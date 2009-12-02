@@ -24,6 +24,7 @@
     <artifactId>jfrog-build-info-api</artifactId>
     <packaging>jar</packaging>
     <name>JFrog Build-Info API</name>
+    <version>1.0.0</version>
 
     <dependencies>
         <dependency>
