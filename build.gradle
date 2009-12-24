@@ -2,7 +2,7 @@ usePlugin('java')
 usePlugin('maven')
 
 group = 'org.jfrog.buildinfo'
-version = '1.0'
+version = '1.0-SNAPSHOT'
 
 /*
 (5) Define the Maven attributes that will be used for POM auto-generation
