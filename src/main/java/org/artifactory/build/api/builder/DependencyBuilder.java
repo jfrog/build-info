@@ -13,13 +13,13 @@ import java.util.Properties;
  */
 public class DependencyBuilder {
 
-    private String id = "";
-    private String type = "";
-    private List<String> scopes = Lists.newArrayList();
-    private String sha1 = "";
-    private String md5 = "";
-    private List<String> requiredBy = Lists.newArrayList();
-    private Properties properties = new Properties();
+    private String id;
+    private String type;
+    private List<String> scopes;
+    private String sha1;
+    private String md5;
+    private List<String> requiredBy;
+    private Properties properties;
 
     /**
      * Assembles the dependency class
@@ -111,6 +111,9 @@ public class DependencyBuilder {
      * @return Builder instance
      */
     public DependencyBuilder addRequiredBy(String requiredBy) {
+        if (this.requiredBy == null) {
+            this.requiredBy = Lists.newArrayList();
+        }
         this.requiredBy.add(requiredBy);
         return this;
     }
@@ -134,6 +137,9 @@ public class DependencyBuilder {
      * @return Builder instance
      */
     public DependencyBuilder addProperty(Object key, Object value) {
+        if (properties == null) {
+            properties = new Properties();
+        }
         properties.put(key, value);
         return this;
     }

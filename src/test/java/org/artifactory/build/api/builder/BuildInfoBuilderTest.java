@@ -4,10 +4,7 @@ import com.google.common.collect.Lists;
 import org.artifactory.build.api.Agent;
 import org.artifactory.build.api.Build;
 import org.artifactory.build.api.BuildType;
-import static org.artifactory.build.api.BuildType.GENERIC;
-import static org.artifactory.build.api.BuildType.GRADLE;
 import org.artifactory.build.api.Module;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -15,6 +12,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+
+import static org.artifactory.build.api.BuildType.GENERIC;
+import static org.artifactory.build.api.BuildType.GRADLE;
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the build info builder class
@@ -46,10 +47,8 @@ public class BuildInfoBuilderTest {
         assertEquals(build.getArtifactoryPrincipal(), "", "Unexpected default build artifactory principal.");
         assertEquals(build.getUrl(), "", "Unexpected default build URL.");
         assertEquals(build.getParentBuildId(), "", "Unexpected default build parent build ID.");
-        assertNotNull(build.getModules(), "Default build modules should not be null.");
-        assertTrue(build.getModules().isEmpty(), "Default build modules list should not have been populated.");
-        assertNotNull(build.getProperties(), "Default build properties should not be null.");
-        assertTrue(build.getProperties().isEmpty(), "Default build properties list should not have been populated.");
+        assertNull(build.getModules(), "Default build modules should be null.");
+        assertNull(build.getProperties(), "Default build properties should be null.");
     }
 
     /**

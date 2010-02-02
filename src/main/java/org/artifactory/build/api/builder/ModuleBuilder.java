@@ -15,10 +15,10 @@ import java.util.Properties;
  */
 public class ModuleBuilder {
 
-    private String id = "";
-    private List<Artifact> artifacts = Lists.newArrayList();
-    private List<Dependency> dependencies = Lists.newArrayList();
-    private Properties properties = new Properties();
+    private String id;
+    private List<Artifact> artifacts;
+    private List<Dependency> dependencies;
+    private Properties properties;
 
     /**
      * Assembles the module class
@@ -63,6 +63,9 @@ public class ModuleBuilder {
      * @return Builder instance
      */
     public ModuleBuilder addArtifact(Artifact artifact) {
+        if (this.artifacts == null) {
+            artifacts = Lists.newArrayList();
+        }
         artifacts.add(artifact);
         return this;
     }
@@ -85,6 +88,9 @@ public class ModuleBuilder {
      * @return Builder instance
      */
     public ModuleBuilder addDependency(Dependency dependency) {
+        if (this.dependencies == null) {
+            dependencies = Lists.newArrayList();
+        }
         dependencies.add(dependency);
         return this;
     }
@@ -108,6 +114,9 @@ public class ModuleBuilder {
      * @return Builder instance
      */
     public ModuleBuilder addProperty(Object key, Object value) {
+        if (properties == null) {
+            properties = new Properties();
+        }
         properties.put(key, value);
         return this;
     }

@@ -2,11 +2,12 @@ package org.artifactory.build.api.builder;
 
 import com.google.common.collect.Lists;
 import org.artifactory.build.api.Dependency;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Properties;
+
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the dependency builder class
@@ -22,17 +23,13 @@ public class DependencyBuilderTest {
     public void testDefaultBuild() {
         Dependency dependency = new DependencyBuilder().build();
 
-        assertEquals(dependency.getId(), "", "Unexpected default dependency ID.");
-        assertEquals(dependency.getType(), "", "Unexpected default dependency type.");
-        assertNotNull(dependency.getScopes(), "Default dependency scopes should have been initialized.");
-        assertTrue(dependency.getScopes().isEmpty(), "Default dependency scopes should be empty.");
-        assertEquals(dependency.getSha1(), "", "Unexpected default dependency SHA1 checksum.");
-        assertEquals(dependency.getMd5(), "", "Unexpected default dependency MD5 checksum.");
-        assertNotNull(dependency.getRequiredBy(), "Default dependency required by should have been initialized.");
-        assertTrue(dependency.getRequiredBy().isEmpty(), "Default dependency required by should be empty.");
-        assertNotNull(dependency.getProperties(), "Default dependency properties should not be null.");
-        assertTrue(dependency.getProperties().isEmpty(),
-                "Default dependency properties list should not have been populated.");
+        assertNull(dependency.getId(), "Unexpected default dependency ID.");
+        assertNull(dependency.getType(), "Unexpected default dependency type.");
+        assertNull(dependency.getScopes(), "Default dependency scopes should not have been initialized.");
+        assertNull(dependency.getSha1(), "Unexpected default dependency SHA1 checksum.");
+        assertNull(dependency.getMd5(), "Unexpected default dependency MD5 checksum.");
+        assertNull(dependency.getRequiredBy(), "Default dependency required by should not have been initialized.");
+        assertNull(dependency.getProperties(), "Default dependency properties should be null.");
     }
 
     /**

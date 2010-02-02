@@ -11,11 +11,11 @@ import java.util.Properties;
  */
 public class ArtifactBuilder {
 
-    private String name = "";
-    private String type = "";
-    private String sha1 = "";
-    private String md5 = "";
-    private Properties properties = new Properties();
+    private String name;
+    private String type;
+    private String sha1;
+    private String md5;
+    private Properties properties;
 
     /**
      * Assembles the artifact class
@@ -95,6 +95,9 @@ public class ArtifactBuilder {
      * @return Builder instance
      */
     public ArtifactBuilder addProperty(Object key, Object value) {
+        if (properties == null) {
+            properties = new Properties();
+        }
         properties.put(key, value);
         return this;
     }

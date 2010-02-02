@@ -29,8 +29,8 @@ public class BuildInfoBuilder {
     private String artifactoryPrincipal = "";
     private String url = "";
     private String parentBuildId = "";
-    private List<Module> modules = Lists.newArrayList();
-    private Properties properties = new Properties();
+    private List<Module> modules;
+    private Properties properties;
 
     /**
      * Assembles the build class
@@ -206,6 +206,9 @@ public class BuildInfoBuilder {
      * @return Builder instance
      */
     public BuildInfoBuilder addModule(Module module) {
+        if (modules == null) {
+            modules = Lists.newArrayList();
+        }
         modules.add(module);
         return this;
     }
@@ -229,6 +232,9 @@ public class BuildInfoBuilder {
      * @return Builder instance
      */
     public BuildInfoBuilder addProperty(Object key, Object value) {
+        if (properties == null) {
+            properties = new Properties();
+        }
         properties.put(key, value);
         return this;
     }

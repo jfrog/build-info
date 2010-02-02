@@ -1,10 +1,11 @@
 package org.artifactory.build.api.builder;
 
 import org.artifactory.build.api.Artifact;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
+
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the artifact builder class
@@ -20,13 +21,11 @@ public class ArtifactBuilderTest {
     public void testDefaultBuild() {
         Artifact artifact = new ArtifactBuilder().build();
 
-        assertEquals(artifact.getName(), "", "Unexpected default artifact name.");
-        assertEquals(artifact.getType(), "", "Unexpected default artifact type.");
-        assertEquals(artifact.getSha1(), "", "Unexpected default artifact SHA1 checksum.");
-        assertEquals(artifact.getMd5(), "", "Unexpected default artifact MD5 checksum.");
-        assertNotNull(artifact.getProperties(), "Default artifact properties should not be null.");
-        assertTrue(artifact.getProperties().isEmpty(),
-                "Default artifact properties list should not have been populated.");
+        assertNull(artifact.getName(), "Unexpected default artifact name.");
+        assertNull(artifact.getType(), "Unexpected default artifact type.");
+        assertNull(artifact.getSha1(), "Unexpected default artifact SHA1 checksum.");
+        assertNull(artifact.getMd5(), "Unexpected default artifact MD5 checksum.");
+        assertNull(artifact.getProperties(), "Default artifact properties should be null.");
     }
 
     /**

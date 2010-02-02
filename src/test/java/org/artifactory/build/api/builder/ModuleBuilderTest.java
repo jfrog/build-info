@@ -4,11 +4,12 @@ import com.google.common.collect.Lists;
 import org.artifactory.build.api.Artifact;
 import org.artifactory.build.api.Dependency;
 import org.artifactory.build.api.Module;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Properties;
+
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the module builder class
@@ -24,13 +25,10 @@ public class ModuleBuilderTest {
     public void testDefaultBuild() {
         Module module = new ModuleBuilder().build();
 
-        assertEquals(module.getId(), "", "Unexpected default module ID.");
-        assertTrue(module.getArtifacts().isEmpty(),
-                "Default module artifacts list should not have been populated.");
-        assertTrue(module.getDependencies().isEmpty(),
-                "Default module dependencies list should not have been populated.");
-        assertNotNull(module.getProperties(), "Default module properties should not be null.");
-        assertTrue(module.getProperties().isEmpty(), "Default module properties list should not have been populated.");
+        assertNull(module.getId(), "Unexpected default module ID.");
+        assertNull(module.getArtifacts(), "Default module artifacts list should not have been initialized.");
+        assertNull(module.getDependencies(), "Default module dependencies list should not have been initialized.");
+        assertNull(module.getProperties(), "Default module properties should be null.");
     }
 
     /**
