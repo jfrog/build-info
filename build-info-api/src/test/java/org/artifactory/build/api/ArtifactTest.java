@@ -1,10 +1,11 @@
 package org.artifactory.build.api;
 
 import org.testng.Assert;
-import static org.testng.Assert.assertNull;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
+
+import static org.testng.Assert.assertNull;
 
 /**
  * Tests the behavior of the artifact class

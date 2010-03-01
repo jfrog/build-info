@@ -1,10 +1,11 @@
 package org.artifactory.build.api;
 
 import com.google.common.collect.Lists;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.util.List;
+
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the module class

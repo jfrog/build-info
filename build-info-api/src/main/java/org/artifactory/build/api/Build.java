@@ -1,11 +1,12 @@
 package org.artifactory.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import static org.artifactory.build.api.BuildBean.ROOT;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+
+import static org.artifactory.build.api.BuildBean.ROOT;
 
 /**
  * Contains the general build information

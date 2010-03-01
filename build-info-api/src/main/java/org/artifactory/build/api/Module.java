@@ -1,9 +1,10 @@
 package org.artifactory.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import static org.artifactory.build.api.BuildBean.MODULE;
 
 import java.util.List;
+
+import static org.artifactory.build.api.BuildBean.MODULE;
 
 /**
  * Contains the build module information

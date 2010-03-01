@@ -1,8 +1,6 @@
 package org.artifactory.build.api;
 
 import com.google.common.collect.Lists;
-import static org.artifactory.build.api.BuildType.GRADLE;
-import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -10,6 +8,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+
+import static org.artifactory.build.api.BuildType.GRADLE;
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the build class
