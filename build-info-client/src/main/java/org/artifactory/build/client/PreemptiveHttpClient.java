@@ -13,6 +13,7 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
@@ -39,6 +40,17 @@ public class PreemptiveHttpClient {
 
     public PreemptiveHttpClient(String userName, String password, int timeout) {
         httpClient = createHttpClient(userName, password, timeout);
+    }
+
+    public void setProxyConfiguration(String host, int port, String username, String password) {
+        HttpHost proxy = new HttpHost(host, port);
+        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+        if (username != null) {
+            httpClient.getCredentialsProvider().setCredentials(
+                    new AuthScope(host, port),
+                    new UsernamePasswordCredentials(username, password)
+            );
+        }
     }
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
@@ -69,19 +81,6 @@ public class PreemptiveHttpClient {
             // Add as the first request interceptor
             client.addRequestInterceptor(new PreemptiveAuth(), 0);
         }
-
-        /*ProxyConfiguration proxyConfiguration = Hudson.getInstance().proxy;
-        if (proxyConfiguration != null) {
-            HttpHost proxy = new HttpHost(proxyConfiguration.name, proxyConfiguration.port);
-            client.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-            if (proxyConfiguration.getUserName() != null) {
-                client.getCredentialsProvider().setCredentials(
-                        new AuthScope(proxyConfiguration.name, proxyConfiguration.port),
-                        new UsernamePasswordCredentials(proxyConfiguration.getUserName(),
-                                proxyConfiguration.getPassword())
-                );
-            }
-        }*/
         return client;
     }
 

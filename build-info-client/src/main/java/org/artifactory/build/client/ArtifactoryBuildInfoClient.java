@@ -37,23 +37,24 @@ public class ArtifactoryBuildInfoClient {
     private static final int DEFAULT_CONNECTION_TIMEOUT = 120000;    // 2 Minutes
 
     private final String artifactoryUrl;
-    private final String userName;
+    private final String username;
     private final String password;
+    private ProxyConfiguration proxyConfiguration;
 
     public ArtifactoryBuildInfoClient(String artifactoryUrl) {
         this(artifactoryUrl, null, null);
     }
 
-    public ArtifactoryBuildInfoClient(String artifactoryUrl, String userName, String password) {
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        this.userName = userName;
+        this.username = username;
         this.password = password;
     }
 
     public List<String> getLocalRepositoriesKeys() {
         List<String> repositories = new ArrayList<String>();
         try {
-            PreemptiveHttpClient client = createHttpClient(userName, password);
+            PreemptiveHttpClient client = createHttpClient(username, password);
 
             String localReposUrl = artifactoryUrl + LOCAL_REPOS_REST_RUL;
             log.debug("Requesting local repositories list from: " + localReposUrl);
@@ -84,7 +85,7 @@ public class ArtifactoryBuildInfoClient {
 
     public void sendBuildInfo(Build buildInfo) throws IOException {
         String url = artifactoryUrl + BUILD_REST_RUL;
-        PreemptiveHttpClient client = createHttpClient(userName, password);
+        PreemptiveHttpClient client = createHttpClient(username, password);
         HttpPut httpPut = new HttpPut(url);
         String buildInfoJson = buildInfoToJsonString(buildInfo);
         StringEntity stringEntity = new StringEntity(buildInfoJson);
@@ -100,8 +101,25 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private PreemptiveHttpClient createHttpClient(String userName, String password) {
-        return new PreemptiveHttpClient(userName, password, DEFAULT_CONNECTION_TIMEOUT);
+    public void setProxyConfiguration(String host, int port) {
+        setProxyConfiguration(host, port, null, null);
+    }
+
+    public void setProxyConfiguration(String host, int port, String username, String password) {
+        proxyConfiguration = new ProxyConfiguration();
+        proxyConfiguration.host = host;
+        proxyConfiguration.port = port;
+        proxyConfiguration.username = username;
+        proxyConfiguration.password = password;
+    }
+
+    private PreemptiveHttpClient createHttpClient(String username, String password) {
+        PreemptiveHttpClient client = new PreemptiveHttpClient(username, password, DEFAULT_CONNECTION_TIMEOUT);
+        if (proxyConfiguration != null) {
+            client.setProxyConfiguration(proxyConfiguration.host, proxyConfiguration.port,
+                    proxyConfiguration.username, proxyConfiguration.password);
+        }
+        return client;
     }
 
     private JsonParser createJsonParser(InputStream in) throws IOException {
