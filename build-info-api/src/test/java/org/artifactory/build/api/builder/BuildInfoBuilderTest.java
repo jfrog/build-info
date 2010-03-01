@@ -29,10 +29,8 @@ public class BuildInfoBuilderTest {
      * Validates the build values when using the defaults
      */
     public void testDefaultBuild() {
-        Build build = new BuildInfoBuilder().build();
-
+        Build build = new BuildInfoBuilder("test").started("test").build();
         assertEquals(build.getVersion(), "1.0.0", "Unexpected default build version.");
-        assertEquals(build.getName(), "", "Unexpected default build name.");
         assertEquals(build.getNumber(), 0L, "Unexpected default build number.");
         assertEquals(build.getType(), GENERIC, "Unexpected default build type.");
 
@@ -41,14 +39,13 @@ public class BuildInfoBuilderTest {
         assertEquals(agent.getName(), "", "Unexpected default build agent name.");
         assertEquals(agent.getVersion(), "", "Unexpected default build agent version.");
 
-        assertEquals(build.getStarted(), "", "Unexpected default build started.");
         assertEquals(build.getDurationMillis(), 0L, "Unexpected default build duration millis.");
         assertEquals(build.getPrincipal(), "", "Unexpected default build principal.");
         assertEquals(build.getArtifactoryPrincipal(), "", "Unexpected default build artifactory principal.");
         assertEquals(build.getUrl(), "", "Unexpected default build URL.");
         assertEquals(build.getParentBuildId(), "", "Unexpected default build parent build ID.");
-        assertNull(build.getModules(), "Default build modules should be null.");
-        assertNull(build.getProperties(), "Default build properties should be null.");
+        assertEquals(build.getModules().size(), 0, "Default build modules size should be 0.");
+        assertEquals(build.getProperties().size(), 0, "Default properties size should be 0.");
     }
 
     /**
@@ -68,9 +65,10 @@ public class BuildInfoBuilderTest {
         List<Module> modules = Lists.newArrayList();
         Properties properties = new Properties();
 
-        Build build = new BuildInfoBuilder().version(version).name(name).number(number).type(buildType).agent(agent).
-                durationMillis(durationMillis).principal(principal).artifactoryPrincipal(artifactoryPrincipal).url(url).
-                parentBuildId(parentBuildId).modules(modules).properties(properties).build();
+        Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
+                .agent(agent).durationMillis(durationMillis).principal(principal)
+                .artifactoryPrincipal(artifactoryPrincipal).url(url)
+                .parentBuildId(parentBuildId).modules(modules).properties(properties).build();
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
@@ -93,11 +91,11 @@ public class BuildInfoBuilderTest {
      */
     public void testStartedSetters() throws ParseException {
         String started = "192-1212-1";
-        Build build = new BuildInfoBuilder().started(started).build();
+        Build build = new BuildInfoBuilder("test").started(started).build();
         assertEquals(build.getStarted(), started, "Unexpected build started.");
 
         Date startedDate = new Date();
-        build = new BuildInfoBuilder().startedDate(startedDate).build();
+        build = new BuildInfoBuilder("test").startedDate(startedDate).build();
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         assertEquals(build.getStarted(), simpleDateFormat.format(startedDate), "Unexpected build started.");
@@ -111,7 +109,8 @@ public class BuildInfoBuilderTest {
         String propertyKey = "key";
         String propertyValue = "value";
 
-        Build build = new BuildInfoBuilder().addModule(module).addProperty(propertyKey, propertyValue).build();
+        Build build = new BuildInfoBuilder("test").started("test").addModule(module)
+                .addProperty(propertyKey, propertyValue).build();
         List<Module> modules = build.getModules();
         assertFalse(modules.isEmpty(), "A build module should have been added.");
         assertEquals(modules.get(0), module, "Unexpected build module.");

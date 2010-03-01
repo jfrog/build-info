@@ -39,17 +39,15 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>org.testng</groupId>
-                <artifactId>testng</artifactId>
-                <classifier>jdk15</classifier>
-                <version>5.9</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
                 <groupId>com.google.collections</groupId>
                 <artifactId>google-collections</artifactId>
                 <version>1.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>commons-lang</groupId>
+                <artifactId>commons-lang</artifactId>
+                <version>2.4</version>
             </dependency>
 
             <dependency>
@@ -74,6 +72,14 @@
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-api</artifactId>
                 <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.testng</groupId>
+                <artifactId>testng</artifactId>
+                <classifier>jdk15</classifier>
+                <version>5.11</version>
+                <scope>test</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

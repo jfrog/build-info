@@ -1,12 +1,14 @@
 package org.artifactory.build.api.builder;
 
 import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
 import org.artifactory.build.api.Agent;
 import org.artifactory.build.api.Build;
 import org.artifactory.build.api.BuildType;
 import org.artifactory.build.api.Module;
 
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -19,11 +21,11 @@ import java.util.Properties;
 public class BuildInfoBuilder {
 
     private String version = "1.0.0";
-    private String name = "";
-    private long number = 0L;
+    private String name;
+    private String started;
+    private long number;
     private BuildType type = BuildType.GENERIC;
     private Agent agent = new Agent("", "");
-    private String started = "";
     private long durationMillis = 0L;
     private String principal = "";
     private String artifactoryPrincipal = "";
@@ -32,12 +34,29 @@ public class BuildInfoBuilder {
     private List<Module> modules;
     private Properties properties;
 
+    public BuildInfoBuilder(String name) {
+        this.name = name;
+    }
+
     /**
      * Assembles the build class
      *
      * @return Assembled build
      */
     public Build build() {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("Build must have a name");
+        }
+        if (StringUtils.isBlank(started)) {
+            throw new IllegalArgumentException("Build start time must be set");
+        }
+        if (modules == null) {
+            modules = Collections.emptyList();
+        }
+        if (properties == null) {
+            properties = new Properties();
+        }
+
         Build build = new Build();
         build.setVersion(version);
         build.setName(name);
