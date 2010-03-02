@@ -26,8 +26,8 @@ public class ModuleBuilderTest {
         Module module = new ModuleBuilder().build();
 
         assertNull(module.getId(), "Unexpected default module ID.");
-        assertNull(module.getArtifacts(), "Default module artifacts list should not have been initialized.");
-        assertNull(module.getDependencies(), "Default module dependencies list should not have been initialized.");
+        assertEquals(module.getArtifacts().size(), 0, "Default module artifacts list should be empty.");
+        assertEquals(module.getDependencies().size(), 0, "Default module dependencies list should be empty.");
         assertNull(module.getProperties(), "Default module properties should be null.");
     }
 

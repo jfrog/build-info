@@ -8,12 +8,11 @@ import java.io.Serializable;
  * @author Noam Y. Tenne
  */
 public interface BuildBean extends Serializable {
-
-    public static final String ROOT = "build";
-    public static final String MODULES = "modules";
-    public static final String MODULE = "module";
-    public static final String ARTIFACTS = "artifacts";
-    public static final String ARTIFACT = "artifact";
-    public static final String DEPENDENCIES = "dependencies";
-    public static final String DEPENDENCY = "dependency";
+    String ROOT = "build";
+    String MODULES = "modules";
+    String MODULE = "module";
+    String ARTIFACTS = "artifacts";
+    String ARTIFACT = "artifact";
+    String DEPENDENCIES = "dependencies";
+    String DEPENDENCY = "dependency";
 }
