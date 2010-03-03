@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.jfrog</groupId>
         <artifactId>build-info-parent</artifactId>
-        <version>1.2.0-SNAPSHOT</version>
+        <version>1.2.0</version>
     </parent>
     <artifactId>build-info-api</artifactId>
     <packaging>jar</packaging>
