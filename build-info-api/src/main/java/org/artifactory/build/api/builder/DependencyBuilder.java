@@ -27,6 +27,12 @@ public class DependencyBuilder {
      * @return Assembled dependency
      */
     public Dependency build() {
+        if (md5 == null) {
+            md5 = "";
+        }
+        if (sha1 == null) {
+            sha1 = "";
+        }
         Dependency dependency = new Dependency();
         dependency.setId(id);
         dependency.setType(type);
