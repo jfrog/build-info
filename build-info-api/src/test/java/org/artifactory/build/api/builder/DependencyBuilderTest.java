@@ -26,8 +26,8 @@ public class DependencyBuilderTest {
         assertNull(dependency.getId(), "Unexpected default dependency ID.");
         assertNull(dependency.getType(), "Unexpected default dependency type.");
         assertNull(dependency.getScopes(), "Default dependency scopes should not have been initialized.");
-        assertNull(dependency.getSha1(), "Unexpected default dependency SHA1 checksum.");
-        assertNull(dependency.getMd5(), "Unexpected default dependency MD5 checksum.");
+        assertEquals(dependency.getSha1(), "", "Unexpected default dependency SHA1 checksum.");
+        assertEquals(dependency.getMd5(), "", "Unexpected default dependency MD5 checksum.");
         assertNull(dependency.getRequiredBy(), "Default dependency required by should not have been initialized.");
         assertNull(dependency.getProperties(), "Default dependency properties should be null.");
     }
