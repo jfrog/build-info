@@ -1,5 +1,6 @@
 package org.artifactory.build.api.builder;
 
+import org.apache.commons.lang.StringUtils;
 import org.artifactory.build.api.Artifact;
 
 import java.util.Properties;
@@ -17,12 +18,25 @@ public class ArtifactBuilder {
     private String md5;
     private Properties properties;
 
+    public ArtifactBuilder(String name) {
+        this.name = name;
+    }
+
     /**
      * Assembles the artifact class
      *
      * @return Assembled dependency
      */
     public Artifact build() {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("Artifact must have a name");
+        }
+        if (md5 == null) {
+            md5 = "";
+        }
+        if (sha1 == null) {
+            sha1 = "";
+        }
         Artifact artifact = new Artifact();
         artifact.setName(name);
         artifact.setType(type);

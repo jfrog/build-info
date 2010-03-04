@@ -19,12 +19,12 @@ public class ArtifactBuilderTest {
      * Validates the artifact values when using the defaults
      */
     public void testDefaultBuild() {
-        Artifact artifact = new ArtifactBuilder().build();
+        Artifact artifact = new ArtifactBuilder("name").build();
 
-        assertNull(artifact.getName(), "Unexpected default artifact name.");
+        assertEquals(artifact.getName(), "name", "Unexpected artifact name.");
         assertNull(artifact.getType(), "Unexpected default artifact type.");
-        assertNull(artifact.getSha1(), "Unexpected default artifact SHA1 checksum.");
-        assertNull(artifact.getMd5(), "Unexpected default artifact MD5 checksum.");
+        assertEquals(artifact.getSha1(), "", "Unexpected default artifact SHA1 checksum.");
+        assertEquals(artifact.getMd5(), "", "Unexpected default artifact MD5 checksum.");
         assertNull(artifact.getProperties(), "Default artifact properties should be null.");
     }
 
@@ -38,7 +38,7 @@ public class ArtifactBuilderTest {
         String md5 = "shmop";
         Properties properties = new Properties();
 
-        Artifact artifact = new ArtifactBuilder().name(name).type(type).sha1(sha1).md5(md5).properties(properties).
+        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).md5(md5).properties(properties).
                 build();
 
         assertEquals(artifact.getName(), name, "Unexpected artifact ID.");
@@ -56,7 +56,7 @@ public class ArtifactBuilderTest {
         String propertyKey = "key";
         String propertyValue = "value";
 
-        Artifact artifact = new ArtifactBuilder().addProperty(propertyKey, propertyValue).build();
+        Artifact artifact = new ArtifactBuilder("name").addProperty(propertyKey, propertyValue).build();
         assertTrue(artifact.getProperties().containsKey(propertyKey), "An artifact property should have been added.");
         assertEquals(artifact.getProperties().get(propertyKey), propertyValue, "Unexpected artifact property value.");
     }
