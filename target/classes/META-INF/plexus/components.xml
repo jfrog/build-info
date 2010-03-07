@@ -1,8 +1,0 @@
-<component-set>
-    <components>
-        <component>
-            <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
-            <implementation>org.jfrog.maven.ArtifactoryMavenLifecycleParticipant</implementation>
-        </component>
-    </components>
-</component-set>
