@@ -10,7 +10,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
 /**
- * File checksum calculator helper class
+ * File checksum calculator class
  *
  * @author Noam Y. Tenne
  */
@@ -19,17 +19,17 @@ public class FileChecksumCalculator {
     private static final int BUFFER_SIZE = 32768;
 
     /**
-     * Reads the given file's checksums
+     * Calculates the given file's checksums
      *
      * @param fileToCalculate File to calculate
      * @param algorithms      Algorithms to use for calculation
      * @return Map with algorithm keys and checksum values
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      * @throws IOException              Thrown if any error occurs while reading the file or calculating the checksums
-     * @throws IllegalArgumentException TThrown if the given file to read is null or non-existing or the algorithms var
+     * @throws IllegalArgumentException TThrown if the given file to calc is null or non-existing or the algorithms var
      *                                  args is null
      */
-    public static Map<String, String> readChecksumsFromFile(File fileToCalculate, String... algorithms)
+    public static Map<String, String> calculateChecksums(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
 
         if ((fileToCalculate == null) || (!fileToCalculate.isFile())) {
@@ -43,7 +43,7 @@ public class FileChecksumCalculator {
             return Maps.newHashMap();
         }
 
-        return getChecksums(fileToCalculate, algorithms);
+        return calculate(fileToCalculate, algorithms);
     }
 
     /**
@@ -54,10 +54,10 @@ public class FileChecksumCalculator {
      * @return Map with algorithm keys and checksum values
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      * @throws IOException              Thrown if any error occurs while reading the file or calculating the checksums
-     * @throws IllegalArgumentException Thrown if the given file to read is null or non-existing or the algorithms var
+     * @throws IllegalArgumentException Thrown if the given file to calc is null or non-existing or the algorithms var
      *                                  args is null
      */
-    private static Map<String, String> getChecksums(File fileToCalculate, String... algorithms)
+    private static Map<String, String> calculate(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
         Map<String, MessageDigest> digestMap = Maps.newHashMap();
         Map<String, String> checksumMap = Maps.newHashMap();

@@ -29,7 +29,7 @@ public class FileChecksumCalculatorTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existant file.")
     public void testNullFile() throws IOException, NoSuchAlgorithmException {
-        FileChecksumCalculator.readChecksumsFromFile(null);
+        FileChecksumCalculator.calculateChecksums(null);
     }
 
     /**
@@ -38,7 +38,7 @@ public class FileChecksumCalculatorTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existant file.")
     public void testNonExistingFile() throws IOException, NoSuchAlgorithmException {
-        FileChecksumCalculator.readChecksumsFromFile(new File("/this/file/doesnt/exists.moo"));
+        FileChecksumCalculator.calculateChecksums(new File("/this/file/doesnt/exists.moo"));
     }
 
     /**
@@ -47,7 +47,7 @@ public class FileChecksumCalculatorTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Checksum algorithms cannot be null.")
     public void testNullAlgorithms() throws IOException, NoSuchAlgorithmException {
-        FileChecksumCalculator.readChecksumsFromFile(File.createTempFile("moo", "bla"), null);
+        FileChecksumCalculator.calculateChecksums(File.createTempFile("moo", "bla"), null);
     }
 
     /**
@@ -55,7 +55,7 @@ public class FileChecksumCalculatorTest {
      */
     public void testEmptyAlgorithms() throws IOException, NoSuchAlgorithmException {
         Map<String, String> checksumsMap =
-                FileChecksumCalculator.readChecksumsFromFile(File.createTempFile("moo", "bla"));
+                FileChecksumCalculator.calculateChecksums(File.createTempFile("moo", "bla"));
         Assert.assertTrue(checksumsMap.isEmpty(), "No algorithms were given to the calculator, checksum value map " +
                 "should be empty");
     }
@@ -69,7 +69,7 @@ public class FileChecksumCalculatorTest {
         BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
         out.write("This is a test file");
         out.close();
-        Map<String, String> checksumsMap = FileChecksumCalculator.readChecksumsFromFile(tempFile, "md5", "sha1");
+        Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(tempFile, "md5", "sha1");
         String md5 = getChecksum("md5", tempFile);
         String sha1 = getChecksum("sha1", tempFile);
         assertEquals(checksumsMap.get("md5"), md5, "Unexpected test file MD5 checksum value.");
