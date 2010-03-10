@@ -1,19 +1,27 @@
-apply id: 'java'
-group = 'org.jfrog.buildinfo'
-version = '1.1-SNAPSHOT'
-
 /*
 (5) Define the Maven attributes that will be used for POM auto-generation
- */
+*/
 def artifactId = 'buildinfo'
 def groupId = group
 def versionNumber = version
+buildscript {
+  repositories {
+    mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
+  }
+  dependencies {
+    classpath group: 'org.gradle.artifactoryplugin', name: 'artifactoryplugin', version: '0.5-SNAPSHOT'
+  }
+}
 
-
+allprojects {
+  group = 'org.jfrog.buildinfo'
+  version = '1.2.1-SNAPSHOT'
+  apply url: 'http://localhost:8080/artifactory/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
+  apply id: 'artifactoryplugin'
+}
 subprojects {
   apply id: 'java'
   apply id: 'maven'
-  apply url: 'http://gradle.artifactoryonline.com/gradle/plugins-releases-local/artifactoryplugin/artifactoryplugin/0.3/artifactoryplugin-0.3.gradle'
 
   dependencies {
     compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
@@ -43,31 +51,3 @@ project(':build-info-client') {
 
 dependsOnChildren()
 
-uploadArchives {
-  repositories {
-    /*
-   (6) This will be used to deploy the Gradle artifact and ivy modules
-    */
-
-    mavenRepo urls: "http://localhost:8080/artifactory/libs-snapshots-local";
-    org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials(REALM, HOST, USER, PASSWORD)
-
-    /*
-   (3) Use this to also deploy an auto-generated POM
-    */
-
-    repositories.mavenDeployer {
-      repository(url: "http://localhost:8080/artifactory/libs-snapshots-local") {
-        /*
-       (4) The login/password of an Artifactory user with deploy privileges.
-       USER and PASSWORD are coming from gradle.properties
-        */
-
-        authentication(userName: USER, password: PASSWORD)
-      }
-      /*  pom.version = versionNumber
-    pom.artifactId = artifactId
-    pom.groupId = groupId*/
-    }
-  }
-}
