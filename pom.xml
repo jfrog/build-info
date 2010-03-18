@@ -73,6 +73,7 @@
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-api</artifactId>
+                <version>${project.version}</version>
             </dependency>
 
             <dependency>

@@ -6,6 +6,7 @@
     <artifactId>build-info-extractor</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
+    <name>Build Info Extractor</name>
 
     <parent>
         <groupId>org.jfrog</groupId>
