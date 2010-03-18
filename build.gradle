@@ -6,7 +6,7 @@ def groupId = group
 def versionNumber = version
 buildscript {
   repositories {
-    mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
+    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/repo'
   }
   dependencies {
     classpath group: 'org.gradle.artifactoryplugin', name: 'artifactoryplugin', version: '0.5-SNAPSHOT'
@@ -15,7 +15,7 @@ buildscript {
 
 allprojects {
   group = 'org.jfrog.buildinfo'
-  version = '1.2.1-SNAPSHOT'
+  version = '1.2.1'
   apply url: 'http://localhost:8080/artifactory/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
   apply id: 'artifactoryplugin'
 }
