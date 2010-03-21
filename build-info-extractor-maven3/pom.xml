@@ -4,9 +4,8 @@
 
     <groupId>org.jfrog</groupId>
     <artifactId>build-info-extractor-maven3</artifactId>
-    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Build Info Maven 3 Extractor</name>
+    <name>JFrog Build-Info Maven 3 Extractor</name>
     <parent>
         <groupId>org.jfrog</groupId>
         <artifactId>build-info-parent</artifactId>
@@ -18,12 +17,12 @@
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>1.2.1</version>
+                <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>

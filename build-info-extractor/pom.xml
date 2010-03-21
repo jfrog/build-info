@@ -4,25 +4,14 @@
 
     <groupId>org.jfrog</groupId>
     <artifactId>build-info-extractor</artifactId>
-    <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Build Info Extractor</name>
+    <name>JFrog Build-Info Extractor</name>
 
     <parent>
         <groupId>org.jfrog</groupId>
         <artifactId>build-info-parent</artifactId>
         <version>1.2.1</version>
     </parent>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jfrog</groupId>
-                <artifactId>build-info-api</artifactId>
-                <version>1.2.1</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
 
     <dependencies>
         <dependency>
