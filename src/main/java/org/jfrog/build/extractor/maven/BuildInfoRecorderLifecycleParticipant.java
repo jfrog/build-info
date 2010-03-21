@@ -1,4 +1,4 @@
-package org.jfrog.maven;
+package org.jfrog.build.extractor.maven;
 
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
