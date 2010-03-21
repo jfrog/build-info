@@ -1,23 +1,11 @@
 package org.jfrog.build.extractor;
 
-import org.jfrog.build.api.Build;
-
-
 /**
  * @author Noam Y. Tenne
  */
-public abstract class BuildInfoExtractorSupport<C> implements BuildInfoExtractor<C> {
+public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtractor<C, O> {
 
-    /**
-     * {@inheritDoc}
-     */
-    public void collectProperties(C context) {
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void export(Build build) {
+    public O extract(C context) {
         throw new UnsupportedOperationException("Implement me");
     }
 }

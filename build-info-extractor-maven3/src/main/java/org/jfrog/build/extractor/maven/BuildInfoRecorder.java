@@ -1,4 +1,4 @@
-package org.jfrog.maven;
+package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
 import org.apache.maven.artifact.Artifact;
@@ -12,7 +12,6 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -30,7 +29,7 @@ import java.util.Set;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent> {
+public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, String> {
 
     @Requirement
     private Logger logger;
@@ -320,12 +319,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    public void collectProperties(ExecutionEvent context) {
-    }
-
-    public void collectModules(ExecutionEvent context) {
-    }
-
-    public void export(Build build) {
+    public String extract(ExecutionEvent context) {
+        throw new UnsupportedOperationException("Implement me");
     }
 }
