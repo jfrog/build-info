@@ -1,11 +1,50 @@
 package org.jfrog.build.extractor;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
+import org.jfrog.build.api.constants.BuildInfoProperties;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Map;
+import java.util.Properties;
+
 /**
  * @author Noam Y. Tenne
  */
 public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtractor<C, O> {
 
-    public O extract(C context) {
-        throw new UnsupportedOperationException("Implement me");
+    /**
+     * Collect system properties and properties from the  {@link org.jfrog.build.api.constants.BuildInfoProperties#PROP_PROPS_FILE}
+     * file.
+     * <p/>
+     * The caller is supposed to inject the build properties into the output (e.g.: adding them to the Build object if
+     * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
+     * buildInfo xml output file, if the output is a path to this file.
+     *
+     * @return
+     */
+    public Properties getBuildInfoProperties() throws IOException {
+        //TODO: [by tc] extract thge props from org.jfrog.build.api.constants.BuildInfoProperties#PROP_PROPS_FILE (if
+        // exists) and from any system props that begin with
+        // org.jfrog.build.api.constants.BuildInfoProperties.BUILD_INFO_PROP_PREFIX
+        Properties props = new Properties();
+        InputStream inputStream = new FileInputStream(new File(BuildInfoProperties.PROP_PROPS_FILE));
+        props.load(inputStream);
+        Map<Object, Object> map = Maps.newHashMap(props);
+        Map<Object, Object> filteredMap = Maps.filterKeys(map, new Predicate<Object>() {
+            public boolean apply(Object input) {
+                String key = (String) input;
+                if (key.startsWith("")) {
+                    return true;
+                }
+                return false;
+            }
+        });
+        props = new Properties();
+        props.putAll(filteredMap);
+        return props;
     }
 }
