@@ -30,9 +30,7 @@ import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
-import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GUtil;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
@@ -43,7 +41,7 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.BuildInfoExtractorSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,37 +65,31 @@ import static com.google.common.collect.Lists.newArrayList;
  *
  * @author Tomer Cohen
  */
-public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtractor<Project, Build> {
+public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build> {
     private static final Logger log = LoggerFactory.getLogger(BuildInfoRecorder.class);
+    private org.jfrog.build.api.Module module;
 
-    public static final String BUILD_INFO_KEY = "buildInfo";
-    public static final String BUILD_START_PROPERTY_NAME = "build.start";
-    public static final String BUILD_NUMBER_PROPERTY_NAME = "build.number";
-    public static final String BUILD_NAME_PROPERTY_NAME = "build.name";
-    public static final String BUILD_PARENT_NAME_PROPERTY_NAME = "build.parentName";
-    public static final String BUILD_PARENT_NUMBER_PROPERTY_NAME = "build.parentNumber";
-
+    private Project project;
 
     private Configuration configuration;
-    private org.jfrog.build.api.Module module;
+
+    public BuildInfoRecorder(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
     public Configuration getConfiguration() {
         return configuration;
     }
 
-    public void setConfiguration(Configuration configuration) {
-        this.configuration = configuration;
-    }
-
-    @TaskAction
     public Build extract(Project project) {
+        this.project = project;
         ModuleBuilder builder = new ModuleBuilder()
                 .id(project.getGroup() + ":" + project.getName() + ":" + project.getVersion().toString());
         if (getConfiguration() != null) {
             try {
                 builder.artifacts(calculateArtifacts(project)).dependencies(calculateDependencies());
             } catch (Exception e) {
-                e.printStackTrace();
+                log.error("Error during extraction: ", e);
             }
         }
         module = builder.build();
@@ -120,30 +112,30 @@ public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtrac
                             return new ArtifactBuilder(from.getName()).type(type)
                                     .md5(calculateMd5ForArtifact(from.getFile())).build();
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            log.error("Error during artifact calculation: ", e);
                         }
                         return new Artifact();
                     }
                 }));
 
-        File mavenPom = new File(getProject().getRepositories().getMavenPomDir(), "pom-default.xml");
+        File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
         if (mavenPom.exists()) {
             Artifact pom =
-                    new ArtifactBuilder(getProject().getName()).md5(calculateMd5ForArtifact(mavenPom)).type("pom")
+                    new ArtifactBuilder(project.getName()).md5(calculateMd5ForArtifact(mavenPom)).type("pom")
                             .build();
             artifacts.add(pom);
         }
-        File ivy = new File(getProject().getBuildDir(), "ivy.xml");
+        File ivy = new File(project.getBuildDir(), "ivy.xml");
         if (ivy.exists()) {
             Artifact ivyArtifact =
-                    new ArtifactBuilder(getProject().getName()).md5(calculateMd5ForArtifact(ivy)).type("ivy").build();
+                    new ArtifactBuilder(project.getName()).md5(calculateMd5ForArtifact(ivy)).type("ivy").build();
             artifacts.add(ivyArtifact);
         }
         return artifacts;
     }
 
     private List<Dependency> calculateDependencies() throws Exception {
-        Set<Configuration> configurationSet = getProject().getConfigurations().getAll();
+        Set<Configuration> configurationSet = project.getConfigurations().getAll();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
@@ -182,19 +174,26 @@ public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtrac
 
     private String calculateMd5ForArtifact(File file) throws Exception {
         if (file != null && file.exists()) {
-            log.debug("Calculating MD5 for file: " + file.getAbsolutePath());
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            InputStream is = new FileInputStream(file);
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = is.read(buffer)) > 0) {
-                digest.update(buffer, 0, read);
+            InputStream is = null;
+            try {
+                log.debug("Calculating MD5 for file: " + file.getAbsolutePath());
+                MessageDigest digest = MessageDigest.getInstance("MD5");
+                is = new FileInputStream(file);
+                byte[] buffer = new byte[8192];
+                int read;
+                while ((read = is.read(buffer)) > 0) {
+                    digest.update(buffer, 0, read);
+                }
+                byte[] md5sum = digest.digest();
+                BigInteger bigInt = new BigInteger(1, md5sum);
+                String output = bigInt.toString(16);
+                log.debug("MD5: " + output);
+                return output;
+            } finally {
+                if (is != null) {
+                    is.close();
+                }
             }
-            byte[] md5sum = digest.digest();
-            BigInteger bigInt = new BigInteger(1, md5sum);
-            String output = bigInt.toString(16);
-            log.debug("MD5: " + output);
-            return output;
         }
         return "";
     }
@@ -225,18 +224,18 @@ public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtrac
             Properties gradleUserPropsFile = GUtil.loadProperties(projectPropsFile);
             gradleProps.putAll(gradleUserPropsFile);
         }
-        long startTime = Long.parseLong(System.getProperty(BUILD_START_PROPERTY_NAME));
-        String buildName = (String) gradleProps.get(BUILD_NAME_PROPERTY_NAME);
+        long startTime = Long.parseLong(System.getProperty("build.start"));
+        String buildName = (String) gradleProps.get("build.name");
         if (buildName == null) {
             buildName = project.getName();
         }
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
         Date startedDate = new Date();
         startedDate.setTime(startTime);
-        Object buildNumber = gradleProps.get(BUILD_NUMBER_PROPERTY_NAME);
+        Object buildNumber = gradleProps.get("build.number");
         if (buildNumber == null) {
             String message =
-                    "Build number not set, please provide system variable \'" + BUILD_NUMBER_PROPERTY_NAME + "\'";
+                    "Build number not set, please provide system variable \'" + "build.number" + "\'";
             log.error(message);
             throw new GradleException(message);
         }
@@ -248,15 +247,15 @@ public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtrac
             addModule(buildInfoBuilder, subProject);
         }
         addModule(buildInfoBuilder, project);
-        String parentName = (String) gradleProps.get(BUILD_PARENT_NAME_PROPERTY_NAME);
-        String parentNumber = (String) gradleProps.get(BUILD_PARENT_NUMBER_PROPERTY_NAME);
+        String parentName = (String) gradleProps.get("build.parent");
+        String parentNumber = (String) gradleProps.get("parent.number");
         if (parentName != null && parentNumber != null) {
             String parent = parentName + ":" + parentNumber;
             buildInfoBuilder.parentBuildId(parent);
         }
         String propertyPrefixes = gradleProps.getProperty("artifactory.propertyPrefixes");
         if (propertyPrefixes != null && !propertyPrefixes.isEmpty()) {
-            if (!propertyPrefixes.equals("*")) {
+            if (!"*".equals(propertyPrefixes)) {
                 final String[] groups = propertyPrefixes.split(",");
                 Properties fileteredProps = new Properties();
                 fileteredProps.putAll(Maps.filterKeys(gradleProps, new Predicate<Object>() {
@@ -280,7 +279,7 @@ public class BuildInfoRecorder extends ConventionTask implements BuildInfoExtrac
     }
 
     private void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {
-        Set<Task> buildInfoTasks = project.getTasksByName(BUILD_INFO_KEY, false);
+        Set<Task> buildInfoTasks = project.getTasksByName("build.info", false);
         for (Task task : buildInfoTasks) {
             BuildInfoRecorder buildInfoTask = (BuildInfoRecorder) task;
             Module module = buildInfoTask.module;
