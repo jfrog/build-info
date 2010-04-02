@@ -31,16 +31,19 @@ public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtrac
         // exists) and from any system props that begin with
         // org.jfrog.build.api.constants.BuildInfoProperties.BUILD_INFO_PROP_PREFIX
         Properties props = new Properties();
-        InputStream inputStream = new FileInputStream(new File(BuildInfoProperties.PROP_PROPS_FILE));
-        props.load(inputStream);
-        Map<Object, Object> filteredMap = Maps.filterKeys(props, new Predicate<Object>() {
-            public boolean apply(Object input) {
-                return isPropertyValid(input);
-            }
-        });
-        props = new Properties();
-        props.putAll(filteredMap);
+        File propertiesFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
+        if (propertiesFile.exists()) {
+            InputStream inputStream = new FileInputStream(propertiesFile);
+            props.load(inputStream);
+            Map<Object, Object> filteredMap = Maps.filterKeys(props, new Predicate<Object>() {
+                public boolean apply(Object input) {
+                    return isPropertyValid(input);
+                }
+            });
 
+            props = new Properties();
+            props.putAll(filteredMap);
+        }
         // now add all the relevant system props.
         Properties systemProperties = System.getProperties();
         Map<Object, Object> filteredSystemProps = Maps.filterKeys(systemProperties, new Predicate<Object>() {
