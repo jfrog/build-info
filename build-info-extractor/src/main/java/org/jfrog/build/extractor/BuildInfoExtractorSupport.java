@@ -33,18 +33,27 @@ public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtrac
         Properties props = new Properties();
         InputStream inputStream = new FileInputStream(new File(BuildInfoProperties.PROP_PROPS_FILE));
         props.load(inputStream);
-        Map<Object, Object> map = Maps.newHashMap(props);
-        Map<Object, Object> filteredMap = Maps.filterKeys(map, new Predicate<Object>() {
+        Map<Object, Object> filteredMap = Maps.filterKeys(props, new Predicate<Object>() {
             public boolean apply(Object input) {
-                String key = (String) input;
-                if (key.startsWith("")) {
-                    return true;
-                }
-                return false;
+                return isPropertyValid(input);
             }
         });
         props = new Properties();
         props.putAll(filteredMap);
+
+        // now add all the relevant system props.
+        Properties systemProperties = System.getProperties();
+        Map<Object, Object> filteredSystemProps = Maps.filterKeys(systemProperties, new Predicate<Object>() {
+            public boolean apply(Object input) {
+                return isPropertyValid(input);
+            }
+        });
+        props.putAll(filteredSystemProps);
         return props;
+    }
+
+    private boolean isPropertyValid(Object input) {
+        String key = (String) input;
+        return key.startsWith(BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
     }
 }
