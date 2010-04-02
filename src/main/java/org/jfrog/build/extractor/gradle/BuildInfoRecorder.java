@@ -31,7 +31,6 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.internal.GradleInternal;
-import org.gradle.util.GUtil;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -41,6 +40,7 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.constants.BuildInfoProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorSupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +48,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -210,22 +211,14 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
         return configuration == null ? null : configuration.getAllArtifactFiles();
     }*/
     private Build closeAndDeploy(Project project) {
-        GradleInternal gradleInternals = (GradleInternal) project.getGradle();
-        Properties gradleProps = new Properties();
-        File projectPropsFile = new File(project.getProjectDir(), Project.GRADLE_PROPERTIES);
-        if (projectPropsFile.exists()) {
-            Properties projectProps = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(projectProps);
+        Properties gradleProps;
+        try {
+            gradleProps = getBuildInfoProperties();
+        } catch (IOException e) {
+            throw new GradleException(e);
         }
-        gradleProps.putAll(System.getProperties());
-        File gradleUserProps =
-                new File(gradleInternals.getStartParameter().getGradleUserHomeDir(), Project.GRADLE_PROPERTIES);
-        if (gradleUserProps.exists()) {
-            Properties gradleUserPropsFile = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(gradleUserPropsFile);
-        }
-        long startTime = Long.parseLong(System.getProperty("build.start"));
-        String buildName = (String) gradleProps.get("build.name");
+        long startTime = Long.parseLong(gradleProps.getProperty("build.start"));
+        String buildName = (String) gradleProps.get(BuildInfoProperties.PROP_BUILD_NAME);
         if (buildName == null) {
             buildName = project.getName();
         }
@@ -235,10 +228,12 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
         Object buildNumber = gradleProps.get("build.number");
         if (buildNumber == null) {
             String message =
-                    "Build number not set, please provide system variable \'" + "build.number" + "\'";
+                    "Build number not set, please provide system variable \'" + BuildInfoProperties.PROP_BUILD_NAME +
+                            "\'";
             log.error(message);
             throw new GradleException(message);
         }
+        GradleInternal gradleInternals = (GradleInternal) project.getGradle();
         buildInfoBuilder.agent(new Agent("Gradle", gradleInternals.getGradleVersion()))
                 .durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate)
@@ -247,8 +242,8 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
             addModule(buildInfoBuilder, subProject);
         }
         addModule(buildInfoBuilder, project);
-        String parentName = (String) gradleProps.get("build.parent");
-        String parentNumber = (String) gradleProps.get("parent.number");
+        String parentName = (String) gradleProps.get(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
+        String parentNumber = (String) gradleProps.get(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
         if (parentName != null && parentNumber != null) {
             String parent = parentName + ":" + parentNumber;
             buildInfoBuilder.parentBuildId(parent);
@@ -279,7 +274,7 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
     }
 
     private void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {
-        Set<Task> buildInfoTasks = project.getTasksByName("build.info", false);
+        Set<Task> buildInfoTasks = project.getTasksByName("buildInfo", false);
         for (Task task : buildInfoTasks) {
             BuildInfoRecorder buildInfoTask = (BuildInfoRecorder) task;
             Module module = buildInfoTask.module;
