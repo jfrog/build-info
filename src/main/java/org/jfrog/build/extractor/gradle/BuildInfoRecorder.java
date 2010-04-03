@@ -48,7 +48,6 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -212,11 +211,7 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
     }*/
     private Build closeAndDeploy(Project project) {
         Properties gradleProps;
-        try {
-            gradleProps = getBuildInfoProperties();
-        } catch (IOException e) {
-            throw new GradleException(e);
-        }
+        gradleProps = getBuildInfoProperties();
         long startTime = Long.parseLong(gradleProps.getProperty("build.start"));
         String buildName = (String) gradleProps.get(BuildInfoProperties.PROP_BUILD_NAME);
         if (buildName == null) {
