@@ -2,6 +2,7 @@ package org.jfrog.build.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.IOUtils;
 import org.jfrog.build.api.constants.BuildInfoProperties;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.util.Properties;
  */
 public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtractor<C, O> {
 
+
     /**
      * Collect system properties and properties from the  {@link org.jfrog.build.api.constants.BuildInfoProperties#PROP_PROPS_FILE}
      * file.
@@ -26,24 +28,33 @@ public abstract class BuildInfoExtractorSupport<C, O> implements BuildInfoExtrac
      *
      * @return
      */
-    public Properties getBuildInfoProperties() throws IOException {
+    public Properties getBuildInfoProperties() {
         //TODO: [by tc] extract thge props from org.jfrog.build.api.constants.BuildInfoProperties#PROP_PROPS_FILE (if
         // exists) and from any system props that begin with
         // org.jfrog.build.api.constants.BuildInfoProperties.BUILD_INFO_PROP_PREFIX
         Properties props = new Properties();
         File propertiesFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
-        if (propertiesFile.exists()) {
-            InputStream inputStream = new FileInputStream(propertiesFile);
-            props.load(inputStream);
-            Map<Object, Object> filteredMap = Maps.filterKeys(props, new Predicate<Object>() {
-                public boolean apply(Object input) {
-                    return isPropertyValid(input);
-                }
-            });
+        InputStream inputStream = null;
+        try {
+            if (propertiesFile.exists()) {
+                inputStream = new FileInputStream(propertiesFile);
+                props.load(inputStream);
+                Map<Object, Object> filteredMap = Maps.filterKeys(props, new Predicate<Object>() {
+                    public boolean apply(Object input) {
+                        return isPropertyValid(input);
+                    }
+                });
 
-            props = new Properties();
-            props.putAll(filteredMap);
+                props = new Properties();
+                props.putAll(filteredMap);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(
+                    "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
+
         // now add all the relevant system props.
         Properties systemProperties = System.getProperties();
         Map<Object, Object> filteredSystemProps = Maps.filterKeys(systemProperties, new Predicate<Object>() {
