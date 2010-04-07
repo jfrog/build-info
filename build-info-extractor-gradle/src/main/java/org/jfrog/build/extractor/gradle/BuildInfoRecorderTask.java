@@ -16,7 +16,7 @@ import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorSupport;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -68,11 +68,11 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
      */
 
     private void closeAndDeploy(Project project) throws IOException {
-        Properties gradleProps = BuildInfoExtractorSupport.getBuildInfoProperties();
+        Properties gradleProps = BuildInfoExtractorUtils.getBuildInfoProperties();
         File projectPropsFile = new File(project.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(BuildInfoExtractorSupport.filterProperties(properties));
+            gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(properties));
         }
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = gradleProps.getProperty(PROP_BUILD_NAME);
@@ -114,7 +114,7 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
         }
         File savedFile = new File(fileExportPath);
         OutputStream fileOutputStream = new FileOutputStream(savedFile);
-        BuildInfoExtractorSupport.saveBuildInfoToFile(build, fileOutputStream);
+        BuildInfoExtractorUtils.saveBuildInfoToFile(build, fileOutputStream);
     }
 
     private static void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {

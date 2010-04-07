@@ -22,8 +22,7 @@ import java.util.Properties;
 /**
  * @author Noam Y. Tenne
  */
-public abstract class BuildInfoExtractorSupport {
-
+public abstract class BuildInfoExtractorUtils {
 
     /**
      * Collect system properties and properties from the  {@link BuildInfoProperties#PROP_PROPS_FILE} file.

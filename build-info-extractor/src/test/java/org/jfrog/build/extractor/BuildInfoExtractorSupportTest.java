@@ -22,7 +22,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoProperties.PROP_BUILD_NAME, "buildname");
         System.setProperty(BuildInfoProperties.PROP_BUILD_NUMBER, "1");
 
-        Properties props = BuildInfoExtractorSupport.getBuildInfoProperties();
+        Properties props = BuildInfoExtractorUtils.getBuildInfoProperties();
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
@@ -41,7 +41,7 @@ public class BuildInfoExtractorSupportTest {
         props.put(BuildInfoProperties.PROP_BUILD_NUMBER, "1");
         props.store(new FileOutputStream(propsFile), "");
 
-        Properties fileProps = BuildInfoExtractorSupport.getBuildInfoProperties();
+        Properties fileProps = BuildInfoExtractorUtils.getBuildInfoProperties();
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
@@ -66,7 +66,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, "parent");
         System.setProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, "2");
 
-        Properties buildInfoProperties = BuildInfoExtractorSupport.getBuildInfoProperties();
+        Properties buildInfoProperties = BuildInfoExtractorUtils.getBuildInfoProperties();
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
         assertEquals(buildInfoProperties.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
                 "build name property is does not match");
