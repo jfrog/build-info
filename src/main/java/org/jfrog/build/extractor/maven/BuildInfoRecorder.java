@@ -18,7 +18,6 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorSupport;
 
 import java.io.File;
 import java.util.HashSet;
@@ -30,8 +29,7 @@ import java.util.Set;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder extends BuildInfoExtractorSupport<MavenProject, Build>
-        implements BuildInfoExtractor<MavenProject, Build>, ExecutionListener {
+public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build>, ExecutionListener {
 
     @Requirement
     private Logger logger;
