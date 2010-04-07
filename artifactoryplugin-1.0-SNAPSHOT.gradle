@@ -1,0 +1,52 @@
+buildscript {
+  def downloadId = 'plugins-releases'
+  String[] pathParts
+  def artifactoryUrl
+  if (!project.hasProperty('artifactory.url')) {
+    if (sourceURI) {
+      logger.debug("sourceURI: $sourceURI")
+      String fullPath = sourceURI.path
+      pathParts = fullPath.split("/")
+      artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
+    } else {
+      artifactoryUrl = 'http://gradle.artifactoryonline.com/gradle/'
+      pathParts = artifactoryUrl.split("/")
+    }
+  } else {
+    artifactoryUrl = project.getProperty('artifactory.url')
+    pathParts = artifactoryUrl.split("/")
+  }
+  logger.debug("artifactory.url: $artifactoryUrl")
+
+  if (!project.hasProperty('artifactory.downloadId')) {
+    if (pathParts.size() >= 3) {
+      downloadId = pathParts[2]
+    }
+    logger.debug("no download id found using: ${downloadId}")
+  } else {
+    def downloadIdProperty = project.getProperty('artifactory.downloadId')
+    logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
+    downloadId = downloadIdProperty
+  }
+  logger.debug("artifactory.downloadId: $downloadId")
+  def artifactoryDownloadUrl
+  if (!project.hasProperty('artifactory.downloadUrl')) {
+    artifactoryDownloadUrl = artifactoryUrl + "/" + downloadId
+    logger.debug("artifactory.downloadUrl: $artifactoryDownloadUrl")
+
+  } else {
+    def artifactoryDownloadUrlProperty = project.getProperty('artifactory.downloadUrl')
+    artifactoryDownloadUrl = artifactoryDownloadUrlProperty
+    logger.debug("Property artifactory.downloadUrl ${artifactoryDownloadUrlProperty}")
+
+  }
+  project.setProperty('artifactory.url', artifactoryUrl)
+  project.setProperty('artifactory.downloadId', downloadId)
+  project.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
+
+  //All the tango above for this one - it configures maven repo for the project
+  repositories {
+    mavenRepo urls: [artifactoryDownloadUrl]
+  }
+}
+logger.debug("Applying Artifactory Plug-in")
