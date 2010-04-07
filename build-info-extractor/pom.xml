@@ -31,5 +31,9 @@
             <artifactId>testng</artifactId>
             <classifier>jdk15</classifier>
         </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+        </dependency>
     </dependencies>
 </project>

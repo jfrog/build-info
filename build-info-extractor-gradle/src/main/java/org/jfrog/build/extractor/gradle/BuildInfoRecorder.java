@@ -20,40 +20,30 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
-import org.gradle.api.internal.GradleInternal;
-import org.jfrog.build.api.Agent;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.api.constants.BuildInfoProperties;
-import org.jfrog.build.extractor.BuildInfoExtractorSupport;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.BuildInfoExtractor;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.security.MessageDigest;
-import java.util.Date;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.Set;
 
 import static com.google.common.collect.Iterables.*;
@@ -65,13 +55,13 @@ import static com.google.common.collect.Lists.newArrayList;
  *
  * @author Tomer Cohen
  */
-public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build> {
-    private static final Logger log = LoggerFactory.getLogger(BuildInfoRecorder.class);
-    private org.jfrog.build.api.Module module;
-
+public class BuildInfoRecorder implements BuildInfoExtractor<Project, Module> {
+    private static final Logger log = Logging.getLogger(BuildInfoRecorder.class);
     private Project project;
 
     private Configuration configuration;
+    private static final String SHA1 = "sha1";
+    private static final String MD5 = "md5";
 
     public BuildInfoRecorder(Configuration configuration) {
         this.configuration = configuration;
@@ -81,7 +71,7 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
         return configuration;
     }
 
-    public Build extract(Project project) {
+    public Module extract(Project project) {
         this.project = project;
         ModuleBuilder builder = new ModuleBuilder()
                 .id(project.getGroup() + ":" + project.getName() + ":" + project.getVersion().toString());
@@ -92,12 +82,7 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
                 log.error("Error during extraction: ", e);
             }
         }
-        module = builder.build();
-        if (project.equals(project.getRootProject())) {
-            //Deploy time!
-            return closeAndDeploy(project);
-        }
-        return null;
+        return builder.build();
     }
 
     private List<Artifact> calculateArtifacts(Project project) throws Exception {
@@ -109,8 +94,9 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
                             if (StringUtils.isNotBlank(from.getClassifier())) {
                                 type = type + "-" + from.getClassifier();
                             }
+                            Map<String, String> checkSums = calculateChecksumsForFile(from.getFile());
                             return new ArtifactBuilder(from.getName()).type(type)
-                                    .md5(calculateMd5ForArtifact(from.getFile())).build();
+                                    .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
                         } catch (Exception e) {
                             log.error("Error during artifact calculation: ", e);
                         }
@@ -120,15 +106,18 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
         if (mavenPom.exists()) {
+            Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
             Artifact pom =
-                    new ArtifactBuilder(project.getName()).md5(calculateMd5ForArtifact(mavenPom)).type("pom")
+                    new ArtifactBuilder(project.getName()).md5(checksums.get(MD5)).sha1(checksums.get(SHA1)).type("pom")
                             .build();
             artifacts.add(pom);
         }
         File ivy = new File(project.getBuildDir(), "ivy.xml");
         if (ivy.exists()) {
+            Map<String, String> checksums = calculateChecksumsForFile(ivy);
             Artifact ivyArtifact =
-                    new ArtifactBuilder(project.getName()).md5(calculateMd5ForArtifact(ivy)).type("ivy").build();
+                    new ArtifactBuilder(project.getName()).md5(checksums.get(MD5)).sha1(checksums.get(SHA1)).type("ivy")
+                            .build();
             artifacts.add(ivyArtifact);
         }
         return artifacts;
@@ -162,9 +151,10 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
                     }
                 } else {
                     DependencyBuilder dependencyBuilder = new DependencyBuilder();
+                    Map<String, String> checksums = calculateChecksumsForFile(artifact.getFile());
                     dependencyBuilder.type(artifact.getType()).id(depId)
                             .scopes(newArrayList(configuration.getName())).
-                            md5(calculateMd5ForArtifact(artifact.getFile()));
+                            md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
                     dependencies.add(dependencyBuilder.build());
                 }
             }
@@ -172,111 +162,10 @@ public class BuildInfoRecorder extends BuildInfoExtractorSupport<Project, Build>
         return dependencies;
     }
 
-    private String calculateMd5ForArtifact(File file) throws Exception {
-        if (file != null && file.exists()) {
-            InputStream is = null;
-            try {
-                log.debug("Calculating MD5 for file: " + file.getAbsolutePath());
-                MessageDigest digest = MessageDigest.getInstance("MD5");
-                is = new FileInputStream(file);
-                byte[] buffer = new byte[8192];
-                int read;
-                while ((read = is.read(buffer)) > 0) {
-                    digest.update(buffer, 0, read);
-                }
-                byte[] md5sum = digest.digest();
-                BigInteger bigInt = new BigInteger(1, md5sum);
-                String output = bigInt.toString(16);
-                log.debug("MD5: " + output);
-                return output;
-            } finally {
-                if (is != null) {
-                    is.close();
-                }
-            }
-        }
-        return "";
+    private Map<String, String> calculateChecksumsForFile(File file)
+            throws NoSuchAlgorithmException, IOException {
+        Map<String, String> checkSums =
+                FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+        return checkSums;
     }
-
-    /**
-     * Returns the artifacts which will be uploaded.
-     *
-     * @param project Tomer will document later.
-     * @throws java.io.IOException Tomer will document later.
-     *//*
-    @InputFiles
-    public FileCollection getArtifacts() {
-        Configuration configuration = getConfiguration();
-        return configuration == null ? null : configuration.getAllArtifactFiles();
-    }*/
-    private Build closeAndDeploy(Project project) {
-        Properties gradleProps;
-        gradleProps = getBuildInfoProperties();
-        long startTime = Long.parseLong(gradleProps.getProperty("build.start"));
-        String buildName = (String) gradleProps.get(BuildInfoProperties.PROP_BUILD_NAME);
-        if (buildName == null) {
-            buildName = project.getName();
-        }
-        BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
-        Date startedDate = new Date();
-        startedDate.setTime(startTime);
-        Object buildNumber = gradleProps.get("build.number");
-        if (buildNumber == null) {
-            String message =
-                    "Build number not set, please provide system variable \'" + BuildInfoProperties.PROP_BUILD_NAME +
-                            "\'";
-            log.error(message);
-            throw new GradleException(message);
-        }
-        GradleInternal gradleInternals = (GradleInternal) project.getGradle();
-        buildInfoBuilder.agent(new Agent("Gradle", gradleInternals.getGradleVersion()))
-                .durationMillis(System.currentTimeMillis() - startTime)
-                .startedDate(startedDate)
-                .number(Long.parseLong((String) buildNumber));
-        for (Project subProject : project.getSubprojects()) {
-            addModule(buildInfoBuilder, subProject);
-        }
-        addModule(buildInfoBuilder, project);
-        String parentName = (String) gradleProps.get(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
-        String parentNumber = (String) gradleProps.get(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
-        if (parentName != null && parentNumber != null) {
-            String parent = parentName + ":" + parentNumber;
-            buildInfoBuilder.parentBuildId(parent);
-        }
-        String propertyPrefixes = gradleProps.getProperty("artifactory.propertyPrefixes");
-        if (propertyPrefixes != null && !propertyPrefixes.isEmpty()) {
-            if (!"*".equals(propertyPrefixes)) {
-                final String[] groups = propertyPrefixes.split(",");
-                Properties fileteredProps = new Properties();
-                fileteredProps.putAll(Maps.filterKeys(gradleProps, new Predicate<Object>() {
-                    public boolean apply(@Nullable Object input) {
-                        String key = (String) input;
-                        for (String group : groups) {
-                            if (key.startsWith(group)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                }));
-                gradleProps = fileteredProps;
-            }
-            buildInfoBuilder.properties(gradleProps);
-        }
-        Build build = buildInfoBuilder.build();
-        log.debug("buildInfoBuilder = " + buildInfoBuilder);
-        return build;
-    }
-
-    private void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {
-        Set<Task> buildInfoTasks = project.getTasksByName("buildInfo", false);
-        for (Task task : buildInfoTasks) {
-            BuildInfoRecorder buildInfoTask = (BuildInfoRecorder) task;
-            Module module = buildInfoTask.module;
-            if (module != null) {
-                buildInfoBuilder.addModule(module);
-            }
-        }
-    }
-
 }

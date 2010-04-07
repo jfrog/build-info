@@ -1,0 +1,14 @@
+apply plugin: 'maven'
+uploadArchives {
+  repositories.mavenDeployer {
+    name = 'gradle releases @ rjo'
+    repository(url: "http://gradle.artifactoryonline.com/gradle/libs-snapshots-local") {
+      authentication(userName: "jfrog", password: "gradle10")
+    }
+  }
+}
+dependencies {
+  compile "org.apache.httpcomponents:httpclient:4.0",
+          "org.codehaus.jackson:jackson-mapper-asl:1.4.1"
+  project(':build-info-api')
+}

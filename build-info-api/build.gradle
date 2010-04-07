@@ -1,0 +1,9 @@
+apply plugin: 'maven'
+uploadArchives {
+  repositories.mavenDeployer {
+    name = 'gradle releases @ rjo'
+    repository(url: "http://gradle.artifactoryonline.com/gradle/libs-snapshots-local") {
+      authentication(userName: "jfrog", password: "gradle10")
+    }
+  }
+}

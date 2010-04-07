@@ -47,7 +47,7 @@ public class FileChecksumCalculator {
     }
 
     /**
-     * Reads the given file's checksums
+     * Calculates the given file's checksums
      *
      * @param fileToCalculate File to calculate
      * @param algorithms      Algorithms to use for calculation

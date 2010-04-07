@@ -1,1 +1,1 @@
-include 'build-info-api', 'build-info-client'
+include 'build-info-api', 'build-info-client', 'build-info-extractor-gradle', 'build-info-extractor'

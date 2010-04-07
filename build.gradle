@@ -1,27 +1,26 @@
-/*
-(5) Define the Maven attributes that will be used for POM auto-generation
-*/
 def artifactId = 'buildinfo'
 def groupId = group
 def versionNumber = version
-buildscript {
+
+apply {
+  apply plugin: 'java'
+  apply plugin: 'groovy'
+  apply plugin: 'maven'
+}
+allprojects {
+
   repositories {
     mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/repo'
   }
-  dependencies {
-    classpath group: 'org.gradle.artifactoryplugin', name: 'artifactoryplugin', version: '0.5-SNAPSHOT'
-  }
-}
 
-allprojects {
+  apply {
+    from: 'http://gradle.artifactoryonline.com/gradle/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
+  }
   group = 'org.jfrog.buildinfo'
-  version = '1.2.1'
-  apply url: 'http://localhost:8080/artifactory/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
-  apply id: 'artifactoryplugin'
+  version = '1.2.1-SNAPSHOT'
 }
 subprojects {
-  apply id: 'java'
-  apply id: 'maven'
+  apply plugin: 'java'
 
   dependencies {
     compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
@@ -48,6 +47,12 @@ project(':build-info-client') {
   }
 }
 
+project(':build-info-extractor-gradle') {
+  dependencies {
+    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.4.1'
+    compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.4.1'
+  }
+}
 
 dependsOnChildren()
 

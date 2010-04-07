@@ -22,8 +22,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoProperties.PROP_BUILD_NAME, "buildname");
         System.setProperty(BuildInfoProperties.PROP_BUILD_NUMBER, "1");
 
-        BuildInfoExtractorSupportStub buildInfoExtractorSupportStub = new BuildInfoExtractorSupportStub();
-        Properties props = buildInfoExtractorSupportStub.getBuildInfoProperties();
+        Properties props = BuildInfoExtractorSupport.getBuildInfoProperties();
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
@@ -35,7 +34,6 @@ public class BuildInfoExtractorSupportTest {
     }
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
-        BuildInfoExtractorSupportStub buildInfoExtractorSupportStub = new BuildInfoExtractorSupportStub();
         File propsFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
         propsFile.createNewFile();
         Properties props = new Properties();
@@ -43,7 +41,7 @@ public class BuildInfoExtractorSupportTest {
         props.put(BuildInfoProperties.PROP_BUILD_NUMBER, "1");
         props.store(new FileOutputStream(propsFile), "");
 
-        Properties fileProps = buildInfoExtractorSupportStub.getBuildInfoProperties();
+        Properties fileProps = BuildInfoExtractorSupport.getBuildInfoProperties();
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
@@ -55,7 +53,6 @@ public class BuildInfoExtractorSupportTest {
     }
 
     public void getBuildInfoProperties() throws IOException {
-        BuildInfoExtractorSupportStub buildInfoExtractorSupportStub = new BuildInfoExtractorSupportStub();
 
         // create a property file
         File propsFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
@@ -69,7 +66,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, "parent");
         System.setProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, "2");
 
-        Properties buildInfoProperties = buildInfoExtractorSupportStub.getBuildInfoProperties();
+        Properties buildInfoProperties = BuildInfoExtractorSupport.getBuildInfoProperties();
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
         assertEquals(buildInfoProperties.getProperty(BuildInfoProperties.PROP_BUILD_NAME), "buildname",
                 "build name property is does not match");
