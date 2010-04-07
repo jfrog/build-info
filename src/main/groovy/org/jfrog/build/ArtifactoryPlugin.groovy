@@ -12,6 +12,7 @@ import org.gradle.api.plugins.PluginContainer
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.Upload
 import org.jfrog.build.api.constants.BuildInfoProperties
+import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
 
@@ -143,24 +144,27 @@ class ArtifactoryPlugin implements Plugin<Project> {
     })
   }
 
-  //TODO: [by ys] support additional matrix params by reading plugin configuration + system properties
-
   String appendProperties(String uploadUrl, Project project) {
+    Properties props = new Properties(System.getProperties())
     String buildNumber = getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
+    if (buildNumber) props.put(BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     String buildName = getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
+    if (buildName) props.put(BuildInfoProperties.PROP_BUILD_NAME, buildName)
     String buildParentNumber = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
+    if (buildParentNumber) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    StringBuilder builder = new StringBuilder(uploadUrl);
-    if (buildNumber) builder.append(";${BuildInfoProperties.PROP_PARENT_BUILD_NUMBER}=${URLEncoder.encode(buildNumber, ENCODING)}")
-    if (buildName) builder.append(";${BuildInfoProperties.PROP_BUILD_NAME}=${URLEncoder.encode(buildName, ENCODING)}")
-    if (buildParentNumber) builder.append(";${BuildInfoProperties.PROP_PARENT_BUILD_NUMBER}=${URLEncoder.encode(buildParentNumber, ENCODING)}")
-    if (buildParentName) builder.append(";${BuildInfoProperties.PROP_PARENT_BUILD_NAME}=${URLEncoder.encode(buildParentName, ENCODING)}")
-    project.properties.keySet().each {String key ->
-      if (key.startsWith('artifactory.ci.matrix')) {
-        builder.append(";$key=${URLEncoder.encode(getProperty(key, project), ENCODING)}")
+    if (buildParentName) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    Map properties = project.getProperties()
+    Set<String> keys = properties.keySet();
+    for (String key: keys) {
+      if (key != null) {
+        Object value = properties.get(key)
+        if (value != null) {
+          props.put(key, value)
+        }
       }
     }
-    return builder.toString()
+    return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
   }
 
   private void configureBuildInfoTask(Project project) {
