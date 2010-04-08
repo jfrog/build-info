@@ -18,6 +18,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.util.FileChecksumCalculator;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -182,6 +184,7 @@ public class ArtifactoryBuildInfoClient {
         }
         log.info("Deploying artifact: " + deploymentPath);
         uploadFile(details.file, deploymentPath.toString());
+        uploadChecksums(details.file, deploymentPath.toString());
     }
 
     /**
@@ -238,15 +241,42 @@ public class ArtifactoryBuildInfoClient {
     private void uploadFile(File file, String uploadUrl) throws IOException {
         HttpPut httpPut = new HttpPut(uploadUrl);
         FileEntity fileEntity = new FileEntity(file, "binary/octet-stream");
+        StatusLine statusLine = upload(httpPut, fileEntity);
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throw new IOException("Failed to deploy file: " + statusLine.getReasonPhrase());
+        }
+    }
+
+    private void uploadChecksums(File file, String uploadUrl) throws IOException {
+        Map<String, String> checksums;
+        try {
+            checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+        String md5 = checksums.get("md5");
+        HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
+        StringEntity md5StringEntity = new StringEntity(md5);
+        StatusLine md5StatusLine = upload(putMd5, md5StringEntity);
+        if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throw new IOException("Failed to deploy MD5 checksum: " + md5StatusLine.getReasonPhrase());
+        }
+        String sha1 = checksums.get("md5");
+        HttpPut putSha1 = new HttpPut(uploadUrl + ".md5");
+        StringEntity sha1StringEntity = new StringEntity(sha1);
+        StatusLine sha1StatusLine = upload(putSha1, sha1StringEntity);
+        if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
+        }
+    }
+
+    private StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
         httpPut.setEntity(fileEntity);
         HttpResponse response = getHttpClient().execute(httpPut);
         StatusLine statusLine = response.getStatusLine();
         if (response.getEntity() != null) {
             response.getEntity().consumeContent();
         }
-
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to deploy file: " + statusLine.getReasonPhrase());
-        }
+        return statusLine;
     }
 }
