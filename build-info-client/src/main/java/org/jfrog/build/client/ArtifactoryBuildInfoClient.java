@@ -247,7 +247,7 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private void uploadChecksums(File file, String uploadUrl) throws IOException {
+    public void uploadChecksums(File file, String uploadUrl) throws IOException {
         Map<String, String> checksums;
         try {
             checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");

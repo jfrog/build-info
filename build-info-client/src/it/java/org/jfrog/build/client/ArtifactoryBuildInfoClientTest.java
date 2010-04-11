@@ -55,4 +55,10 @@ public class ArtifactoryBuildInfoClientTest {
             client.deployArtifact(details);
         }
     }
+
+    public void uploadChecksums() throws IOException {
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
+        File file = new File("build-info-client/pom.xml");
+        client.uploadChecksums(file, artifactoryUrl);
+    }
 }
