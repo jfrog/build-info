@@ -15,13 +15,12 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
@@ -108,13 +107,17 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
         Build build = buildInfoBuilder.build();
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
 
-        String fileExportPath = gradleProps.getProperty(PROP_EXPORT_FILE_PATH);
+        /*String fileExportPath = gradleProps.getProperty(PROP_EXPORT_FILE_PATH);
         if (fileExportPath == null) {
             throw new GradleException("Cannot have a null path to export the build-info");
         }
         File savedFile = new File(fileExportPath);
         OutputStream fileOutputStream = new FileOutputStream(savedFile);
-        BuildInfoExtractorUtils.saveBuildInfoToFile(build, fileOutputStream);
+        BuildInfoExtractorUtils.saveBuildInfoToFile(build, fileOutputStream);*/
+        String buildInfoUploadUrl = gradleProps.getProperty(BUILD_INFO_PROP_PREFIX + "uploadRootUrl");
+        ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
+                new ArtifactoryBuildInfoClient(buildInfoUploadUrl);
+        artifactoryBuildInfoClient.sendBuildInfo(build);
     }
 
     private static void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {

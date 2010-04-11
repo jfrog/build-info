@@ -9,9 +9,9 @@
  *
  */
 
-apply {
+/*apply {
   apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
-}
+}*/
 
 allprojects {
   apply {

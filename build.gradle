@@ -1,13 +1,13 @@
 def artifactId = 'buildinfo'
-
 apply {
-  apply plugin: 'java'
-  apply plugin: 'groovy'
-  apply plugin: 'maven'
+  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
 }
+
 allprojects {
   apply {
-    from: 'http://gradle.artifactoryonline.com/gradle/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
+    apply plugin: 'java'
+    apply plugin: 'groovy'
+    apply plugin: 'maven'
   }
   group = 'org.jfrog.buildinfo'
   version = '1.2.1-SNAPSHOT'

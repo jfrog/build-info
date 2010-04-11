@@ -1,12 +1,4 @@
 apply plugin: 'maven'
-uploadArchives {
-  repositories.mavenDeployer {
-    name = 'gradle releases @ rjo'
-    repository(url: "http://gradle.artifactoryonline.com/gradle/libs-snapshots-local") {
-      authentication(userName: "jfrog", password: "gradle10")
-    }
-  }
-}
 
 dependencies {
   compile "org.slf4j:slf4j-api:1.5.10",

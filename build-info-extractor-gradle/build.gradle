@@ -1,15 +1,4 @@
 version = '1.0-SNAPSHOT'
-apply plugin: 'groovy'
-apply plugin: 'maven'
-uploadArchives {
-  repositories.mavenDeployer {
-    name = 'gradle releases @ rjo'
-    repository(url: "http://gradle.artifactoryonline.com/gradle/libs-snapshots-local") {
-      authentication(userName: "jfrog", password: "gradle10")
-    }
-  }
-}
-
 dependencies {
   compile "org.codehaus.groovy:groovy-all:1.7.1",
           "com.google.collections:google-collections:1.0",
