@@ -1,6 +1,4 @@
 def artifactId = 'buildinfo'
-def groupId = group
-def versionNumber = version
 
 apply {
   apply plugin: 'java'
@@ -8,11 +6,6 @@ apply {
   apply plugin: 'maven'
 }
 allprojects {
-
-  repositories {
-    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/repo'
-  }
-
   apply {
     from: 'http://gradle.artifactoryonline.com/gradle/plugins-snapshots-local/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
   }

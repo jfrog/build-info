@@ -1,0 +1,5 @@
+initscript {
+  apply {
+    apply from: 'http://localhost:8080/artifactory/repo/artifactoryinitplugin/artifactoryinitplugin/0.5-SNAPSHOT/artifactoryinitplugin-0.5-SNAPSHOT.gradle'
+  }
+}

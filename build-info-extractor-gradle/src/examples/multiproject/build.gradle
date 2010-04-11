@@ -1,0 +1,35 @@
+/**
+ * There are 2 ways to activate the Artifactory Build-Info plugin.
+ * 1. use apply from directly from the build.gradle as shown below.
+ * 2. use the init script "gradle --init-script init.gradle" ATTENTION: Check the URL inside this init.gradle
+ * 3. Copy the init.gradle to your ~/.gradle directory and execute normally. ATTENTION: Now the Artifactory URL will
+ * always be applied to all your projects.
+ *
+ * Check the URL that apply uses to get the remote script
+ *
+ */
+
+apply {
+  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
+}
+
+allprojects {
+  apply {
+    apply plugin: 'maven'
+  }
+  group = 'org.gradle'
+  version = '1.0'
+}
+
+subprojects {
+  apply {
+    apply plugin: 'java'
+  }
+
+  dependencies {
+    testCompile 'junit:junit:4.7'
+  }
+  manifest.mainAttributes(provider: 'gradle')
+}
+
+dependsOnChildren()

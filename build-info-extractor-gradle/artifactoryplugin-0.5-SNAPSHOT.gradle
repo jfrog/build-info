@@ -1,8 +1,7 @@
 buildscript {
-  def downloadId = 'plugins-releases'
   String[] pathParts
   def artifactoryUrl
-  if (!project.hasProperty('artifactory.url')) {
+  if (!rootProject.hasProperty('artifactory.url')) {
     if (sourceURI) {
       logger.debug("sourceURI: $sourceURI")
       String fullPath = sourceURI.path
@@ -13,40 +12,51 @@ buildscript {
       pathParts = artifactoryUrl.split("/")
     }
   } else {
-    artifactoryUrl = project.getProperty('artifactory.url')
+    artifactoryUrl = rootProject.getProperty('artifactory.url')
     pathParts = artifactoryUrl.split("/")
   }
   logger.debug("artifactory.url: $artifactoryUrl")
 
-  if (!project.hasProperty('artifactory.downloadId')) {
+  def downloadId = 'plugins-releases'
+  if (!rootProject.hasProperty('artifactory.downloadId')) {
     if (pathParts.size() >= 3) {
       downloadId = pathParts[2]
     }
     logger.debug("no download id found using: ${downloadId}")
   } else {
-    def downloadIdProperty = project.getProperty('artifactory.downloadId')
+    def downloadIdProperty = rootProject.getProperty('artifactory.downloadId')
     logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
     downloadId = downloadIdProperty
   }
   logger.debug("artifactory.downloadId: $downloadId")
+
   def artifactoryDownloadUrl
-  if (!project.hasProperty('artifactory.downloadUrl')) {
+  if (!rootProject.hasProperty('artifactory.downloadUrl')) {
     artifactoryDownloadUrl = artifactoryUrl + "/" + downloadId
     logger.debug("artifactory.downloadUrl: $artifactoryDownloadUrl")
-
   } else {
-    def artifactoryDownloadUrlProperty = project.getProperty('artifactory.downloadUrl')
+    def artifactoryDownloadUrlProperty = rootProject.getProperty('artifactory.downloadUrl')
     artifactoryDownloadUrl = artifactoryDownloadUrlProperty
     logger.debug("Property artifactory.downloadUrl ${artifactoryDownloadUrlProperty}")
 
   }
-  project.setProperty('artifactory.url', artifactoryUrl)
-  project.setProperty('artifactory.downloadId', downloadId)
-  project.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
+
+  rootProject.setProperty('artifactory.url', artifactoryUrl)
+  rootProject.setProperty('artifactory.downloadId', downloadId)
+  rootProject.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
 
   //All the tango above for this one - it configures maven repo for the project
   repositories {
     mavenRepo urls: [artifactoryDownloadUrl]
   }
+  dependencies {
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0-SNAPSHOT'
+  }
 }
+
 logger.debug("Applying Artifactory Plug-in")
+allprojects {
+  apply {
+    apply plugin: org.jfrog.build.ArtifactoryPlugin
+  }
+}
