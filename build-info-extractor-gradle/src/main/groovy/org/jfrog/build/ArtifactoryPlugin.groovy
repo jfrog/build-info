@@ -3,6 +3,7 @@ package org.jfrog.build
 import org.gradle.api.tasks.bundling.Jar
 
 import org.gradle.BuildAdapter
+import org.gradle.StartParameter
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -186,6 +187,14 @@ class ArtifactoryPlugin implements Plugin<Project> {
   private String getProperty(String propertyName, Project project) {
     if (System.getProperty(propertyName) != null) {
       return System.getProperty(propertyName)
+    }
+    StartParameter startParameter = project.getGradle().getStartParameter()
+    Map projectProperties = startParameter.getProjectProperties()
+    if (projectProperties != null) {
+      String propertyValue = projectProperties.get(propertyName)
+      if (propertyValue != null) {
+        return propertyValue
+      }
     }
     if (project.hasProperty(propertyName)) {
       return project.property(propertyName);

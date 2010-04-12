@@ -39,7 +39,8 @@ import java.util.Map;
 public class ArtifactoryBuildInfoClient {
     private static final Log log = LogFactory.getLog(ArtifactoryBuildInfoClient.class);
 
-    private static final String LOCAL_REPOS_REST_RUL = "/api/repositories?type=local";
+    private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
+    private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_RUL = "/api/build";
     private static final int DEFAULT_CONNECTION_TIMEOUT = 120000;    // 2 Minutes
 
@@ -83,7 +84,37 @@ public class ArtifactoryBuildInfoClient {
         List<String> repositories = new ArrayList<String>();
         PreemptiveHttpClient client = getHttpClient();
 
-        String localReposUrl = artifactoryUrl + LOCAL_REPOS_REST_RUL;
+        String localReposUrl = artifactoryUrl + LOCAL_REPOS_REST_URL;
+        log.debug("Requesting local repositories list from: " + localReposUrl);
+        HttpGet httpget = new HttpGet(localReposUrl);
+        HttpResponse response = client.execute(httpget);
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            throw new IOException("Failed to obtain list of repositories: " + response.getStatusLine());
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                repositories = new ArrayList<String>();
+                JsonParser parser = createJsonParser(entity.getContent());
+                JsonNode result = parser.readValueAsTree();
+                log.debug("Repositories result = " + result);
+                for (JsonNode jsonNode : result) {
+                    String repositoryKey = jsonNode.get("key").getTextValue();
+                    repositories.add(repositoryKey);
+                }
+            }
+        }
+        return repositories;
+    }
+
+    /**
+     * @return A list of local repositories available for deployment.
+     * @throws IOException On any connection error
+     */
+    public List<String> getVirtualRepositoryKeys() throws IOException {
+        List<String> repositories = new ArrayList<String>();
+        PreemptiveHttpClient client = getHttpClient();
+
+        String localReposUrl = artifactoryUrl + VIRTUAL_REPOS_REST_URL;
         log.debug("Requesting local repositories list from: " + localReposUrl);
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
@@ -254,19 +285,25 @@ public class ArtifactoryBuildInfoClient {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-        String md5 = checksums.get("md5");
-        HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
-        StringEntity md5StringEntity = new StringEntity(md5);
-        StatusLine md5StatusLine = upload(putMd5, md5StringEntity);
-        if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to deploy MD5 checksum: " + md5StatusLine.getReasonPhrase());
+        String md5 = checksums.get("MD5");
+        if (StringUtils.isNotBlank(md5)) {
+            log.debug("Uploading MD5 for file " + file.getAbsolutePath() + " : " + md5);
+            HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
+            StringEntity md5StringEntity = new StringEntity(md5);
+            StatusLine md5StatusLine = upload(putMd5, md5StringEntity);
+            if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+                throw new IOException("Failed to deploy MD5 checksum: " + md5StatusLine.getReasonPhrase());
+            }
         }
-        String sha1 = checksums.get("md5");
-        HttpPut putSha1 = new HttpPut(uploadUrl + ".md5");
-        StringEntity sha1StringEntity = new StringEntity(sha1);
-        StatusLine sha1StatusLine = upload(putSha1, sha1StringEntity);
-        if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
+        String sha1 = checksums.get("SHA1");
+        if (StringUtils.isNotBlank(sha1)) {
+            log.debug("Uploading SHA1 for file " + file.getAbsolutePath() + " : " + sha1);
+            HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
+            StringEntity sha1StringEntity = new StringEntity(sha1);
+            StatusLine sha1StatusLine = upload(putSha1, sha1StringEntity);
+            if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+                throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
+            }
         }
     }
 

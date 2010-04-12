@@ -1,6 +1,14 @@
 initscript {
   apply {
-    apply from: 'http://localhost:8080/artifactory/repo/artifactoryinitplugin/artifactoryinitplugin/0.5-SNAPSHOT/artifactoryinitplugin-0.5-SNAPSHOT.gradle'
+    apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/0.5-SNAPSHOT/artifactoryinitplugin-0.5-SNAPSHOT.gradle'
   }
 }
-addListener(new BuildAdapter())
+addListener(new PropertyListener())
+class PropertyListener extends BuildAdapter implements BuildListener {
+
+  def void settingsEvaluated(Settings settings) {
+    //settings.getStartParameter().getProjectProperties().put('artifactory.url', 'http')
+  }
+}
+//}
+
