@@ -30,4 +30,10 @@ public interface BuildInfoProperties {
     String PROP_BUILD_NUMBER = BUILD_INFO_PROP_PREFIX + "buildNumber";
     String PROP_PARENT_BUILD_NAME = BUILD_INFO_PROP_PREFIX + "parentBuildName";
     String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PROP_PREFIX + "parentBuildNumber";
+    /**
+     * Property to link the build back to the CI server that produced the build
+     */
+    String PROP_BUILD_URL = BUILD_INFO_PROP_PREFIX + "build.url";
+    String PROP_BUILD_AGENT_NAME = BUILD_INFO_PROP_PREFIX + "build.agent.name";
+    String PROP_BUILD_AGENT_VERSION = BUILD_INFO_PROP_PREFIX + "build.agent.version";
 }

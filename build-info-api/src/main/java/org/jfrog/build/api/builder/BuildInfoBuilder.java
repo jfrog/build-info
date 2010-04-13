@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 
@@ -26,6 +27,7 @@ public class BuildInfoBuilder {
     private long number;
     private BuildType type = BuildType.GENERIC;
     private Agent agent = new Agent("", "");
+    private BuildAgent buildAgent = new BuildAgent("", "");
     private long durationMillis = 0L;
     private String principal = "";
     private String artifactoryPrincipal = "";
@@ -63,6 +65,7 @@ public class BuildInfoBuilder {
         build.setNumber(number);
         build.setType(type);
         build.setAgent(agent);
+        build.setBuildAgent(buildAgent);
         build.setStarted(started);
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
@@ -126,6 +129,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder agent(Agent agent) {
         this.agent = agent;
+        return this;
+    }
+
+    /**
+     * Sets the build agent of the build
+     *
+     * @param buildAgent The build agent
+     * @return Builder instance
+     */
+    public BuildInfoBuilder buildAgent(BuildAgent buildAgent) {
+        this.buildAgent = buildAgent;
         return this;
     }
 

@@ -5,12 +5,12 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import java.io.Serializable;
 
 /**
- * Information about the agent that triggered the build (e.g. Hudson, TeamCity etc.).
+ * Information about the agent that executed the build (e.g. Maven, Ant/Ivy, Gradle etc.)
  *
- * @author Noam Y. Tenne
+ * @author Tomer Cohen
  */
-@XStreamAlias("agent")
-public class Agent implements Serializable {
+@XStreamAlias("buildagent")
+public class BuildAgent implements Serializable {
 
     private String name;
     private String version;
@@ -18,7 +18,7 @@ public class Agent implements Serializable {
     /**
      * Default constructor
      */
-    public Agent() {
+    public BuildAgent() {
     }
 
     /**
@@ -27,7 +27,7 @@ public class Agent implements Serializable {
      * @param name    Agent name
      * @param version Agent version
      */
-    public Agent(String name, String version) {
+    public BuildAgent(String name, String version) {
         this.name = name;
         this.version = version;
     }

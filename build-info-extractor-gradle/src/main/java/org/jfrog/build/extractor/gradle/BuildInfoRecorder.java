@@ -95,7 +95,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<Project, Module> {
                                 type = type + "-" + from.getClassifier();
                             }
                             Map<String, String> checkSums = calculateChecksumsForFile(from.getFile());
-                            return new ArtifactBuilder(from.getName()).type(type)
+                            return new ArtifactBuilder(from.getFile().getName()).type(type)
                                     .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
                         } catch (Exception e) {
                             log.error("Error during artifact calculation: ", e);
@@ -108,7 +108,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<Project, Module> {
         if (mavenPom.exists()) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
             Artifact pom =
-                    new ArtifactBuilder(project.getName()).md5(checksums.get(MD5)).sha1(checksums.get(SHA1)).type("pom")
+                    new ArtifactBuilder(project.getName() + "-" + project.getVersion() + ".pom").md5(checksums.get(MD5))
+                            .sha1(checksums.get(SHA1)).type("pom")
                             .build();
             artifacts.add(pom);
         }
@@ -116,7 +117,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<Project, Module> {
         if (ivy.exists()) {
             Map<String, String> checksums = calculateChecksumsForFile(ivy);
             Artifact ivyArtifact =
-                    new ArtifactBuilder(project.getName()).md5(checksums.get(MD5)).sha1(checksums.get(SHA1)).type("ivy")
+                    new ArtifactBuilder("ivy-" + project.getVersion() + ".xml").md5(checksums.get(MD5))
+                            .sha1(checksums.get(SHA1)).type("ivy")
                             .build();
             artifacts.add(ivyArtifact);
         }

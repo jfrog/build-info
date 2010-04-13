@@ -53,7 +53,8 @@ public class Dependency extends BaseBuildFileBean {
     }
 
     /**
-     * Returns an ID list of other dependencies required by this one
+     * Returns an ID list of dependencies that directly depend on this dependency. Used for building the module's
+     * transitive dependency graph. Can be left empty if a root dependency.
      *
      * @return Required dependency IDs list
      */
@@ -62,7 +63,7 @@ public class Dependency extends BaseBuildFileBean {
     }
 
     /**
-     * Sets an ID list of other dependencies required by this one
+     * Sets an ID list of dependencies that directly depend on this dependency.
      *
      * @param requiredBy Required dependency IDs list
      */

@@ -3,6 +3,7 @@ package org.jfrog.build.api.builder;
 import com.google.common.collect.Lists;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.testng.annotations.Test;
@@ -57,6 +58,7 @@ public class BuildInfoBuilderTest {
         long number = 15L;
         BuildType buildType = GRADLE;
         Agent agent = new Agent("pop", "1.6");
+        BuildAgent buildAgent = new BuildAgent("rock", "2.6");
         long durationMillis = 6L;
         String principal = "bob";
         String artifactoryPrincipal = "too";
@@ -68,13 +70,14 @@ public class BuildInfoBuilderTest {
         Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url)
-                .parentBuildId(parentBuildId).modules(modules).properties(properties).build();
+                .parentBuildId(parentBuildId).modules(modules).properties(properties).buildAgent(buildAgent).build();
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
         assertEquals(build.getNumber(), number, "Unexpected build number.");
         assertEquals(build.getType(), buildType, "Unexpected build type.");
         assertEquals(build.getAgent(), agent, "Unexpected build agent.");
+        assertEquals(build.getBuildAgent(), buildAgent, "Unexpected build agent.");
         assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");
         assertEquals(build.getPrincipal(), principal, "Unexpected build principal.");
         assertEquals(build.getArtifactoryPrincipal(), artifactoryPrincipal, "Unexpected build artifactory principal.");

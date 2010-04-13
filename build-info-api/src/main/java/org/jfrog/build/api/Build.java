@@ -18,10 +18,12 @@ public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    private String version = "1.0.0";
+    private String version = "1.0.1";
     private String name;
     private long number;
+    @Deprecated
     private BuildType type;
+    private BuildAgent buildAgent;
     private Agent agent;
     private String started;
     private long durationMillis;
@@ -92,6 +94,7 @@ public class Build extends BaseBuildBean {
      *
      * @return Build type
      */
+    @Deprecated
     public BuildType getType() {
         return type;
     }
@@ -101,26 +104,46 @@ public class Build extends BaseBuildBean {
      *
      * @param type Build type
      */
+    @Deprecated
     public void setType(BuildType type) {
         this.type = type;
     }
 
     /**
-     * Returns the agent of the build
+     * Returns the agent that triggered the build (e.g. Hudson, TeamCity etc.). In case that the build was triggered by
+     * the build agent itself, this value would be equal to the {@link getBuildAgent}
      *
-     * @return Build agent
+     * @return Triggering agent
      */
     public Agent getAgent() {
         return agent;
     }
 
     /**
-     * Sets the agent of the build
+     * Sets the agent that triggered the build
      *
-     * @param agent Build agent
+     * @param agent Triggering agent
      */
     public void setAgent(Agent agent) {
         this.agent = agent;
+    }
+
+    /**
+     * Returns the agent that executed the build (e.g. Maven, Ant/Ivy, Gradle etc.)
+     *
+     * @return Build agent
+     */
+    public BuildAgent getBuildAgent() {
+        return buildAgent;
+    }
+
+    /**
+     * Sets the agent that executed the build
+     *
+     * @param agent Executing agent
+     */
+    public void setBuildAgent(BuildAgent buildAgent) {
+        this.buildAgent = buildAgent;
     }
 
     /**

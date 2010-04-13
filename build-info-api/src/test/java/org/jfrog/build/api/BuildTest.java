@@ -26,7 +26,7 @@ public class BuildTest {
     public void testEmptyConstructor() {
         Build build = new Build();
 
-        assertEquals(build.getVersion(), "1.0.0", "Unexpected default build version.");
+        assertEquals(build.getVersion(), "1.0.1", "Unexpected default build version.");
         assertNull(build.getName(), "Build name should have not been initialized.");
         assertEquals(build.getNumber(), 0, "Build number should have not been initialized.");
         assertNull(build.getType(), "Build type should have not been initialized.");
