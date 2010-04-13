@@ -3,7 +3,7 @@ package org.jfrog.build.client;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.constants.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoProperties;
 
 import java.util.Map;
 import java.util.Properties;
@@ -16,8 +16,8 @@ public abstract class DeploymentUrlUtils {
 
     /**
      * Calculate the full Artifactory deployment URL which includes the matrix params appended to it. see {@link
-     * org.jfrog.build.api.constants.BuildInfoProperties#BUILD_INFO_DEPLOY_PROP_PREFIX} for the property prefix that
-     * this method takes into account.
+     * org.jfrog.build.api.BuildInfoProperties#BUILD_INFO_DEPLOY_PROP_PREFIX} for the property prefix that this method
+     * takes into account.
      *
      * @param artifactoryUrl The Artifactory upload URL.
      * @param properties     The properties to append to the Artifactory URL.

@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Artifactory.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jfrog.build.api.constants;
+package org.jfrog.build.api;
 
 /**
  * @author Tomer Cohen

@@ -18,7 +18,7 @@
 
 package org.jfrog.build.client;
 
-import org.jfrog.build.api.constants.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

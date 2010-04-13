@@ -8,7 +8,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.constants.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoProperties;
 
 import java.io.File;
 import java.io.FileInputStream;

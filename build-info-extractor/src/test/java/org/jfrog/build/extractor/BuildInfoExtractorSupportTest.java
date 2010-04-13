@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor;
 
-import org.jfrog.build.api.constants.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.testng.annotations.Test;
 
 import java.io.File;

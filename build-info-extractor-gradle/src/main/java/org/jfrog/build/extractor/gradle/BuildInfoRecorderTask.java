@@ -1,5 +1,7 @@
 package org.jfrog.build.extractor.gradle;
 
+import org.apache.commons.lang.StringUtils;
+import org.gradle.StartParameter;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -16,6 +18,7 @@ import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
@@ -25,7 +28,7 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.jfrog.build.api.constants.BuildInfoProperties.*;
+import static org.jfrog.build.api.BuildInfoProperties.*;
 
 /**
  * @author Tomer Cohen
@@ -73,6 +76,10 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
             Properties properties = GUtil.loadProperties(projectPropsFile);
             gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(properties));
         }
+        StartParameter startParameter = project.getGradle().getStartParameter();
+        Properties props = new Properties();
+        props.putAll(startParameter.getProjectProperties());
+        gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(props));
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = gradleProps.getProperty(PROP_BUILD_NAME);
         if (buildName == null) {
@@ -114,7 +121,11 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
         File savedFile = new File(fileExportPath);
         OutputStream fileOutputStream = new FileOutputStream(savedFile);
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, fileOutputStream);*/
-        String buildInfoUploadUrl = gradleProps.getProperty(BUILD_INFO_PROP_PREFIX + "uploadRootUrl");
+        String buildInfoUploadUrl = gradleProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
+        if (StringUtils.isBlank(buildInfoUploadUrl)) {
+            buildInfoUploadUrl = project.getGradle().getStartParameter().getProjectProperties()
+                    .get(ClientProperties.PROP_CONTEXT_URL);
+        }
         ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
                 new ArtifactoryBuildInfoClient(buildInfoUploadUrl);
         artifactoryBuildInfoClient.sendBuildInfo(build);

@@ -1,7 +1,8 @@
-apply plugin: 'maven'
 dependencies {
-  compile "org.apache.httpcomponents:httpclient:4.0",
-          "org.codehaus.jackson:jackson-mapper-asl:1.4.1",
-          "com.google.collections:google-collections:1.0"
-  project(':build-info-api')
+  compile project(':build-info-api')
+  compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.4.1'
+  compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.4.1'
+  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0.1'
+  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
+  compile group: 'com.google.collections', name: 'google-collections', version: '1.0'
 }
