@@ -12,7 +12,8 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginContainer
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.Upload
-import org.jfrog.build.api.constants.BuildInfoProperties
+import org.jfrog.build.api.BuildInfoProperties
+import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
@@ -26,8 +27,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
   def void apply(Project project) {
 
     log.debug("Using Artifactory Plugin")
-    def artifactoryUrl = getProperty('artifactory.url', project) ?: 'http://gradle.artifactoryonline.com/gradle/'
-    def downloadId = getProperty('artifactory.downloadId', project)
+    def artifactoryUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle/'
+    def downloadId = getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
     if (!downloadId) {
       // take the target repository from the full url
       String[] pathParts = artifactoryUrl.split("/")
@@ -72,7 +73,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
     });
 
-    def uploadId = getProperty("artifactory.uploadId", project)
+    def uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project)
     if (uploadId) {
       // configure upload repository for maven deployer or ivy publisher
       log.debug "ArtifactoryURL before setting upload is ${artifactoryUrl}"
@@ -87,8 +88,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
       log.debug("Configure Upload URL to ${uploadUrl}")
       uploadUrl = appendProperties(uploadUrl, project)
 
-      def user = getProperty("artifactory.username", project) ?: "anonymous"
-      def password = getProperty("artifactory.password", project) ?: ""
+      def user = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, project) ?: "anonymous"
+      def password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, project) ?: ""
       def host = new URI(uploadUrl).getHost()
       project.tasks.withType(Upload.class).allObjects { uploadTask ->
         project.configure(uploadTask) {
