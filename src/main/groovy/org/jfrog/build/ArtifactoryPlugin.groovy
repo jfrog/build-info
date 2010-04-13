@@ -94,7 +94,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       project.tasks.withType(Upload.class).allObjects { uploadTask ->
         project.configure(uploadTask) {
           boolean deployIvy
-          def deployIvyProp = getProperty("artifactory.deployIvy", project);
+          def deployIvyProp = getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
           if (deployIvyProp != null) {
             deployIvy = Boolean.parseBoolean(deployIvyProp);
           } else {
@@ -115,7 +115,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
           }
           boolean deployMaven
-          def deployMavenProp = getProperty("artifactory.deployMaven", project);
+          def deployMavenProp = getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
           if (deployMavenProp != null) {
             deployMaven = Boolean.parseBoolean(deployMavenProp);
           } else {

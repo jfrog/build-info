@@ -14,6 +14,8 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GUtil;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
@@ -96,10 +98,14 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
             throw new GradleException(message);
         }
         GradleInternal gradleInternals = (GradleInternal) project.getGradle();
-        buildInfoBuilder.agent(new Agent("Gradle", gradleInternals.getGradleVersion()))
+        String agentName = props.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME, "Gradle");
+        String agentVersion =
+                props.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION, gradleInternals.getGradleVersion());
+        Agent agent = new Agent(agentName, agentVersion);
+        buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
-                .startedDate(startedDate)
-                .number(Long.parseLong(buildNumber));
+                .startedDate(startedDate).number(Long.parseLong(buildNumber))
+                .buildAgent(new BuildAgent("Gradle", gradleInternals.getGradleVersion()));
         for (Project subProject : project.getSubprojects()) {
             addModule(buildInfoBuilder, subProject);
         }
@@ -110,10 +116,14 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
             String parent = parentName + ":" + parentNumber;
             buildInfoBuilder.parentBuildId(parent);
         }
+        String buildUrl = gradleProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
+        if (StringUtils.isNotBlank(buildUrl)) {
+            buildInfoBuilder.url(buildUrl);
+        }
+        gradleProps.putAll(gatherSysPropInfo());
         buildInfoBuilder.properties(gradleProps);
         Build build = buildInfoBuilder.build();
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
-
         /*String fileExportPath = gradleProps.getProperty(PROP_EXPORT_FILE_PATH);
         if (fileExportPath == null) {
             throw new GradleException("Cannot have a null path to export the build-info");
@@ -129,6 +139,19 @@ public class BuildInfoRecorderTask extends ConventionTask implements BuildInfoEx
         ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
                 new ArtifactoryBuildInfoClient(buildInfoUploadUrl);
         artifactoryBuildInfoClient.sendBuildInfo(build);
+    }
+
+    private Properties gatherSysPropInfo() {
+        Properties props = new Properties();
+        props.setProperty("os.arch", System.getProperty("os.arch"));
+        props.setProperty("os.name", System.getProperty("os.name"));
+        props.setProperty("os.version", System.getProperty("os.version"));
+        props.setProperty("java.version", System.getProperty("java.version"));
+        props.setProperty("java.vm.info", System.getProperty("java.vm.info"));
+        props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
+        props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
+        props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
+        return props;
     }
 
     private static void addModule(BuildInfoBuilder buildInfoBuilder, Project project) {
