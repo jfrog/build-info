@@ -13,7 +13,7 @@ class PropertyListener extends BuildAdapter implements BuildListener {
             "artifactory.publish.repoKey": "libs-releases-local",
             "artifactory.publish.username": "admin",
             "artifactory.publish.password": "password",
-            "artifactory.publish.artifacts": "true",
+            "artifactory.publish.artifact": "true",
             "artifactory.publish.ivy": "true",
             "artifactory.publish.maven": "true",
             "buildInfo.buildName": "multiproj-example",
