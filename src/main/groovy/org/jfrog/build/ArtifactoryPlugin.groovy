@@ -3,7 +3,6 @@ package org.jfrog.build
 import org.gradle.api.tasks.bundling.Jar
 
 import org.gradle.BuildAdapter
-import org.gradle.StartParameter
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -27,8 +26,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
   def void apply(Project project) {
 
     log.debug("Using Artifactory Plugin")
-    def artifactoryUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle/'
-    def downloadId = getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
+    def artifactoryUrl = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle/'
+    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
     if (!downloadId) {
       // take the target repository from the full url
       String[] pathParts = artifactoryUrl.split("/")
@@ -38,7 +37,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       //TODO: [by ys] why plugins releases in the default?
       downloadId = downloadId ?: 'plugins-releases'
     }
-    def artifactoryDownloadUrl = getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
+    def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
     log.debug("Artifactory URL: $artifactoryUrl")
     log.debug("Artifactory Download ID: $downloadId")
     log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
@@ -73,12 +72,12 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
     });
 
-    def uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project)
+    def uploadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project)
     if (uploadId) {
       // configure upload repository for maven deployer or ivy publisher
       log.debug "ArtifactoryURL before setting upload is ${artifactoryUrl}"
       log.debug("Upload ID was declared: ${uploadId} and so deployArchives task reconfigured")
-      String uploadRootUrl = getProperty("artifactory.uploadRootUrl", project)
+      String uploadRootUrl = ArtifactoryPluginUtils.getProperty("artifactory.uploadRootUrl", project)
       String uploadUrl = "${artifactoryUrl}/${uploadId}"
       if (uploadRootUrl) {
         log.debug "Using Artifactory Upload Root URL: $uploadRootUrl"
@@ -88,13 +87,13 @@ class ArtifactoryPlugin implements Plugin<Project> {
       log.debug("Configure Upload URL to ${uploadUrl}")
       uploadUrl = appendProperties(uploadUrl, project)
 
-      def user = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, project) ?: "anonymous"
-      def password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, project) ?: ""
+      def user = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, project) ?: "anonymous"
+      def password = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, project) ?: ""
       def host = new URI(uploadUrl).getHost()
       project.tasks.withType(Upload.class).allObjects { uploadTask ->
         project.configure(uploadTask) {
           boolean deployIvy
-          def deployIvyProp = getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
+          def deployIvyProp = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
           if (deployIvyProp != null) {
             deployIvy = Boolean.parseBoolean(deployIvyProp);
           } else {
@@ -115,7 +114,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
           }
           boolean deployMaven
-          def deployMavenProp = getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
           if (deployMavenProp != null) {
             deployMaven = Boolean.parseBoolean(deployMavenProp);
           } else {
@@ -148,13 +147,13 @@ class ArtifactoryPlugin implements Plugin<Project> {
 
   String appendProperties(String uploadUrl, Project project) {
     Properties props = new Properties(System.getProperties())
-    String buildNumber = getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
+    String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
     if (buildNumber) props.put(BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
-    String buildName = getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
+    String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
     if (buildName) props.put(BuildInfoProperties.PROP_BUILD_NAME, buildName)
-    String buildParentNumber = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
+    String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
     if (buildParentNumber) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
-    String buildParentName = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
+    String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
     if (buildParentName) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
@@ -185,27 +184,5 @@ class ArtifactoryPlugin implements Plugin<Project> {
     buildInfo.setDescription("Generates build info from build artifacts");
   }
 
-  private String getProperty(String propertyName, Project project) {
-    if (System.getProperty(propertyName) != null) {
-      return System.getProperty(propertyName)
-    }
-    StartParameter startParameter = project.getGradle().getStartParameter()
-    Map projectProperties = startParameter.getProjectProperties()
-    if (projectProperties != null) {
-      String propertyValue = projectProperties.get(propertyName)
-      if (propertyValue != null) {
-        return propertyValue
-      }
-    }
-    if (project.hasProperty(propertyName)) {
-      return project.property(propertyName);
-    } else {
-      project = project.getParent();
-      if (project == null) {
-        return null;
-      } else {
-        return getProperty(propertyName, project);
-      }
-    }
-  }
+
 }
