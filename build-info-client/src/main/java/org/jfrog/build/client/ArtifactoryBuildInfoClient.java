@@ -294,6 +294,9 @@ public class ArtifactoryBuildInfoClient {
             log.debug("Version result: " + result);
             version = result.get("version").getTextValue();
         }
+        if (version.endsWith("SNAPSHOT")) {
+            return true;
+        }
         StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
         if (stringTokenizer.countTokens() == 3) {
             int major = Integer.parseInt(stringTokenizer.nextToken());
