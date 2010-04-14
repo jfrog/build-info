@@ -33,6 +33,7 @@ import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.util.GUtil;
+import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -46,6 +47,7 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
@@ -191,7 +193,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }));
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        if (mavenPom.exists()) {
+        String publishPom = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+        boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
+        if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
             Artifact pom =
                     new ArtifactBuilder(project.getName() + "-" + project.getVersion() + ".pom").md5(checksums.get(MD5))
@@ -199,8 +203,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             .build();
             artifacts.add(pom);
         }
+        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+        boolean isPublishIvy = StringUtils.isNotBlank(publishIvy) && Boolean.parseBoolean(publishIvy);
         File ivy = new File(project.getBuildDir(), "ivy.xml");
-        if (ivy.exists()) {
+        if (ivy.exists() && isPublishIvy) {
             Map<String, String> checksums = calculateChecksumsForFile(ivy);
             Artifact ivyArtifact =
                     new ArtifactBuilder("ivy-" + project.getVersion() + ".xml").md5(checksums.get(MD5))

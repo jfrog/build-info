@@ -2,6 +2,7 @@ package org.jfrog.build.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -14,7 +15,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Properties;
@@ -86,8 +86,8 @@ public abstract class BuildInfoExtractorUtils {
         return result;
     }
 
-    public static void saveBuildInfoToFile(Build build, OutputStream outputStream) throws IOException {
+    public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
-        IOUtils.write(buildInfoJson, outputStream);
+        FileUtils.writeStringToFile(toFile, buildInfoJson, "UTF-8");
     }
 }

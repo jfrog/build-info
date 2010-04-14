@@ -30,6 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Artifactory client to perform build info related tasks.
@@ -42,6 +43,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_RUL = "/api/build";
+    private static final String VERSION_INFO_URL = "/api/system/version";
     private static final int DEFAULT_CONNECTION_TIMEOUT = 120000;    // 2 Minutes
 
     private final String artifactoryUrl;
@@ -254,15 +256,54 @@ public class ArtifactoryBuildInfoClient {
     }
 
     private String buildInfoToJsonString(Build buildInfo) throws IOException {
+        boolean isCompatibleArtifactory = isCompatibleArtifactory();
+        if (!isCompatibleArtifactory) {
+            buildInfo.setBuildAgent(null);
+        }
         JsonFactory jsonFactory = createJsonFactory();
-
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
         jsonGenerator.useDefaultPrettyPrinter();
-
         jsonGenerator.writeObject(buildInfo);
         String result = writer.getBuffer().toString();
+        if (!isCompatibleArtifactory) {
+            result = removeBuildAgentFromJson(result);
+        }
         return result;
+    }
+
+    private String removeBuildAgentFromJson(String result) {
+        result = StringUtils.remove(result, "\"buildAgent\" : null,");
+        return result;
+    }
+
+    private boolean isCompatibleArtifactory() throws IOException {
+        String versionUrl = artifactoryUrl + VERSION_INFO_URL;
+        PreemptiveHttpClient client = getHttpClient();
+        HttpGet httpGet = new HttpGet(versionUrl);
+        HttpResponse response = client.execute(httpGet);
+        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            return false;
+        }
+        String version = "2.2.2";
+        HttpEntity httpEntity = response.getEntity();
+        if (httpEntity != null) {
+            JsonParser parser = createJsonParser(httpEntity.getContent());
+            httpEntity.consumeContent();
+            JsonNode result = parser.readValueAsTree();
+            log.debug("Version result: " + result);
+            version = result.get("version").getTextValue();
+        }
+        StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
+        if (stringTokenizer.countTokens() == 3) {
+            int major = Integer.parseInt(stringTokenizer.nextToken());
+            int minor = Integer.parseInt(stringTokenizer.nextToken());
+            int minorminor = Integer.parseInt(stringTokenizer.nextToken());
+            if (major > 2 || minor > 2 || minorminor > 2) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String urlEncode(String value) throws UnsupportedEncodingException {

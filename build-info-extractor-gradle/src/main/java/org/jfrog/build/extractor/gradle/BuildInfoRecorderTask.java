@@ -14,9 +14,7 @@ import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
 import static org.jfrog.build.api.BuildInfoProperties.PROP_EXPORT_FILE_PATH;
@@ -113,7 +111,6 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
     private void exportBuildInfo(Build build, File toFile) throws IOException {
-        OutputStream fileOutputStream = new FileOutputStream(toFile);
-        BuildInfoExtractorUtils.saveBuildInfoToFile(build, fileOutputStream);
+        BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 }
