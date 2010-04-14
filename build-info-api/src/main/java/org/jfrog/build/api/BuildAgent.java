@@ -22,6 +22,22 @@ public class BuildAgent implements Serializable {
     }
 
     /**
+     * Build the build agent from a full agent name in the following format: AGENT_NAME/AGENT_VERSION
+     *
+     * @param agent The agent name
+     */
+    public BuildAgent(String agent) {
+        int slash = agent.indexOf('/');
+        if (slash != -1 && slash < agent.length() - 1) {
+            this.name = agent.substring(0, slash);
+            this.version = agent.substring(slash + 1);
+        } else {
+            this.name = agent;
+            this.version = "";
+        }
+    }
+
+    /**
      * Main constructor
      *
      * @param name    Agent name
@@ -71,7 +87,7 @@ public class BuildAgent implements Serializable {
     /**
      * Returns the display representation of the agent
      *
-     * @return AGENT_NAME/AGENT_VERISON
+     * @return AGENT_NAME/AGENT_VERSION
      */
     @Override
     public String toString() {

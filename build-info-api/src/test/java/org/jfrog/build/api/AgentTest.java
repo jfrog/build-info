@@ -23,6 +23,12 @@ public class AgentTest {
         assertEquals(agent.toString(), "null/null", "Agent display representation should not be valid.");
     }
 
+    public void testAgentNameConstructor() {
+        Agent agent = new Agent("MOO/1.0");
+        assertEquals(agent.getVersion(), "1.0", "Agent version does not match");
+        assertEquals(agent.getName(), "MOO", "Agent name does not match");
+    }
+
     /**
      * Validates the agent values after initializing the main constructor
      */

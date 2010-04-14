@@ -57,5 +57,9 @@ public interface ClientProperties {
      */
     String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publish.maven";
 
+    /**
+     * Property whether to publish the generated build artifacts.
+     */
+    String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifact";
 
 }

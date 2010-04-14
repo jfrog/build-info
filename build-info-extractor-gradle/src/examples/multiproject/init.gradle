@@ -5,10 +5,19 @@ initscript {
 }
 addListener(new PropertyListener())
 class PropertyListener extends BuildAdapter implements BuildListener {
-
   def void settingsEvaluated(Settings settings) {
-    //settings.getStartParameter().getProjectProperties().put('artifactory.url', 'http')
+    Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
+    projProps.putAll([
+            "artifactory.contextUrl": "http://localhost:8081/artifactory",
+            "artifactory.resolve.repoKey": "repo",
+            "artifactory.publish.repoKey": "libs-releases-local",
+            "artifactory.publish.username": "admin",
+            "artifactory.publish.password": "password",
+            "artifactory.publish.artifacts": "true",
+            "artifactory.publish.ivy": "true",
+            "artifactory.publish.maven": "true",
+            "buildInfo.buildName": "multiproj-example",
+            "buildInfo.buildNumber": "1234",
+    ])
   }
 }
-//}
-

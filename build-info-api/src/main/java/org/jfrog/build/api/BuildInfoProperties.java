@@ -25,7 +25,7 @@ public interface BuildInfoProperties {
     String BUILD_INFO_DEPLOY_PROP_PREFIX = BUILD_INFO_PROP_PREFIX + "deploy.";
 
     String PROP_PROPS_FILE = BUILD_INFO_PROP_PREFIX + "propertiesFile";
-    String PROP_EXPORT_FILE_PATH = BUILD_INFO_PROP_PREFIX + "propertiesFile";
+    String PROP_EXPORT_FILE_PATH = BUILD_INFO_PROP_PREFIX + "exportFile";
     String PROP_BUILD_NAME = BUILD_INFO_PROP_PREFIX + "buildName";
     String PROP_BUILD_NUMBER = BUILD_INFO_PROP_PREFIX + "buildNumber";
     String PROP_PARENT_BUILD_NAME = BUILD_INFO_PROP_PREFIX + "parentBuildName";
@@ -33,7 +33,7 @@ public interface BuildInfoProperties {
     /**
      * Property to link the build back to the CI server that produced the build
      */
-    String PROP_BUILD_URL = BUILD_INFO_PROP_PREFIX + "build.url";
-    String PROP_BUILD_AGENT_NAME = BUILD_INFO_PROP_PREFIX + "build.agent.name";
-    String PROP_BUILD_AGENT_VERSION = BUILD_INFO_PROP_PREFIX + "build.agent.version";
+    String PROP_BUILD_URL = BUILD_INFO_PROP_PREFIX + "buildUrl";
+    String PROP_BUILD_AGENT = BUILD_INFO_PROP_PREFIX + "agent";
+    String PROP_BUILD_BUILD_AGENT_NAME = BUILD_INFO_PROP_PREFIX + "buildAgent";
 }
