@@ -33,10 +33,10 @@ public class DeploymentUrlUtilsTest {
     public void getDeploymentUrl() {
         String artifactoryUrl = "http://localhost:8080/artifactory/libs-releases-local";
         Properties props = System.getProperties();
-        props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildNumber", "1");
         props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildName", "moo");
+        props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildNumber", "1");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
-        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildName=moo;buildNumber=1");
+        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildNumber=1;buildName=moo");
     }
 
 }
