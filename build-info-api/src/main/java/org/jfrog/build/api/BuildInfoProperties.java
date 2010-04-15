@@ -21,19 +21,25 @@ package org.jfrog.build.api;
  * @author Tomer Cohen
  */
 public interface BuildInfoProperties {
-    String BUILD_INFO_PROP_PREFIX = "buildInfo.";
-    String BUILD_INFO_DEPLOY_PROP_PREFIX = BUILD_INFO_PROP_PREFIX + "deploy.";
 
-    String PROP_PROPS_FILE = BUILD_INFO_PROP_PREFIX + "propertiesFile";
-    String PROP_EXPORT_FILE_PATH = BUILD_INFO_PROP_PREFIX + "exportFile";
-    String PROP_BUILD_NAME = BUILD_INFO_PROP_PREFIX + "buildName";
-    String PROP_BUILD_NUMBER = BUILD_INFO_PROP_PREFIX + "buildNumber";
-    String PROP_PARENT_BUILD_NAME = BUILD_INFO_PROP_PREFIX + "parentBuildName";
-    String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PROP_PREFIX + "parentBuildNumber";
+    /**
+     * A prefix for all properties that should affect the build info model
+     */
+    String BUILD_INFO_PREFIX = "buildInfo.";
+
+    /**
+     * Prefix for properties that are dynamically added to build info
+     */
+    String BUILD_INFO_PROP_PREFIX = "buildInfo.property.";
+
+    String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "buildName";
+    String PROP_BUILD_NUMBER = BUILD_INFO_PREFIX + "buildNumber";
+    String PROP_PARENT_BUILD_NAME = BUILD_INFO_PREFIX + "parentBuildName";
+    String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "parentBuildNumber";
     /**
      * Property to link the build back to the CI server that produced the build
      */
-    String PROP_BUILD_URL = BUILD_INFO_PROP_PREFIX + "buildUrl";
-    String PROP_BUILD_AGENT = BUILD_INFO_PROP_PREFIX + "agent";
-    String PROP_BUILD_BUILD_AGENT_NAME = BUILD_INFO_PROP_PREFIX + "buildAgent";
+    String PROP_BUILD_URL = BUILD_INFO_PREFIX + "buildUrl";
+    String PROP_BUILD_AGENT = BUILD_INFO_PREFIX + "agent";
+    String PROP_BUILD_BUILD_AGENT_NAME = BUILD_INFO_PREFIX + "buildAgent";
 }

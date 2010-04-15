@@ -11,20 +11,10 @@ public abstract class BaseBuildBean implements BuildBean {
 
     private Properties properties;
 
-    /**
-     * Returns the properties of the bean
-     *
-     * @return Bean properties
-     */
     public Properties getProperties() {
         return properties;
     }
 
-    /**
-     * Sets the properties of the bean
-     *
-     * @param properties Bean properties
-     */
     public void setProperties(Properties properties) {
         this.properties = properties;
     }

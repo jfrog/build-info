@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor;
 
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.testng.annotations.Test;
 
@@ -34,7 +35,7 @@ public class BuildInfoExtractorSupportTest {
     }
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
-        File propsFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
+        File propsFile = new File(BuildInfoConfigProperties.PROP_PROPS_FILE);
         propsFile.createNewFile();
         Properties props = new Properties();
         props.put(BuildInfoProperties.PROP_BUILD_NAME, "buildname");
@@ -55,7 +56,7 @@ public class BuildInfoExtractorSupportTest {
     public void getBuildInfoProperties() throws IOException {
 
         // create a property file
-        File propsFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
+        File propsFile = new File(BuildInfoConfigProperties.PROP_PROPS_FILE);
         propsFile.createNewFile();
         Properties props = new Properties();
         props.put(BuildInfoProperties.PROP_BUILD_NAME, "buildname");

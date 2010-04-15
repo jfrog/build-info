@@ -301,8 +301,8 @@ public class ArtifactoryBuildInfoClient {
         if (stringTokenizer.countTokens() == 3) {
             int major = Integer.parseInt(stringTokenizer.nextToken());
             int minor = Integer.parseInt(stringTokenizer.nextToken());
-            int minorminor = Integer.parseInt(stringTokenizer.nextToken());
-            if (major > 2 || minor > 2 || minorminor > 2) {
+            int miniminor = Integer.parseInt(stringTokenizer.nextToken());
+            if (major > 2 || minor > 2 || miniminor > 2) {
                 return true;
             }
         }

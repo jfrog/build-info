@@ -18,7 +18,7 @@
 
 package org.jfrog.build.client;
 
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -33,8 +33,8 @@ public class DeploymentUrlUtilsTest {
     public void getDeploymentUrl() {
         String artifactoryUrl = "http://localhost:8080/artifactory/libs-releases-local";
         Properties props = System.getProperties();
-        props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildNumber", "1");
-        props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildName", "moo");
+        props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildNumber", "1");
+        props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + "buildName", "moo");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
         Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildName=moo;buildNumber=1");
     }

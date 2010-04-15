@@ -4,11 +4,13 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 
 import java.io.File;
@@ -25,7 +27,8 @@ import java.util.Properties;
 public abstract class BuildInfoExtractorUtils {
 
     /**
-     * Collect system properties and properties from the  {@link BuildInfoProperties#PROP_PROPS_FILE} file.
+     * Collect system properties and properties from the  {@link org.jfrog.build.api.BuildInfoConfigProperties#PROP_PROPS_FILE}
+     * file.
      * <p/>
      * The caller is supposed to inject the build properties into the output (e.g.: adding them to the Build object if
      * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
@@ -33,24 +36,30 @@ public abstract class BuildInfoExtractorUtils {
      */
     public static Properties getBuildInfoProperties() {
         Properties props = new Properties();
-        File propertiesFile = new File(BuildInfoProperties.PROP_PROPS_FILE);
-        InputStream inputStream = null;
-        try {
-            if (propertiesFile.exists()) {
-                inputStream = new FileInputStream(propertiesFile);
-                props.load(inputStream);
-                props = filterProperties(props);
+        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+
+        if (StringUtils.isNotBlank(propertiesFilePath)) {
+            File propertiesFile = new File(propertiesFilePath);
+            InputStream inputStream = null;
+            try {
+                if (propertiesFile.exists()) {
+                    inputStream = new FileInputStream(propertiesFile);
+                    props.load(inputStream);
+                    props = filterProperties(props);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(
+                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+            } finally {
+                IOUtils.closeQuietly(inputStream);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
         }
 
         // now add all the relevant system props.
         Properties filteredSystemProps = filterProperties(System.getProperties());
         props.putAll(filteredSystemProps);
+
+        //TODO: [by yl] Add common system properties
         return props;
     }
 
