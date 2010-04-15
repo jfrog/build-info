@@ -148,13 +148,13 @@ class ArtifactoryPlugin implements Plugin<Project> {
   String appendProperties(String uploadUrl, Project project) {
     Properties props = new Properties(System.getProperties())
     String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
-    if (buildNumber) props.put(BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
+    if (buildNumber) props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
-    if (buildName) props.put(BuildInfoProperties.PROP_BUILD_NAME, buildName)
+    if (buildName) props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (buildParentNumber) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
+    if (buildParentNumber) props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (buildParentName) props.put(BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    if (buildParentName) props.put(BuildInfoProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {
