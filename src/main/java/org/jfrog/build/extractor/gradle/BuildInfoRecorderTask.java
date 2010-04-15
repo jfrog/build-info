@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.Set;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
-import static org.jfrog.build.api.BuildInfoProperties.PROP_EXPORT_FILE_PATH;
+import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_EXPORT_FILE_PATH;
 
 /**
  * @author Tomer Cohen
