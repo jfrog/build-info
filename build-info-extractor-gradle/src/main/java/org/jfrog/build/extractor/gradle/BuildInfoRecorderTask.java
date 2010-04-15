@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.gradle;
 
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -15,6 +16,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
 import static org.jfrog.build.api.BuildInfoProperties.PROP_EXPORT_FILE_PATH;
@@ -70,15 +72,17 @@ public class BuildInfoRecorderTask extends ConventionTask {
              * only after a successful build. This is done before the build-info is sent.
              */
             for (Project uploadingProject : getRootProject().getAllprojects()) {
-                try {
-                    Task uploadTask = uploadingProject.getTasks().getByName("uploadArchives");
-                    if (uploadTask != null) {
-                        log.debug("Uploading project {}", uploadingProject);
-                        ((Upload) uploadTask).execute();
+                Set<Task> uploadTask = uploadingProject.getTasksByName("uploadArchives", false);
+                if (uploadTask != null) {
+                    for (Task task : uploadTask) {
+                        try {
+                            log.debug("Uploading project {}", uploadingProject);
+                            ((Upload) task).execute();
+                        } catch (Exception e) {
+                            throw new GradleException("Unable to upload project: " + uploadingProject, e);
+                        }
+
                     }
-                } catch (Exception e) {
-                    log.debug("Could not publish project {} since the uploadArchives task was not configured properly",
-                            gbie, e);
                 }
             }
             /**
