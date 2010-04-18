@@ -257,6 +257,9 @@ public class ArtifactoryBuildInfoClient {
 
     private String buildInfoToJsonString(Build buildInfo) throws IOException {
         boolean isCompatibleArtifactory = isCompatibleArtifactory();
+        // prior to Artifactory V2.2.3 the build-info JSON did not contain the buildAgent.
+        // so it is set to null and removed from the build-info JSON string to avoid conflict.
+        // Artifactory version prior to 2.2.3 would fail on unknown property
         if (!isCompatibleArtifactory) {
             buildInfo.setBuildAgent(null);
         }
@@ -267,6 +270,7 @@ public class ArtifactoryBuildInfoClient {
         jsonGenerator.writeObject(buildInfo);
         String result = writer.getBuffer().toString();
         if (!isCompatibleArtifactory) {
+            // remove the buildAgent from the JSON String itself.
             result = removeBuildAgentFromJson(result);
         }
         return result;

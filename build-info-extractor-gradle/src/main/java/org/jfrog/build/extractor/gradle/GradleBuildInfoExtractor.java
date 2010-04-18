@@ -22,7 +22,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
@@ -103,7 +102,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     public Build extract(BuildInfoRecorderTask buildInfoTask) {
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
-        String buildName = gradleProps.getProperty(PROP_BUILD_NAME);
+        String buildName = getStartParamProps().getProperty(PROP_BUILD_NAME);
         if (buildName == null) {
             buildName = rootProject.getName();
         }
@@ -111,16 +110,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Date startedDate = new Date();
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
-        String buildNumber = gradleProps.getProperty(PROP_BUILD_NUMBER);
+        String buildNumber = getStartParamProps().getProperty(PROP_BUILD_NUMBER);
         if (buildNumber == null) {
             String message = "Build number not set, please provide system variable \'" + PROP_BUILD_NUMBER + "\'";
             log.error(message);
-            throw new GradleException(message);
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
-        String agentString = startParamProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, buildAgent.toString());
+        String agentString =
+                getStartParamProps().getProperty(BuildInfoProperties.PROP_BUILD_AGENT, buildAgent.toString());
         Agent agent = new Agent(agentString);
         buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
@@ -131,17 +130,19 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
         }
         buildInfoBuilder.addModule(extractModule(buildInfoTask.getConfiguration(), rootProject));
-        String parentName = gradleProps.getProperty(PROP_PARENT_BUILD_NAME);
-        String parentNumber = gradleProps.getProperty(PROP_PARENT_BUILD_NUMBER);
+        String parentName = getStartParamProps().getProperty(PROP_PARENT_BUILD_NAME);
+        String parentNumber = getStartParamProps().getProperty(PROP_PARENT_BUILD_NUMBER);
         if (parentName != null && parentNumber != null) {
             String parent = parentName + ":" + parentNumber;
             buildInfoBuilder.parentBuildId(parent);
         }
-        String buildUrl = gradleProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
+        String buildUrl = getStartParamProps().getProperty(BuildInfoProperties.PROP_BUILD_URL);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
         }
-        buildInfoBuilder.properties(gatherSysPropInfo());
+        Properties properties = gatherSysPropInfo();
+        properties.putAll(gradleProps);
+        buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
         return buildInfoBuilder.build();
     }
