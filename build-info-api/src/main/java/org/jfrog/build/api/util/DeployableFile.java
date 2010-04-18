@@ -21,4 +21,17 @@ public class DeployableFile extends BaseBuildFileBean {
      * The file to deploy
      */
     File file;
+
+    public DeployableFile(BuildFileBean buildFile, File file) {
+        this.buildFile = buildFile;
+        this.file = file;
+    }
+
+    public BuildFileBean getBuildFile() {
+        return buildFile;
+    }
+
+    public File getFile() {
+        return file;
+    }
 }
