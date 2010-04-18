@@ -11,12 +11,12 @@ import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginContainer
 import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.Upload
+import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
-import org.jfrog.build.api.BuildInfoConfigProperties
 
 class ArtifactoryPlugin implements Plugin<Project> {
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -166,6 +166,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
       }
     }
+    props.putAll(project.getGradle().getStartParameter().getProperties())
     return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
   }
 
