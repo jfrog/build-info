@@ -166,7 +166,6 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
       }
     }
-    props.putAll(project.getGradle().getStartParameter().getProperties())
     return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
   }
 
