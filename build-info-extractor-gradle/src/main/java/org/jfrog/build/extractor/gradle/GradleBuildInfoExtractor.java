@@ -245,11 +245,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                     }
                 } else {
                     DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                    Map<String, String> checksums = calculateChecksumsForFile(artifact.getFile());
-                    dependencyBuilder.type(artifact.getType()).id(depId)
-                            .scopes(newArrayList(configuration.getName())).
-                            md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
-                    dependencies.add(dependencyBuilder.build());
+                    File file = artifact.getFile();
+                    if (file != null && file.exists()) {
+                        Map<String, String> checksums = calculateChecksumsForFile(file);
+                        dependencyBuilder.type(artifact.getType()).id(depId)
+                                .scopes(newArrayList(configuration.getName())).
+                                md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                        dependencies.add(dependencyBuilder.build());
+                    }
                 }
             }
         }
