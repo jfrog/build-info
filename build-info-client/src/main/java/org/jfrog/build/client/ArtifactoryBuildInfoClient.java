@@ -22,7 +22,6 @@ import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -46,7 +45,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_RUL = "/api/build";
     private static final String VERSION_INFO_URL = "/api/system/version";
-    private static final int DEFAULT_CONNECTION_TIMEOUT = 120000;    // 2 Minutes
+    private static final int DEFAULT_CONNECTION_TIMEOUT = 120;    // 2 Minutes in seconds
 
     private final String artifactoryUrl;
     private final String username;
@@ -190,9 +189,9 @@ public class ArtifactoryBuildInfoClient {
     }
 
     /**
-     * Network timeout in milliseconds to use both for connection establishment and for unanswered requests.
+     * Network timeout in seconds to use both for connection establishment and for unanswered requests.
      *
-     * @param connectionTimeout Timeout in milliseconds.
+     * @param connectionTimeout Timeout in seconds.
      */
     public void setConnectionTimeout(int connectionTimeout) {
         this.connectionTimeout = connectionTimeout;
@@ -211,15 +210,9 @@ public class ArtifactoryBuildInfoClient {
             deploymentPathBuilder.append("/");
         }
         deploymentPathBuilder.append(details.artifactPath);
-        if (details.properties != null) {
-            for (Map.Entry<String, String> property : details.properties.entrySet()) {
-                deploymentPathBuilder.append(";").append(urlEncode(property.getKey()))
-                        .append("=").append(urlEncode(property.getValue()));
-            }
-        }
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
-        uploadFile(details.file, deploymentPath);
+        uploadFile(details, deploymentPath);
         uploadChecksums(details, deploymentPath);
     }
 
@@ -320,9 +313,16 @@ public class ArtifactoryBuildInfoClient {
         return URLEncoder.encode(value, "UTF-8");
     }
 
-    private void uploadFile(File file, String uploadUrl) throws IOException {
-        HttpPut httpPut = new HttpPut(uploadUrl);
-        FileEntity fileEntity = new FileEntity(file, "binary/octet-stream");
+    private void uploadFile(DeployDetails details, String uploadUrl) throws IOException {
+        StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
+        if (details.properties != null) {
+            for (Map.Entry<String, String> property : details.properties.entrySet()) {
+                deploymentPathBuilder.append(";").append(urlEncode(property.getKey()))
+                        .append("=").append(urlEncode(property.getValue()));
+            }
+        }
+        HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
+        FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = upload(httpPut, fileEntity);
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             throw new IOException("Failed to deploy file: " + statusLine.getReasonPhrase());

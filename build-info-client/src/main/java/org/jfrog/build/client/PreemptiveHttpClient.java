@@ -63,8 +63,9 @@ public class PreemptiveHttpClient {
 
     private DefaultHttpClient createHttpClient(String userName, String password, int timeout) {
         BasicHttpParams params = new BasicHttpParams();
-        HttpConnectionParams.setConnectionTimeout(params, timeout);
-        HttpConnectionParams.setSoTimeout(params, timeout);
+        int timeoutMilliSeconds = timeout * 1000;
+        HttpConnectionParams.setConnectionTimeout(params, timeoutMilliSeconds);
+        HttpConnectionParams.setSoTimeout(params, timeoutMilliSeconds);
         DefaultHttpClient client = new DefaultHttpClient(params);
 
         if (userName != null && !"".equals(userName)) {
