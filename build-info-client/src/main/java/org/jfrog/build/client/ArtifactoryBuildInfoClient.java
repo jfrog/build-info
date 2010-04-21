@@ -1,5 +1,7 @@
 package org.jfrog.build.client;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -203,21 +205,22 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public void deployArtifact(DeployDetails details) throws IOException {
-        StringBuilder deploymentPath = new StringBuilder(artifactoryUrl);
-        deploymentPath.append("/").append(details.targetRepository);
+        StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
+        deploymentPathBuilder.append("/").append(details.targetRepository);
         if (!details.artifactPath.startsWith("/")) {
-            deploymentPath.append("/");
+            deploymentPathBuilder.append("/");
         }
-        deploymentPath.append(details.artifactPath);
+        deploymentPathBuilder.append(details.artifactPath);
         if (details.properties != null) {
             for (Map.Entry<String, String> property : details.properties.entrySet()) {
-                deploymentPath.append(";").append(urlEncode(property.getKey()))
+                deploymentPathBuilder.append(";").append(urlEncode(property.getKey()))
                         .append("=").append(urlEncode(property.getValue()));
             }
         }
+        String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
-        uploadFile(details.file, deploymentPath.toString());
-        uploadChecksums(details.file, deploymentPath.toString());
+        uploadFile(details.file, deploymentPath);
+        uploadChecksums(details, deploymentPath);
     }
 
     /**
@@ -326,16 +329,12 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    public void uploadChecksums(File file, String uploadUrl) throws IOException {
-        Map<String, String> checksums;
-        try {
-            checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+    public void uploadChecksums(DeployDetails details, String uploadUrl) throws IOException {
+        Map<String, String> checksums = getChecksumMap(details);
+        String fileAbsolutePath = details.file.getAbsolutePath();
         String md5 = checksums.get("MD5");
         if (StringUtils.isNotBlank(md5)) {
-            log.debug("Uploading MD5 for file " + file.getAbsolutePath() + " : " + md5);
+            log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
             HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
             StringEntity md5StringEntity = new StringEntity(md5);
             StatusLine md5StatusLine = upload(putMd5, md5StringEntity);
@@ -345,7 +344,7 @@ public class ArtifactoryBuildInfoClient {
         }
         String sha1 = checksums.get("SHA1");
         if (StringUtils.isNotBlank(sha1)) {
-            log.debug("Uploading SHA1 for file " + file.getAbsolutePath() + " : " + sha1);
+            log.debug("Uploading SHA1 for file " + fileAbsolutePath + " : " + sha1);
             HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = upload(putSha1, sha1StringEntity);
@@ -353,6 +352,34 @@ public class ArtifactoryBuildInfoClient {
                 throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
             }
         }
+    }
+
+    private Map<String, String> getChecksumMap(DeployDetails details) throws IOException {
+        Map<String, String> checksums = Maps.newHashMap();
+
+        List<String> checksumTypeList = Lists.newArrayList();
+
+        if (StringUtils.isBlank(details.md5)) {
+            checksumTypeList.add("MD5");
+        } else {
+            checksums.put("MD5", details.md5);
+        }
+
+        if (StringUtils.isBlank(details.sha1)) {
+            checksumTypeList.add("SHA1");
+        } else {
+            checksums.put("SHA1", details.sha1);
+        }
+
+        if (!checksumTypeList.isEmpty()) {
+            try {
+                checksums.putAll(FileChecksumCalculator.calculateChecksums(details.file,
+                        checksumTypeList.toArray(new String[checksumTypeList.size()])));
+            } catch (NoSuchAlgorithmException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return checksums;
     }
 
     private StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
