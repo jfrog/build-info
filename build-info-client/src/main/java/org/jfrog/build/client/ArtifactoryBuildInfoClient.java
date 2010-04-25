@@ -65,13 +65,13 @@ public class ArtifactoryBuildInfoClient {
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_RUL = "/api/build";
     private static final String VERSION_INFO_URL = "/api/system/version";
-    private static final int DEFAULT_CONNECTION_TIMEOUT = 120;    // 2 Minutes in seconds
+    private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
 
     private final String artifactoryUrl;
     private final String username;
     private final String password;
     private ProxyConfiguration proxyConfiguration;
-    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     /**
      * The http client used for deploying artifacts and build info. Created and cached on the first deploy request.
      */
