@@ -41,6 +41,6 @@ public interface BuildInfoProperties {
      * Property to link the build back to the CI server that produced the build
      */
     String PROP_BUILD_URL = BUILD_INFO_PREFIX + "buildUrl";
-    String PROP_BUILD_AGENT = BUILD_INFO_PREFIX + "agent";
-    String PROP_BUILD_BUILD_AGENT_NAME = BUILD_INFO_PREFIX + "buildAgent";
+    String PROP_BUILD_AGENT = BUILD_INFO_PREFIX + "buildAgent"; //maven, gradle...
+    String PROP_AGENT = BUILD_INFO_PREFIX + "agent"; //hudson, teamcity...
 }

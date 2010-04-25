@@ -34,6 +34,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -56,6 +57,9 @@ import java.util.StringTokenizer;
  */
 public class ArtifactoryBuildInfoClient {
     private static final Log log = LogFactory.getLog(ArtifactoryBuildInfoClient.class);
+
+    private static final Version UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.3");
+    private static final Version MINIMAL_ARTIFACTORY_VERSION = new Version("2.2.3");
 
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
@@ -263,17 +267,25 @@ public class ArtifactoryBuildInfoClient {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
         mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
     }
 
     private String buildInfoToJsonString(Build buildInfo) throws IOException {
-        boolean isCompatibleArtifactory = isCompatibleArtifactory();
-        // prior to Artifactory V2.2.3 the build-info JSON did not contain the buildAgent.
-        // so it is set to null and removed from the build-info JSON string to avoid conflict.
-        // Artifactory version prior to 2.2.3 would fail on unknown property
+        Version version = getVersion();
+
+        boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
         if (!isCompatibleArtifactory) {
+            log.warn("Note: Please upgrade your Artifactory server. This plugin is designed to work with version " +
+                    MINIMAL_ARTIFACTORY_VERSION + " of Artifactory and above.");
+        }
+        //From Artifactory 2.2.3 we do need to discard new properties in order to avoid a server side exception
+        //on JSON parsing. Our JSON writer is configured to discard null values.
+        if (!isCompatibleArtifactory && !version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
             buildInfo.setBuildAgent(null);
+            buildInfo.setParentName(null);
+            buildInfo.setParentNumber(null);
         }
         JsonFactory jsonFactory = createJsonFactory();
         StringWriter writer = new StringWriter();
@@ -281,25 +293,16 @@ public class ArtifactoryBuildInfoClient {
         jsonGenerator.useDefaultPrettyPrinter();
         jsonGenerator.writeObject(buildInfo);
         String result = writer.getBuffer().toString();
-        if (!isCompatibleArtifactory) {
-            // remove the buildAgent from the JSON String itself.
-            result = removeBuildAgentFromJson(result);
-        }
         return result;
     }
 
-    private String removeBuildAgentFromJson(String result) {
-        result = StringUtils.remove(result, "\"buildAgent\" : null,");
-        return result;
-    }
-
-    private boolean isCompatibleArtifactory() throws IOException {
+    private Version getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
         PreemptiveHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            return false;
+            return Version.UNKNOWN;
         }
         String version = "2.2.2";
         HttpEntity httpEntity = response.getEntity();
@@ -310,19 +313,7 @@ public class ArtifactoryBuildInfoClient {
             log.debug("Version result: " + result);
             version = result.get("version").getTextValue();
         }
-        if (version.endsWith("SNAPSHOT")) {
-            return true;
-        }
-        StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
-        if (stringTokenizer.countTokens() == 3) {
-            int major = Integer.parseInt(stringTokenizer.nextToken());
-            int minor = Integer.parseInt(stringTokenizer.nextToken());
-            int miniminor = Integer.parseInt(stringTokenizer.nextToken());
-            if (major > 2 || minor > 2 || miniminor > 2) {
-                return true;
-            }
-        }
-        return false;
+        return new Version(version);
     }
 
     private String urlEncode(String value) throws UnsupportedEncodingException {
@@ -407,4 +398,58 @@ public class ArtifactoryBuildInfoClient {
         }
         return statusLine;
     }
+
+    static class Version {
+        static final Version UNKNOWN = new Version("0.0.0");
+
+        private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+
+        private final int[] numbers = {2, 2, 2};
+        private final boolean snapshot;
+
+        Version(String version) {
+            StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
+            if (stringTokenizer.countTokens() == 3) {
+                numbers[0] = Integer.parseInt(stringTokenizer.nextToken());
+                numbers[1] = Integer.parseInt(stringTokenizer.nextToken());
+                String miniminor = stringTokenizer.nextToken();
+                snapshot = miniminor.endsWith(SNAPSHOT_SUFFIX);
+                if (snapshot) {
+                    numbers[2] =
+                            Integer.parseInt(miniminor.substring(0, miniminor.length() - SNAPSHOT_SUFFIX.length()));
+                } else {
+                    numbers[2] = Integer.parseInt(miniminor);
+                }
+            } else {
+                throw new IllegalArgumentException("Version is expected to be in the format major.minor.miniminor");
+            }
+        }
+
+        boolean isSnapshot() {
+            return snapshot;
+        }
+
+        @SuppressWarnings({"SimplifiableIfStatement"})
+        boolean isAtLeast(Version version) {
+            if (isSnapshot() || isUnknown()) {
+                //Hack
+                return true;
+            }
+            return weight() >= version.weight();
+        }
+
+        boolean isUnknown() {
+            return weight() == UNKNOWN.weight();
+        }
+
+        int weight() {
+            return numbers[0] * 100 + numbers[1] * 10 + numbers[2];
+        }
+
+        @Override
+        public String toString() {
+            return numbers[0] + "." + numbers[1] + "." + numbers[2];
+        }
+    }
+
 }
