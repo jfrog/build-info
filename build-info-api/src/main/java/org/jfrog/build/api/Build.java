@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -20,7 +35,7 @@ public class Build extends BaseBuildBean {
 
     private String version = "1.0.1";
     private String name;
-    private long number;
+    private String number;
     @Deprecated
     private BuildType type;
     private BuildAgent buildAgent;
@@ -30,6 +45,9 @@ public class Build extends BaseBuildBean {
     private String principal;
     private String artifactoryPrincipal;
     private String url;
+    private String parentName;
+    private String parentNumber;
+    @Deprecated
     private String parentBuildId;
 
     @XStreamAlias(MODULES)
@@ -76,7 +94,7 @@ public class Build extends BaseBuildBean {
      *
      * @return Build number
      */
-    public long getNumber() {
+    public String getNumber() {
         return number;
     }
 
@@ -85,14 +103,51 @@ public class Build extends BaseBuildBean {
      *
      * @param number Build number
      */
-    public void setNumber(long number) {
+    public void setNumber(String number) {
         this.number = number;
+    }
+
+    /**
+     * Returns the name of the parent build
+     *
+     * @return Parent build name
+     */
+    public String getParentName() {
+        return parentName;
+    }
+
+    /**
+     * Sets the name of the parent build
+     *
+     * @param parentName Parent build number
+     */
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
+    }
+
+    /**
+     * Returns the number of the parent build
+     *
+     * @return Parent build number
+     */
+    public String getParentNumber() {
+        return parentNumber;
+    }
+
+    /**
+     * Sets the number of the parent build
+     *
+     * @param parentNumber Parent build number
+     */
+    public void setParentNumber(String parentNumber) {
+        this.parentNumber = parentNumber;
     }
 
     /**
      * Returns the type of the build
      *
      * @return Build type
+     * @deprecated Use {@link Build#getBuildAgent()} instead.
      */
     @Deprecated
     public BuildType getType() {
@@ -103,6 +158,7 @@ public class Build extends BaseBuildBean {
      * Sets the type of the build
      *
      * @param type Build type
+     * @deprecated Use {@link Build#setBuildAgent(BuildAgent)} instead.
      */
     @Deprecated
     public void setType(BuildType type) {
@@ -250,7 +306,9 @@ public class Build extends BaseBuildBean {
      * Returns the parent build ID of the build
      *
      * @return Build parent build ID
+     * @deprecated Use {@link org.jfrog.build.api.Build#getParentName()} and {@link Build#getParentNumber()} instead.
      */
+    @Deprecated
     public String getParentBuildId() {
         return parentBuildId;
     }
@@ -259,7 +317,10 @@ public class Build extends BaseBuildBean {
      * Sets the parent build ID of the build
      *
      * @param parentBuildId Build parent build ID
+     * @deprecated Use {@link org.jfrog.build.api.Build#setParentName(String)} and {@link Build#setParentNumber(String)}
+     *             instead.
      */
+    @Deprecated
     public void setParentBuildId(String parentBuildId) {
         this.parentBuildId = parentBuildId;
     }

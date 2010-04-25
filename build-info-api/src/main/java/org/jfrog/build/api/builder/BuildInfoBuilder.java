@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
@@ -24,7 +40,7 @@ public class BuildInfoBuilder {
     private String version = "1.0.0";
     private String name;
     private String started;
-    private long number;
+    private String number;
     private BuildType type = BuildType.GENERIC;
     private Agent agent = new Agent("", "");
     private BuildAgent buildAgent = new BuildAgent("", "");
@@ -32,7 +48,8 @@ public class BuildInfoBuilder {
     private String principal = "";
     private String artifactoryPrincipal = "";
     private String url = "";
-    private String parentBuildId = "";
+    private String parentName = "";
+    private String parentNumber = "";
     private List<Module> modules;
     private Properties properties;
 
@@ -48,6 +65,9 @@ public class BuildInfoBuilder {
     public Build build() {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Build must have a name");
+        }
+        if (StringUtils.isBlank(number)) {
+            throw new IllegalArgumentException("Build number must be set");
         }
         if (StringUtils.isBlank(started)) {
             throw new IllegalArgumentException("Build start time must be set");
@@ -71,7 +91,8 @@ public class BuildInfoBuilder {
         build.setPrincipal(principal);
         build.setArtifactoryPrincipal(artifactoryPrincipal);
         build.setUrl(url);
-        build.setParentBuildId(parentBuildId);
+        build.setParentName(parentName);
+        build.setParentNumber(parentNumber);
         build.setModules(modules);
         build.setProperties(properties);
         return build;
@@ -105,7 +126,7 @@ public class BuildInfoBuilder {
      * @param number Build number
      * @return Builder instance
      */
-    public BuildInfoBuilder number(long number) {
+    public BuildInfoBuilder number(String number) {
         this.number = number;
         return this;
     }
@@ -210,14 +231,26 @@ public class BuildInfoBuilder {
         return this;
     }
 
+
     /**
-     * Sets the parent build ID of the build
+     * Sets the parent build name of the build
      *
-     * @param parentBuildId Build parent build ID
+     * @param parentName Build parent build name
      * @return Builder instance
      */
-    public BuildInfoBuilder parentBuildId(String parentBuildId) {
-        this.parentBuildId = parentBuildId;
+    public BuildInfoBuilder parentName(String parentName) {
+        this.parentName = parentName;
+        return this;
+    }
+
+    /**
+     * Sets the parent build number of the build
+     *
+     * @param parentNumber Build parent build number
+     * @return Builder instance
+     */
+    public BuildInfoBuilder parentNumber(String parentNumber) {
+        this.parentNumber = parentNumber;
         return this;
     }
 
