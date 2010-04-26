@@ -53,7 +53,7 @@ public class ArtifactoryPluginUtils {
             }
         }
         if (project.hasProperty(propertyName)) {
-            return (String) project.property(propertyName);
+            return project.property(propertyName).toString();
         } else {
             project = project.getParent();
             if (project == null) {
