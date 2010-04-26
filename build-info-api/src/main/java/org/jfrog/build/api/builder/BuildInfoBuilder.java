@@ -50,6 +50,7 @@ public class BuildInfoBuilder {
     private String url = "";
     private String parentName = "";
     private String parentNumber = "";
+    private String vcsRevision = "";
     private List<Module> modules;
     private Properties properties;
 
@@ -251,6 +252,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder parentNumber(String parentNumber) {
         this.parentNumber = parentNumber;
+        return this;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcsRevision The vcs revision
+     * @return Builder instance
+     */
+    public BuildInfoBuilder vcsRevision(String vcsRevision) {
+        this.vcsRevision = vcsRevision;
         return this;
     }
 

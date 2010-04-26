@@ -286,6 +286,7 @@ public class ArtifactoryBuildInfoClient {
             buildInfo.setBuildAgent(null);
             buildInfo.setParentName(null);
             buildInfo.setParentNumber(null);
+            buildInfo.setVcsRevision(null);
         }
         JsonFactory jsonFactory = createJsonFactory();
         StringWriter writer = new StringWriter();
@@ -302,7 +303,7 @@ public class ArtifactoryBuildInfoClient {
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            return Version.UNKNOWN;
+            return Version.NOT_FOUND;
         }
         String version = "2.2.2";
         HttpEntity httpEntity = response.getEntity();
@@ -400,16 +401,16 @@ public class ArtifactoryBuildInfoClient {
     }
 
     static class Version {
-        static final Version UNKNOWN = new Version("0.0.0");
+        static final Version NOT_FOUND = new Version("0.0.0");
 
         private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
         private final int[] numbers = {2, 2, 2};
-        private final boolean snapshot;
+        private boolean snapshot;
 
         Version(String version) {
             StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
-            if (stringTokenizer.countTokens() == 3) {
+            try {
                 numbers[0] = Integer.parseInt(stringTokenizer.nextToken());
                 numbers[1] = Integer.parseInt(stringTokenizer.nextToken());
                 String miniminor = stringTokenizer.nextToken();
@@ -420,8 +421,10 @@ public class ArtifactoryBuildInfoClient {
                 } else {
                     numbers[2] = Integer.parseInt(miniminor);
                 }
-            } else {
-                throw new IllegalArgumentException("Version is expected to be in the format major.minor.miniminor");
+            } catch (NumberFormatException nfe) {
+                snapshot = true;
+            } catch (ArrayIndexOutOfBoundsException aioobe) {
+                snapshot = true;
             }
         }
 
@@ -431,15 +434,15 @@ public class ArtifactoryBuildInfoClient {
 
         @SuppressWarnings({"SimplifiableIfStatement"})
         boolean isAtLeast(Version version) {
-            if (isSnapshot() || isUnknown()) {
+            if (isSnapshot() || isNotFound()) {
                 //Hack
                 return true;
             }
             return weight() >= version.weight();
         }
 
-        boolean isUnknown() {
-            return weight() == UNKNOWN.weight();
+        boolean isNotFound() {
+            return weight() == NOT_FOUND.weight();
         }
 
         int weight() {

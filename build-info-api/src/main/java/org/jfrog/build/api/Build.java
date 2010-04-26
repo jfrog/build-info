@@ -47,6 +47,7 @@ public class Build extends BaseBuildBean {
     private String url;
     private String parentName;
     private String parentNumber;
+    private String vcsRevision;
     @Deprecated
     private String parentBuildId;
 
@@ -141,6 +142,24 @@ public class Build extends BaseBuildBean {
      */
     public void setParentNumber(String parentNumber) {
         this.parentNumber = parentNumber;
+    }
+
+    /**
+     * Returns the vcs revision (format is vcs specific)
+     *
+     * @return The vcs revision
+     */
+    public String getVcsRevision() {
+        return vcsRevision;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcsRevision The vcs revision
+     */
+    public void setVcsRevision(String vcsRevision) {
+        this.vcsRevision = vcsRevision;
     }
 
     /**

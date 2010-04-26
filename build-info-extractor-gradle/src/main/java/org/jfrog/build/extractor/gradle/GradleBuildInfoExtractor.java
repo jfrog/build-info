@@ -75,6 +75,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     private static final String MD5 = "md5";
     private Properties gradleProps;
     private Properties startParamProps;
+    private Properties buildInfoProps;
 
     public Properties getGradleProps() {
         return gradleProps;
@@ -87,8 +88,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     GradleBuildInfoExtractor(Project rootProject) {
         StartParameter startParameter = rootProject.getGradle().getStartParameter();
         startParamProps = new Properties();
+        buildInfoProps = new Properties();
         startParamProps.putAll(startParameter.getProjectProperties());
+        buildInfoProps.putAll(startParamProps);
         gradleProps = BuildInfoExtractorUtils.getBuildInfoProperties();
+        buildInfoProps.putAll(gradleProps);
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
@@ -100,7 +104,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     public Build extract(BuildInfoRecorderTask buildInfoTask) {
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
-        String buildName = getStartParamProps().getProperty(PROP_BUILD_NAME);
+        String buildName = buildInfoProps.getProperty(PROP_BUILD_NAME);
         if (buildName == null) {
             buildName = rootProject.getName();
         }
@@ -108,7 +112,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Date startedDate = new Date();
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
-        String buildNumber = getStartParamProps().getProperty(PROP_BUILD_NUMBER);
+        String buildNumber = buildInfoProps.getProperty(PROP_BUILD_NUMBER);
         if (buildNumber == null) {
             String message = "Build number not set, please provide system variable \'" + PROP_BUILD_NUMBER + "\'";
             log.error(message);
@@ -117,7 +121,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
         String agentString =
-                getStartParamProps().getProperty(BuildInfoProperties.PROP_BUILD_AGENT, buildAgent.toString());
+                buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, buildAgent.toString());
         Agent agent = new Agent(agentString);
         buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
@@ -128,13 +132,15 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
         }
         buildInfoBuilder.addModule(extractModule(buildInfoTask.getConfiguration(), rootProject));
-        String parentName = getStartParamProps().getProperty(PROP_PARENT_BUILD_NAME);
-        String parentNumber = getStartParamProps().getProperty(PROP_PARENT_BUILD_NUMBER);
+        String parentName = buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME);
+        String parentNumber = buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER);
         if (parentName != null && parentNumber != null) {
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        String buildUrl = getStartParamProps().getProperty(BuildInfoProperties.PROP_BUILD_URL);
+        //TODO: [by yl]
+        //add the agent and the vcs revision
+        String buildUrl = buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
         }
@@ -181,9 +187,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             if (StringUtils.isNotBlank(from.getClassifier())) {
                                 type = type + "-" + from.getClassifier();
                             }
-                            Map<String, String> checkSums = calculateChecksumsForFile(from.getFile());
-                            return new ArtifactBuilder(from.getFile().getName()).type(type)
-                                    .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
+                            File artifactFile = from.getFile();
+                            if (artifactFile != null && artifactFile.exists()) {
+                                Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
+                                return new ArtifactBuilder(from.getFile().getName()).type(type)
+                                        .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
+                            }
                         } catch (Exception e) {
                             log.error("Error during artifact calculation: ", e);
                         }
