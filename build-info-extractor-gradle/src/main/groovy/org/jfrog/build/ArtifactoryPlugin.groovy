@@ -172,6 +172,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
     if (buildParentNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
     if (buildParentName) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
+    if (vcsRevision) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {

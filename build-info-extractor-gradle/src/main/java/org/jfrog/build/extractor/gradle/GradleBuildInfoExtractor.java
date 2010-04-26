@@ -138,11 +138,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        //TODO: [by yl]
-        //add the agent and the vcs revision
         String buildUrl = buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
+        }
+        String vcsRevision = buildInfoProps.getProperty(BuildInfoProperties.PROP_VCS_REVISION);
+        if (StringUtils.isNotBlank(vcsRevision)) {
+            buildInfoBuilder.vcsRevision(vcsRevision);
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(gradleProps);

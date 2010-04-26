@@ -24,7 +24,7 @@ class PropertyListener extends BuildAdapter implements BuildListener {
   def void settingsEvaluated(Settings settings) {
     Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
     projProps.putAll([
-            "artifactory.contextUrl": "http://localhost:8081/artifactory",
+            "artifactory.contextUrl": "http://localhost:8080/artifactory",
             "artifactory.resolve.repoKey": "repo",
             "artifactory.publish.repoKey": "libs-releases-local",
             "artifactory.publish.username": "admin",
