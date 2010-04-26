@@ -64,7 +64,7 @@ public class BuildInfoBuilderTest {
         assertEquals(build.getParentNumber(), "", "Unexpected default build parent build number.");
         assertEquals(build.getModules().size(), 0, "Default build modules size should be 0.");
         assertEquals(build.getProperties().size(), 0, "Default properties size should be 0.");
-        assertEquals(build.getVersion(), "", "Unexpected default vcs revision.");
+        assertEquals(build.getVersion(), "1.0.0", "Unexpected default vcs revision.");
     }
 
     /**
