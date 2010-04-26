@@ -106,6 +106,14 @@ public class DeployDetails {
             deployDetails.properties.put(key, value);
             return this;
         }
+
+        public Builder addProperties(Map<String, String> propertiesToAdd) {
+            if (deployDetails.properties == null) {
+                deployDetails.properties = new HashMap<String, String>();
+            }
+            deployDetails.properties.putAll(propertiesToAdd);
+            return this;
+        }
     }
 
 }
