@@ -28,6 +28,8 @@ import java.util.List;
 @XStreamAlias(BuildBean.DEPENDENCY)
 public class Dependency extends BaseBuildFileBean {
 
+    public static final String SCOPE_BUILD = "_build_";
+
     private String id;
     private List<String> scopes;
     private List<String> requiredBy;
