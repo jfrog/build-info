@@ -20,6 +20,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
@@ -104,7 +105,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     public Build extract(BuildInfoRecorderTask buildInfoTask) {
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
-        String buildName = buildInfoProps.getProperty(PROP_BUILD_NAME);
+        String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
         if (buildName == null) {
             buildName = rootProject.getName();
         }
@@ -112,16 +113,19 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Date startedDate = new Date();
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
-        String buildNumber = buildInfoProps.getProperty(PROP_BUILD_NUMBER);
+        String buildNumber = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NUMBER, rootProject);
         if (buildNumber == null) {
             String message = "Build number not set, please provide system variable \'" + PROP_BUILD_NUMBER + "\'";
-            log.error(message);
+            throw new GradleException(message);
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
-        String agentString =
-                buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, buildAgent.toString());
+        String agentString = buildAgent.toString();
+        String buildAgentProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, rootProject);
+        if (StringUtils.isNotBlank(buildAgentProp)) {
+            agentString = buildAgentProp;
+        }
         Agent agent = new Agent(agentString);
         buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
@@ -132,17 +136,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
         }
         buildInfoBuilder.addModule(extractModule(buildInfoTask.getConfiguration(), rootProject));
-        String parentName = buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME);
-        String parentNumber = buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER);
+        String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
+        String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
         if (parentName != null && parentNumber != null) {
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        String buildUrl = buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
+        String buildUrl = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_URL, rootProject);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
         }
-        String vcsRevision = buildInfoProps.getProperty(BuildInfoProperties.PROP_VCS_REVISION);
+        String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, rootProject);
         if (StringUtils.isNotBlank(vcsRevision)) {
             buildInfoBuilder.vcsRevision(vcsRevision);
         }

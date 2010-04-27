@@ -163,7 +163,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
   }
 
   String appendProperties(String uploadUrl, Project project) {
-    Properties props = new Properties(System.getProperties())
+    Properties props = new Properties()
+    props.putAll(System.getProperties())
     String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
     if (buildNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
