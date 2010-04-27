@@ -42,6 +42,11 @@ subprojects {
     classifier = 'sources'
     from sourceSets.main.java
   }
+
+  artifacts {
+    archives sourceJar
+  }
+
 }
 
 project(':build-info-extractor-gradle') {
