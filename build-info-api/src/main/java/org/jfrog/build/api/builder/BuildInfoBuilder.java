@@ -41,16 +41,16 @@ public class BuildInfoBuilder {
     private String name;
     private String started;
     private String number;
-    private BuildType type = BuildType.GENERIC;
-    private Agent agent = new Agent("", "");
-    private BuildAgent buildAgent = new BuildAgent("", "");
-    private long durationMillis = 0L;
-    private String principal = "";
-    private String artifactoryPrincipal = "";
-    private String url = "";
-    private String parentName = "";
-    private String parentNumber = "";
-    private String vcsRevision = "";
+    private BuildType type;
+    private Agent agent;
+    private BuildAgent buildAgent;
+    private long durationMillis;
+    private String principal;
+    private String artifactoryPrincipal;
+    private String url;
+    private String parentName;
+    private String parentNumber;
+    private String vcsRevision;
     private List<Module> modules;
     private Properties properties;
 
@@ -96,6 +96,7 @@ public class BuildInfoBuilder {
         build.setParentNumber(parentNumber);
         build.setModules(modules);
         build.setProperties(properties);
+        build.setVcsRevision(vcsRevision);
         return build;
     }
 
