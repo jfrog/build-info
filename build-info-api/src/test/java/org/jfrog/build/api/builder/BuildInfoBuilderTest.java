@@ -30,7 +30,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import static org.jfrog.build.api.BuildType.GENERIC;
 import static org.jfrog.build.api.BuildType.GRADLE;
 import static org.testng.Assert.*;
 
@@ -49,22 +48,19 @@ public class BuildInfoBuilderTest {
         Build build = new BuildInfoBuilder("test").number("4").started("test").build();
         assertEquals(build.getVersion(), "1.0.0", "Unexpected default build version.");
         assertEquals(build.getNumber(), "4", "Unexpected default build number.");
-        assertEquals(build.getType(), GENERIC, "Unexpected default build type.");
+        assertNull(build.getType(), "Default build type should be null.");
 
-        Agent agent = build.getAgent();
-        assertNotNull(agent, "Default build agent should not be null.");
-        assertEquals(agent.getName(), "", "Unexpected default build agent name.");
-        assertEquals(agent.getVersion(), "", "Unexpected default build agent version.");
+        assertNull(build.getAgent(), "Default build agent should be null.");
 
-        assertEquals(build.getDurationMillis(), 0L, "Unexpected default build duration millis.");
-        assertEquals(build.getPrincipal(), "", "Unexpected default build principal.");
-        assertEquals(build.getArtifactoryPrincipal(), "", "Unexpected default build artifactory principal.");
-        assertEquals(build.getUrl(), "", "Unexpected default build URL.");
-        assertEquals(build.getParentName(), "", "Unexpected default build parent build name.");
-        assertEquals(build.getParentNumber(), "", "Unexpected default build parent build number.");
-        assertEquals(build.getModules().size(), 0, "Default build modules size should be 0.");
-        assertEquals(build.getProperties().size(), 0, "Default properties size should be 0.");
-        assertEquals(build.getVersion(), "1.0.0", "Unexpected default vcs revision.");
+        assertEquals(build.getDurationMillis(), 0, "Default build duration millis should be zero.");
+        assertNull(build.getPrincipal(), "Default build principal should be null.");
+        assertNull(build.getArtifactoryPrincipal(), "Default build artifactory principal should be null.");
+        assertNull(build.getUrl(), "Default build URL should be null.");
+        assertNull(build.getParentName(), "Default build parent build name should be null.");
+        assertNull(build.getParentNumber(), "Default build parent build number should be null.");
+        assertNull(build.getModules(), "Default build modules should be null.");
+        assertNull(build.getProperties(), "Default properties should be null.");
+        assertNull(build.getVcsRevision(), "Default vcs revision should be null.");
     }
 
     /**

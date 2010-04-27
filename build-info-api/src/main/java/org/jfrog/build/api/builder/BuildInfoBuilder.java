@@ -25,7 +25,6 @@ import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -72,12 +71,6 @@ public class BuildInfoBuilder {
         }
         if (StringUtils.isBlank(started)) {
             throw new IllegalArgumentException("Build start time must be set");
-        }
-        if (modules == null) {
-            modules = Collections.emptyList();
-        }
-        if (properties == null) {
-            properties = new Properties();
         }
 
         Build build = new Build();

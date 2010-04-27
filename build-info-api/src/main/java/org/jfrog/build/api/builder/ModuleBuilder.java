@@ -21,7 +21,6 @@ import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -43,12 +42,6 @@ public class ModuleBuilder {
      * @return Assembled module
      */
     public Module build() {
-        if (artifacts == null) {
-            artifacts = Collections.emptyList();
-        }
-        if (dependencies == null) {
-            dependencies = Collections.emptyList();
-        }
         Module module = new Module();
         module.setId(id);
         module.setArtifacts(artifacts);
