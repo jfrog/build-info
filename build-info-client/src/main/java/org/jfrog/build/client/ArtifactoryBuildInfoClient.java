@@ -288,6 +288,10 @@ public class ArtifactoryBuildInfoClient {
             buildInfo.setParentNumber(null);
             buildInfo.setVcsRevision(null);
         }
+        return toJsonString(buildInfo);
+    }
+
+    String toJsonString(Build buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
