@@ -36,7 +36,7 @@ import java.util.Properties;
  */
 public class BuildInfoBuilder {
 
-    private String version = "1.0.0";
+    private String version;
     private String name;
     private String started;
     private String number;
@@ -74,7 +74,9 @@ public class BuildInfoBuilder {
         }
 
         Build build = new Build();
-        build.setVersion(version);
+        if (StringUtils.isNotBlank(version)) {
+            build.setVersion(version);
+        }
         build.setName(name);
         build.setNumber(number);
         build.setType(type);

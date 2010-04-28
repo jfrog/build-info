@@ -47,12 +47,6 @@ public class ArtifactBuilder {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Artifact must have a name");
         }
-        if (md5 == null) {
-            md5 = "";
-        }
-        if (sha1 == null) {
-            sha1 = "";
-        }
         Artifact artifact = new Artifact();
         artifact.setName(name);
         artifact.setType(type);
