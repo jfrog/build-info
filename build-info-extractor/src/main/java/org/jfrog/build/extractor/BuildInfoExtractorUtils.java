@@ -91,6 +91,7 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
+    //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
     private static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
