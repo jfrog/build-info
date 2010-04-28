@@ -1,3 +1,18 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -18,16 +33,22 @@ public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    private String version = "1.0.0";
+    private String version = "1.0.1";
     private String name;
-    private long number;
+    private String number;
+    @Deprecated
     private BuildType type;
+    private BuildAgent buildAgent;
     private Agent agent;
     private String started;
     private long durationMillis;
     private String principal;
     private String artifactoryPrincipal;
     private String url;
+    private String parentName;
+    private String parentNumber;
+    private String vcsRevision;
+    @Deprecated
     private String parentBuildId;
 
     @XStreamAlias(MODULES)
@@ -74,7 +95,7 @@ public class Build extends BaseBuildBean {
      *
      * @return Build number
      */
-    public long getNumber() {
+    public String getNumber() {
         return number;
     }
 
@@ -83,15 +104,71 @@ public class Build extends BaseBuildBean {
      *
      * @param number Build number
      */
-    public void setNumber(long number) {
+    public void setNumber(String number) {
         this.number = number;
+    }
+
+    /**
+     * Returns the name of the parent build
+     *
+     * @return Parent build name
+     */
+    public String getParentName() {
+        return parentName;
+    }
+
+    /**
+     * Sets the name of the parent build
+     *
+     * @param parentName Parent build number
+     */
+    public void setParentName(String parentName) {
+        this.parentName = parentName;
+    }
+
+    /**
+     * Returns the number of the parent build
+     *
+     * @return Parent build number
+     */
+    public String getParentNumber() {
+        return parentNumber;
+    }
+
+    /**
+     * Sets the number of the parent build
+     *
+     * @param parentNumber Parent build number
+     */
+    public void setParentNumber(String parentNumber) {
+        this.parentNumber = parentNumber;
+    }
+
+    /**
+     * Returns the vcs revision (format is vcs specific)
+     *
+     * @return The vcs revision
+     */
+    public String getVcsRevision() {
+        return vcsRevision;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcsRevision The vcs revision
+     */
+    public void setVcsRevision(String vcsRevision) {
+        this.vcsRevision = vcsRevision;
     }
 
     /**
      * Returns the type of the build
      *
      * @return Build type
+     * @deprecated Use {@link Build#getBuildAgent()} instead.
      */
+    @Deprecated
     public BuildType getType() {
         return type;
     }
@@ -100,27 +177,48 @@ public class Build extends BaseBuildBean {
      * Sets the type of the build
      *
      * @param type Build type
+     * @deprecated Use {@link Build#setBuildAgent(BuildAgent)} instead.
      */
+    @Deprecated
     public void setType(BuildType type) {
         this.type = type;
     }
 
     /**
-     * Returns the agent of the build
+     * Returns the agent that triggered the build (e.g. Hudson, TeamCity etc.). In case that the build was triggered by
+     * the build agent itself, this value would be equal to the {@link getBuildAgent}
      *
-     * @return Build agent
+     * @return Triggering agent
      */
     public Agent getAgent() {
         return agent;
     }
 
     /**
-     * Sets the agent of the build
+     * Sets the agent that triggered the build
      *
-     * @param agent Build agent
+     * @param agent Triggering agent
      */
     public void setAgent(Agent agent) {
         this.agent = agent;
+    }
+
+    /**
+     * Returns the agent that executed the build (e.g. Maven, Ant/Ivy, Gradle etc.)
+     *
+     * @return Build agent
+     */
+    public BuildAgent getBuildAgent() {
+        return buildAgent;
+    }
+
+    /**
+     * Sets the agent that executed the build
+     *
+     * @param agent Executing agent
+     */
+    public void setBuildAgent(BuildAgent buildAgent) {
+        this.buildAgent = buildAgent;
     }
 
     /**
@@ -227,7 +325,9 @@ public class Build extends BaseBuildBean {
      * Returns the parent build ID of the build
      *
      * @return Build parent build ID
+     * @deprecated Use {@link org.jfrog.build.api.Build#getParentName()} and {@link Build#getParentNumber()} instead.
      */
+    @Deprecated
     public String getParentBuildId() {
         return parentBuildId;
     }
@@ -236,7 +336,10 @@ public class Build extends BaseBuildBean {
      * Sets the parent build ID of the build
      *
      * @param parentBuildId Build parent build ID
+     * @deprecated Use {@link org.jfrog.build.api.Build#setParentName(String)} and {@link Build#setParentNumber(String)}
+     *             instead.
      */
+    @Deprecated
     public void setParentBuildId(String parentBuildId) {
         this.parentBuildId = parentBuildId;
     }

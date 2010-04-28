@@ -1,9 +1,24 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
-import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.model.Model;
@@ -12,6 +27,7 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -29,7 +45,7 @@ import java.util.Set;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, String> {
+public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build>, ExecutionListener {
 
     @Requirement
     private Logger logger;
@@ -44,14 +60,12 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         wrappedListener = executionListener;
     }
 
-    @Override
     public void projectDiscoveryStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectDiscoveryStarted(event);
         }
     }
 
-    @Override
     public void sessionStarted(ExecutionEvent event) {
         initBuildInfo();
 
@@ -60,21 +74,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    @Override
     public void sessionEnded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
     }
 
-    @Override
     public void projectSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectSkipped(event);
         }
     }
 
-    @Override
     public void projectStarted(ExecutionEvent event) {
         MavenProject project = event.getProject();
         initModule(project);
@@ -84,62 +95,54 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    @Override
     public void projectSucceeded(ExecutionEvent event) {
-        extractArtifactsAndDependencies(event);
-        finalizeAndAddModule(event);
+        MavenProject project = event.getProject();
+        extract(project);
 
         if (wrappedListener != null) {
             wrappedListener.projectSucceeded(event);
         }
     }
 
-    @Override
     public void projectFailed(ExecutionEvent event) {
-        extractArtifactsAndDependencies(event);
-        finalizeAndAddModule(event);
+        MavenProject context = event.getProject();
+        extract(context);
 
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
         }
     }
 
-    @Override
     public void forkStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkStarted(event);
         }
     }
 
-    @Override
     public void forkSucceeded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkSucceeded(event);
         }
     }
 
-    @Override
     public void forkFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkFailed(event);
         }
     }
 
-    @Override
     public void mojoSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoSkipped(event);
         }
     }
 
-    @Override
     public void mojoStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoStarted(event);
         }
     }
 
-    @Override
     public void mojoSucceeded(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
@@ -153,7 +156,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    @Override
     public void mojoFailed(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
@@ -185,8 +187,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         currentModuleDependencies = new HashSet<Artifact>();
     }
 
-    private void extractArtifactsAndDependencies(ExecutionEvent event) {
-        MavenProject project = event.getProject();
+    private void extractArtifactsAndDependencies(MavenProject project) {
         if (project == null) {
             logger.warn("Skipping Artifactory Build-Info artifact and dependency extraction: Null project.");
             return;
@@ -223,8 +224,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    private void finalizeAndAddModule(ExecutionEvent event) {
-        addFilesToCurrentModule(event);
+    private void finalizeAndAddModule(MavenProject project) {
+        addFilesToCurrentModule(project);
 
         currentModule = null;
 
@@ -232,18 +233,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         currentModuleDependencies = null;
     }
 
-    private void addFilesToCurrentModule(ExecutionEvent event) {
+    private void addFilesToCurrentModule(MavenProject project) {
         if (currentModule == null) {
             logger.warn("Skipping Artifactory Build-Info module finalization: Null current module.");
             return;
         }
-        addArtifactsToCurrentModule(event);
+        addArtifactsToCurrentModule(project);
         addDependenciesToCurrentModule();
 
         buildInfoBuilder.addModule(currentModule.build());
     }
 
-    private void addArtifactsToCurrentModule(ExecutionEvent event) {
+    private void addArtifactsToCurrentModule(MavenProject project) {
         if (currentModuleArtifacts == null) {
             logger.warn("Skipping Artifactory Build-Info module artifact addition: Null current module artifact list.");
             return;
@@ -258,7 +259,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (!isPomProject(moduleArtifact)) {
                 for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
                     if (metadata instanceof ProjectArtifactMetadata) {
-                        Model model = event.getProject().getModel();
+                        Model model = project.getModel();
                         if (model != null) {
                             File pomFile = model.getPomFile();
                             setArtifactChecksums(pomFile, artifactBuilder);
@@ -319,7 +320,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    public String extract(ExecutionEvent context) {
-        throw new UnsupportedOperationException("Implement me");
+    public Build extract(MavenProject context) {
+        extractArtifactsAndDependencies(context);
+        finalizeAndAddModule(context);
+        return buildInfoBuilder.build();
     }
 }

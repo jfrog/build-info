@@ -1,14 +1,30 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 
 import java.text.SimpleDateFormat;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -20,17 +36,20 @@ import java.util.Properties;
  */
 public class BuildInfoBuilder {
 
-    private String version = "1.0.0";
+    private String version;
     private String name;
     private String started;
-    private long number;
-    private BuildType type = BuildType.GENERIC;
-    private Agent agent = new Agent("", "");
-    private long durationMillis = 0L;
-    private String principal = "";
-    private String artifactoryPrincipal = "";
-    private String url = "";
-    private String parentBuildId = "";
+    private String number;
+    private BuildType type;
+    private Agent agent;
+    private BuildAgent buildAgent;
+    private long durationMillis;
+    private String principal;
+    private String artifactoryPrincipal;
+    private String url;
+    private String parentName;
+    private String parentNumber;
+    private String vcsRevision;
     private List<Module> modules;
     private Properties properties;
 
@@ -47,30 +66,32 @@ public class BuildInfoBuilder {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Build must have a name");
         }
+        if (StringUtils.isBlank(number)) {
+            throw new IllegalArgumentException("Build number must be set");
+        }
         if (StringUtils.isBlank(started)) {
             throw new IllegalArgumentException("Build start time must be set");
         }
-        if (modules == null) {
-            modules = Collections.emptyList();
-        }
-        if (properties == null) {
-            properties = new Properties();
-        }
 
         Build build = new Build();
-        build.setVersion(version);
+        if (StringUtils.isNotBlank(version)) {
+            build.setVersion(version);
+        }
         build.setName(name);
         build.setNumber(number);
         build.setType(type);
         build.setAgent(agent);
+        build.setBuildAgent(buildAgent);
         build.setStarted(started);
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
         build.setArtifactoryPrincipal(artifactoryPrincipal);
         build.setUrl(url);
-        build.setParentBuildId(parentBuildId);
+        build.setParentName(parentName);
+        build.setParentNumber(parentNumber);
         build.setModules(modules);
         build.setProperties(properties);
+        build.setVcsRevision(vcsRevision);
         return build;
     }
 
@@ -102,7 +123,7 @@ public class BuildInfoBuilder {
      * @param number Build number
      * @return Builder instance
      */
-    public BuildInfoBuilder number(long number) {
+    public BuildInfoBuilder number(String number) {
         this.number = number;
         return this;
     }
@@ -126,6 +147,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder agent(Agent agent) {
         this.agent = agent;
+        return this;
+    }
+
+    /**
+     * Sets the build agent of the build
+     *
+     * @param buildAgent The build agent
+     * @return Builder instance
+     */
+    public BuildInfoBuilder buildAgent(BuildAgent buildAgent) {
+        this.buildAgent = buildAgent;
         return this;
     }
 
@@ -196,14 +228,37 @@ public class BuildInfoBuilder {
         return this;
     }
 
+
     /**
-     * Sets the parent build ID of the build
+     * Sets the parent build name of the build
      *
-     * @param parentBuildId Build parent build ID
+     * @param parentName Build parent build name
      * @return Builder instance
      */
-    public BuildInfoBuilder parentBuildId(String parentBuildId) {
-        this.parentBuildId = parentBuildId;
+    public BuildInfoBuilder parentName(String parentName) {
+        this.parentName = parentName;
+        return this;
+    }
+
+    /**
+     * Sets the parent build number of the build
+     *
+     * @param parentNumber Build parent build number
+     * @return Builder instance
+     */
+    public BuildInfoBuilder parentNumber(String parentNumber) {
+        this.parentNumber = parentNumber;
+        return this;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcsRevision The vcs revision
+     * @return Builder instance
+     */
+    public BuildInfoBuilder vcsRevision(String vcsRevision) {
+        this.vcsRevision = vcsRevision;
         return this;
     }
 

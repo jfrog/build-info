@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang.StringUtils;
@@ -30,12 +46,6 @@ public class ArtifactBuilder {
     public Artifact build() {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Artifact must have a name");
-        }
-        if (md5 == null) {
-            md5 = "";
-        }
-        if (sha1 == null) {
-            sha1 = "";
         }
         Artifact artifact = new Artifact();
         artifact.setName(name);
