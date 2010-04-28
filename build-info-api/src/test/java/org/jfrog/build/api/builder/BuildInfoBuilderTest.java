@@ -46,7 +46,7 @@ public class BuildInfoBuilderTest {
      */
     public void testDefaultBuild() {
         Build build = new BuildInfoBuilder("test").number("4").started("test").build();
-        assertEquals(build.getVersion(), "1.0.0", "Unexpected default build version.");
+        assertEquals(build.getVersion(), "1.0.1", "Unexpected default build version.");
         assertEquals(build.getNumber(), "4", "Unexpected default build number.");
         assertNull(build.getType(), "Default build type should be null.");
 

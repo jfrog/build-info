@@ -38,9 +38,9 @@ public class ArtifactBuilderTest {
         Artifact artifact = new ArtifactBuilder("name").build();
 
         assertEquals(artifact.getName(), "name", "Unexpected artifact name.");
-        assertNull(artifact.getType(), "Unexpected default artifact type.");
-        assertEquals(artifact.getSha1(), "", "Unexpected default artifact SHA1 checksum.");
-        assertEquals(artifact.getMd5(), "", "Unexpected default artifact MD5 checksum.");
+        assertNull(artifact.getType(), "Default artifact type.");
+        assertNull(artifact.getSha1(), "Default artifact SHA1 checksum should be null.");
+        assertNull(artifact.getMd5(), "Default artifact MD5 checksum should be null.");
         assertNull(artifact.getProperties(), "Default artifact properties should be null.");
     }
 
