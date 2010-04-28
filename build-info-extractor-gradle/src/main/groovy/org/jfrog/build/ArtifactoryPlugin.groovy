@@ -123,7 +123,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials("Artifactory Realm", host, user, password)
                 name = 'artifactory'
                 addIvyPattern "$uploadUrl/[organisation]/[module]/[revision]/ivy-[revision].xml"
-                addArtifactPattern "$uploadUrl/[organisation]/[module]/[revision]/[module]-[revision]-(-[classifier]).[ext]"
+                addArtifactPattern "$uploadUrl/[organisation]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]"
                 descriptor = 'optional'
                 checkmodified = true
                 m2compatible = true
