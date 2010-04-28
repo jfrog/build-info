@@ -38,14 +38,14 @@ subprojects {
     testCompile group: 'org.testng', name: 'testng', version: '5.11', classifier: 'jdk15'
   }
 
-  /*task sourceJar(type: Jar) {
+  task sourceJar(type: Jar) {
     classifier = 'sources'
     from sourceSets.main.java
   }
 
   artifacts {
     archives sourceJar
-  }*/
+  }
 
 }
 
