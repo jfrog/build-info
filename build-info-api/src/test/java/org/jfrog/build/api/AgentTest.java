@@ -36,7 +36,7 @@ public class AgentTest {
         Agent agent = new Agent();
         assertNull(agent.getName(), "Agent name should have not been initialized.");
         assertNull(agent.getVersion(), "Agent version should have not been initialized.");
-        assertEquals(agent.toString(), "null/null", "Agent display representation should not be valid.");
+        assertEquals(agent.toString(), "", "Agent display representation should not be valid.");
     }
 
     public void testAgentNameConstructor() {

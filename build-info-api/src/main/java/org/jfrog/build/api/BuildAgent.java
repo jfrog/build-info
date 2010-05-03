@@ -107,9 +107,15 @@ public class BuildAgent implements Serializable {
      */
     @Override
     public String toString() {
-        StringBuilder toStringBuilder = new StringBuilder().append(name);
+        StringBuilder toStringBuilder = new StringBuilder();
+        if (StringUtils.isNotBlank(name)) {
+            toStringBuilder.append(name);
+        }
         if (StringUtils.isNotBlank(version)) {
-            toStringBuilder.append("/").append(version);
+            if (toStringBuilder.length() > 0) {
+                toStringBuilder.append("/");
+            }
+            toStringBuilder.append(version);
         }
         return toStringBuilder.toString();
     }
