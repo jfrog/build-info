@@ -59,6 +59,7 @@ public class ArtifactoryBuildInfoClient {
     private static final Log log = LogFactory.getLog(ArtifactoryBuildInfoClient.class);
 
     private static final Version UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.3");
+    private static final Version NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.4");
     private static final Version MINIMAL_ARTIFACTORY_VERSION = new Version("2.2.3");
 
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
@@ -277,16 +278,23 @@ public class ArtifactoryBuildInfoClient {
 
         boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
         if (!isCompatibleArtifactory) {
-            log.warn("Note: Please upgrade your Artifactory server. This plugin is designed to work with version " +
+            log.warn("Note: Please upgrade your Artifactory server! This plugin is designed to work with version " +
                     MINIMAL_ARTIFACTORY_VERSION + " of Artifactory and above.");
         }
-        //From Artifactory 2.2.3 we do need to discard new properties in order to avoid a server side exception
-        //on JSON parsing. Our JSON writer is configured to discard null values.
-        if (!isCompatibleArtifactory && !version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
+        //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
+        //JSON parsing. Our JSON writer is configured to discard null values.
+        if (!version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
             buildInfo.setBuildAgent(null);
             buildInfo.setParentName(null);
             buildInfo.setParentNumber(null);
             buildInfo.setVcsRevision(null);
+        }
+        //From Artifactory 2.2.4 we also handle non-numeric build numbers
+        if (!version.isAtLeast(NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION)) {
+            String buildNumber = buildInfo.getNumber();
+            verifyNonNumericBuildNumber(buildNumber);
+            String parentBuildNumber = buildInfo.getParentNumber();
+            verifyNonNumericBuildNumber(parentBuildNumber);
         }
         return toJsonString(buildInfo);
     }
@@ -299,6 +307,20 @@ public class ArtifactoryBuildInfoClient {
         jsonGenerator.writeObject(buildInfo);
         String result = writer.getBuffer().toString();
         return result;
+    }
+
+    private void verifyNonNumericBuildNumber(String buildNumber) {
+        if (buildNumber != null) {
+            try {
+                Long.parseLong(buildNumber);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Cannot handle build/parent build number: " + buildNumber +
+                                ". Non-numeric build numbers are supported by Artifactory version " +
+                                NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION +
+                                " and above. Please upgrade your Artifactory or use numeric build numbers.");
+            }
+        }
     }
 
     private Version getVersion() throws IOException {
