@@ -1,0 +1,78 @@
+/*
+ * Copyright (C) 2010 JFrog Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+buildscript {
+  String[] pathParts
+  def artifactoryUrl
+  if (!rootProject.hasProperty('artifactory.url')) {
+    if (sourceURI) {
+      logger.debug("sourceURI: $sourceURI")
+      String fullPath = sourceURI.path
+      pathParts = fullPath.split("/")
+      artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
+    } else {
+      artifactoryUrl = 'http://gradle.artifactoryonline.com/gradle/'
+      pathParts = artifactoryUrl.split("/")
+    }
+  } else {
+    artifactoryUrl = rootProject.getProperty('artifactory.url')
+    pathParts = artifactoryUrl.split("/")
+  }
+  logger.debug("artifactory.url: $artifactoryUrl")
+
+  def downloadId = 'plugins-releases'
+  if (!rootProject.hasProperty('artifactory.downloadId')) {
+    if (pathParts.size() >= 3) {
+      downloadId = pathParts[2]
+    }
+    logger.debug("no download id found using: ${downloadId}")
+  } else {
+    def downloadIdProperty = rootProject.getProperty('artifactory.downloadId')
+    logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
+    downloadId = downloadIdProperty
+  }
+  logger.debug("artifactory.downloadId: $downloadId")
+
+  def artifactoryDownloadUrl
+  if (!rootProject.hasProperty('artifactory.downloadUrl')) {
+    artifactoryDownloadUrl = artifactoryUrl + "/" + downloadId
+    logger.debug("artifactory.downloadUrl: $artifactoryDownloadUrl")
+  } else {
+    def artifactoryDownloadUrlProperty = rootProject.getProperty('artifactory.downloadUrl')
+    artifactoryDownloadUrl = artifactoryDownloadUrlProperty
+    logger.debug("Property artifactory.downloadUrl ${artifactoryDownloadUrlProperty}")
+
+  }
+
+  rootProject.setProperty('artifactory.url', artifactoryUrl)
+  rootProject.setProperty('artifactory.downloadId', downloadId)
+  rootProject.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
+
+  //All the tango above for this one - it configures maven repo for the project
+  repositories {
+    mavenRepo urls: [artifactoryDownloadUrl]
+  }
+  dependencies {
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0-SNAPSHOT'
+  }
+}
+
+logger.debug("Applying Artifactory Plug-in")
+allprojects {
+  apply {
+    apply plugin: org.jfrog.build.ArtifactoryPlugin
+  }
+}
