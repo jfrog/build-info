@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 
@@ -49,7 +50,6 @@ public class Agent implements Serializable {
             this.version = agent.substring(slash + 1);
         } else {
             this.name = agent;
-            this.version = "";
         }
     }
 
@@ -107,6 +107,10 @@ public class Agent implements Serializable {
      */
     @Override
     public String toString() {
-        return name + "/" + version;
+        StringBuilder toStringBuilder = new StringBuilder().append(name);
+        if (StringUtils.isNotBlank(version)) {
+            toStringBuilder.append("/").append(version);
+        }
+        return toStringBuilder.toString();
     }
 }
