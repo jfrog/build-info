@@ -34,6 +34,7 @@ import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
@@ -103,6 +104,10 @@ public class PreemptiveHttpClient {
 
     public void shutdown() {
         httpClient.getConnectionManager().shutdown();
+    }
+
+    public void setHttpParams(HttpParams httpParams) {
+        httpClient.setParams(httpParams);
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
