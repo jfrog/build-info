@@ -138,15 +138,15 @@ public class ArtifactoryHttpClient {
             JsonParser parser;
             try {
                 parser = createJsonParser(content);
+                httpEntity.consumeContent();
+                JsonNode result = parser.readValueAsTree();
+                log.debug("Version result: " + result);
+                version = result.get("version").getTextValue();
             } finally {
                 if (content != null) {
                     content.close();
                 }
             }
-            httpEntity.consumeContent();
-            JsonNode result = parser.readValueAsTree();
-            log.debug("Version result: " + result);
-            version = result.get("version").getTextValue();
         }
         return new Version(version);
     }

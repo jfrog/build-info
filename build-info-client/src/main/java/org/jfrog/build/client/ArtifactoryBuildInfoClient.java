@@ -138,16 +138,16 @@ public class ArtifactoryBuildInfoClient {
                 JsonParser parser;
                 try {
                     parser = httpClient.createJsonParser(content);
+                    JsonNode result = parser.readValueAsTree();
+                    log.debug("Repositories result = " + result);
+                    for (JsonNode jsonNode : result) {
+                        String repositoryKey = jsonNode.get("key").getTextValue();
+                        repositories.add(repositoryKey);
+                    }
                 } finally {
                     if (content != null) {
                         content.close();
                     }
-                }
-                JsonNode result = parser.readValueAsTree();
-                log.debug("Repositories result = " + result);
-                for (JsonNode jsonNode : result) {
-                    String repositoryKey = jsonNode.get("key").getTextValue();
-                    repositories.add(repositoryKey);
                 }
             }
         }
@@ -176,16 +176,16 @@ public class ArtifactoryBuildInfoClient {
                 JsonParser parser;
                 try {
                     parser = httpClient.createJsonParser(content);
+                    JsonNode result = parser.readValueAsTree();
+                    log.debug("Repositories result = " + result);
+                    for (JsonNode jsonNode : result) {
+                        String repositoryKey = jsonNode.get("key").getTextValue();
+                        repositories.add(repositoryKey);
+                    }
                 } finally {
                     if (content != null) {
                         content.close();
                     }
-                }
-                JsonNode result = parser.readValueAsTree();
-                log.debug("Repositories result = " + result);
-                for (JsonNode jsonNode : result) {
-                    String repositoryKey = jsonNode.get("key").getTextValue();
-                    repositories.add(repositoryKey);
                 }
             }
         }
