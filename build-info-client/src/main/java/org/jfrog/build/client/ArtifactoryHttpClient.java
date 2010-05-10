@@ -134,7 +134,15 @@ public class ArtifactoryHttpClient {
         String version = "2.2.2";
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
-            JsonParser parser = createJsonParser(httpEntity.getContent());
+            InputStream content = httpEntity.getContent();
+            JsonParser parser;
+            try {
+                parser = createJsonParser(content);
+            } finally {
+                if (content != null) {
+                    content.close();
+                }
+            }
             httpEntity.consumeContent();
             JsonNode result = parser.readValueAsTree();
             log.debug("Version result: " + result);

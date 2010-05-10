@@ -37,6 +37,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -133,7 +134,15 @@ public class ArtifactoryBuildInfoClient {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
-                JsonParser parser = httpClient.createJsonParser(entity.getContent());
+                InputStream content = entity.getContent();
+                JsonParser parser;
+                try {
+                    parser = httpClient.createJsonParser(content);
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                }
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Repositories result = " + result);
                 for (JsonNode jsonNode : result) {
@@ -163,7 +172,15 @@ public class ArtifactoryBuildInfoClient {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
-                JsonParser parser = httpClient.createJsonParser(entity.getContent());
+                InputStream content = entity.getContent();
+                JsonParser parser;
+                try {
+                    parser = httpClient.createJsonParser(content);
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                }
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Repositories result = " + result);
                 for (JsonNode jsonNode : result) {
