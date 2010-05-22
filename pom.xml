@@ -24,7 +24,7 @@
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
     <name>JFrog Build-Info</name>
-    <version>1.3.x-SNAPSHOT</version>
+    <version>1.4.x-SNAPSHOT</version>
 
     <description>Common API for collecting and sending CI build information to Artifactory</description>
     <inceptionYear>2009</inceptionYear>
@@ -149,7 +149,7 @@
                     <execution>
                         <id>attach-sources</id>
                         <goals>
-                            <goal>jar</goal>
+                            <goal>jar-no-fork</goal>
                         </goals>
                     </execution>
                 </executions>
