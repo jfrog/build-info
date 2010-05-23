@@ -34,7 +34,7 @@ public interface BuildInfoProperties {
     /**
      * Prefix for build info properties that are coming from the CI server.
      */
-    String BUILD_INFO_ENVIRONMENT_PREFIX = BUILD_INFO_PROP_PREFIX + "env.";
+    String BUILD_INFO_ENVIRONMENT_PREFIX = "env.";
 
 
     String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "buildName";

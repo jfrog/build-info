@@ -97,9 +97,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(properties));
+            gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
-        gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(startParamProps));
+        gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
     }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask) {
@@ -152,6 +152,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(gradleProps);
+        properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(System.getProperties()));
+        properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
         return buildInfoBuilder.build();
