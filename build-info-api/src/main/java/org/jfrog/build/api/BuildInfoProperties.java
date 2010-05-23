@@ -25,10 +25,17 @@ public interface BuildInfoProperties {
      */
     String BUILD_INFO_PREFIX = "buildInfo.";
 
+
     /**
      * Prefix for properties that are dynamically added to build info
      */
     String BUILD_INFO_PROP_PREFIX = "buildInfo.property.";
+
+    /**
+     * Prefix for build info properties that are coming from the CI server.
+     */
+    String BUILD_INFO_ENVIRONMENT_PREFIX = BUILD_INFO_PROP_PREFIX + "env.";
+
 
     String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "buildName";
     String PROP_BUILD_NUMBER = BUILD_INFO_PREFIX + "buildNumber";
