@@ -22,7 +22,7 @@
     <artifactId>build-info-extractor-gradle</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Build Info Gradle Extractor</name>
+    <name>JFrog Build-Info Gradle Extractor</name>
 
     <parent>
         <groupId>org.jfrog</groupId>
