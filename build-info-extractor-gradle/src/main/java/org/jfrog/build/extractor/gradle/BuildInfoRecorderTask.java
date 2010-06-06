@@ -115,8 +115,16 @@ public class BuildInfoRecorderTask extends ConventionTask {
                 // If export property set always save the file before sending it to artifactory
                 exportBuildInfo(build, new File(fileExportPath));
             }
+            String username = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, getRootProject());
+            if (StringUtils.isBlank(username)) {
+                username = "";
+            }
+            String password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, getRootProject());
+            if (StringUtils.isBlank(password)) {
+                password = "";
+            }
             ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
-                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl);
+                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl, username, password);
             artifactoryBuildInfoClient.sendBuildInfo(build);
         } else {
             /**
