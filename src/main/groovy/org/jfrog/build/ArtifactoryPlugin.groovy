@@ -175,10 +175,11 @@ class ArtifactoryPlugin implements Plugin<Project> {
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
     if (buildName) {
+      buildName = buildName.replace(' ', '-')
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     } else {
       Project rootProject = project.getRootProject();
-      String defaultBuildName = new String(rootProject.getGroup() + ":" + rootProject.getName()).replaceAll(" ", "-")
+      String defaultBuildName = new String(rootProject.getGroup() + ":" + rootProject.getName()).replace(' ', '-')
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, defaultBuildName)
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
@@ -193,8 +194,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       if (key != null) {
         Object value = properties.get(key)
         if (value != null) {
-          key = URLEncoder.encode(key, "UTF-8")
-          value = URLEncoder.encode(value.toString(), "UTF-8")
+          value = value.toString().replace(" ", "-")
           props.put(key, value)
         }
       }
