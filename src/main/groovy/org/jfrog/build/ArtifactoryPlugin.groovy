@@ -18,6 +18,7 @@ package org.jfrog.build
 
 import org.gradle.api.tasks.bundling.Jar
 
+import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
 import org.gradle.api.Action
 import org.gradle.api.Plugin
@@ -41,9 +42,11 @@ class ArtifactoryPlugin implements Plugin<Project> {
   List<String> compatiblePlugins = ['java', 'scala', 'groovy'] as List
 
   def void apply(Project project) {
-
     log.debug("Using Artifactory Plugin")
-    def artifactoryUrl = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle/'
+    String artifactoryUrl = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle'
+    while (artifactoryUrl.endsWith("/")) {
+      artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
+    }
     def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
     if (!downloadId) {
       // take the target repository from the full url
