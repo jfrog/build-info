@@ -179,7 +179,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     } else {
       Project rootProject = project.getRootProject();
-      String defaultBuildName = new String(rootProject.getGroup() + ":" + rootProject.getName()).replace(' ', '-')
+      String defaultBuildName = rootProject.getName().replace(' ', '-')
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, defaultBuildName)
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
