@@ -105,11 +105,10 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
 
       log.debug("Configure Upload URL to ${uploadUrl}")
-      uploadUrl = appendProperties(uploadUrl, project)
-
       def user = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, project) ?: "anonymous"
       def password = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, project) ?: ""
       def host = new URI(uploadUrl).getHost()
+      uploadUrl = appendProperties(uploadUrl, project)
       project.tasks.withType(Upload.class).allObjects { uploadTask ->
         project.configure(uploadTask) {
           boolean deployIvy
@@ -169,9 +168,19 @@ class ArtifactoryPlugin implements Plugin<Project> {
     Properties props = new Properties()
     props.putAll(System.getProperties())
     String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
-    if (buildNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
+    if (buildNumber) {
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
+    } else {
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.currentTimeMillis() + "")
+    }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
-    if (buildName) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
+    if (buildName) {
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
+    } else {
+      Project rootProject = project.getRootProject();
+      String defaultBuildName = new String(rootProject.getGroup() + ":" + rootProject.getName()).replaceAll(" ", "-")
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, defaultBuildName)
+    }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
     if (buildParentNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
@@ -184,6 +193,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
       if (key != null) {
         Object value = properties.get(key)
         if (value != null) {
+          key = URLEncoder.encode(key, "UTF-8")
+          value = URLEncoder.encode(value.toString(), "UTF-8")
           props.put(key, value)
         }
       }
@@ -206,6 +217,4 @@ class ArtifactoryPlugin implements Plugin<Project> {
     }
     buildInfo.setDescription("Generates build info from build artifacts");
   }
-
-
 }

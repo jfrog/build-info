@@ -20,7 +20,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
@@ -107,8 +106,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
-        if (buildName == null) {
-            buildName = rootProject.getName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = rootProject.getGroup() + ":" + rootProject.getName();
         }
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
         Date startedDate = new Date();
@@ -116,8 +115,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         buildInfoBuilder.type(BuildType.GRADLE);
         String buildNumber = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NUMBER, rootProject);
         if (buildNumber == null) {
-            String message = "Build number not set, please provide system variable \'" + PROP_BUILD_NUMBER + "\'";
-            throw new GradleException(message);
+            buildNumber = String.valueOf(System.currentTimeMillis());
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
