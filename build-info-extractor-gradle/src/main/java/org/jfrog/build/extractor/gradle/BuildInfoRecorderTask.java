@@ -16,6 +16,7 @@
 
 package org.jfrog.build.extractor.gradle;
 
+import org.apache.commons.lang.StringUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -106,6 +107,9 @@ public class BuildInfoRecorderTask extends ConventionTask {
              * object.
              */
             String buildInfoUploadUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, getRootProject());
+            while (buildInfoUploadUrl.endsWith("/")) {
+                buildInfoUploadUrl = StringUtils.removeEnd(buildInfoUploadUrl, "/");
+            }
             Build build = gbie.extract(this);
             if (fileExportPath != null) {
                 // If export property set always save the file before sending it to artifactory
