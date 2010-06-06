@@ -107,7 +107,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
         if (StringUtils.isBlank(buildName)) {
-            buildName = rootProject.getGroup() + ":" + rootProject.getName();
+            buildName = rootProject.getName().replace(' ', '-');
         }
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
         Date startedDate = new Date();
