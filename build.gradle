@@ -20,15 +20,15 @@ def artifactId = 'buildinfo'
 }*/
 
 allprojects {
+  group = 'org.jfrog.buildinfo'
+  version = '1.4.x-SNAPSHOT'
+}
+subprojects {
   apply {
     apply plugin: 'java'
     apply plugin: 'groovy'
     apply plugin: 'maven'
   }
-  group = 'org.jfrog.buildinfo'
-  version = '1.4.x-SNAPSHOT'
-}
-subprojects {
   repositories {
     mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
   }
