@@ -171,7 +171,10 @@ class ArtifactoryPlugin implements Plugin<Project> {
     if (buildNumber) {
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     } else {
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("build.start", Long.toString(System.currentTimeMillis()) + ""))
+      if (StringUtils.isBlank(System.getProperty("timestamp"))) {
+        System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
+      }
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
     if (buildName) {

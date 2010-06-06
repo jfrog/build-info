@@ -117,7 +117,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         buildInfoBuilder.type(BuildType.GRADLE);
         String buildNumber = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NUMBER, rootProject);
         if (buildNumber == null) {
-            buildNumber = System.getProperty("build.start", Long.toString(System.currentTimeMillis()));
+            buildNumber = System.getProperty("timestamp", Long.toString(System.currentTimeMillis()));
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
