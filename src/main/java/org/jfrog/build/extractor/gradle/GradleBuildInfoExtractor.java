@@ -90,16 +90,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         StartParameter startParameter = rootProject.getGradle().getStartParameter();
         startParamProps = new Properties();
         buildInfoProps = new Properties();
+        gradleProps = new Properties();
         startParamProps.putAll(startParameter.getProjectProperties());
-        buildInfoProps.putAll(startParamProps);
-        gradleProps = BuildInfoExtractorUtils.getBuildInfoProperties();
-        buildInfoProps.putAll(gradleProps);
+        gradleProps.putAll(startParamProps);
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
             gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
-        gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties());
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
     }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask) {
@@ -135,7 +136,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             BuildInfoRecorderTask birTask = (BuildInfoRecorderTask) subProject.getTasks().getByName("buildInfo");
             buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
         }
-        buildInfoBuilder.addModule(extractModule(buildInfoTask.getConfiguration(), rootProject));
         String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
         String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
         if (parentName != null && parentNumber != null) {
@@ -151,7 +151,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.vcsRevision(vcsRevision);
         }
         Properties properties = gatherSysPropInfo();
-        properties.putAll(gradleProps);
+        properties.putAll(buildInfoProps);
         properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(System.getProperties()));
         properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
