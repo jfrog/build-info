@@ -174,7 +174,7 @@ public abstract class BuildInfoExtractorUtils {
 
     private static String getAdditionalPropertiesFile(Properties additionalProps) {
         String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
-        if (StringUtils.isBlank(propertiesFilePath)) {
+        if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         }
         return propertiesFilePath;
