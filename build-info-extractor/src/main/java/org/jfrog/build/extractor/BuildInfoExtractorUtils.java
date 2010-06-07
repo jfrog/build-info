@@ -104,7 +104,9 @@ public abstract class BuildInfoExtractorUtils {
         }
         if (includeEnvVars) {
             Map<String, String> envMap = System.getenv();
-            props.putAll(envMap);
+            for (Map.Entry<String, String> entry : envMap.entrySet()) {
+                props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+            }
         }
         String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
@@ -123,9 +125,10 @@ public abstract class BuildInfoExtractorUtils {
                 IOUtils.closeQuietly(inputStream);
             }
         }
-
         Properties filteredSystemProperties = filterEnvProperties(System.getProperties());
-        props.putAll(filteredSystemProperties);
+        for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
+            props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+        }
         return props;
     }
 
