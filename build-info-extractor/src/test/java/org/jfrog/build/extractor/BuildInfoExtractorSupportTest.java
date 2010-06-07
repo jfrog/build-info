@@ -109,7 +109,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(ENV_POPO_KEY, "buildname");
         System.setProperty(ENV_MOMO_KEY, "1");
 
-        Properties props = BuildInfoExtractorUtils.getEnvProperties();
+        Properties props = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
@@ -128,7 +128,7 @@ public class BuildInfoExtractorSupportTest {
 
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
 
-        Properties fileProps = BuildInfoExtractorUtils.getEnvProperties();
+        Properties fileProps = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
@@ -158,7 +158,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(kokoKey, "parent");
         System.setProperty(gogoKey, "2");
 
-        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties();
+        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
         assertEquals(buildInfoProperties.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");

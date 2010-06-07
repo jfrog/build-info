@@ -25,7 +25,6 @@ public interface BuildInfoProperties {
      */
     String BUILD_INFO_PREFIX = "buildInfo.";
 
-
     /**
      * Prefix for properties that are dynamically added to build info
      */

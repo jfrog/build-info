@@ -29,6 +29,7 @@ import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
@@ -110,7 +111,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
             while (buildInfoUploadUrl.endsWith("/")) {
                 buildInfoUploadUrl = StringUtils.removeEnd(buildInfoUploadUrl, "/");
             }
-            Build build = gbie.extract(this);
+            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
             if (fileExportPath != null) {
                 // If export property set always save the file before sending it to artifactory
                 exportBuildInfo(build, new File(fileExportPath));
@@ -137,7 +138,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
             } else {
                 savedFile = new File(fileExportPath);
             }
-            Build build = gbie.extract(this);
+            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
             exportBuildInfo(build, savedFile);
         }
     }

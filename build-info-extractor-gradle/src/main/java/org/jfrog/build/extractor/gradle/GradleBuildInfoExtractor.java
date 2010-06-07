@@ -44,8 +44,10 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import javax.annotation.Nullable;
@@ -102,7 +104,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
     }
 
-    public Build extract(BuildInfoRecorderTask buildInfoTask) {
+    public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
@@ -152,7 +154,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
-        properties.putAll(BuildInfoExtractorUtils.getEnvProperties());
+        properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
         properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
@@ -219,7 +221,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             .build();
             artifacts.add(pom);
         }
-        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
+        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project);
         boolean isPublishIvy = StringUtils.isNotBlank(publishIvy) && Boolean.parseBoolean(publishIvy);
         File ivy = new File(project.getBuildDir(), "ivy.xml");
         if (ivy.exists() && isPublishIvy) {

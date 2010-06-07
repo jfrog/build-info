@@ -30,6 +30,8 @@ import org.gradle.api.specs.Spec
 import org.gradle.api.tasks.Upload
 import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.api.BuildInfoProperties
+import org.jfrog.build.client.ClientIvyProperties
+import org.jfrog.build.client.ClientMavenProperties
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
@@ -112,7 +114,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       project.tasks.withType(Upload.class).allObjects { uploadTask ->
         project.configure(uploadTask) {
           boolean deployIvy
-          def deployIvyProp = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
+          def deployIvyProp = ArtifactoryPluginUtils.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project);
           if (deployIvyProp != null) {
             deployIvy = Boolean.parseBoolean(deployIvyProp);
           } else {
@@ -133,7 +135,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
           }
           boolean deployMaven
-          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
           if (deployMavenProp != null) {
             deployMaven = Boolean.parseBoolean(deployMavenProp);
           } else {

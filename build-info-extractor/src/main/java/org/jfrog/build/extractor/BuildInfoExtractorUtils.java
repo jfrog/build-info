@@ -91,10 +91,23 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
-    public static Properties getEnvProperties() {
+    public static Properties getEnvProperties(Properties startProps) {
         Properties props = new Properties();
+        boolean includeEnvVars = false;
+        String includeVars = System.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        if (StringUtils.isNotBlank(includeVars)) {
+            includeEnvVars = Boolean.parseBoolean(includeVars);
+        } else {
+            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+            if (StringUtils.isNotBlank(includeVars)) {
+                includeEnvVars = Boolean.parseBoolean(includeVars);
+            }
+        }
+        if (includeEnvVars) {
+            Map<String, String> envMap = System.getenv();
+            props.putAll(envMap);
+        }
         String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
-
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
