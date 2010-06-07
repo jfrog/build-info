@@ -97,9 +97,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
+            buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(properties));
             gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
-        buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(startParamProps));
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
     }

@@ -50,9 +50,9 @@ public abstract class BuildInfoExtractorUtils {
      * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
      * buildInfo xml output file, if the output is a path to this file.
      */
-    public static Properties getBuildInfoProperties(Properties startProps) {
+    public static Properties getBuildInfoProperties(Properties additionalProps) {
         Properties props = new Properties();
-        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
+        String propertiesFilePath = getAdditionalPropertiesFile(additionalProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
