@@ -152,7 +152,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
-        properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(System.getProperties()));
+        properties.putAll(BuildInfoExtractorUtils.getEnvProperties());
         properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);

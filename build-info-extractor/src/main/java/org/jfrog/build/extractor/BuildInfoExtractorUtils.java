@@ -91,6 +91,32 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
+    public static Properties getEnvProperties() {
+        Properties props = new Properties();
+        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+
+        if (StringUtils.isNotBlank(propertiesFilePath)) {
+            File propertiesFile = new File(propertiesFilePath);
+            InputStream inputStream = null;
+            try {
+                if (propertiesFile.exists()) {
+                    inputStream = new FileInputStream(propertiesFile);
+                    props.load(inputStream);
+                    props = filterEnvProperties(props);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(
+                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+            } finally {
+                IOUtils.closeQuietly(inputStream);
+            }
+        }
+
+        Properties filteredSystemProperties = filterEnvProperties(System.getProperties());
+        props.putAll(filteredSystemProperties);
+        return props;
+    }
+
     public static Properties filterEnvProperties(Properties source) {
         Properties properties = new Properties();
         Map<Object, Object> filtered = Maps.filterKeys(source, new Predicate<Object>() {
