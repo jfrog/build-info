@@ -243,33 +243,32 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 ResolvedDependency resolvedDependency = artifact.getResolvedDependency();
-                String depId = resolvedDependency.getName();
-                if (depId.startsWith(":")) {
-                    depId = resolvedDependency.getModuleGroup() + depId + ":" + resolvedDependency.getModuleVersion();
-                }
-                final String finalDepId = depId;
-                Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
-                    public boolean apply(@Nullable Dependency input) {
-                        return input.getId().equals(finalDepId);
-                    }
-                };
-                //maybe we have it already?
-                if (any(dependencies, idEqualsPredicate)) {
-                    Dependency existingDependency = find(dependencies, idEqualsPredicate);
-                    List<String> existingScopes = existingDependency.getScopes();
-                    String configScope = configuration.getName();
-                    if (!existingScopes.contains(configScope)) {
-                        existingScopes.add(configScope);
-                    }
-                } else {
-                    DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                    File file = artifact.getFile();
-                    if (file != null && file.exists()) {
-                        Map<String, String> checksums = calculateChecksumsForFile(file);
-                        dependencyBuilder.type(artifact.getType()).id(depId)
-                                .scopes(newArrayList(configuration.getName())).
-                                md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
-                        dependencies.add(dependencyBuilder.build());
+                if (!artifact.getFile().getAbsolutePath().contains("-sources")) {
+                    String depId = resolvedDependency.getName();
+                    final String finalDepId = depId;
+                    Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
+                        public boolean apply(@Nullable Dependency input) {
+                            return input.getId().equals(finalDepId);
+                        }
+                    };
+                    //maybe we have it already?
+                    if (any(dependencies, idEqualsPredicate)) {
+                        Dependency existingDependency = find(dependencies, idEqualsPredicate);
+                        List<String> existingScopes = existingDependency.getScopes();
+                        String configScope = configuration.getName();
+                        if (!existingScopes.contains(configScope)) {
+                            existingScopes.add(configScope);
+                        }
+                    } else {
+                        DependencyBuilder dependencyBuilder = new DependencyBuilder();
+                        File file = artifact.getFile();
+                        if (file != null && file.exists()) {
+                            Map<String, String> checksums = calculateChecksumsForFile(file);
+                            dependencyBuilder.type(artifact.getType()).id(depId)
+                                    .scopes(newArrayList(configuration.getName())).
+                                    md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                            dependencies.add(dependencyBuilder.build());
+                        }
                     }
                 }
             }
