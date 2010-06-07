@@ -50,10 +50,9 @@ public abstract class BuildInfoExtractorUtils {
      * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
      * buildInfo xml output file, if the output is a path to this file.
      */
-    public static Properties getBuildInfoProperties() {
+    public static Properties getBuildInfoProperties(Properties startProps) {
         Properties props = new Properties();
-        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
-
+        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -107,7 +106,7 @@ public abstract class BuildInfoExtractorUtils {
             Map<String, String> envMap = System.getenv();
             props.putAll(envMap);
         }
-        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -142,8 +141,8 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
-
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
+
 
     private static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
@@ -168,5 +167,13 @@ public abstract class BuildInfoExtractorUtils {
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
         FileUtils.writeStringToFile(toFile, buildInfoJson, "UTF-8");
+    }
+
+    private static String getAdditionalPropertiesFile(Properties additionalProps) {
+        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        if (StringUtils.isBlank(propertiesFilePath)) {
+            propertiesFilePath = additionalProps.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        }
+        return propertiesFilePath;
     }
 }

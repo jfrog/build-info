@@ -50,13 +50,4 @@ public interface ClientProperties {
      */
     String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
 
-    /**
-     * Property for whether to publish Ivy descriptors.
-     */
-    String PROP_PUBLISH_IVY = ARTIFACTORY_PREFIX + "publish.ivy";
-
-    /**
-     * Property for whether to publish Maven POMs.
-     */
-    String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publish.maven";
 }
