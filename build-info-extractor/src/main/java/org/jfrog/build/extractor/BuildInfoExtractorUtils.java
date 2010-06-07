@@ -145,6 +145,7 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
+    //TODO: [by yl] introduce a commons module for common impl and also move PropertyUtils there
 
 
     private static JsonFactory createJsonFactory() {
