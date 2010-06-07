@@ -127,7 +127,7 @@ public abstract class BuildInfoExtractorUtils {
         }
         Properties filteredSystemProperties = filterEnvProperties(System.getProperties());
         for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
-            props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+            props.put(entry.getKey(), entry.getValue());
         }
         return props;
     }
