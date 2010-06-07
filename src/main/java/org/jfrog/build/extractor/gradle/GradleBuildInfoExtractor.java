@@ -45,7 +45,7 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
-import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.ClientMavenProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -99,7 +99,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             Properties properties = GUtil.loadProperties(projectPropsFile);
             gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
-        buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties());
+        buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(startParamProps));
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
     }
@@ -211,7 +211,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }));
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        String publishPom = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+        String publishPom = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
         boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
         if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
