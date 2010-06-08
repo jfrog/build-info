@@ -85,7 +85,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
 
         if (Boolean.parseBoolean(uploadArtifactsProperty)) {
             /**
-             * if the {@link org.jfrog.build.client.ClientProperties.PROP_PUBLISH_ARTIFACT} is set the true,
+             * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
              * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
              * only after a successful build. This is done before the build-info is sent.
              */
