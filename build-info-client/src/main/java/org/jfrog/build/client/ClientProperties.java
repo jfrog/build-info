@@ -50,4 +50,9 @@ public interface ClientProperties {
      */
     String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
 
+    /**
+     * Property for whoever started the build (username).
+     */
+    String PROP_PRINCIPAL = ARTIFACTORY_PREFIX + "principal";
+
 }

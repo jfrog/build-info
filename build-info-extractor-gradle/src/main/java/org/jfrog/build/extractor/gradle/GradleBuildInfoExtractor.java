@@ -46,6 +46,7 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientMavenProperties;
+import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -144,6 +145,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
+        String principal = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PRINCIPAL, rootProject);
+        if (StringUtils.isBlank(principal)) {
+            principal = System.getProperty("user.name");
+        }
+        buildInfoBuilder.principal(principal);
+        String artifactoryPrincipal =
+                ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
+        if (StringUtils.isBlank(artifactoryPrincipal)) {
+            artifactoryPrincipal = System.getProperty("user.name");
+        }
+        buildInfoBuilder.artifactoryPrincipal(artifactoryPrincipal);
         String buildUrl = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_URL, rootProject);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
@@ -158,7 +170,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
-        return buildInfoBuilder.build();
+        // for backward compatibility for Artifactory 2.2.3
+        Build build = buildInfoBuilder.build();
+        if (parentName != null && parentNumber != null) {
+            build.setParentBuildId(parentName);
+        }
+        return build;
     }
 
     private Properties gatherSysPropInfo() {
