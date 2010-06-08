@@ -243,6 +243,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 ResolvedDependency resolvedDependency = artifact.getResolvedDependency();
+                /**
+                 * If including sources jar the jars will have the same ID despite one of them having a sources
+                 * classifier, this fix will remain until GAP-13 is fixed, on both our side and the Gradle side.
+                 */
                 if (!artifact.getFile().getAbsolutePath().contains("-sources")) {
                     String depId = resolvedDependency.getName();
                     final String finalDepId = depId;
