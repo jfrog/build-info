@@ -35,13 +35,12 @@ public interface BuildInfoProperties {
      */
     String BUILD_INFO_ENVIRONMENT_PREFIX = "env.";
 
-
-    String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "buildName";
-    String PROP_BUILD_NUMBER = BUILD_INFO_PREFIX + "buildNumber";
-    String PROP_PARENT_BUILD_NAME = BUILD_INFO_PREFIX + "parentBuildName";
-    String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "parentBuildNumber";
-
-    String PROP_VCS_REVISION = BUILD_INFO_PREFIX + "vcs.revision";
+    //TODO: [by YS] move the build.name etc. to another interface/class and use them from all places
+    String PROP_BUILD_NAME = "build.name";
+    String PROP_BUILD_NUMBER = "build.number";
+    String PROP_PARENT_BUILD_NAME = "build.parentName";
+    String PROP_PARENT_BUILD_NUMBER = "build.parentNumber";
+    String PROP_VCS_REVISION = "vcs.revision";
 
     /**
      * Property to link the build back to the CI server that produced the build
