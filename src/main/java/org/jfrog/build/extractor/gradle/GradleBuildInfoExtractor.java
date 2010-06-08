@@ -264,7 +264,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                  * If including sources jar the jars will have the same ID despite one of them having a sources
                  * classifier, this fix will remain until GAP-13 is fixed, on both our side and the Gradle side.
                  */
-                if (!artifact.getFile().getAbsolutePath().contains("-sources")) {
+                File file = artifact.getFile();
+                if (file != null && file.exists() && !file.getName().endsWith("-sources.jar")) {
                     String depId = resolvedDependency.getName();
                     final String finalDepId = depId;
                     Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
@@ -272,7 +273,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             return input.getId().equals(finalDepId);
                         }
                     };
-                    //maybe we have it already?
+                    // if it's already in the dependencies list just add the current scope
                     if (any(dependencies, idEqualsPredicate)) {
                         Dependency existingDependency = find(dependencies, idEqualsPredicate);
                         List<String> existingScopes = existingDependency.getScopes();
@@ -281,15 +282,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             existingScopes.add(configScope);
                         }
                     } else {
-                        DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                        File file = artifact.getFile();
-                        if (file != null && file.exists()) {
-                            Map<String, String> checksums = calculateChecksumsForFile(file);
-                            dependencyBuilder.type(artifact.getType()).id(depId)
-                                    .scopes(newArrayList(configuration.getName())).
-                                    md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
-                            dependencies.add(dependencyBuilder.build());
-                        }
+                        Map<String, String> checksums = calculateChecksumsForFile(file);
+                        DependencyBuilder dependencyBuilder = new DependencyBuilder()
+                                .type(artifact.getType()).id(depId)
+                                .scopes(newArrayList(configuration.getName())).
+                                        md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                        dependencies.add(dependencyBuilder.build());
                     }
                 }
             }
