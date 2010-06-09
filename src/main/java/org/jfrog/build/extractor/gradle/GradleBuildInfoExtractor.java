@@ -20,7 +20,6 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
@@ -45,8 +44,11 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ClientIvyProperties;
+import org.jfrog.build.client.ClientMavenProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import javax.annotation.Nullable;
@@ -90,24 +92,27 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         StartParameter startParameter = rootProject.getGradle().getStartParameter();
         startParamProps = new Properties();
         buildInfoProps = new Properties();
+        gradleProps = new Properties();
         startParamProps.putAll(startParameter.getProjectProperties());
-        buildInfoProps.putAll(startParamProps);
-        gradleProps = BuildInfoExtractorUtils.getBuildInfoProperties();
-        buildInfoProps.putAll(gradleProps);
+        gradleProps.putAll(startParamProps);
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(properties));
+            buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(properties));
+            gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
-        gradleProps.putAll(BuildInfoExtractorUtils.filterProperties(startParamProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
     }
 
-    public Build extract(BuildInfoRecorderTask buildInfoTask) {
+    public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
-        if (buildName == null) {
-            buildName = rootProject.getName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = rootProject.getName().replace(' ', '-');
+        } else {
+            buildName = buildName.replace(' ', '-');
         }
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
         Date startedDate = new Date();
@@ -115,8 +120,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         buildInfoBuilder.type(BuildType.GRADLE);
         String buildNumber = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NUMBER, rootProject);
         if (buildNumber == null) {
-            String message = "Build number not set, please provide system variable \'" + PROP_BUILD_NUMBER + "\'";
-            throw new GradleException(message);
+            buildNumber = System.getProperty("timestamp", Long.toString(System.currentTimeMillis()));
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
@@ -135,13 +139,23 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             BuildInfoRecorderTask birTask = (BuildInfoRecorderTask) subProject.getTasks().getByName("buildInfo");
             buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
         }
-        buildInfoBuilder.addModule(extractModule(buildInfoTask.getConfiguration(), rootProject));
         String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
         String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
         if (parentName != null && parentNumber != null) {
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
+        String principal = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PRINCIPAL, rootProject);
+        if (StringUtils.isBlank(principal)) {
+            principal = System.getProperty("user.name");
+        }
+        buildInfoBuilder.principal(principal);
+        String artifactoryPrincipal =
+                ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
+        if (StringUtils.isBlank(artifactoryPrincipal)) {
+            artifactoryPrincipal = System.getProperty("user.name");
+        }
+        buildInfoBuilder.artifactoryPrincipal(artifactoryPrincipal);
         String buildUrl = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_URL, rootProject);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
@@ -151,10 +165,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.vcsRevision(vcsRevision);
         }
         Properties properties = gatherSysPropInfo();
-        properties.putAll(gradleProps);
+        properties.putAll(buildInfoProps);
+        properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
+        properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
-        return buildInfoBuilder.build();
+        // for backward compatibility for Artifactory 2.2.3
+        Build build = buildInfoBuilder.build();
+        if (parentName != null && parentNumber != null) {
+            build.setParentBuildId(parentName);
+        }
+        return build;
     }
 
     private Properties gatherSysPropInfo() {
@@ -207,7 +228,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }));
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        String publishPom = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_MAVEN, project);
+        String publishPom = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
         boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
         if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
@@ -217,7 +238,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             .build();
             artifacts.add(pom);
         }
-        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_IVY, project);
+        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project);
         boolean isPublishIvy = StringUtils.isNotBlank(publishIvy) && Boolean.parseBoolean(publishIvy);
         File ivy = new File(project.getBuildDir(), "ivy.xml");
         if (ivy.exists() && isPublishIvy) {
@@ -239,32 +260,33 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 ResolvedDependency resolvedDependency = artifact.getResolvedDependency();
-                String depId = resolvedDependency.getName();
-                if (depId.startsWith(":")) {
-                    depId = resolvedDependency.getModuleGroup() + depId + ":" + resolvedDependency.getModuleVersion();
-                }
-                final String finalDepId = depId;
-                Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
-                    public boolean apply(@Nullable Dependency input) {
-                        return input.getId().equals(finalDepId);
-                    }
-                };
-                //maybe we have it already?
-                if (any(dependencies, idEqualsPredicate)) {
-                    Dependency existingDependency = find(dependencies, idEqualsPredicate);
-                    List<String> existingScopes = existingDependency.getScopes();
-                    String configScope = configuration.getName();
-                    if (!existingScopes.contains(configScope)) {
-                        existingScopes.add(configScope);
-                    }
-                } else {
-                    DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                    File file = artifact.getFile();
-                    if (file != null && file.exists()) {
+                /**
+                 * If including sources jar the jars will have the same ID despite one of them having a sources
+                 * classifier, this fix will remain until GAP-13 is fixed, on both our side and the Gradle side.
+                 */
+                File file = artifact.getFile();
+                if (file != null && file.exists() && !file.getName().endsWith("-sources.jar")) {
+                    String depId = resolvedDependency.getName();
+                    final String finalDepId = depId;
+                    Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
+                        public boolean apply(@Nullable Dependency input) {
+                            return input.getId().equals(finalDepId);
+                        }
+                    };
+                    // if it's already in the dependencies list just add the current scope
+                    if (any(dependencies, idEqualsPredicate)) {
+                        Dependency existingDependency = find(dependencies, idEqualsPredicate);
+                        List<String> existingScopes = existingDependency.getScopes();
+                        String configScope = configuration.getName();
+                        if (!existingScopes.contains(configScope)) {
+                            existingScopes.add(configScope);
+                        }
+                    } else {
                         Map<String, String> checksums = calculateChecksumsForFile(file);
-                        dependencyBuilder.type(artifact.getType()).id(depId)
+                        DependencyBuilder dependencyBuilder = new DependencyBuilder()
+                                .type(artifact.getType()).id(depId)
                                 .scopes(newArrayList(configuration.getName())).
-                                md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                                        md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
                         dependencies.add(dependencyBuilder.build());
                     }
                 }

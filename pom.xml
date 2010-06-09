@@ -22,12 +22,12 @@
     <artifactId>build-info-extractor-gradle</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Build Info Gradle Extractor</name>
+    <name>JFrog Build-Info Gradle Extractor</name>
 
     <parent>
         <groupId>org.jfrog</groupId>
         <artifactId>build-info-parent</artifactId>
-        <version>1.3.1</version>
+        <version>1.4.x-SNAPSHOT</version>
     </parent>
 
     <dependencyManagement>
@@ -35,17 +35,17 @@
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>1.3.1</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>1.3.1</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>1.3.1</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>
@@ -56,8 +56,17 @@
             <dependency>
                 <groupId>org.gradle</groupId>
                 <artifactId>gradle-core</artifactId>
-                <version>0.9-SNAPSHOT</version>
-                <scope>provided</scope>
+                <version>0.9-preview-3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.gradle</groupId>
+                <artifactId>gradle-plugins</artifactId>
+                <version>0.9-preview-3</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.groovy.maven.runtime</groupId>
+                <artifactId>gmaven-runtime-default</artifactId>
+                <version>1.0-rc-3</version>
             </dependency>
             <dependency>
                 <groupId>com.google.code.findbugs</groupId>
@@ -98,6 +107,17 @@
             <groupId>org.gradle</groupId>
             <artifactId>gradle-core</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.gradle</groupId>
+            <artifactId>gradle-plugins</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy.maven.runtime</groupId>
+            <artifactId>gmaven-runtime-1.6</artifactId>
+            <version>1.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
