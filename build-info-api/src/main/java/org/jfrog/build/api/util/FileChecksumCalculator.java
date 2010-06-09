@@ -30,7 +30,7 @@ import java.util.Map;
  *
  * @author Noam Y. Tenne
  */
-public class FileChecksumCalculator {
+public abstract class FileChecksumCalculator {
 
     private static final int BUFFER_SIZE = 32768;
 

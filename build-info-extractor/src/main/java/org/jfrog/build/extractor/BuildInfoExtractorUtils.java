@@ -50,10 +50,9 @@ public abstract class BuildInfoExtractorUtils {
      * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
      * buildInfo xml output file, if the output is a path to this file.
      */
-    public static Properties getBuildInfoProperties() {
+    public static Properties getBuildInfoProperties(Properties additionalProps) {
         Properties props = new Properties();
-        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
-
+        String propertiesFilePath = getAdditionalPropertiesFile(additionalProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -61,7 +60,7 @@ public abstract class BuildInfoExtractorUtils {
                 if (propertiesFile.exists()) {
                     inputStream = new FileInputStream(propertiesFile);
                     props.load(inputStream);
-                    props = filterProperties(props);
+                    props = filterBuildInfoProperties(props);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -72,14 +71,14 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         // now add all the relevant system props.
-        Properties filteredSystemProps = filterProperties(System.getProperties());
+        Properties filteredSystemProps = filterBuildInfoProperties(System.getProperties());
         props.putAll(filteredSystemProps);
 
         //TODO: [by yl] Add common system properties
         return props;
     }
 
-    public static Properties filterProperties(Properties source) {
+    public static Properties filterBuildInfoProperties(Properties source) {
         Properties properties = new Properties();
         Map<Object, Object> filteredProperties = Maps.filterKeys(source, new Predicate<Object>() {
             public boolean apply(Object input) {
@@ -91,7 +90,64 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
+    public static Properties getEnvProperties(Properties startProps) {
+        Properties props = new Properties();
+        boolean includeEnvVars = false;
+        String includeVars = System.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        if (StringUtils.isNotBlank(includeVars)) {
+            includeEnvVars = Boolean.parseBoolean(includeVars);
+        } else {
+            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+            if (StringUtils.isNotBlank(includeVars)) {
+                includeEnvVars = Boolean.parseBoolean(includeVars);
+            }
+        }
+        if (includeEnvVars) {
+            Map<String, String> envMap = System.getenv();
+            for (Map.Entry<String, String> entry : envMap.entrySet()) {
+                props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+            }
+        }
+        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
+        if (StringUtils.isNotBlank(propertiesFilePath)) {
+            File propertiesFile = new File(propertiesFilePath);
+            InputStream inputStream = null;
+            try {
+                if (propertiesFile.exists()) {
+                    inputStream = new FileInputStream(propertiesFile);
+                    props.load(inputStream);
+                    props = filterEnvProperties(props);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(
+                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+            } finally {
+                IOUtils.closeQuietly(inputStream);
+            }
+        }
+        Properties filteredSystemProperties = filterEnvProperties(System.getProperties());
+        for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
+            props.put(entry.getKey(), entry.getValue());
+        }
+        return props;
+    }
+
+    public static Properties filterEnvProperties(Properties source) {
+        Properties properties = new Properties();
+        Map<Object, Object> filtered = Maps.filterKeys(source, new Predicate<Object>() {
+            public boolean apply(Object input) {
+                String key = input.toString();
+                return key.startsWith(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
+            }
+        });
+        properties.putAll(filtered);
+        return properties;
+    }
+
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
+    //TODO: [by yl] introduce a commons module for common impl and also move PropertyUtils there
+
+
     private static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
@@ -115,5 +171,13 @@ public abstract class BuildInfoExtractorUtils {
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
         FileUtils.writeStringToFile(toFile, buildInfoJson, "UTF-8");
+    }
+
+    private static String getAdditionalPropertiesFile(Properties additionalProps) {
+        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
+            propertiesFilePath = additionalProps.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        }
+        return propertiesFilePath;
     }
 }

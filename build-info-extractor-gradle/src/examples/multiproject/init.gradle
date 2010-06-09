@@ -16,7 +16,7 @@
 
 initscript {
   apply {
-    apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/0.5-SNAPSHOT/artifactoryinitplugin-0.5-SNAPSHOT.gradle'
+    apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/1.0/artifactoryinitplugin-1.0.gradle'
   }
 }
 addListener(new PropertyListener())

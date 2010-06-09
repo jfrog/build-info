@@ -14,7 +14,17 @@
  * limitations under the License.
  */
 
-dependencies {
-  compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.0'
-  compile group: 'com.google.collections', name: 'google-collections', version: '1.0'
+package org.jfrog.build.client;
+
+import static org.jfrog.build.client.ClientProperties.ARTIFACTORY_PREFIX;
+
+/**
+ * @author Tomer Cohen
+ */
+public interface ClientIvyProperties {
+
+    /**
+     * Property for whether to publish Ivy descriptors.
+     */
+    String PROP_PUBLISH_IVY = ARTIFACTORY_PREFIX + "publish.ivy";
 }

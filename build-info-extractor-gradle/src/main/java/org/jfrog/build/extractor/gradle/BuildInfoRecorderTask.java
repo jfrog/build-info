@@ -16,6 +16,7 @@
 
 package org.jfrog.build.extractor.gradle;
 
+import org.apache.commons.lang.StringUtils;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -28,6 +29,7 @@ import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
@@ -83,7 +85,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
 
         if (Boolean.parseBoolean(uploadArtifactsProperty)) {
             /**
-             * if the {@link org.jfrog.build.client.ClientProperties.PROP_PUBLISH_ARTIFACT} is set the true,
+             * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
              * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
              * only after a successful build. This is done before the build-info is sent.
              */
@@ -106,13 +108,24 @@ public class BuildInfoRecorderTask extends ConventionTask {
              * object.
              */
             String buildInfoUploadUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, getRootProject());
-            Build build = gbie.extract(this);
+            while (buildInfoUploadUrl.endsWith("/")) {
+                buildInfoUploadUrl = StringUtils.removeEnd(buildInfoUploadUrl, "/");
+            }
+            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
             if (fileExportPath != null) {
                 // If export property set always save the file before sending it to artifactory
                 exportBuildInfo(build, new File(fileExportPath));
             }
+            String username = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, getRootProject());
+            if (StringUtils.isBlank(username)) {
+                username = "";
+            }
+            String password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, getRootProject());
+            if (StringUtils.isBlank(password)) {
+                password = "";
+            }
             ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
-                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl);
+                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl, username, password);
             artifactoryBuildInfoClient.sendBuildInfo(build);
         } else {
             /**
@@ -125,7 +138,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
             } else {
                 savedFile = new File(fileExportPath);
             }
-            Build build = gbie.extract(this);
+            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
             exportBuildInfo(build, savedFile);
         }
     }

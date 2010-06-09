@@ -46,18 +46,13 @@ public interface ClientProperties {
     String PROP_PUBLISH_PASSWORD = ARTIFACTORY_PREFIX + "publish.password";
 
     /**
-     * Property whether to publish Ivy descriptors.
+     * Property for whether to publish the generated build artifacts.
      */
-    String PROP_PUBLISH_IVY = ARTIFACTORY_PREFIX + "publish.ivy";
+    String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
 
     /**
-     * Property whether to publish Maven POMs.
+     * Property for whoever started the build (username).
      */
-    String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publish.maven";
-
-    /**
-     * Property whether to publish the generated build artifacts.
-     */
-    String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifact";
+    String PROP_PRINCIPAL = ARTIFACTORY_PREFIX + "principal";
 
 }

@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package org.jfrog.build.client;
 
-dependencies {
-  compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.0'
-  compile group: 'com.google.collections', name: 'google-collections', version: '1.0'
+import static org.jfrog.build.client.ClientProperties.ARTIFACTORY_PREFIX;
+
+/**
+ * @author Tomer Cohen
+ */
+public interface ClientMavenProperties {
+
+    /**
+     * Property for whether to publish Maven POMs.
+     */
+    String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publish.maven";
 }
