@@ -34,6 +34,7 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 
 import java.io.File;
 import java.util.HashSet;
@@ -97,7 +98,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
 
     public void projectSucceeded(ExecutionEvent event) {
         MavenProject project = event.getProject();
-        extract(project);
+        extract(project, BuildInfoExtractorSpec.fromProperties());
 
         if (wrappedListener != null) {
             wrappedListener.projectSucceeded(event);
@@ -105,8 +106,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void projectFailed(ExecutionEvent event) {
-        MavenProject context = event.getProject();
-        extract(context);
+        MavenProject project = event.getProject();
+        extract(project, BuildInfoExtractorSpec.fromProperties());
 
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
@@ -320,9 +321,10 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         }
     }
 
-    public Build extract(MavenProject context) {
+    public Build extract(MavenProject context, BuildInfoExtractorSpec spec) {
         extractArtifactsAndDependencies(context);
         finalizeAndAddModule(context);
+        //TODO: [by yl] Handle the spec!!!
         return buildInfoBuilder.build();
     }
 }
