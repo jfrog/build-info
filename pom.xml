@@ -20,7 +20,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>org.jfrog</groupId>
+    <groupId>org.jfrog.buildinfo</groupId>
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
     <name>JFrog Build-Info</name>
@@ -73,6 +73,22 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>build-info-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>build-info-extractor</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>build-info-client</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
                 <groupId>com.google.collections</groupId>
                 <artifactId>google-collections</artifactId>
                 <version>1.0</version>
@@ -106,11 +122,6 @@
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
                 <version>1.4</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jfrog</groupId>
-                <artifactId>build-info-api</artifactId>
-                <version>${project.version}</version>
             </dependency>
 
             <dependency>
