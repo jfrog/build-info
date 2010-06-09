@@ -23,8 +23,8 @@
     <groupId>org.jfrog</groupId>
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
-    <name>JFrog Build-Info Parent</name>
-    <version>1.4.0</version>
+    <name>JFrog Build-Info</name>
+    <version>1.4.x-SNAPSHOT</version>
 
     <description>Common API for collecting and sending CI build information to Artifactory</description>
     <inceptionYear>2009</inceptionYear>
@@ -63,7 +63,7 @@
         <module>build-info-api</module>
         <module>build-info-client</module>
         <module>build-info-extractor</module>
-        <!--<module>build-info-extractor-maven3</module>-->
+        <module>build-info-extractor-maven3</module>
     </modules>
 
     <properties>

@@ -15,13 +15,9 @@ def artifactId = 'buildinfo'
  * limitations under the License.
  */
 
-/*apply {
-  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryplugin/artifactoryplugin/0.5-SNAPSHOT/artifactoryplugin-0.5-SNAPSHOT.gradle'
-}*/
-
 allprojects {
   group = 'org.jfrog.buildinfo'
-  version = '1.4.0'
+  version = '1.4.x-SNAPSHOT'
 }
 subprojects {
   apply {
@@ -29,10 +25,6 @@ subprojects {
     apply plugin: 'groovy'
     apply plugin: 'maven'
   }
-  group = 'org.jfrog.buildinfo'
-  version = '1.3.x-SNAPSHOT'
-}
-subprojects {
   repositories {
     mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
   }
