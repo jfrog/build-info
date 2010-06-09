@@ -64,7 +64,6 @@
         <module>build-info-client</module>
         <module>build-info-extractor</module>
         <module>build-info-extractor-maven3</module>
-        <module>build-info-extractor-gradle</module>
     </modules>
 
     <properties>
@@ -191,4 +190,3 @@
         </pluginManagement>
     </build>
 </project>
-        
