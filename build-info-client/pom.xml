@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.jfrog</groupId>
         <artifactId>build-info-parent</artifactId>
-        <version>1.4.x-SNAPSHOT</version>
+        <version>1.4.0</version>
     </parent>
     <artifactId>build-info-client</artifactId>
     <packaging>jar</packaging>

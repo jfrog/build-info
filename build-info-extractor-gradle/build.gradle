@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-version = '1.0-SNAPSHOT'
+version = '1.0.0'
 dependencies {
   compile "org.codehaus.groovy:groovy-all:1.7.1",
           "com.google.collections:google-collections:1.0",
