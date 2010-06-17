@@ -15,6 +15,13 @@ def artifactId = 'buildinfo'
  * limitations under the License.
  */
 
+
+buildscript {
+  apply {
+    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.0/artifactoryinitplugin-1.0.0.gradle'
+  }
+}
+
 allprojects {
   group = 'org.jfrog.buildinfo'
   version = '1.4.x-SNAPSHOT'
@@ -24,9 +31,6 @@ subprojects {
     apply plugin: 'java'
     apply plugin: 'groovy'
     apply plugin: 'maven'
-  }
-  repositories {
-    mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
   }
   dependencies {
     compile group: 'commons-lang', name: 'commons-lang', version: '2.4'

@@ -1,5 +1,3 @@
-import org.jfrog.build.client.ClientProperties
-
 /*
 * Copyright (C) 2010 JFrog Ltd.
 *
@@ -19,7 +17,7 @@ import org.jfrog.build.client.ClientProperties
 buildscript {
   String[] pathParts
   def artifactoryUrl
-  if (!rootProject.hasProperty(ClientProperties.PROP_CONTEXT_URL)) {
+  if (!rootProject.hasProperty('artifactory.contextUrl')) {
     if (sourceURI) {
       logger.debug("sourceURI: $sourceURI")
       String fullPath = sourceURI.path
@@ -30,19 +28,19 @@ buildscript {
       pathParts = artifactoryUrl.split("/")
     }
   } else {
-    artifactoryUrl = rootProject.getProperty(ClientProperties.PROP_CONTEXT_URL)
+    artifactoryUrl = rootProject.getProperty('artifactory.contextUrl')
     pathParts = artifactoryUrl.split("/")
   }
   logger.debug("artifactory.url: $artifactoryUrl")
 
   def downloadId = 'plugins-releases'
-  if (!rootProject.hasProperty(ClientProperties.PROP_RESOLVE_REPOKEY)) {
+  if (!rootProject.hasProperty('artifactory.resolve.repoKey')) {
     if (pathParts.size() >= 3) {
       downloadId = pathParts[2]
     }
     logger.debug("no download id found using: ${downloadId}")
   } else {
-    def downloadIdProperty = rootProject.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)
+    def downloadIdProperty = rootProject.getProperty('artifactory.resolve.repoKey')
     logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
     downloadId = downloadIdProperty
   }
@@ -59,8 +57,8 @@ buildscript {
 
   }
 
-  rootProject.setProperty(ClientProperties.PROP_CONTEXT_URL, artifactoryUrl)
-  rootProject.setProperty(ClientProperties.PROP_RESOLVE_REPOKEY, downloadId)
+  rootProject.setProperty('artifactory.contextUrl', artifactoryUrl)
+  rootProject.setProperty('artifactory.resolve.repoKey', downloadId)
   rootProject.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
 
   //All the tango above for this one - it configures maven repo for the project
