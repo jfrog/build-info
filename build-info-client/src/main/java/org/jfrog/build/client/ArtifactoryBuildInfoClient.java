@@ -223,6 +223,11 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public void deployArtifact(DeployDetails details) throws IOException {
+        Version version = httpClient.getVersion();
+        if (version.isNotFound()) {
+            throw new IOException("This version of Artifactory is not supported by the Hudson-Artifactory Plugin," +
+                    " please upgrade to the latest Artifactory version");
+        }
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
         deploymentPathBuilder.append("/").append(details.targetRepository);
         if (!details.artifactPath.startsWith("/")) {

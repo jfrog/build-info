@@ -129,6 +129,10 @@ public class ArtifactoryHttpClient {
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            HttpEntity httpEntity = response.getEntity();
+            if (httpEntity != null) {
+                httpEntity.consumeContent();
+            }
             return Version.NOT_FOUND;
         }
         String version = "2.2.2";
