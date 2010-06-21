@@ -16,15 +16,15 @@ def artifactId = 'buildinfo'
  */
 
 
-buildscript {
+/*buildscript {
   apply {
     apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.0/artifactoryinitplugin-1.0.0.gradle'
   }
-}
+}*/
 
 allprojects {
   group = 'org.jfrog.buildinfo'
-  version = '1.4.x-SNAPSHOT'
+  version = '1.4.0'
 }
 subprojects {
   apply {
