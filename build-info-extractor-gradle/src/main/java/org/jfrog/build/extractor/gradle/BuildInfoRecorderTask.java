@@ -82,7 +82,6 @@ public class BuildInfoRecorderTask extends ConventionTask {
     private void closeAndDeploy(GradleBuildInfoExtractor gbie) throws IOException {
         String uploadArtifactsProperty = getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT, getRootProject());
         String fileExportPath = getProperty(PROP_EXPORT_FILE_PATH, getRootProject());
-
         if (Boolean.parseBoolean(uploadArtifactsProperty)) {
             /**
              * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
@@ -103,14 +102,16 @@ public class BuildInfoRecorderTask extends ConventionTask {
                     }
                 }
             }
+        }
+        String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, getRootProject());
+        boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
+        if (isPublishBuildInfo) {
             /**
              * After all the artifacts were uploaded successfully the next task is to send the build-info
              * object.
              */
             String buildInfoUploadUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, getRootProject());
-            while (buildInfoUploadUrl.endsWith("/")) {
-                buildInfoUploadUrl = StringUtils.removeEnd(buildInfoUploadUrl, "/");
-            }
+            buildInfoUploadUrl = StringUtils.stripEnd(buildInfoUploadUrl, "/");
             Build build = gbie.extract(this, new BuildInfoExtractorSpec());
             if (fileExportPath != null) {
                 // If export property set always save the file before sending it to artifactory

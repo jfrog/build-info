@@ -201,7 +201,13 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(Build buildInfo) throws IOException {
         String url = artifactoryUrl + BUILD_REST_RUL;
         HttpPut httpPut = new HttpPut(url);
-        String buildInfoJson = buildInfoToJsonString(buildInfo);
+        String buildInfoJson;
+        try {
+            buildInfoJson = buildInfoToJsonString(buildInfo);
+        } catch (Exception e) {
+            log.error("Could not build the build-info object.", e);
+            throw new IOException("Could not publish build-info: " + e.getMessage());
+        }
         StringEntity stringEntity = new StringEntity(buildInfoJson);
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         httpPut.setEntity(stringEntity);
@@ -223,11 +229,6 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public void deployArtifact(DeployDetails details) throws IOException {
-        Version version = httpClient.getVersion();
-        if (version.isNotFound()) {
-            throw new IOException("This version of Artifactory is not supported by the Hudson-Artifactory Plugin," +
-                    " please upgrade to the latest Artifactory version");
-        }
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
         deploymentPathBuilder.append("/").append(details.targetRepository);
         if (!details.artifactPath.startsWith("/")) {
@@ -240,6 +241,17 @@ public class ArtifactoryBuildInfoClient {
         uploadChecksums(details, deploymentPath);
     }
 
+    public Version getVersion() throws Exception {
+        Version version = httpClient.getVersion();
+        boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
+        if (!isCompatibleArtifactory) {
+            throw new UnsupportedOperationException(
+                    "This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
+                            " of Artifactory and above. Please upgrade your Artifactory server!");
+        }
+        return version;
+    }
+
     /**
      * Release all connection and cleanup resources.
      */
@@ -249,14 +261,8 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private String buildInfoToJsonString(Build buildInfo) throws IOException {
-        ArtifactoryHttpClient.Version version = httpClient.getVersion();
-
-        boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
-        if (!isCompatibleArtifactory) {
-            log.warn("Note: Please upgrade your Artifactory server! This plugin is designed to work with version " +
-                    MINIMAL_ARTIFACTORY_VERSION + " of Artifactory and above.");
-        }
+    private String buildInfoToJsonString(Build buildInfo) throws Exception {
+        Version version = getVersion();
         //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
         //JSON parsing. Our JSON writer is configured to discard null values.
         if (!version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
