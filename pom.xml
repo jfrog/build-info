@@ -64,6 +64,7 @@
         <module>build-info-client</module>
         <module>build-info-extractor</module>
         <module>build-info-extractor-maven3</module>
+        <module>build-info-extractor-ivy</module>
     </modules>
 
     <properties>

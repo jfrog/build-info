@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="build-info-extractor-ivy-example">
+
+    <property name="target.dir" value="target"/>
+    <property name="src.dir" value="src"/>
+    <property name="lib.dir" value="${target.dir}/lib"/>
+    <property name="build.dir" value="${target.dir}/build"/>
+    <property name="dist.dir" value="${target.dir}/dist"/>
+    <property name="jars.dir" value="${dist.dir}/jars"/>
+    <property name="ivy.distrib.dir" value="${dist.dir}"/>
+    <property name="ivy.lib.dir" value="${lib.dir}"/>
+    <property name="jar.file" value="${build.dir}/${ant.project.name}.jar"/>
+    <property name="module.version.target" value="1.0"/>
+    <!--<property name="ivy.build.artifacts.dir" value="???"/>-->
+
+    <path id="lib.path.id">
+        <fileset dir="${lib.dir}"/>
+    </path>
+
+    <path id="run.path.id">
+        <path refid="lib.path.id"/>
+        <path location="${build.dir}"/>
+    </path>
+
+    <target name="ivyConfigure">
+        <ivy:configure/>
+    </target>
+
+    <target name="resolve" description="--> retreive dependencies with ivy" depends="ivyConfigure, setup">
+        <ivy:retrieve/>
+    </target>
+
+    <target name="publish" depends="package, ivyConfigure">
+        <ivy:resolve/>
+        <ivy:publish artifactspattern="${build.dir}/[artifact].[ext]"
+                     resolver="publish_artifactory"
+                     status="integration"
+                     forcedeliver="true"
+                     overwrite="true"
+                />
+    </target>
+
+    <target name="local-version">
+        <tstamp>
+            <format property="now" pattern="yyyyMMddHHmmss"/>
+        </tstamp>
+        <property name="ivy.new.revision" value="${module.version.target}-local-${now}"/>
+    </target>
+
+    <target name="publish-local" depends="local-version, package"
+            description="--> publish this project in the local ivy repository">
+        <ivy:publish artifactspattern="${build.dir}/[artifact].[ext]"
+                     resolver="local"
+                     pubrevision="${ivy.new.revision}"
+                     pubdate="${now}"
+                     status="integration"
+                     forcedeliver="true"
+                />
+        <echo message="project ${ant.project.name} published locally with version ${version}"/>
+    </target>
+
+    <target name="report" depends="resolve" description="--> generates a report of dependencies">
+        <ivy:report todir="${build.dir}"/>
+    </target>
+
+
+    <target name="setup">
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${jars.dir}"/>
+    </target>
+
+    <target name="compile" depends="resolve">
+        <javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="lib.path.id"/>
+    </target>
+
+    <target name="package" depends="compile">
+        <jar destfile="${jar.file}"/>
+    </target>
+
+    <target name="clean" description="--> clean the project">
+        <delete includeemptydirs="true">
+            <fileset dir="${basedir}">
+                <include name="${target.dir}/**"/>
+            </fileset>
+        </delete>
+    </target>
+
+
+    <target name="clean-cache" description="--> clean the ivy cache">
+        <ivy:cleancache/>
+    </target>
+</project>

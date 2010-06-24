@@ -1,0 +1,8 @@
+<ivy-module version="1.0" xmlns:e="http://ant.apache.org/ivy/extra">
+    <info organisation="org.jfrog.buildinfo" module="build-info-extractor-ivy-example" revision="1.0"/>
+    <dependencies>
+        <dependency org="org.jfrog.buildinfo" name="build-info-extractor-ivy" rev="latest.integration"/>
+        <dependency org="org.jfrog.buildinfo" name="build-info-api" rev="1.4.0" changing="true"/>
+        <dependency org="org.jfrog.buildinfo" name="build-info-client" rev="1.4.0" changing="true"/>
+    </dependencies>
+</ivy-module>
