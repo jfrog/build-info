@@ -49,16 +49,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
     while (artifactoryUrl.endsWith("/")) {
       artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
     }
-    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
-    if (!downloadId) {
-      // take the target repository from the full url
-      String[] pathParts = artifactoryUrl.split("/")
-      if (pathParts.size() >= 3) {
-        downloadId = pathParts[2]
-      }
-      //TODO: [by ys] why plugins releases in the default?
-      downloadId = downloadId ?: 'plugins-releases'
-    }
+    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project) ?: 'libs'
     def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
     log.debug("Artifactory URL: $artifactoryUrl")
     log.debug("Artifactory Download ID: $downloadId")
