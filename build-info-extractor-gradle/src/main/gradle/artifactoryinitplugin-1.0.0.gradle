@@ -19,12 +19,11 @@ import org.gradle.api.internal.project.ProjectInternal
 
 buildscript {
   def downloadId = 'libs'
-  String[] pathParts
   def artifactoryUrl
   if (sourceURI) {
     logger.debug("sourceURI: $sourceURI")
     String fullPath = sourceURI.path
-    pathParts = fullPath.split("/")
+    String[] pathParts = fullPath.split("/")
     artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
     if (pathParts.size() >= 3) {
       downloadId = pathParts[2]
@@ -38,13 +37,12 @@ buildscript {
   artifactoryDownloadUrl = artifactoryUrl + "/" + downloadId
   logger.debug("artifactory.downloadUrl: $artifactoryDownloadUrl")
 
-  // TODO: Give the properties found to the initscript??
   //All the tango above for this one - it configures maven repo for the project
   repositories {
     mavenRepo urls: [artifactoryDownloadUrl]
   }
   dependencies {
-    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0.0'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0-SNAPSHOT'
   }
 
 }

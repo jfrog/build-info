@@ -15,34 +15,25 @@
 */
 
 buildscript {
-  String[] pathParts
+  def downloadId = 'libs'
   def artifactoryUrl
   if (!rootProject.hasProperty('artifactory.contextUrl')) {
     if (sourceURI) {
       logger.debug("sourceURI: $sourceURI")
       String fullPath = sourceURI.path
-      pathParts = fullPath.split("/")
+      String[] pathParts = fullPath.split("/")
+      if (pathParts.size() >= 3) {
+        downloadId = pathParts[2]
+      }
       artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
-    } else {
-      artifactoryUrl = 'http://gradle.artifactoryonline.com/gradle/'
-      pathParts = artifactoryUrl.split("/")
     }
   } else {
     artifactoryUrl = rootProject.getProperty('artifactory.contextUrl')
-    pathParts = artifactoryUrl.split("/")
   }
   logger.debug("artifactory.url: $artifactoryUrl")
-
-  def downloadId = 'plugins-releases'
-  if (!rootProject.hasProperty('artifactory.resolve.repoKey')) {
-    if (pathParts.size() >= 3) {
-      downloadId = pathParts[2]
-    }
+  if (rootProject.hasProperty('artifactory.resolve.repoKey')) {
+    downloadId = rootProject.getProperty('artifactory.resolve.repoKey')
     logger.debug("no download id found using: ${downloadId}")
-  } else {
-    def downloadIdProperty = rootProject.getProperty('artifactory.resolve.repoKey')
-    logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
-    downloadId = downloadIdProperty
   }
   logger.debug("artifactory.downloadId: $downloadId")
 
@@ -66,7 +57,7 @@ buildscript {
     mavenRepo urls: [artifactoryDownloadUrl]
   }
   dependencies {
-    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0.0'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0-SNAPSHOT'
   }
 }
 
