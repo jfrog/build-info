@@ -3,6 +3,8 @@ package org.jfrog.build.extractor.listener;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.IOUtils;
+import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.ivy.plugins.trigger.Trigger;
@@ -12,15 +14,28 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 /**
+ * This trigger is fired when a {@code pre-publish-artifact} has occurred. Allowing to get module data as to the
+ * artifacts that will be published.
+ *
  * @author Tomer Cohen
  */
 public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
 
     private static List<Module> allModules = Lists.newArrayList();
+
+    private Properties fileLocations;
+
+    public IvyModuleTrigger() throws IOException {
+        fileLocations = new Properties();
+    }
+
 
     public void progress(IvyEvent event) {
         Map<String, String> map = event.getAttributes();
@@ -33,6 +48,13 @@ public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
         });
         String file = map.get("file");
         File artifactFile = new File(file);
+        String organization = map.get("organisation");
+        fileLocations.put(organization + "." + artifactFile.getName(), artifactFile.getAbsolutePath());
+        try {
+            saveFileLocationFile(fileLocations);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         artifactBuilder.type(map.get("type"));
         Map<String, String> checksums;
@@ -54,6 +76,24 @@ public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
             allModules.set(indexOfModule, module);
         } else {
             allModules.add(module);
+        }
+    }
+
+    private void saveFileLocationFile(Properties fileLocations) throws IOException {
+        File baseDir = IvyContext.getContext().getSettings().getBaseDir();
+        File propFileLocation = new File(baseDir, "file-locations.properties");
+        if (!propFileLocation.exists()) {
+            propFileLocation.createNewFile();
+        } else {
+            propFileLocation.delete();
+            propFileLocation.createNewFile();
+        }
+        FileOutputStream out = null;
+        try {
+            out = new FileOutputStream(propFileLocation);
+            fileLocations.store(out, "");
+        } finally {
+            IOUtils.closeQuietly(out);
         }
     }
 

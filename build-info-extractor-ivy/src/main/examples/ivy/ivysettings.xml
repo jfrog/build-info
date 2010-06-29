@@ -1,9 +1,9 @@
 <ivysettings>
     <classpath
-            file="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100624151944.jar"/>
+            file="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
     <classpath
             file="${ivy.cache.dir}/org.jfrog.buildinfo/build-info-client/jars/build-info-client-1.4.0.jar"/>
-    <classpath3
+    <classpath
             file="${ivy.cache.dir}/org.jfrog.buildinfo/build-info-extractor/jars/build-info-extractor-1.4.0.jar"/>
     <classpath
             file="${ivy.cache.dir}/org.jfrog.buildinfo/build-info-api/jars/build-info-api-1.4.0.jar"/>
@@ -20,12 +20,17 @@
     <classpath
             file="${ivy.cache.dir}/commons-lang/commons-lang/jars/commons-lang-2.4.jar"/>
     <classpath
+            file="${ivy.cache.dir}/commons-io/commons-io/jars/commons-io-1.4.jar"/>
+    <classpath
             file="${ivy.cache.dir}/commons-codec/commons-codec/jars/commons-codec-1.3.jar"/>
     <classpath
             file="${ivy.cache.dir}/commons-logging/commons-logging/jars/commons-logging-1.1.1.jar"/>
     <typedef name="dependencies" classname="org.jfrog.build.extractor.listener.IvyDependencyTrigger"/>
     <typedef name="modules" classname="org.jfrog.build.extractor.listener.IvyModuleTrigger"/>
     <typedef name="buildinfo" classname="org.jfrog.build.extractor.listener.IvyBuildInfoTrigger"/>
+    <taskdef name="artifactory_publish" classname="org.jfrog.build.extractor.task.ArtifactoryPublishTask"
+             classpath="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629082826.jar"/>
+
     <triggers>
         <dependencies event="post-resolve"/>
         <modules event="pre-publish-artifact"/>

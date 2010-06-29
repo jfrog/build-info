@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Properties;
@@ -166,6 +168,15 @@ public abstract class BuildInfoExtractorUtils {
         jsonGenerator.writeObject(buildInfo);
         String result = writer.getBuffer().toString();
         return result;
+    }
+
+    public static Build jsonStringToBuildInfo(String json) throws IOException {
+        JsonFactory jsonFactory = new JsonFactory();
+        ObjectMapper mapper = new ObjectMapper(jsonFactory);
+        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        jsonFactory.setCodec(mapper);
+        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        return mapper.readValue(parser, Build.class);
     }
 
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
