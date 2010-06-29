@@ -13,18 +13,21 @@ import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorSpec;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
 /**
+ * This trigger is fired as a {@code post-publish-artifact} event. After the artifact has successfully been published to
+ * either a remote or local repository, this event is fired. This is called after <b>every</b> publish event, if we have
+ * 2 artifacts (jar, ivy) to be published, this event will be called 2 times.
+ *
  * @author Tomer Cohen
  */
-public class IvyBuildInfoTrigger extends AbstractTrigger implements Trigger, BuildInfoExtractor<IvyEvent, Build> {
+public class IvyBuildInfoTrigger extends AbstractTrigger implements Trigger {
     private Build build;
 
 
@@ -46,17 +49,13 @@ public class IvyBuildInfoTrigger extends AbstractTrigger implements Trigger, Bui
         builder.startedDate(new Date());
         builder.type(BuildType.IVY);
         build = builder.build();
-        ArtifactoryBuildInfoClient client =
-                new ArtifactoryBuildInfoClient("http://localhost:8080/artifactory", "admin", "password");
+        File baseDir = ivySettings.getBaseDir();
+        File exportedBuildInfoFile = new File(baseDir, "build-info.json");
         try {
-            client.sendBuildInfo(build);
+            BuildInfoExtractorUtils.saveBuildInfoToFile(build, exportedBuildInfoFile);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public Build extract(IvyEvent context, BuildInfoExtractorSpec spec) {
-        progress(context);
-        return build;
-    }
 }

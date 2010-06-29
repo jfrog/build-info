@@ -11,6 +11,9 @@
     <property name="ivy.lib.dir" value="${lib.dir}"/>
     <property name="jar.file" value="${build.dir}/${ant.project.name}.jar"/>
     <property name="module.version.target" value="1.0"/>
+    <property name="ivy.cache.dir" value="/home/tomer/.ivy2/cache"/>
+    <taskdef name="artifactory_publish" classname="org.jfrog.build.extractor.task.ArtifactoryPublishTask"
+             classpath="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
     <!--<property name="ivy.build.artifacts.dir" value="???"/>-->
 
     <path id="lib.path.id">
@@ -32,11 +35,11 @@
 
     <target name="publish" depends="package, ivyConfigure">
         <ivy:resolve/>
-        <ivy:publish artifactspattern="${build.dir}/[artifact].[ext]"
-                     resolver="publish_artifactory"
-                     status="integration"
-                     forcedeliver="true"
-                     overwrite="true"
+        <artifactory_publish artifactspattern="${build.dir}/[artifact].[ext]"
+                             resolver="publish_artifactory"
+                             status="integration"
+                             forcedeliver="true"
+                             overwrite="true"
                 />
     </target>
 

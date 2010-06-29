@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
+ * dependencies via the {@link ResolveReport} with file locations and configurations.
+ *
  * @author Tomer Cohen
  */
 public class IvyDependencyTrigger extends AbstractTrigger implements Trigger {
