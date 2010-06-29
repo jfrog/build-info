@@ -144,7 +144,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
     } else {
       if (project.getRootProject().equals(project)) {
-        log.warn "Upload ID was not declared, no actual deployment will be performed."
+        log.debug "Upload ID was not declared, no actual deployment will be performed."
       }
     }
     project.getGradle().addBuildListener(new BuildAdapter() {
