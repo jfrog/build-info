@@ -18,6 +18,7 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -221,6 +223,29 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
+    public long getItemLastModified(String path) throws IOException, ParseException {
+        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified";
+        HttpGet get = new HttpGet(url);
+        HttpResponse response = httpClient.getHttpClient().execute(get);
+
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            throw new IOException("Failed to obtain item info: " + response.getStatusLine());
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream content = entity.getContent();
+                try {
+                    String lastModifiedString = IOUtils.toString(content);
+                    return Long.parseLong(lastModifiedString);
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                }
+            }
+        }
+        return -1;
+    }
 
     /**
      * Deploys the artifact to the destination repository.
