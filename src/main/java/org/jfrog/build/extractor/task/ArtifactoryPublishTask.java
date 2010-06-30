@@ -20,6 +20,7 @@ import org.apache.tools.ant.BuildException;
 public class ArtifactoryPublishTask extends IvyPublish {
     private static final String RESOLVER_NAME = "artifactory_resolver";
     private static final String REPOSITORY_NAME = "artifactory";
+    public static final String PUBLISH_ARTIFACT_TASK_NAME = "publish_artifact";
 
     @Override
     public void doExecute() throws BuildException {
@@ -29,6 +30,7 @@ public class ArtifactoryPublishTask extends IvyPublish {
             ivySettings.addResolver(createArtifactoryDependencyResolver(ivySettings));
         }
         addArtifactspattern(IBiblioResolver.DEFAULT_PATTERN);
+
     }
 
     private DependencyResolver createArtifactoryDependencyResolver(IvySettings ivySettings) {
