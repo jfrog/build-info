@@ -67,7 +67,7 @@
                      status="integration"
                      forcedeliver="true"
                 />
-        <echo message="project ${ant.project.name} published locally with version ${version}"/>
+        <echo message="project ${ant.project.name} published locally with version ${ivy.new.revision}"/>
     </target>
 
     <target name="package" depends="compile" description="--> make a jar file for this project">
