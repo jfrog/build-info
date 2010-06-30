@@ -223,7 +223,7 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    public long getItemLastModified(String path) throws IOException, ParseException {
+    public String getItemLastModified(String path) throws IOException, ParseException {
         String url = artifactoryUrl + "/api/storage/" + path + "?lastModified";
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
@@ -235,8 +235,7 @@ public class ArtifactoryBuildInfoClient {
             if (entity != null) {
                 InputStream content = entity.getContent();
                 try {
-                    String lastModifiedString = IOUtils.toString(content);
-                    return Long.parseLong(lastModifiedString);
+                    return IOUtils.toString(content);
                 } finally {
                     if (content != null) {
                         content.close();
@@ -244,7 +243,7 @@ public class ArtifactoryBuildInfoClient {
                 }
             }
         }
-        return -1;
+        return null;
     }
 
     /**
