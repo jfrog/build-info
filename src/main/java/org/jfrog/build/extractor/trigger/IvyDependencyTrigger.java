@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.listener;
+package org.jfrog.build.extractor.trigger;
 
 import com.google.common.collect.Lists;
 import org.apache.ivy.core.event.IvyEvent;
