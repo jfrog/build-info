@@ -1,6 +1,6 @@
 <ivysettings>
     <classpath
-            file="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
+            file="${ivy.settings.dir}/../../../../../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
     <classpath
             file="${ivy.cache.dir}/org.jfrog.buildinfo/build-info-client/jars/build-info-client-1.4.0.jar"/>
     <classpath
