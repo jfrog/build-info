@@ -11,7 +11,9 @@ import org.apache.ivy.plugins.resolver.URLResolver;
 import org.apache.tools.ant.BuildException;
 
 /**
- * A customized Ivy task that is used to configure a custom resolver which wraps around the existing one.
+ * A customized Ivy task that is used to configure a custom resolver which wraps around the existing resolver. It
+ * extends the {@link IvyPublish} so that the artifacts will not be automatically published, but rather we have more
+ * control on artifact deployment.
  *
  * @author Tomer Cohen
  */

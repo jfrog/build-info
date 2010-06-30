@@ -17,7 +17,7 @@ import java.io.IOException;
 
 
 /**
- * A listner which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
+ * A listener which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
  * itself! This is not to be confused with {@code Ivy} {@link Trigger} which is called during Ivy related events
  *
  * @author Tomer Cohen
