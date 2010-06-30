@@ -11,6 +11,7 @@ import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.task.ArtifactoryPublishTask;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,9 @@ public class ArtifactoryBuildListener implements BuildListener {
      */
     public void buildFinished(BuildEvent event) {
         Project project = event.getProject();
+        ArtifactoryPublishTask publishTask =
+                (ArtifactoryPublishTask) project.getTargets().get(ArtifactoryPublishTask.PUBLISH_ARTIFACT_TASK_NAME);
+        publishTask.doExecute();
         IvyContext context = IvyContext.getContext();
         IvySettings ivySettings = context.getSettings();
         project.log("Reading build-info", Project.MSG_INFO);
