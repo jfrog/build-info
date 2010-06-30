@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.listener;
+package org.jfrog.build.extractor.trigger;
 
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.IvyContext;

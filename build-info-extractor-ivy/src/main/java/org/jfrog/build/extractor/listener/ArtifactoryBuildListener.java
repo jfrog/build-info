@@ -5,13 +5,13 @@ import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.BuildEvent;
-import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.task.ArtifactoryPublishTask;
+import org.jfrog.build.extractor.trigger.IvyBuildInfoTrigger;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,18 +23,16 @@ import java.io.IOException;
  *
  * @author Tomer Cohen
  */
-public class ArtifactoryBuildListener implements BuildListener {
-
-    public void buildStarted(BuildEvent event) {
-    }
+public class ArtifactoryBuildListener extends BuildListenerAdapter {
 
     /**
      * Called when the build has ended, this is the time where we will read the build-info object that was assembled by
      * the {@link IvyBuildInfoTrigger}, it will parse the file into a senadble build-info object to be used by the
      * {@link ArtifactoryBuildInfoClient}
      *
-     * @param event
+     * @param event The build event.
      */
+    @Override
     public void buildFinished(BuildEvent event) {
         Project project = event.getProject();
         ArtifactoryPublishTask publishTask =
@@ -51,20 +49,5 @@ public class ArtifactoryBuildListener implements BuildListener {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public void targetStarted(BuildEvent event) {
-    }
-
-    public void targetFinished(BuildEvent event) {
-    }
-
-    public void taskStarted(BuildEvent event) {
-    }
-
-    public void taskFinished(BuildEvent event) {
-    }
-
-    public void messageLogged(BuildEvent event) {
     }
 }
