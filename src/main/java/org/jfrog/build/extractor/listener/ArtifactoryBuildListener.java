@@ -35,6 +35,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     @Override
     public void buildFinished(BuildEvent event) {
         Project project = event.getProject();
+        project.log("Build finished triggered", Project.MSG_INFO);
         ArtifactoryPublishTask publishTask =
                 (ArtifactoryPublishTask) project.getTargets().get(ArtifactoryPublishTask.PUBLISH_ARTIFACT_TASK_NAME);
         publishTask.doExecute();
