@@ -4,10 +4,12 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
+import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.ivy.plugins.trigger.Trigger;
+import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -38,6 +40,8 @@ public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
 
 
     public void progress(IvyEvent event) {
+        Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+        project.log("Collecting Module information.", Project.MSG_INFO);
         Map<String, String> map = event.getAttributes();
         final String moduleName = map.get("module");
         List<Module> modules = IvyDependencyTrigger.getModules();
@@ -49,7 +53,9 @@ public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
         String file = map.get("file");
         File artifactFile = new File(file);
         String organization = map.get("organisation");
-        fileLocations.put(organization + "." + artifactFile.getName(), artifactFile.getAbsolutePath());
+        String path = artifactFile.getAbsolutePath();
+        project.log("Module location: " + path, Project.MSG_INFO);
+        fileLocations.put(organization + "." + artifactFile.getName(), path);
         try {
             saveFileLocationFile(fileLocations);
         } catch (IOException e) {

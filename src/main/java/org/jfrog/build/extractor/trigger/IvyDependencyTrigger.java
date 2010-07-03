@@ -1,6 +1,8 @@
 package org.jfrog.build.extractor.trigger;
 
 import com.google.common.collect.Lists;
+import org.apache.ivy.ant.IvyTask;
+import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
@@ -8,6 +10,7 @@ import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.ivy.plugins.trigger.Trigger;
+import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -34,6 +37,8 @@ public class IvyDependencyTrigger extends AbstractTrigger implements Trigger {
     }
 
     public void progress(IvyEvent event) {
+        Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+        project.log("Collecting dependencies.", Project.MSG_INFO);
         ResolveReport report = ((EndResolveEvent) event).getReport();
         Map<String, String> attributes = event.getAttributes();
         String moduleName = attributes.get("module");
@@ -41,9 +46,12 @@ public class IvyDependencyTrigger extends AbstractTrigger implements Trigger {
         String[] configurations = report.getConfigurations();
         List<Dependency> moduleDependencies = Lists.newArrayList();
         for (String configuration : configurations) {
+            project.log("Configuration: " + configuration + " Dependencies", Project.MSG_INFO);
             ConfigurationResolveReport configurationReport = report.getConfigurationReport(configuration);
             ArtifactDownloadReport[] allArtifactsReports = configurationReport.getAllArtifactsReports();
             for (ArtifactDownloadReport artifactsReport : allArtifactsReports) {
+                project.log("Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
+                        Project.MSG_INFO);
                 DependencyBuilder dependencyBuilder = new DependencyBuilder();
                 dependencyBuilder.type(artifactsReport.getType()).id(artifactsReport.getName())
                         .scopes(Arrays.asList(configurations));
