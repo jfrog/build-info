@@ -18,7 +18,6 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -224,7 +223,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public String getItemLastModified(String path) throws IOException, ParseException {
-        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified";
+        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified&deep=1";
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
 
@@ -234,8 +233,11 @@ public class ArtifactoryBuildInfoClient {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 InputStream content = entity.getContent();
+                JsonParser parser;
                 try {
-                    return IOUtils.toString(content);
+                    parser = httpClient.createJsonParser(content);
+                    JsonNode result = parser.readValueAsTree();
+                    return result.get("lastModified").getTextValue();
                 } finally {
                     if (content != null) {
                         content.close();
