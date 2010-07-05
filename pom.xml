@@ -44,20 +44,6 @@
         <url>http://subversion.jfrog.org/jfrog/build-info/trunk/</url>
         <connection>scm:svn:http://subversion.jfrog.org/jfrog/build-info/trunk/</connection>
     </scm>
-    <!-- this is temporarily copied from the parent pom.  remove this section when that is used -->
-    <distributionManagement>
-        <repository>
-            <id>rjo-release</id>
-            <name>JFrog's release repository</name>
-            <url>repo.jfrog.org/artifactory/libs-releases-local</url>
-        </repository>
-        <snapshotRepository>
-            <id>rjo-releases-snapshot</id>
-            <name>JFrog's snapshot repository</name>
-            <url>repo.jfrog.org/artifactory/libs-snapshots-local</url>
-            <uniqueVersion>true</uniqueVersion>
-        </snapshotRepository>
-    </distributionManagement>
 
     <modules>
         <module>build-info-api</module>
