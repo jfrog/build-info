@@ -267,8 +267,16 @@ public class ArtifactoryBuildInfoClient {
         uploadChecksums(details, deploymentPath);
     }
 
-    public Version getVersion() throws Exception {
+    /**
+     * @return Artifactory version if working against a compatible version of Artifactory
+     * @throws IOException If server not found or it doesn't answer to the version query or it is too old
+     */
+    public Version verifyCompatibleArtifactoryVersion() throws IOException {
         Version version = httpClient.getVersion();
+        if (version.isNotFound()) {
+            throw new UnsupportedOperationException(
+                    "There is either an incompatible or no instance of Artifactory at the provided URL.");
+        }
         boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
         if (!isCompatibleArtifactory) {
             throw new UnsupportedOperationException(
@@ -288,7 +296,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     private String buildInfoToJsonString(Build buildInfo) throws Exception {
-        Version version = getVersion();
+        Version version = verifyCompatibleArtifactoryVersion();
         //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
         //JSON parsing. Our JSON writer is configured to discard null values.
         if (!version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
