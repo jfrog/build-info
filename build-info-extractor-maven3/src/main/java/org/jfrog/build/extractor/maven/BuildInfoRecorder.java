@@ -37,6 +37,7 @@ import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 
 import java.io.File;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,7 +69,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void sessionStarted(ExecutionEvent event) {
-        initBuildInfo();
+        initBuildInfo(event);
 
         if (wrappedListener != null) {
             wrappedListener.sessionStarted(event);
@@ -99,7 +100,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     public void projectSucceeded(ExecutionEvent event) {
         MavenProject project = event.getProject();
         extract(project, BuildInfoExtractorSpec.fromProperties());
-
         if (wrappedListener != null) {
             wrappedListener.projectSucceeded(event);
         }
@@ -129,6 +129,31 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     public void forkFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkFailed(event);
+        }
+    }
+
+    public void forkedProjectStarted(ExecutionEvent event) {
+        MavenProject project = event.getProject();
+        initModule(project);
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectStarted(event);
+        }
+    }
+
+    public void forkedProjectSucceeded(ExecutionEvent event) {
+        MavenProject project = event.getProject();
+        extract(project, BuildInfoExtractorSpec.fromProperties());
+        System.out.println("Artifactory Maven3 Plugin successfully built.");
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectSucceeded(event);
+        }
+    }
+
+    public void forkedProjectFailed(ExecutionEvent event) {
+        MavenProject project = event.getProject();
+        extract(project, BuildInfoExtractorSpec.fromProperties());
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectFailed(event);
         }
     }
 
@@ -170,9 +195,10 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         }
     }
 
-    private void initBuildInfo() {
+    private void initBuildInfo(ExecutionEvent event) {
+        MavenProject topLevelProject = event.getSession().getTopLevelProject();
         logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = new BuildInfoBuilder("");
+        buildInfoBuilder = new BuildInfoBuilder(topLevelProject.getName()).number("0").startedDate(new Date());
     }
 
     private void initModule(MavenProject project) {

@@ -18,20 +18,20 @@
     <components>
         <component>
             <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
-            <implementation>org.jfrog.maven.build.extractor.BuildInfoRecorderLifecycleParticipant</implementation>
+            <implementation>org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant</implementation>
             <role-hint>default</role-hint>
             <isolated-realm>false</isolated-realm>
             <requirements>
                 <requirement>
-                    <role>org.jfrog.maven.build.extractor.BuildInfoRecorder</role>
+                    <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
                     <role-hint>default</role-hint>
                     <field-name>recorder</field-name>
                 </requirement>
             </requirements>
         </component>
         <component>
-            <role>org.jfrog.maven.build.extractor.BuildInfoRecorder</role>
-            <implementation>org.jfrog.maven.build.extractor.BuildInfoRecorder</implementation>
+            <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
+            <implementation>org.jfrog.build.extractor.maven.BuildInfoRecorder</implementation>
             <role-hint>default</role-hint>
             <isolated-realm>false</isolated-realm>
             <requirements>
