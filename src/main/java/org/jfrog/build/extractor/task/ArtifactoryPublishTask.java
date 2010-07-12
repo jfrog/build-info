@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.task;
 
+import org.apache.ivy.ant.IvyDeliver;
 import org.apache.ivy.ant.IvyPublish;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.settings.IvySettings;
@@ -17,7 +18,7 @@ import org.apache.tools.ant.BuildException;
  *
  * @author Tomer Cohen
  */
-public class ArtifactoryPublishTask extends IvyPublish {
+public class ArtifactoryPublishTask extends IvyDeliver {
     private static final String RESOLVER_NAME = "artifactory_resolver";
     private static final String REPOSITORY_NAME = "artifactory";
     public static final String PUBLISH_ARTIFACT_TASK_NAME = "publish_artifact";
@@ -29,8 +30,7 @@ public class ArtifactoryPublishTask extends IvyPublish {
         if (ivySettings.getResolver(RESOLVER_NAME) == null) {
             ivySettings.addResolver(createArtifactoryDependencyResolver(ivySettings));
         }
-        addArtifactspattern(IBiblioResolver.DEFAULT_PATTERN);
-
+        setDeliverpattern(IBiblioResolver.DEFAULT_PATTERN);
     }
 
     private DependencyResolver createArtifactoryDependencyResolver(IvySettings ivySettings) {
