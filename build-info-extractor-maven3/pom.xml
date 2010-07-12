@@ -24,6 +24,7 @@
     </parent>
 
     <artifactId>build-info-extractor-maven3</artifactId>
+    <version>1.0.x-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Maven 3 Extractor</name>
 
@@ -31,13 +32,18 @@
         <dependencies>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>build-info-extractor</artifactId>
-                <version>${project.version}</version>
+                <artifactId>build-info-api</artifactId>
+                <version>${parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>build-info-api</artifactId>
-                <version>${project.version}</version>
+                <artifactId>build-info-client</artifactId>
+                <version>${parent.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>build-info-extractor</artifactId>
+                <version>${parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>
@@ -57,11 +63,15 @@
     <dependencies>
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
-            <artifactId>build-info-extractor</artifactId>
+            <artifactId>build-info-api</artifactId>
         </dependency>
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
-            <artifactId>build-info-api</artifactId>
+            <artifactId>build-info-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jfrog.buildinfo</groupId>
+            <artifactId>build-info-extractor</artifactId>
         </dependency>
         <dependency>
             <groupId>org.codehaus.plexus</groupId>

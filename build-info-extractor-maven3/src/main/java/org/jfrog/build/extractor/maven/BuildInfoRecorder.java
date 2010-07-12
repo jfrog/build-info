@@ -17,37 +17,50 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
+import org.apache.maven.execution.BuildSuccess;
+import org.apache.maven.execution.BuildSummary;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 
 import java.io.File;
-import java.util.Date;
-import java.util.HashSet;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
+
+import static org.jfrog.build.api.BuildInfoProperties.*;
 
 /**
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build>, ExecutionListener {
+public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Build>, ExecutionListener {
+
+    public static final String PREFIX = "org.jfrog.build.extractor.maven.";
 
     @Requirement
     private Logger logger;
@@ -57,6 +70,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     private ModuleBuilder currentModule;
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
+    private Set<DeployDetails> deployableArtifacts = null;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -69,7 +83,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void sessionStarted(ExecutionEvent event) {
+        logger.info("Initializing Artifactory Build-Info Recording");
         initBuildInfo(event);
+        deployableArtifacts = Sets.newHashSet();
 
         if (wrappedListener != null) {
             wrappedListener.sessionStarted(event);
@@ -77,6 +93,13 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void sessionEnded(ExecutionEvent event) {
+        MavenSession session = event.getSession();
+        BuildSummary summary = session.getResult().getBuildSummary(session.getTopLevelProject());
+        if (summary instanceof BuildSuccess) {
+            summary.getTime();
+        }
+
+        deployableArtifacts = null;
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
@@ -98,17 +121,13 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void projectSucceeded(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
+        finalizeModule(event.getProject());
         if (wrappedListener != null) {
             wrappedListener.projectSucceeded(event);
         }
     }
 
     public void projectFailed(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
-
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
         }
@@ -141,17 +160,13 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void forkedProjectSucceeded(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
-        System.out.println("Artifactory Maven3 Plugin successfully built.");
+        finalizeModule(event.getProject());
         if (wrappedListener != null) {
             wrappedListener.forkedProjectSucceeded(event);
         }
     }
 
     public void forkedProjectFailed(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
         if (wrappedListener != null) {
             wrappedListener.forkedProjectFailed(event);
         }
@@ -196,9 +211,32 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     private void initBuildInfo(ExecutionEvent event) {
-        MavenProject topLevelProject = event.getSession().getTopLevelProject();
-        logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = new BuildInfoBuilder(topLevelProject.getName()).number("0").startedDate(new Date());
+        MavenSession session = event.getSession();
+
+        Properties systemProperties = session.getSystemProperties();
+
+        Properties mavenProperties = new Properties();
+        InputStream inputStream = BuildInfoRecorder.class.getClassLoader()
+                .getResourceAsStream("org/apache/maven/messages/build.properties");
+        try {
+            mavenProperties.load(inputStream);
+        } catch (IOException e) {
+            IOUtils.closeQuietly(inputStream);
+        }
+
+        buildInfoBuilder = new BuildInfoBuilder(systemProperties.getProperty(PREFIX + PROP_BUILD_NAME)).
+                number(systemProperties.getProperty(PREFIX + PROP_BUILD_NUMBER)).
+                started(systemProperties.getProperty(PREFIX + PROP_BUILD_STARTED)).
+                url(systemProperties.getProperty(PREFIX + PROP_BUILD_URL)).
+                artifactoryPrincipal(systemProperties.getProperty(PREFIX + "deployer.username")).
+                agent(new Agent(systemProperties.getProperty(PREFIX + "agent.name"),
+                        systemProperties.getProperty(PREFIX + "agent.version"))).
+                buildAgent(new BuildAgent("Maven", mavenProperties.getProperty("version"))).
+                principal(systemProperties.getProperty(PREFIX + "triggeredBy")).
+                vcsRevision(systemProperties.getProperty(PREFIX + PROP_VCS_REVISION)).
+                parentName(systemProperties.getProperty(PREFIX + PROP_PARENT_BUILD_NAME)).
+                parentNumber(systemProperties.getProperty(PREFIX + PROP_PARENT_BUILD_NUMBER)).
+                properties(gatherBuildInfoProperties());
     }
 
     private void initModule(MavenProject project) {
@@ -210,8 +248,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         currentModule.id(project.getId());
         currentModule.properties(project.getProperties());
 
-        currentModuleArtifacts = new HashSet<Artifact>();
-        currentModuleDependencies = new HashSet<Artifact>();
+        currentModuleArtifacts = Sets.newHashSet();
+        currentModuleDependencies = Sets.newHashSet();
     }
 
     private void extractArtifactsAndDependencies(MavenProject project) {
@@ -222,6 +260,11 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         extractModuleArtifact(project);
         extractModuleAttachedArtifacts(project);
         extractModuleDependencies(project);
+    }
+
+    private void finalizeModule(MavenProject project) {
+        extractArtifactsAndDependencies(project);
+        finalizeAndAddModule(project);
     }
 
     private void extractModuleArtifact(MavenProject project) {
@@ -347,10 +390,24 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         }
     }
 
-    public Build extract(MavenProject context, BuildInfoExtractorSpec spec) {
-        extractArtifactsAndDependencies(context);
-        finalizeAndAddModule(context);
+    public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
         //TODO: [by yl] Handle the spec!!!
-        return buildInfoBuilder.build();
+
+        long startTime = event.getSession().getStartTime().getTime();
+        return buildInfoBuilder.durationMillis(startTime).build();
+    }
+
+    protected Properties gatherBuildInfoProperties() {
+        Properties props = new Properties();
+        props.setProperty("os.arch", System.getProperty("os.arch"));
+        props.setProperty("os.name", System.getProperty("os.name"));
+        props.setProperty("os.version", System.getProperty("os.version"));
+        props.setProperty("java.version", System.getProperty("java.version"));
+        props.setProperty("java.vm.info", System.getProperty("java.vm.info"));
+        props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
+        props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
+        props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
+
+        return props;
     }
 }
