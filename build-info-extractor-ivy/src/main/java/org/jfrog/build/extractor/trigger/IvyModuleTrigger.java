@@ -8,7 +8,6 @@ import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
-import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Module;
@@ -28,11 +27,12 @@ import java.util.Properties;
  *
  * @author Tomer Cohen
  */
-public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
+public class IvyModuleTrigger extends AbstractTrigger {
 
     private static List<Module> allModules = Lists.newArrayList();
 
     private Properties fileLocations;
+    private static final String FILE_LOCATIONS_FILE_NAME = "file-locations.properties";
 
     public IvyModuleTrigger() throws IOException {
         fileLocations = new Properties();
@@ -87,7 +87,7 @@ public class IvyModuleTrigger extends AbstractTrigger implements Trigger {
 
     private void saveFileLocationFile(Properties fileLocations) throws IOException {
         File baseDir = IvyContext.getContext().getSettings().getBaseDir();
-        File propFileLocation = new File(baseDir, "file-locations.properties");
+        File propFileLocation = new File(baseDir, FILE_LOCATIONS_FILE_NAME);
         if (!propFileLocation.exists()) {
             propFileLocation.createNewFile();
         } else {

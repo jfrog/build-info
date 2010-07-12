@@ -6,7 +6,6 @@ import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.core.settings.IvyVariableContainer;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
-import org.apache.ivy.plugins.trigger.Trigger;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
@@ -27,7 +26,7 @@ import java.util.List;
  *
  * @author Tomer Cohen
  */
-public class IvyBuildInfoTrigger extends AbstractTrigger implements Trigger {
+public class IvyBuildInfoTrigger extends AbstractTrigger {
     private Build build;
 
 

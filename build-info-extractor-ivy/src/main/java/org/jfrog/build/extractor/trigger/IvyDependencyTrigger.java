@@ -9,7 +9,6 @@ import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
-import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -28,7 +27,7 @@ import java.util.Map;
  *
  * @author Tomer Cohen
  */
-public class IvyDependencyTrigger extends AbstractTrigger implements Trigger {
+public class IvyDependencyTrigger extends AbstractTrigger {
 
     private static List<Module> modules;
 
