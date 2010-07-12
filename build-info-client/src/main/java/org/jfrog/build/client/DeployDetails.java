@@ -16,7 +16,10 @@
 
 package org.jfrog.build.client;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BuildFileBean;
 
 import java.io.File;
 import java.util.HashMap;
@@ -72,6 +75,14 @@ public class DeployDetails {
                 throw new IllegalArgumentException("Artifact path cannot be empty");
             }
             return deployDetails;
+        }
+
+        public Builder bean(BuildFileBean bean) {
+            ImmutableMap<String, String> props = Maps.fromProperties(bean.getProperties());
+            deployDetails.properties = props;
+            deployDetails.sha1 = bean.getSha1();
+            deployDetails.md5 = bean.getMd5();
+            return this;
         }
 
         public Builder file(File file) {

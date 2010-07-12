@@ -38,6 +38,8 @@
 
     <property name="ivy.jar.dir" value="${user.home}/.ivy2/jars"/>
     <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar"/>
+    <taskdef name="artifactory_publish" classname="org.jfrog.build.extractor.task.ArtifactoryPublishTask"/>
+
 
     <!-- =================================
     target: load-ivy
@@ -164,13 +166,14 @@
          ================================= -->
     <target name="publish-local" depends="local-version, jar"
             description="--> publish this project in the local ivy repository">
-        <ivy:publish artifactspattern="${build.dir}/[artifact].[ext]"
-                     resolver="local"
-                     pubrevision="${version}"
-                     pubdate="${now}"
-                     status="integration"
-                     forcedeliver="true"
+        <artifactory_publish artifactspattern="${build.dir}/[artifact].[ext]"
+                             resolver="local"
+                             pubrevision="${version}"
+                             pubdate="${now}"
+                             status="integration"
+                             forcedeliver="true"
                 />
+
         <echo message="project ${ant.project.name} published locally with version ${version}"/>
     </target>
 

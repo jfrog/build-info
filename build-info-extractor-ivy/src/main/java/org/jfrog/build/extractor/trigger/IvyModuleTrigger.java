@@ -9,10 +9,13 @@ import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.PropertyHelper;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.context.BuildContext;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -82,6 +85,10 @@ public class IvyModuleTrigger extends AbstractTrigger {
             allModules.set(indexOfModule, module);
         } else {
             allModules.add(module);
+            PropertyHelper propertyHelper = PropertyHelper.getPropertyHelper(project);
+            BuildContext ctx = (BuildContext) propertyHelper.getUserProperty(BuildContext.CONTEXT_NAME);
+            DeployDetails deployDetails = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5).build();
+            ctx.addDeployDetailsForModule(deployDetails);
         }
     }
 
