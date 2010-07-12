@@ -161,41 +161,39 @@ class ArtifactoryPlugin implements Plugin<Project> {
     Properties props = new Properties()
     props.putAll(System.getProperties())
     String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
-    if (buildNumber) {
+    if (StringUtils.isBlank(System.getProperty("timestamp"))) {
+      System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
+    }
+    props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
+    if (StringUtils.isNotBlank(buildNumber)) {
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
-    } else {
-      if (StringUtils.isBlank(System.getProperty("timestamp"))) {
-        System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
-      }
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
-    if (buildName) {
+    if (StringUtils.isNotBlank(buildName)) {
       buildName = buildName.replace(' ', '-')
       props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     } else {
       Project rootProject = project.getRootProject();
-      String defaultBuildName = rootProject.getName().replace(' ', '-')
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, defaultBuildName)
+      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, rootProject.getName().replace(' ', '-'))
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (buildParentNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
+    if (StringUtils.isNotBlank(buildParentNumber)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (buildParentName) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    if (StringUtils.isNotBlank(buildParentName)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
     String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
-    if (vcsRevision) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
+    if (StringUtils.isNotBlank(vcsRevision)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {
       if (key != null) {
         Object value = properties.get(key)
         if (value != null) {
-          value = value.toString().replace(" ", "-")
+          value = value.toString()
           props.put(key, value)
         }
       }
     }
-    return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
+    return URLEncoder.encode(DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props), 'UTF-8')
   }
 
   private void configureBuildInfoTask(Project project) {
