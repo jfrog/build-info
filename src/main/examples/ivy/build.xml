@@ -13,7 +13,7 @@
     <property name="module.version.target" value="1.0"/>
     <property name="ivy.cache.dir" value="/home/tomer/.ivy2/cache"/>
     <taskdef name="artifactory_publish" classname="org.jfrog.build.extractor.task.ArtifactoryPublishTask"
-             classpath="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
+             classpath="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100712113755.jar"/>
     <!--<property name="ivy.build.artifacts.dir" value="???"/>-->
 
     <path id="lib.path.id">
