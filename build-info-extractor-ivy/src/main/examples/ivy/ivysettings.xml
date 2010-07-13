@@ -1,6 +1,6 @@
 <ivysettings>
     <classpath
-            file="${ivy.settings.dir}/../../../../../repository/build-info-extractor-ivy-1.0-local-20100629085540.jar"/>
+            file="${ivy.settings.dir}/../../../../target/build/build-info-extractor-ivy.jar"/>
     <classpath
             file="${ivy.cache.dir}/org.jfrog.buildinfo/build-info-client/jars/build-info-client-1.4.0.jar"/>
     <classpath
@@ -25,19 +25,16 @@
             file="${ivy.cache.dir}/commons-codec/commons-codec/jars/commons-codec-1.3.jar"/>
     <classpath
             file="${ivy.cache.dir}/commons-logging/commons-logging/jars/commons-logging-1.1.1.jar"/>
-    <typedef name="dependencies" classname="org.jfrog.build.extractor.listener.IvyDependencyTrigger"/>
-    <typedef name="modules" classname="org.jfrog.build.extractor.listener.IvyModuleTrigger"/>
-    <typedef name="buildinfo" classname="org.jfrog.build.extractor.listener.IvyBuildInfoTrigger"/>
-    <taskdef name="artifactory_publish" classname="org.jfrog.build.extractor.task.ArtifactoryPublishTask"
-             classpath="/work/build-info/trunk/build-info-extractor-ivy/../repository/build-info-extractor-ivy-1.0-local-20100629082826.jar"/>
+    <typedef name="dependencies" classname="org.jfrog.build.extractor.trigger.IvyDependencyTrigger"/>
+    <typedef name="modules" classname="org.jfrog.build.extractor.trigger.IvyModuleTrigger"/>
+
 
     <triggers>
         <dependencies event="post-resolve"/>
         <modules event="pre-publish-artifact"/>
-        <buildinfo event="post-publish-artifact"/>
     </triggers>
     <settings defaultResolver="main"/>
-    <credentials host="localhost" realm="Artifactory Realm" username="admin" passwd="password"/>
+
     <resolvers>
         <chain name="main">
             <filesystem name="local" checkmodified="true" validate="true">
@@ -47,10 +44,7 @@
 
             <ibiblio name="artifactory" m2compatible="true" root="http://repo.jfrog.org/artifactory/repo"/>
         </chain>
-        <url name="publish_artifactory" m2compatible="true">
-            <artifact
-                    pattern="http://localhost:8080/artifactory/libs-releases-local/[organization]/[module]/[revision]/[artifact]-[revision].[ext]"/>
-        </url>
+
     </resolvers>
 
 </ivysettings>

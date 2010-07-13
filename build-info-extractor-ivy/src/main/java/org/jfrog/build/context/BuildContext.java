@@ -1,9 +1,9 @@
 package org.jfrog.build.context;
 
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.DeployDetails;
 
+import java.util.HashSet;
 import java.util.Set;
 
 
@@ -19,13 +19,13 @@ public class BuildContext {
      *
      * @see org.apache.tools.ant.PropertyHelper
      */
-    public static String CONTEXT_NAME = "artifactory.ant.context";
+    public static final String CONTEXT_NAME = "artifactory.ant.context";
 
     private Set<DeployDetails> deployDetails;
     private Build build;
 
     public BuildContext() {
-        deployDetails = Sets.newHashSet();
+        deployDetails = new HashSet<DeployDetails>();
     }
 
     public void addDeployDetailsForModule(DeployDetails deployDetails) {

@@ -166,12 +166,12 @@
          ================================= -->
     <target name="publish-local" depends="local-version, jar"
             description="--> publish this project in the local ivy repository">
-        <artifactory_publish artifactspattern="${build.dir}/[artifact].[ext]"
-                             resolver="local"
-                             pubrevision="${version}"
-                             pubdate="${now}"
-                             status="integration"
-                             forcedeliver="true"
+        <ivy:publish artifactspattern="${build.dir}/[artifact].[ext]"
+                     resolver="local"
+                     pubrevision="${version}"
+                     pubdate="${now}"
+                     status="integration"
+                     forcedeliver="true"
                 />
 
         <echo message="project ${ant.project.name} published locally with version ${version}"/>
