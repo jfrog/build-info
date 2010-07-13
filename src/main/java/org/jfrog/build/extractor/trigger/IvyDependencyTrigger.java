@@ -15,6 +15,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.context.BuildContext;
 
 import java.io.File;
 import java.util.Arrays;
@@ -28,12 +29,6 @@ import java.util.Map;
  * @author Tomer Cohen
  */
 public class IvyDependencyTrigger extends AbstractTrigger {
-
-    private static List<Module> modules;
-
-    public IvyDependencyTrigger() {
-        modules = Lists.newArrayList();
-    }
 
     public void progress(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
@@ -69,11 +64,8 @@ public class IvyDependencyTrigger extends AbstractTrigger {
 
         }
         moduleBuilder.dependencies(moduleDependencies);
+        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
+        List<Module> modules = ctx.getModules();
         modules.add(moduleBuilder.build());
-
-    }
-
-    public static List<Module> getModules() {
-        return modules;
     }
 }
