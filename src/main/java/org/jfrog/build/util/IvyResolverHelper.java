@@ -44,15 +44,14 @@ public class IvyResolverHelper {
         } else {
             mrid = ModuleRevisionId.newInstance(organisation, module, revision);
         }
+        String fullPattern;
         if (artifactFile.getAbsolutePath().endsWith(".jar")) {
-            String fullPattern = IvyPatternHelper.substitute(pattern, mrid, artifactFile.getName(), "jar", "jar");
-            fullPattern = fullPattern.substring(fullPattern.indexOf(mrid.getOrganisation()));
-            return fullPattern;
+            fullPattern = IvyPatternHelper.substitute(pattern, mrid, artifactFile.getName(), "jar", "jar");
         } else {
-            String fullPattern = IvyPatternHelper.substitute(pattern, mrid);
-            fullPattern = fullPattern.substring(fullPattern.indexOf(mrid.getOrganisation()));
-            return fullPattern;
+            fullPattern = IvyPatternHelper.substitute(pattern, mrid);
         }
+        fullPattern = fullPattern.substring(fullPattern.indexOf(mrid.getOrganisation()));
+        return fullPattern;
     }
 
     /**
