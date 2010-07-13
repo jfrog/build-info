@@ -228,6 +228,10 @@ public class ArtifactoryBuildInfoClient {
         HttpResponse response = httpClient.getHttpClient().execute(get);
 
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                entity.consumeContent();
+            }
             throw new IOException("Failed to obtain item info: " + response.getStatusLine());
         } else {
             HttpEntity entity = response.getEntity();
@@ -242,6 +246,7 @@ public class ArtifactoryBuildInfoClient {
                     if (content != null) {
                         content.close();
                     }
+                    entity.consumeContent();
                 }
             }
         }
