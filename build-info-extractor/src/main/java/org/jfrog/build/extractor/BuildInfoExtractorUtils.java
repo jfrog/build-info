@@ -52,7 +52,7 @@ public abstract class BuildInfoExtractorUtils {
      * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
      * buildInfo xml output file, if the output is a path to this file.
      */
-    public static Properties getBuildInfoProperties(Properties additionalProps) {
+    public static Properties getBuildInfoPropertiesFromFileAndSystem(Properties additionalProps) {
         Properties props = new Properties();
         String propertiesFilePath = getAdditionalPropertiesFile(additionalProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
@@ -81,6 +81,24 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static Properties filterBuildInfoProperties(Properties source) {
+        Properties properties = new Properties();
+        Map<Object, Object> filteredProperties = Maps.filterKeys(source, new Predicate<Object>() {
+            public boolean apply(Object input) {
+                String key = (String) input;
+                return key.startsWith(BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
+            }
+        });
+        properties.putAll(filteredProperties);
+        return properties;
+    }
+
+    /**
+     * Filters properties that should be added to the build info model objects (root, artifact, dependencies)
+     *
+     * @param source Properties to filter
+     * @return Properties to add to the different build info model objects
+     */
+    public static Properties filterBuildInfoPropertiesToAddToModel(Properties source) {
         Properties properties = new Properties();
         Map<Object, Object> filteredProperties = Maps.filterKeys(source, new Predicate<Object>() {
             public boolean apply(Object input) {

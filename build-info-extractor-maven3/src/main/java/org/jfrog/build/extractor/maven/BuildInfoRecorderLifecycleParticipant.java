@@ -22,6 +22,9 @@ import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
+import org.codehaus.plexus.logging.Logger;
+
+import java.util.Properties;
 
 /**
  * @author Noam Y. Tenne
@@ -29,13 +32,37 @@ import org.codehaus.plexus.component.annotations.Requirement;
 @Component(role = AbstractMavenLifecycleParticipant.class)
 public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycleParticipant {
 
+    @Requirement
+    private Logger logger;
+
     @Requirement(role = BuildInfoRecorder.class, hint = "default", optional = false)
     BuildInfoRecorder recorder;
 
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
+
+        Properties allMavenProps = new Properties();
+        allMavenProps.putAll(session.getSystemProperties());
+        allMavenProps.putAll(session.getUserProperties());
+
+        Properties systemProperties = session.getSystemProperties();
+        Object activateRecorderObject = systemProperties.get(BuildInfoRecorder.ACTIVATE_RECORDER);
+        if (activateRecorderObject == null) {
+            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
+                    BuildInfoRecorder.ACTIVATE_RECORDER + ") not found.");
+            return;
+        }
+        if (Boolean.valueOf(activateRecorderObject.toString())) {
+            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
+                    BuildInfoRecorder.ACTIVATE_RECORDER + ") value is either false or invalid.");
+            return;
+        }
+        logger.debug("Activating Artifactory Maven3 Build-Info Recorder: activation property (" +
+                BuildInfoRecorder.ACTIVATE_RECORDER + ") value is true.");
+
         ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
         recorder.setListenerToWrap(existingExecutionListener);
+        recorder.setAllMavenProps(allMavenProps);
         session.getRequest().setExecutionListener(recorder);
     }
 }

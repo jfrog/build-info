@@ -37,6 +37,10 @@
             <artifactId>build-info-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.jfrog.buildinfo</groupId>
+            <artifactId>build-info-client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymockclassextension</artifactId>
         </dependency>
