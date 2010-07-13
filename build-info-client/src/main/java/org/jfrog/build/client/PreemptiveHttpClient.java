@@ -29,14 +29,9 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.params.ConnRoutePNames;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -88,14 +83,7 @@ public class PreemptiveHttpClient {
         int timeoutMilliSeconds = timeout * 1000;
         HttpConnectionParams.setConnectionTimeout(params, timeoutMilliSeconds);
         HttpConnectionParams.setSoTimeout(params, timeoutMilliSeconds);
-
-        SchemeRegistry schemeRegistry = new SchemeRegistry();
-        schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-        schemeRegistry.register(new Scheme("https", PlainSocketFactory.getSocketFactory(), 443));
-
-        ClientConnectionManager cm = new ThreadSafeClientConnManager(params, schemeRegistry);
-
-        DefaultHttpClient client = new DefaultHttpClient(cm, params);
+        DefaultHttpClient client = new DefaultHttpClient(params);
 
         if (userName != null && !"".equals(userName)) {
             client.getCredentialsProvider().setCredentials(
