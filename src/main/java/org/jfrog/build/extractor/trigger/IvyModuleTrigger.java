@@ -3,26 +3,22 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.commons.io.IOUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.tools.ant.Project;
-import org.apache.tools.ant.PropertyHelper;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * This trigger is fired when a {@code pre-publish-artifact} has occurred. Allowing to get module data as to the
@@ -33,14 +29,6 @@ import java.util.Properties;
 public class IvyModuleTrigger extends AbstractTrigger {
 
     private static List<Module> allModules = Lists.newArrayList();
-
-    private Properties fileLocations;
-    private static final String FILE_LOCATIONS_FILE_NAME = "file-locations.properties";
-
-    public IvyModuleTrigger() throws IOException {
-        fileLocations = new Properties();
-    }
-
 
     public void progress(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
@@ -58,12 +46,6 @@ public class IvyModuleTrigger extends AbstractTrigger {
         String organization = map.get("organisation");
         String path = artifactFile.getAbsolutePath();
         project.log("Module location: " + path, Project.MSG_INFO);
-        fileLocations.put(organization + "." + artifactFile.getName(), path);
-        try {
-            saveFileLocationFile(fileLocations);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         artifactBuilder.type(map.get("type"));
         Map<String, String> checksums;
@@ -80,33 +62,18 @@ public class IvyModuleTrigger extends AbstractTrigger {
             module.setArtifacts(Lists.<Artifact>newArrayList());
         }
         module.getArtifacts().add(artifactBuilder.build());
-        int indexOfModule = allModules.indexOf(module);
-        if (indexOfModule != -1) {
-            allModules.set(indexOfModule, module);
-        } else {
+        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
+        DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
+        String revision = map.get("revision");
+        String artifactPath =
+                IvyResolverHelper.calculateArtifactPath(artifactFile, organization, moduleName, revision);
+        builder.artifactPath(artifactPath);
+        String targetRepository = IvyResolverHelper.getTargetRepository();
+        builder.targetRepository(targetRepository);
+        DeployDetails deployDetails = builder.build();
+        ctx.addDeployDetailsForModule(deployDetails);
+        if (allModules.indexOf(module) == -1) {
             allModules.add(module);
-            PropertyHelper propertyHelper = PropertyHelper.getPropertyHelper(project);
-            BuildContext ctx = (BuildContext) propertyHelper.getUserProperty(BuildContext.CONTEXT_NAME);
-            DeployDetails deployDetails = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5).build();
-            ctx.addDeployDetailsForModule(deployDetails);
-        }
-    }
-
-    private void saveFileLocationFile(Properties fileLocations) throws IOException {
-        File baseDir = IvyContext.getContext().getSettings().getBaseDir();
-        File propFileLocation = new File(baseDir, FILE_LOCATIONS_FILE_NAME);
-        if (!propFileLocation.exists()) {
-            propFileLocation.createNewFile();
-        } else {
-            propFileLocation.delete();
-            propFileLocation.createNewFile();
-        }
-        FileOutputStream out = null;
-        try {
-            out = new FileOutputStream(propFileLocation);
-            fileLocations.store(out, "");
-        } finally {
-            IOUtils.closeQuietly(out);
         }
     }
 
