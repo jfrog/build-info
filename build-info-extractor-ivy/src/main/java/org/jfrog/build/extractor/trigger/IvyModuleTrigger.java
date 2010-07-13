@@ -28,14 +28,13 @@ import java.util.Map;
  */
 public class IvyModuleTrigger extends AbstractTrigger {
 
-    private static List<Module> allModules = Lists.newArrayList();
-
     public void progress(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         project.log("Collecting Module information.", Project.MSG_INFO);
         Map<String, String> map = event.getAttributes();
         final String moduleName = map.get("module");
-        List<Module> modules = IvyDependencyTrigger.getModules();
+        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
+        List<Module> modules = ctx.getModules();
         Module module = Iterables.find(modules, new Predicate<Module>() {
             public boolean apply(Module input) {
                 return input.getId().equals(moduleName);
@@ -62,7 +61,6 @@ public class IvyModuleTrigger extends AbstractTrigger {
             module.setArtifacts(Lists.<Artifact>newArrayList());
         }
         module.getArtifacts().add(artifactBuilder.build());
-        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
         String revision = map.get("revision");
         String artifactPath =
@@ -72,12 +70,9 @@ public class IvyModuleTrigger extends AbstractTrigger {
         builder.targetRepository(targetRepository);
         DeployDetails deployDetails = builder.build();
         ctx.addDeployDetailsForModule(deployDetails);
-        if (allModules.indexOf(module) == -1) {
-            allModules.add(module);
+        List<Module> contextModules = ctx.getModules();
+        if (contextModules.indexOf(module) == -1) {
+            ctx.addModule(module);
         }
-    }
-
-    public static List<Module> getAllModules() {
-        return allModules;
     }
 }

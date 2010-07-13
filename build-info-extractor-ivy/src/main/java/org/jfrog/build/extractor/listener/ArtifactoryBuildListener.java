@@ -13,7 +13,6 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.trigger.IvyModuleTrigger;
 
 import java.io.IOException;
 import java.util.Date;
@@ -51,12 +50,11 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
         project.log("Build finished triggered", Project.MSG_INFO);
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         Set<DeployDetails> deployDetails = ctx.getDeployDetails();
-        BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(IvyModuleTrigger.getAllModules())
+        BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
                 .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
                 .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion())).agent(new Agent("Ivy", Ivy.getIvyVersion()));
         Build build = builder.build();
         try {
-
             ArtifactoryBuildInfoClient client =
                     new ArtifactoryBuildInfoClient("http://localhost:8080/artifactory/", "admin", "password");
             deployArtifacts(client, deployDetails);

@@ -18,7 +18,6 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.trigger.IvyDependencyTrigger;
 import org.jfrog.build.util.IvyArtifactHelper;
 import org.jfrog.build.util.IvyResolverHelper;
 
@@ -42,7 +41,7 @@ public class ArtifactoryPublishTask extends IvyPublish {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         project.log("Collecting Module information.", Project.MSG_INFO);
         final String moduleName = getProperty(ivySettings, "ivy.module");
-        List<Module> modules = IvyDependencyTrigger.getModules();
+        List<Module> modules = null;
         Module module = Iterables.find(modules, new Predicate<Module>() {
             public boolean apply(Module input) {
                 return input.getId().equals(moduleName);

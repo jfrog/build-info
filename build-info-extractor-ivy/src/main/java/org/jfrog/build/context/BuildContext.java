@@ -1,9 +1,13 @@
 package org.jfrog.build.context;
 
-import org.jfrog.build.api.Build;
+import org.apache.ivy.core.IvyContext;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.client.DeployDetails;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -15,32 +19,41 @@ import java.util.Set;
  */
 public class BuildContext {
     /**
-     * Name of the context that is being set as a useProperty.
-     *
-     * @see org.apache.tools.ant.PropertyHelper
+     * Name of the context that is being in the contextMap of {@link IvyContext}.
      */
     public static final String CONTEXT_NAME = "artifactory.ant.context";
 
     private Set<DeployDetails> deployDetails;
-    private Build build;
+    private List<Module> modules;
+    private List<Dependency> dependencies;
 
     public BuildContext() {
         deployDetails = new HashSet<DeployDetails>();
+        modules = new ArrayList<Module>();
+        dependencies = new ArrayList<Dependency>();
     }
 
     public void addDeployDetailsForModule(DeployDetails deployDetails) {
         this.deployDetails.add(deployDetails);
     }
 
-    public void setBuild(Build build) {
-        this.build = build;
+    public void addModule(Module module) {
+        this.modules.add(module);
     }
 
-    public Build getBuild() {
-        return build;
+    public List<Module> getModules() {
+        return modules;
     }
 
     public Set<DeployDetails> getDeployDetails() {
         return deployDetails;
+    }
+
+    public void addDependency(Dependency dependency) {
+        this.dependencies.add(dependency);
+    }
+
+    public List<Dependency> getDependencies() {
+        return dependencies;
     }
 }
