@@ -10,5 +10,7 @@
         <dependency org="commons-logging" name="commons-logging" rev="1.1.1" changing="false"/>
         <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.5.1" changing="false"/>
         <dependency org="com.google.guava" name="guava" rev="r06" changing="false"/>
+        <dependency org="org.aspectj" name="aspectjtools" rev="1.6.9" changing="false"/>
+        <dependency org="org.aspectj" name="aspectjweaver" rev="1.6.9" changing="false"/>
     </dependencies>
 </ivy-module>

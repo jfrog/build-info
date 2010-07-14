@@ -13,8 +13,6 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.trigger.IvyDependencyTrigger;
-import org.jfrog.build.extractor.trigger.IvyModuleTrigger;
 
 import java.io.IOException;
 import java.util.Date;
@@ -41,8 +39,8 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
 
     /**
      * Called when the build has ended, this is the time where we will assemble the build-info object that its
-     * information was collected by the {@link IvyDependencyTrigger} and {@link IvyModuleTrigger} it will serialize the
-     * build-info object into a senadble JSON object to be used by the {@link ArtifactoryBuildInfoClient}
+     * information was collected by the {@link org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger} it will
+     * serialize the build-info object into a senadble JSON object to be used by the {@link ArtifactoryBuildInfoClient}
      *
      * @param event The build event.
      */

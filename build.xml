@@ -3,6 +3,7 @@
 
     <property name="target.dir" value="target"/>
     <property name="src.dir" value="src/main/java"/>
+    <property name="resources.dir" value="src/main/resources"/>
     <property name="lib.dir" value="${target.dir}/lib"/>
     <property name="build.dir" value="${target.dir}/build"/>
     <property name="dist.dir" value="${target.dir}/dist"/>
@@ -73,6 +74,7 @@
     <target name="package" depends="compile" description="--> make a jar file for this project">
         <jar destfile="${jar.file}">
             <fileset dir="${build.dir}"/>
+            <fileset dir="${resources.dir}"/>
             <manifest>
                 <attribute name="Built-By" value="${user.name}"/>
                 <attribute name="Build-Version" value="${version}"/>
