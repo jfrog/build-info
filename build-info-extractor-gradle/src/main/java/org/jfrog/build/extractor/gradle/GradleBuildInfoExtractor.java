@@ -99,10 +99,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
             buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoPropertiesFromFileAndSystem(properties));
-            gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
+            gradleProps.putAll(BuildInfoExtractorUtils.filterDynamicBuildInfoProperties(properties));
         }
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterDynamicBuildInfoProperties(startParamProps));
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterDynamicBuildInfoProperties(gradleProps));
     }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
@@ -146,7 +146,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        String principal = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PRINCIPAL, rootProject);
+        String principal = ArtifactoryPluginUtils.getProperty(PROP_PRINCIPAL, rootProject);
         if (StringUtils.isBlank(principal)) {
             principal = System.getProperty("user.name");
         }

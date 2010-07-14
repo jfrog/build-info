@@ -164,24 +164,24 @@ class ArtifactoryPlugin implements Plugin<Project> {
     if (StringUtils.isBlank(System.getProperty("timestamp"))) {
       System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
     }
-    props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
+    props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
     if (StringUtils.isNotBlank(buildNumber)) {
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
     if (StringUtils.isNotBlank(buildName)) {
       buildName = buildName.replace(' ', '-')
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     } else {
       Project rootProject = project.getRootProject();
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, rootProject.getName().replace(' ', '-'))
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, rootProject.getName().replace(' ', '-'))
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (StringUtils.isNotBlank(buildParentNumber)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
+    if (StringUtils.isNotBlank(buildParentNumber)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (StringUtils.isNotBlank(buildParentName)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    if (StringUtils.isNotBlank(buildParentName)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
     String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
-    if (StringUtils.isNotBlank(vcsRevision)) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
+    if (StringUtils.isNotBlank(vcsRevision)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {
