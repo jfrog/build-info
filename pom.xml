@@ -49,6 +49,7 @@
         <module>build-info-api</module>
         <module>build-info-client</module>
         <module>build-info-extractor</module>
+        <module>build-info-extractor-gradle</module>
         <module>build-info-extractor-maven3</module>
         <module>build-info-extractor-ivy</module>
     </modules>
@@ -78,7 +79,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>r05</version>
+                <version>r06</version>
             </dependency>
 
             <dependency>
