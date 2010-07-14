@@ -6,7 +6,6 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
-import org.apache.ivy.plugins.resolver.IBiblioResolver;
 import org.apache.ivy.plugins.resolver.URLResolver;
 
 import java.io.File;
@@ -18,6 +17,8 @@ import java.io.File;
  * @author Tomer Cohen
  */
 public class IvyResolverHelper {
+    public static final String ARTIFACTORY_RESOLVER_NAME = "publish_artifactory";
+    public static final String DEFAULT_PATTERN = "[organization]/[module]/[revision]/[artifact]-[revision].[ext]";
 
     /**
      * Calculate a repo path for a file
@@ -32,8 +33,8 @@ public class IvyResolverHelper {
         String pattern = getArtifactPatternFromIvy();
         IvyContext context = IvyContext.getContext();
         IvySettings ivySettings = context.getSettings();
-        boolean m2Compatible = false;
-        DependencyResolver resolver = ivySettings.getResolver("publish_artifactory");
+        boolean m2Compatible = true;
+        DependencyResolver resolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
         if (resolver != null) {
             URLResolver artifactoryResolver = (URLResolver) resolver;
             m2Compatible = artifactoryResolver.isM2compatible();
@@ -46,11 +47,19 @@ public class IvyResolverHelper {
         }
         String fullPattern;
         if (artifactFile.getAbsolutePath().endsWith(".jar")) {
-            fullPattern = IvyPatternHelper.substitute(pattern, mrid, artifactFile.getName(), "jar", "jar");
+            String moduleName = artifactFile.getName().substring(0, artifactFile.getName().indexOf("."));
+            fullPattern = IvyPatternHelper.substitute(pattern, mrid, moduleName, "jar", "jar");
         } else {
             fullPattern = IvyPatternHelper.substitute(pattern, mrid);
         }
-        fullPattern = fullPattern.substring(fullPattern.indexOf(mrid.getOrganisation()));
+        int index = fullPattern.indexOf(mrid.getOrganisation());
+        if (index != -1) {
+            fullPattern = fullPattern.substring(index);
+        } else {
+            fullPattern =
+                    StringUtils.removeStart(fullPattern.substring(fullPattern.indexOf(getTargetRepository())),
+                            getTargetRepository());
+        }
         return fullPattern;
     }
 
@@ -74,13 +83,11 @@ public class IvyResolverHelper {
     private static String getArtifactPatternFromIvy() {
         IvyContext context = IvyContext.getContext();
         IvySettings ivySettings = context.getSettings();
-        String artifactPattern =
-                "http://repo.jfrog.org/artifactory/libs-releases-local/" + IBiblioResolver.DEFAULT_PATTERN;
-        DependencyResolver publishingResolver = ivySettings.getResolver("publish_artifactory");
+        DependencyResolver publishingResolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
         if (publishingResolver != null) {
             URLResolver urlResolver = (URLResolver) publishingResolver;
-            artifactPattern = urlResolver.getArtifactPatterns().get(0).toString();
+            return urlResolver.getArtifactPatterns().get(0).toString();
         }
-        return artifactPattern;
+        return "http://localhost:8080/artifactory/libs-releases-local/" + DEFAULT_PATTERN;
     }
 }

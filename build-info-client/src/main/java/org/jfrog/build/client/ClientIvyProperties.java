@@ -23,8 +23,13 @@ import static org.jfrog.build.client.ClientProperties.ARTIFACTORY_PREFIX;
  */
 public interface ClientIvyProperties {
 
+    String PROP_ARTIFACTORY_IVY_PREFIX = ARTIFACTORY_PREFIX + "ivy.";
     /**
      * Property for whether to publish Ivy descriptors.
      */
-    String PROP_PUBLISH_IVY = ARTIFACTORY_PREFIX + "publish.ivy";
+    String PROP_PUBLISH_IVY = PROP_ARTIFACTORY_IVY_PREFIX + "publish";
+
+    String PROP_IVY_ARTIFACT_PATTERN = PROP_ARTIFACTORY_IVY_PREFIX + "artifact.pattern";
+
+    String PROP_IVY_IVY_PATTERN = PROP_ARTIFACTORY_IVY_PREFIX + "ivy.pattern";
 }

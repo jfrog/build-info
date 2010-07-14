@@ -1,10 +1,4 @@
 <ivysettings>
-    <typedef name="dependencies" classname="org.jfrog.build.extractor.trigger.IvyDependencyTrigger"/>
-    <typedef name="modules" classname="org.jfrog.build.extractor.trigger.IvyModuleTrigger"/>
-    <triggers>
-        <dependencies event="post-resolve"/>
-        <modules event="pre-publish-artifact"/>
-    </triggers>
     <settings defaultResolver="main"/>
     <credentials host="localhost" realm="Artifactory Realm" username="admin" passwd="password"/>
     <resolvers>
@@ -15,9 +9,9 @@
             </filesystem>
             <ibiblio name="rjo" m2compatible="true" root="http://repo.jfrog.org/artifactory/repo"/>
         </chain>
-        <url name="publish_artifactory" m2compatible="true">
+        <!-- <url name="publish_artifactory" m2compatible="true">
             <artifact
                     pattern="http://localhost:8081/artifactory/libs-releases-local/[organization]/[module]/[revision]/[artifact]-[revision].[ext]"/>
-        </url>
+        </url>-->
     </resolvers>
 </ivysettings>
