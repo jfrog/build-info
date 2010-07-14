@@ -18,7 +18,6 @@ package org.jfrog.build.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import com.sun.istack.internal.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -186,7 +185,7 @@ public abstract class BuildInfoExtractorUtils {
             this.prefix = prefix;
         }
 
-        public boolean apply(@Nullable Object o) {
+        public boolean apply(Object o) {
             return o != null && ((String) o).startsWith(prefix);
         }
     }
