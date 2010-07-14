@@ -31,7 +31,7 @@ import org.gradle.api.tasks.Upload
 import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.client.ClientIvyProperties
-import org.jfrog.build.client.ClientMavenProperties
+import org.jfrog.build.client.ClientGradleProperties
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
@@ -126,7 +126,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
           }
           boolean deployMaven
-          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
+          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project);
           if (deployMavenProp != null) {
             deployMaven = Boolean.parseBoolean(deployMavenProp);
           } else {
