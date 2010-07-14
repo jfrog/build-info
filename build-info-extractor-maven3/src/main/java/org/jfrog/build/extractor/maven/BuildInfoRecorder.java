@@ -75,14 +75,14 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
     private Set<DeployDetails> deployableArtifacts = null;
-    private Properties buildInfoProps;
+    private Properties allProps;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
     }
 
-    public void setAllMavenProps(Properties allMavenProps) {
-        buildInfoProps = BuildInfoExtractorUtils.getBuildInfoPropertiesFromFileAndSystem(allMavenProps);
+    public void setAllProps(Properties allProps) {
+        this.allProps = allProps;
     }
 
     public void projectDiscoveryStarted(ExecutionEvent event) {
@@ -93,7 +93,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
-        initBuildInfo(event);
+        initBuildInfo();
         deployableArtifacts = Sets.newHashSet();
 
         if (wrappedListener != null) {
@@ -218,7 +218,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
-    private void initBuildInfo(ExecutionEvent event) {
+    private void initBuildInfo() {
+        Properties buildInfoProps =
+                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
         buildInfoBuilder = new BuildInfoBuilder(buildInfoProps.getProperty(PROP_BUILD_NAME)).
                 number(buildInfoProps.getProperty(PROP_BUILD_NUMBER)).
                 started(buildInfoProps.getProperty(PROP_BUILD_STARTED)).
@@ -227,7 +229,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
                         buildInfoProps.getProperty(PROP_AGENT_VERSION))).
                 buildAgent(new BuildAgent("Maven", getMavenVersion())).
-                principal(ClientProperties.PROP_PRINCIPAL).
+                principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
                 vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
                 parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
                 parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
@@ -387,7 +389,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 file(artifactFile).
                 md5(artifact.getMd5()).
                 sha1(artifact.getSha1()).
-                targetRepository(buildInfoProps.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)).build();
+                targetRepository(allProps.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)).build();
         deployableArtifacts.add(details);
     }
 
@@ -465,7 +467,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         if (summary instanceof BuildSuccess) {
 
             if (spec.includeAllEnvironmentVariables()) {
-                Properties envProperties = BuildInfoExtractorUtils.filterEnvProperties(session.getSystemProperties());
+                Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(allProps);
                 for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                     buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
                 }
@@ -487,7 +489,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
         props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
         props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
-        props.putAll(BuildInfoExtractorUtils.filterBuildInfoPropertiesToAddToModel(null));
+        props.putAll((BuildInfoExtractorUtils.filterDynamicProperties(allProps,
+                BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE)));
 
         return props;
     }

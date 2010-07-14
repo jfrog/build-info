@@ -23,6 +23,7 @@ import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.util.Properties;
 
@@ -45,8 +46,9 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         allMavenProps.putAll(session.getSystemProperties());
         allMavenProps.putAll(session.getUserProperties());
 
-        Properties systemProperties = session.getSystemProperties();
-        Object activateRecorderObject = systemProperties.get(BuildInfoRecorder.ACTIVATE_RECORDER);
+        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
+
+        Object activateRecorderObject = allProps.get(BuildInfoRecorder.ACTIVATE_RECORDER);
         if (activateRecorderObject == null) {
             logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
                     BuildInfoRecorder.ACTIVATE_RECORDER + ") not found.");
@@ -62,7 +64,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
 
         ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
         recorder.setListenerToWrap(existingExecutionListener);
-        recorder.setAllMavenProps(allMavenProps);
+        recorder.setAllProps(allProps);
         session.getRequest().setExecutionListener(recorder);
     }
 }
