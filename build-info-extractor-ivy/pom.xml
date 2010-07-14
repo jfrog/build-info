@@ -74,6 +74,11 @@
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.testng</groupId>
+            <artifactId>testng</artifactId>
+            <classifier>jdk15</classifier>
+        </dependency>
         <!--<dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
