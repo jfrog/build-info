@@ -18,6 +18,7 @@ package org.jfrog.build.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import com.sun.istack.internal.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -44,6 +45,17 @@ import java.util.Properties;
  * @author Noam Y. Tenne
  */
 public abstract class BuildInfoExtractorUtils {
+
+    public static final Predicate<Object> BUILD_INFO_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_PREFIX);
+
+    public static final Predicate<Object> BUILD_INFO_PROP_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
+
+    public static final Predicate<Object> ENV_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
+
+    public static final Predicate<Object> CLIENT_PREDICATE = new PrefixPredicate(ClientProperties.ARTIFACTORY_PREFIX);
 
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
         Properties props = new Properties();
@@ -166,31 +178,16 @@ public abstract class BuildInfoExtractorUtils {
         return propertiesFilePath;
     }
 
-    public static final Predicate<Object> BUILD_INFO_PREDICATE = new Predicate<Object>() {
-        public boolean apply(Object input) {
-            return applies(input, BuildInfoProperties.BUILD_INFO_PREFIX);
-        }
-    };
+    private static class PrefixPredicate implements Predicate<Object> {
 
-    public static final Predicate<Object> BUILD_INFO_PROP_PREDICATE = new Predicate<Object>() {
-        public boolean apply(Object input) {
-            return applies(input, BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
-        }
-    };
+        private String prefix;
 
-    public static final Predicate<Object> ENV_PREDICATE = new Predicate<Object>() {
-        public boolean apply(Object input) {
-            return applies(input, BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
+        protected PrefixPredicate(String prefix) {
+            this.prefix = prefix;
         }
-    };
 
-    public static final Predicate<Object> CLIENT_PREDICATE = new Predicate<Object>() {
-        public boolean apply(Object input) {
-            return applies(input, ClientProperties.ARTIFACTORY_PREFIX);
+        public boolean apply(@Nullable Object o) {
+            return o != null && ((String) o).startsWith(prefix);
         }
-    };
-
-    private static boolean applies(Object input, String prefix) {
-        return ((String) input).startsWith(prefix);
     }
 }
