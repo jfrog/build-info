@@ -98,7 +98,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
-            buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(properties));
+            buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoPropertiesFromFileAndSystem(properties));
             gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
         }
         buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
@@ -126,7 +126,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
         String agentString = buildAgent.toString();
-        String buildAgentProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, rootProject);
+        String buildAgentProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME,
+                rootProject);
         if (StringUtils.isNotBlank(buildAgentProp)) {
             agentString = buildAgentProp;
         }

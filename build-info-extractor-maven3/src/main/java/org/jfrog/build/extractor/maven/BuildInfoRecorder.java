@@ -75,7 +75,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
     private Set<DeployDetails> deployableArtifacts = null;
-    private Properties allMavenProps;
     private Properties buildInfoProps;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
@@ -83,7 +82,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     }
 
     public void setAllMavenProps(Properties allMavenProps) {
-        this.allMavenProps = allMavenProps;
+        buildInfoProps = BuildInfoExtractorUtils.getBuildInfoPropertiesFromFileAndSystem(allMavenProps);
     }
 
     public void projectDiscoveryStarted(ExecutionEvent event) {
@@ -220,10 +219,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     }
 
     private void initBuildInfo(ExecutionEvent event) {
-        buildInfoProps = new Properties();
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(allMavenProps));
-        buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoPropertiesFromFileAndSystem(allMavenProps));
-
         buildInfoBuilder = new BuildInfoBuilder(buildInfoProps.getProperty(PROP_BUILD_NAME)).
                 number(buildInfoProps.getProperty(PROP_BUILD_NUMBER)).
                 started(buildInfoProps.getProperty(PROP_BUILD_STARTED)).
@@ -236,7 +231,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
                 parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
                 parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
-                properties(gatherBuildInfoProperties(allMavenProps));
+                properties(gatherBuildInfoProperties());
     }
 
     private String getMavenVersion() {
@@ -482,7 +477,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         return null;
     }
 
-    protected Properties gatherBuildInfoProperties(Properties allMavenProperties) {
+    protected Properties gatherBuildInfoProperties() {
         Properties props = new Properties();
         props.setProperty("os.arch", System.getProperty("os.arch"));
         props.setProperty("os.name", System.getProperty("os.name"));
@@ -492,7 +487,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
         props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
         props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
-        props.putAll(BuildInfoExtractorUtils.filterBuildInfoPropertiesToAddToModel(allMavenProperties));
+        props.putAll(BuildInfoExtractorUtils.filterBuildInfoPropertiesToAddToModel(null));
 
         return props;
     }
