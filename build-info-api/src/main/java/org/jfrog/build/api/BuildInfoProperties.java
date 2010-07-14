@@ -42,6 +42,7 @@ public interface BuildInfoProperties {
     String PROP_PARENT_BUILD_NAME = BUILD_INFO_PREFIX + "build.parentName";
     String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.parentNumber";
     String PROP_VCS_REVISION = BUILD_INFO_PREFIX + "vcs.revision";
+    String PROP_PRINCIPAL = BUILD_INFO_PREFIX + "principal";
 
     /**
      * Property to link the build back to the CI server that produced the build

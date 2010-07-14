@@ -55,10 +55,8 @@ public interface ClientProperties {
      */
     String PROP_PUBLISH_BUILD_INFO = ARTIFACTORY_PREFIX + "publish.buildInfo";
 
-
     /**
-     * Property for whoever started the build (username).
+     * Prefix for properties that are dynamically added to deployment (as matrix params)
      */
-    String PROP_PRINCIPAL = ARTIFACTORY_PREFIX + "principal";
-
+    String PROP_DEPLOY_PARAM_PROP_PREFIX = ARTIFACTORY_PREFIX + "deploy.";
 }

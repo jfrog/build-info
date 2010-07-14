@@ -62,7 +62,7 @@ public abstract class BuildInfoExtractorUtils {
                 if (propertiesFile.exists()) {
                     inputStream = new FileInputStream(propertiesFile);
                     props.load(inputStream);
-                    props = filterBuildInfoProperties(props);
+                    props = filterDynamicBuildInfoProperties(props);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -73,14 +73,20 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         // now add all the relevant system props.
-        Properties filteredSystemProps = filterBuildInfoProperties(System.getProperties());
+        Properties filteredSystemProps = filterDynamicBuildInfoProperties(System.getProperties());
         props.putAll(filteredSystemProps);
 
         //TODO: [by yl] Add common system properties
         return props;
     }
 
-    public static Properties filterBuildInfoProperties(Properties source) {
+    /**
+     * Collect the dynamic properties that should be added to build info
+     *
+     * @param source
+     * @return
+     */
+    public static Properties filterDynamicBuildInfoProperties(Properties source) {
         Properties properties = new Properties();
         Map<Object, Object> filteredProperties = Maps.filterKeys(source, new Predicate<Object>() {
             public boolean apply(Object input) {

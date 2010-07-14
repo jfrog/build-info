@@ -16,7 +16,6 @@
 
 package org.jfrog.build.client;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
@@ -78,8 +77,7 @@ public class DeployDetails {
         }
 
         public Builder bean(BuildFileBean bean) {
-            ImmutableMap<String, String> props = Maps.fromProperties(bean.getProperties());
-            deployDetails.properties = props;
+            deployDetails.properties = Maps.fromProperties(bean.getProperties());
             deployDetails.sha1 = bean.getSha1();
             deployDetails.md5 = bean.getMd5();
             return this;
