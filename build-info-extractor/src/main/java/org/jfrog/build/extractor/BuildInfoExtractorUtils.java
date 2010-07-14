@@ -84,8 +84,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Properties filterDynamicProperties(Properties source, Predicate<Object> filter) {
         Properties properties = new Properties();
-        Map<Object, Object> filteredProperties = Maps.filterKeys(source, filter);
-        properties.putAll(filteredProperties);
+        properties.putAll(Maps.filterKeys(source, filter));
         return properties;
     }
 
