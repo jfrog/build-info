@@ -26,6 +26,16 @@ public interface ClientProperties {
      */
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
 
+    String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
+
+    String PROP_PROXY_HOST = ARTIFACTORY_PREFIX + "proxy.host";
+
+    String PROP_PROXY_PORT = ARTIFACTORY_PREFIX + "proxy.port";
+
+    String PROP_PROXY_USERNAME = ARTIFACTORY_PREFIX + "proxy.username";
+
+    String PROP_PROXY_PASSWORD = ARTIFACTORY_PREFIX + "proxy.password";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */
