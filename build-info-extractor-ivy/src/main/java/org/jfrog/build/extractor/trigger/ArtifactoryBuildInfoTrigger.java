@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
@@ -14,6 +15,7 @@ import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -138,6 +140,26 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         builder.artifactPath(artifactPath);
         String targetRepository = IvyResolverHelper.getTargetRepository();
         builder.targetRepository(targetRepository);
+        String svnRevision = System.getenv("SVN_REVISION");
+        if (StringUtils.isNotBlank(svnRevision)) {
+            builder.addProperty(
+                    StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
+                            BuildInfoProperties.BUILD_INFO_PREFIX),
+                    svnRevision);
+        }
+        String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
+        if (StringUtils.isNotBlank(buildName)) {
+            builder.addProperty(
+                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
+                    buildName);
+        }
+        String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
+        if (StringUtils.isNotBlank(buildNumber)) {
+            builder.addProperty(
+                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
+                            BuildInfoProperties.BUILD_INFO_PREFIX),
+                    buildNumber);
+        }
         DeployDetails deployDetails = builder.build();
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();
