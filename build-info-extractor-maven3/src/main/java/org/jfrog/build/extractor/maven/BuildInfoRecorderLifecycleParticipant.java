@@ -54,7 +54,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
                     BuildInfoRecorder.ACTIVATE_RECORDER + ") not found.");
             return;
         }
-        if (Boolean.valueOf(activateRecorderObject.toString())) {
+        if (!Boolean.valueOf(activateRecorderObject.toString())) {
             logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
                     BuildInfoRecorder.ACTIVATE_RECORDER + ") value is either false or invalid.");
             return;

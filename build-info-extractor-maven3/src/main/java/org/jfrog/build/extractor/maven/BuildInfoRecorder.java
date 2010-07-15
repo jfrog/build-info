@@ -17,9 +17,9 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -34,14 +34,13 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -50,13 +49,10 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import static org.jfrog.build.api.BuildInfoProperties.*;
 
 /**
  * @author Noam Y. Tenne
@@ -69,6 +65,12 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     @Requirement
     private Logger logger;
 
+    @Requirement
+    private BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
+
+    @Requirement
+    private ClientPropertyResolver clientPropertyResolver;
+
     private ExecutionListener wrappedListener;
     private BuildInfoBuilder buildInfoBuilder;
     private ModuleBuilder currentModule;
@@ -76,6 +78,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     private Set<Artifact> currentModuleDependencies;
     private Set<DeployDetails> deployableArtifacts = null;
     private Properties allProps;
+    private Map<String, String> matrixParams;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -93,8 +96,15 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
-        initBuildInfo();
+        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(allProps);
         deployableArtifacts = Sets.newHashSet();
+        matrixParams = Maps.newHashMap();
+        Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
+                BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
+        for (Map.Entry<Object, Object> matrixParamProp : matrixParamProps.entrySet()) {
+            matrixParams.put(((String) matrixParamProp.getKey()), ((String) matrixParamProp.getValue()));
+        }
+
 
         if (wrappedListener != null) {
             wrappedListener.sessionStarted(event);
@@ -105,7 +115,49 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
 
         if (build != null) {
+            Properties clientProps =
+                    BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
+            boolean publishInfo = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
+            boolean publishArtifacts = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
 
+            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " +
+                    publishInfo);
+            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " +
+                    publishArtifacts);
+
+            if (publishInfo || publishArtifacts) {
+
+                ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(clientProps);
+
+                try {
+                    if (publishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
+
+                        logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
+                                clientProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
+
+                        for (DeployDetails artifact : deployableArtifacts) {
+                            try {
+                                client.deployArtifact(artifact);
+                            } catch (IOException e) {
+                                throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
+                                        artifact.getFile() +
+                                        ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
+                            }
+                        }
+                    }
+
+                    if (publishInfo) {
+                        try {
+                            logger.info("Artifactory Build Info Recorder: Deploying build info ...");
+                            client.sendBuildInfo(build);
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
+                        }
+                    }
+                } finally {
+                    client.shutdown();
+                }
+            }
         }
         deployableArtifacts = null;
         if (wrappedListener != null) {
@@ -216,50 +268,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         if (wrappedListener != null) {
             wrappedListener.mojoFailed(event);
         }
-    }
-
-    private void initBuildInfo() {
-        Properties buildInfoProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
-        buildInfoBuilder = new BuildInfoBuilder(buildInfoProps.getProperty(PROP_BUILD_NAME)).
-                number(buildInfoProps.getProperty(PROP_BUILD_NUMBER)).
-                started(buildInfoProps.getProperty(PROP_BUILD_STARTED)).
-                url(buildInfoProps.getProperty(PROP_BUILD_URL)).
-                artifactoryPrincipal(ClientProperties.PROP_PUBLISH_USERNAME).
-                agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
-                        buildInfoProps.getProperty(PROP_AGENT_VERSION))).
-                buildAgent(new BuildAgent("Maven", getMavenVersion())).
-                principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
-                vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
-                parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
-                parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
-                properties(gatherBuildInfoProperties());
-    }
-
-    private String getMavenVersion() {
-        Properties mavenVersionProperties = new Properties();
-        InputStream inputStream = BuildInfoRecorder.class.getClassLoader()
-                .getResourceAsStream("org/apache/maven/messages/build.properties");
-        if (inputStream == null) {
-            throw new RuntimeException("Could not extract Maven version: unable to find the resource " +
-                    "'org/apache/maven/messages/build.properties'");
-        }
-        try {
-            mavenVersionProperties.load(inputStream);
-        } catch (IOException e) {
-            throw new RuntimeException(
-                    "Error while extracting Maven version properties from: org/apache/maven/messages/build.properties",
-                    e);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-        }
-
-        String version = mavenVersionProperties.getProperty("version");
-        if (StringUtils.isBlank(version)) {
-            throw new RuntimeException("Could not extract Maven version: no version property found in the resource " +
-                    "'org/apache/maven/messages/build.properties'");
-        }
-        return version;
     }
 
     private void initModule(MavenProject project) {
@@ -387,9 +395,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         DeployDetails details = new DeployDetails.Builder().artifactPath(deploymentPath).
                 bean(artifact).
                 file(artifactFile).
-                md5(artifact.getMd5()).
-                sha1(artifact.getSha1()).
-                targetRepository(allProps.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)).build();
+                targetRepository(allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY)).
+                addProperties(matrixParams).
+                build();
         deployableArtifacts.add(details);
     }
 
@@ -442,7 +450,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 artifactBuilder.sha1(checksums.get("sha1"));
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + artifactBuilder.build().getName() + "': " +
-                        e.getMessage());
+                        e.getMessage(), e);
             }
         }
     }
@@ -456,7 +464,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 dependencyBuilder.sha1(checksumsMap.get("sha1"));
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': " +
-                        e.getMessage());
+                        e.getMessage(), e);
             }
         }
     }
@@ -477,21 +485,5 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
 
         return null;
-    }
-
-    protected Properties gatherBuildInfoProperties() {
-        Properties props = new Properties();
-        props.setProperty("os.arch", System.getProperty("os.arch"));
-        props.setProperty("os.name", System.getProperty("os.name"));
-        props.setProperty("os.version", System.getProperty("os.version"));
-        props.setProperty("java.version", System.getProperty("java.version"));
-        props.setProperty("java.vm.info", System.getProperty("java.vm.info"));
-        props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
-        props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
-        props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
-        props.putAll((BuildInfoExtractorUtils.filterDynamicProperties(allProps,
-                BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE)));
-
-        return props;
     }
 }

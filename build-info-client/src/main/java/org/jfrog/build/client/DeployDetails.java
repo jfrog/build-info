@@ -23,6 +23,7 @@ import org.jfrog.build.api.BuildFileBean;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Simple value object holding an artifact deploy request details.
@@ -77,7 +78,10 @@ public class DeployDetails {
         }
 
         public Builder bean(BuildFileBean bean) {
-            deployDetails.properties = Maps.fromProperties(bean.getProperties());
+            Properties beanProperties = bean.getProperties();
+            if (beanProperties != null) {
+                deployDetails.properties = Maps.fromProperties(beanProperties);
+            }
             deployDetails.sha1 = bean.getSha1();
             deployDetails.md5 = bean.getMd5();
             return this;
@@ -125,4 +129,7 @@ public class DeployDetails {
         }
     }
 
+    public File getFile() {
+        return file;
+    }
 }
