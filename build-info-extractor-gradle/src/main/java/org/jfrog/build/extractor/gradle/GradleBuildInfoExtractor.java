@@ -126,12 +126,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
         String agentString = buildAgent.toString();
-        String buildAgentProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME,
-                rootProject);
-        if (StringUtils.isNotBlank(buildAgentProp)) {
-            agentString = buildAgentProp;
-        }
         Agent agent = new Agent(agentString);
+        String buildAgentNameProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME,
+                rootProject);
+        String buildAgentVersionProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION,
+                rootProject);
+        if (StringUtils.isNotBlank(buildAgentNameProp) && StringUtils.isNotBlank(buildAgentVersionProp)) {
+            agent = new Agent(buildAgentNameProp, buildAgentVersionProp);
+        }
         buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate).number(buildNumber)
@@ -167,7 +169,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
-        properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
         properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
