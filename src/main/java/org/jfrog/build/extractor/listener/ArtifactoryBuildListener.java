@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.listener;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.plugins.trigger.Trigger;
@@ -9,8 +10,10 @@ import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
 
@@ -53,10 +56,30 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
         BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
                 .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
                 .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion())).agent(new Agent("Ivy", Ivy.getIvyVersion()));
+        String buildAgentName = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
+        String buildAgentVersion = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
+        if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
+            builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
+        }
+        String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
+        if (StringUtils.isNotBlank(buildName)) {
+            builder.name(buildName);
+        }
+        String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
+        if (StringUtils.isNotBlank(buildNumber)) {
+            builder.number(buildNumber);
+        }
+        String buildUrl = System.getenv("BUILD_URL");
+        if (StringUtils.isNotBlank(buildUrl)) {
+            builder.url(buildUrl);
+        }
         Build build = builder.build();
+        String contextUrl = System.getenv(ClientProperties.PROP_CONTEXT_URL);
+        String username = System.getenv(ClientProperties.PROP_PUBLISH_USERNAME);
+        String password = System.getenv(ClientProperties.PROP_PUBLISH_PASSWORD);
         try {
             ArtifactoryBuildInfoClient client =
-                    new ArtifactoryBuildInfoClient("http://localhost:8080/artifactory/", "admin", "password");
+                    new ArtifactoryBuildInfoClient(contextUrl, username, password);
             deployArtifacts(client, deployDetails);
             deployBuildInfo(client, build);
         } catch (IOException e) {
