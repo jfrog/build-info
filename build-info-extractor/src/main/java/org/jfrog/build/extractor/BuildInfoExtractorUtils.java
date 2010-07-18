@@ -95,13 +95,14 @@ public abstract class BuildInfoExtractorUtils {
         Properties props = new Properties();
         boolean includeEnvVars = false;
         String includeVars = System.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        if (StringUtils.isBlank(includeVars)) {
+            includeVars = System.getenv(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        }
+        if (StringUtils.isBlank(includeVars)) {
+            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        }
         if (StringUtils.isNotBlank(includeVars)) {
             includeEnvVars = Boolean.parseBoolean(includeVars);
-        } else {
-            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
-            if (StringUtils.isNotBlank(includeVars)) {
-                includeEnvVars = Boolean.parseBoolean(includeVars);
-            }
         }
         if (includeEnvVars) {
             Map<String, String> envMap = System.getenv();
@@ -127,6 +128,8 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
         Properties filteredSystemProperties = filterDynamicProperties(System.getProperties(), ENV_PREDICATE);
+        filteredSystemProperties.putAll(System.getenv());
+        filteredSystemProperties = filterDynamicProperties(filteredSystemProperties, ENV_PREDICATE);
         for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
             props.put(entry.getKey(), entry.getValue());
         }
