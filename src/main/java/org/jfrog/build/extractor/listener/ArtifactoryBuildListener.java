@@ -16,9 +16,11 @@ import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Properties;
 import java.util.Set;
 
 
@@ -31,6 +33,7 @@ import java.util.Set;
 public class ArtifactoryBuildListener extends BuildListenerAdapter {
     private BuildContext ctx = new BuildContext();
     private long started;
+    private static boolean isDidDeploy;
 
     @Override
     public void buildStarted(BuildEvent event) {
@@ -49,41 +52,57 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
      */
     @Override
     public void buildFinished(BuildEvent event) {
-        Project project = event.getProject();
-        project.log("Build finished triggered", Project.MSG_INFO);
-        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        Set<DeployDetails> deployDetails = ctx.getDeployDetails();
-        BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
-                .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
-                .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion())).agent(new Agent("Ivy", Ivy.getIvyVersion()));
-        String buildAgentName = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
-        String buildAgentVersion = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
-        if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
-            builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
-        }
-        String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
-        if (StringUtils.isNotBlank(buildName)) {
-            builder.name(buildName);
-        }
-        String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
-        if (StringUtils.isNotBlank(buildNumber)) {
-            builder.number(buildNumber);
-        }
-        String buildUrl = System.getenv("BUILD_URL");
-        if (StringUtils.isNotBlank(buildUrl)) {
-            builder.url(buildUrl);
-        }
-        Build build = builder.build();
-        String contextUrl = System.getenv(ClientProperties.PROP_CONTEXT_URL);
-        String username = System.getenv(ClientProperties.PROP_PUBLISH_USERNAME);
-        String password = System.getenv(ClientProperties.PROP_PUBLISH_PASSWORD);
-        try {
-            ArtifactoryBuildInfoClient client =
-                    new ArtifactoryBuildInfoClient(contextUrl, username, password);
-            deployArtifacts(client, deployDetails);
-            deployBuildInfo(client, build);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (!isDidDeploy) {
+            Project project = event.getProject();
+            project.log("Build finished triggered", Project.MSG_INFO);
+            BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
+            Set<DeployDetails> deployDetails = ctx.getDeployDetails();
+            BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
+                    .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
+                    .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
+                    .agent(new Agent("Ivy", Ivy.getIvyVersion()));
+            String buildAgentName = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
+            String buildAgentVersion = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
+            if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
+                builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
+            }
+            String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
+            if (StringUtils.isNotBlank(buildName)) {
+                builder.name(buildName);
+            }
+            String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
+            if (StringUtils.isNotBlank(buildNumber)) {
+                builder.number(buildNumber);
+            }
+            String buildUrl = System.getenv("BUILD_URL");
+            if (StringUtils.isNotBlank(buildUrl)) {
+                builder.url(buildUrl);
+            }
+            Properties envProps = new Properties();
+            envProps.putAll(System.getenv());
+            Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
+            Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
+            builder.properties(envProperties);
+            Build build = builder.build();
+            String contextUrl = System.getenv(ClientProperties.PROP_CONTEXT_URL);
+            String username = System.getenv(ClientProperties.PROP_PUBLISH_USERNAME);
+            String password = System.getenv(ClientProperties.PROP_PUBLISH_PASSWORD);
+            try {
+                ArtifactoryBuildInfoClient client =
+                        new ArtifactoryBuildInfoClient(contextUrl, username, password);
+                boolean isDeployArtifacts = Boolean.parseBoolean(System.getenv(ClientProperties.PROP_PUBLISH_ARTIFACT));
+                if (isDeployArtifacts) {
+                    deployArtifacts(client, deployDetails);
+                }
+                boolean isDeployBuildInfo =
+                        Boolean.parseBoolean(System.getenv(ClientProperties.PROP_PUBLISH_BUILD_INFO));
+                if (isDeployBuildInfo) {
+                    deployBuildInfo(client, build);
+                }
+                isDidDeploy = true;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
