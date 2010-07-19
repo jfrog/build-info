@@ -11,6 +11,7 @@ import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
@@ -61,41 +62,48 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                     .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
                     .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
                     .agent(new Agent("Ivy", Ivy.getIvyVersion()));
-            String buildAgentName = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
-            String buildAgentVersion = System.getenv(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
-            if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
-                builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
-            }
-            String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
-            if (StringUtils.isNotBlank(buildName)) {
-                builder.name(buildName);
-            }
-            String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
-            if (StringUtils.isNotBlank(buildNumber)) {
-                builder.number(buildNumber);
-            }
-            String buildUrl = System.getenv("BUILD_URL");
-            if (StringUtils.isNotBlank(buildUrl)) {
-                builder.url(buildUrl);
-            }
+            // This is here for backwards compatibility.
+            builder.type(BuildType.IVY);
             Properties envProps = new Properties();
             envProps.putAll(System.getenv());
             Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
+            String buildAgentName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
+            String buildAgentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
+            if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
+                builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
+            }
+            String buildName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
+            if (StringUtils.isNotBlank(buildName)) {
+                builder.name(buildName);
+            }
+            String buildNumber = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
+            if (StringUtils.isNotBlank(buildNumber)) {
+                builder.number(buildNumber);
+            }
+            String buildUrl = mergedProps.getProperty("BUILD_URL");
+            if (StringUtils.isNotBlank(buildUrl)) {
+                builder.url(buildUrl);
+            }
+            String principal = mergedProps.getProperty(BuildInfoProperties.PROP_PRINCIPAL);
+            if (StringUtils.isNotBlank(principal)) {
+                builder.principal(principal);
+            }
             Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             builder.properties(envProperties);
             Build build = builder.build();
-            String contextUrl = System.getenv(ClientProperties.PROP_CONTEXT_URL);
-            String username = System.getenv(ClientProperties.PROP_PUBLISH_USERNAME);
-            String password = System.getenv(ClientProperties.PROP_PUBLISH_PASSWORD);
+            String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
+            String username = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
+            String password = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD);
             try {
                 ArtifactoryBuildInfoClient client =
                         new ArtifactoryBuildInfoClient(contextUrl, username, password);
-                boolean isDeployArtifacts = Boolean.parseBoolean(System.getenv(ClientProperties.PROP_PUBLISH_ARTIFACT));
+                boolean isDeployArtifacts =
+                        Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
                 if (isDeployArtifacts) {
                     deployArtifacts(client, deployDetails);
                 }
                 boolean isDeployBuildInfo =
-                        Boolean.parseBoolean(System.getenv(ClientProperties.PROP_PUBLISH_BUILD_INFO));
+                        Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
                 if (isDeployBuildInfo) {
                     deployBuildInfo(client, build);
                 }
