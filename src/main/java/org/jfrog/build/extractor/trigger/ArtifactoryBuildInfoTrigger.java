@@ -24,12 +24,14 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Properties;
 
 /**
  * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
@@ -140,20 +142,21 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         builder.artifactPath(artifactPath);
         String targetRepository = IvyResolverHelper.getTargetRepository();
         builder.targetRepository(targetRepository);
-        String svnRevision = System.getenv("SVN_REVISION");
+        Properties props = getMergedEnvAndSystemProps();
+        String svnRevision = props.getProperty("SVN_REVISION");
         if (StringUtils.isNotBlank(svnRevision)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
                             BuildInfoProperties.BUILD_INFO_PREFIX),
                     svnRevision);
         }
-        String buildName = System.getenv(BuildInfoProperties.PROP_BUILD_NAME);
+        String buildName = props.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
         if (StringUtils.isNotBlank(buildName)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
                     buildName);
         }
-        String buildNumber = System.getenv(BuildInfoProperties.PROP_BUILD_NUMBER);
+        String buildNumber = props.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
         if (StringUtils.isNotBlank(buildNumber)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
@@ -180,5 +183,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         } catch (NoSuchElementException e) {
             return null;
         }
+    }
+
+    private Properties getMergedEnvAndSystemProps() {
+        Properties props = new Properties();
+        props.putAll(System.getenv());
+        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
     }
 }
