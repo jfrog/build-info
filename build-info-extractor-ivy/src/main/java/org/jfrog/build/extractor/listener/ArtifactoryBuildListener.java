@@ -88,8 +88,11 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(principal)) {
                 builder.principal(principal);
             }
-            Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
-            builder.properties(envProperties);
+            Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
+            Properties propsFromSys = BuildInfoExtractorUtils
+                    .filterDynamicProperties(System.getProperties(), BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
+            props.putAll(propsFromSys);
+            builder.properties(props);
             Build build = builder.build();
             String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
             String username = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
