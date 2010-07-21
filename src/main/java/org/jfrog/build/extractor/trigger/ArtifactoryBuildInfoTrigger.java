@@ -122,8 +122,19 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String organization = map.get("organisation");
         String path = artifactFile.getAbsolutePath();
         project.log("Module location: " + path, Project.MSG_INFO);
+        List<Artifact> artifacts = module.getArtifacts();
+        if (artifacts == null) {
+            module.setArtifacts(Lists.<Artifact>newArrayList());
+        }
+        if (isArtifactExist(module.getArtifacts(), artifactFile.getName())) {
+            return;
+        }
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
-        artifactBuilder.type(map.get("type"));
+        String type = map.get("type");
+        if (artifactFile.getName().contains("sources")) {
+            type = type + "-sources";
+        }
+        artifactBuilder.type(type);
         Map<String, String> checksums;
         try {
             checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "MD5", "SHA1");
@@ -133,10 +144,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String md5 = checksums.get("MD5");
         String sha1 = checksums.get("SHA1");
         artifactBuilder.md5(md5).sha1(sha1);
-        List<Artifact> artifacts = module.getArtifacts();
-        if (artifacts == null) {
-            module.setArtifacts(Lists.<Artifact>newArrayList());
-        }
+
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
         String revision = map.get("revision");
@@ -206,4 +214,18 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         }
         return true;
     }
+
+    private boolean isArtifactExist(List<Artifact> artifacts, final String artifactName) {
+        try {
+            Iterables.find(artifacts, new Predicate<Artifact>() {
+                public boolean apply(Artifact input) {
+                    return input.getName().equals(artifactName);
+                }
+            });
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+        return true;
+    }
 }
+
