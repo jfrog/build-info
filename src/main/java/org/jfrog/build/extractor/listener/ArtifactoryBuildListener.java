@@ -53,6 +53,9 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
      */
     @Override
     public void buildFinished(BuildEvent event) {
+        if (event.getException() != null) {
+            return;
+        }
         if (!isDidDeploy) {
             Project project = event.getProject();
             project.log("Build finished triggered", Project.MSG_INFO);
