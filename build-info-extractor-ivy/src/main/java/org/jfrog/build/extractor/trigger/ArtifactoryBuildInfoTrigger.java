@@ -59,42 +59,45 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("Collecting dependencies.", Project.MSG_INFO);
         ResolveReport report = ((EndResolveEvent) event).getReport();
         Map<String, String> attributes = event.getAttributes();
-        String moduleName = attributes.get("module");
-        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
-        String[] configurations = report.getConfigurations();
-        List<Dependency> moduleDependencies = Lists.newArrayList();
-        for (String configuration : configurations) {
-            project.log("Configuration: " + configuration + " Dependencies", Project.MSG_INFO);
-            ConfigurationResolveReport configurationReport = report.getConfigurationReport(configuration);
-            ArtifactDownloadReport[] allArtifactsReports = configurationReport.getAllArtifactsReports();
-            for (final ArtifactDownloadReport artifactsReport : allArtifactsReports) {
-                project.log("Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
-                        Project.MSG_INFO);
-                Dependency dependency = findDependencyInList(artifactsReport, moduleDependencies);
-                if (dependency == null) {
-                    DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                    dependencyBuilder.type(artifactsReport.getType()).id(artifactsReport.getName())
-                            .scopes(Lists.newArrayList(configuration));
-                    File file = artifactsReport.getLocalFile();
-                    Map<String, String> checksums;
-                    try {
-                        checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                    String md5 = checksums.get("MD5");
-                    String sha1 = checksums.get("SHA1");
-                    dependencyBuilder.md5(md5).sha1(sha1);
-                    moduleDependencies.add(dependencyBuilder.build());
-                } else {
-                    dependency.getScopes().add(configuration);
-                }
-            }
-        }
-        moduleBuilder.dependencies(moduleDependencies);
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         List<Module> modules = ctx.getModules();
-        modules.add(moduleBuilder.build());
+        String moduleName = attributes.get("module");
+        if (!isModuleExists(modules, moduleName)) {
+            ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
+            String[] configurations = report.getConfigurations();
+            List<Dependency> moduleDependencies = Lists.newArrayList();
+            for (String configuration : configurations) {
+                project.log("Configuration: " + configuration + " Dependencies", Project.MSG_INFO);
+                ConfigurationResolveReport configurationReport = report.getConfigurationReport(configuration);
+                ArtifactDownloadReport[] allArtifactsReports = configurationReport.getAllArtifactsReports();
+                for (final ArtifactDownloadReport artifactsReport : allArtifactsReports) {
+                    project.log(
+                            "Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
+                            Project.MSG_INFO);
+                    Dependency dependency = findDependencyInList(artifactsReport, moduleDependencies);
+                    if (dependency == null) {
+                        DependencyBuilder dependencyBuilder = new DependencyBuilder();
+                        dependencyBuilder.type(artifactsReport.getType()).id(artifactsReport.getName())
+                                .scopes(Lists.newArrayList(configuration));
+                        File file = artifactsReport.getLocalFile();
+                        Map<String, String> checksums;
+                        try {
+                            checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+                        } catch (Exception e) {
+                            throw new RuntimeException(e);
+                        }
+                        String md5 = checksums.get("MD5");
+                        String sha1 = checksums.get("SHA1");
+                        dependencyBuilder.md5(md5).sha1(sha1);
+                        moduleDependencies.add(dependencyBuilder.build());
+                    } else {
+                        dependency.getScopes().add(configuration);
+                    }
+                }
+            }
+            moduleBuilder.dependencies(moduleDependencies);
+            modules.add(moduleBuilder.build());
+        }
     }
 
     /**
@@ -189,5 +192,18 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         Properties props = new Properties();
         props.putAll(System.getenv());
         return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
+    }
+
+    private boolean isModuleExists(List<Module> modules, final String moduleName) {
+        try {
+            Iterables.find(modules, new Predicate<Module>() {
+                public boolean apply(Module input) {
+                    return input.getId().equals(moduleName);
+                }
+            });
+        } catch (NoSuchElementException e) {
+            return false;
+        }
+        return true;
     }
 }
