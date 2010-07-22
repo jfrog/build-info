@@ -112,21 +112,18 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     private void collectModuleInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         final Map<String, String> map = event.getAttributes();
-        final String moduleName = map.get("module");
-        project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         List<Module> modules = ctx.getModules();
+        String file = map.get("file");
+        final String moduleName = map.get("module");
+        project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
         Module module = Iterables.find(modules, new Predicate<Module>() {
             public boolean apply(Module input) {
                 return input.getId().equals(moduleName) || input.getId().equals(generateModuleIdFromAttributes(map));
             }
         });
         module.setId(generateModuleIdFromAttributes(map));
-        String file = map.get("file");
         File artifactFile = new File(file);
-        String organization = map.get("organisation");
-        String path = artifactFile.getAbsolutePath();
-        project.log("Module location: " + path, Project.MSG_INFO);
         List<Artifact> artifacts = module.getArtifacts();
         if (artifacts == null) {
             module.setArtifacts(Lists.<Artifact>newArrayList());
@@ -134,6 +131,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (isArtifactExist(module.getArtifacts(), artifactFile.getName())) {
             return;
         }
+        String organization = map.get("organisation");
+        String path = artifactFile.getAbsolutePath();
+        project.log("Module location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         String type = map.get("type");
         if (artifactFile.getName().contains("sources")) {
