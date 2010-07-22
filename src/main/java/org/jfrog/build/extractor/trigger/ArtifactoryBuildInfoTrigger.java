@@ -177,6 +177,16 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
                             BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
         }
+        String parentBuildName = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
+        if (StringUtils.isNotBlank(parentBuildName)) {
+            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME,
+                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildName);
+        }
+        String parentBuildNumber = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
+        if (StringUtils.isNotBlank(parentBuildNumber)) {
+            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER,
+                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildNumber);
+        }
         Properties matrixParams =
                 BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
         builder.addProperties(Maps.fromProperties(matrixParams));

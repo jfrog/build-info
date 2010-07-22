@@ -91,6 +91,14 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(principal)) {
                 builder.principal(principal);
             }
+            String parentBuildName = mergedProps.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
+            if (StringUtils.isNotBlank(parentBuildName)) {
+                builder.parentName(parentBuildName);
+            }
+            String parentBuildNumber = mergedProps.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
+            if (StringUtils.isNotBlank(parentBuildNumber)) {
+                builder.parentNumber(parentBuildNumber);
+            }
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
                     .filterDynamicProperties(System.getProperties(), BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
