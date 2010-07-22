@@ -9,6 +9,7 @@ import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
 import org.apache.ivy.core.event.publish.StartArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
+import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
@@ -77,8 +78,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     Dependency dependency = findDependencyInList(artifactsReport, moduleDependencies);
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                        dependencyBuilder.type(artifactsReport.getType()).id(artifactsReport.getName())
-                                .scopes(Lists.newArrayList(configuration));
+                        dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
+                        ModuleRevisionId id = artifactsReport.getArtifact().getModuleRevisionId();
+                        dependencyBuilder.id(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
@@ -107,16 +109,17 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
      */
     private void collectModuleInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
-        project.log("Collecting Module information.", Project.MSG_INFO);
-        Map<String, String> map = event.getAttributes();
+        final Map<String, String> map = event.getAttributes();
         final String moduleName = map.get("module");
+        project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         List<Module> modules = ctx.getModules();
         Module module = Iterables.find(modules, new Predicate<Module>() {
             public boolean apply(Module input) {
-                return input.getId().equals(moduleName);
+                return input.getId().equals(moduleName) || input.getId().equals(generateModuleIdFromAttributes(map));
             }
         });
+        module.setId(generateModuleIdFromAttributes(map));
         String file = map.get("file");
         File artifactFile = new File(file);
         String organization = map.get("organisation");
@@ -180,6 +183,13 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (contextModules.indexOf(module) == -1) {
             ctx.addModule(module);
         }
+    }
+
+    private String generateModuleIdFromAttributes(Map<String, String> attributes) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(attributes.get("organisation")).append(":").append(attributes.get("module"))
+                .append(":").append(attributes.get("revision"));
+        return builder.toString();
     }
 
     private Dependency findDependencyInList(final ArtifactDownloadReport artifactsReport,
