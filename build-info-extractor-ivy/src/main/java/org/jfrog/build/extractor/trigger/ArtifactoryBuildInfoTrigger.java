@@ -75,11 +75,12 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     project.log(
                             "Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
                             Project.MSG_INFO);
-                    Dependency dependency = findDependencyInList(artifactsReport, moduleDependencies);
+                    ModuleRevisionId id = artifactsReport.getArtifact().getModuleRevisionId();
+                    Dependency dependency = findDependencyInList(id, moduleDependencies);
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
                         dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
-                        ModuleRevisionId id = artifactsReport.getArtifact().getModuleRevisionId();
+
                         dependencyBuilder.id(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
@@ -192,12 +193,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         return builder.toString();
     }
 
-    private Dependency findDependencyInList(final ArtifactDownloadReport artifactsReport,
-            List<Dependency> moduleDependencies) {
+    private Dependency findDependencyInList(final ModuleRevisionId id, List<Dependency> moduleDependencies) {
         try {
             Dependency dependency = Iterables.find(moduleDependencies, new Predicate<Dependency>() {
                 public boolean apply(Dependency input) {
-                    return input.getId().equals(artifactsReport.getName());
+                    return input.getId().equals(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
                 }
             });
             return dependency;
