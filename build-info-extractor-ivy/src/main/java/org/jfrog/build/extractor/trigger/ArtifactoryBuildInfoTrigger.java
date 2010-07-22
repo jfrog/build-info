@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -178,6 +179,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                             BuildInfoProperties.BUILD_INFO_PREFIX),
                     buildNumber);
         }
+        Properties matrixParams =
+                BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
+        builder.addProperties(Maps.fromProperties(matrixParams));
         DeployDetails deployDetails = builder.build();
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();
