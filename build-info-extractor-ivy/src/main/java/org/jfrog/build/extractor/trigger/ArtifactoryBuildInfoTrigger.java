@@ -152,12 +152,12 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
         String revision = map.get("revision");
-        String artifactPath =
-                IvyResolverHelper.calculateArtifactPath(artifactFile, organization, moduleName, revision);
-        builder.artifactPath(artifactPath);
-        String targetRepository = IvyResolverHelper.getTargetRepository();
-        builder.targetRepository(targetRepository);
         Properties props = getMergedEnvAndSystemProps();
+        String artifactPath =
+                IvyResolverHelper.calculateArtifactPath(props, artifactFile, organization, moduleName, revision);
+        builder.artifactPath(artifactPath);
+        String targetRepository = IvyResolverHelper.getTargetRepository(props);
+        builder.targetRepository(targetRepository);
         String svnRevision = props.getProperty("SVN_REVISION");
         if (StringUtils.isNotBlank(svnRevision)) {
             builder.addProperty(
