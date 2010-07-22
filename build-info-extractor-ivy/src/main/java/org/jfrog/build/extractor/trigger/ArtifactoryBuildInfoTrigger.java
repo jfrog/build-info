@@ -163,8 +163,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (StringUtils.isNotBlank(svnRevision)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
-                            BuildInfoProperties.BUILD_INFO_PREFIX),
-                    svnRevision);
+                            BuildInfoProperties.BUILD_INFO_PREFIX), svnRevision);
         }
         String buildName = props.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
         if (StringUtils.isNotBlank(buildName)) {
@@ -176,8 +175,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (StringUtils.isNotBlank(buildNumber)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
-                            BuildInfoProperties.BUILD_INFO_PREFIX),
-                    buildNumber);
+                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
         }
         Properties matrixParams =
                 BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
