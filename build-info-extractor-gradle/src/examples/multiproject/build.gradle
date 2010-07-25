@@ -26,7 +26,7 @@
  */
 
 /*apply {
-  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/1.0/artifactoryinitplugin-1.0.0.gradle'
+  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/1.0/artifactoryinitplugin-1.0-SNAPSHOT.gradle'
 }*/
 
 allprojects {

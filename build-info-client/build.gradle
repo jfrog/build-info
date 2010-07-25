@@ -20,5 +20,5 @@ dependencies {
   compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.5.1'
   compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0.1'
   compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
-  compile group: 'com.google.collections', name: 'google-collections', version: '1.0'
+  compile group: 'com.google.guava', name: 'guava', version: 'r06'
 }

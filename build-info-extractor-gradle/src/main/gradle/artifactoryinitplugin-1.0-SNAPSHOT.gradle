@@ -42,7 +42,7 @@ buildscript {
     mavenRepo urls: [artifactoryDownloadUrl]
   }
   dependencies {
-    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0-SNAPSHOT'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0.1'
   }
 
 }
