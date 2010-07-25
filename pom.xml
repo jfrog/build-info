@@ -62,17 +62,17 @@
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>${project.version}</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>${project.version}</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>${project.version}</version>
+                <version>1.4.x-SNAPSHOT</version>
             </dependency>
 
             <dependency>
