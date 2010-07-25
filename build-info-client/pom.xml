@@ -34,11 +34,7 @@
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-api</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.jfrog.buildinfo</groupId>
-            <artifactId>build-info-api</artifactId>
-        </dependency>
-
+       
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
