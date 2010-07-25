@@ -16,7 +16,7 @@
 
 initscript {
   apply {
-    apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/1.0/artifactoryinitplugin-1.0.0.gradle'
+    apply from: 'http://localhost:8081/artifactory/plugins-releases/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryinitplugin-1.0.1.gradle'
   }
 }
 addListener(new PropertyListener())
@@ -24,16 +24,18 @@ class PropertyListener extends BuildAdapter implements BuildListener {
   def void settingsEvaluated(Settings settings) {
     Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
     projProps.putAll([
-            "artifactory.contextUrl": "http://localhost:8080/artifactory",
-            "artifactory.resolve.repoKey": "repo",
-            "artifactory.publish.repoKey": "libs-releases-local",
-            "artifactory.publish.username": "admin",
-            "artifactory.publish.password": "password",
-            "artifactory.publish.artifact": "true",
-            "artifactory.publish.ivy": "true",
-            "artifactory.publish.maven": "true",
-            "buildInfo.buildName": "multiproj-example",
-            "buildInfo.buildNumber": "1234",
+            'artifactory.contextUrl': 'http://localhost:8081/artifactory',
+            'artifactory.resolve.repoKey': 'libs-releases',
+            'artifactory.publish.repoKey': 'libs-releases-local',
+            'artifactory.publish.username': 'admin',
+            'artifactory.publish.password': 'password',
+            'artifactory.publish.artifacts': 'true',
+            'artifactory.publish.ivy': 'true',
+            'artifactory.publish.maven': 'true',
+            'buildInfo.parentBuildName': 'parent',
+            'buildInfo.parentBuildNumber': '123',
+            //"buildInfo.buildName": "multiproj-example",
+            //"buildInfo.buildNumber": "1234",
     ])
   }
 }

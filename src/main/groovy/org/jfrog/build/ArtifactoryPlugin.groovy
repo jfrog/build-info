@@ -31,7 +31,7 @@ import org.gradle.api.tasks.Upload
 import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.client.ClientIvyProperties
-import org.jfrog.build.client.ClientMavenProperties
+import org.jfrog.build.client.ClientGradleProperties
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
@@ -49,16 +49,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
     while (artifactoryUrl.endsWith("/")) {
       artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
     }
-    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
-    if (!downloadId) {
-      // take the target repository from the full url
-      String[] pathParts = artifactoryUrl.split("/")
-      if (pathParts.size() >= 3) {
-        downloadId = pathParts[2]
-      }
-      //TODO: [by ys] why plugins releases in the default?
-      downloadId = downloadId ?: 'plugins-releases'
-    }
+    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project) ?: 'libs'
     def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
     log.debug("Artifactory URL: $artifactoryUrl")
     log.debug("Artifactory Download ID: $downloadId")
@@ -135,7 +126,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
           }
           boolean deployMaven
-          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
+          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project);
           if (deployMavenProp != null) {
             deployMaven = Boolean.parseBoolean(deployMavenProp);
           } else {
@@ -153,7 +144,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
     } else {
       if (project.getRootProject().equals(project)) {
-        log.warn "Upload ID was not declared, no actual deployment will be performed."
+        log.info "Upload ID was not declared, no actual deployment will be performed."
       }
     }
     project.getGradle().addBuildListener(new BuildAdapter() {
@@ -170,36 +161,34 @@ class ArtifactoryPlugin implements Plugin<Project> {
     Properties props = new Properties()
     props.putAll(System.getProperties())
     String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
-    if (buildNumber) {
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
-    } else {
-      if (StringUtils.isBlank(System.getProperty("timestamp"))) {
-        System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
-      }
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
+    if (StringUtils.isBlank(System.getProperty("timestamp"))) {
+      System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
+    }
+    props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
+    if (StringUtils.isNotBlank(buildNumber)) {
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NUMBER, buildNumber)
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
-    if (buildName) {
+    if (StringUtils.isNotBlank(buildName)) {
       buildName = buildName.replace(' ', '-')
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, buildName)
     } else {
       Project rootProject = project.getRootProject();
-      String defaultBuildName = rootProject.getName().replace(' ', '-')
-      props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, defaultBuildName)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_BUILD_NAME, rootProject.getName().replace(' ', '-'))
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (buildParentNumber) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
+    if (StringUtils.isNotBlank(buildParentNumber)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (buildParentName) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
+    if (StringUtils.isNotBlank(buildParentName)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_PARENT_BUILD_NAME, buildParentName)
     String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
-    if (vcsRevision) props.put(BuildInfoConfigProperties.BUILD_INFO_DEPLOY_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
+    if (StringUtils.isNotBlank(vcsRevision)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + BuildInfoProperties.PROP_VCS_REVISION, vcsRevision)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {
       if (key != null) {
         Object value = properties.get(key)
         if (value != null) {
-          value = value.toString().replace(" ", "-")
+          value = value.toString()
           props.put(key, value)
         }
       }
