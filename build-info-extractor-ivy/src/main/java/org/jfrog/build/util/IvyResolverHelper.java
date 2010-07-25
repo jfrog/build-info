@@ -11,6 +11,7 @@ import org.apache.ivy.plugins.resolver.URLResolver;
 import org.jfrog.build.client.ClientProperties;
 
 import java.io.File;
+import java.util.List;
 import java.util.Properties;
 
 
@@ -92,13 +93,12 @@ public class IvyResolverHelper {
         DependencyResolver publishingResolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
         if (publishingResolver != null) {
             AbstractPatternsBasedResolver urlResolver = (AbstractPatternsBasedResolver) publishingResolver;
-            return urlResolver.getArtifactPatterns().get(0).toString();
+            List artifactPatterns = urlResolver.getArtifactPatterns();
+            if (!artifactPatterns.isEmpty()) {
+                return artifactPatterns.get(0).toString();
+            }
         }
-        String contextUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL, "");
-        contextUrl = StringUtils.stripEnd(contextUrl, "/");
-        String repoKey = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, "");
-        repoKey = StringUtils.stripEnd(repoKey, "/");
-        return contextUrl + "/" + repoKey + "/" + DEFAULT_PATTERN;
+        return getDefaultPattern(props);
     }
 
     private static String getIvyPatternFromIvy(Properties props) {
@@ -107,8 +107,15 @@ public class IvyResolverHelper {
         DependencyResolver publishingResolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
         if (publishingResolver != null) {
             AbstractPatternsBasedResolver urlResolver = (AbstractPatternsBasedResolver) publishingResolver;
-            return urlResolver.getIvyPatterns().get(0).toString();
+            List ivyPatterns = urlResolver.getIvyPatterns();
+            if (!ivyPatterns.isEmpty()) {
+                return ivyPatterns.get(0).toString();
+            }
         }
+        return getDefaultPattern(props);
+    }
+
+    private static String getDefaultPattern(Properties props) {
         String contextUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL, "");
         contextUrl = StringUtils.stripEnd(contextUrl, "/");
         String repoKey = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, "");
