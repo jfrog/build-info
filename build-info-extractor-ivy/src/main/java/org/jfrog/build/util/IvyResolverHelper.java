@@ -5,6 +5,7 @@ import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.settings.IvySettings;
+import org.apache.ivy.plugins.resolver.AbstractPatternsBasedResolver;
 import org.apache.ivy.plugins.resolver.DependencyResolver;
 import org.apache.ivy.plugins.resolver.URLResolver;
 import org.jfrog.build.client.ClientProperties;
@@ -34,7 +35,6 @@ public class IvyResolverHelper {
      */
     public static String calculateArtifactPath(Properties props, File artifactFile, String organisation, String module,
             String revision) {
-        String pattern = getArtifactPatternFromIvy(props);
         IvyContext context = IvyContext.getContext();
         IvySettings ivySettings = context.getSettings();
         boolean m2Compatible = true;
@@ -51,9 +51,11 @@ public class IvyResolverHelper {
         }
         String fullPattern;
         if (artifactFile.getAbsolutePath().endsWith(".jar")) {
+            String pattern = getArtifactPatternFromIvy(props);
             String moduleName = artifactFile.getName().substring(0, artifactFile.getName().indexOf("."));
             fullPattern = IvyPatternHelper.substitute(pattern, mrid, moduleName, "jar", "jar");
         } else {
+            String pattern = getIvyPatternFromIvy(props);
             fullPattern = IvyPatternHelper.substitute(pattern, mrid);
         }
         int index = fullPattern.indexOf(mrid.getOrganisation());
@@ -89,8 +91,23 @@ public class IvyResolverHelper {
         IvySettings ivySettings = context.getSettings();
         DependencyResolver publishingResolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
         if (publishingResolver != null) {
-            URLResolver urlResolver = (URLResolver) publishingResolver;
+            AbstractPatternsBasedResolver urlResolver = (AbstractPatternsBasedResolver) publishingResolver;
             return urlResolver.getArtifactPatterns().get(0).toString();
+        }
+        String contextUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL, "");
+        contextUrl = StringUtils.stripEnd(contextUrl, "/");
+        String repoKey = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, "");
+        repoKey = StringUtils.stripEnd(repoKey, "/");
+        return contextUrl + "/" + repoKey + "/" + DEFAULT_PATTERN;
+    }
+
+    private static String getIvyPatternFromIvy(Properties props) {
+        IvyContext context = IvyContext.getContext();
+        IvySettings ivySettings = context.getSettings();
+        DependencyResolver publishingResolver = ivySettings.getResolver(ARTIFACTORY_RESOLVER_NAME);
+        if (publishingResolver != null) {
+            AbstractPatternsBasedResolver urlResolver = (AbstractPatternsBasedResolver) publishingResolver;
+            return urlResolver.getIvyPatterns().get(0).toString();
         }
         String contextUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL, "");
         contextUrl = StringUtils.stripEnd(contextUrl, "/");
