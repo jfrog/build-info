@@ -193,7 +193,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
       }
     }
-    return URLEncoder.encode(DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props), 'UTF-8')
+    return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
   }
 
   private void configureBuildInfoTask(Project project) {
