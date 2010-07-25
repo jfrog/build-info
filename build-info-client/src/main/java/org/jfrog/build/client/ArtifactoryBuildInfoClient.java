@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -201,7 +202,13 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(Build buildInfo) throws IOException {
         String url = artifactoryUrl + BUILD_REST_RUL;
         HttpPut httpPut = new HttpPut(url);
-        String buildInfoJson = buildInfoToJsonString(buildInfo);
+        String buildInfoJson;
+        try {
+            buildInfoJson = buildInfoToJsonString(buildInfo);
+        } catch (Exception e) {
+            log.error("Could not build the build-info object.", e);
+            throw new IOException("Could not publish build-info: " + e.getMessage());
+        }
         StringEntity stringEntity = new StringEntity(buildInfoJson);
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         httpPut.setEntity(stringEntity);
@@ -215,6 +222,36 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
+    public String getItemLastModified(String path) throws IOException, ParseException {
+        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified&deep=1";
+        HttpGet get = new HttpGet(url);
+        HttpResponse response = httpClient.getHttpClient().execute(get);
+
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                entity.consumeContent();
+            }
+            throw new IOException("Failed to obtain item info: " + response.getStatusLine());
+        } else {
+            HttpEntity entity = response.getEntity();
+            if (entity != null) {
+                InputStream content = entity.getContent();
+                JsonParser parser;
+                try {
+                    parser = httpClient.createJsonParser(content);
+                    JsonNode result = parser.readValueAsTree();
+                    return result.get("lastModified").getTextValue();
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                    entity.consumeContent();
+                }
+            }
+        }
+        return null;
+    }
 
     /**
      * Deploys the artifact to the destination repository.
@@ -236,6 +273,25 @@ public class ArtifactoryBuildInfoClient {
     }
 
     /**
+     * @return Artifactory version if working against a compatible version of Artifactory
+     * @throws IOException If server not found or it doesn't answer to the version query or it is too old
+     */
+    public Version verifyCompatibleArtifactoryVersion() throws IOException {
+        Version version = httpClient.getVersion();
+        if (version.isNotFound()) {
+            throw new UnsupportedOperationException(
+                    "There is either an incompatible or no instance of Artifactory at the provided URL.");
+        }
+        boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
+        if (!isCompatibleArtifactory) {
+            throw new UnsupportedOperationException(
+                    "This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
+                            " of Artifactory and above. Please upgrade your Artifactory server!");
+        }
+        return version;
+    }
+
+    /**
      * Release all connection and cleanup resources.
      */
     public void shutdown() {
@@ -244,14 +300,8 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private String buildInfoToJsonString(Build buildInfo) throws IOException {
-        ArtifactoryHttpClient.Version version = httpClient.getVersion();
-
-        boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
-        if (!isCompatibleArtifactory) {
-            log.warn("Note: Please upgrade your Artifactory server! This plugin is designed to work with version " +
-                    MINIMAL_ARTIFACTORY_VERSION + " of Artifactory and above.");
-        }
+    private String buildInfoToJsonString(Build buildInfo) throws Exception {
+        Version version = verifyCompatibleArtifactoryVersion();
         //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
         //JSON parsing. Our JSON writer is configured to discard null values.
         if (!version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {

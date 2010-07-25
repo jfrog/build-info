@@ -44,8 +44,8 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ClientGradleProperties;
 import org.jfrog.build.client.ClientIvyProperties;
-import org.jfrog.build.client.ClientMavenProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
@@ -91,18 +91,18 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     GradleBuildInfoExtractor(Project rootProject) {
         StartParameter startParameter = rootProject.getGradle().getStartParameter();
         startParamProps = new Properties();
-        buildInfoProps = new Properties();
-        gradleProps = new Properties();
         startParamProps.putAll(startParameter.getProjectProperties());
+        gradleProps = new Properties();
         gradleProps.putAll(startParamProps);
         File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
         if (projectPropsFile.exists()) {
             Properties properties = GUtil.loadProperties(projectPropsFile);
-            buildInfoProps.putAll(BuildInfoExtractorUtils.getBuildInfoProperties(properties));
-            gradleProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(properties));
+            gradleProps.putAll(properties);
         }
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(startParamProps));
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterBuildInfoProperties(gradleProps));
+        Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(startParamProps);
+        buildInfoProps = new Properties();
+        buildInfoProps.putAll(BuildInfoExtractorUtils.filterDynamicProperties(mergedProps,
+                BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE));
     }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
@@ -126,11 +126,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         // If
         String agentString = buildAgent.toString();
-        String buildAgentProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT, rootProject);
-        if (StringUtils.isNotBlank(buildAgentProp)) {
-            agentString = buildAgentProp;
-        }
         Agent agent = new Agent(agentString);
+        String buildAgentNameProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME,
+                rootProject);
+        String buildAgentVersionProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION,
+                rootProject);
+        if (StringUtils.isNotBlank(buildAgentNameProp) && StringUtils.isNotBlank(buildAgentVersionProp)) {
+            agent = new Agent(buildAgentNameProp, buildAgentVersionProp);
+        }
         buildInfoBuilder.agent(agent)
                 .durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate).number(buildNumber)
@@ -145,7 +148,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        String principal = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PRINCIPAL, rootProject);
+        String principal = ArtifactoryPluginUtils.getProperty(PROP_PRINCIPAL, rootProject);
         if (StringUtils.isBlank(principal)) {
             principal = System.getProperty("user.name");
         }
@@ -167,7 +170,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
         properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
-        properties.putAll(BuildInfoExtractorUtils.filterEnvProperties(startParamProps));
         buildInfoBuilder.properties(properties);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
         // for backward compatibility for Artifactory 2.2.3
@@ -228,7 +230,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }));
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        String publishPom = ArtifactoryPluginUtils.getProperty(ClientMavenProperties.PROP_PUBLISH_MAVEN, project);
+        String publishPom = ArtifactoryPluginUtils.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project);
         boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
         if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);

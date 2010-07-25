@@ -24,15 +24,11 @@ public interface BuildInfoConfigProperties {
      * Prefix for all config/runtime properties
      */
     String BUILD_INFO_CONFIG_PREFIX = "buildInfoConfig.";
-    /**
-     * Prefix for properties that are dynamically added to deployment (as matrix params)
-     */
-    String BUILD_INFO_DEPLOY_PROP_PREFIX = BUILD_INFO_CONFIG_PREFIX + "deploy.";
     String PROP_PROPS_FILE = BUILD_INFO_CONFIG_PREFIX + "propertiesFile";
     String PROP_EXPORT_FILE_PATH = BUILD_INFO_CONFIG_PREFIX + "exportFile";
 
     /**
-     * Property for whether to include all environment variables in the
+     * Property for whether to include all environment variables in the generic set of build info properties
      */
     String PROP_INCLUDE_ENV_VARS = BUILD_INFO_CONFIG_PREFIX + "includeEnvVars";
 }

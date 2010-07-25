@@ -36,16 +36,20 @@ public interface BuildInfoProperties {
     String BUILD_INFO_ENVIRONMENT_PREFIX = "env.";
 
     //TODO: [by YS] move the build.name etc. to another interface/class and use them from all places
-    String PROP_BUILD_NAME = "build.name";
-    String PROP_BUILD_NUMBER = "build.number";
-    String PROP_PARENT_BUILD_NAME = "build.parentName";
-    String PROP_PARENT_BUILD_NUMBER = "build.parentNumber";
-    String PROP_VCS_REVISION = "vcs.revision";
+    String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "build.name";
+    String PROP_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.number";
+    String PROP_BUILD_STARTED = BUILD_INFO_PREFIX + "build.started";
+    String PROP_PARENT_BUILD_NAME = BUILD_INFO_PREFIX + "build.parentName";
+    String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.parentNumber";
+    String PROP_VCS_REVISION = BUILD_INFO_PREFIX + "vcs.revision";
+    String PROP_PRINCIPAL = BUILD_INFO_PREFIX + "principal";
 
     /**
      * Property to link the build back to the CI server that produced the build
      */
     String PROP_BUILD_URL = BUILD_INFO_PREFIX + "buildUrl";
-    String PROP_BUILD_AGENT = BUILD_INFO_PREFIX + "buildAgent"; //maven, gradle...
-    String PROP_AGENT = BUILD_INFO_PREFIX + "agent"; //hudson, teamcity...
+    String PROP_BUILD_AGENT_NAME = BUILD_INFO_PREFIX + "buildAgent.name"; // maven, ivy, gradle...
+    String PROP_BUILD_AGENT_VERSION = BUILD_INFO_PREFIX + "buildAgent.version";
+    String PROP_AGENT_NAME = BUILD_INFO_PREFIX + "agent.name"; //hudson, teamcity...
+    String PROP_AGENT_VERSION = BUILD_INFO_PREFIX + "agent.version"; //hudson, teamcity...
 }

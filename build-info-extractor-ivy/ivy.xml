@@ -1,0 +1,16 @@
+<ivy-module version="1.0" xmlns:e="http://ant.apache.org/ivy/extra">
+    <info organisation="org.jfrog.buildinfo" module="build-info-extractor-ivy" revision="1.0"/>
+    <dependencies>
+        <dependency org="org.jfrog.buildinfo" name="build-info-api" rev="1.4.1" changing="false"/>
+        <dependency org="org.jfrog.buildinfo" name="build-info-client" rev="1.4.1" changing="false"/>
+        <dependency org="org.jfrog.buildinfo" name="build-info-extractor" rev="1.4.1" changing="false"/>
+        <dependency org="commons-lang" name="commons-lang" rev="2.4" changing="false"/>
+        <dependency org="commons-io" name="commons-io" rev="1.4" changing="false"/>
+        <dependency org="commons-codec" name="commons-codec" rev="1.3" changing="false"/>
+        <dependency org="commons-logging" name="commons-logging" rev="1.1.1" changing="false"/>
+        <dependency org="org.codehaus.jackson" name="jackson-mapper-asl" rev="1.5.1" changing="false"/>
+        <dependency org="com.google.guava" name="guava" rev="r06" changing="false"/>
+        <dependency org="org.aspectj" name="aspectjtools" rev="1.6.9" changing="false"/>
+        <dependency org="org.aspectj" name="aspectjweaver" rev="1.6.9" changing="false"/>
+    </dependencies>
+</ivy-module>

@@ -14,4 +14,4 @@
  * limitations under the License.
  */
 
-include 'build-info-api', 'build-info-client', 'build-info-extractor-gradle', 'build-info-extractor'
+include 'build-info-api', 'build-info-client', 'build-info-extractor-gradle', 'build-info-extractor', 'build-info-extractor-ivy'

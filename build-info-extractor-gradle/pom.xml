@@ -20,11 +20,11 @@
     <parent>
         <groupId>org.jfrog.buildinfo</groupId>
         <artifactId>build-info-parent</artifactId>
-        <version>1.4.0</version>
+        <version>1.4.1</version>
     </parent>
 
     <artifactId>build-info-extractor-gradle</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Gradle Extractor</name>
 

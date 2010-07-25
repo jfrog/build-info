@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.maven;
+package org.jfrog.build.extractor.maven;
 
 import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.MavenExecutionRequest;
@@ -22,8 +22,6 @@ import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.PlexusContainer;
 import org.easymock.EasyMock;
-import org.jfrog.build.extractor.maven.BuildInfoRecorder;
-import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;

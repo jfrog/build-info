@@ -49,7 +49,7 @@ public class ArtifactoryHttpClient {
     public static final Version NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.4");
     public static final Version MINIMAL_ARTIFACTORY_VERSION = new Version("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
-
+    public static final String ARTIFACTORY_WEBAPP_URI = "/webapp/simplebrowserroot.html";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
 
     private final String artifactoryUrl;
@@ -128,10 +128,17 @@ public class ArtifactoryHttpClient {
         PreemptiveHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_NOT_FOUND) {
+            HttpEntity httpEntity = response.getEntity();
+            if (httpEntity != null) {
+                httpEntity.consumeContent();
+            }
             return Version.NOT_FOUND;
         }
-        String version = "2.2.2";
+        if (statusCode != HttpStatus.SC_OK) {
+            throw new IOException(response.getStatusLine().getReasonPhrase());
+        }
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
             InputStream content = httpEntity.getContent();
@@ -141,14 +148,15 @@ public class ArtifactoryHttpClient {
                 httpEntity.consumeContent();
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
-                version = result.get("version").getTextValue();
+                String version = result.get("version").getTextValue();
+                return new Version(version);
             } finally {
                 if (content != null) {
                     content.close();
                 }
             }
         }
-        return new Version(version);
+        return Version.NOT_FOUND;
     }
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
@@ -213,8 +221,7 @@ public class ArtifactoryHttpClient {
 
         @SuppressWarnings({"SimplifiableIfStatement"})
         boolean isAtLeast(Version version) {
-            if (isSnapshot() || isNotFound()) {
-                //Hack
+            if (isSnapshot()) {
                 return true;
             }
             return weight() >= version.weight();

@@ -20,10 +20,8 @@ import static org.jfrog.build.client.ClientProperties.ARTIFACTORY_PREFIX;
 /**
  * @author Tomer Cohen
  */
-public interface ClientMavenProperties {
+public interface ClientGradleProperties {
 
-    /**
-     * Property for whether to publish Maven POMs.
-     */
-    String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publish.maven";
+    String PROP_PUBLISH_IVY = ARTIFACTORY_PREFIX + "publishIvy";
+    String PROP_PUBLISH_MAVEN = ARTIFACTORY_PREFIX + "publishMaven";
 }

@@ -1,0 +1,17 @@
+<ivysettings>
+    <settings defaultResolver="main"/>
+
+    <resolvers>
+        <chain name="main">
+            <filesystem name="local" checkmodified="true" validate="true">
+                <ivy pattern="${ivy.settings.dir}/../../../../repository/[module]-[revision].xml"/>
+                <artifact pattern="${ivy.settings.dir}/../../../../repository/[module]-[revision].[ext]"/>
+            </filesystem>
+
+            <ibiblio name="artifactory" m2compatible="true" root="http://repo.jfrog.org/artifactory/repo"/>
+        </chain>
+
+    </resolvers>
+
+</ivysettings>
+

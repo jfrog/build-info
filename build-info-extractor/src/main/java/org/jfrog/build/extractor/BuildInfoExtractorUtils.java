@@ -23,16 +23,19 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.client.ClientProperties;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Properties;
@@ -42,17 +45,23 @@ import java.util.Properties;
  */
 public abstract class BuildInfoExtractorUtils {
 
-    /**
-     * Collect system properties and properties from the  {@link org.jfrog.build.api.BuildInfoConfigProperties#PROP_PROPS_FILE}
-     * file.
-     * <p/>
-     * The caller is supposed to inject the build properties into the output (e.g.: adding them to the Build object if
-     * the output of the extractor is a {@link org.jfrog.build.api.Build} instance, or saving them into a generated
-     * buildInfo xml output file, if the output is a path to this file.
-     */
-    public static Properties getBuildInfoProperties(Properties additionalProps) {
+    public static final Predicate<Object> BUILD_INFO_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_PREFIX);
+
+    public static final Predicate<Object> BUILD_INFO_PROP_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
+
+    public static final Predicate<Object> ENV_PREDICATE =
+            new PrefixPredicate(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
+
+    public static final Predicate<Object> CLIENT_PREDICATE = new PrefixPredicate(ClientProperties.ARTIFACTORY_PREFIX);
+
+    public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
+            new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
+
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
         Properties props = new Properties();
-        String propertiesFilePath = getAdditionalPropertiesFile(additionalProps);
+        String propertiesFilePath = getAdditionalPropertiesFile(existingProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -60,7 +69,6 @@ public abstract class BuildInfoExtractorUtils {
                 if (propertiesFile.exists()) {
                     inputStream = new FileInputStream(propertiesFile);
                     props.load(inputStream);
-                    props = filterBuildInfoProperties(props);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -70,23 +78,16 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
 
-        // now add all the relevant system props.
-        Properties filteredSystemProps = filterBuildInfoProperties(System.getProperties());
-        props.putAll(filteredSystemProps);
+        props.putAll(existingProps);
+        props.putAll(System.getProperties());
 
-        //TODO: [by yl] Add common system properties
         return props;
     }
 
-    public static Properties filterBuildInfoProperties(Properties source) {
+
+    public static Properties filterDynamicProperties(Properties source, Predicate<Object> filter) {
         Properties properties = new Properties();
-        Map<Object, Object> filteredProperties = Maps.filterKeys(source, new Predicate<Object>() {
-            public boolean apply(Object input) {
-                String key = (String) input;
-                return key.startsWith(BuildInfoProperties.BUILD_INFO_PROP_PREFIX);
-            }
-        });
-        properties.putAll(filteredProperties);
+        properties.putAll(Maps.filterKeys(source, filter));
         return properties;
     }
 
@@ -94,13 +95,14 @@ public abstract class BuildInfoExtractorUtils {
         Properties props = new Properties();
         boolean includeEnvVars = false;
         String includeVars = System.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        if (StringUtils.isBlank(includeVars)) {
+            includeVars = System.getenv(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        }
+        if (StringUtils.isBlank(includeVars)) {
+            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
+        }
         if (StringUtils.isNotBlank(includeVars)) {
             includeEnvVars = Boolean.parseBoolean(includeVars);
-        } else {
-            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
-            if (StringUtils.isNotBlank(includeVars)) {
-                includeEnvVars = Boolean.parseBoolean(includeVars);
-            }
         }
         if (includeEnvVars) {
             Map<String, String> envMap = System.getenv();
@@ -116,7 +118,7 @@ public abstract class BuildInfoExtractorUtils {
                 if (propertiesFile.exists()) {
                     inputStream = new FileInputStream(propertiesFile);
                     props.load(inputStream);
-                    props = filterEnvProperties(props);
+                    props = filterDynamicProperties(props, ENV_PREDICATE);
                 }
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -125,23 +127,13 @@ public abstract class BuildInfoExtractorUtils {
                 IOUtils.closeQuietly(inputStream);
             }
         }
-        Properties filteredSystemProperties = filterEnvProperties(System.getProperties());
+        Properties filteredSystemProperties = filterDynamicProperties(System.getProperties(), ENV_PREDICATE);
+        filteredSystemProperties.putAll(System.getenv());
+        filteredSystemProperties = filterDynamicProperties(filteredSystemProperties, ENV_PREDICATE);
         for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
             props.put(entry.getKey(), entry.getValue());
         }
         return props;
-    }
-
-    public static Properties filterEnvProperties(Properties source) {
-        Properties properties = new Properties();
-        Map<Object, Object> filtered = Maps.filterKeys(source, new Predicate<Object>() {
-            public boolean apply(Object input) {
-                String key = input.toString();
-                return key.startsWith(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
-            }
-        });
-        properties.putAll(filtered);
-        return properties;
     }
 
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
@@ -168,6 +160,15 @@ public abstract class BuildInfoExtractorUtils {
         return result;
     }
 
+    public static Build jsonStringToBuildInfo(String json) throws IOException {
+        JsonFactory jsonFactory = new JsonFactory();
+        ObjectMapper mapper = new ObjectMapper(jsonFactory);
+        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        jsonFactory.setCodec(mapper);
+        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        return mapper.readValue(parser, Build.class);
+    }
+
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
         FileUtils.writeStringToFile(toFile, buildInfoJson, "UTF-8");
@@ -179,5 +180,18 @@ public abstract class BuildInfoExtractorUtils {
             propertiesFilePath = additionalProps.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         }
         return propertiesFilePath;
+    }
+
+    private static class PrefixPredicate implements Predicate<Object> {
+
+        private String prefix;
+
+        protected PrefixPredicate(String prefix) {
+            this.prefix = prefix;
+        }
+
+        public boolean apply(Object o) {
+            return o != null && ((String) o).startsWith(prefix);
+        }
     }
 }

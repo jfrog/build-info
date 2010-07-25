@@ -17,10 +17,17 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
+import org.apache.maven.execution.BuildSuccess;
+import org.apache.maven.execution.BuildSummary;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
@@ -33,32 +40,52 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
-import java.util.HashSet;
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build>, ExecutionListener {
+public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Build>, ExecutionListener {
+
+    public static final String ACTIVATE_RECORDER = "org.jfrog.build.extractor.maven.recorder.activate";
 
     @Requirement
     private Logger logger;
+
+    @Requirement
+    private BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
+
+    @Requirement
+    private ClientPropertyResolver clientPropertyResolver;
 
     private ExecutionListener wrappedListener;
     private BuildInfoBuilder buildInfoBuilder;
     private ModuleBuilder currentModule;
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
+    private Set<DeployDetails> deployableArtifacts = null;
+    private Properties allProps;
+    private Map<String, String> matrixParams;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
+    }
+
+    public void setAllProps(Properties allProps) {
+        this.allProps = allProps;
     }
 
     public void projectDiscoveryStarted(ExecutionEvent event) {
@@ -68,7 +95,16 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void sessionStarted(ExecutionEvent event) {
-        initBuildInfo();
+        logger.info("Initializing Artifactory Build-Info Recording");
+        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(allProps);
+        deployableArtifacts = Sets.newHashSet();
+        matrixParams = Maps.newHashMap();
+        Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
+                BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
+        for (Map.Entry<Object, Object> matrixParamProp : matrixParamProps.entrySet()) {
+            matrixParams.put(((String) matrixParamProp.getKey()), ((String) matrixParamProp.getValue()));
+        }
+
 
         if (wrappedListener != null) {
             wrappedListener.sessionStarted(event);
@@ -76,6 +112,54 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void sessionEnded(ExecutionEvent event) {
+        Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
+
+        if (build != null) {
+            Properties clientProps =
+                    BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
+            boolean publishInfo = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
+            boolean publishArtifacts = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
+
+            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " +
+                    publishInfo);
+            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " +
+                    publishArtifacts);
+
+            if (publishInfo || publishArtifacts) {
+
+                ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(clientProps);
+
+                try {
+                    if (publishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
+
+                        logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
+                                clientProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
+
+                        for (DeployDetails artifact : deployableArtifacts) {
+                            try {
+                                client.deployArtifact(artifact);
+                            } catch (IOException e) {
+                                throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
+                                        artifact.getFile() +
+                                        ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
+                            }
+                        }
+                    }
+
+                    if (publishInfo) {
+                        try {
+                            logger.info("Artifactory Build Info Recorder: Deploying build info ...");
+                            client.sendBuildInfo(build);
+                        } catch (IOException e) {
+                            throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
+                        }
+                    }
+                } finally {
+                    client.shutdown();
+                }
+            }
+        }
+        deployableArtifacts = null;
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
@@ -97,18 +181,13 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     }
 
     public void projectSucceeded(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
-
+        finalizeModule(event.getProject());
         if (wrappedListener != null) {
             wrappedListener.projectSucceeded(event);
         }
     }
 
     public void projectFailed(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        extract(project, BuildInfoExtractorSpec.fromProperties());
-
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
         }
@@ -129,6 +208,27 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
     public void forkFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkFailed(event);
+        }
+    }
+
+    public void forkedProjectStarted(ExecutionEvent event) {
+        MavenProject project = event.getProject();
+        initModule(project);
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectStarted(event);
+        }
+    }
+
+    public void forkedProjectSucceeded(ExecutionEvent event) {
+        finalizeModule(event.getProject());
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectSucceeded(event);
+        }
+    }
+
+    public void forkedProjectFailed(ExecutionEvent event) {
+        if (wrappedListener != null) {
+            wrappedListener.forkedProjectFailed(event);
         }
     }
 
@@ -170,11 +270,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         }
     }
 
-    private void initBuildInfo() {
-        logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = new BuildInfoBuilder("");
-    }
-
     private void initModule(MavenProject project) {
         if (project == null) {
             logger.warn("Skipping Artifactory Build-Info module initialization: Null project.");
@@ -184,8 +279,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         currentModule.id(project.getId());
         currentModule.properties(project.getProperties());
 
-        currentModuleArtifacts = new HashSet<Artifact>();
-        currentModuleDependencies = new HashSet<Artifact>();
+        currentModuleArtifacts = Sets.newHashSet();
+        currentModuleDependencies = Sets.newHashSet();
     }
 
     private void extractArtifactsAndDependencies(MavenProject project) {
@@ -196,6 +291,11 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         extractModuleArtifact(project);
         extractModuleAttachedArtifacts(project);
         extractModuleDependencies(project);
+    }
+
+    private void finalizeModule(MavenProject project) {
+        extractArtifactsAndDependencies(project);
+        finalizeAndAddModule(project);
     }
 
     private void extractModuleArtifact(MavenProject project) {
@@ -254,24 +354,72 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
         for (Artifact moduleArtifact : currentModuleArtifacts) {
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(moduleArtifact.getId())
                     .type(moduleArtifact.getType());
-            setArtifactChecksums(moduleArtifact.getFile(), artifactBuilder);
-            currentModule.addArtifact(artifactBuilder.build());
+            File artifactFile = moduleArtifact.getFile();
+            setArtifactChecksums(artifactFile, artifactBuilder);
+            org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
+            currentModule.addArtifact(artifact);
+            if ((artifactFile != null) && artifactFile.isFile()) {
+                addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
+                        moduleArtifact.getArtifactId(), moduleArtifact.getVersion(), moduleArtifact.getClassifier(),
+                        moduleArtifact.getType());
+            }
 
             if (!isPomProject(moduleArtifact)) {
                 for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
                     if (metadata instanceof ProjectArtifactMetadata) {
                         Model model = project.getModel();
+                        File pomFile = null;
                         if (model != null) {
-                            File pomFile = model.getPomFile();
+                            pomFile = model.getPomFile();
                             setArtifactChecksums(pomFile, artifactBuilder);
                         }
                         artifactBuilder.type("pom");
                         artifactBuilder.name(moduleArtifact.getId().replace(moduleArtifact.getType(), "pom"));
-                        currentModule.addArtifact(artifactBuilder.build());
+                        org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
+                        currentModule.addArtifact(pomArtifact);
+                        if ((pomFile != null) && pomFile.isFile()) {
+                            addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
+                                    moduleArtifact.getArtifactId(), moduleArtifact.getVersion(),
+                                    moduleArtifact.getClassifier(), "pom");
+                        }
                     }
                 }
             }
         }
+    }
+
+    private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
+            String groupId, String artifactId, String version, String classifier, String type) {
+        String deploymentPath =
+                getDeploymentPath(groupId, artifactId, version, classifier, artifactFile.getName(), type);
+        DeployDetails details = new DeployDetails.Builder().artifactPath(deploymentPath).
+                bean(artifact).
+                file(artifactFile).
+                targetRepository(allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY)).
+                addProperties(matrixParams).
+                build();
+        deployableArtifacts.add(details);
+    }
+
+    protected String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
+            String fileName, String type) {
+        StringBuilder pathBuilder = new StringBuilder();
+
+        pathBuilder.append(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
+                append("/").append(artifactId).append("-").append(version);
+
+        if (StringUtils.isNotBlank(classifier)) {
+            pathBuilder.append("-").append(classifier);
+        }
+
+        if (FilenameUtils.getExtension(fileName) != null) {
+            //TODO: [by YS] what if the file ends with tar.gz?
+            pathBuilder.append(".").append(FilenameUtils.getExtension(fileName));
+        } else {
+            pathBuilder.append(".").append(type);
+        }
+
+        return pathBuilder.toString();
     }
 
     private void addDependenciesToCurrentModule() {
@@ -302,7 +450,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
                 artifactBuilder.sha1(checksums.get("sha1"));
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + artifactBuilder.build().getName() + "': " +
-                        e.getMessage());
+                        e.getMessage(), e);
             }
         }
     }
@@ -316,15 +464,26 @@ public class BuildInfoRecorder implements BuildInfoExtractor<MavenProject, Build
                 dependencyBuilder.sha1(checksumsMap.get("sha1"));
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': " +
-                        e.getMessage());
+                        e.getMessage(), e);
             }
         }
     }
 
-    public Build extract(MavenProject context, BuildInfoExtractorSpec spec) {
-        extractArtifactsAndDependencies(context);
-        finalizeAndAddModule(context);
-        //TODO: [by yl] Handle the spec!!!
-        return buildInfoBuilder.build();
+    public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
+        MavenSession session = event.getSession();
+        BuildSummary summary = session.getResult().getBuildSummary(session.getTopLevelProject());
+        if (summary instanceof BuildSuccess) {
+
+            if (spec.includeAllEnvironmentVariables()) {
+                Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(allProps);
+                for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
+                    buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
+                }
+
+            }
+            return buildInfoBuilder.durationMillis(summary.getTime()).build();
+        }
+
+        return null;
     }
 }

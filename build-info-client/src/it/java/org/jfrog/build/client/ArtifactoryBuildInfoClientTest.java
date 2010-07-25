@@ -54,7 +54,7 @@ public class ArtifactoryBuildInfoClientTest {
     }
 
     public void postBuildInfo() throws IOException {
-        Build build = new BuildInfoBuilder("build").started("test").build();
+        Build build = new BuildInfoBuilder("build").started("test").number("123").build();
         ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
         client.sendBuildInfo(build);
     }
@@ -72,9 +72,9 @@ public class ArtifactoryBuildInfoClientTest {
         }
     }
 
-    public void uploadChecksums() throws IOException {
+    /*public void uploadChecksums() throws IOException {
         ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
         File file = new File("build-info-client/pom.xml");
         client.uploadChecksums(file, artifactoryUrl);
-    }
+    }*/
 }

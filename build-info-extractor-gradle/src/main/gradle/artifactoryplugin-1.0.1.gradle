@@ -1,5 +1,3 @@
-import org.jfrog.build.client.ClientProperties
-
 /*
 * Copyright (C) 2010 JFrog Ltd.
 *
@@ -17,34 +15,25 @@ import org.jfrog.build.client.ClientProperties
 */
 
 buildscript {
-  String[] pathParts
+  def downloadId = 'libs'
   def artifactoryUrl
-  if (!rootProject.hasProperty(ClientProperties.PROP_CONTEXT_URL)) {
+  if (!rootProject.hasProperty('artifactory.contextUrl')) {
     if (sourceURI) {
       logger.debug("sourceURI: $sourceURI")
       String fullPath = sourceURI.path
-      pathParts = fullPath.split("/")
+      String[] pathParts = fullPath.split("/")
+      if (pathParts.size() >= 3) {
+        downloadId = pathParts[2]
+      }
       artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
-    } else {
-      artifactoryUrl = 'http://gradle.artifactoryonline.com/gradle/'
-      pathParts = artifactoryUrl.split("/")
     }
   } else {
-    artifactoryUrl = rootProject.getProperty(ClientProperties.PROP_CONTEXT_URL)
-    pathParts = artifactoryUrl.split("/")
+    artifactoryUrl = rootProject.getProperty('artifactory.contextUrl')
   }
   logger.debug("artifactory.url: $artifactoryUrl")
-
-  def downloadId = 'plugins-releases'
-  if (!rootProject.hasProperty(ClientProperties.PROP_RESOLVE_REPOKEY)) {
-    if (pathParts.size() >= 3) {
-      downloadId = pathParts[2]
-    }
+  if (rootProject.hasProperty('artifactory.resolve.repoKey')) {
+    downloadId = rootProject.getProperty('artifactory.resolve.repoKey')
     logger.debug("no download id found using: ${downloadId}")
-  } else {
-    def downloadIdProperty = rootProject.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)
-    logger.debug("Property artifactory.downloadId ${downloadIdProperty}")
-    downloadId = downloadIdProperty
   }
   logger.debug("artifactory.downloadId: $downloadId")
 
@@ -59,8 +48,8 @@ buildscript {
 
   }
 
-  rootProject.setProperty(ClientProperties.PROP_CONTEXT_URL, artifactoryUrl)
-  rootProject.setProperty(ClientProperties.PROP_RESOLVE_REPOKEY, downloadId)
+  rootProject.setProperty('artifactory.contextUrl', artifactoryUrl)
+  rootProject.setProperty('artifactory.resolve.repoKey', downloadId)
   rootProject.setProperty('artifactory.downloadUrl', artifactoryDownloadUrl)
 
   //All the tango above for this one - it configures maven repo for the project
@@ -68,7 +57,7 @@ buildscript {
     mavenRepo urls: [artifactoryDownloadUrl]
   }
   dependencies {
-    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0.0'
+    classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0.1'
   }
 }
 
