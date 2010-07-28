@@ -276,17 +276,24 @@ public class ArtifactoryBuildInfoClient {
      * @return Artifactory version if working against a compatible version of Artifactory
      * @throws IOException If server not found or it doesn't answer to the version query or it is too old
      */
-    public Version verifyCompatibleArtifactoryVersion() throws IOException {
-        Version version = httpClient.getVersion();
+    public Version verifyCompatibleArtifactoryVersion() throws VersionException {
+        Version version;
+        try {
+            version = httpClient.getVersion();
+        } catch (IOException e) {
+            throw new VersionException("Error occurred while requesting version information", e,
+                    VersionCompatibilityType.NOT_FOUND);
+        }
         if (version.isNotFound()) {
-            throw new UnsupportedOperationException(
-                    "There is either an incompatible or no instance of Artifactory at the provided URL.");
+            throw new VersionException(
+                    "There is either an incompatible or no instance of Artifactory at the provided URL.",
+                    VersionCompatibilityType.NOT_FOUND);
         }
         boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
         if (!isCompatibleArtifactory) {
-            throw new UnsupportedOperationException(
-                    "This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
-                            " of Artifactory and above. Please upgrade your Artifactory server!");
+            throw new VersionException("This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
+                    " of Artifactory and above. Please upgrade your Artifactory server!",
+                    VersionCompatibilityType.INCOMPATIBLE);
         }
         return version;
     }
