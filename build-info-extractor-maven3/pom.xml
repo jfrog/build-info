@@ -33,17 +33,17 @@
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>${parent.version}</version>
+                <version>${project.parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>${parent.version}</version>
+                <version>${project.parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>${parent.version}</version>
+                <version>${project.parent.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.codehaus.plexus</groupId>

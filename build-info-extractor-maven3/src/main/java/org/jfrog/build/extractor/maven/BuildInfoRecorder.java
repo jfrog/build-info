@@ -35,6 +35,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -105,7 +106,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             matrixParams.put(((String) matrixParamProp.getKey()), ((String) matrixParamProp.getValue()));
         }
 
-
         if (wrappedListener != null) {
             wrappedListener.sessionStarted(event);
         }
@@ -115,25 +115,30 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
 
         if (build != null) {
-            Properties clientProps =
-                    BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
-            boolean publishInfo = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
-            boolean publishArtifacts = Boolean.valueOf(clientProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
+            String outputFile = allProps.getProperty(BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE);
+            logger.debug(
+                    "Build Info Recorder: " + BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE + " = " + outputFile);
+            if (StringUtils.isNotBlank(outputFile)) {
+                try {
+                    logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
+                    BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile));
+                } catch (IOException e) {
+                    throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
+                }
+            }
 
-            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " +
-                    publishInfo);
-            logger.debug("Artifactory Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " +
-                    publishArtifacts);
-
+            boolean publishInfo = isPublishBuildInfo();
+            boolean publishArtifacts = isPublishArtifacts();
+            logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " + publishInfo);
+            logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " + publishArtifacts);
             if (publishInfo || publishArtifacts) {
 
-                ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(clientProps);
+                ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(allProps);
 
                 try {
                     if (publishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
-
                         logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
-                                clientProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
+                                allProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
 
                         for (DeployDetails artifact : deployableArtifacts) {
                             try {
@@ -358,7 +363,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             setArtifactChecksums(artifactFile, artifactBuilder);
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             currentModule.addArtifact(artifact);
-            if ((artifactFile != null) && artifactFile.isFile()) {
+            if (artifactFile != null && artifactFile.isFile() && isPublishArtifacts()) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         moduleArtifact.getArtifactId(), moduleArtifact.getVersion(), moduleArtifact.getClassifier(),
                         moduleArtifact.getType());
@@ -377,7 +382,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                         artifactBuilder.name(moduleArtifact.getId().replace(moduleArtifact.getType(), "pom"));
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         currentModule.addArtifact(pomArtifact);
-                        if ((pomFile != null) && pomFile.isFile()) {
+                        if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
                             addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
                                     moduleArtifact.getArtifactId(), moduleArtifact.getVersion(),
                                     moduleArtifact.getClassifier(), "pom");
@@ -485,5 +490,13 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
 
         return null;
+    }
+
+    private boolean isPublishArtifacts() {
+        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
+    }
+
+    private boolean isPublishBuildInfo() {
+        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
     }
 }
