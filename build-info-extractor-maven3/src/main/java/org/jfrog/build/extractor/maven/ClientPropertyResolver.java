@@ -40,9 +40,9 @@ public class ClientPropertyResolver extends AbstractPropertyResolver<Artifactory
 
         if (StringUtils.isNotBlank(username)) {
             logResolvedProperty(PROP_PUBLISH_USERNAME, username);
-            return new ArtifactoryBuildInfoClient(contextUrl, username, password);
+            return new ArtifactoryBuildInfoClient(contextUrl, username, password, new Maven3BuildInfoLogger(logger));
         } else {
-            return new ArtifactoryBuildInfoClient(contextUrl);
+            return new ArtifactoryBuildInfoClient(contextUrl, new Maven3BuildInfoLogger(logger));
         }
     }
 

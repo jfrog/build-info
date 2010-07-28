@@ -17,8 +17,6 @@
 package org.jfrog.build.client;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -31,6 +29,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
+import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +42,7 @@ import java.util.StringTokenizer;
  */
 public class ArtifactoryHttpClient {
 
-    private static final Log log = LogFactory.getLog(ArtifactoryHttpClient.class);
+    private final Log log;
 
     public static final Version UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.3");
     public static final Version NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.4");
@@ -60,10 +59,11 @@ public class ArtifactoryHttpClient {
 
     private PreemptiveHttpClient deployClient;
 
-    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password) {
+    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         this.username = username;
         this.password = password;
+        this.log = log;
     }
 
     /**
