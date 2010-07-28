@@ -149,7 +149,10 @@ public class ArtifactoryHttpClient {
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
                 String version = result.get("version").getTextValue();
-                return new Version(version);
+
+                JsonNode addonsNode = result.get("addons");
+                boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
+                return new Version(version, hasAddons);
             } finally {
                 if (content != null) {
                     content.close();
@@ -188,14 +191,19 @@ public class ArtifactoryHttpClient {
     }
 
     public static class Version {
-        static final Version NOT_FOUND = new Version("0.0.0");
+        static final Version NOT_FOUND = new Version("0.0.0", false);
 
         private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
         private final int[] numbers = {2, 2, 2};
         private boolean snapshot;
+        private boolean hasAddons;
 
-        Version(String version) {
+        public Version(String version) {
+            this(version, false);
+        }
+
+        Version(String version, boolean hasAddons) {
             StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
             try {
                 numbers[0] = Integer.parseInt(stringTokenizer.nextToken());
@@ -213,10 +221,15 @@ public class ArtifactoryHttpClient {
             } catch (ArrayIndexOutOfBoundsException aioobe) {
                 snapshot = true;
             }
+            this.hasAddons = hasAddons;
         }
 
         boolean isSnapshot() {
             return snapshot;
+        }
+
+        public boolean hasAddons() {
+            return hasAddons;
         }
 
         @SuppressWarnings({"SimplifiableIfStatement"})
