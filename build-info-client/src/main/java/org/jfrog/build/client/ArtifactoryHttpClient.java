@@ -233,7 +233,7 @@ public class ArtifactoryHttpClient {
         }
 
         @SuppressWarnings({"SimplifiableIfStatement"})
-        boolean isAtLeast(Version version) {
+        public boolean isAtLeast(Version version) {
             if (isSnapshot()) {
                 return true;
             }
