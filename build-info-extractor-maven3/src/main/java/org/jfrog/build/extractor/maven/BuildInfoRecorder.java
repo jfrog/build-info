@@ -19,7 +19,6 @@ package org.jfrog.build.extractor.maven;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -103,7 +102,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
                 BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
         for (Map.Entry<Object, Object> matrixParamProp : matrixParamProps.entrySet()) {
-            matrixParams.put(((String) matrixParamProp.getKey()), ((String) matrixParamProp.getValue()));
+            String key = (String) matrixParamProp.getKey();
+            key = StringUtils.removeStartIgnoreCase(key, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
+            matrixParams.put(key, ((String) matrixParamProp.getValue()));
         }
 
         if (wrappedListener != null) {
@@ -357,16 +358,20 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
 
         for (Artifact moduleArtifact : currentModuleArtifacts) {
+            String type = moduleArtifact.getType();
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(moduleArtifact.getId())
-                    .type(moduleArtifact.getType());
+                    .type(type);
             File artifactFile = moduleArtifact.getFile();
+            if ((artifactFile == null) && moduleArtifact.equals(project.getArtifact())) {
+                artifactFile = project.getFile();
+            }
             setArtifactChecksums(artifactFile, artifactBuilder);
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             currentModule.addArtifact(artifact);
             if (artifactFile != null && artifactFile.isFile() && isPublishArtifacts()) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         moduleArtifact.getArtifactId(), moduleArtifact.getVersion(), moduleArtifact.getClassifier(),
-                        moduleArtifact.getType());
+                        moduleArtifact.getArtifactHandler().getExtension());
             }
 
             if (!isPomProject(moduleArtifact)) {
@@ -379,7 +384,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                             setArtifactChecksums(pomFile, artifactBuilder);
                         }
                         artifactBuilder.type("pom");
-                        artifactBuilder.name(moduleArtifact.getId().replace(moduleArtifact.getType(), "pom"));
+                        artifactBuilder.name(moduleArtifact.getId().replace(type, "pom"));
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         currentModule.addArtifact(pomArtifact);
                         if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
@@ -394,9 +399,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-            String groupId, String artifactId, String version, String classifier, String type) {
+            String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath =
-                getDeploymentPath(groupId, artifactId, version, classifier, artifactFile.getName(), type);
+                getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         DeployDetails details = new DeployDetails.Builder().artifactPath(deploymentPath).
                 bean(artifact).
                 file(artifactFile).
@@ -407,7 +412,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     }
 
     protected String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-            String fileName, String type) {
+            String fileExtension) {
         StringBuilder pathBuilder = new StringBuilder();
 
         pathBuilder.append(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
@@ -417,12 +422,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             pathBuilder.append("-").append(classifier);
         }
 
-        if (FilenameUtils.getExtension(fileName) != null) {
-            //TODO: [by YS] what if the file ends with tar.gz?
-            pathBuilder.append(".").append(FilenameUtils.getExtension(fileName));
-        } else {
-            pathBuilder.append(".").append(type);
-        }
+        pathBuilder.append(".").append(fileExtension);
 
         return pathBuilder.toString();
     }
