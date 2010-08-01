@@ -32,7 +32,11 @@ public class BuildInfoModelPropertyResolver extends AbstractPropertyResolver<Bui
         Properties buildInfoProps =
                 BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
 
+        Properties clientProps =
+                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
+
         BuildInfoBuilder builder = resolveCoreProperties(allProps).
+                artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME)).
                 url(buildInfoProps.getProperty(PROP_BUILD_URL)).
                 agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
                         buildInfoProps.getProperty(PROP_AGENT_VERSION))).
