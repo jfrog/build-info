@@ -19,8 +19,6 @@ package org.jfrog.build.client;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -35,6 +33,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,7 +52,7 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.*;
  * @author Yossi Shaul
  */
 public class ArtifactoryBuildInfoClient {
-    private static final Log log = LogFactory.getLog(ArtifactoryBuildInfoClient.class);
+    private final Log log;
 
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
@@ -70,8 +69,8 @@ public class ArtifactoryBuildInfoClient {
      *
      * @param artifactoryUrl Artifactory url in the form of: protocol://host[:port]/contextPath
      */
-    public ArtifactoryBuildInfoClient(String artifactoryUrl) {
-        this(artifactoryUrl, null, null);
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, Log log) {
+        this(artifactoryUrl, null, null, log);
     }
 
     /**
@@ -81,9 +80,10 @@ public class ArtifactoryBuildInfoClient {
      * @param username       Authentication username
      * @param password       Authentication password
      */
-    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password) {
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password);
+        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, log);
+        this.log = log;
     }
 
     /**
@@ -276,17 +276,24 @@ public class ArtifactoryBuildInfoClient {
      * @return Artifactory version if working against a compatible version of Artifactory
      * @throws IOException If server not found or it doesn't answer to the version query or it is too old
      */
-    public Version verifyCompatibleArtifactoryVersion() throws IOException {
-        Version version = httpClient.getVersion();
+    public Version verifyCompatibleArtifactoryVersion() throws VersionException {
+        Version version;
+        try {
+            version = httpClient.getVersion();
+        } catch (IOException e) {
+            throw new VersionException("Error occurred while requesting version information: " + e.getMessage(), e,
+                    VersionCompatibilityType.NOT_FOUND);
+        }
         if (version.isNotFound()) {
-            throw new UnsupportedOperationException(
-                    "There is either an incompatible or no instance of Artifactory at the provided URL.");
+            throw new VersionException(
+                    "There is either an incompatible or no instance of Artifactory at the provided URL.",
+                    VersionCompatibilityType.NOT_FOUND);
         }
         boolean isCompatibleArtifactory = version.isAtLeast(MINIMAL_ARTIFACTORY_VERSION);
         if (!isCompatibleArtifactory) {
-            throw new UnsupportedOperationException(
-                    "This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
-                            " of Artifactory and above. Please upgrade your Artifactory server!");
+            throw new VersionException("This plugin is compatible with version " + MINIMAL_ARTIFACTORY_VERSION +
+                    " of Artifactory and above. Please upgrade your Artifactory server!",
+                    VersionCompatibilityType.INCOMPATIBLE);
         }
         return version;
     }

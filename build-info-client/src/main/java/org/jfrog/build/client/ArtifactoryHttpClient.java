@@ -17,8 +17,6 @@
 package org.jfrog.build.client;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -31,6 +29,7 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
+import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +42,7 @@ import java.util.StringTokenizer;
  */
 public class ArtifactoryHttpClient {
 
-    private static final Log log = LogFactory.getLog(ArtifactoryHttpClient.class);
+    private final Log log;
 
     public static final Version UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.3");
     public static final Version NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.4");
@@ -60,10 +59,11 @@ public class ArtifactoryHttpClient {
 
     private PreemptiveHttpClient deployClient;
 
-    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password) {
+    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         this.username = username;
         this.password = password;
+        this.log = log;
     }
 
     /**
@@ -149,7 +149,10 @@ public class ArtifactoryHttpClient {
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
                 String version = result.get("version").getTextValue();
-                return new Version(version);
+
+                JsonNode addonsNode = result.get("addons");
+                boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
+                return new Version(version, hasAddons);
             } finally {
                 if (content != null) {
                     content.close();
@@ -188,14 +191,19 @@ public class ArtifactoryHttpClient {
     }
 
     public static class Version {
-        static final Version NOT_FOUND = new Version("0.0.0");
+        static final Version NOT_FOUND = new Version("0.0.0", false);
 
         private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
         private final int[] numbers = {2, 2, 2};
         private boolean snapshot;
+        private boolean hasAddons;
 
-        Version(String version) {
+        public Version(String version) {
+            this(version, false);
+        }
+
+        Version(String version, boolean hasAddons) {
             StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
             try {
                 numbers[0] = Integer.parseInt(stringTokenizer.nextToken());
@@ -213,14 +221,19 @@ public class ArtifactoryHttpClient {
             } catch (ArrayIndexOutOfBoundsException aioobe) {
                 snapshot = true;
             }
+            this.hasAddons = hasAddons;
         }
 
         boolean isSnapshot() {
             return snapshot;
         }
 
+        public boolean hasAddons() {
+            return hasAddons;
+        }
+
         @SuppressWarnings({"SimplifiableIfStatement"})
-        boolean isAtLeast(Version version) {
+        public boolean isAtLeast(Version version) {
             if (isSnapshot()) {
                 return true;
             }

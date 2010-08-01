@@ -23,7 +23,7 @@
     <parent>
         <groupId>org.jfrog.buildinfo</groupId>
         <artifactId>build-info-parent</artifactId>
-        <version>1.4.1</version>
+        <version>1.4.2</version>
     </parent>
     <artifactId>build-info-client</artifactId>
     <packaging>jar</packaging>
@@ -34,7 +34,7 @@
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-api</artifactId>
         </dependency>
-       
+
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>

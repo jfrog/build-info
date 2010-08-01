@@ -24,7 +24,7 @@
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
     <name>JFrog Build-Info</name>
-    <version>1.4.1</version>
+    <version>1.4.2</version>
 
     <description>Common API for collecting and sending CI build information to Artifactory</description>
     <inceptionYear>2009</inceptionYear>
@@ -62,17 +62,17 @@
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>1.4.1</version>
+                <version>1.4.2</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>1.4.1</version>
+                <version>1.4.2</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>1.4.1</version>
+                <version>1.4.2</version>
             </dependency>
 
             <dependency>
