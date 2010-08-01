@@ -18,6 +18,7 @@ import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
 import java.util.Date;
@@ -110,7 +111,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             String password = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD);
             try {
                 ArtifactoryBuildInfoClient client =
-                        new ArtifactoryBuildInfoClient(contextUrl, username, password);
+                        new ArtifactoryBuildInfoClient(contextUrl, username, password, new IvyBuildInfoLog(project));
                 boolean isDeployArtifacts =
                         Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
                 if (isDeployArtifacts) {
