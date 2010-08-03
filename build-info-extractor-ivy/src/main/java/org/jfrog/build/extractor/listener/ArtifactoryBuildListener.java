@@ -84,7 +84,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(buildNumber)) {
                 builder.number(buildNumber);
             }
-            String buildUrl = mergedProps.getProperty("BUILD_URL");
+            String buildUrl = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
             if (StringUtils.isNotBlank(buildUrl)) {
                 builder.url(buildUrl);
             }
