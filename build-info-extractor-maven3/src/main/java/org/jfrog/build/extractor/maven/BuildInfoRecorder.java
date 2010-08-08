@@ -22,8 +22,6 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
-import org.apache.maven.execution.BuildSuccess;
-import org.apache.maven.execution.BuildSummary;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
@@ -477,9 +475,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
     public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
         MavenSession session = event.getSession();
-        BuildSummary summary = session.getResult().getBuildSummary(session.getTopLevelProject());
 
-        if (summary instanceof BuildSuccess) {
+        if (!session.getResult().hasExceptions()) {
 
             if (spec.includeAllEnvironmentVariables()) {
                 Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(allProps);
