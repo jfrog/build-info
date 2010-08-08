@@ -165,7 +165,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 }
             }
         }
-        deployableArtifacts = null;
+        deployableArtifacts.clear();
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
@@ -336,8 +336,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
         currentModule = null;
 
-        currentModuleArtifacts = null;
-        currentModuleDependencies = null;
+        currentModuleArtifacts.clear();
+        currentModuleDependencies.clear();
     }
 
     private void addFilesToCurrentModule(MavenProject project) {
