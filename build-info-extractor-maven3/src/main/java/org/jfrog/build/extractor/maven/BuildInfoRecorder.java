@@ -49,6 +49,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -477,6 +478,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
         MavenSession session = event.getSession();
         BuildSummary summary = session.getResult().getBuildSummary(session.getTopLevelProject());
+
         if (summary instanceof BuildSuccess) {
 
             if (spec.includeAllEnvironmentVariables()) {
@@ -486,7 +488,11 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 }
 
             }
-            return buildInfoBuilder.durationMillis(summary.getTime()).build();
+
+            Date finish = new Date();
+            long time = finish.getTime() - session.getRequest().getStartTime().getTime();
+
+            return buildInfoBuilder.durationMillis(time).build();
         }
 
         return null;
