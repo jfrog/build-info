@@ -125,10 +125,14 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 for (org.jfrog.build.api.Artifact artifact : artifacts) {
                     DeployDetails deployable = deployableArtifactBuilderMap.get(artifact);
 
-                    File file = deployable.getFile();
-                    setArtifactChecksums(file, artifact);
-                    deployableArtifacts.add(new DeployDetails.Builder().artifactPath(deployable.getArtifactPath()).
-                            file(file).bean(artifact).targetRepository(deployable.getTargetRepository()).build());
+                    if (deployable != null) {
+                        File file = deployable.getFile();
+                        setArtifactChecksums(file, artifact);
+                        deployableArtifacts.add(new DeployDetails.Builder().artifactPath(deployable.getArtifactPath()).
+                                file(file).md5(artifact.getMd5()).sha1(artifact.getSha1()).
+                                addProperties(deployable.getProperties()).
+                                targetRepository(deployable.getTargetRepository()).build());
+                    }
                 }
             }
 

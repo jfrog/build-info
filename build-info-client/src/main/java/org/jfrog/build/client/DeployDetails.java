@@ -140,4 +140,8 @@ public class DeployDetails {
     public File getFile() {
         return file;
     }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
 }
