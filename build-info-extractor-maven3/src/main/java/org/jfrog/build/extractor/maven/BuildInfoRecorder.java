@@ -136,7 +136,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
                 }
             }
 
-
             String outputFile = allProps.getProperty(BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE);
             logger.debug(
                     "Build Info Recorder: " + BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE + " = " + outputFile);
