@@ -14,12 +14,11 @@ import static org.jfrog.build.client.ClientProperties.*;
  * @author Noam Y. Tenne
  */
 @Component(role = ClientPropertyResolver.class)
-public class ClientPropertyResolver extends AbstractPropertyResolver<ArtifactoryBuildInfoClient> {
+public class ClientPropertyResolver {
 
     @Requirement
     private Logger logger;
 
-    @Override
     public ArtifactoryBuildInfoClient resolveProperties(Properties clientProperties) {
         ArtifactoryBuildInfoClient client = resolveClientProps(clientProperties);
         resolveTimeout(clientProperties, client);

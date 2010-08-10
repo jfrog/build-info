@@ -97,7 +97,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(allProps);
+        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
         deployableArtifactBuilderMap = Maps.newHashMap();
         deployableArtifacts = Sets.newHashSet();
         matrixParams = Maps.newHashMap();
