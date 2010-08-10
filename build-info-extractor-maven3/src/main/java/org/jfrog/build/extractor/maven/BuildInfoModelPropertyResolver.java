@@ -7,6 +7,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -42,6 +43,7 @@ public class BuildInfoModelPropertyResolver extends AbstractPropertyResolver<Bui
                         buildInfoProps.getProperty(PROP_AGENT_VERSION))).
                 buildAgent(new BuildAgent("Maven", getMavenVersion())).
                 principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
+                type(BuildType.MAVEN).
                 vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
                 parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
                 parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).

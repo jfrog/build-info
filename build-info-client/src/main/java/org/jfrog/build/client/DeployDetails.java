@@ -129,6 +129,14 @@ public class DeployDetails {
         }
     }
 
+    public String getTargetRepository() {
+        return targetRepository;
+    }
+
+    public String getArtifactPath() {
+        return artifactPath;
+    }
+
     public File getFile() {
         return file;
     }
