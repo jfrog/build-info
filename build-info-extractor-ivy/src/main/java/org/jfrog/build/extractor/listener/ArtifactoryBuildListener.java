@@ -110,7 +110,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             }
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
-                    .filterDynamicProperties(System.getProperties(), BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
+                    .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
             props.putAll(propsFromSys);
             props = BuildInfoExtractorUtils.stripPrefixFromProperties(props, BUILD_INFO_PROP_PREFIX);
             builder.properties(props);
