@@ -236,15 +236,12 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     }
 
     public void forkedProjectStarted(ExecutionEvent event) {
-        MavenProject project = event.getProject();
-        initModule(project);
         if (wrappedListener != null) {
             wrappedListener.forkedProjectStarted(event);
         }
     }
 
     public void forkedProjectSucceeded(ExecutionEvent event) {
-        finalizeModule(event.getProject());
         if (wrappedListener != null) {
             wrappedListener.forkedProjectSucceeded(event);
         }
@@ -274,7 +271,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        extractArtifactsAndDependencies(project);
+        extractModuleDependencies(project);
 
         if (wrappedListener != null) {
             wrappedListener.mojoSucceeded(event);
