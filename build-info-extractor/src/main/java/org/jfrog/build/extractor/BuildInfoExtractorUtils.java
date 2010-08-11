@@ -91,6 +91,15 @@ public abstract class BuildInfoExtractorUtils {
         return properties;
     }
 
+    public static Properties stripPrefixFromProperties(Properties source, String prefix) {
+        Properties props = new Properties();
+        for (Map.Entry<Object, Object> entry : source.entrySet()) {
+            String key = entry.getKey().toString();
+            props.put(StringUtils.removeStart(key, prefix), entry.getValue());
+        }
+        return props;
+    }
+
     public static Properties getEnvProperties(Properties startProps) {
         Properties props = new Properties();
         boolean includeEnvVars = false;
@@ -133,6 +142,7 @@ public abstract class BuildInfoExtractorUtils {
         for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
             props.put(entry.getKey(), entry.getValue());
         }
+        props = stripPrefixFromProperties(props, BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
         return props;
     }
 

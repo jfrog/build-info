@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
+
 
 /**
  * A listener which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
@@ -110,6 +112,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             Properties propsFromSys = BuildInfoExtractorUtils
                     .filterDynamicProperties(System.getProperties(), BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
             props.putAll(propsFromSys);
+            props = BuildInfoExtractorUtils.stripPrefixFromProperties(props, BUILD_INFO_PROP_PREFIX);
             builder.properties(props);
             Build build = builder.build();
             String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
