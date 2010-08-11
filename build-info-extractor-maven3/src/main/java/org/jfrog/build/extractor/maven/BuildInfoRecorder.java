@@ -21,10 +21,13 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
+import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -394,16 +397,23 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             }
 
             if (!isPomProject(moduleArtifact)) {
-                artifactBuilder.type("pom");
-                artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
-                org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
-                currentModule.addArtifact(pomArtifact);
-
-                File pomFile = project.getFile();
-                if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
-                    addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
-                            artifactId, artifactVersion,
-                            artifactClassifier, "pom");
+                for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
+                    if (metadata instanceof ProjectArtifactMetadata) {
+                        Model model = project.getModel();
+                        File pomFile = null;
+                        if (model != null) {
+                            pomFile = model.getPomFile();
+                        }
+                        artifactBuilder.type("pom");
+                        artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
+                        org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
+                        currentModule.addArtifact(pomArtifact);
+                        if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
+                            addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
+                                    artifactId, artifactVersion,
+                                    artifactClassifier, "pom");
+                        }
+                    }
                 }
             }
         }
