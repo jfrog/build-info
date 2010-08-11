@@ -32,6 +32,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -497,7 +498,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
         if (!session.getResult().hasExceptions()) {
 
-            if (spec.includeAllEnvironmentVariables()) {
+            if (Boolean.valueOf(allProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS))) {
                 Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(allProps);
                 for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                     buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
