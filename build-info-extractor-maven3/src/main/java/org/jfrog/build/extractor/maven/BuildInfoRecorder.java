@@ -300,7 +300,9 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             return;
         }
         currentModule = new ModuleBuilder();
-        currentModule.id(project.getId());
+
+        currentModule.id(new StringBuilder(project.getGroupId()).append(":").append(project.getArtifactId()).
+                append(":").append(project.getVersion()).toString());
         currentModule.properties(project.getProperties());
 
         currentModuleArtifacts = Sets.newHashSet();
