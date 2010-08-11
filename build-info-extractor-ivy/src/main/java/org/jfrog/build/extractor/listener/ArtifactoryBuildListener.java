@@ -71,6 +71,12 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             Properties envProps = new Properties();
             envProps.putAll(System.getenv());
             Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
+
+            String agentName = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_NAME);
+            String agentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_VERSION);
+            if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
+                builder.agent(new Agent(agentName, agentVersion));
+            }
             String buildAgentName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
             String buildAgentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
             if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
