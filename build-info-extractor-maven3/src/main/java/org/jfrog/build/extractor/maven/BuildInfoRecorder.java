@@ -302,8 +302,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
         currentModule = new ModuleBuilder();
 
-        currentModule.id(new StringBuilder(project.getGroupId()).append(":").append(project.getArtifactId()).
-                append(":").append(project.getVersion()).toString());
+        currentModule.id(getArtifactIdWithoutType(project.getGroupId(), project.getArtifactId(), project.getVersion()));
         currentModule.properties(project.getProperties());
 
         currentModuleArtifacts = Sets.newHashSet();
@@ -455,7 +454,8 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
         for (Artifact dependency : currentModuleDependencies) {
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                    .id(dependency.getId())
+                    .id(getArtifactIdWithoutType(dependency.getGroupId(), dependency.getArtifactId(),
+                            dependency.getVersion()))
                     .type(dependency.getType())
                     .scopes(Lists.newArrayList(dependency.getScope()));
             setDependencyChecksums(dependency.getFile(), dependencyBuilder);
@@ -521,5 +521,10 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
 
     private boolean isPublishBuildInfo() {
         return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
+    }
+
+    private String getArtifactIdWithoutType(String groupId, String artifactId, String version) {
+        return new StringBuilder(groupId).append(":").append(artifactId).
+                append(":").append(version).toString();
     }
 }
