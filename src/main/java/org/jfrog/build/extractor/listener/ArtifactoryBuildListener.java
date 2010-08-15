@@ -25,6 +25,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
+
 
 /**
  * A listener which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
@@ -71,6 +73,12 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             Properties envProps = new Properties();
             envProps.putAll(System.getenv());
             Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
+
+            String agentName = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_NAME);
+            String agentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_VERSION);
+            if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
+                builder.agent(new Agent(agentName, agentVersion));
+            }
             String buildAgentName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
             String buildAgentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
             if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
@@ -84,7 +92,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(buildNumber)) {
                 builder.number(buildNumber);
             }
-            String buildUrl = mergedProps.getProperty("BUILD_URL");
+            String buildUrl = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
             if (StringUtils.isNotBlank(buildUrl)) {
                 builder.url(buildUrl);
             }
@@ -102,8 +110,9 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             }
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
-                    .filterDynamicProperties(System.getProperties(), BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
+                    .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
             props.putAll(propsFromSys);
+            props = BuildInfoExtractorUtils.stripPrefixFromProperties(props, BUILD_INFO_PROP_PREFIX);
             builder.properties(props);
             Build build = builder.build();
             String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
