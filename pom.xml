@@ -19,8 +19,9 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jfrog.buildinfo</groupId>
-        <artifactId>build-info-parent</artifactId>
-        <version>1.4.2</version>
+        <artifactId>parent</artifactId>
+        <version>1</version>
+        <relativePath>../build-info-parent</relativePath>
     </parent>
 
     <artifactId>build-info-extractor-gradle</artifactId>
@@ -28,71 +29,75 @@
     <packaging>jar</packaging>
     <name>JFrog Build-Info Gradle Extractor</name>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.codehaus.plexus</groupId>
-                <artifactId>plexus-component-annotations</artifactId>
-                <version>1.5.4</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.gradle</groupId>
-                <artifactId>gradle-core</artifactId>
-                <version>0.9-preview-3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.gradle</groupId>
-                <artifactId>gradle-plugins</artifactId>
-                <version>0.9-preview-3</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy.maven.runtime</groupId>
-                <artifactId>gmaven-runtime-default</artifactId>
-                <version>1.0-rc-3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.code.findbugs</groupId>
-                <artifactId>jsr305</artifactId>
-                <version>1.3.9</version>
-            </dependency>
-            <dependency>
-                <groupId>org.slf4j</groupId>
-                <artifactId>slf4j-api</artifactId>
-                <version>1.5.8</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.groovy</groupId>
-                <artifactId>groovy-all</artifactId>
-                <version>1.7.1</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <scm>
+        <url>https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-ivy/</url>
+        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-ivy/</connection>
+    </scm>
+
+    <properties>
+        <build-info-version>1.4.2</build-info-version>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
-            <artifactId>build-info-extractor</artifactId>
+            <artifactId>build-info-api</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-client</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
-            <artifactId>build-info-api</artifactId>
+            <artifactId>build-info-extractor</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-component-annotations</artifactId>
+            <version>1.5.4</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.gradle</groupId>
             <artifactId>gradle-core</artifactId>
+            <version>0.9-preview-3</version>
         </dependency>
+
         <dependency>
             <groupId>org.gradle</groupId>
             <artifactId>gradle-plugins</artifactId>
+            <version>0.9-preview-3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy.maven.runtime</groupId>
+            <artifactId>gmaven-runtime-default</artifactId>
+            <version>1.0-rc-3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>1.3.9</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.5.8</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.codehaus.groovy</groupId>
+            <artifactId>groovy-all</artifactId>
+            <version>1.7.1</version>
         </dependency>
 
         <dependency>
@@ -104,24 +109,6 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <classifier>jdk15</classifier>
-        </dependency>
-        <dependency>
-            <groupId>com.google.code.findbugs</groupId>
-            <artifactId>jsr305</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.easymock</groupId>
-            <artifactId>easymockclassextension</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
-            <artifactId>groovy-all</artifactId>
         </dependency>
     </dependencies>
 </project>
