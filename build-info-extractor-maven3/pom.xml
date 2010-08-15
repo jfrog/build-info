@@ -19,77 +19,66 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.jfrog.buildinfo</groupId>
-        <artifactId>build-info-parent</artifactId>
-        <version>1.4.x-SNAPSHOT</version>
+        <artifactId>parent</artifactId>
+        <version>1</version>
+        <relativePath>../build-info-parent</relativePath>
     </parent>
-
     <artifactId>build-info-extractor-maven3</artifactId>
     <version>1.0.x-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Maven 3 Extractor</name>
+    <description>JFrog Build-Info Maven 3 Extractor</description>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>build-info-api</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>build-info-client</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>build-info-extractor</artifactId>
-                <version>${project.parent.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.codehaus.plexus</groupId>
-                <artifactId>plexus-component-annotations</artifactId>
-                <version>1.5.4</version>
-                <scope>provided</scope>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.maven</groupId>
-                <artifactId>maven-core</artifactId>
-                <version>3.0-beta-1</version>
-                <scope>provided</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <scm>
+        <url>https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-maven3/</url>
+        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-maven3/</connection>
+    </scm>
+
+    <properties>
+        <build-info-version>1.4.x-SNAPSHOT</build-info-version>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-api</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-client</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
             <artifactId>build-info-extractor</artifactId>
+            <version>${build-info-version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.codehaus.plexus</groupId>
             <artifactId>plexus-component-annotations</artifactId>
+            <version>1.5.4</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-core</artifactId>
+            <version>3.0-beta-2</version>
+            <scope>provided</scope>
         </dependency>
+
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <classifier>jdk15</classifier>
         </dependency>
+
         <dependency>
             <groupId>org.easymock</groupId>
             <artifactId>easymockclassextension</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
