@@ -27,6 +27,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
@@ -126,7 +127,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
                 password = "";
             }
             ArtifactoryBuildInfoClient artifactoryBuildInfoClient =
-                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl, username, password);
+                    new ArtifactoryBuildInfoClient(buildInfoUploadUrl, username, password, new NullLog());
             artifactoryBuildInfoClient.sendBuildInfo(build);
         } else {
             /**

@@ -2,17 +2,21 @@ package org.jfrog.build.extractor.maven;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Properties;
 
@@ -22,36 +26,12 @@ import static org.jfrog.build.api.BuildInfoProperties.*;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoModelPropertyResolver.class)
-public class BuildInfoModelPropertyResolver extends AbstractPropertyResolver<BuildInfoBuilder> {
+public class BuildInfoModelPropertyResolver {
 
     @Requirement
     private Logger logger;
 
-    @Override
-    public BuildInfoBuilder resolveProperties(Properties allProps) {
-        Properties buildInfoProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
-
-        Properties clientProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
-
-        BuildInfoBuilder builder = resolveCoreProperties(allProps).
-                artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME)).
-                url(buildInfoProps.getProperty(PROP_BUILD_URL)).
-                agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
-                        buildInfoProps.getProperty(PROP_AGENT_VERSION))).
-                buildAgent(new BuildAgent("Maven", getMavenVersion())).
-                principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
-                vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
-                parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
-                parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
-                properties(gatherBuildInfoProperties(allProps));
-
-        resolveArtifactoryPrincipalProperty(allProps, builder);
-        return builder;
-    }
-
-    private BuildInfoBuilder resolveCoreProperties(Properties buildInfoProperties) {
+    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, Properties buildInfoProperties) {
         String buildName = buildInfoProperties.getProperty(PROP_BUILD_NAME);
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException(
@@ -66,14 +46,38 @@ public class BuildInfoModelPropertyResolver extends AbstractPropertyResolver<Bui
 
         String buildStarted = buildInfoProperties.getProperty(PROP_BUILD_STARTED);
         if (StringUtils.isBlank(buildStarted)) {
-            throw new IllegalArgumentException(
-                    "Unable to resolve Artifactory Build Info Model properties: no build started date was found.");
+            buildStarted =
+                    new SimpleDateFormat(Build.STARTED_FORMAT).format(event.getSession().getRequest().getStartTime());
         }
 
         logResolvedProperty(PROP_BUILD_NAME, buildName);
         logResolvedProperty(PROP_BUILD_NUMBER, buildNumber);
         logResolvedProperty(PROP_BUILD_STARTED, buildStarted);
         return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
+    }
+
+    public BuildInfoBuilder resolveProperties(ExecutionEvent event, Properties allProps) {
+        Properties buildInfoProps =
+                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
+
+        Properties clientProps =
+                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
+
+        BuildInfoBuilder builder = resolveCoreProperties(event, allProps).
+                artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME)).
+                url(buildInfoProps.getProperty(PROP_BUILD_URL)).
+                agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
+                        buildInfoProps.getProperty(PROP_AGENT_VERSION))).
+                buildAgent(new BuildAgent("Maven", getMavenVersion())).
+                principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
+                type(BuildType.MAVEN).
+                vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
+                parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
+                parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
+                properties(gatherBuildInfoProperties(allProps));
+
+        resolveArtifactoryPrincipalProperty(allProps, builder);
+        return builder;
     }
 
     private void resolveArtifactoryPrincipalProperty(Properties allProps, BuildInfoBuilder builder) {

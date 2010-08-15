@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.trigger;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -24,6 +25,7 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -189,7 +191,10 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         }
         Properties matrixParams =
                 BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
-        builder.addProperties(Maps.fromProperties(matrixParams));
+        matrixParams = BuildInfoExtractorUtils
+                .stripPrefixFromProperties(matrixParams, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
+        ImmutableMap<String, String> propertiesToAdd = Maps.fromProperties(matrixParams);
+        builder.addProperties(propertiesToAdd);
         DeployDetails deployDetails = builder.build();
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();

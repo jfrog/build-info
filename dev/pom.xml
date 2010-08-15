@@ -20,34 +20,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
          http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>org.jfrog.buildinfo</groupId>
-        <artifactId>build-info-parent</artifactId>
-        <version>1.4.2</version>
-    </parent>
-    <artifactId>build-info-api</artifactId>
-    <packaging>jar</packaging>
-    <name>JFrog Build-Info API</name>
+    <groupId>org.jfrog.buildinfo</groupId>
+    <artifactId>dev</artifactId>
+    <packaging>pom</packaging>
+    <version>1</version>
+    <scm>
+        <url>http://subversion.jfrog.org/jfrog/build-info/trunk/</url>
+        <connection>scm:svn:http://subversion.jfrog.org/jfrog/build-info/trunk/</connection>
+    </scm>
 
-    <dependencies>
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.thoughtworks.xstream</groupId>
-            <artifactId>xstream</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
-        </dependency>
-    </dependencies>
+    <modules>
+        <module>../build-info-parent</module>
+        <module>..</module>
+        <module>../build-info-extractor-gradle</module>
+        <module>../build-info-extractor-maven3</module>
+        <module>../build-info-extractor-ivy</module>
+    </modules>
 </project>

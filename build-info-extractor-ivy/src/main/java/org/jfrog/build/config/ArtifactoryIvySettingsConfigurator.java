@@ -17,10 +17,10 @@ import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 public class ArtifactoryIvySettingsConfigurator {
 
     @Pointcut("execution(* org.apache.ivy.Ivy.postConfigure(..))")
-    public void intercept() {
+    public void interceptIvyPostConfigure() {
     }
 
-    @Before("intercept()")
+    @Before("interceptIvyPostConfigure()")
     public void configure() throws Throwable {
         IvyContext context = IvyContext.getContext();
         IvySettings ivySettings = context.getSettings();

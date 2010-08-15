@@ -119,8 +119,8 @@ public class BuildInfoExtractorSupportTest {
         Properties props = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
-        assertEquals(props.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
-        assertEquals(props.getProperty(ENV_MOMO_KEY), "1", "momo property does not match");
+        assertEquals(props.getProperty("popo"), "buildname", "popo property does not match");
+        assertEquals(props.getProperty("momo"), "1", "momo property does not match");
         System.clearProperty(ENV_POPO_KEY);
         System.clearProperty(ENV_MOMO_KEY);
     }
@@ -138,8 +138,8 @@ public class BuildInfoExtractorSupportTest {
         Properties fileProps = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
-        assertEquals(fileProps.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
-        assertEquals(fileProps.getProperty(ENV_MOMO_KEY), "1", "momo property does not match");
+        assertEquals(fileProps.getProperty("popo"), "buildname", "popo property does not match");
+        assertEquals(fileProps.getProperty("momo"), "1", "momo property does not match");
 
         propsFile.delete();
 
@@ -168,10 +168,10 @@ public class BuildInfoExtractorSupportTest {
         Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(new Properties());
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
-        assertEquals(buildInfoProperties.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
-        assertEquals(buildInfoProperties.getProperty(ENV_MOMO_KEY), "1", "momo number property does not match");
-        assertEquals(buildInfoProperties.getProperty(kokoKey), "parent", "koko parent name property does not match");
-        assertEquals(buildInfoProperties.getProperty(gogoKey), "2", "gogo parent number property does not match");
+        assertEquals(buildInfoProperties.getProperty("popo"), "buildname", "popo property does not match");
+        assertEquals(buildInfoProperties.getProperty("momo"), "1", "momo number property does not match");
+        assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
+        assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
 
         propsFile.delete();
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);

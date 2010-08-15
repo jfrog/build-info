@@ -5,6 +5,7 @@
 
     <aspects>
         <aspect name="org.jfrog.build.config.ArtifactoryIvySettingsConfigurator"/>
+        <aspect name="org.jfrog.build.config.ArtifactoryIvyListenerConfigurator"/>
     </aspects>
 
 </aspectj>
