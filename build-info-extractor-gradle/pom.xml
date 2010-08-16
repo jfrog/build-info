@@ -30,8 +30,8 @@
     <name>JFrog Build-Info Gradle Extractor</name>
 
     <scm>
-        <url>https://subversion.jfrog.org/jfrog/build-info/branches/release/build-info-extractor-gradle/</url>
-        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/branches/release/build-info-extractor-gradle/</connection>
+        <url>https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-gradle/</url>
+        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-gradle/</connection>
     </scm>
 
     <properties>
