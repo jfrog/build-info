@@ -35,7 +35,7 @@
     </scm>
 
     <properties>
-        <build-info-version>1.4.x-SNAPSHOT</build-info-version>
+        <build-info-version>1.4.3</build-info-version>
     </properties>
 
     <dependencies>

@@ -48,4 +48,10 @@ subprojects {
   manifest.mainAttributes(provider: 'gradle')
 }
 
+task bla {
+  {
+
+  }
+}
+
 dependsOnChildren()
