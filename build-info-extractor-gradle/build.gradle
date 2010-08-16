@@ -21,6 +21,7 @@
 //    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
 //  }
 //}
+group = 'org.jfrog.buildinfo'
 version = '1.0-SNAPSHOT'
 apply {
   apply plugin: 'java'
