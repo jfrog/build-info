@@ -30,8 +30,8 @@
     <name>JFrog Build-Info Gradle Extractor</name>
 
     <scm>
-        <url>https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-ivy/</url>
-        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/trunk/build-info-extractor-ivy/</connection>
+        <url>https://subversion.jfrog.org/jfrog/build-info/branches/release/build-info-extractor-gradle/</url>
+        <connection>scm:svn:https://subversion.jfrog.org/jfrog/build-info/branches/release/build-info-extractor-gradle/</connection>
     </scm>
 
     <properties>
@@ -93,7 +93,7 @@
             <artifactId>slf4j-api</artifactId>
             <version>1.5.8</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
