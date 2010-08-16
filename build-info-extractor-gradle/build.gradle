@@ -13,7 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+buildscript {
+  apply {
+    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
+  }
+  repositories {
+    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
+  }
+}
 version = '1.0-SNAPSHOT'
+apply {
+  apply plugin: 'java'
+  apply plugin: 'groovy'
+  apply plugin: 'maven'
+}
+
 dependencies {
   compile "org.codehaus.groovy:groovy-all:1.7.1",
           "com.google.guava:guava:r06",
@@ -22,9 +36,7 @@ dependencies {
           "javax.annotation:jsr250-api:1.0",
           "org.gradle:gradle-core:0.9-preview-3",
           "org.gradle:gradle-plugins:0.9-preview-3",
-          project(':build-info-extractor'),
-          project(':build-info-api'),
-          project(':build-info-client'),
+          "org.jfrog.buildinfo:build-info-extractor:1.4.3",
           gradleApi()
   groovy localGroovy()
 }
