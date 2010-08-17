@@ -16,18 +16,18 @@
 
 def artifactId = 'buildinfo'
 
-buildscript {
-  apply {
-    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.0/artifactoryplugin-1.0.0.gradle'
-  }
-  repositories {
-    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
-  }
-}
+//buildscript {
+//  apply {
+//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
+//  }
+//  repositories {
+//    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
+//  }
+//}
 
 allprojects {
   group = 'org.jfrog.buildinfo'
-  version = '1.4.2'
+  version = '1.4.3'
 }
 subprojects {
   apply {
@@ -56,14 +56,6 @@ project(':build-info-extractor-gradle') {
   dependencies {
     compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.5.1'
     compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.5.1'
-  }
-  task uploadScripts << {
-    def files = file('src/main/gradle').listFiles().sort()
-    files.each { File file ->
-      if (file.isFile()) {
-
-      }
-    }
   }
 }
 
