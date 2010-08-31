@@ -129,8 +129,9 @@ public class ArtifactoryBuildInfoClient {
         log.debug("Requesting local repositories list from: " + localReposUrl);
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories: " + response.getStatusLine());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -167,8 +168,9 @@ public class ArtifactoryBuildInfoClient {
         log.debug("Requesting local repositories list from: " + localReposUrl);
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories: " + response.getStatusLine());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -217,8 +219,9 @@ public class ArtifactoryBuildInfoClient {
         if (response.getEntity() != null) {
             response.getEntity().consumeContent();
         }
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            throw new IOException("Failed to send build info: " + response.getStatusLine().getReasonPhrase());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+            throwHttpIOException("Failed to send build info:", statusLine);
         }
     }
 
@@ -227,12 +230,13 @@ public class ArtifactoryBuildInfoClient {
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
 
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 entity.consumeContent();
             }
-            throw new IOException("Failed to obtain item info: " + response.getStatusLine());
+            throwHttpIOException("Failed to obtain item info:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -364,7 +368,7 @@ public class ArtifactoryBuildInfoClient {
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to deploy file: " + statusLine.getReasonPhrase());
+            throwHttpIOException("Failed to deploy file:", statusLine);
         }
     }
 
@@ -378,7 +382,7 @@ public class ArtifactoryBuildInfoClient {
             StringEntity md5StringEntity = new StringEntity(md5);
             StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
             if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException("Failed to deploy MD5 checksum: " + md5StatusLine.getReasonPhrase());
+                throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
             }
         }
         String sha1 = checksums.get("SHA1");
@@ -388,7 +392,7 @@ public class ArtifactoryBuildInfoClient {
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
             if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
+                throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
             }
         }
     }
@@ -419,5 +423,12 @@ public class ArtifactoryBuildInfoClient {
             }
         }
         return checksums;
+    }
+
+    private void throwHttpIOException(String message, StatusLine statusLine) throws IOException {
+        String errorMessage = new StringBuilder(message).append(" HTTP response code: ").
+                append(statusLine.getStatusCode()).append(". HTTP response message: ").
+                append(statusLine.getReasonPhrase()).toString();
+        throw new IOException(errorMessage);
     }
 }
