@@ -18,11 +18,7 @@ package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -52,6 +48,7 @@ public class BuildInfoBuilder {
     private String vcsRevision;
     private List<Module> modules;
     private Properties properties;
+    private Notifications notifications;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -92,6 +89,7 @@ public class BuildInfoBuilder {
         build.setModules(modules);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
+        build.setNotifications(notifications);
         return build;
     }
 
@@ -270,6 +268,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder modules(List<Module> modules) {
         this.modules = modules;
+        return this;
+    }
+
+    /**
+     * Sets the violation notifications of the build
+     *
+     * @param notifications Build violation  recipients.
+     * @return Builder instance
+     */
+    public BuildInfoBuilder notifications(Notifications notifications) {
+        this.notifications = notifications;
         return this;
     }
 
