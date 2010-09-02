@@ -16,10 +16,11 @@
 
 package org.jfrog.build.extractor;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -74,7 +75,7 @@ public abstract class BuildInfoExtractorUtils {
                 throw new RuntimeException(
                         "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
             } finally {
-                IOUtils.closeQuietly(inputStream);
+                Closeables.closeQuietly(inputStream);
             }
         }
 
@@ -133,7 +134,7 @@ public abstract class BuildInfoExtractorUtils {
                 throw new RuntimeException(
                         "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
             } finally {
-                IOUtils.closeQuietly(inputStream);
+                Closeables.closeQuietly(inputStream);
             }
         }
         Properties filteredSystemProperties = filterDynamicProperties(System.getProperties(), ENV_PREDICATE);
@@ -181,7 +182,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
-        FileUtils.writeStringToFile(toFile, buildInfoJson, "UTF-8");
+        Files.write(buildInfoJson, toFile, Charsets.UTF_8);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps) {
