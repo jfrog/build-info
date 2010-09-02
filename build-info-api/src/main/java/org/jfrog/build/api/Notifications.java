@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
 
@@ -45,10 +46,16 @@ public class Notifications implements Serializable {
      * @param licenseViolationsRecipients
      */
     public void setLicenseViolationsRecipientsList(String licenseViolationsRecipients) {
-
+        String[] recipients = StringUtils.split(licenseViolationsRecipients, " ");
+        setLicenseViolationsRecipients(recipients);
     }
 
     public String getLicenseViolationsRecipientsList() {
-        return null;
+        StringBuilder builder = new StringBuilder();
+        String[] recipients = getLicenseViolationsRecipients();
+        for (String recipient : recipients) {
+            builder.append(recipient).append(" ");
+        }
+        return builder.toString();
     }
 }
