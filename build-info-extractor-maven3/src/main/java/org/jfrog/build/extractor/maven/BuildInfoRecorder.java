@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
+import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
@@ -59,7 +60,7 @@ import java.util.Set;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Build>, ExecutionListener {
+public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, Build> {
 
     public static final String ACTIVATE_RECORDER = "org.jfrog.build.extractor.maven.recorder.activate";
 
@@ -90,12 +91,14 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         this.allProps = allProps;
     }
 
+    @Override
     public void projectDiscoveryStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectDiscoveryStarted(event);
         }
     }
 
+    @Override
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
         buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
@@ -115,6 +118,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
 
@@ -193,12 +197,14 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void projectSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectSkipped(event);
         }
     }
 
+    @Override
     public void projectStarted(ExecutionEvent event) {
         MavenProject project = event.getProject();
         initModule(project);
@@ -208,6 +214,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void projectSucceeded(ExecutionEvent event) {
         finalizeModule(event.getProject());
         if (wrappedListener != null) {
@@ -215,60 +222,70 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void projectFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
         }
     }
 
+    @Override
     public void forkStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkStarted(event);
         }
     }
 
+    @Override
     public void forkSucceeded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkSucceeded(event);
         }
     }
 
+    @Override
     public void forkFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkFailed(event);
         }
     }
 
+    @Override
     public void forkedProjectStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectStarted(event);
         }
     }
 
+    @Override
     public void forkedProjectSucceeded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectSucceeded(event);
         }
     }
 
+    @Override
     public void forkedProjectFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectFailed(event);
         }
     }
 
+    @Override
     public void mojoSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoSkipped(event);
         }
     }
 
+    @Override
     public void mojoStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoStarted(event);
         }
     }
 
+    @Override
     public void mojoSucceeded(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
@@ -282,6 +299,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void mojoFailed(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
