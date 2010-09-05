@@ -26,6 +26,8 @@ public interface ClientProperties {
      */
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
 
+    String PROP_NOTIFICATION_RECIPIENTS = ARTIFACTORY_PREFIX + "notification.recipients";
+
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 
     String PROP_PROXY_HOST = ARTIFACTORY_PREFIX + "proxy.host";
