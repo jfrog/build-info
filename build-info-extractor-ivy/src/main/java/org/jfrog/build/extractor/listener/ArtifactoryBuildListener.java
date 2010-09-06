@@ -104,7 +104,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(parentBuildNumber)) {
                 builder.parentNumber(parentBuildNumber);
             }
-            String notificationRecipients = mergedProps.getProperty(ClientProperties.PROP_NOTIFICATION_RECIPIENTS);
+            String notificationRecipients = mergedProps.getProperty(BuildInfoProperties.PROP_NOTIFICATION_RECIPIENTS);
             if (StringUtils.isNotBlank(notificationRecipients)) {
                 Notifications notifications = new Notifications();
                 notifications.setLicenseViolationsRecipientsList(notificationRecipients);

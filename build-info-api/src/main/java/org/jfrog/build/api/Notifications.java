@@ -29,30 +29,30 @@ import java.io.Serializable;
 @XStreamAlias("notifications")
 public class Notifications implements Serializable {
 
-    private String[] licenseViolationsRecipients;
+    private String[] licenseViolationRecipients;
 
-    public String[] getLicenseViolationsRecipients() {
-        return licenseViolationsRecipients;
+    public String[] getLicenseViolationRecipients() {
+        return licenseViolationRecipients;
     }
 
-    public void setLicenseViolationsRecipients(String[] licenseViolationsRecipients) {
-        this.licenseViolationsRecipients = licenseViolationsRecipients;
+    public void setLicenseViolationRecipients(String[] licenseViolationRecipients) {
+        this.licenseViolationRecipients = licenseViolationRecipients;
     }
 
 
     /**
      * Set the emails of recipients about license violations from a comma separated list
      *
-     * @param licenseViolationsRecipients
+     * @param licenseViolationRecipients
      */
-    public void setLicenseViolationsRecipientsList(String licenseViolationsRecipients) {
-        String[] recipients = StringUtils.split(licenseViolationsRecipients, " ");
-        setLicenseViolationsRecipients(recipients);
+    public void setLicenseViolationsRecipientsList(String licenseViolationRecipients) {
+        String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
+        setLicenseViolationRecipients(recipients);
     }
 
     public String getLicenseViolationsRecipientsList() {
         StringBuilder builder = new StringBuilder();
-        String[] recipients = getLicenseViolationsRecipients();
+        String[] recipients = getLicenseViolationRecipients();
         for (String recipient : recipients) {
             builder.append(recipient).append(" ");
         }
