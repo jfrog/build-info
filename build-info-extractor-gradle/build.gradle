@@ -31,9 +31,9 @@ apply {
 
 dependencies {
   compile "com.tonicsystems.jarjar:jarjar-plugin:1.0",
-          "org.jfrog.buildinfo:build-info-extractor:1.4.3",
-          "org.jfrog.buildinfo:build-info-api:1.4.3",
-          "org.jfrog.buildinfo:build-info-client:1.4.3",
+          "org.jfrog.buildinfo:build-info-extractor:1.4.x-SNAPSHOT",
+          "org.jfrog.buildinfo:build-info-api:1.4.x-SNAPSHOT",
+          "org.jfrog.buildinfo:build-info-client:1.4.x-SNAPSHOT",
           "com.google.guava:guava:r06",
           "commons-lang:commons-lang:2.4",
           "org.apache.httpcomponents:httpclient:4.0.1",
