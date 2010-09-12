@@ -6,10 +6,7 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -65,6 +62,12 @@ public class BuildInfoModelPropertyResolver {
             agentVersion = buildAgent.getVersion();
         }
         builder.agent(new Agent(agentName, agentVersion));
+        String notificationRecipients = buildInfoProps.getProperty(PROP_NOTIFICATION_RECIPIENTS);
+        if (StringUtils.isNotBlank(notificationRecipients)) {
+            Notifications notifications = new Notifications();
+            notifications.setLicenseViolationsRecipientsList(notificationRecipients);
+            builder.notifications(notifications);
+        }
 
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
