@@ -265,7 +265,7 @@ public class ArtifactoryBuildInfoClient {
      */
     public void deployArtifact(DeployDetails details) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
-        deploymentPathBuilder.append("/").append(details.targetRepository);
+        deploymentPathBuilder.append("/").append(details.getTargetRepository());
         if (!details.artifactPath.startsWith("/")) {
             deploymentPathBuilder.append("/");
         }
