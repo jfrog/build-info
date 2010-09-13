@@ -129,7 +129,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 List<org.jfrog.build.api.Artifact> artifacts = module.getArtifacts();
                 for (org.jfrog.build.api.Artifact artifact : artifacts) {
                     DeployDetails deployable = deployableArtifactBuilderMap.get(artifact);
-
                     if (deployable != null) {
                         File file = deployable.getFile();
                         setArtifactChecksums(file, artifact);
@@ -158,9 +157,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " + publishInfo);
             logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " + publishArtifacts);
             if (publishInfo || publishArtifacts) {
-
                 ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(allProps);
-
                 try {
                     if (publishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
                         logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
@@ -451,11 +448,26 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
             String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
+        // deploy to snapshots or releases repository based on the deploy version
+        String targetRepository = getTargetRepository(deploymentPath);
+
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
-                targetRepository(allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY)).
-                addProperties(matrixParams).build();
+                targetRepository(targetRepository).addProperties(matrixParams).build();
 
         deployableArtifactBuilderMap.put(artifact, deployable);
+    }
+
+    /**
+     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if
+     *         defined and the deployed file is a snapshot.
+     */
+    public String getTargetRepository(String version) {
+        String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
+        if (snapshotsRepository != null && version.contains("-SNAPSHOT")) {
+            return snapshotsRepository;
+        }
+        String releasesRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
+        return releasesRepository;
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,

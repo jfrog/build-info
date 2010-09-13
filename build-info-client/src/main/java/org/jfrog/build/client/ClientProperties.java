@@ -43,9 +43,15 @@ public interface ClientProperties {
     String PROP_RESOLVE_REPOKEY = ARTIFACTORY_PREFIX + "resolve.repoKey";
 
     /**
-     * The repo key in Artifactory to where to publish artifacts.
+     * The repo key in Artifactory to where to publish release artifacts.
      */
     String PROP_PUBLISH_REPOKEY = ARTIFACTORY_PREFIX + "publish.repoKey";
+
+    /**
+     * The repo key in Artifactory to where to publish snapshot artifacts.
+     */
+    String PROP_PUBLISH_SNAPSHOTS_REPOKEY = ARTIFACTORY_PREFIX + "publish.snapshots.repoKey";
+
     /**
      * The username to use when publishing artifacts to Artifactory.
      */

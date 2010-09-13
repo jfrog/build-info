@@ -32,13 +32,9 @@ import java.util.Properties;
  */
 public class DeployDetails {
     /**
-     * Target deploy repository for release versions
+     * Target deploy repository
      */
     private String targetRepository;
-    /**
-     * Target deploy repository for snapshot versions
-     */
-    private String targetSnapshotsRepository;
     /**
      * Artifact deployment path
      */
@@ -100,11 +96,6 @@ public class DeployDetails {
             return this;
         }
 
-        public Builder targetSnapshotsRepository(String targetSnapshotsRepository) {
-            deployDetails.targetSnapshotsRepository = targetSnapshotsRepository;
-            return this;
-        }
-
         public Builder artifactPath(String artifactPath) {
             deployDetails.artifactPath = artifactPath;
             return this;
@@ -138,13 +129,9 @@ public class DeployDetails {
     }
 
     /**
-     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if
-     *         defined and the deployed file is a snapshot.
+     * @return Return the target deployment repository.
      */
     public String getTargetRepository() {
-        if (targetSnapshotsRepository != null && file.getPath().contains("-SNAPSHOT")) {
-            return targetSnapshotsRepository;
-        }
         return targetRepository;
     }
 
