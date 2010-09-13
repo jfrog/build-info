@@ -79,7 +79,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
-    private Set<DeployDetails> deployableArtifacts;
     private Properties allProps;
     private Map<String, String> matrixParams;
 
@@ -103,7 +102,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         logger.info("Initializing Artifactory Build-Info Recording");
         buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
         deployableArtifactBuilderMap = Maps.newHashMap();
-        deployableArtifacts = Sets.newHashSet();
         matrixParams = Maps.newHashMap();
         Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
                 BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
@@ -121,9 +119,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     @Override
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
-
         if (build != null) {
-
+            Set<DeployDetails> deployableArtifacts = Sets.newLinkedHashSet();
             List<Module> modules = build.getModules();
             for (Module module : modules) {
                 List<org.jfrog.build.api.Artifact> artifacts = module.getArtifacts();
@@ -188,7 +185,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
         }
         deployableArtifactBuilderMap.clear();
-        deployableArtifacts.clear();
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
@@ -461,9 +457,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
      * @return Return the target deployment repository. Either the releases repository (default) or snapshots if
      *         defined and the deployed file is a snapshot.
      */
-    public String getTargetRepository(String version) {
+    public String getTargetRepository(String deployPath) {
         String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
-        if (snapshotsRepository != null && version.contains("-SNAPSHOT")) {
+        if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
             return snapshotsRepository;
         }
         String releasesRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
