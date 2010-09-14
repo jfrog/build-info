@@ -16,6 +16,7 @@ initscript {
     classpath "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
     classpath "org.codehaus.jackson:jackson-core-asl:1.5.1"
     classpath "org.apache.httpcomponents:httpclient:4.0"
+    classpath "org.apache.httpcomponents:httpcore:4.0.1"
   }
 }
 addListener(new PropertyListener())
