@@ -28,6 +28,9 @@ import java.util.Map;
  */
 public class ArtifactoryPluginUtils {
 
+    private static final String NEW_LINE = "\n";
+    private static final String QUOTE = "'";
+
     /**
      * Get a property, this method will search for a property in our defined hierarchy.<br/> <ol><li>First search for
      * the property as a system property, if found return it.</li> <li>Second search for the property in the Gradle
@@ -62,5 +65,21 @@ public class ArtifactoryPluginUtils {
                 return getProperty(propertyName, project);
             }
         }
+    }
+
+    /**
+     * Appends a key-value property in compatible format for the gradle init-script build info properties collection
+     * replacement
+     *
+     * @param stringBuilder Property collection string
+     * @param key Key to add
+     * @param value Value to add
+     */
+    public static void addProperty(StringBuilder stringBuilder, String key, String value) {
+        key = key.replace("\\", "\\\\");
+        value = value.replace("\\", "\\\\");
+        value = value.replace('"', ' ');
+        stringBuilder.append(QUOTE).append(key).append(QUOTE).append(":").append(QUOTE).append(value).append(QUOTE)
+                .append(",").append(NEW_LINE);
     }
 }
