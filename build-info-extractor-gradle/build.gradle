@@ -46,9 +46,10 @@ dependencies {
           gradleApi()
   groovy localGroovy()
 }
+
 task jarAll(type: Jar, dependsOn: jar) {
   inputs.files jar.archivePath
-  appendix = 'uber'
+  classifier = 'uber'
   doLast {
     project.ant {
       taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.runtime.asPath
@@ -63,3 +64,8 @@ task jarAll(type: Jar, dependsOn: jar) {
     }
   }
 }
+
+artifacts {
+    archives jarAll
+}
+
