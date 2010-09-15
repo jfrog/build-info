@@ -36,6 +36,7 @@ dependencies {
           "org.jfrog.buildinfo:build-info-client:1.4.x-SNAPSHOT",
           "com.google.guava:guava:r06",
           "commons-lang:commons-lang:2.4",
+          "commons-logging:commons-logging:1.1",
           "org.apache.httpcomponents:httpclient:4.0.1",
           "org.apache.httpcomponents:httpcore:4.0.1",
           "org.codehaus.jackson:jackson-mapper-asl:1.5.1",
@@ -54,7 +55,7 @@ task jarAll(type: Jar, dependsOn: jar) {
       jarjar(jarfile: archivePath) {
         zipfileset(src: jar.archivePath)
         configurations.compile.files.findAll {file ->
-          ['build-info', 'guava', 'commons-lang', 'httpclient', 'httpcore', 'jackson-mapper-asl', 'jackson-core-asl'].any { file.name.startsWith(it) && ['ivy'].every {!file.name.startsWith(it)}}
+          ['build-info', 'guava', 'commons-lang', 'commons-logging', 'httpclient', 'httpcore', 'jackson-mapper-asl', 'jackson-core-asl'].any { file.name.startsWith(it) && ['ivy'].every {!file.name.startsWith(it)}}
         }.each {jarjarFile ->
           zipfileset(src: jarjarFile)
         }
