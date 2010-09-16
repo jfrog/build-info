@@ -367,7 +367,7 @@ public class ArtifactoryBuildInfoClient {
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+        if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
             throwHttpIOException("Failed to deploy file:", statusLine);
         }
     }
@@ -391,7 +391,7 @@ public class ArtifactoryBuildInfoClient {
             HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
-            if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (sha1StatusLine.getStatusCode() != HttpStatus.SC_CREATED) {
                 throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
             }
         }
