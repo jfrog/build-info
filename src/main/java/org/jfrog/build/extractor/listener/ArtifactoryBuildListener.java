@@ -7,11 +7,7 @@ import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildInfoProperties;
-import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
@@ -107,6 +103,12 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             String parentBuildNumber = mergedProps.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
             if (StringUtils.isNotBlank(parentBuildNumber)) {
                 builder.parentNumber(parentBuildNumber);
+            }
+            String notificationRecipients = mergedProps.getProperty(BuildInfoProperties.PROP_NOTIFICATION_RECIPIENTS);
+            if (StringUtils.isNotBlank(notificationRecipients)) {
+                Notifications notifications = new Notifications();
+                notifications.setLicenseViolationsRecipientsList(notificationRecipients);
+                builder.notifications(notifications);
             }
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
