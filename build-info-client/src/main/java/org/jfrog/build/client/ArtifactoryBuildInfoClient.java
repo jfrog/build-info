@@ -367,7 +367,10 @@ public class ArtifactoryBuildInfoClient {
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
-        if (statusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+        int statusCode = statusLine.getStatusCode();
+
+        //Accept both 200, and 201 for backwards-compatibility reasons
+        if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
             throwHttpIOException("Failed to deploy file:", statusLine);
         }
     }
@@ -381,7 +384,10 @@ public class ArtifactoryBuildInfoClient {
             HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
             StringEntity md5StringEntity = new StringEntity(md5);
             StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
-            if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
+            int md5StatusCode = md5StatusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((md5StatusCode != HttpStatus.SC_CREATED) && (md5StatusCode != HttpStatus.SC_OK)) {
                 throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
             }
         }
@@ -391,7 +397,10 @@ public class ArtifactoryBuildInfoClient {
             HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
-            if (sha1StatusLine.getStatusCode() != HttpStatus.SC_CREATED) {
+            int sha1StatusCode = sha1StatusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((sha1StatusCode != HttpStatus.SC_CREATED) && (sha1StatusCode != HttpStatus.SC_OK)) {
                 throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
             }
         }
