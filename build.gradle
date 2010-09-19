@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//buildscript {
-//  apply {
-//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
-//  }
-//  repositories {
-//    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
-//  }
-//}
+buildscript {
+  apply {
+    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
+  }
+  repositories {
+    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
+  }
+}
 group = 'org.jfrog.buildinfo'
 version = '1.0.1'
 apply {
@@ -31,9 +31,9 @@ apply {
 
 dependencies {
   compile "com.tonicsystems.jarjar:jarjar-plugin:1.0",
-//          "org.jfrog.buildinfo:build-info-extractor:1.4.x-SNAPSHOT",
-//          "org.jfrog.buildinfo:build-info-api:1.4.x-SNAPSHOT",
-//          "org.jfrog.buildinfo:build-info-client:1.4.x-SNAPSHOT",
+//          "org.jfrog.buildinfo:build-info-extractor:1.4.4",
+//          "org.jfrog.buildinfo:build-info-api:1.4.4",
+//          "org.jfrog.buildinfo:build-info-client:1.4.4",
           "com.google.guava:guava:r06",
           "commons-lang:commons-lang:2.4",
           "commons-logging:commons-logging:1.1",
