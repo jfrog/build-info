@@ -1,15 +1,12 @@
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.io.IOUtils;
+import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -31,31 +28,6 @@ public class BuildInfoModelPropertyResolver {
     @Requirement
     private Logger logger;
 
-    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, Properties buildInfoProperties) {
-        String buildName = buildInfoProperties.getProperty(PROP_BUILD_NAME);
-        if (StringUtils.isBlank(buildName)) {
-            throw new IllegalArgumentException(
-                    "Unable to resolve Artifactory Build Info Model properties: no build name was found.");
-        }
-
-        String buildNumber = buildInfoProperties.getProperty(PROP_BUILD_NUMBER);
-        if (StringUtils.isBlank(buildNumber)) {
-            throw new IllegalArgumentException(
-                    "Unable to resolve Artifactory Build Info Model properties: no build number was found.");
-        }
-
-        String buildStarted = buildInfoProperties.getProperty(PROP_BUILD_STARTED);
-        if (StringUtils.isBlank(buildStarted)) {
-            buildStarted =
-                    new SimpleDateFormat(Build.STARTED_FORMAT).format(event.getSession().getRequest().getStartTime());
-        }
-
-        logResolvedProperty(PROP_BUILD_NAME, buildName);
-        logResolvedProperty(PROP_BUILD_NUMBER, buildNumber);
-        logResolvedProperty(PROP_BUILD_STARTED, buildStarted);
-        return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
-    }
-
     public BuildInfoBuilder resolveProperties(ExecutionEvent event, Properties allProps) {
         Properties buildInfoProps =
                 BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
@@ -66,18 +38,64 @@ public class BuildInfoModelPropertyResolver {
         BuildInfoBuilder builder = resolveCoreProperties(event, allProps).
                 artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME)).
                 url(buildInfoProps.getProperty(PROP_BUILD_URL)).
-                agent(new Agent(buildInfoProps.getProperty(PROP_AGENT_NAME),
-                        buildInfoProps.getProperty(PROP_AGENT_VERSION))).
-                buildAgent(new BuildAgent("Maven", getMavenVersion())).
                 principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
                 type(BuildType.MAVEN).
-                vcsRevision(buildInfoProps.getProperty(PROP_VCS_REVISION)).
                 parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
                 parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
                 properties(gatherBuildInfoProperties(allProps));
 
+        String vcsRevision = buildInfoProps.getProperty(PROP_VCS_REVISION);
+        if (StringUtils.isNotBlank(vcsRevision)) {
+            addMatrixParamIfNeeded(allProps, "vcs.revision", vcsRevision);
+            builder.vcsRevision(vcsRevision);
+        }
+
+        BuildAgent buildAgent = new BuildAgent("Maven", getMavenVersion());
+        builder.buildAgent(buildAgent);
+
+        String agentName = buildInfoProps.getProperty(PROP_AGENT_NAME);
+        if (StringUtils.isBlank(agentName)) {
+            agentName = buildAgent.getName();
+        }
+        String agentVersion = buildInfoProps.getProperty(PROP_AGENT_VERSION);
+        if (StringUtils.isBlank(agentVersion)) {
+            agentVersion = buildAgent.getVersion();
+        }
+        builder.agent(new Agent(agentName, agentVersion));
+        String notificationRecipients = buildInfoProps.getProperty(PROP_NOTIFICATION_RECIPIENTS);
+        if (StringUtils.isNotBlank(notificationRecipients)) {
+            Notifications notifications = new Notifications();
+            notifications.setLicenseViolationsRecipientsList(notificationRecipients);
+            builder.notifications(notifications);
+        }
+
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
+    }
+
+    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, Properties allProps) {
+        String buildName = allProps.getProperty(PROP_BUILD_NAME);
+        if (StringUtils.isBlank(buildName)) {
+            buildName = event.getSession().getTopLevelProject().getName();
+        }
+        addMatrixParamIfNeeded(allProps, "build.name", buildName);
+
+        String buildNumber = allProps.getProperty(PROP_BUILD_NUMBER);
+        if (StringUtils.isBlank(buildNumber)) {
+            buildNumber = Long.toString(System.currentTimeMillis());
+        }
+        addMatrixParamIfNeeded(allProps, "build.number", buildNumber);
+
+        String buildStarted = allProps.getProperty(PROP_BUILD_STARTED);
+        if (StringUtils.isBlank(buildStarted)) {
+            buildStarted =
+                    new SimpleDateFormat(Build.STARTED_FORMAT).format(event.getSession().getRequest().getStartTime());
+        }
+
+        logResolvedProperty(PROP_BUILD_NAME, buildName);
+        logResolvedProperty(PROP_BUILD_NUMBER, buildNumber);
+        logResolvedProperty(PROP_BUILD_STARTED, buildStarted);
+        return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
     }
 
     private void resolveArtifactoryPrincipalProperty(Properties allProps, BuildInfoBuilder builder) {
@@ -101,7 +119,7 @@ public class BuildInfoModelPropertyResolver {
                     "Error while extracting Maven version properties from: org/apache/maven/messages/build.properties",
                     e);
         } finally {
-            IOUtils.closeQuietly(inputStream);
+            Closeables.closeQuietly(inputStream);
         }
 
         String version = mavenVersionProperties.getProperty("version");
@@ -135,5 +153,12 @@ public class BuildInfoModelPropertyResolver {
 
     private void logResolvedProperty(String key, String value) {
         logger.debug("Artifactory Build Info Model Property Resolver: " + key + " = " + value);
+    }
+
+    private void addMatrixParamIfNeeded(Properties allProps, String paramPrefix, String paramValue) {
+        String matrixParamKey = ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + paramPrefix;
+        if (!allProps.containsKey(matrixParamKey)) {
+            allProps.put(matrixParamKey, paramValue);
+        }
     }
 }
