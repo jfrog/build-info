@@ -21,22 +21,13 @@ import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.PublishArtifact;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.util.GUtil;
 import org.jfrog.build.ArtifactoryPluginUtils;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildInfoProperties;
-import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -55,11 +46,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -110,9 +97,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         long startTime = Long.parseLong(System.getProperty("build.start"));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
         if (StringUtils.isBlank(buildName)) {
-            buildName = rootProject.getName().replace(' ', '-');
-        } else {
-            buildName = buildName.replace(' ', '-');
+            buildName = rootProject.getName();
         }
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName);
         Date startedDate = new Date();
@@ -166,6 +151,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, rootProject);
         if (StringUtils.isNotBlank(vcsRevision)) {
             buildInfoBuilder.vcsRevision(vcsRevision);
+        }
+        String notification = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_NOTIFICATION_RECIPIENTS, rootProject);
+        if (StringUtils.isNotBlank(notification)) {
+            Notifications notifications = new Notifications();
+            notifications.setLicenseViolationsRecipientsList(notification);
+            buildInfoBuilder.notifications(notifications);
         }
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);

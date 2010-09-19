@@ -19,7 +19,8 @@ dependencies {
   compile project(':build-info-client')
   compile project(':build-info-extractor')
   compile group: 'org.codehaus.plexus', name: 'plexus-component-annotations', version: '1.5.4'
-  compile group: 'org.apache.maven', name: 'maven-core', version: '3.0-beta-2'
+  compile group: 'org.apache.maven', name: 'maven-core', version: '3.0-beta-3'
+  compile group: 'org.sonatype.aether', name: 'aether-api', version: '1.2'
   testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
   testCompile group: 'org.easymock', name: 'easymockclassextension', version: '2.5.2'
 }

@@ -51,6 +51,8 @@ public class Build extends BaseBuildBean {
     @Deprecated
     private String parentBuildId;
 
+    private Notifications notifications;
+
     @XStreamAlias(MODULES)
     private List<Module> modules;
 
@@ -379,5 +381,13 @@ public class Build extends BaseBuildBean {
         }
 
         return null;
+    }
+
+    public Notifications getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(Notifications notifications) {
+        this.notifications = notifications;
     }
 }

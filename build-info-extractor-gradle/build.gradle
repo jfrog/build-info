@@ -30,14 +30,45 @@ apply {
 }
 
 dependencies {
-  compile "org.codehaus.groovy:groovy-all:1.7.1",
+  compile "com.tonicsystems.jarjar:jarjar-plugin:1.0",
+//          "org.jfrog.buildinfo:build-info-extractor:1.4.x-SNAPSHOT",
+//          "org.jfrog.buildinfo:build-info-api:1.4.x-SNAPSHOT",
+//          "org.jfrog.buildinfo:build-info-client:1.4.x-SNAPSHOT",
           "com.google.guava:guava:r06",
           "commons-lang:commons-lang:2.4",
+          "commons-logging:commons-logging:1.1",
+          "org.apache.httpcomponents:httpclient:4.0.1",
+          "org.apache.httpcomponents:httpcore:4.0.1",
+          "org.codehaus.jackson:jackson-mapper-asl:1.5.1",
+          "org.codehaus.jackson:jackson-core-asl:1.5.1",
           "com.google.code.findbugs:jsr305:1.3.7",
           "javax.annotation:jsr250-api:1.0",
-          "org.gradle:gradle-core:0.9-preview-3",
-          "org.gradle:gradle-plugins:0.9-preview-3",
-          "org.jfrog.buildinfo:build-info-extractor:1.4.3",
+          project(":build-info-api"),
+          project(":build-info-client"),
+          project(":build-info-extractor"),
           gradleApi()
   groovy localGroovy()
 }
+
+task jarAll(type: Jar, dependsOn: jar) {
+  inputs.files jar.archivePath
+  classifier = 'uber'
+  doLast {
+    project.ant {
+      taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.runtime.asPath
+      jarjar(jarfile: archivePath) {
+        zipfileset(src: jar.archivePath)
+        configurations.compile.files.findAll {file ->
+          ['build-info', 'guava', 'commons-lang', 'commons-logging', 'httpclient', 'httpcore', 'jackson-mapper-asl', 'jackson-core-asl'].any { file.name.startsWith(it) && ['ivy'].every {!file.name.startsWith(it)}}
+        }.each {jarjarFile ->
+          zipfileset(src: jarjarFile)
+        }
+      }
+    }
+  }
+}
+
+artifacts {
+  archives jarAll
+}
+

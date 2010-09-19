@@ -129,8 +129,9 @@ public class ArtifactoryBuildInfoClient {
         log.debug("Requesting local repositories list from: " + localReposUrl);
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories: " + response.getStatusLine());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -167,8 +168,9 @@ public class ArtifactoryBuildInfoClient {
         log.debug("Requesting local repositories list from: " + localReposUrl);
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories: " + response.getStatusLine());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -217,8 +219,9 @@ public class ArtifactoryBuildInfoClient {
         if (response.getEntity() != null) {
             response.getEntity().consumeContent();
         }
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            throw new IOException("Failed to send build info: " + response.getStatusLine().getReasonPhrase());
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+            throwHttpIOException("Failed to send build info:", statusLine);
         }
     }
 
@@ -227,12 +230,13 @@ public class ArtifactoryBuildInfoClient {
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
 
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
                 entity.consumeContent();
             }
-            throw new IOException("Failed to obtain item info: " + response.getStatusLine());
+            throwHttpIOException("Failed to obtain item info:", statusLine);
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -261,7 +265,7 @@ public class ArtifactoryBuildInfoClient {
      */
     public void deployArtifact(DeployDetails details) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
-        deploymentPathBuilder.append("/").append(details.targetRepository);
+        deploymentPathBuilder.append("/").append(details.getTargetRepository());
         if (!details.artifactPath.startsWith("/")) {
             deploymentPathBuilder.append("/");
         }
@@ -363,8 +367,11 @@ public class ArtifactoryBuildInfoClient {
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to deploy file: " + statusLine.getReasonPhrase());
+        int statusCode = statusLine.getStatusCode();
+
+        //Accept both 200, and 201 for backwards-compatibility reasons
+        if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
+            throwHttpIOException("Failed to deploy file:", statusLine);
         }
     }
 
@@ -377,8 +384,11 @@ public class ArtifactoryBuildInfoClient {
             HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
             StringEntity md5StringEntity = new StringEntity(md5);
             StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
-            if (md5StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException("Failed to deploy MD5 checksum: " + md5StatusLine.getReasonPhrase());
+            int md5StatusCode = md5StatusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((md5StatusCode != HttpStatus.SC_CREATED) && (md5StatusCode != HttpStatus.SC_OK)) {
+                throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
             }
         }
         String sha1 = checksums.get("SHA1");
@@ -387,8 +397,11 @@ public class ArtifactoryBuildInfoClient {
             HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
-            if (sha1StatusLine.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException("Failed to deploy SHA1 checksum: " + sha1StatusLine.getReasonPhrase());
+            int sha1StatusCode = sha1StatusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((sha1StatusCode != HttpStatus.SC_CREATED) && (sha1StatusCode != HttpStatus.SC_OK)) {
+                throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
             }
         }
     }
@@ -419,5 +432,12 @@ public class ArtifactoryBuildInfoClient {
             }
         }
         return checksums;
+    }
+
+    private void throwHttpIOException(String message, StatusLine statusLine) throws IOException {
+        String errorMessage = new StringBuilder(message).append(" HTTP response code: ").
+                append(statusLine.getStatusCode()).append(". HTTP response message: ").
+                append(statusLine.getReasonPhrase()).toString();
+        throw new IOException(errorMessage);
     }
 }

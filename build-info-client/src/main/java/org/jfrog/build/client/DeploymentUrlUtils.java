@@ -20,6 +20,8 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -37,7 +39,8 @@ public abstract class DeploymentUrlUtils {
      * @param properties     The properties to append to the Artifactory URL.
      * @return The generated Artifactory URL with the matrix params appended to it.
      */
-    public static String getDeploymentUrl(String artifactoryUrl, Properties properties) {
+    public static String getDeploymentUrl(String artifactoryUrl, Properties properties)
+            throws UnsupportedEncodingException {
         Map<Object, Object> filteredProperties = Maps.filterKeys(properties, new Predicate<Object>() {
             public boolean apply(Object input) {
                 String inputKey = (String) input;
@@ -50,7 +53,8 @@ public abstract class DeploymentUrlUtils {
             String key = StringUtils
                     .removeStart((String) propertyEntry.getKey(),
                             ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-            deploymentUrl.append(";").append(key).append("=").append(propertyEntry.getValue());
+            deploymentUrl.append(";").append(URLEncoder.encode(key, "UTF-8")).append("=").
+                    append(URLEncoder.encode(((String) propertyEntry.getValue()), "UTF-8"));
         }
         return deploymentUrl.toString();
     }

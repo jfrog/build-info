@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
+import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
@@ -59,7 +60,7 @@ import java.util.Set;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Build>, ExecutionListener {
+public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, Build> {
 
     public static final String ACTIVATE_RECORDER = "org.jfrog.build.extractor.maven.recorder.activate";
 
@@ -78,7 +79,6 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     private Set<Artifact> currentModuleArtifacts;
     private Set<Artifact> currentModuleDependencies;
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
-    private Set<DeployDetails> deployableArtifacts;
     private Properties allProps;
     private Map<String, String> matrixParams;
 
@@ -90,17 +90,18 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         this.allProps = allProps;
     }
 
+    @Override
     public void projectDiscoveryStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectDiscoveryStarted(event);
         }
     }
 
+    @Override
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
         buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
         deployableArtifactBuilderMap = Maps.newHashMap();
-        deployableArtifacts = Sets.newHashSet();
         matrixParams = Maps.newHashMap();
         Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
                 BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
@@ -115,17 +116,16 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
-
         if (build != null) {
-
+            Set<DeployDetails> deployableArtifacts = Sets.newLinkedHashSet();
             List<Module> modules = build.getModules();
             for (Module module : modules) {
                 List<org.jfrog.build.api.Artifact> artifacts = module.getArtifacts();
                 for (org.jfrog.build.api.Artifact artifact : artifacts) {
                     DeployDetails deployable = deployableArtifactBuilderMap.get(artifact);
-
                     if (deployable != null) {
                         File file = deployable.getFile();
                         setArtifactChecksums(file, artifact);
@@ -154,9 +154,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " + publishInfo);
             logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " + publishArtifacts);
             if (publishInfo || publishArtifacts) {
-
                 ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(allProps);
-
                 try {
                     if (publishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
                         logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
@@ -187,18 +185,19 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
             }
         }
         deployableArtifactBuilderMap.clear();
-        deployableArtifacts.clear();
         if (wrappedListener != null) {
             wrappedListener.sessionEnded(event);
         }
     }
 
+    @Override
     public void projectSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectSkipped(event);
         }
     }
 
+    @Override
     public void projectStarted(ExecutionEvent event) {
         MavenProject project = event.getProject();
         initModule(project);
@@ -208,6 +207,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void projectSucceeded(ExecutionEvent event) {
         finalizeModule(event.getProject());
         if (wrappedListener != null) {
@@ -215,60 +215,70 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void projectFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.projectFailed(event);
         }
     }
 
+    @Override
     public void forkStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkStarted(event);
         }
     }
 
+    @Override
     public void forkSucceeded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkSucceeded(event);
         }
     }
 
+    @Override
     public void forkFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkFailed(event);
         }
     }
 
+    @Override
     public void forkedProjectStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectStarted(event);
         }
     }
 
+    @Override
     public void forkedProjectSucceeded(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectSucceeded(event);
         }
     }
 
+    @Override
     public void forkedProjectFailed(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.forkedProjectFailed(event);
         }
     }
 
+    @Override
     public void mojoSkipped(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoSkipped(event);
         }
     }
 
+    @Override
     public void mojoStarted(ExecutionEvent event) {
         if (wrappedListener != null) {
             wrappedListener.mojoStarted(event);
         }
     }
 
+    @Override
     public void mojoSucceeded(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
@@ -282,6 +292,7 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
         }
     }
 
+    @Override
     public void mojoFailed(ExecutionEvent event) {
         MavenProject project = event.getProject();
         if (project == null) {
@@ -433,11 +444,26 @@ public class BuildInfoRecorder implements BuildInfoExtractor<ExecutionEvent, Bui
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
             String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
+        // deploy to snapshots or releases repository based on the deploy version
+        String targetRepository = getTargetRepository(deploymentPath);
+
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
-                targetRepository(allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY)).
-                addProperties(matrixParams).build();
+                targetRepository(targetRepository).addProperties(matrixParams).build();
 
         deployableArtifactBuilderMap.put(artifact, deployable);
+    }
+
+    /**
+     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if
+     *         defined and the deployed file is a snapshot.
+     */
+    public String getTargetRepository(String deployPath) {
+        String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
+        if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
+            return snapshotsRepository;
+        }
+        String releasesRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
+        return releasesRepository;
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,

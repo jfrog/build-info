@@ -57,4 +57,7 @@ public interface BuildInfoProperties {
     String PROP_BUILD_AGENT_VERSION = BUILD_INFO_PREFIX + "buildAgent.version";
     String PROP_AGENT_NAME = BUILD_INFO_PREFIX + "agent.name"; //hudson, teamcity...
     String PROP_AGENT_VERSION = BUILD_INFO_PREFIX + "agent.version"; //hudson, teamcity...
+
+    String PROP_NOTIFICATION_RECIPIENTS = BUILD_INFO_PREFIX + "notifications.licenseViolationRecipients";
+
 }

@@ -23,13 +23,13 @@
     <parent>
         <groupId>org.jfrog.buildinfo</groupId>
         <artifactId>parent</artifactId>
-        <version>1</version>
+        <version>2</version>
         <relativePath>build-info-parent</relativePath>
     </parent>
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
     <name>JFrog Build-Info</name>
-    <version>1.4.3</version>
+    <version>1.4.4</version>
     <description>Common API for collecting and sending CI build information to Artifactory</description>
     <url>http://wiki.jfrog.org/confluence/display/RTF/Build+Integration</url>
 
@@ -53,17 +53,17 @@
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>1.4.3</version>
+                <version>1.4.4</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>1.4.3</version>
+                <version>1.4.4</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>1.4.3</version>
+                <version>1.4.4</version>
             </dependency>
 
             <dependency>

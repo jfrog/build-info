@@ -34,7 +34,7 @@ public class DeployDetails {
     /**
      * Target deploy repository
      */
-    String targetRepository;
+    private String targetRepository;
     /**
      * Artifact deployment path
      */
@@ -55,7 +55,6 @@ public class DeployDetails {
      * Properties to attach to the deployed file
      */
     Map<String, String> properties;
-
 
     public static class Builder {
         private DeployDetails deployDetails;
@@ -129,6 +128,9 @@ public class DeployDetails {
         }
     }
 
+    /**
+     * @return Return the target deployment repository.
+     */
     public String getTargetRepository() {
         return targetRepository;
     }

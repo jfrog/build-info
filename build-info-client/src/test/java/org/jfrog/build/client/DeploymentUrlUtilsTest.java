@@ -19,6 +19,7 @@ package org.jfrog.build.client;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Properties;
 
 /**
@@ -27,13 +28,21 @@ import java.util.Properties;
 @Test
 public class DeploymentUrlUtilsTest {
 
-    public void getDeploymentUrl() {
+    public void getDeploymentUrl() throws UnsupportedEncodingException {
         String artifactoryUrl = "http://localhost:8080/artifactory/libs-releases-local";
-        Properties props = System.getProperties();
+        Properties props = new Properties(System.getProperties());
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "buildName", "moo");
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "buildNumber", "1");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
-        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildNumber=1;buildName=moo");
+        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildName=moo;buildNumber=1");
     }
 
+    public void getDeploymentUrlWithEncodingNeeded() throws UnsupportedEncodingException {
+        String artifactoryUrl = "http://localhost:8080/artifactory/libs-releases-local";
+        Properties props = new Properties(System.getProperties());
+        props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "build Name", "moo");
+        props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "build Number", "1");
+        String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
+        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";build+Number=1;build+Name=moo");
+    }
 }
