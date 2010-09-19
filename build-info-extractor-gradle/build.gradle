@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-buildscript {
-  apply {
-    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
-  }
-  repositories {
-    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
-  }
-}
+//buildscript {
+//  apply {
+//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
+//  }
+//  repositories {
+//    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
+//  }
+//}
 group = 'org.jfrog.buildinfo'
 version = '1.0-SNAPSHOT'
 apply {
