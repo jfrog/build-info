@@ -27,7 +27,7 @@ def artifactId = 'buildinfo'
 
 allprojects {
   group = 'org.jfrog.buildinfo'
-  version = '1.4.x-SNAPSHOT'
+  version = '1.4.4'
 }
 subprojects {
   apply {
