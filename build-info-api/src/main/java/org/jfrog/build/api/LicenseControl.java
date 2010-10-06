@@ -33,6 +33,9 @@ public class LicenseControl implements Serializable {
 
     private String[] licenseViolationRecipients;
 
+    public LicenseControl() {
+    }
+
     public LicenseControl(boolean runChecks) {
         this.runChecks = runChecks;
     }
@@ -56,13 +59,18 @@ public class LicenseControl implements Serializable {
      * @param licenseViolationRecipients
      */
     public void setLicenseViolationsRecipientsList(String licenseViolationRecipients) {
-        String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
-        setLicenseViolationRecipients(recipients);
+        if (StringUtils.isNotBlank(licenseViolationRecipients)) {
+            String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
+            setLicenseViolationRecipients(recipients);
+        }
     }
 
     public String getLicenseViolationsRecipientsList() {
         StringBuilder builder = new StringBuilder();
         String[] recipients = getLicenseViolationRecipients();
+        if (recipients == null || recipients.length == 0) {
+            return builder.toString();
+        }
         for (String recipient : recipients) {
             builder.append(recipient).append(" ");
         }
