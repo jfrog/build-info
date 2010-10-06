@@ -26,10 +26,20 @@ import java.io.Serializable;
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias("notifications")
-public class Notifications implements Serializable {
+@XStreamAlias("licensecontrol")
+public class LicenseControl implements Serializable {
+
+    private boolean runChecks = true;
 
     private String[] licenseViolationRecipients;
+
+    public LicenseControl(boolean runChecks) {
+        this.runChecks = runChecks;
+    }
+
+    public boolean isRunChecks() {
+        return runChecks;
+    }
 
     public String[] getLicenseViolationRecipients() {
         return licenseViolationRecipients;

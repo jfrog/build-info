@@ -104,12 +104,17 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(parentBuildNumber)) {
                 builder.parentNumber(parentBuildNumber);
             }
-            String notificationRecipients = mergedProps.getProperty(BuildInfoProperties.PROP_NOTIFICATION_RECIPIENTS);
-            if (StringUtils.isNotBlank(notificationRecipients)) {
-                Notifications notifications = new Notifications();
-                notifications.setLicenseViolationsRecipientsList(notificationRecipients);
-                builder.notifications(notifications);
+            boolean runLicenseChecks = true;
+            String runChecks = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS);
+            if (StringUtils.isNotBlank(runChecks)) {
+                runLicenseChecks = Boolean.parseBoolean(runChecks);
             }
+            LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
+            String notificationRecipients = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+            if (StringUtils.isNotBlank(notificationRecipients)) {
+                licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
+            }
+            builder.licenseControl(licenseControl);
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
                     .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
