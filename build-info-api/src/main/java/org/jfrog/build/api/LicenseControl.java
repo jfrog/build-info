@@ -44,6 +44,10 @@ public class LicenseControl implements Serializable {
         return runChecks;
     }
 
+    public void setRunChecks(boolean runChecks) {
+        this.runChecks = runChecks;
+    }
+
     public String[] getLicenseViolationRecipients() {
         return licenseViolationRecipients;
     }
