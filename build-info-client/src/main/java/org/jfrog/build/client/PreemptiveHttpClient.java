@@ -35,11 +35,14 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
+import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 /**
  * Wrapper of HttpClient that forces preemptive BASIC authentication if user credentials exist.
@@ -48,8 +51,25 @@ import java.io.IOException;
  */
 public class PreemptiveHttpClient {
 
+    private final static String CLIENT_VERSION;
+
     private DefaultHttpClient httpClient;
     private BasicHttpContext localContext;
+
+    static {
+        // initialize client version
+        Properties properties = new Properties();
+        InputStream is = PreemptiveHttpClient.class.getResourceAsStream("/bi.client.properties");
+        if (is != null) {
+            try {
+                properties.load(is);
+                is.close();
+            } catch (IOException e) {
+                // ignore, use the default value
+            }
+        }
+        CLIENT_VERSION = properties.getProperty("client.version", "unknown");
+    }
 
     public PreemptiveHttpClient(int timeout) {
         this(null, null, timeout);
@@ -99,6 +119,11 @@ public class PreemptiveHttpClient {
             // Add as the first request interceptor
             client.addRequestInterceptor(new PreemptiveAuth(), 0);
         }
+
+        // set the following user agent with each request
+        String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
+        HttpProtocolParams.setUserAgent(client.getParams(), userAgent);
+
         return client;
     }
 

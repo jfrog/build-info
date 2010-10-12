@@ -29,6 +29,15 @@
     <packaging>jar</packaging>
     <name>JFrog Build-Info Client</name>
 
+    <build>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/filtered-resources</directory>
+            </resource>
+        </resources>
+    </build>
+
     <dependencies>
         <dependency>
             <groupId>org.jfrog.buildinfo</groupId>
