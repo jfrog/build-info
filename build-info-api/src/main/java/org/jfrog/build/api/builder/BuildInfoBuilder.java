@@ -48,7 +48,7 @@ public class BuildInfoBuilder {
     private String vcsRevision;
     private List<Module> modules;
     private Properties properties;
-    private Notifications notifications;
+    private LicenseControl licenseControl;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -89,7 +89,7 @@ public class BuildInfoBuilder {
         build.setModules(modules);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
-        build.setNotifications(notifications);
+        build.setLicenseControl(licenseControl);
         return build;
     }
 
@@ -274,11 +274,11 @@ public class BuildInfoBuilder {
     /**
      * Sets the violation notifications of the build
      *
-     * @param notifications Build violation  recipients.
+     * @param licenseControl Build violation  recipients.
      * @return Builder instance
      */
-    public BuildInfoBuilder notifications(Notifications notifications) {
-        this.notifications = notifications;
+    public BuildInfoBuilder licenseControl(LicenseControl licenseControl) {
+        this.licenseControl = licenseControl;
         return this;
     }
 

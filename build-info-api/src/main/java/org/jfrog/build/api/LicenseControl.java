@@ -26,10 +26,27 @@ import java.io.Serializable;
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias("notifications")
-public class Notifications implements Serializable {
+@XStreamAlias("licensecontrol")
+public class LicenseControl implements Serializable {
+
+    private boolean runChecks = true;
 
     private String[] licenseViolationRecipients;
+
+    public LicenseControl() {
+    }
+
+    public LicenseControl(boolean runChecks) {
+        this.runChecks = runChecks;
+    }
+
+    public boolean isRunChecks() {
+        return runChecks;
+    }
+
+    public void setRunChecks(boolean runChecks) {
+        this.runChecks = runChecks;
+    }
 
     public String[] getLicenseViolationRecipients() {
         return licenseViolationRecipients;
@@ -46,13 +63,18 @@ public class Notifications implements Serializable {
      * @param licenseViolationRecipients
      */
     public void setLicenseViolationsRecipientsList(String licenseViolationRecipients) {
-        String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
-        setLicenseViolationRecipients(recipients);
+        if (StringUtils.isNotBlank(licenseViolationRecipients)) {
+            String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
+            setLicenseViolationRecipients(recipients);
+        }
     }
 
     public String getLicenseViolationsRecipientsList() {
         StringBuilder builder = new StringBuilder();
         String[] recipients = getLicenseViolationRecipients();
+        if (recipients == null || recipients.length == 0) {
+            return builder.toString();
+        }
         for (String recipient : recipients) {
             builder.append(recipient).append(" ");
         }

@@ -18,10 +18,12 @@ package org.jfrog.build.client;
 
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 
 import static org.testng.Assert.assertNotNull;
@@ -35,11 +37,11 @@ import static org.testng.Assert.assertTrue;
 @Test
 public class ArtifactoryBuildInfoClientTest {
 
-    //private String artifactoryUrl = "http://repo.jfrog.org/artifactory";
+    //private String artifactoryUrl = "http://localhost:8080/artifactory";
     private String artifactoryUrl = "http://localhost:8081/artifactory";
 
     public void getLocalRepositoriesKeys() throws IOException {
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl);
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, new NullLog());
         List<String> repositoryKeys = client.getLocalRepositoriesKeys();
         assertNotNull(repositoryKeys, "Repositories keys should not be null");
         assertTrue(repositoryKeys.size() > 0, "Expected to get some repositories");
@@ -48,19 +50,23 @@ public class ArtifactoryBuildInfoClientTest {
     @Test(enabled = false, expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".* Unauthorized")
     public void postBuildInfoWithBadCredentials() throws IOException {
         Build build = new Build();
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "no-such-user", "test");
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl,
+                "no-such-user", "test", new NullLog());
 
         client.sendBuildInfo(build);
     }
 
     public void postBuildInfo() throws IOException {
-        Build build = new BuildInfoBuilder("build").started("test").number("123").build();
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
+        Build build = new BuildInfoBuilder("build").startedDate(new Date()).number("123").build();
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password",
+                new NullLog());
         client.sendBuildInfo(build);
     }
 
+    @Test(enabled = false)
     public void deployFile() throws IOException {
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
+        ArtifactoryBuildInfoClient client =
+                new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password", new NullLog());
         for (int i = 0; i < 10; i++) {
             String version = "1." + i;
             DeployDetails details = new DeployDetails.Builder().targetRepository("libs-releases-local")

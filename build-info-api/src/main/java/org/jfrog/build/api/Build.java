@@ -51,7 +51,7 @@ public class Build extends BaseBuildBean {
     @Deprecated
     private String parentBuildId;
 
-    private Notifications notifications;
+    private LicenseControl licenseControl;
 
     @XStreamAlias(MODULES)
     private List<Module> modules;
@@ -383,11 +383,11 @@ public class Build extends BaseBuildBean {
         return null;
     }
 
-    public Notifications getNotifications() {
-        return notifications;
+    public LicenseControl getLicenseControl() {
+        return licenseControl;
     }
 
-    public void setNotifications(Notifications notifications) {
-        this.notifications = notifications;
+    public void setLicenseControl(LicenseControl licenseControl) {
+        this.licenseControl = licenseControl;
     }
 }
