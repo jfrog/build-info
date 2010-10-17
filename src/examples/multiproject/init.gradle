@@ -16,7 +16,7 @@
 
 initscript {
   apply {
-    apply from: 'http://localhost:8081/artifactory/plugins-releases/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryinitplugin-1.0.1.gradle'
+    apply from: 'http://localhost:8081/artifactory/plugins-releases/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.2/artifactoryinitplugin-1.0.2.gradle'
   }
 }
 addListener(new PropertyListener())

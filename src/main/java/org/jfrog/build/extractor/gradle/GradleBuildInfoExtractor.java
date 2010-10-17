@@ -152,12 +152,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         if (StringUtils.isNotBlank(vcsRevision)) {
             buildInfoBuilder.vcsRevision(vcsRevision);
         }
-        String notification = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_NOTIFICATION_RECIPIENTS, rootProject);
-        if (StringUtils.isNotBlank(notification)) {
-            Notifications notifications = new Notifications();
-            notifications.setLicenseViolationsRecipientsList(notification);
-            buildInfoBuilder.notifications(notifications);
+        boolean runLicenseChecks = true;
+        String runChecks = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS, rootProject);
+        if (StringUtils.isNotBlank(runChecks)) {
+            runLicenseChecks = Boolean.parseBoolean(runChecks);
         }
+        LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
+        String notificationRecipients = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS, rootProject);
+        if (StringUtils.isNotBlank(notificationRecipients)) {
+            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
+        }
+        buildInfoBuilder.licenseControl(licenseControl);
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
         properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));

@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-buildscript {
-  apply {
-    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
-  }
-  repositories {
-    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
-  }
-}
+//buildscript {
+//  apply {
+//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.2/artifactoryplugin-1.0.2.gradle'
+//  }
+//  repositories {
+//    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
+//  }
+//}
 group = 'org.jfrog.buildinfo'
-version = '1.0.1'
+version = '1.0.2'
 apply {
   apply plugin: 'java'
   apply plugin: 'groovy'
@@ -31,9 +31,9 @@ apply {
 
 dependencies {
   compile "com.tonicsystems.jarjar:jarjar-plugin:1.0",
-//          "org.jfrog.buildinfo:build-info-extractor:1.4.4",
-//          "org.jfrog.buildinfo:build-info-api:1.4.4",
-//          "org.jfrog.buildinfo:build-info-client:1.4.4",
+          "org.jfrog.buildinfo:build-info-extractor:1.4.5",
+          "org.jfrog.buildinfo:build-info-api:1.4.5",
+          "org.jfrog.buildinfo:build-info-client:1.4.5",
           "com.google.guava:guava:r06",
           "commons-lang:commons-lang:2.4",
           "commons-logging:commons-logging:1.1",
@@ -43,9 +43,9 @@ dependencies {
           "org.codehaus.jackson:jackson-core-asl:1.5.1",
           "com.google.code.findbugs:jsr305:1.3.7",
           "javax.annotation:jsr250-api:1.0",
-          project(":build-info-api"),
-          project(":build-info-client"),
-          project(":build-info-extractor"),
+//          project(":build-info-api"),
+//          project(":build-info-client"),
+//          project(":build-info-extractor"),
           gradleApi()
   groovy localGroovy()
 }
