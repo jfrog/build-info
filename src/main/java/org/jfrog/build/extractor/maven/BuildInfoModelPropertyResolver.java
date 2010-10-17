@@ -62,12 +62,17 @@ public class BuildInfoModelPropertyResolver {
             agentVersion = buildAgent.getVersion();
         }
         builder.agent(new Agent(agentName, agentVersion));
-        String notificationRecipients = buildInfoProps.getProperty(PROP_NOTIFICATION_RECIPIENTS);
-        if (StringUtils.isNotBlank(notificationRecipients)) {
-            Notifications notifications = new Notifications();
-            notifications.setLicenseViolationsRecipientsList(notificationRecipients);
-            builder.notifications(notifications);
+        boolean runLicenseChecks = true;
+        String runChecks = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS);
+        if (StringUtils.isNotBlank(runChecks)) {
+            runLicenseChecks = Boolean.parseBoolean(runChecks);
         }
+        LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
+        String notificationRecipients = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+        if (StringUtils.isNotBlank(notificationRecipients)) {
+            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
+        }
+        builder.licenseControl(licenseControl);
 
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
