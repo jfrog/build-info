@@ -24,7 +24,7 @@
         <relativePath>../build-info-parent</relativePath>
     </parent>
     <artifactId>build-info-extractor-ivy</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Ivy Extractor</name>
 
@@ -34,7 +34,7 @@
     </scm>
 
     <properties>
-        <build-info-version>1.4.4</build-info-version>
+        <build-info-version>1.4.5</build-info-version>
     </properties>
 
     <dependencies>
