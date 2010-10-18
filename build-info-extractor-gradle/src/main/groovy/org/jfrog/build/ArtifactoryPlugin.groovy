@@ -162,24 +162,23 @@ class ArtifactoryPlugin implements Plugin<Project> {
     if (StringUtils.isBlank(System.getProperty("timestamp"))) {
       System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
     }
-    props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
+    props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
     if (StringUtils.isNotBlank(buildNumber)) {
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber)
     }
     String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
     if (StringUtils.isNotBlank(buildName)) {
-      buildName = buildName.replace(' ', '-')
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildName)
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildName)
     } else {
       Project rootProject = project.getRootProject();
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), rootProject.getName().replace(' ', '-'))
+      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), rootProject.getName().replace(' ', '-'))
     }
     String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (StringUtils.isNotBlank(buildParentNumber)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentNumber)
+    if (StringUtils.isNotBlank(buildParentNumber)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentNumber)
     String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (StringUtils.isNotBlank(buildParentName)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentName)
+    if (StringUtils.isNotBlank(buildParentName)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentName)
     String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
-    if (StringUtils.isNotBlank(vcsRevision)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.stripStart(BuildInfoProperties.PROP_VCS_REVISION, BuildInfoProperties.BUILD_INFO_PREFIX), vcsRevision)
+    if (StringUtils.isNotBlank(vcsRevision)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION, BuildInfoProperties.BUILD_INFO_PREFIX), vcsRevision)
     Map properties = project.getProperties()
     Set<String> keys = properties.keySet();
     for (String key: keys) {
