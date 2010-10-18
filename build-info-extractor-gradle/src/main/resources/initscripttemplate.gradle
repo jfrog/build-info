@@ -5,7 +5,7 @@ initscript {
     flatDir(dirs: file('${pluginLibDir}'))
   }
   dependencies {
-    classpath ":build-info-extractor-gradle:1.0-SNAPSHOT"
+    classpath ":build-info-extractor-gradle:1.0.2"
     classpath ":build-info-client:1.4.5"
     classpath ":build-info-api:1.4.5"
     classpath ":build-info-extractor:1.4.5"
