@@ -18,7 +18,7 @@ def artifactId = 'buildinfo'
 
 //buildscript {
 //  apply {
-//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.2/artifactoryplugin-1.0.2.gradle'
+//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
 //  }
 //  repositories {
 //    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
