@@ -72,6 +72,10 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
+        String includePublishedArtifacts = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
+        if (StringUtils.isNotBlank(includePublishedArtifacts)) {
+            licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
+        }
         builder.licenseControl(licenseControl);
 
         resolveArtifactoryPrincipalProperty(allProps, builder);
