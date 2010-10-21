@@ -166,6 +166,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         if (StringUtils.isNotBlank(includePublishedArtifacts)) {
             licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
         }
+        String scopes = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES, rootProject);
+        if (StringUtils.isNotBlank(scopes)) {
+            licenseControl.setScopesList(scopes);
+        }
         buildInfoBuilder.licenseControl(licenseControl);
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);

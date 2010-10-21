@@ -33,6 +33,7 @@ public class LicenseControl implements Serializable {
     private boolean includePublishedArtifacts = false;
 
     private String[] licenseViolationRecipients;
+    private String[] scopes;
 
     public LicenseControl() {
     }
@@ -65,6 +66,13 @@ public class LicenseControl implements Serializable {
         this.licenseViolationRecipients = licenseViolationRecipients;
     }
 
+    public String[] getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(String[] scopes) {
+        this.scopes = scopes;
+    }
 
     /**
      * Set the emails of recipients about license violations from a comma separated list
@@ -76,6 +84,25 @@ public class LicenseControl implements Serializable {
             String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
             setLicenseViolationRecipients(recipients);
         }
+    }
+
+    public void setScopesList(String scopes) {
+        if (StringUtils.isNotBlank(scopes)) {
+            String[] splitScopes = StringUtils.split(scopes, " ");
+            setScopes(splitScopes);
+        }
+    }
+
+    public String getScopesList() {
+        StringBuilder builder = new StringBuilder();
+        String[] scopes = getScopes();
+        if (scopes == null || scopes.length == 0) {
+            return builder.toString();
+        }
+        for (String scope : scopes) {
+            builder.append(scope).append(" ");
+        }
+        return builder.toString();
     }
 
     public String getLicenseViolationsRecipientsList() {

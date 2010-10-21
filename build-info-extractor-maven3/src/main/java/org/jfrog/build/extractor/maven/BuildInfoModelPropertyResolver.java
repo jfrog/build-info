@@ -76,8 +76,11 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isNotBlank(includePublishedArtifacts)) {
             licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
         }
+        String scopes = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
+        if (StringUtils.isNotBlank(scopes)) {
+            licenseControl.setScopesList(scopes);
+        }
         builder.licenseControl(licenseControl);
-
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
     }
