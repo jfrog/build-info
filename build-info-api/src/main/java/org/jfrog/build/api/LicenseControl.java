@@ -30,6 +30,7 @@ import java.io.Serializable;
 public class LicenseControl implements Serializable {
 
     private boolean runChecks = true;
+    private boolean includePublishedArtifacts = false;
 
     private String[] licenseViolationRecipients;
 
@@ -42,6 +43,14 @@ public class LicenseControl implements Serializable {
 
     public boolean isRunChecks() {
         return runChecks;
+    }
+
+    public boolean isIncludePublishedArtifacts() {
+        return includePublishedArtifacts;
+    }
+
+    public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
+        this.includePublishedArtifacts = includePublishedArtifacts;
     }
 
     public void setRunChecks(boolean runChecks) {
