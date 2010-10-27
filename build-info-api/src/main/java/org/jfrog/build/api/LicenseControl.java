@@ -31,6 +31,7 @@ public class LicenseControl implements Serializable {
 
     private boolean runChecks = true;
     private boolean includePublishedArtifacts = false;
+    private boolean autoDiscover = true;
 
     private String[] licenseViolationRecipients;
     private String[] scopes;
@@ -56,6 +57,14 @@ public class LicenseControl implements Serializable {
 
     public void setRunChecks(boolean runChecks) {
         this.runChecks = runChecks;
+    }
+
+    public boolean isAutoDiscover() {
+        return autoDiscover;
+    }
+
+    public void setAutoDiscover(boolean autoDiscover) {
+        this.autoDiscover = autoDiscover;
     }
 
     public String[] getLicenseViolationRecipients() {

@@ -80,6 +80,10 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isNotBlank(scopes)) {
             licenseControl.setScopesList(scopes);
         }
+        String autoDiscover = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
+        if (StringUtils.isNotBlank(autoDiscover)) {
+            licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
+        }
         builder.licenseControl(licenseControl);
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;

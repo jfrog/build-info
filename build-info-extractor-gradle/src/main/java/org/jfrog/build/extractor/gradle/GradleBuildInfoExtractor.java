@@ -170,6 +170,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         if (StringUtils.isNotBlank(scopes)) {
             licenseControl.setScopesList(scopes);
         }
+        String autoDiscover = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER, rootProject);
+        if (StringUtils.isNotBlank(autoDiscover)) {
+            licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
+        }
         buildInfoBuilder.licenseControl(licenseControl);
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
