@@ -60,5 +60,7 @@ public interface BuildInfoProperties {
 
     String PROP_LICENSE_CONTROL_RUN_CHECKS = BUILD_INFO_PREFIX + "licenseControl.runChecks";
     String PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS = BUILD_INFO_PREFIX + "licenseControl.violationRecipients";
-
+    String PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS = BUILD_INFO_PREFIX + "licenseControl.includePublishedArtifacts";
+    String PROP_LICENSE_CONTROL_SCOPES = BUILD_INFO_PREFIX + "licenseControl.scopes";
+    String PROP_LICENSE_CONTROL_AUTO_DISCOVER = BUILD_INFO_PREFIX + "licenseControl.autoDiscover";
 }

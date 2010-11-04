@@ -30,8 +30,11 @@ import java.io.Serializable;
 public class LicenseControl implements Serializable {
 
     private boolean runChecks = true;
+    private boolean includePublishedArtifacts = false;
+    private boolean autoDiscover = true;
 
     private String[] licenseViolationRecipients;
+    private String[] scopes;
 
     public LicenseControl() {
     }
@@ -44,8 +47,24 @@ public class LicenseControl implements Serializable {
         return runChecks;
     }
 
+    public boolean isIncludePublishedArtifacts() {
+        return includePublishedArtifacts;
+    }
+
+    public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
+        this.includePublishedArtifacts = includePublishedArtifacts;
+    }
+
     public void setRunChecks(boolean runChecks) {
         this.runChecks = runChecks;
+    }
+
+    public boolean isAutoDiscover() {
+        return autoDiscover;
+    }
+
+    public void setAutoDiscover(boolean autoDiscover) {
+        this.autoDiscover = autoDiscover;
     }
 
     public String[] getLicenseViolationRecipients() {
@@ -56,6 +75,13 @@ public class LicenseControl implements Serializable {
         this.licenseViolationRecipients = licenseViolationRecipients;
     }
 
+    public String[] getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(String[] scopes) {
+        this.scopes = scopes;
+    }
 
     /**
      * Set the emails of recipients about license violations from a comma separated list
@@ -67,6 +93,25 @@ public class LicenseControl implements Serializable {
             String[] recipients = StringUtils.split(licenseViolationRecipients, " ");
             setLicenseViolationRecipients(recipients);
         }
+    }
+
+    public void setScopesList(String scopes) {
+        if (StringUtils.isNotBlank(scopes)) {
+            String[] splitScopes = StringUtils.split(scopes, " ");
+            setScopes(splitScopes);
+        }
+    }
+
+    public String getScopesList() {
+        StringBuilder builder = new StringBuilder();
+        String[] scopes = getScopes();
+        if (scopes == null || scopes.length == 0) {
+            return builder.toString();
+        }
+        for (String scope : scopes) {
+            builder.append(scope).append(" ");
+        }
+        return builder.toString();
     }
 
     public String getLicenseViolationsRecipientsList() {

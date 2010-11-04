@@ -114,6 +114,18 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(notificationRecipients)) {
                 licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
             }
+            String includePublishedArtifacts = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
+            if (StringUtils.isNotBlank(includePublishedArtifacts)) {
+                licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
+            }
+            String scopes = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
+            if (StringUtils.isNotBlank(scopes)) {
+                licenseControl.setScopesList(scopes);
+            }
+            String autoDiscover = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
+            if (StringUtils.isNotBlank(autoDiscover)) {
+                licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
+            }
             builder.licenseControl(licenseControl);
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils

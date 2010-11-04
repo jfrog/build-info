@@ -162,6 +162,18 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
+        String includePublishedArtifacts = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS, rootProject);
+        if (StringUtils.isNotBlank(includePublishedArtifacts)) {
+            licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
+        }
+        String scopes = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES, rootProject);
+        if (StringUtils.isNotBlank(scopes)) {
+            licenseControl.setScopesList(scopes);
+        }
+        String autoDiscover = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER, rootProject);
+        if (StringUtils.isNotBlank(autoDiscover)) {
+            licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
+        }
         buildInfoBuilder.licenseControl(licenseControl);
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);

@@ -454,8 +454,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
-     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if
-     *         defined and the deployed file is a snapshot.
+     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if defined
+     *         and the deployed file is a snapshot.
      */
     public String getTargetRepository(String deployPath) {
         String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
@@ -482,8 +482,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
                     .id(getArtifactIdWithoutType(dependency.getGroupId(), dependency.getArtifactId(),
                             dependency.getVersion()))
-                    .type(dependency.getType())
-                    .scopes(Lists.newArrayList(dependency.getScope()));
+                    .type(dependency.getType());
+            String scopes = dependency.getScope();
+            if (StringUtils.isNotBlank(scopes)) {
+                dependencyBuilder.scopes(Lists.newArrayList(scopes));
+            }
             setDependencyChecksums(dependency.getFile(), dependencyBuilder);
             currentModule.addDependency(dependencyBuilder.build());
         }
