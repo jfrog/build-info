@@ -72,8 +72,19 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
+        String includePublishedArtifacts = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
+        if (StringUtils.isNotBlank(includePublishedArtifacts)) {
+            licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
+        }
+        String scopes = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
+        if (StringUtils.isNotBlank(scopes)) {
+            licenseControl.setScopesList(scopes);
+        }
+        String autoDiscover = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
+        if (StringUtils.isNotBlank(autoDiscover)) {
+            licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
+        }
         builder.licenseControl(licenseControl);
-
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
     }
