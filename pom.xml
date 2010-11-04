@@ -25,7 +25,7 @@
     </parent>
 
     <artifactId>build-info-extractor-gradle</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Gradle Extractor</name>
 
@@ -36,7 +36,7 @@
     </scm>
 
     <properties>
-        <build-info-version>1.4.5</build-info-version>
+        <build-info-version>1.4.6</build-info-version>
     </properties>
 
     <dependencies>
