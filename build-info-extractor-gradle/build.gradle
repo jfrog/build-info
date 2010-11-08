@@ -13,14 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-//buildscript {
-//  apply {
-//    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.2/artifactoryplugin-1.0.2.gradle'
-//  }
-//  repositories {
-//    mavenRepo urls: 'http://gradle.artifactoryonline.com/gradle/plugins'
-//  }
-//}
+configurations{
+  tools
+}
+
+buildscript {
+  apply {
+    apply from: 'http://repo.jfrog.org/artifactory/repo/org/jfrog/buildinfo/build-info-extractor-gradle/1.0.1/artifactoryplugin-1.0.1.gradle'
+  }
+  repositories {
+    mavenRepo urls: 'http://repo.jfrog.org/artifactory/repo'
+  }
+}
+
 group = 'org.jfrog.buildinfo'
 version = '1.0-SNAPSHOT'
 apply {
@@ -31,7 +36,7 @@ apply {
 
 dependencies {
   compile gradleApi()
-  compile group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+  tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
   compile group: 'com.google.guava', name: 'guava', version: 'r06'
   compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0'
   compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
@@ -50,7 +55,7 @@ task jarAll(type: Jar, dependsOn: jar) {
   classifier = 'uber'
   doLast {
     project.ant {
-      taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.runtime.asPath
+      taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
       jarjar(jarfile: archivePath) {
         zipfileset(src: jar.archivePath)
         configurations.compile.files.findAll {file ->
