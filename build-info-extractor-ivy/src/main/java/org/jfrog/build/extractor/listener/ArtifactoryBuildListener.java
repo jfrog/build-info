@@ -7,11 +7,18 @@ import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyBuildInfoLog;
@@ -110,11 +117,13 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                 runLicenseChecks = Boolean.parseBoolean(runChecks);
             }
             LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-            String notificationRecipients = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+            String notificationRecipients =
+                    mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
             if (StringUtils.isNotBlank(notificationRecipients)) {
                 licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
             }
-            String includePublishedArtifacts = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
+            String includePublishedArtifacts =
+                    mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
             if (StringUtils.isNotBlank(includePublishedArtifacts)) {
                 licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
             }
@@ -143,7 +152,11 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                 boolean isDeployArtifacts =
                         Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
                 if (isDeployArtifacts) {
-                    deployArtifacts(client, deployDetails);
+                    IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                            mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS),
+                            mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS));
+
+                    deployArtifacts(project, client, deployDetails, patterns);
                 }
                 boolean isDeployBuildInfo =
                         Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
@@ -157,9 +170,15 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
         }
     }
 
-    private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails)
-            throws IOException {
+    private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
+            IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
+            String artifactPath = deployDetail.getArtifactPath();
+            if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
+                project.log("Skipping the deployment of '" + artifactPath +
+                        "' due to the defined include-exclude patterns.", Project.MSG_INFO);
+                continue;
+            }
             client.deployArtifact(deployDetail);
         }
     }
