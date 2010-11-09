@@ -19,21 +19,21 @@ public abstract class PatternMatcher {
      *
      * @param path     Path to check
      * @param patterns Patterns to match
-     * @return True if the path does not conflict
+     * @return True if the path conflicts
      */
-    public static boolean pathDoesNotConflict(String path, IncludeExcludePatterns patterns) {
+    public static boolean pathConflicts(String path, IncludeExcludePatterns patterns) {
         String[] includePatterns = patterns.getIncludePatterns();
         String[] excludePatterns = patterns.getExcludePatterns();
 
         if ((includePatterns.length > 0) && !pathMatchesPattern(path, includePatterns)) {
-            return false;
+            return true;
         }
 
         if ((excludePatterns.length > 0) && pathMatchesPattern(path, excludePatterns)) {
-            return false;
+            return true;
         }
 
-        return true;
+        return false;
     }
 
     /**
