@@ -70,12 +70,12 @@ public interface ClientProperties {
     /**
      * Property for whitespace\comma separated artifact deployment include patterns
      */
-    String PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".patterns.include";
+    String PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".includePatterns";
 
     /**
      * Property for whitespace\comma separated artifact deployment exclude patterns
      */
-    String PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".patterns.exclude";
+    String PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".excludePatterns";
 
     /**
      * Property for whether to publish the generated build info.
