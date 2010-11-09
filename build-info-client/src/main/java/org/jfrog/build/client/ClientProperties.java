@@ -68,6 +68,16 @@ public interface ClientProperties {
     String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
 
     /**
+     * Property for whitespace\comma separated artifact deployment include patterns
+     */
+    String PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".patterns.include";
+
+    /**
+     * Property for whitespace\comma separated artifact deployment exclude patterns
+     */
+    String PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".patterns.exclude";
+
+    /**
      * Property for whether to publish the generated build info.
      */
     String PROP_PUBLISH_BUILD_INFO = ARTIFACTORY_PREFIX + "publish.buildInfo";
