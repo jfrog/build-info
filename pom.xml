@@ -43,8 +43,16 @@
         <module>build-info-client</module>
         <module>build-info-extractor</module>
     </modules>
-
-    <properties>
+	
+	<licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>rjo</distribution>
+        </license>
+    </licenses>
+    
+	<properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
