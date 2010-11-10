@@ -63,4 +63,7 @@ public interface BuildInfoProperties {
     String PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS = BUILD_INFO_PREFIX + "licenseControl.includePublishedArtifacts";
     String PROP_LICENSE_CONTROL_SCOPES = BUILD_INFO_PREFIX + "licenseControl.scopes";
     String PROP_LICENSE_CONTROL_AUTO_DISCOVER = BUILD_INFO_PREFIX + "licenseControl.autoDiscover";
+
+    String PROP_BUILD_RETENTION_DAYS = BUILD_INFO_PREFIX + "buildRetention.daysToKeep";
+    String PROP_BUILD_RETENTION_MINIMUM_DATE = BUILD_INFO_PREFIX + "buildRetention.minimumDate";
 }

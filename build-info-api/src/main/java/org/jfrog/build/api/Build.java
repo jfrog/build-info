@@ -53,6 +53,8 @@ public class Build extends BaseBuildBean {
 
     private LicenseControl licenseControl;
 
+    private BuildRetention buildRetention;
+
     @XStreamAlias(MODULES)
     private List<Module> modules;
 
@@ -389,5 +391,13 @@ public class Build extends BaseBuildBean {
 
     public void setLicenseControl(LicenseControl licenseControl) {
         this.licenseControl = licenseControl;
+    }
+
+    public void setBuildRetention(BuildRetention buildRetention) {
+        this.buildRetention = buildRetention;
+    }
+
+    public BuildRetention getBuildRetention() {
+        return buildRetention;
     }
 }

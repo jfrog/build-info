@@ -18,7 +18,13 @@ package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.LicenseControl;
+import org.jfrog.build.api.Module;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -49,6 +55,7 @@ public class BuildInfoBuilder {
     private List<Module> modules;
     private Properties properties;
     private LicenseControl licenseControl;
+    private BuildRetention buildRetention;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -90,6 +97,7 @@ public class BuildInfoBuilder {
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
         build.setLicenseControl(licenseControl);
+        build.setBuildRetention(buildRetention);
         return build;
     }
 
@@ -279,6 +287,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder licenseControl(LicenseControl licenseControl) {
         this.licenseControl = licenseControl;
+        return this;
+    }
+
+      /**
+     * Sets the post build retention period
+     *
+     * @param licenseControl Build violation  recipients.
+     * @return Builder instance
+     */
+    public BuildInfoBuilder buildRetention(BuildRetention buildRetention) {
+        this.buildRetention = buildRetention;
         return this;
     }
 

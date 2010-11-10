@@ -11,6 +11,7 @@ import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
@@ -24,6 +25,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
@@ -136,6 +138,21 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                 licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
             }
             builder.licenseControl(licenseControl);
+            BuildRetention buildRetention = new BuildRetention();
+            String buildRetentionDays = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS);
+            if (StringUtils.isNotBlank(buildRetentionDays)) {
+                buildRetention.setCount(Integer.parseInt(buildRetentionDays));
+            }
+            String buildRetentionMinimumDays = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
+            if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
+                int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
+                if (minimumDays > -1) {
+                    Calendar calendar = Calendar.getInstance();
+                    calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                    buildRetention.setMinimumBuildDate(calendar.getTime());
+                }
+            }
+            builder.buildRetention(buildRetention);
             Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
             Properties propsFromSys = BuildInfoExtractorUtils
                     .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
