@@ -32,4 +32,6 @@ public interface ClientIvyProperties {
     String PROP_IVY_ARTIFACT_PATTERN = PROP_ARTIFACTORY_IVY_PREFIX + "artifact.pattern";
 
     String PROP_IVY_IVY_PATTERN = PROP_ARTIFACTORY_IVY_PREFIX + "ivy.pattern";
+
+    String PROP_M2_COMPATIBLE = PROP_ARTIFACTORY_IVY_PREFIX + "ivy.m2compatible";
 }

@@ -130,9 +130,23 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 .durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate).number(buildNumber)
                 .buildAgent(buildAgent);
-        for (Project subProject : rootProject.getSubprojects()) {
-            BuildInfoRecorderTask birTask = (BuildInfoRecorderTask) subProject.getTasks().getByName("buildInfo");
-            buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
+        Set<Project> subProjects = rootProject.getSubprojects();
+        if (subProjects.isEmpty()) {
+            Set<Configuration> configurations = rootProject.getConfigurations().getAll();
+            for (Configuration configuration : configurations) {
+                if ((!configuration.getArtifacts().isEmpty())) {
+                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
+                }
+            }
+        } else {
+            for (Project subProject : subProjects) {
+                Set<Configuration> configurations = subProject.getConfigurations().getAll();
+                for (Configuration configuration : configurations) {
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
+                    }
+                }
+            }
         }
         String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
         String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
