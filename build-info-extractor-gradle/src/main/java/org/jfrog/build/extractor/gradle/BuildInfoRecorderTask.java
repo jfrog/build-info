@@ -29,7 +29,6 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientGradleProperties;
 import org.jfrog.build.client.ClientIvyProperties;
@@ -39,6 +38,7 @@ import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,82 +101,89 @@ public class BuildInfoRecorderTask extends ConventionTask {
             password = "";
         }
         ArtifactoryBuildInfoClient client =
-                new ArtifactoryBuildInfoClient(contextUrl, username, password, new NullLog());
-        if (Boolean.parseBoolean(uploadArtifactsProperty)) {
-            /**
-             * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
-             * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
-             * only after a successful build. This is done before the build-info is sent.
-             */
-            Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
-            for (Project uploadingProject : rootProject.getAllprojects()) {
-                Set<DeployDetails> deployDetailsFromProject =
-                        ArtifactoryPluginUtils.getDeployArtifactsProject(uploadingProject);
-                allDeployableDetails.addAll(deployDetailsFromProject);
-                String deployIvy = getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, uploadingProject);
-                if (Boolean.parseBoolean(deployIvy)) {
-                    File ivyFile = new File(uploadingProject.getBuildDir(), "ivy.xml");
-                    if (!ivyFile.exists()) {
-                        Set<Task> installTask = uploadingProject.getTasksByName("uploadArchives", false);
-                        for (Task task : installTask) {
-                            ((Upload) task).execute();
+                new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
+        try {
+            if (Boolean.parseBoolean(uploadArtifactsProperty)) {
+                /**
+                 * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
+                 * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
+                 * only after a successful build. This is done before the build-info is sent.
+                 */
+                Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
+                for (Project uploadingProject : rootProject.getAllprojects()) {
+                    Set<DeployDetails> deployDetailsFromProject =
+                            ArtifactoryPluginUtils.getDeployArtifactsProject(uploadingProject);
+                    allDeployableDetails.addAll(deployDetailsFromProject);
+                    String deployIvy = getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, uploadingProject);
+                    if (Boolean.parseBoolean(deployIvy)) {
+                        File ivyFile = new File(uploadingProject.getBuildDir(), "ivy.xml");
+                        if (!ivyFile.exists()) {
+                            Set<Task> installTask = uploadingProject.getTasksByName("uploadArchives", false);
+                            for (Task task : installTask) {
+                                ((Upload) task).execute();
+                            }
+                        }
+                        Set<DeployDetails> details =
+                                ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(uploadingProject);
+                        allDeployableDetails.addAll(details);
+                    }
+                    String deployMaven = getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, uploadingProject);
+                    if (Boolean.parseBoolean(deployMaven)) {
+                        File mavenPom =
+                                new File(uploadingProject.getRepositories().getMavenPomDir(), "pom-default.xml");
+                        if (!mavenPom.exists()) {
+                            Set<Task> installTask = uploadingProject.getTasksByName("install", false);
+                            if (installTask == null ||
+                                    installTask.isEmpty() &&
+                                            !uploadingProject.equals(uploadingProject.getRootProject())) {
+                                throw new GradleException("Maven plugin is not configured");
+                            }
+                            for (Task task : installTask) {
+                                ((Upload) task).execute();
+                            }
+                        }
+                        if (mavenPom.exists()) {
+                            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(uploadingProject));
                         }
                     }
-                    Set<DeployDetails> details = ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(uploadingProject);
-                    allDeployableDetails.addAll(details);
                 }
-                String deployMaven = getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, uploadingProject);
-                if (Boolean.parseBoolean(deployMaven)) {
-                    File mavenPom = new File(uploadingProject.getRepositories().getMavenPomDir(), "pom-default.xml");
-                    if (!mavenPom.exists()) {
-                        Set<Task> installTask = uploadingProject.getTasksByName("install", false);
-                        if (installTask == null ||
-                                installTask.isEmpty() && !uploadingProject.equals(uploadingProject.getRootProject())) {
-                            throw new GradleException("Maven plugin is not configured");
-                        }
-                        for (Task task : installTask) {
-                            ((Upload) task).execute();
-                        }
-                    }
-                    if (mavenPom.exists()) {
-                        allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(uploadingProject));
-                    }
-                }
-            }
 
-            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                    ArtifactoryPluginUtils
-                            .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
-                    ArtifactoryPluginUtils
-                            .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS, rootProject));
-            deployArtifacts(client, allDeployableDetails, patterns);
-        }
-        String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
-        boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
-        if (isPublishBuildInfo) {
-            /**
-             * After all the artifacts were uploaded successfully the next task is to send the build-info
-             * object.
-             */
-            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
-            if (fileExportPath != null) {
-                // If export property set always save the file before sending it to artifactory
-                exportBuildInfo(build, new File(fileExportPath));
+                IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                        ArtifactoryPluginUtils
+                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
+                        ArtifactoryPluginUtils
+                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS, rootProject));
+                deployArtifacts(client, allDeployableDetails, patterns);
             }
-            client.sendBuildInfo(build);
-        } else {
-            /**
-             * If we do not deploy any artifacts or build-info, the build-info will be written to a file in its
-             * JSON form.
-             */
-            File savedFile;
-            if (fileExportPath == null) {
-                savedFile = new File(getProject().getBuildDir(), "build-info.json");
+            String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
+            boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
+            if (isPublishBuildInfo) {
+                /**
+                 * After all the artifacts were uploaded successfully the next task is to send the build-info
+                 * object.
+                 */
+                Build build = gbie.extract(this, new BuildInfoExtractorSpec());
+                if (fileExportPath != null) {
+                    // If export property set always save the file before sending it to artifactory
+                    exportBuildInfo(build, new File(fileExportPath));
+                }
+                client.sendBuildInfo(build);
             } else {
-                savedFile = new File(fileExportPath);
+                /**
+                 * If we do not deploy any artifacts or build-info, the build-info will be written to a file in its
+                 * JSON form.
+                 */
+                File savedFile;
+                if (fileExportPath == null) {
+                    savedFile = new File(getProject().getBuildDir(), "build-info.json");
+                } else {
+                    savedFile = new File(fileExportPath);
+                }
+                Build build = gbie.extract(this, new BuildInfoExtractorSpec());
+                exportBuildInfo(build, savedFile);
             }
-            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
-            exportBuildInfo(build, savedFile);
+        } finally {
+            client.shutdown();
         }
     }
 
