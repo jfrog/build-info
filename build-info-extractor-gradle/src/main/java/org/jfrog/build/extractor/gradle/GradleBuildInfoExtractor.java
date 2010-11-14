@@ -21,6 +21,7 @@ import com.google.common.base.Predicate;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.ResolvedArtifact;
@@ -132,16 +133,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 .buildAgent(buildAgent);
         Set<Project> subProjects = rootProject.getSubprojects();
         if (subProjects.isEmpty()) {
-            Set<Configuration> configurations = rootProject.getConfigurations().getAll();
-            for (Configuration configuration : configurations) {
+            Configuration configuration = getBuildInfoRecorderTask(rootProject).getConfiguration();
+            if (configuration != null) {
                 if ((!configuration.getArtifacts().isEmpty())) {
                     buildInfoBuilder.addModule(extractModule(configuration, rootProject));
                 }
             }
         } else {
             for (Project subProject : subProjects) {
-                Set<Configuration> configurations = subProject.getConfigurations().getAll();
-                for (Configuration configuration : configurations) {
+                Configuration configuration = getBuildInfoRecorderTask(subProject).getConfiguration();
+                if (configuration != null) {
                     if ((!configuration.getArtifacts().isEmpty())) {
                         buildInfoBuilder.addModule(extractModule(configuration, subProject));
                     }
@@ -229,6 +230,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             build.setParentBuildId(parentName);
         }
         return build;
+    }
+
+    private BuildInfoRecorderTask getBuildInfoRecorderTask(Project project) {
+        Set<Task> tasks = project.getTasksByName("buildInfo", false);
+        if (tasks.isEmpty()) {
+            return null;
+        }
+        return (BuildInfoRecorderTask) tasks.iterator().next();
     }
 
     private Properties gatherSysPropInfo() {
