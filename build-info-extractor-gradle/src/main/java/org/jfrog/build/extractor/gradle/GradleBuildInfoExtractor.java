@@ -18,7 +18,9 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -267,7 +269,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         return builder.build();
     }
 
-    private List<Artifact> calculateArtifacts(Configuration configuration, Project project) throws Exception {
+    private List<Artifact> calculateArtifacts(final Configuration configuration, final Project project)
+            throws Exception {
         List<Artifact> artifacts = newArrayList(
                 transform(configuration.getAllArtifacts(), new Function<PublishArtifact, Artifact>() {
                     public Artifact apply(PublishArtifact from) {
@@ -279,7 +282,19 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             File artifactFile = from.getFile();
                             if (artifactFile != null && artifactFile.exists()) {
                                 Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
-                                return new ArtifactBuilder(from.getFile().getName()).type(type)
+                                String pattern = ArtifactoryPluginUtils.getPattern(project);
+                                Map<String, String> extraTokens = Maps.newHashMap();
+                                if (StringUtils.isNotBlank(from.getClassifier())) {
+                                    extraTokens.put("classifier", from.getClassifier());
+                                }
+                                String finalPattern = IvyPatternHelper.substitute(pattern,
+                                        ArtifactoryPluginUtils.getGroupIdPatternByM2Compatible(project),
+                                        project.getName(),
+                                        project.getVersion().toString(), null, from.getType(),
+                                        from.getExtension(), configuration.getName(),
+                                        extraTokens, null);
+                                int index = finalPattern.lastIndexOf('/');
+                                return new ArtifactBuilder(finalPattern.substring(index+1)).type(type)
                                         .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
                             }
                         } catch (Exception e) {

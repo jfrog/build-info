@@ -21,7 +21,6 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.apache.ivy.plugins.resolver.IvyRepResolver;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -120,16 +119,7 @@ public class ArtifactoryPluginUtils {
         if (configuration == null) {
             return deployDetails;
         }
-        String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
-        String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
-        if (StringUtils.isBlank(pattern)) {
-            if ( isM2Compatible(project) ) {
-                pattern = M2_PATTERN;
-            } else {
-                pattern = IBiblioResolver.DEFAULT_PATTERN;
-            }
-        }
-        pattern = pattern.trim();
+        String pattern = getPattern(project);
         Set<PublishArtifact> artifacts = configuration.getAllArtifacts();
         for (PublishArtifact publishArtifact : artifacts) {
             File file = publishArtifact.getFile();
@@ -152,6 +142,7 @@ public class ArtifactoryPluginUtils {
                             revision, null, publishArtifact.getType(),
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
+            String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);            
             artifactBuilder.targetRepository(uploadId);
             Properties matrixParams = getMatrixParams(project);
             artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
@@ -161,20 +152,24 @@ public class ArtifactoryPluginUtils {
         return deployDetails;
     }
 
+    public static String getPattern(Project project) {
+        String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
+        if (StringUtils.isBlank(pattern)) {
+            if (isM2Compatible(project)) {
+                pattern = M2_PATTERN;
+            } else {
+                pattern = IBiblioResolver.DEFAULT_PATTERN;
+            }
+        }
+        return pattern.trim();
+    }
+
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         ConfigurationContainer projectConfigurationContainer = project.getConfigurations();
         Set<Configuration> projectConfigurations = projectConfigurationContainer.getAll();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
-        String pattern = getProperty(ClientIvyProperties.PROP_IVY_IVY_PATTERN, project);
-        if (StringUtils.isBlank(pattern)) {
-            if (isM2Compatible(project)) {
-                pattern = M2_IVY_PATTERN;
-            } else {
-                pattern = IvyRepResolver.DEFAULT_IVYPATTERN;
-            }
-        }
-        pattern = pattern.trim();
+        String pattern = getPattern(project);
         for (Configuration configuration : projectConfigurations) {
             String uploadTaskName = configuration.getUploadTaskName();
             if (StringUtils.isNotBlank(uploadTaskName)) {
@@ -208,7 +203,7 @@ public class ArtifactoryPluginUtils {
         return deployDetails;
     }
 
-    private static String getGroupIdPatternByM2Compatible(Project project) {
+    public static String getGroupIdPatternByM2Compatible(Project project) {
         String groupId = project.getGroup().toString();
         if (isM2Compatible(project)) {
             groupId = groupId.replace(".", "/");
