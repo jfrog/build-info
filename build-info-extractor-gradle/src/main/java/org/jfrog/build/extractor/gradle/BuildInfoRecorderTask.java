@@ -46,6 +46,7 @@ import java.util.Set;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_EXPORT_FILE_PATH;
+import static org.jfrog.build.client.ClientProperties.*;
 
 /**
  * @author Tomer Cohen
@@ -92,6 +93,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
         String uploadArtifactsProperty = getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT, rootProject);
         String fileExportPath = getProperty(PROP_EXPORT_FILE_PATH, rootProject);
         String contextUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, rootProject);
+        log.debug("Context URL for deployment '{}", contextUrl);
         String username = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
         String password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, rootProject);
         if (StringUtils.isBlank(username)) {
@@ -104,6 +106,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         try {
             if (Boolean.parseBoolean(uploadArtifactsProperty)) {
+                log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
                  * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
                  * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
@@ -118,10 +121,13 @@ public class BuildInfoRecorderTask extends ConventionTask {
                     if (Boolean.parseBoolean(deployIvy)) {
                         File ivyFile = new File(uploadingProject.getBuildDir(), "ivy.xml");
                         if (!ivyFile.exists()) {
+                            log.debug("Ivy file not found, force generating one");
                             Set<Task> installTask = uploadingProject.getTasksByName("uploadArchives", false);
                             for (Task task : installTask) {
                                 ((Upload) task).execute();
                             }
+                        } else {
+                            log.debug("Found Ivy file at '{}'", ivyFile.getAbsolutePath());
                         }
                         Set<DeployDetails> details =
                                 ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(uploadingProject);
@@ -132,6 +138,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
                         File mavenPom =
                                 new File(uploadingProject.getRepositories().getMavenPomDir(), "pom-default.xml");
                         if (!mavenPom.exists()) {
+                            log.debug("Maven POM not found, force generating one");
                             Set<Task> installTask = uploadingProject.getTasksByName("install", false);
                             if (installTask == null ||
                                     installTask.isEmpty() &&
@@ -143,6 +150,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
                             }
                         }
                         if (mavenPom.exists()) {
+                            log.debug("Found Maven POM at '{}'", mavenPom.getAbsolutePath());
                             allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(uploadingProject));
                         }
                     }
@@ -153,11 +161,13 @@ public class BuildInfoRecorderTask extends ConventionTask {
                                 .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
                         ArtifactoryPluginUtils
                                 .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS, rootProject));
+                configureProxy(rootProject, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
             String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
             boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
             if (isPublishBuildInfo) {
+                log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
                  * After all the artifacts were uploaded successfully the next task is to send the build-info
                  * object.
@@ -187,6 +197,29 @@ public class BuildInfoRecorderTask extends ConventionTask {
         }
     }
 
+    private void configureProxy(Project project, ArtifactoryBuildInfoClient client) {
+        String proxyHost = ArtifactoryPluginUtils.getProperty(PROP_PROXY_HOST, project);
+        if (StringUtils.isNotBlank(proxyHost)) {
+            log.debug("Found proxy host '{}'", proxyHost);
+            String proxyPort = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PORT, project);
+            if (!StringUtils.isNumeric(proxyPort)) {
+                log.debug("Proxy port is not of numeric value '{}'", proxyPort);
+                return;
+            }
+            String proxyUserName = ArtifactoryPluginUtils.getProperty(PROP_PROXY_USERNAME, project);
+            if (StringUtils.isNotBlank(proxyUserName)) {
+                log.debug("Found proxy user name '{}'", proxyUserName);
+                String proxyPassword = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PASSWORD, project);
+                log.debug("Using proxy password '{}'", proxyPassword);
+                client.setProxyConfiguration(proxyHost, Integer.parseInt(proxyPort), proxyUserName, proxyPassword);
+            } else {
+                log.debug("No proxy user name and password found, using anonymous proxy");
+                client.setProxyConfiguration(proxyHost, Integer.parseInt(proxyPort));
+            }
+        }
+
+    }
+
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> details,
             IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails detail : details) {
@@ -201,6 +234,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
     private void exportBuildInfo(Build build, File toFile) throws IOException {
+        log.debug("Exporting generated build info to '{}'", toFile.getAbsolutePath());
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 }
