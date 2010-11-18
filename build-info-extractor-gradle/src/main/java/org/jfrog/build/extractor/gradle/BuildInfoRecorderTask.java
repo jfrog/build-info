@@ -23,6 +23,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.internal.ConventionTask;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskAction;
@@ -225,7 +226,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
         for (DeployDetails detail : details) {
             String artifactPath = detail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
-                log.info("Skipping the deployment of '" + artifactPath +
+                log.log(LogLevel.LIFECYCLE, "Skipping the deployment of '" + artifactPath +
                         "' due to the defined include-exclude patterns.");
                 continue;
             }
