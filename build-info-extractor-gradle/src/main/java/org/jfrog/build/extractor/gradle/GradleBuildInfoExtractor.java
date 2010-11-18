@@ -282,7 +282,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             File artifactFile = from.getFile();
                             if (artifactFile != null && artifactFile.exists()) {
                                 Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
-                                String pattern = ArtifactoryPluginUtils.getPattern(project);
+                                String pattern = ArtifactoryPluginUtils.getArtifactPattern(project);
                                 Map<String, String> extraTokens = Maps.newHashMap();
                                 if (StringUtils.isNotBlank(from.getClassifier())) {
                                     extraTokens.put("classifier", from.getClassifier());

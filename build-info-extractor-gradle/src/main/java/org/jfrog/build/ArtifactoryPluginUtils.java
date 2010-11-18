@@ -21,6 +21,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.plugins.resolver.IBiblioResolver;
+import org.apache.ivy.plugins.resolver.IvyRepResolver;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -119,7 +120,7 @@ public class ArtifactoryPluginUtils {
         if (configuration == null) {
             return deployDetails;
         }
-        String pattern = getPattern(project);
+        String pattern = getArtifactPattern(project);
         Set<PublishArtifact> artifacts = configuration.getAllArtifacts();
         for (PublishArtifact publishArtifact : artifacts) {
             File file = publishArtifact.getFile();
@@ -152,7 +153,7 @@ public class ArtifactoryPluginUtils {
         return deployDetails;
     }
 
-    public static String getPattern(Project project) {
+    public static String getArtifactPattern(Project project) {
         String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
         if (StringUtils.isBlank(pattern)) {
             if (isM2Compatible(project)) {
@@ -164,12 +165,24 @@ public class ArtifactoryPluginUtils {
         return pattern.trim();
     }
 
+    public static String getIvyDescriptorPattern(Project project) {
+        String pattern = getProperty(ClientIvyProperties.PROP_IVY_IVY_PATTERN, project);
+        if (StringUtils.isNotBlank(pattern)) {
+            return pattern.trim();
+        }
+        if (isM2Compatible(project)) {
+            return M2_IVY_PATTERN;
+        } else {
+            return IvyRepResolver.DEFAULT_IVYPATTERN;
+        }
+    }
+
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         ConfigurationContainer projectConfigurationContainer = project.getConfigurations();
         Set<Configuration> projectConfigurations = projectConfigurationContainer.getAll();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
-        String pattern = getPattern(project);
+        String pattern = getIvyDescriptorPattern(project);
         for (Configuration configuration : projectConfigurations) {
             String uploadTaskName = configuration.getUploadTaskName();
             if (StringUtils.isNotBlank(uploadTaskName)) {
