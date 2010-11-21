@@ -44,6 +44,8 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -160,7 +162,15 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
                                 allProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
 
+                        IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns();
                         for (DeployDetails artifact : deployableArtifacts) {
+                            String artifactPath = artifact.getArtifactPath();
+                            if (PatternMatcher.pathConflicts(artifactPath, includeExcludePatterns)) {
+                                logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" +
+                                        artifactPath + "' due to the defined include-exclude patterns.");
+                                continue;
+                            }
+
                             try {
                                 client.deployArtifact(artifact);
                             } catch (IOException e) {
@@ -546,6 +556,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     private boolean isPublishArtifacts() {
         return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
+    }
+
+    private IncludeExcludePatterns getArtifactDeploymentPatterns() {
+        return new IncludeExcludePatterns(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS),
+                allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS));
     }
 
     private boolean isPublishBuildInfo() {

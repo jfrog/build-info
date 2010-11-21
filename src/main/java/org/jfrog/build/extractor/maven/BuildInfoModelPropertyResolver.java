@@ -6,7 +6,13 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -14,6 +20,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Map;
 import java.util.Properties;
 
@@ -68,11 +75,13 @@ public class BuildInfoModelPropertyResolver {
             runLicenseChecks = Boolean.parseBoolean(runChecks);
         }
         LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-        String notificationRecipients = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+        String notificationRecipients =
+                buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
-        String includePublishedArtifacts = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
+        String includePublishedArtifacts =
+                buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
         if (StringUtils.isNotBlank(includePublishedArtifacts)) {
             licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
         }
@@ -85,6 +94,22 @@ public class BuildInfoModelPropertyResolver {
             licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
         }
         builder.licenseControl(licenseControl);
+        BuildRetention buildRetention = new BuildRetention();
+        String buildRetentionDays = buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS);
+        if (StringUtils.isNotBlank(buildRetentionDays)) {
+            buildRetention.setCount(Integer.parseInt(buildRetentionDays));
+        }
+        String buildRetentionMinimumDays =
+                buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
+        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
+            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
+            if (minimumDays > -1) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                buildRetention.setMinimumBuildDate(calendar.getTime());
+            }
+        }
+        builder.buildRetention(buildRetention);
         resolveArtifactoryPrincipalProperty(allProps, builder);
         return builder;
     }
