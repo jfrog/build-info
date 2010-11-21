@@ -18,18 +18,23 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.*;
+import org.gradle.api.Task;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.ResolvedConfiguration;
+import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.util.GUtil;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.*;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -46,7 +51,12 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -123,9 +133,23 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 .durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate).number(buildNumber)
                 .buildAgent(buildAgent);
-        for (Project subProject : rootProject.getSubprojects()) {
-            BuildInfoRecorderTask birTask = (BuildInfoRecorderTask) subProject.getTasks().getByName("buildInfo");
-            buildInfoBuilder.addModule(extractModule(birTask.getConfiguration(), subProject));
+        Set<Project> subProjects = rootProject.getSubprojects();
+        if (subProjects.isEmpty()) {
+            Configuration configuration = getBuildInfoRecorderTask(rootProject).getConfiguration();
+            if (configuration != null) {
+                if ((!configuration.getArtifacts().isEmpty())) {
+                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
+                }
+            }
+        } else {
+            for (Project subProject : subProjects) {
+                Configuration configuration = getBuildInfoRecorderTask(subProject).getConfiguration();
+                if (configuration != null) {
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
+                    }
+                }
+            }
         }
         String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
         String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
@@ -153,28 +177,50 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             buildInfoBuilder.vcsRevision(vcsRevision);
         }
         boolean runLicenseChecks = true;
-        String runChecks = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS, rootProject);
+        String runChecks =
+                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS, rootProject);
         if (StringUtils.isNotBlank(runChecks)) {
             runLicenseChecks = Boolean.parseBoolean(runChecks);
         }
         LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-        String notificationRecipients = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS, rootProject);
+        String notificationRecipients = ArtifactoryPluginUtils
+                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS, rootProject);
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
-        String includePublishedArtifacts = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS, rootProject);
+        String includePublishedArtifacts = ArtifactoryPluginUtils
+                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS, rootProject);
         if (StringUtils.isNotBlank(includePublishedArtifacts)) {
             licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
         }
-        String scopes = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES, rootProject);
+        String scopes =
+                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES, rootProject);
         if (StringUtils.isNotBlank(scopes)) {
             licenseControl.setScopesList(scopes);
         }
-        String autoDiscover = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER, rootProject);
+        String autoDiscover =
+                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER, rootProject);
         if (StringUtils.isNotBlank(autoDiscover)) {
             licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
         }
         buildInfoBuilder.licenseControl(licenseControl);
+        BuildRetention buildRetention = new BuildRetention();
+        String buildRetentionDays =
+                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS, rootProject);
+        if (StringUtils.isNotBlank(buildRetentionDays)) {
+            buildRetention.setCount(Integer.parseInt(buildRetentionDays));
+        }
+        String buildRetentionMinimumDays =
+                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE, rootProject);
+        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
+            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
+            if (minimumDays > -1) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                buildRetention.setMinimumBuildDate(calendar.getTime());
+            }
+        }
+        buildInfoBuilder.buildRetention(buildRetention);
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
         properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
@@ -186,6 +232,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             build.setParentBuildId(parentName);
         }
         return build;
+    }
+
+    private BuildInfoRecorderTask getBuildInfoRecorderTask(Project project) {
+        Set<Task> tasks = project.getTasksByName("buildInfo", false);
+        if (tasks.isEmpty()) {
+            return null;
+        }
+        return (BuildInfoRecorderTask) tasks.iterator().next();
     }
 
     private Properties gatherSysPropInfo() {
@@ -215,7 +269,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         return builder.build();
     }
 
-    private List<Artifact> calculateArtifacts(Configuration configuration, Project project) throws Exception {
+    private List<Artifact> calculateArtifacts(final Configuration configuration, final Project project)
+            throws Exception {
         List<Artifact> artifacts = newArrayList(
                 transform(configuration.getAllArtifacts(), new Function<PublishArtifact, Artifact>() {
                     public Artifact apply(PublishArtifact from) {
@@ -227,7 +282,19 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             File artifactFile = from.getFile();
                             if (artifactFile != null && artifactFile.exists()) {
                                 Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
-                                return new ArtifactBuilder(from.getFile().getName()).type(type)
+                                String pattern = ArtifactoryPluginUtils.getArtifactPattern(project);
+                                Map<String, String> extraTokens = Maps.newHashMap();
+                                if (StringUtils.isNotBlank(from.getClassifier())) {
+                                    extraTokens.put("classifier", from.getClassifier());
+                                }
+                                String finalPattern = IvyPatternHelper.substitute(pattern,
+                                        ArtifactoryPluginUtils.getGroupIdPatternByM2Compatible(project),
+                                        project.getName(),
+                                        project.getVersion().toString(), null, from.getType(),
+                                        from.getExtension(), configuration.getName(),
+                                        extraTokens, null);
+                                int index = finalPattern.lastIndexOf('/');
+                                return new ArtifactBuilder(finalPattern.substring(index+1)).type(type)
                                         .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
                             }
                         } catch (Exception e) {

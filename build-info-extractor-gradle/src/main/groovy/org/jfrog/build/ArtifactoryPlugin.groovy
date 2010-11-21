@@ -18,20 +18,17 @@ package org.jfrog.build
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
+import org.gradle.BuildResult
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.PluginContainer
 import org.gradle.api.specs.Spec
-import org.gradle.api.tasks.Upload
 import org.gradle.api.tasks.bundling.Jar
-import org.jfrog.build.api.BuildInfoProperties
-import org.jfrog.build.client.ClientGradleProperties
-import org.jfrog.build.client.ClientIvyProperties
 import org.jfrog.build.client.ClientProperties
-import org.jfrog.build.client.DeploymentUrlUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
 
@@ -47,14 +44,18 @@ class ArtifactoryPlugin implements Plugin<Project> {
     while (artifactoryUrl.endsWith("/")) {
       artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
     }
-    def downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project) ?: 'libs'
-    def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
-    log.debug("Artifactory URL: $artifactoryUrl")
-    log.debug("Artifactory Download ID: $downloadId")
-    log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
-    // add artifactory url to the list of repositories
-    project.repositories {
-      mavenRepo urls: [artifactoryDownloadUrl]
+    String downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
+    if (StringUtils.isNotBlank(downloadId)) {
+      def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
+      log.debug("Artifactory URL: $artifactoryUrl")
+      log.debug("Artifactory Download ID: $downloadId")
+      log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
+      // add artifactory url to the list of repositories
+      project.repositories {
+        mavenRepo urls: [artifactoryDownloadUrl]
+      }
+    } else {
+      log.debug("No download repository was defined")
     }
 
     log.debug("Configuring BuildInfo task")
@@ -96,101 +97,21 @@ class ArtifactoryPlugin implements Plugin<Project> {
       }
 
       log.debug("Configure Upload URL to ${uploadUrl}")
-      def user = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, project) ?: "anonymous"
-      def password = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, project) ?: ""
-      def host = new URI(uploadUrl).getHost()
-      uploadUrl = appendProperties(uploadUrl, project)
-      project.tasks.withType(Upload.class).allObjects { uploadTask ->
-        project.configure(uploadTask) {
-          boolean deployIvy
-          def deployIvyProp = ArtifactoryPluginUtils.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project);
-          if (deployIvyProp != null) {
-            deployIvy = Boolean.parseBoolean(deployIvyProp);
-          } else {
-            deployIvy = true
-          }
-          if (deployIvy) {
-            log.debug "Configuring Ivy repository"
-            repositories {
-              add(new org.apache.ivy.plugins.resolver.URLResolver()) {
-                org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials("Artifactory Realm", host, user, password)
-                name = 'artifactory'
-                addIvyPattern "$uploadUrl/[organisation]/[module]/[revision]/ivy-[revision].xml"
-                addArtifactPattern "$uploadUrl/[organisation]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]"
-                descriptor = 'optional'
-                checkmodified = true
-                m2compatible = true
-              }
-            }
-          }
-          boolean deployMaven
-          def deployMavenProp = ArtifactoryPluginUtils.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project);
-          if (deployMavenProp != null) {
-            deployMaven = Boolean.parseBoolean(deployMavenProp);
-          } else {
-            deployMaven = true
-          }
-          if (deployMaven) {
-            log.debug "Configuring Maven repository"
-            repositories.mavenDeployer {
-              repository(url: uploadUrl) {
-                authentication(userName: user, password: password)
-              }
-            }
-          }
-        }
-      }
-    } else {
-      if (project.getRootProject().equals(project)) {
-        log.info "Upload ID was not declared, no actual deployment will be performed."
-      }
-    }
-    project.getGradle().addBuildListener(new BuildAdapter() {
-      def void projectsEvaluated(Gradle gradle) {
-        String buildStart = System.getProperty("build.start");
-        if (!buildStart) {
-          System.setProperty("build.start", Long.toString(System.currentTimeMillis()));
-        }
-      }
-    })
-  }
 
-  String appendProperties(String uploadUrl, Project project) {
-    Properties props = new Properties()
-    props.putAll(System.getProperties())
-    String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project)
-    if (StringUtils.isBlank(System.getProperty("timestamp"))) {
-      System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()))
-    }
-    props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""))
-    if (StringUtils.isNotBlank(buildNumber)) {
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber)
-    }
-    String buildName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NAME, project)
-    if (StringUtils.isNotBlank(buildName)) {
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildName)
-    } else {
-      Project rootProject = project.getRootProject();
-      props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), rootProject.getName().replace(' ', '-'))
-    }
-    String buildParentNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project)
-    if (StringUtils.isNotBlank(buildParentNumber)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentNumber)
-    String buildParentName = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project)
-    if (StringUtils.isNotBlank(buildParentName)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX), buildParentName)
-    String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project)
-    if (StringUtils.isNotBlank(vcsRevision)) props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION, BuildInfoProperties.BUILD_INFO_PREFIX), vcsRevision)
-    Map properties = project.getProperties()
-    Set<String> keys = properties.keySet();
-    for (String key: keys) {
-      if (key != null) {
-        Object value = properties.get(key)
-        if (value != null) {
-          value = value.toString()
-          props.put(key, value)
+      project.getGradle().addBuildListener(new BuildAdapter() {
+        def void projectsEvaluated(Gradle gradle) {
+          String buildStart = System.getProperty("build.start");
+          if (!buildStart) {
+            System.setProperty("build.start", Long.toString(System.currentTimeMillis()));
+          }
         }
-      }
+
+        @Override
+        void buildFinished(BuildResult result) {
+          super.buildFinished(result)
+        }
+      })
     }
-    return DeploymentUrlUtils.getDeploymentUrl(uploadUrl, props)
   }
 
   private void configureBuildInfoTask(Project project) {
@@ -202,10 +123,11 @@ class ArtifactoryPlugin implements Plugin<Project> {
       (project.getTasks().withType(Jar)).all
     })
 
-    def archivesConfiguration = project.getConfigurations().findByName(Dependency.DEFAULT_CONFIGURATION)
+    Configuration archivesConfiguration = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION)
     if (archivesConfiguration != null) {
       buildInfo.setConfiguration(archivesConfiguration)
     }
     buildInfo.setDescription("Generates build info from build artifacts");
   }
 }
+

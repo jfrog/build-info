@@ -29,7 +29,7 @@
     <artifactId>build-info-parent</artifactId>
     <packaging>pom</packaging>
     <name>JFrog Build-Info</name>
-    <version>1.4.6</version>
+    <version>1.4.7</version>
     <description>Common API for collecting and sending CI build information to Artifactory</description>
     <url>http://wiki.jfrog.org/confluence/display/RTF/Build+Integration</url>
 
@@ -44,7 +44,15 @@
         <module>build-info-extractor</module>
     </modules>
 
-    <properties>
+	<licenses>
+        <license>
+            <name>The Apache Software License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>rjo</distribution>
+        </license>
+    </licenses>
+
+	<properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -53,17 +61,17 @@
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-api</artifactId>
-                <version>1.4.6</version>
+                <version>1.4.7</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-client</artifactId>
-                <version>1.4.6</version>
+                <version>1.4.7</version>
             </dependency>
             <dependency>
                 <groupId>org.jfrog.buildinfo</groupId>
                 <artifactId>build-info-extractor</artifactId>
-                <version>1.4.6</version>
+                <version>1.4.7</version>
             </dependency>
 
             <dependency>

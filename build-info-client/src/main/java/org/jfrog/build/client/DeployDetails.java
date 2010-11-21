@@ -146,4 +146,21 @@ public class DeployDetails {
     public Map<String, String> getProperties() {
         return properties;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DeployDetails details = (DeployDetails) o;
+        return artifactPath.equals(details.artifactPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return artifactPath.hashCode();
+    }
 }
