@@ -6,8 +6,8 @@ initscript {
   }
   dependencies {
     classpath ":build-info-extractor-gradle:1.0-SNAPSHOT"
-    classpath ":build-info-client:1.4.7"
-    classpath ":build-info-api:1.4.7"
+    classpath ":build-info-client:1.4.x-SNAPSHOT"
+    classpath ":build-info-api:1.4.x-SNAPSHOT"
     classpath ":build-info-extractor:1.4.7"
     classpath "commons-lang:commons-lang:2.4"
     classpath "com.google.guava:guava:r06"
