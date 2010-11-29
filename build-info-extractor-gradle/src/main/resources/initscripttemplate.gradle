@@ -5,7 +5,7 @@ initscript {
     flatDir(dirs: file('${pluginLibDir}'))
   }
   dependencies {
-    classpath ":build-info-extractor-gradle:1.0.5"
+    classpath ":build-info-extractor-gradle:1.0-SNAPSHOT"
     classpath ":build-info-client:1.4.7"
     classpath ":build-info-api:1.4.7"
     classpath ":build-info-extractor:1.4.7"
@@ -21,7 +21,7 @@ addListener(new PropertyListener())
 class PropertyListener extends BuildAdapter implements BuildListener {
   def void settingsEvaluated(Settings settings) {
     Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
-    projProps.putAll([${allBuildInfoProperties}])
+    projProps.putAll([$ {allBuildInfoProperties}])
   }
 }
 addListener(new ArtifactoryPlugin())
