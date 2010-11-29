@@ -60,7 +60,7 @@ task jarAll(type: Jar, dependsOn: jar) {
       jarjar(jarfile: archivePath) {
         zipfileset(src: jar.archivePath)
         configurations.compile.files.findAll {file ->
-          ['build-info', 'guava', 'commons-lang', 'commons-logging', 'httpclient', 'httpcore', 'jackson-mapper-asl', 'jackson-core-asl'].any { file.name.startsWith(it) && ['ivy'].every {!file.name.startsWith(it)}}
+          ['build-info', 'guava', 'commons-logging', 'httpclient', 'httpcore', 'jackson-mapper-asl', 'jackson-core-asl'].any { file.name.startsWith(it) && ['ivy'].every {!file.name.startsWith(it)}}
         }.each {jarjarFile ->
           zipfileset(src: jarjarFile)
         }
