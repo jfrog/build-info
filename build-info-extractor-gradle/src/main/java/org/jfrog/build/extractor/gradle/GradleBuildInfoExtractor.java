@@ -104,7 +104,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
 
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
         Project rootProject = buildInfoTask.getRootProject();
-        long startTime = Long.parseLong(System.getProperty("build.start"));
+        long startTime = Long.parseLong(ArtifactoryPluginUtils.getProperty("build.start", rootProject));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
         if (StringUtils.isBlank(buildName)) {
             buildName = rootProject.getName();

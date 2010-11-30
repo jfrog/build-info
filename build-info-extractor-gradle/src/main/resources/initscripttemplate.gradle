@@ -21,7 +21,7 @@ addListener(new PropertyListener())
 class PropertyListener extends BuildAdapter implements BuildListener {
   def void settingsEvaluated(Settings settings) {
     Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
-    projProps.putAll([$ {allBuildInfoProperties}])
+    projProps.putAll([${allBuildInfoProperties}])
   }
 }
 addListener(new ArtifactoryPlugin())
@@ -43,7 +43,7 @@ class ArtifactoryPlugin extends BuildAdapter {
     return val
   }
 
-  def void projectsLoaded(Gradle gradle) {
+  def void projectsEvaluated(Gradle gradle) {
     def repoId = 'libs'
     def artifactoryUrl = findBestProperty(gradle, 'artifactory.contextUrl') {
       if (gradle.rootProject.hasProperty('sourceURI')) {
@@ -58,6 +58,7 @@ class ArtifactoryPlugin extends BuildAdapter {
         'http://gradle.artifactoryonline.com/gradle'
       }
     }
+    gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))
     repoId = findBestProperty(gradle, 'artifactory.resolve.repoKey') { repoId }
 
     gradle.rootProject.logger.debug("artifactory.contextUrl: $artifactoryUrl")
