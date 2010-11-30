@@ -68,6 +68,14 @@ class ArtifactoryPlugin extends BuildAdapter {
     gradle.rootProject.logger.debug("Using $repoPluginsUrl for plugin repo URL")
 
     //All the tango above for this one - it configures maven repo for the project
+    Set<org.apache.ivy.plugins.resolver.DependencyResolver> allRepositories = gradle.rootProject.repositories.getAll()
+    boolean addRepo = true
+    for(org.apache.ivy.plugins.resolver.DependencyResolver resolver : allRepositories){
+      if(resolver.name.equals(repoPluginsUrl)){
+        addRepo=false
+      }
+    }
+    if(addRepo)
     gradle.rootProject.repositories {
       mavenRepo urls: [repoPluginsUrl]
     }

@@ -135,18 +135,24 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 .buildAgent(buildAgent);
         Set<Project> subProjects = rootProject.getSubprojects();
         if (subProjects.isEmpty()) {
-            Configuration configuration = getBuildInfoRecorderTask(rootProject).getConfiguration();
-            if (configuration != null) {
-                if ((!configuration.getArtifacts().isEmpty())) {
-                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
+            BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(rootProject);
+            if (buildInfoRecorderTask != null) {
+                Configuration configuration = buildInfoRecorderTask.getConfiguration();
+                if (configuration != null) {
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, rootProject));
+                    }
                 }
             }
         } else {
             for (Project subProject : subProjects) {
-                Configuration configuration = getBuildInfoRecorderTask(subProject).getConfiguration();
-                if (configuration != null) {
-                    if ((!configuration.getArtifacts().isEmpty())) {
-                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
+                BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(subProject);
+                if (buildInfoRecorderTask != null) {
+                    Configuration configuration = buildInfoRecorderTask.getConfiguration();
+                    if (configuration != null) {
+                        if ((!configuration.getArtifacts().isEmpty())) {
+                            buildInfoBuilder.addModule(extractModule(configuration, subProject));
+                        }
                     }
                 }
             }
@@ -294,7 +300,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                                         from.getExtension(), configuration.getName(),
                                         extraTokens, null);
                                 int index = finalPattern.lastIndexOf('/');
-                                return new ArtifactBuilder(finalPattern.substring(index+1)).type(type)
+                                return new ArtifactBuilder(finalPattern.substring(index + 1)).type(type)
                                         .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
                             }
                         } catch (Exception e) {
