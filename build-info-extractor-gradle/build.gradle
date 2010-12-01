@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import org.jfrog.build.Version
+version = new Version(project)
+
 configurations{
   tools
 }
@@ -27,7 +31,6 @@ configurations{
 //}
 
 group = 'org.jfrog.buildinfo'
-version = '1.0-SNAPSHOT'
 apply {
   apply plugin: 'java'
   apply plugin: 'groovy'
@@ -72,4 +75,3 @@ task jarAll(type: Jar, dependsOn: jar) {
 artifacts {
   archives jarAll
 }
-
