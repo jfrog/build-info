@@ -5,10 +5,10 @@ initscript {
     flatDir(dirs: file('${pluginLibDir}'))
   }
   dependencies {
-    classpath ":build-info-extractor-gradle:1.0.5"
-    classpath ":build-info-client:1.4.7"
-    classpath ":build-info-api:1.4.7"
-    classpath ":build-info-extractor:1.4.7"
+    classpath ":build-info-extractor-gradle:@fullVersion@"
+    classpath ":build-info-client:@buildInfoVersion@"
+    classpath ":build-info-api:@buildInfoVersion@"
+    classpath ":build-info-extractor:@buildInfoVersion@"
     classpath "commons-lang:commons-lang:2.4"
     classpath "com.google.guava:guava:r06"
     classpath "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
@@ -43,7 +43,7 @@ class ArtifactoryPlugin extends BuildAdapter {
     return val
   }
 
-  def void projectsLoaded(Gradle gradle) {
+  def void projectsEvaluated(Gradle gradle) {
     def repoId = 'libs'
     def artifactoryUrl = findBestProperty(gradle, 'artifactory.contextUrl') {
       if (gradle.rootProject.hasProperty('sourceURI')) {
@@ -58,6 +58,7 @@ class ArtifactoryPlugin extends BuildAdapter {
         'http://gradle.artifactoryonline.com/gradle'
       }
     }
+    gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))
     repoId = findBestProperty(gradle, 'artifactory.resolve.repoKey') { repoId }
 
     gradle.rootProject.logger.debug("artifactory.contextUrl: $artifactoryUrl")
@@ -67,6 +68,14 @@ class ArtifactoryPlugin extends BuildAdapter {
     gradle.rootProject.logger.debug("Using $repoPluginsUrl for plugin repo URL")
 
     //All the tango above for this one - it configures maven repo for the project
+    Set<org.apache.ivy.plugins.resolver.DependencyResolver> allRepositories = gradle.rootProject.repositories.getAll()
+    boolean addRepo = true
+    for(org.apache.ivy.plugins.resolver.DependencyResolver resolver : allRepositories){
+      if(resolver.name.equals(repoPluginsUrl)){
+        addRepo=false
+      }
+    }
+    if(addRepo)
     gradle.rootProject.repositories {
       mavenRepo urls: [repoPluginsUrl]
     }

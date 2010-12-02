@@ -46,14 +46,14 @@
                     <field-name>logger</field-name>
                 </requirement>
                 <requirement>
-                    <role>org.jfrog.build.extractor.maven.ClientPropertyResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>clientPropertyResolver</field-name>
-                </requirement>
-                <requirement>
                     <role>org.jfrog.build.extractor.maven.BuildInfoModelPropertyResolver</role>
                     <role-hint>default</role-hint>
                     <field-name>buildInfoModelPropertyResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.BuildDeploymentHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>buildDeploymentHelper</field-name>
                 </requirement>
             </requirements>
         </component>
@@ -80,6 +80,24 @@
                     <role>org.codehaus.plexus.logging.Logger</role>
                     <role-hint>default</role-hint>
                     <field-name>logger</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <component>
+            <role>org.jfrog.build.extractor.maven.BuildDeploymentHelper</role>
+            <implementation>org.jfrog.build.extractor.maven.BuildDeploymentHelper</implementation>
+            <role-hint>default</role-hint>
+            <isolated-realm>false</isolated-realm>
+            <requirements>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.ClientPropertyResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>clientPropertyResolver</field-name>
                 </requirement>
             </requirements>
         </component>
