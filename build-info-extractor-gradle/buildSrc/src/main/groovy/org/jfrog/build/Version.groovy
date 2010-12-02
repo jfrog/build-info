@@ -11,11 +11,12 @@ class Version {
 
     def Version(Project project) {
         this.versionNumber = project.nextVersion
+	this.release = project.isRelease
         File timestampFile = new File(project.buildDir, 'timestamp.txt')
         if (timestampFile.isFile()) {
             boolean uptodate = true
             def modified = timestampFile.lastModified()
-            project.project(':core').fileTree('src/main').visit {fte ->
+            project.fileTree('src/main').visit {fte ->
                 if (fte.file.isFile() && fte.lastModified > modified) {
                     uptodate = false
                     fte.stopVisiting()
@@ -29,7 +30,9 @@ class Version {
             timestampFile.createNewFile()
         }
         buildTime = new Date(timestampFile.lastModified())
-
+        if (release)
+            this.versionNumber += "-" + getTimestamp()
+/*
         project.gradle.taskGraph.whenReady {graph ->
             if (graph.hasTask(':releaseVersion')) {
                 release = true
@@ -38,6 +41,7 @@ class Version {
                 release = false
             }
         }
+*/
     }
 
     String toString() {
@@ -53,13 +57,5 @@ class Version {
             throw new GradleException("Can't determine whether this is a release build before the task graph is populated")
         }
         return release
-    }
-
-    String getDistributionUrl() {
-        if (release) {
-            'https://dav.codehaus.org/dist/gradle'
-        } else {
-            'https://dav.codehaus.org/snapshots.dist/gradle'
-        }
     }
 }

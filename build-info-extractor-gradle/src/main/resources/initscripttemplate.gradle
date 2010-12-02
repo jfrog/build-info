@@ -5,10 +5,10 @@ initscript {
     flatDir(dirs: file('${pluginLibDir}'))
   }
   dependencies {
-    classpath ":build-info-extractor-gradle:1.0-SNAPSHOT"
-    classpath ":build-info-client:1.4.x-SNAPSHOT"
-    classpath ":build-info-api:1.4.x-SNAPSHOT"
-    classpath ":build-info-extractor:1.4.x-SNAPSHOT"
+    classpath ":build-info-extractor-gradle:@fullVersion@"
+    classpath ":build-info-client:@buildInfoVersion@"
+    classpath ":build-info-api:@buildInfoVersion@"
+    classpath ":build-info-extractor:@buildInfoVersion@"
     classpath "commons-lang:commons-lang:2.4"
     classpath "com.google.guava:guava:r06"
     classpath "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
