@@ -24,7 +24,7 @@
         <relativePath>../build-info-parent</relativePath>
     </parent>
     <artifactId>build-info-extractor-maven3</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>jar</packaging>
     <name>JFrog Build-Info Maven 3 Extractor</name>
     <description>JFrog Build-Info Maven 3 Extractor</description>
