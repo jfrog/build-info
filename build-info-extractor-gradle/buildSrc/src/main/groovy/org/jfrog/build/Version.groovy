@@ -11,7 +11,7 @@ class Version {
 
     def Version(Project project) {
         this.versionNumber = project.nextVersion
-	this.release = project.isRelease
+	this.release = project.getProperties().get("isRelease").toString()
         File timestampFile = new File(project.buildDir, 'timestamp.txt')
         if (timestampFile.isFile()) {
             boolean uptodate = true
