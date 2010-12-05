@@ -42,7 +42,6 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Set;
 
@@ -237,16 +236,6 @@ public class BuildInfoRecorderTask extends ConventionTask {
 
     private void exportBuildInfo(Build build, File toFile) throws IOException {
         log.debug("Exporting generated build info to '{}'", toFile.getAbsolutePath());
-        try {
-            BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
-        } catch (FileNotFoundException fnfe) {
-            log.error("NOT FOUND", fnfe);
-            log.error("FILE EXISTS: " + toFile.exists());
-            if (toFile.exists()) {
-                log.error("CAN EXECUTE FILE: " + toFile.canExecute());
-                log.error("CAN READ FILE: " + toFile.canRead());
-                log.error("CAN WRITE FILE: " + toFile.canWrite());
-            }
-        }
+        BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 }
