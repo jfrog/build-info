@@ -20,39 +20,40 @@ import org.apache.tools.ant.filters.ReplaceTokens
 version = new Version(project)
 buildInfoVersion='1.4.x-SNAPSHOT'
 
+description = 'JFrog Build-Info Gradle Extractor'
+
+apply plugin: 'groovy'
+
 configurations{
   tools
 }
 
-group = 'org.jfrog.buildinfo'
-apply {
-  apply plugin: 'java'
-  apply plugin: 'groovy'
-  apply plugin: 'maven'
-  apply plugin: 'idea'
-}
-
 dependencies {
-  compile gradleApi()
-  tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
-  compile group: 'com.google.guava', name: 'guava', version: 'r06'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0'
-  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
-  compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.5.1'
-  compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.5.1'
-  compile group: 'com.google.code.findbugs', name: 'jsr305', version: '1.3.7'
-  compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
-  compile group: 'org.jfrog.buildinfo', name: 'build-info-api', version: buildInfoVersion
-  compile group: 'org.jfrog.buildinfo', name: 'build-info-client', version: buildInfoVersion
-  compile group: 'org.jfrog.buildinfo', name: 'build-info-extractor', version: buildInfoVersion
-  compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
-  groovy localGroovy()
+    compile gradleApi()
+    tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+    compile project(':api')
+    compile project(':client')
+    compile project(':extractor')
+    compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided: true
+    }
+    compile("com.google.code.findbugs:jsr305:1.3.9") {
+        provided: true
+    }
+    compile group: 'com.google.guava', name: 'guava', version: 'r06'
+    compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0'
+    compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
+    compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.5.1'
+    compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.5.1'
+    compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
+    compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
+    groovy localGroovy()
 }
 
-processResources { 
-    from(sourceSets.main.resources.srcDirs) { 
-        include '**/*template.gradle' 
-        filter(ReplaceTokens, tokens: ['fullVersion': version.toString(), 'buildInfoVersion':buildInfoVersion]) 
+processResources {
+    from(sourceSets.main.resources.srcDirs) {
+        include '**/*template.gradle'
+        filter(ReplaceTokens, tokens: ['fullVersion': version.toString(), 'buildInfoVersion':buildInfoVersion])
     }
 }
 

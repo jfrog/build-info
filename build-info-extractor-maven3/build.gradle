@@ -1,26 +1,16 @@
-/*
- * Copyright (C) 2010 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+description = 'JFrog Build-Info Maven 3 Extractor'
 
 dependencies {
-  compile project(':build-info-api')
-  compile project(':build-info-client')
-  compile project(':build-info-extractor')
-  compile group: 'org.codehaus.plexus', name: 'plexus-component-annotations', version: '1.5.4'
-  compile group: 'org.apache.maven', name: 'maven-core', version: '3.0-beta-3'
-  compile group: 'org.sonatype.aether', name: 'aether-api', version: '1.2'
-  testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
-  testCompile group: 'org.easymock', name: 'easymockclassextension', version: '2.5.2'
+    compile project(':api')
+    compile project(':client')
+    compile project(':extractor')
+    compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided: true
+    }
+    compile("org.apache.maven:maven-core:3.0") {
+        provided: true
+    }
+
+    testCompile "org.easymock:easymockclassextension:2.5.2"
 }
+
