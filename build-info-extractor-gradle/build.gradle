@@ -18,7 +18,6 @@ import org.jfrog.build.Version
 import org.apache.tools.ant.filters.ReplaceTokens
 
 version = new Version(project)
-buildInfoVersion='1.4.x-SNAPSHOT'
 
 description = 'JFrog Build-Info Gradle Extractor'
 
@@ -53,7 +52,7 @@ dependencies {
 processResources {
     from(sourceSets.main.resources.srcDirs) {
         include '**/*template.gradle'
-        filter(ReplaceTokens, tokens: ['fullVersion': version.toString(), 'buildInfoVersion':buildInfoVersion])
+        filter(ReplaceTokens, tokens: ['fullVersion': version.toString(), 'buildInfoVersion': buildInfoVersion.toString()])
     }
 }
 

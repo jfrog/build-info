@@ -28,6 +28,9 @@ rootProject.children.each {project ->
     project.projectDir = new File(settingsDir, "build-info-$fileBaseName")
     if (!project.projectDir.isDirectory()) {
         project.projectDir = new File(settingsDir, "build-info-extractor-$fileBaseName")
+        //project.setProperty('extractor','true')
+    } else {
+        //project.setProperty('extractor','false')
     }
     //project.buildFileName = "${fileBaseName}.gradle"
     assert project.projectDir.isDirectory()
