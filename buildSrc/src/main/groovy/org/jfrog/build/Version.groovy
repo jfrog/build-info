@@ -9,13 +9,13 @@ class Version {
     Date buildTime
     Boolean release = null
 
-    def Version(Project project, String versionNumber, boolean isRelease) {
-        this(project, versionNumber, isRelease, null)
+    def Version(Project project) {
+        this(project, null)
     }
 
-    def Version(Project project, String versionNumber, boolean isRelease, List<String> subProjects) {
-        this.versionNumber = versionNumber
-        this.release = isRelease
+    def Version(Project project, List<String> subProjects) {
+        this.versionNumber = project.getProperty("${project.name}-version")
+        this.release = Boolean.valueOf(project.getProperty("${project.name}-release"))
         File timestampFile = new File(project.buildDir, 'timestamp.txt')
         if (timestampFile.isFile()) {
             boolean uptodate = true
