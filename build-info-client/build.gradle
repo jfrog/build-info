@@ -1,8 +1,0 @@
-
-description = 'JFrog Build-Info Client'
-
-dependencies {
-    compile project(':api')
-    compile "org.apache.httpcomponents:httpclient:4.0"
-    compile "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
-}

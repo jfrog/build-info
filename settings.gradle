@@ -17,22 +17,13 @@
 include 'api'
 include 'client'
 include 'extractor'
-include 'gradle'
-include 'ivy'
-include 'maven3'
+include 'extractor-gradle'
+include 'extractor-ivy'
+include 'extractor-maven3'
 
 rootProject.name = 'build-info'
 
 rootProject.children.each {project ->
-    String fileBaseName = project.name.replaceAll("\\p{Upper}") { "-${it.toLowerCase()}" }
-    project.projectDir = new File(settingsDir, "build-info-$fileBaseName")
-    if (!project.projectDir.isDirectory()) {
-        project.projectDir = new File(settingsDir, "build-info-extractor-$fileBaseName")
-        //project.setProperty('extractor','true')
-    } else {
-        //project.setProperty('extractor','false')
-    }
-    //project.buildFileName = "${fileBaseName}.gradle"
+    project.projectDir = new File(settingsDir, "build-info-${project.name}")
     assert project.projectDir.isDirectory()
-    assert project.buildFile.isFile()
 }
