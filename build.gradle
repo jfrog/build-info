@@ -19,6 +19,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
 version='2'
+baseProjectNames = ['api','client','extractor']
 
 allprojects {
     apply plugin: 'idea'
@@ -26,11 +27,7 @@ allprojects {
 }
 
 def baseProjects() {
-    subprojects.findAll { !it.name.startsWith('extractor-') }
-}
-
-def extractorProjects() {
-    subprojects.findAll { it.name.startsWith('extractor-') }
+    subprojects.findAll { p -> baseProjectNames.contains(p.name) }
 }
 
 subprojects {
@@ -38,7 +35,7 @@ subprojects {
     apply plugin: 'java'
     sourceCompatibility = 1.5
     targetCompatibility = 1.5
-    buildInfoVersion = new Version(rootProject)
+    buildInfoVersion = new Version(rootProject, '1.4.9', false, baseProjectNames)
     artifactId = "build-info-$name"
 
     dependencies {
@@ -61,9 +58,11 @@ configure(baseProjects()) {
     test.useTestNG()
 }
 
+/*
 configure(extractorProjects()) { p ->
     version = new Version(p)
 }
+*/
 
 project('api') {
     description = 'JFrog Build-Info API'
@@ -87,6 +86,7 @@ project('extractor') {
 }
 
 project('extractor-ivy') {
+    version = new Version(project, '1.0.5', false)
     description = 'JFrog Build-Info Ivy Extractor'
     dependencies {
         compile project(':extractor')
@@ -107,6 +107,7 @@ project('extractor-ivy') {
 project('extractor-gradle') {
     apply plugin: 'groovy'
 
+    version = new Version(project, '1.0.6', false)
     description = 'JFrog Build-Info Gradle Extractor'
 
     dependencies {
@@ -132,6 +133,7 @@ project('extractor-gradle') {
 }
 
 project('extractor-maven3') {
+    version = new Version(project, '1.0.4', false)
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
