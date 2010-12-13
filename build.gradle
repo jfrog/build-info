@@ -157,6 +157,7 @@ project('extractor-gradle') {
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
         compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         groovy localGroovy()
+        testCompile(group: 'org.gradle', name: 'gradle-core', version: '0.9+', configuration: 'publicTestCompile')
     }
 
     processResources {
