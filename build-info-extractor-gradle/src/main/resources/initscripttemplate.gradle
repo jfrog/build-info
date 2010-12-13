@@ -43,7 +43,8 @@ class ArtifactoryPlugin extends BuildAdapter {
     return val
   }
 
-  def void projectsEvaluated(Gradle gradle) {
+  @Override
+  void projectsLoaded(Gradle gradle) {
     def repoId = 'libs'
     def artifactoryUrl = findBestProperty(gradle, 'artifactory.contextUrl') {
       if (gradle.rootProject.hasProperty('sourceURI')) {
@@ -70,19 +71,15 @@ class ArtifactoryPlugin extends BuildAdapter {
     //All the tango above for this one - it configures maven repo for the project
     Set<org.apache.ivy.plugins.resolver.DependencyResolver> allRepositories = gradle.rootProject.repositories.getAll()
     boolean addRepo = true
-    for(org.apache.ivy.plugins.resolver.DependencyResolver resolver : allRepositories){
-      if(resolver.name.equals(repoPluginsUrl)){
-        addRepo=false
+    for (org.apache.ivy.plugins.resolver.DependencyResolver resolver: allRepositories) {
+      if (resolver.name.equals(repoPluginsUrl)) {
+        addRepo = false
       }
     }
-    if(addRepo)
-    gradle.rootProject.repositories {
-      mavenRepo urls: [repoPluginsUrl]
-    }
-    /* dependencies {
-      classpath ":build-info-extractor-gradle:1.0-SNAPSHOT"
-    }*/
-
+    if (addRepo)
+      gradle.rootProject.repositories {
+        mavenRepo urls: [repoPluginsUrl]
+      }
     gradle.rootProject.allprojects {
       apply {
         apply plugin: org.jfrog.build.ArtifactoryPlugin

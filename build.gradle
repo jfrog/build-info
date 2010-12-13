@@ -141,7 +141,13 @@ project('extractor-ivy') {
 
 project('extractor-gradle') {
     apply plugin: 'groovy'
-
+    repositories{
+      add(new org.apache.ivy.plugins.resolver.IvyRepResolver()){
+         name = "ivyrepo"
+        artroot = 'http://192.168.1.152:8081/artifactory/repo'
+        ivyroot = 'http://192.168.1.152:8081/artifactory/repo'
+      }
+    }
     version = new Version(project)
     description = 'JFrog Build-Info Gradle Extractor'
 
