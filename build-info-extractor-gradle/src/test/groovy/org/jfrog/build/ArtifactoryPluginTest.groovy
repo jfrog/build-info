@@ -1,14 +1,13 @@
 package org.jfrog.build
 
 import org.apache.ivy.plugins.resolver.IBiblioResolver
-import org.gradle.StartParameter
+import org.gradle.BuildListener
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.util.HelperUtil
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import spock.lang.Specification
-import org.gradle.initialization.*
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import static org.jfrog.build.client.ClientProperties.PROP_RESOLVE_REPOKEY
 
@@ -78,7 +77,7 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         BuildInfoRecorderTask buildInfoTask = project.tasks.findByName('buildInfo')
-        evaluateSettings()
+        evaluateSettings(project)
         expect:
         buildInfoTask.configuration != null
     }
@@ -94,21 +93,15 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         Task buildInfoTask = project.tasks.findByName('buildInfo')
-        evaluateSettings()
+        evaluateSettings(project)
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
         buildInfoTask.dependsOn.size() == 1
     }
 
-    private def evaluateSettings() {
-        final CommandLineConverter<StartParameter> parameterConverter = Mock()
-        final DefaultGradleLauncherFactory factory = new DefaultGradleLauncherFactory();
-        factory.setCommandLineConverter(parameterConverter);
-        StartParameter startParameter = new StartParameter();
-        BuildClientMetaData clientMetaData = Mock()
-        BuildRequestMetaData requestMetaData = new DefaultBuildRequestMetaData(clientMetaData, 90)
-        DefaultGradleLauncher parent = factory.newInstance(startParameter, requestMetaData);
-        parent.buildListener.projectsEvaluated(parent.gradle)
+    private def evaluateSettings(Project project) {
+        BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
+        next.projectsEvaluated(project.getGradle())
     }
 }
