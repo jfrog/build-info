@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ClientProperties
@@ -80,12 +80,11 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     BuildInfoRecorderTask buildInfoTask = tasks.findByName('buildInfo')
                     if (buildInfoTask != null) {
                         if (buildInfoTask.getConfiguration() == null) {
-                            buildInfoTask.setConfiguration(getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION))
-                        }
-                        Set<Object> dependsOnTasks = buildInfoTask.getDependsOn()
-                        Task jarTask = tasks.findByName('jar')
-                        if ((dependsOnTasks == null || dependsOnTasks.isEmpty()) && jarTask != null) {
-                            buildInfoTask.dependsOn(jarTask)
+                            Configuration configuration = getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION)
+                            if(configuration == null){
+                                configuration = configurations.add("__dummy_build_info__")
+                            }
+                            buildInfoTask.setConfiguration(configuration)
                         }
                         if (subprojects != null && !subprojects.isEmpty()) {
                             subprojects.each { if (it.tasks.findByName('buildInfo')) buildInfoTask.dependsOn(it.buildInfo) }

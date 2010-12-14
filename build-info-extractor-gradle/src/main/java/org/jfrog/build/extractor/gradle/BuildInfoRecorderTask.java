@@ -26,17 +26,12 @@ import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ClientGradleProperties;
-import org.jfrog.build.client.ClientIvyProperties;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
@@ -56,7 +51,8 @@ public class BuildInfoRecorderTask extends ConventionTask {
     private static final Logger log = Logging.getLogger(BuildInfoRecorderTask.class);
 
     private Configuration configuration;
-
+    
+    @InputFiles
     public Configuration getConfiguration() {
         return configuration;
     }

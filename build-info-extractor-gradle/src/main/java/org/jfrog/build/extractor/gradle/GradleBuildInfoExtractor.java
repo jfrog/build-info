@@ -24,17 +24,15 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.PublishArtifact;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.util.GUtil;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.*;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -51,12 +49,7 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -138,10 +131,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(rootProject);
             if (buildInfoRecorderTask != null) {
                 Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                if (configuration != null) {
-                    if ((!configuration.getArtifacts().isEmpty())) {
-                        buildInfoBuilder.addModule(extractModule(configuration, rootProject));
-                    }
+                if ((!configuration.getArtifacts().isEmpty())) {
+                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
                 }
             }
         } else {
@@ -149,10 +140,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(subProject);
                 if (buildInfoRecorderTask != null) {
                     Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                    if (configuration != null) {
-                        if ((!configuration.getArtifacts().isEmpty())) {
-                            buildInfoBuilder.addModule(extractModule(configuration, subProject));
-                        }
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
                     }
                 }
             }
