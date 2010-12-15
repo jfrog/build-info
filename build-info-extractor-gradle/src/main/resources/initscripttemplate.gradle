@@ -1,89 +1,32 @@
-import org.gradle.api.internal.project.ProjectInternal
-
 initscript {
-  repositories {
-    flatDir(dirs: file('${pluginLibDir}'))
-  }
-  dependencies {
-    classpath ":build-info-extractor-gradle:@fullVersion@"
-    classpath ":build-info-client:@buildInfoVersion@"
-    classpath ":build-info-api:@buildInfoVersion@"
-    classpath ":build-info-extractor:@buildInfoVersion@"
-    classpath "commons-lang:commons-lang:2.4"
-    classpath "com.google.guava:guava:r06"
-    classpath "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
-    classpath "org.codehaus.jackson:jackson-core-asl:1.5.1"
-    classpath "org.apache.httpcomponents:httpclient:4.0"
-    classpath "org.apache.httpcomponents:httpcore:4.0.1"
-  }
-}
-addListener(new PropertyListener())
-class PropertyListener extends BuildAdapter implements BuildListener {
-  def void settingsEvaluated(Settings settings) {
-    Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
-    projProps.putAll([${allBuildInfoProperties}])
-  }
-}
-addListener(new ArtifactoryPlugin())
-class ArtifactoryPlugin extends BuildAdapter {
-  String findBestProperty(Gradle gradle, String key, Closure defVal) {
-    ProjectInternal rootProject = gradle.getRootProject()
-    Map startParams = gradle.getStartParameter().getProperties()
-    def val
-    if (System.hasProperty(key)) {
-      val = System.getProperty(key)
-    } else if (startParams.hasProperty(key)) {
-      val = rootProject.getProperty(key)
-    } else if (rootProject.hasProperty(key)) {
-      val = rootProject.getProperty(key)
-    } else {
-      val = defVal.call()
+    dependencies {
+        classpath fileTree('${pluginLibDir}')
     }
-    rootProject.setProperty(key, val)
-    return val
-  }
+}
 
-  @Override
-  void projectsLoaded(Gradle gradle) {
-    def repoId = 'libs'
-    def artifactoryUrl = findBestProperty(gradle, 'artifactory.contextUrl') {
-      if (gradle.rootProject.hasProperty('sourceURI')) {
-        logger.debug("sourceURI: $gradle.rootProject.sourceURI")
-        String fullPath = sourceURI.path
-        String[] pathParts = fullPath.split("/")
-        if (pathParts.size() >= 3) {
-          repoId = pathParts[2]
+addListener(new BuildInfoPluginListener())
+class BuildInfoPluginListener extends BuildAdapter {
+    def void settingsEvaluated(Settings settings) {
+        Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
+        projProps.putAll([${allBuildInfoProperties}])
+    }
+
+    def void projectsLoaded(Gradle gradle) {
+        gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))
+        Project root = gradle.getRootProject()
+        root.logger.debug("BuildInfo Artifactory Plugin projectsEvaluated: ${root.name}")
+        if ("buildSrc".equals(root.name)) {
+            root.allProjects {
+                dependencies {
+                    compile fileTree('${pluginLibDir}')
+                }
+            }
+        } else {
+            root.allprojects {
+                apply {
+                    apply plugin: org.jfrog.build.ArtifactoryPlugin
+                }
+            }
         }
-        "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
-      } else {
-        'http://gradle.artifactoryonline.com/gradle'
-      }
     }
-    gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))
-    repoId = findBestProperty(gradle, 'artifactory.resolve.repoKey') { repoId }
-
-    gradle.rootProject.logger.debug("artifactory.contextUrl: $artifactoryUrl")
-    gradle.rootProject.logger.debug("artifactory.repoId: $repoId")
-
-    def repoPluginsUrl = artifactoryUrl + "/" + repoId
-    gradle.rootProject.logger.debug("Using $repoPluginsUrl for plugin repo URL")
-
-    //All the tango above for this one - it configures maven repo for the project
-    Set<org.apache.ivy.plugins.resolver.DependencyResolver> allRepositories = gradle.rootProject.repositories.getAll()
-    boolean addRepo = true
-    for (org.apache.ivy.plugins.resolver.DependencyResolver resolver: allRepositories) {
-      if (resolver.name.equals(repoPluginsUrl)) {
-        addRepo = false
-      }
-    }
-    if (addRepo)
-      gradle.rootProject.repositories {
-        mavenRepo urls: [repoPluginsUrl]
-      }
-    gradle.rootProject.allprojects {
-      apply {
-        apply plugin: org.jfrog.build.ArtifactoryPlugin
-      }
-    }
-  }
 }
