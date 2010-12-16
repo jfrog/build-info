@@ -21,7 +21,7 @@ class ArtifactoryGradleSettings extends BuildAdapter implements BuildListener {
 
     def void projectsLoaded(Gradle gradle) {
         Project root = gradle.getRootProject()
-        artifactoryRoot = 'http://repo.jfrog.org/artifactory'
+        String artifactoryRoot = 'http://repo.jfrog.org/artifactory'
         root.logger.debug("Applying Artifactory to project root ${root.name}")
         root.allprojects {
             buildscript {
@@ -30,7 +30,7 @@ class ArtifactoryGradleSettings extends BuildAdapter implements BuildListener {
                 }
             }
             repositories {
-                mavenRepo name: 'libs-repo', urls: "$artifactoryRoot/gradle-libs"
+                mavenRepo name: 'libs-repo', urls: "$artifactoryRoot/gradle"
                 add(new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
                     name = 'gradle-ivy'
                     ivyroot = "$artifactoryRoot/gradle-ivy"
