@@ -25,33 +25,33 @@
  *
  */
 
-/*apply {
-  apply from: 'http://gradle.artifactoryonline.com/gradle/repo/artifactoryinitplugin/artifactoryinitplugin/1.0/artifactoryinitplugin-1.0-SNAPSHOT.gradle'
-}*/
+buildscript {
+    repositories {
+        mavenRepo name: 'build-plugins-repo', urls: "http://localhost:8081/artifactory/plugins-snapshot"
+    }
+    dependencies {
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0+'
+    }
+}
 
 allprojects {
-  apply {
-    apply plugin: 'maven'
-  }
-  group = 'org.gradle'
-  version = '1.0'
+    apply {
+        apply plugin: 'maven'
+        apply plugin: 'artifactoryplugin'
+    }
+    group = 'org.gradle'
+    version = '1.0'
 }
 
 subprojects {
-  apply {
-    apply plugin: 'java'
-  }
+    apply {
+        apply plugin: 'java'
+    }
 
-  dependencies {
-    testCompile 'junit:junit:4.7'
-  }
-  manifest.mainAttributes(provider: 'gradle')
-}
-
-task bla {
-  {
-
-  }
+    dependencies {
+        testCompile 'junit:junit:4.7'
+    }
+    manifest.mainAttributes(provider: 'gradle')
 }
 
 dependsOnChildren()
