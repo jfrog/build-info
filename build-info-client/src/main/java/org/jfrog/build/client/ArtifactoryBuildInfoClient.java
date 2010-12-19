@@ -365,6 +365,7 @@ public class ArtifactoryBuildInfoClient {
             }
         }
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
+        httpPut.addHeader("X-Checksum-Sha1", details.sha1);
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         int statusCode = statusLine.getStatusCode();
