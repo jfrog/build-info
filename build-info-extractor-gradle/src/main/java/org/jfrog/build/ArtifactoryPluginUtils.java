@@ -113,7 +113,7 @@ public class ArtifactoryPluginUtils {
                 .append(",").append(NEW_LINE);
     }
 
-    public static Set<DeployDetails> getDeployArtifactsProject(Project project) {
+    public static Set<DeployDetails> getDeployArtifactsProject(Project project, String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         Set<Task> buildInfoTask = project.getTasksByName("buildInfo", false);
         if (buildInfoTask.isEmpty()) {
@@ -142,8 +142,9 @@ public class ArtifactoryPluginUtils {
             if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
                 extraTokens.put("classifier", publishArtifact.getClassifier());
             }
+            String name = getProjectName(project, artifactName);
             artifactBuilder.artifactPath(
-                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), project.getName(),
+                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), name,
                             revision, null, publishArtifact.getType(),
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
@@ -181,7 +182,7 @@ public class ArtifactoryPluginUtils {
         }
     }
 
-    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor) {
+    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor, String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         String pattern = getIvyDescriptorPattern(project);
@@ -195,15 +196,24 @@ public class ArtifactoryPluginUtils {
                     "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(),
                     e);
         }
+        String name = getProjectName(project, artifactName);
         artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(pattern, getGroupIdPatternByM2Compatible(project), project.getName(),
-                        project.getVersion().toString(), null, "ivy", "xml"));
+                .substitute(pattern, getGroupIdPatternByM2Compatible(project), name, project.getVersion().toString(),
+                        null, "ivy", "xml"));
         artifactBuilder.targetRepository(uploadId);
         Properties matrixParams = getMatrixParams(project);
         artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
         DeployDetails details = artifactBuilder.build();
         deployDetails.add(details);
         return deployDetails;
+    }
+
+    public static String getProjectName(Project project, String artifactName) {
+        String name = project.getName();
+        if (StringUtils.isNotBlank(artifactName)) {
+            name = artifactName;
+        }
+        return name;
     }
 
     public static String getGroupIdPatternByM2Compatible(Project project) {
@@ -219,7 +229,7 @@ public class ArtifactoryPluginUtils {
         return Boolean.parseBoolean(m2Compatible);
     }
 
-    public static DeployDetails getMavenDeployDetails(Project project, File mavenDescriptor) {
+    public static DeployDetails getMavenDeployDetails(Project project, File mavenDescriptor, String artifactName) {
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
         try {
@@ -231,8 +241,9 @@ public class ArtifactoryPluginUtils {
                     "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(),
                     e);
         }
+        String name = getProjectName(project, artifactName);
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(M2_PATTERN,
-                project.getGroup().toString().replace(".", "/"), project.getName(),
+                project.getGroup().toString().replace(".", "/"), name,
                 project.getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(uploadId);
         Properties matrixParams = getMatrixParams(project);

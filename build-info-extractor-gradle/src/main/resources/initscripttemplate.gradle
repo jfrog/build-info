@@ -15,13 +15,7 @@ class BuildInfoPluginListener extends BuildAdapter {
         gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))
         Project root = gradle.getRootProject()
         root.logger.debug("BuildInfo Artifactory Plugin projectsEvaluated: ${root.name}")
-        if ("buildSrc".equals(root.name)) {
-            root.allProjects {
-                dependencies {
-                    compile fileTree('${pluginLibDir}')
-                }
-            }
-        } else {
+        if (!"buildSrc".equals(root.name)) {
             root.allprojects {
                 apply {
                     apply plugin: org.jfrog.build.ArtifactoryPlugin

@@ -20,17 +20,23 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.maven.MavenPom;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
@@ -62,6 +68,13 @@ public class BuildInfoRecorderTask extends ConventionTask {
     @Optional
     private Configuration configuration;
 
+    @Input
+    @Optional
+    private MavenPom mavenPom;
+
+    @Input
+    @Optional
+    private String artifactName;
 
     public Configuration getConfiguration() {
         return configuration;
@@ -87,6 +100,22 @@ public class BuildInfoRecorderTask extends ConventionTask {
         this.mavenDescriptor = mavenDescriptor;
     }
 
+    public MavenPom getMavenPom() {
+        return mavenPom;
+    }
+
+    public void setMavenPom(MavenPom mavenPom) {
+        this.mavenPom = mavenPom;
+    }
+
+    public String getArtifactName() {
+        return artifactName;
+    }
+
+    public void setArtifactName(String artifactName) {
+        this.artifactName = artifactName;
+    }
+
     /**
      * @return The root project.
      */
@@ -105,16 +134,16 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
     private void uploadDescriptorsAndArtifacts(Project project, Set<DeployDetails> allDeployableDetails) throws IOException {
-        Set<DeployDetails> deployDetailsFromProject = ArtifactoryPluginUtils.getDeployArtifactsProject(project);
+        Set<DeployDetails> deployDetailsFromProject = ArtifactoryPluginUtils.getDeployArtifactsProject(project, artifactName);
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (ivyDescriptor != null && ivyDescriptor.exists()) {
             Set<DeployDetails> details =
-                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor);
+                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor, artifactName);
             allDeployableDetails.addAll(details);
         }
 
         if (mavenDescriptor != null && mavenDescriptor.exists()) {
-            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor));
+            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor, artifactName));
         }
     }
 
