@@ -77,6 +77,10 @@ subprojects {
             }
         }
     }
+   task sourceJar(type: Jar, dependsOn: jar) {
+      from sourceSets.main
+       classifier = 'sources'
+   }
 }
 
 configure(baseProjects()) {
@@ -121,7 +125,7 @@ configure(extractorProjects()) {
     }
 
     artifacts {
-        archives jarAll
+        archives jarAll, sourceJar
     }
 }
 
