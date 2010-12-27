@@ -23,7 +23,11 @@ buildscript {
       String fullPath = sourceURI.path
       String[] pathParts = fullPath.split("/")
       if (pathParts.size() >= 3) {
-        downloadId = pathParts[2]
+        if(pathParts[1].equals('artifactory')){
+          downloadId = pathParts[2]
+        } else {
+          downloadId = pathParts[0]
+        }
       }
       artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
     }
@@ -45,7 +49,6 @@ buildscript {
     def artifactoryDownloadUrlProperty = rootProject.getProperty('artifactory.downloadUrl')
     artifactoryDownloadUrl = artifactoryDownloadUrlProperty
     logger.debug("Property artifactory.downloadUrl ${artifactoryDownloadUrlProperty}")
-
   }
 
   rootProject.setProperty('artifactory.contextUrl', artifactoryUrl)

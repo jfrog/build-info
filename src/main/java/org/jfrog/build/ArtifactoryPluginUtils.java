@@ -26,9 +26,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.PublishArtifact;
-import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
@@ -55,6 +53,7 @@ public class ArtifactoryPluginUtils {
             = "[revision]/[artifact]-[revision](-[classifier]).[ext]";
     private static final String M2_PATTERN = "[organisation]/[module]/" + M2_PER_MODULE_PATTERN;
     private static final String M2_IVY_PATTERN = "[organisation]/[module]/[revision]/ivy-[revision].xml";
+    public static final String BUILD_INFO_TASK_NAME = "buildInfo";
 
 
     /**
@@ -93,6 +92,11 @@ public class ArtifactoryPluginUtils {
         }
     }
 
+    public static boolean getBooleanProperty(String propertyName, Project project) {
+        String value = ArtifactoryPluginUtils.getProperty(propertyName, project);
+        return StringUtils.isNotBlank(value) && Boolean.parseBoolean(value);
+    }
+
     /**
      * Appends a key-value property in compatible format for the gradle init-script build info properties collection
      * replacement
@@ -109,7 +113,7 @@ public class ArtifactoryPluginUtils {
                 .append(",").append(NEW_LINE);
     }
 
-    public static Set<DeployDetails> getDeployArtifactsProject(Project project) {
+    public static Set<DeployDetails> getDeployArtifactsProject(Project project, String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         Set<Task> buildInfoTask = project.getTasksByName("buildInfo", false);
         if (buildInfoTask.isEmpty()) {
@@ -138,12 +142,13 @@ public class ArtifactoryPluginUtils {
             if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
                 extraTokens.put("classifier", publishArtifact.getClassifier());
             }
+            String name = getProjectName(project, artifactName);
             artifactBuilder.artifactPath(
-                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), project.getName(),
+                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), name,
                             revision, null, publishArtifact.getType(),
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
-            String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);            
+            String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
             artifactBuilder.targetRepository(uploadId);
             Properties matrixParams = getMatrixParams(project);
             artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
@@ -177,43 +182,38 @@ public class ArtifactoryPluginUtils {
         }
     }
 
-    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project) {
+    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor, String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
-        ConfigurationContainer projectConfigurationContainer = project.getConfigurations();
-        Set<Configuration> projectConfigurations = projectConfigurationContainer.getAll();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         String pattern = getIvyDescriptorPattern(project);
-        for (Configuration configuration : projectConfigurations) {
-            String uploadTaskName = configuration.getUploadTaskName();
-            if (StringUtils.isNotBlank(uploadTaskName)) {
-                Set<Task> tasks = project.getTasksByName(uploadTaskName, false);
-                if (tasks != null) {
-                    for (Task task : tasks) {
-                        Upload uploadTask = (Upload) task;
-                        File descriptorFile = uploadTask.getDescriptorDestination();
-                        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(descriptorFile);
-                        try {
-                            Map<String, String> checksums =
-                                    FileChecksumCalculator.calculateChecksums(descriptorFile, "MD5", "SHA1");
-                            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
-                        } catch (Exception e) {
-                            throw new RuntimeException(
-                                    "Failed to calculated checksums for artifact: " + descriptorFile.getAbsolutePath(),
-                                    e);
-                        }
-                        artifactBuilder.artifactPath(IvyPatternHelper
-                                .substitute(pattern, getGroupIdPatternByM2Compatible(project), project.getName(),
-                                        project.getVersion().toString(), null, "ivy", "xml"));
-                        artifactBuilder.targetRepository(uploadId);
-                        Properties matrixParams = getMatrixParams(project);
-                        artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
-                        DeployDetails details = artifactBuilder.build();
-                        deployDetails.add(details);
-                    }
-                }
-            }
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(ivyDescriptor, "MD5", "SHA1");
+            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(),
+                    e);
         }
+        String name = getProjectName(project, artifactName);
+        artifactBuilder.artifactPath(IvyPatternHelper
+                .substitute(pattern, getGroupIdPatternByM2Compatible(project), name, project.getVersion().toString(),
+                        null, "ivy", "xml"));
+        artifactBuilder.targetRepository(uploadId);
+        Properties matrixParams = getMatrixParams(project);
+        artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
+        DeployDetails details = artifactBuilder.build();
+        deployDetails.add(details);
         return deployDetails;
+    }
+
+    public static String getProjectName(Project project, String artifactName) {
+        String name = project.getName();
+        if (StringUtils.isNotBlank(artifactName)) {
+            name = artifactName;
+        }
+        return name;
     }
 
     public static String getGroupIdPatternByM2Compatible(Project project) {
@@ -229,22 +229,21 @@ public class ArtifactoryPluginUtils {
         return Boolean.parseBoolean(m2Compatible);
     }
 
-    public static DeployDetails getMavenDeployDetails(Project project) {
+    public static DeployDetails getMavenDeployDetails(Project project, File mavenDescriptor, String artifactName) {
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
-        File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenPom);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
         try {
             Map<String, String> checksums =
-                    FileChecksumCalculator.calculateChecksums(mavenPom, "MD5", "SHA1");
+                    FileChecksumCalculator.calculateChecksums(mavenDescriptor, "MD5", "SHA1");
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Failed to calculated checksums for artifact: " + mavenPom.getAbsolutePath(),
+                    "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(),
                     e);
         }
+        String name = getProjectName(project, artifactName);
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(M2_PATTERN,
-                project.getGroup().toString().replace(".", "/"), project.getName(),
+                project.getGroup().toString().replace(".", "/"), name,
                 project.getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(uploadId);
         Properties matrixParams = getMatrixParams(project);

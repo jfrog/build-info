@@ -138,10 +138,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(rootProject);
             if (buildInfoRecorderTask != null) {
                 Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                if (configuration != null) {
-                    if ((!configuration.getArtifacts().isEmpty())) {
-                        buildInfoBuilder.addModule(extractModule(configuration, rootProject));
-                    }
+                if ((!configuration.getArtifacts().isEmpty())) {
+                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
                 }
             }
         } else {
@@ -149,10 +147,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(subProject);
                 if (buildInfoRecorderTask != null) {
                     Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                    if (configuration != null) {
-                        if ((!configuration.getArtifacts().isEmpty())) {
-                            buildInfoBuilder.addModule(extractModule(configuration, subProject));
-                        }
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
                     }
                 }
             }
@@ -262,8 +258,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     }
 
     public Module extractModule(Configuration configuration, Project project) {
+        String projectName = project.getName();
+        BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
+        if (task != null) {
+            String artifactName = task.getArtifactName();
+            if (StringUtils.isNotBlank(artifactName)) {
+                projectName = ArtifactoryPluginUtils.getProjectName(project, artifactName);
+            }
+        }
         ModuleBuilder builder = new ModuleBuilder()
-                .id(project.getGroup() + ":" + project.getName() + ":" + project.getVersion().toString());
+                .id(project.getGroup() + ":" + projectName + ":" + project.getVersion().toString());
         if (configuration != null) {
             try {
                 builder.artifacts(calculateArtifacts(configuration, project))
@@ -293,9 +297,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                                 if (StringUtils.isNotBlank(from.getClassifier())) {
                                     extraTokens.put("classifier", from.getClassifier());
                                 }
+                                String projectName = project.getName();
+                                BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
+                                if (task != null) {
+                                    if (StringUtils.isNotBlank(task.getArtifactName())) {
+                                        projectName = task.getArtifactName();
+                                    }
+                                }
                                 String finalPattern = IvyPatternHelper.substitute(pattern,
                                         ArtifactoryPluginUtils.getGroupIdPatternByM2Compatible(project),
-                                        project.getName(),
+                                        projectName,
                                         project.getVersion().toString(), null, from.getType(),
                                         from.getExtension(), configuration.getName(),
                                         extraTokens, null);
@@ -315,8 +326,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
         if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
+            String projectName = project.getName();
+            BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
+            if (task != null) {
+                String artifactName = task.getArtifactName();
+                if (StringUtils.isNotBlank(artifactName)) {
+                    projectName = ArtifactoryPluginUtils.getProjectName(project, artifactName);
+                }
+            }
             Artifact pom =
-                    new ArtifactBuilder(project.getName() + "-" + project.getVersion() + ".pom").md5(checksums.get(MD5))
+                    new ArtifactBuilder(projectName + "-" + project.getVersion() + ".pom").md5(checksums.get(MD5))
                             .sha1(checksums.get(SHA1)).type("pom")
                             .build();
             artifacts.add(pom);
