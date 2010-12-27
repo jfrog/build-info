@@ -40,7 +40,6 @@ subprojects {
     sourceCompatibility = 1.5
     targetCompatibility = 1.5
     buildInfoVersion = new Version(rootProject, baseProjectNames)
-    artifactId = "build-info-$name"
 
     dependencies {
         compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
