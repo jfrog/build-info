@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-include 'api'
-include 'client'
-include 'extractor'
-include 'extractor-gradle'
-include 'extractor-ivy'
-include 'extractor-maven3'
+include 'build-info-api'
+include 'build-info-client'
+include 'build-info-extractor'
+include 'build-info-extractor-gradle'
+include 'build-info-extractor-ivy'
+include 'build-info-extractor-maven3'
 
 rootProject.name = 'build-info'
-
-rootProject.children.each {project ->
-    project.projectDir = new File(settingsDir, "build-info-${project.name}")
-    assert project.projectDir.isDirectory()
-}
