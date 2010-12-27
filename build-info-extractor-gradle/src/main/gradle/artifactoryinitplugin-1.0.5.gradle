@@ -26,7 +26,11 @@ buildscript {
     String[] pathParts = fullPath.split("/")
     artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
     if (pathParts.size() >= 3) {
-      downloadId = pathParts[2]
+      if(pathParts[1].equals('artifactory')){
+          downloadId = pathParts[2]
+        } else {
+          downloadId = pathParts[0]
+        }
     }
   } else {
     artifactoryUrl = 'http://gradle.artifactoryonline.com/gradle/'
