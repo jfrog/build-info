@@ -18,21 +18,21 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.maven.MavenPom;
 import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.Upload;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ClientGradleProperties;
-import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.client.IncludeExcludePatterns;
@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
 import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_EXPORT_FILE_PATH;
 import static org.jfrog.build.client.ClientProperties.*;
@@ -55,7 +56,25 @@ import static org.jfrog.build.client.ClientProperties.*;
 public class BuildInfoRecorderTask extends ConventionTask {
     private static final Logger log = Logging.getLogger(BuildInfoRecorderTask.class);
 
+    @InputFile
+    @Optional
+    private File ivyDescriptor;
+
+    @InputFile
+    @Optional
+    private File mavenDescriptor;
+
+    @InputFiles
+    @Optional
     private Configuration configuration;
+
+    @Input
+    @Optional
+    private MavenPom mavenPom;
+
+    @Input
+    @Optional
+    private String artifactName;
 
     public Configuration getConfiguration() {
         return configuration;
@@ -63,6 +82,38 @@ public class BuildInfoRecorderTask extends ConventionTask {
 
     public void setConfiguration(Configuration configuration) {
         this.configuration = configuration;
+    }
+
+    public File getIvyDescriptor() {
+        return ivyDescriptor;
+    }
+
+    public void setIvyDescriptor(File ivyDescriptor) {
+        this.ivyDescriptor = ivyDescriptor;
+    }
+
+    public File getMavenDescriptor() {
+        return mavenDescriptor;
+    }
+
+    public void setMavenDescriptor(File mavenDescriptor) {
+        this.mavenDescriptor = mavenDescriptor;
+    }
+
+    public MavenPom getMavenPom() {
+        return mavenPom;
+    }
+
+    public void setMavenPom(MavenPom mavenPom) {
+        this.mavenPom = mavenPom;
+    }
+
+    public String getArtifactName() {
+        return artifactName;
+    }
+
+    public void setArtifactName(String artifactName) {
+        this.artifactName = artifactName;
     }
 
     /**
@@ -82,13 +133,26 @@ public class BuildInfoRecorderTask extends ConventionTask {
         }
     }
 
-    /**
-     * Returns the artifacts which will be uploaded.
-     *
-     * @param gbie Tomer will document later.
-     * @throws java.io.IOException Tomer will document later.
-     */
+    private void uploadDescriptorsAndArtifacts(Project project, Set<DeployDetails> allDeployableDetails) throws IOException {
+        Set<DeployDetails> deployDetailsFromProject = ArtifactoryPluginUtils.getDeployArtifactsProject(project, artifactName);
+        allDeployableDetails.addAll(deployDetailsFromProject);
+        if (ivyDescriptor != null && ivyDescriptor.exists()) {
+            Set<DeployDetails> details =
+                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor, artifactName);
+            allDeployableDetails.addAll(details);
+        }
 
+        if (mavenDescriptor != null && mavenDescriptor.exists()) {
+            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor, artifactName));
+        }
+    }
+
+    /**
+     * This method will be activated only at the end of the build, when we reached the root project.
+     *
+     * @param gbie The Build info extractor object will will assemble the {@link Build} object
+     * @throws java.io.IOException In case the deployment fails.
+     */
     private void closeAndDeploy(GradleBuildInfoExtractor gbie) throws IOException {
         Project rootProject = getRootProject();
         String uploadArtifactsProperty = getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT, rootProject);
@@ -115,48 +179,12 @@ public class BuildInfoRecorderTask extends ConventionTask {
                  */
                 Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
                 for (Project uploadingProject : rootProject.getAllprojects()) {
-                    Set<DeployDetails> deployDetailsFromProject =
-                            ArtifactoryPluginUtils.getDeployArtifactsProject(uploadingProject);
-                    allDeployableDetails.addAll(deployDetailsFromProject);
-                    String deployIvy = getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, uploadingProject);
-                    if (Boolean.parseBoolean(deployIvy)) {
-                        File ivyFile = new File(uploadingProject.getBuildDir(), "ivy.xml");
-                        if (!ivyFile.exists()) {
-                            log.debug("Ivy file not found, force generating one");
-                            Set<Task> installTask = uploadingProject.getTasksByName("uploadArchives", false);
-                            for (Task task : installTask) {
-                                ((Upload) task).execute();
-                            }
-                        } else {
-                            log.debug("Found Ivy file at '{}'", ivyFile.getAbsolutePath());
-                        }
-                        Set<DeployDetails> details =
-                                ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(uploadingProject);
-                        allDeployableDetails.addAll(details);
-                    }
-                    String deployMaven = getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, uploadingProject);
-                    if (Boolean.parseBoolean(deployMaven)) {
-                        File mavenPom =
-                                new File(uploadingProject.getRepositories().getMavenPomDir(), "pom-default.xml");
-                        if (!mavenPom.exists()) {
-                            log.debug("Maven POM not found, force generating one");
-                            Set<Task> installTask = uploadingProject.getTasksByName("install", false);
-                            if (installTask == null ||
-                                    installTask.isEmpty() &&
-                                            !uploadingProject.equals(uploadingProject.getRootProject())) {
-                                throw new GradleException("Maven plugin is not configured");
-                            }
-                            for (Task task : installTask) {
-                                ((Upload) task).execute();
-                            }
-                        }
-                        if (mavenPom.exists()) {
-                            log.debug("Found Maven POM at '{}'", mavenPom.getAbsolutePath());
-                            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(uploadingProject));
-                        }
+                    BuildInfoRecorderTask upTasksBuildInfo =
+                            (BuildInfoRecorderTask) uploadingProject.getTasks().findByName(BUILD_INFO_TASK_NAME);
+                    if (upTasksBuildInfo != null) {
+                        upTasksBuildInfo.uploadDescriptorsAndArtifacts(uploadingProject, allDeployableDetails);
                     }
                 }
-
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         ArtifactoryPluginUtils
                                 .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
@@ -165,6 +193,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
                 configureProxy(rootProject, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
+
             String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
             boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
             if (isPublishBuildInfo) {
@@ -198,6 +227,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
         }
     }
 
+
     private void configureProxy(Project project, ArtifactoryBuildInfoClient client) {
         String proxyHost = ArtifactoryPluginUtils.getProperty(PROP_PROXY_HOST, project);
         if (StringUtils.isNotBlank(proxyHost)) {
@@ -222,7 +252,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> details,
-            IncludeExcludePatterns patterns) throws IOException {
+                                 IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails detail : details) {
             String artifactPath = detail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {

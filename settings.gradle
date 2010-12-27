@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-dependencies {
-  compile project(':build-info-api')
-  compile group: 'org.codehaus.jackson', name: 'jackson-mapper-asl', version: '1.5.1'
-  compile group: 'org.codehaus.jackson', name: 'jackson-core-asl', version: '1.5.1'
-  compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.0'
-  compile group: 'org.apache.httpcomponents', name: 'httpcore', version: '4.0.1'
-  compile group: 'com.google.guava', name: 'guava', version: 'r06'
-}
+include 'build-info-api'
+include 'build-info-client'
+include 'build-info-extractor'
+include 'build-info-extractor-gradle'
+include 'build-info-extractor-ivy'
+include 'build-info-extractor-maven3'
+
+rootProject.name = 'build-info'
