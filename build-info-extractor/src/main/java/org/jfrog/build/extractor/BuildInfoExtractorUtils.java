@@ -182,6 +182,12 @@ public abstract class BuildInfoExtractorUtils {
 
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
+        if (!toFile.getParentFile().exists()) {
+            toFile.getParentFile().mkdirs();
+        }
+        if (!toFile.exists()) {
+            toFile.createNewFile();
+        }
         Files.write(buildInfoJson, toFile, Charsets.UTF_8);
     }
 
