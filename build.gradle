@@ -78,7 +78,7 @@ subprojects {
         }
     }
    task sourceJar(type: Jar, dependsOn: jar) {
-      from sourceSets.main
+      from sourceSets.main.allSource
        classifier = 'sources'
    }
 }
