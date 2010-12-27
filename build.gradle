@@ -47,9 +47,6 @@ subprojects {
         testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
     }
 
-    jar {
-        baseName = artifactId
-    }
     configure(install.repositories.mavenInstaller) {
         pom.project {
             licenses {
