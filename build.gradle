@@ -63,13 +63,13 @@ subprojects {
                     archive 'http://forums.jfrog.org/Artifactory-Users-f2377369.html'
                 }
             }
-            developers{
-                developer{
+            developers {
+                developer {
                     id 'tomerc'
                     name 'Tomer Cohen'
                     email 'tomerc at jfrog dot org'
                 }
-                developer{
+                developer {
                     id 'freds'
                     name 'Frederic Simon'
                     email 'frederic dot simon at jfrog dot org'
@@ -77,10 +77,14 @@ subprojects {
             }
         }
     }
-   task sourceJar(type: Jar, dependsOn: jar) {
-      from sourceSets.main.allSource
-       classifier = 'sources'
-   }
+    task sourceJar(type: Jar, dependsOn: jar) {
+        from sourceSets.main.allSource
+        classifier = 'sources'
+    }
+
+    artifacts {
+        archives sourceJar
+    }
 }
 
 configure(baseProjects()) {
@@ -125,7 +129,7 @@ configure(extractorProjects()) {
     }
 
     artifacts {
-        archives jarAll, sourceJar
+        archives jarAll
     }
 }
 
