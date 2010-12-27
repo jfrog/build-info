@@ -29,7 +29,6 @@ buildscript {
           downloadId = pathParts[0]
         }
       }
-      println "ID $downloadId"
       artifactoryUrl = "${sourceURI.scheme}://${sourceURI.authority}/${pathParts[1]}"
     }
   } else {
@@ -51,7 +50,6 @@ buildscript {
     artifactoryDownloadUrl = artifactoryDownloadUrlProperty
     logger.debug("Property artifactory.downloadUrl ${artifactoryDownloadUrlProperty}")
   }
-  println "ID $artifactoryDownloadUrl"
 
   rootProject.setProperty('artifactory.contextUrl', artifactoryUrl)
   rootProject.setProperty('artifactory.resolve.repoKey', downloadId)
