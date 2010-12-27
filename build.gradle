@@ -19,7 +19,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
 version = '2'
-baseProjectNames = ['api', 'client', 'extractor']
+baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor']
 
 allprojects {
     apply plugin: 'idea'
