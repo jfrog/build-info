@@ -18,8 +18,8 @@ import org.jfrog.build.Version
 import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
-version='2'
-baseProjectNames = ['api','client','extractor']
+version = '2'
+baseProjectNames = ['api', 'client', 'extractor']
 
 allprojects {
     apply plugin: 'idea'
@@ -51,6 +51,36 @@ subprojects {
     jar {
         baseName = artifactId
     }
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            mailingLists {
+                mailingList {
+                    name 'JFrog Mailing List'
+                    subscribe 'https://lists.sourceforge.net/lists/listinfo/artifactory-users'
+                    archive 'http://forums.jfrog.org/Artifactory-Users-f2377369.html'
+                }
+            }
+            developers{
+                developer{
+                    id 'tomerc'
+                    name 'Tomer Cohen'
+                    email 'tomerc at jfrog dot org'
+                }
+                developer{
+                    id 'freds'
+                    name 'Frederic Simon'
+                    email 'frederic dot simon at jfrog dot org'
+                }
+            }
+        }
+    }
 }
 
 configure(baseProjects()) {
@@ -79,23 +109,23 @@ configure(extractorProjects()) {
     }
 
     task jarAll(type: Jar, dependsOn: jar) {
-      inputs.files jar.archivePath
-      classifier = 'uber'
-      doLast {
-        project.ant {
-          taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
-          jarjar(jarfile: archivePath) {
-            zipfileset(src: jar.archivePath)
-            configurations.uberJar.files.each {jarjarFile ->
-              zipfileset(src: jarjarFile)
+        inputs.files jar.archivePath
+        classifier = 'uber'
+        doLast {
+            project.ant {
+                taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
+                jarjar(jarfile: archivePath) {
+                    zipfileset(src: jar.archivePath)
+                    configurations.uberJar.files.each {jarjarFile ->
+                        zipfileset(src: jarjarFile)
+                    }
+                }
             }
-          }
         }
-      }
     }
 
     artifacts {
-      archives jarAll
+        archives jarAll
     }
 }
 
@@ -141,12 +171,12 @@ project('extractor-ivy') {
 
 project('extractor-gradle') {
     apply plugin: 'groovy'
-    repositories{
-      add(new org.apache.ivy.plugins.resolver.IvyRepResolver()){
-         name = "ivyrepo"
-        artroot = 'http://192.168.1.152:8081/artifactory/repo'
-        ivyroot = 'http://192.168.1.152:8081/artifactory/repo'
-      }
+    repositories {
+        add(new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
+            name = "ivyrepo"
+            artroot = 'http://192.168.1.152:8081/artifactory/repo'
+            ivyroot = 'http://192.168.1.152:8081/artifactory/repo'
+        }
     }
     version = new Version(project)
     description = 'JFrog Build-Info Gradle Extractor'
