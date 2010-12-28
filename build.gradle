@@ -95,6 +95,7 @@ configure(baseProjects()) {
 // Create configurations for the extractor projects
 configure(extractorProjects()) {
     configurations {
+        provided
         tools
         uberJar {
             description = 'All jars that should be included in the Uber Jar'
@@ -102,6 +103,7 @@ configure(extractorProjects()) {
         }
         compile {
             extendsFrom uberJar
+            extendsFrom provided
         }
     }
 
@@ -135,6 +137,7 @@ configure(extractorProjects()) {
     // dependencies in generated extractor poms
     configure(install.repositories.mavenInstaller) {
         pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 1, configurations.uberJar, "compile")
+        pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
     }
 }
 
@@ -169,13 +172,13 @@ project('build-info-extractor-ivy') {
         uberJar project(':build-info-extractor')
         uberJar "org.slf4j:slf4j-api:1.5.8"
         uberJar "org.aspectj:aspectjweaver:1.6.9"
-        compile("com.google.code.findbugs:jsr305:1.3.9") {
+        provided("com.google.code.findbugs:jsr305:1.3.9") {
             provided: true
         }
-        compile("org.apache.ivy:ivy:2.1.0") {
+        provided("org.apache.ivy:ivy:2.1.0") {
             provided: true
         }
-        compile("org.apache.ant:ant:1.8.1") {
+        provided("org.apache.ant:ant:1.8.1") {
             provided: true
         }
     }
@@ -197,10 +200,10 @@ project('build-info-extractor-gradle') {
     dependencies {
         compile gradleApi()
         uberJar project(':build-info-extractor')
-        compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
             provided: true
         }
-        compile("com.google.code.findbugs:jsr305:1.3.9") {
+        provided("com.google.code.findbugs:jsr305:1.3.9") {
             provided: true
         }
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
@@ -233,10 +236,10 @@ project('build-info-extractor-maven3') {
 
     dependencies {
         uberJar project(':build-info-extractor')
-        compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
             provided: true
         }
-        compile("org.apache.maven:maven-core:3.0") {
+        provided("org.apache.maven:maven-core:3.0") {
             provided: true
         }
 
