@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -127,15 +128,16 @@ public class BuildInfoModelPropertyResolver {
         }
         addMatrixParamIfNeeded(allProps, PROP_BUILD_NUMBER, buildNumber);
 
+        Date buildStartedDate = event.getSession().getRequest().getStartTime();
+
         String buildStarted = allProps.getProperty(PROP_BUILD_STARTED);
         if (StringUtils.isBlank(buildStarted)) {
-            buildStarted =
-                    new SimpleDateFormat(Build.STARTED_FORMAT).format(event.getSession().getRequest().getStartTime());
+            buildStarted = new SimpleDateFormat(Build.STARTED_FORMAT).format(buildStartedDate);
         }
 
         String buildTimestamp = allProps.getProperty(PROP_BUILD_TIMESTAMP);
         if (StringUtils.isBlank(buildTimestamp)) {
-            buildTimestamp = Long.toString(System.currentTimeMillis());
+            buildTimestamp = Long.toString(buildStartedDate.getTime());
         }
         addMatrixParamIfNeeded(allProps, PROP_BUILD_TIMESTAMP, buildTimestamp);
 
