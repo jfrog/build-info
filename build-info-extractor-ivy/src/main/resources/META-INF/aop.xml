@@ -1,7 +1,7 @@
 <!--<!DOCTYPE aspectj PUBLIC "-//AspectJ//DTD//EN" "http://www.eclipse.org/aspectj/dtd/aspectj.dtd">-->
 <aspectj>
 
-    <weaver options="-showWeaveInfo"/>
+    <!--<weaver options="-showWeaveInfo"/>-->
 
     <aspects>
         <aspect name="org.jfrog.build.config.ArtifactoryIvySettingsConfigurator"/>
