@@ -48,6 +48,10 @@ public interface BuildInfoProperties {
     String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.parentNumber";
     String PROP_VCS_REVISION = BUILD_INFO_PREFIX + "vcs.revision";
     String PROP_PRINCIPAL = BUILD_INFO_PREFIX + "principal";
+    /**
+     * A timestamp to add to deployed artifacts as matrix param. Usually same as build start time.
+     */
+    String PROP_BUILD_TIMESTAMP = BUILD_INFO_PREFIX + "build.timestamp";
 
     /**
      * Property to link the build back to the CI server that produced the build

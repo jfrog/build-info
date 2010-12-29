@@ -119,13 +119,13 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
         }
-        addMatrixParamIfNeeded(allProps, "build.name", buildName);
+        addMatrixParamIfNeeded(allProps, PROP_BUILD_NAME, buildName);
 
         String buildNumber = allProps.getProperty(PROP_BUILD_NUMBER);
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = Long.toString(System.currentTimeMillis());
         }
-        addMatrixParamIfNeeded(allProps, "build.number", buildNumber);
+        addMatrixParamIfNeeded(allProps, PROP_BUILD_NUMBER, buildNumber);
 
         String buildStarted = allProps.getProperty(PROP_BUILD_STARTED);
         if (StringUtils.isBlank(buildStarted)) {
@@ -133,9 +133,16 @@ public class BuildInfoModelPropertyResolver {
                     new SimpleDateFormat(Build.STARTED_FORMAT).format(event.getSession().getRequest().getStartTime());
         }
 
+        String buildTimestamp = allProps.getProperty(PROP_BUILD_TIMESTAMP);
+        if (StringUtils.isBlank(buildTimestamp)) {
+            buildTimestamp = Long.toString(System.currentTimeMillis());
+        }
+        addMatrixParamIfNeeded(allProps, PROP_BUILD_TIMESTAMP, buildTimestamp);
+
         logResolvedProperty(PROP_BUILD_NAME, buildName);
         logResolvedProperty(PROP_BUILD_NUMBER, buildNumber);
         logResolvedProperty(PROP_BUILD_STARTED, buildStarted);
+        logResolvedProperty(PROP_BUILD_TIMESTAMP, buildTimestamp);
         return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
     }
 
@@ -196,8 +203,10 @@ public class BuildInfoModelPropertyResolver {
         logger.debug("Artifactory Build Info Model Property Resolver: " + key + " = " + value);
     }
 
-    private void addMatrixParamIfNeeded(Properties allProps, String paramPrefix, String paramValue) {
-        String matrixParamKey = ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + paramPrefix;
+    private void addMatrixParamIfNeeded(Properties allProps, String propName, String paramValue) {
+        // TODO [by YS]: I don't like doing it here, should encapsulate in an object
+        propName = StringUtils.removeStart(propName, BuildInfoProperties.BUILD_INFO_PREFIX);
+        String matrixParamKey = ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + propName;
         if (!allProps.containsKey(matrixParamKey)) {
             allProps.put(matrixParamKey, paramValue);
         }
