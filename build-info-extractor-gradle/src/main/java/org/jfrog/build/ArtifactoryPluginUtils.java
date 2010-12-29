@@ -32,6 +32,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.LayoutPatterns;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask;
 
@@ -49,10 +50,6 @@ public class ArtifactoryPluginUtils {
 
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "'";
-    private static final String M2_PER_MODULE_PATTERN
-            = "[revision]/[artifact]-[revision](-[classifier]).[ext]";
-    private static final String M2_PATTERN = "[organisation]/[module]/" + M2_PER_MODULE_PATTERN;
-    private static final String M2_IVY_PATTERN = "[organisation]/[module]/[revision]/ivy-[revision].xml";
     public static final String BUILD_INFO_TASK_NAME = "buildInfo";
 
 
@@ -162,7 +159,7 @@ public class ArtifactoryPluginUtils {
         String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
         if (StringUtils.isBlank(pattern)) {
             if (isM2Compatible(project)) {
-                pattern = M2_PATTERN;
+                pattern = LayoutPatterns.M2_PATTERN;
             } else {
                 pattern = IBiblioResolver.DEFAULT_PATTERN;
             }
@@ -176,7 +173,7 @@ public class ArtifactoryPluginUtils {
             return pattern.trim();
         }
         if (isM2Compatible(project)) {
-            return M2_IVY_PATTERN;
+            return LayoutPatterns.M2_IVY_PATTERN;
         } else {
             return IvyRepResolver.DEFAULT_IVYPATTERN;
         }
@@ -243,7 +240,7 @@ public class ArtifactoryPluginUtils {
                     e);
         }
         String name = getProjectName(project, artifactName);
-        artifactBuilder.artifactPath(IvyPatternHelper.substitute(M2_PATTERN,
+        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
                 project.getGroup().toString().replace(".", "/"), name,
                 project.getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(uploadId);
