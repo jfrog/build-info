@@ -76,11 +76,6 @@ subprojects {
         from sourceSets.main.allSource
         classifier = 'sources'
     }
-
-    // Add the published artifact of sourceJar task to the list of published artifacts for the archives configuration
-    artifacts {
-        archives sourceJar
-    }
 }
 
 configure(baseProjects()) {
@@ -97,6 +92,7 @@ configure(extractorProjects()) {
     configurations {
         provided
         tools
+        sources
         uberJar {
             description = 'All jars that should be included in the Uber Jar'
             transitive = true
@@ -131,6 +127,7 @@ configure(extractorProjects()) {
     // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
     artifacts {
         archives jarAll
+        archives sourceJar
     }
 
     // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope
