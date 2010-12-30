@@ -3,7 +3,6 @@ package org.jfrog.build.util;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.apache.ivy.plugins.resolver.IvyRepResolver;
 import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.LayoutPatterns;
@@ -60,7 +59,7 @@ public class IvyResolverHelper {
         if (StringUtils.isNotBlank(pattern)) {
             return pattern.trim();
         }
-        return IvyRepResolver.DEFAULT_IVYPATTERN;
+        return LayoutPatterns.DEFAULT_IVY_PATTERN;
     }
 
     private static String getArtifactPattern(Properties props) {

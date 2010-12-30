@@ -8,5 +8,5 @@ package org.jfrog.build.client;
 public interface LayoutPatterns {
     String M2_PER_MODULE_PATTERN = "[revision]/[artifact]-[revision](-[classifier]).[ext]";
     String M2_PATTERN = "[organisation]/[module]/" + M2_PER_MODULE_PATTERN;
-    String M2_IVY_PATTERN = "[organisation]/[module]/[revision]/ivy-[revision].xml";
+    String DEFAULT_IVY_PATTERN = "[organisation]/[module]/[revision]/ivy.xml";
 }

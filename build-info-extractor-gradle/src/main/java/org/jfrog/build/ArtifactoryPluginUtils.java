@@ -21,7 +21,6 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.apache.ivy.plugins.resolver.IvyRepResolver;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -172,11 +171,7 @@ public class ArtifactoryPluginUtils {
         if (StringUtils.isNotBlank(pattern)) {
             return pattern.trim();
         }
-        if (isM2Compatible(project)) {
-            return LayoutPatterns.M2_IVY_PATTERN;
-        } else {
-            return IvyRepResolver.DEFAULT_IVYPATTERN;
-        }
+        return LayoutPatterns.DEFAULT_IVY_PATTERN;
     }
 
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor,
@@ -197,7 +192,7 @@ public class ArtifactoryPluginUtils {
         String name = getProjectName(project, artifactName);
         artifactBuilder.artifactPath(IvyPatternHelper
                 .substitute(pattern, getGroupIdPatternByM2Compatible(project), name, project.getVersion().toString(),
-                null, "ivy", "xml"));
+                        null, "ivy", "xml"));
         artifactBuilder.targetRepository(uploadId);
         Properties matrixParams = getMatrixParams(project);
         artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
