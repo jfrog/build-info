@@ -20,7 +20,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
-import org.apache.ivy.plugins.resolver.IBiblioResolver;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -157,11 +156,7 @@ public class ArtifactoryPluginUtils {
     public static String getArtifactPattern(Project project) {
         String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
         if (StringUtils.isBlank(pattern)) {
-            if (isM2Compatible(project)) {
-                pattern = LayoutPatterns.M2_PATTERN;
-            } else {
-                pattern = IBiblioResolver.DEFAULT_PATTERN;
-            }
+            return LayoutPatterns.M2_PATTERN;
         }
         return pattern.trim();
     }
