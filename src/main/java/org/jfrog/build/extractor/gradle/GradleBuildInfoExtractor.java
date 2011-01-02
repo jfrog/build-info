@@ -61,6 +61,7 @@ import java.util.Set;
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
 
 /**
  * An upload task uploads files to the repositories assigned to it.  The files that get uploaded are the artifacts of
@@ -98,8 +99,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(startParamProps);
         buildInfoProps = new Properties();
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterDynamicProperties(mergedProps,
-                BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE));
+        Properties buildInfoProperties =
+                BuildInfoExtractorUtils.filterDynamicProperties(mergedProps, BUILD_INFO_PROP_PREDICATE);
+        buildInfoProperties =
+                BuildInfoExtractorUtils.stripPrefixFromProperties(buildInfoProperties, BUILD_INFO_PROP_PREFIX);
+        buildInfoProps.putAll(buildInfoProperties);
     }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {

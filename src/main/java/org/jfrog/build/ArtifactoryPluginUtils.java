@@ -20,8 +20,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
-import org.apache.ivy.plugins.resolver.IBiblioResolver;
-import org.apache.ivy.plugins.resolver.IvyRepResolver;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -32,6 +30,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.LayoutPatterns;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask;
 
@@ -49,10 +48,6 @@ public class ArtifactoryPluginUtils {
 
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "'";
-    private static final String M2_PER_MODULE_PATTERN
-            = "[revision]/[artifact]-[revision](-[classifier]).[ext]";
-    private static final String M2_PATTERN = "[organisation]/[module]/" + M2_PER_MODULE_PATTERN;
-    private static final String M2_IVY_PATTERN = "[organisation]/[module]/[revision]/ivy-[revision].xml";
     public static final String BUILD_INFO_TASK_NAME = "buildInfo";
 
 
@@ -161,11 +156,7 @@ public class ArtifactoryPluginUtils {
     public static String getArtifactPattern(Project project) {
         String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
         if (StringUtils.isBlank(pattern)) {
-            if (isM2Compatible(project)) {
-                pattern = M2_PATTERN;
-            } else {
-                pattern = IBiblioResolver.DEFAULT_PATTERN;
-            }
+            return LayoutPatterns.M2_PATTERN;
         }
         return pattern.trim();
     }
@@ -175,14 +166,11 @@ public class ArtifactoryPluginUtils {
         if (StringUtils.isNotBlank(pattern)) {
             return pattern.trim();
         }
-        if (isM2Compatible(project)) {
-            return M2_IVY_PATTERN;
-        } else {
-            return IvyRepResolver.DEFAULT_IVYPATTERN;
-        }
+        return LayoutPatterns.DEFAULT_IVY_PATTERN;
     }
 
-    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor, String artifactName) {
+    public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor,
+            String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         String pattern = getIvyDescriptorPattern(project);
@@ -242,7 +230,7 @@ public class ArtifactoryPluginUtils {
                     e);
         }
         String name = getProjectName(project, artifactName);
-        artifactBuilder.artifactPath(IvyPatternHelper.substitute(M2_PATTERN,
+        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
                 project.getGroup().toString().replace(".", "/"), name,
                 project.getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(uploadId);
@@ -257,30 +245,37 @@ public class ArtifactoryPluginUtils {
         Properties props = new Properties();
         props.putAll(project.getGradle().getStartParameter().getProjectProperties());
         props.putAll(System.getProperties());
-        String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project);
+
         if (StringUtils.isBlank(System.getProperty("timestamp"))) {
             System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()));
         }
+
+        String buildName = getProperty(BuildInfoProperties.PROP_BUILD_NAME, project);
+        if (StringUtils.isBlank(buildName)) {
+            Project rootProject = project.getRootProject();
+            buildName = rootProject.getName().replace(' ', '-');
+        }
+        props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
+                StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
+                buildName);
+
+        String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project);
+        if (StringUtils.isBlank(buildNumber)) {
+            buildNumber = System.getProperty("timestamp");
+        }
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
                 StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX),
-                System.getProperty("timestamp", Long.toString(System.currentTimeMillis()) + ""));
-        if (StringUtils.isNotBlank(buildNumber)) {
-            props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
-                    StringUtils
-                            .removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX),
-                    buildNumber);
+                buildNumber);
+
+        String buildTimestamp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP, project);
+        if (StringUtils.isBlank(buildTimestamp)) {
+            buildTimestamp = System.getProperty("timestamp");   // this must hold value
         }
-        String buildName = getProperty(BuildInfoProperties.PROP_BUILD_NAME, project);
-        if (StringUtils.isNotBlank(buildName)) {
-            props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
-                    buildName);
-        } else {
-            Project rootProject = project.getRootProject();
-            props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
-                    rootProject.getName().replace(' ', '-'));
-        }
+        props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
+                StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_TIMESTAMP,
+                        BuildInfoProperties.BUILD_INFO_PREFIX),
+                buildTimestamp);
+
         String buildParentNumber =
                 ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project);
         if (StringUtils.isNotBlank(buildParentNumber)) {
@@ -290,6 +285,7 @@ public class ArtifactoryPluginUtils {
                                     BuildInfoProperties.BUILD_INFO_PREFIX),
                     buildParentNumber);
         }
+
         String buildParentName = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project);
         if (StringUtils.isNotBlank(buildParentName)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
@@ -297,6 +293,7 @@ public class ArtifactoryPluginUtils {
                             BuildInfoProperties.BUILD_INFO_PREFIX),
                     buildParentName);
         }
+
         String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project);
         if (StringUtils.isNotBlank(vcsRevision)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
