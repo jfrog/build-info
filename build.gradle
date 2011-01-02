@@ -85,6 +85,11 @@ configure(baseProjects()) {
         compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
     test.useTestNG()
+
+    // Add the sourceJars to non-extractor modules
+    artifacts {
+        archives sourceJar
+    }
 }
 
 // Create configurations for the extractor projects
