@@ -157,6 +157,20 @@ project('build-info-client') {
         compile "org.apache.httpcomponents:httpclient:4.0"
         compile "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
     }
+    sourceSets {
+        main {
+            resources {
+                srcDir 'src/main/filtered-resources'
+            }
+        }
+    }
+    processResources {
+        from(sourceSets.main.resources.srcDirs) {
+            include '**/*bi.client.properties'
+            filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
+        }
+    }
+
 }
 
 project('build-info-extractor') {
