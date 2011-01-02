@@ -123,7 +123,6 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     And default install task for project ${project.path} is not an Upload task""")
                 }
                 buildInfoTask.mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml")
-                buildInfoTask.mavenPom = project.getRepositories().mavenDeployer().getPom()
                 buildInfoTask.dependsOn(installTask)
             } else {
                 buildInfoTask.mavenDescriptor = null

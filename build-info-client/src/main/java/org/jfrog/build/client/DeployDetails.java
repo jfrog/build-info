@@ -32,29 +32,65 @@ import java.util.Properties;
  */
 public class DeployDetails {
     /**
-     * Target deploy repository
+     * Target deploy repository.
      */
     private String targetRepository;
     /**
-     * Artifact deployment path
+     * Artifact deployment path.
      */
     String artifactPath;
     /**
-     * The file to deploy
+     * The file to deploy.
      */
     File file;
     /**
-     * sha1 checksum of the file to deploy
+     * sha1 checksum of the file to deploy.
      */
     String sha1;
     /**
-     * md5 checksum of the file to deploy
+     * md5 checksum of the file to deploy.
      */
     String md5;
     /**
-     * Properties to attach to the deployed file
+     * Properties to attach to the deployed file as matrix params.
      */
     Map<String, String> properties;
+
+    /**
+     * @return Return the target deployment repository.
+     */
+    public String getTargetRepository() {
+        return targetRepository;
+    }
+
+    public String getArtifactPath() {
+        return artifactPath;
+    }
+
+    public File getFile() {
+        return file;
+    }
+
+    public Map<String, String> getProperties() {
+        return properties;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        DeployDetails details = (DeployDetails) o;
+        return artifactPath.equals(details.artifactPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return artifactPath.hashCode();
+    }
 
     public static class Builder {
         private DeployDetails deployDetails;
@@ -128,39 +164,4 @@ public class DeployDetails {
         }
     }
 
-    /**
-     * @return Return the target deployment repository.
-     */
-    public String getTargetRepository() {
-        return targetRepository;
-    }
-
-    public String getArtifactPath() {
-        return artifactPath;
-    }
-
-    public File getFile() {
-        return file;
-    }
-
-    public Map<String, String> getProperties() {
-        return properties;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        DeployDetails details = (DeployDetails) o;
-        return artifactPath.equals(details.artifactPath);
-    }
-
-    @Override
-    public int hashCode() {
-        return artifactPath.hashCode();
-    }
 }

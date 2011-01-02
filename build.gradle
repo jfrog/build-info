@@ -47,8 +47,11 @@ subprojects {
         testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
     }
 
+    // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
+    // MavenResolver (mavenInstaller) take the pomFilterContainer (pom) and configure the maven project
     configure(install.repositories.mavenInstaller) {
         pom.project {
+            url 'http://wiki.jfrog.org/confluence/display/RTF/Build+Integration'
             licenses {
                 license {
                     name 'The Apache Software License, Version 2.0'
@@ -63,27 +66,15 @@ subprojects {
                     archive 'http://forums.jfrog.org/Artifactory-Users-f2377369.html'
                 }
             }
-            developers {
-                developer {
-                    id 'tomerc'
-                    name 'Tomer Cohen'
-                    email 'tomerc at jfrog dot org'
-                }
-                developer {
-                    id 'freds'
-                    name 'Frederic Simon'
-                    email 'frederic dot simon at jfrog dot org'
-                }
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/BI'
             }
         }
     }
     task sourceJar(type: Jar, dependsOn: jar) {
         from sourceSets.main.allSource
         classifier = 'sources'
-    }
-
-    artifacts {
-        archives sourceJar
     }
 }
 
@@ -96,15 +87,19 @@ configure(baseProjects()) {
     test.useTestNG()
 }
 
+// Create configurations for the extractor projects
 configure(extractorProjects()) {
     configurations {
+        provided
         tools
+        sources
         uberJar {
-            description = 'All jar that should be included in the Uber Jar'
+            description = 'All jars that should be included in the Uber Jar'
             transitive = true
         }
         compile {
             extendsFrom uberJar
+            extendsFrom provided
         }
     }
 
@@ -113,11 +108,12 @@ configure(extractorProjects()) {
     }
 
     task jarAll(type: Jar, dependsOn: jar) {
-        inputs.files jar.archivePath
+        //Add the directory of the archive as the input files for this task
         classifier = 'uber'
         doLast {
             project.ant {
                 taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
+                //Zip the  project's jar (jar.archivePath) and the dependencies defined for the uberJar conf into archivePath (with classifier)
                 jarjar(jarfile: archivePath) {
                     zipfileset(src: jar.archivePath)
                     configurations.uberJar.files.each {jarjarFile ->
@@ -128,10 +124,22 @@ configure(extractorProjects()) {
         }
     }
 
+    // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
     artifacts {
         archives jarAll
+        archives sourceJar
+    }
+
+    // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope
+    // dependencies in generated extractor poms
+    configure(install.repositories.mavenInstaller) {
+        pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 1, configurations.uberJar, "compile")
+        pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
     }
 }
+
+// Declare the root project to build its children first
+dependsOnChildren()
 
 project('build-info-api') {
     description = 'JFrog Build-Info API'
@@ -159,17 +167,24 @@ project('build-info-extractor-ivy') {
     description = 'JFrog Build-Info Ivy Extractor'
     dependencies {
         uberJar project(':build-info-extractor')
-        compile project(':build-info-extractor')
         uberJar "org.slf4j:slf4j-api:1.5.8"
         uberJar "org.aspectj:aspectjweaver:1.6.9"
-        compile("com.google.code.findbugs:jsr305:1.3.9") {
+        provided("com.google.code.findbugs:jsr305:1.3.9") {
             provided: true
         }
-        compile("org.apache.ivy:ivy:2.1.0") {
+        provided("org.apache.ivy:ivy:2.1.0") {
             provided: true
         }
-        compile("org.apache.ant:ant:1.8.1") {
+        provided("org.apache.ant:ant:1.8.1") {
             provided: true
+        }
+    }
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/IAP'
+            }
         }
     }
 }
@@ -182,11 +197,10 @@ project('build-info-extractor-gradle') {
     dependencies {
         compile gradleApi()
         uberJar project(':build-info-extractor')
-        compile project(':build-info-extractor')
-        compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
             provided: true
         }
-        compile("com.google.code.findbugs:jsr305:1.3.9") {
+        provided("com.google.code.findbugs:jsr305:1.3.9") {
             provided: true
         }
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
@@ -202,6 +216,15 @@ project('build-info-extractor-gradle') {
             filter(ReplaceTokens, tokens: ['fullVersion': version.toString(), 'buildInfoVersion': buildInfoVersion.toString()])
         }
     }
+
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/GAP'
+            }
+        }
+    }
 }
 
 project('build-info-extractor-maven3') {
@@ -210,16 +233,21 @@ project('build-info-extractor-maven3') {
 
     dependencies {
         uberJar project(':build-info-extractor')
-        compile project(':build-info-extractor')
-        compile("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
+        provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
             provided: true
         }
-        compile("org.apache.maven:maven-core:3.0") {
+        provided("org.apache.maven:maven-core:3.0") {
             provided: true
         }
 
         testCompile "org.easymock:easymockclassextension:2.5.2"
     }
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/MAP'
+            }
+        }
+    }
 }
-
-dependsOnChildren()
