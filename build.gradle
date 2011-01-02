@@ -122,7 +122,6 @@ configure(extractorProjects()) {
                 //Zip the  project's jar (jar.archivePath) and the dependencies defined for the uberJar conf into archivePath (with classifier)
                 jarjar(jarfile: archivePath) {
                     zipfileset(src: jar.archivePath)
-                    filter(ReplaceTokens, tokens: ['project.version': '1'])
                     configurations.uberJar.files.each {jarjarFile ->
                         zipfileset(src: jarjarFile)
                     }
