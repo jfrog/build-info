@@ -2,7 +2,6 @@ package org.jfrog.build.util;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
-import org.apache.ivy.plugins.resolver.IBiblioResolver;
 import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.LayoutPatterns;
@@ -65,11 +64,7 @@ public class IvyResolverHelper {
     private static String getArtifactPattern(Properties props) {
         String pattern = props.getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN);
         if (StringUtils.isBlank(pattern)) {
-            if (isM2Compatible(props)) {
-                pattern = LayoutPatterns.M2_PATTERN;
-            } else {
-                pattern = IBiblioResolver.DEFAULT_PATTERN;
-            }
+            pattern = LayoutPatterns.M2_PATTERN;
         }
         return pattern.trim();
     }
