@@ -32,6 +32,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -133,13 +134,15 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (isArtifactExist(module.getArtifacts(), artifactFile.getName())) {
             return;
         }
-        String organization = map.get("organisation");
         String path = artifactFile.getAbsolutePath();
         project.log("Module location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         String type = map.get("type");
-        if (artifactFile.getName().contains("sources")) {
-            type = type + "-sources";
+        String classifier = IvyResolverHelper.getClassifier(artifactFile.getName());
+        Map<String, String> extraAttributes = new HashMap<String, String>();
+        if (StringUtils.isNotBlank(classifier)) {
+            type = type + "-" + classifier;
+            extraAttributes.put("classifier", classifier);
         }
         artifactBuilder.type(type);
         Map<String, String> checksums;
@@ -154,10 +157,8 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
-        String revision = map.get("revision");
         Properties props = getMergedEnvAndSystemProps();
-        String artifactPath =
-                IvyResolverHelper.calculateArtifactPath(props, artifactFile, organization, moduleName, revision);
+        String artifactPath = IvyResolverHelper.calculateArtifactPath(props, artifactFile, map, extraAttributes);
         builder.artifactPath(artifactPath);
         String targetRepository = IvyResolverHelper.getTargetRepository(props);
         builder.targetRepository(targetRepository);
@@ -174,6 +175,18 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     buildName);
         }
         String buildNumber = props.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
+        if (StringUtils.isNotBlank(buildNumber)) {
+            builder.addProperty(
+                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
+                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
+        }
+        String buildTimestamp = props.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP);
+        if (StringUtils.isBlank(buildTimestamp)) {
+            buildTimestamp = ctx.getBuildStartTime() + "";
+        }
+        builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_TIMESTAMP,
+                BuildInfoProperties.BUILD_INFO_PREFIX), buildTimestamp);
+
         if (StringUtils.isNotBlank(buildNumber)) {
             builder.addProperty(
                     StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
