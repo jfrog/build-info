@@ -356,12 +356,12 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-
     private void uploadFile(DeployDetails details, String uploadUrl) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
         deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.sha1);
+        httpPut.addHeader("X-Checksum-Md5", details.md5);
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         int statusCode = statusLine.getStatusCode();
