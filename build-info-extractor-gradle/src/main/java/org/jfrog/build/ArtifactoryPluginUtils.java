@@ -109,7 +109,7 @@ public class ArtifactoryPluginUtils {
     }
 
     public static Set<DeployDetails> getDeployArtifactsProject(Project project, String artifactName) {
-        Set<DeployDetails> deployDetails = Sets.newHashSet();
+        Set<DeployDetails> deployDetails = Sets.newLinkedHashSet();
         Set<Task> buildInfoTask = project.getTasksByName("buildInfo", false);
         if (buildInfoTask.isEmpty()) {
             return deployDetails;
@@ -170,7 +170,7 @@ public class ArtifactoryPluginUtils {
     }
 
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor,
-            String artifactName) {
+                                                                   String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         String pattern = getIvyDescriptorPattern(project);
