@@ -64,6 +64,10 @@ public class ArtifactoryBuildInfoClient {
      */
     private ArtifactoryHttpClient httpClient;
     private String artifactoryUrl;
+    /**
+     * Version of Artifactory we work with.
+     */
+    private Version artifactoryVersion;
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -85,6 +89,11 @@ public class ArtifactoryBuildInfoClient {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, log);
         this.log = log;
+        try {
+            artifactoryVersion = httpClient.getVersion();
+        } catch (IOException e) {
+            artifactoryVersion = Version.NOT_FOUND;
+        }
     }
 
     /**
@@ -274,7 +283,10 @@ public class ArtifactoryBuildInfoClient {
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
         uploadFile(details, deploymentPath);
-        uploadChecksums(details, deploymentPath);
+        // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
+        if (!artifactoryVersion.isAtLeast(new Version("2.3.2"))) {
+            uploadChecksums(details, deploymentPath);
+        }
     }
 
     /**
