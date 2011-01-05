@@ -138,8 +138,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
             if (buildInfoRecorderTask != null) {
                 Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                if ((!configuration.getArtifacts().isEmpty())) {
-                    buildInfoBuilder.addModule(extractModule(configuration, project));
+                if (configuration != null) {
+                    if ((!configuration.getArtifacts().isEmpty())) {
+                        buildInfoBuilder.addModule(extractModule(configuration, project));
+                    }
                 }
             }
         }
