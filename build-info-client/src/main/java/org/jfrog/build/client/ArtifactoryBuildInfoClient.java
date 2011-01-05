@@ -18,6 +18,7 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -140,10 +141,15 @@ public class ArtifactoryBuildInfoClient {
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
         StatusLine statusLine = response.getStatusLine();
+        HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (entity != null) {
+                entity.consumeContent();
+                InputStream content = entity.getContent();
+                Closeables.closeQuietly(content);
+            }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
-            HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
                 InputStream content = entity.getContent();
@@ -179,10 +185,15 @@ public class ArtifactoryBuildInfoClient {
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
         StatusLine statusLine = response.getStatusLine();
+        HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (entity != null) {
+                entity.consumeContent();
+                InputStream content = entity.getContent();
+                Closeables.closeQuietly(content);
+            }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
-            HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
                 InputStream content = entity.getContent();
@@ -422,7 +433,7 @@ public class ArtifactoryBuildInfoClient {
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (Map.Entry<String, String> property : matrixParams.entrySet()) {
                 matrix.append(";").append(httpClient.urlEncode(property.getKey()))
-                      .append("=").append(httpClient.urlEncode(property.getValue()));
+                        .append("=").append(httpClient.urlEncode(property.getValue()));
             }
         }
         return matrix.toString();
