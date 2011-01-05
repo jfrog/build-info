@@ -139,7 +139,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             if (buildInfoRecorderTask != null) {
                 Configuration configuration = buildInfoRecorderTask.getConfiguration();
                 if ((!configuration.getArtifacts().isEmpty())) {
-                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
+                    buildInfoBuilder.addModule(extractModule(configuration, project));
                 }
             }
         }
