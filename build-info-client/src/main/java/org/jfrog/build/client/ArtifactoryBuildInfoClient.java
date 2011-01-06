@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.protocol.HTTP;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
@@ -375,6 +376,9 @@ public class ArtifactoryBuildInfoClient {
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.sha1);
         httpPut.addHeader("X-Checksum-Md5", details.md5);
+        // add the 100 continue directive
+        httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         int statusCode = statusLine.getStatusCode();

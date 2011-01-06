@@ -123,7 +123,6 @@ public class PreemptiveHttpClient {
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
         HttpProtocolParams.setUserAgent(client.getParams(), userAgent);
-        HttpProtocolParams.setUseExpectContinue(client.getParams(), true);
         return client;
     }
 
