@@ -79,6 +79,11 @@ subprojects {
     from sourceSets.main.allSource
     classifier = 'sources'
   }
+
+  install {
+    dependsOn: jar
+    dependsOn: sourceJar
+  }
 }
 
 configure(baseProjects()) {
