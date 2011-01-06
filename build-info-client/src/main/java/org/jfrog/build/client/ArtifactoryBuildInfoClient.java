@@ -145,8 +145,6 @@ public class ArtifactoryBuildInfoClient {
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             if (entity != null) {
                 entity.consumeContent();
-                InputStream content = entity.getContent();
-                Closeables.closeQuietly(content);
             }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
@@ -189,8 +187,6 @@ public class ArtifactoryBuildInfoClient {
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             if (entity != null) {
                 entity.consumeContent();
-                InputStream content = entity.getContent();
-                Closeables.closeQuietly(content);
             }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
