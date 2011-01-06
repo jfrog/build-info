@@ -137,6 +137,9 @@ public class ArtifactoryHttpClient {
             return Version.NOT_FOUND;
         }
         if (statusCode != HttpStatus.SC_OK) {
+            if (response.getEntity() != null) {
+                response.getEntity().consumeContent();
+            }
             throw new IOException(response.getStatusLine().getReasonPhrase());
         }
         HttpEntity httpEntity = response.getEntity();

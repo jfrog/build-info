@@ -18,7 +18,6 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -90,11 +89,6 @@ public class ArtifactoryBuildInfoClient {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, log);
         this.log = log;
-        try {
-            artifactoryVersion = httpClient.getVersion();
-        } catch (IOException e) {
-            artifactoryVersion = Version.NOT_FOUND;
-        }
     }
 
     /**
@@ -291,7 +285,7 @@ public class ArtifactoryBuildInfoClient {
         log.info("Deploying artifact: " + deploymentPath);
         uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
-        if (!artifactoryVersion.isAtLeast(new Version("2.3.2"))) {
+        if (!getArtifactoryVersion().isAtLeast(new Version("2.3.2"))) {
             uploadChecksums(details, deploymentPath);
         }
     }
@@ -468,5 +462,16 @@ public class ArtifactoryBuildInfoClient {
                 append(statusLine.getStatusCode()).append(". HTTP response message: ").
                 append(statusLine.getReasonPhrase()).toString();
         throw new IOException(errorMessage);
+    }
+
+    private Version getArtifactoryVersion() {
+        if (artifactoryVersion == null) {
+            try {
+                artifactoryVersion = httpClient.getVersion();
+            } catch (IOException e) {
+                artifactoryVersion = Version.NOT_FOUND;
+            }
+        }
+        return artifactoryVersion;
     }
 }
