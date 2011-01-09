@@ -119,7 +119,7 @@ configure(extractorProjects()) {
   }
 
   dependencies {
-    if (version.release) {
+    if (version.release && !buildInfoVersion.release) {
       uberJar group: "$group", name: 'build-info-extractor', version: project.getProperty('build-info-latest-release-version')
     } else {
       uberJar project(':build-info-extractor')
