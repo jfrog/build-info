@@ -40,7 +40,6 @@ public interface BuildInfoProperties {
      */
     String PROP_BUILD_INFO_OUTPUT_FILE = BUILD_INFO_PREFIX + "output.file";
 
-    //TODO: [by YS] move the build.name etc. to another interface/class and use them from all places
     String PROP_BUILD_NAME = BUILD_INFO_PREFIX + "build.name";
     String PROP_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.number";
     String PROP_BUILD_STARTED = BUILD_INFO_PREFIX + "build.started";
