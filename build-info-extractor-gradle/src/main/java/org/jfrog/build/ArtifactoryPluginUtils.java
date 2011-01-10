@@ -53,6 +53,7 @@ public class ArtifactoryPluginUtils {
     private static final String NEW_LINE = "\n";
     private static final String QUOTE = "'";
     public static final String BUILD_INFO_TASK_NAME = "buildInfo";
+    public static final String BUILD_INFO_CONFIG_TASK_NAME = "buildInfoConfig";
 
     /**
      * Returns a new client configuration handler object out of a Gradle project.

@@ -18,18 +18,16 @@ package org.jfrog.build
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
-
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-
 import org.gradle.api.invocation.Gradle
-
-import org.jfrog.build.client.ArtifactoryClientConfiguration
+import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
+import org.jfrog.build.extractor.gradle.BuildInfoConfigTask
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
+import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_CONFIG_TASK_NAME
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME
-import static org.jfrog.build.api.BuildInfoFields.BUILD_STARTED
-import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PREFIX
 
 class ArtifactoryPlugin implements Plugin<Project> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -40,18 +38,17 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory Plugin disabled for ${project.path}")
             return
         }
-        // First add the build info task
-        BuildInfoRecorderTask birt = createBuildInfoTask(project)
-        def acc = birt.getArtifactoryClientConfiguration()
-        Map startParamProps = project.gradle.getStartParameter().projectProperties
-        if (!acc.info.buildStarted) {
-            def start = "" + System.currentTimeMillis()
-            startParamProps[BUILD_INFO_PREFIX + BUILD_STARTED] = start
+        // First add the build info config task to the root project if needed
+        BuildInfoConfigTask bict = createBuildInfoConfigTask(project.getRootProject())
+        // Then add the build info task
+        BuildInfoRecorderTask birt = createBuildInfoTask(project, bict)
+        if (!bict.acc.info.buildStarted) {
+            bict.acc.info.buildStarted = "" + System.currentTimeMillis()
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
-        defineResolvers(birt)
-        String buildListenerAdded = startParamProps['__ArtifactoryPlugin_buildListener__'];
-        if (!buildListenerAdded) {
+        defineResolvers(project, bict.acc.resolver)
+
+        if (!bict.acc.isBuildListernerAdded()) {
             def gradle = project.getGradle()
             gradle.addBuildListener(new ProjectEvaluatedBuildListener())
             // Flag the last buildInfo task in the execution graph
@@ -64,28 +61,27 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     }
                 }
             }
-            startParamProps['__ArtifactoryPlugin_buildListener__'] = 'done'
+            bict.acc.setBuildListernerAdded(true)
         }
     }
 
-    private void defineResolvers(BuildInfoRecorderTask birt) {
-        ArtifactoryClientConfiguration acc = birt.getArtifactoryClientConfiguration()
-        String downloadId = acc.resolver.repoKey
-        if (acc.resolver.isEnabled() && StringUtils.isNotBlank(downloadId)) {
-            String artifactoryUrl = acc.contextUrl ?: 'http://gradle.artifactoryonline.com/gradle'
+    private void defineResolvers(Project project, ResolverHandler resolverConf) {
+        String downloadId = resolverConf.repoKey
+        if (resolverConf.isEnabled() && StringUtils.isNotBlank(downloadId)) {
+            String artifactoryUrl = resolverConf.contextUrl ?: 'http://gradle.artifactoryonline.com/gradle'
             while (artifactoryUrl.endsWith("/")) {
                 artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
             }
-            def artifactoryDownloadUrl = acc.resolver.getDownloadUrl() ?: "${artifactoryUrl}/${downloadId}"
+            def artifactoryDownloadUrl = resolverConf.getDownloadUrl() ?: "${artifactoryUrl}/${downloadId}"
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
             // add artifactory url to the list of repositories
-            birt.getProject().repositories {
+            project.repositories {
                 mavenRepo urls: [artifactoryDownloadUrl]
             }
         } else {
-            log.debug("No repository resolution defined for ${birt.getProject().path}")
+            log.debug("No repository resolution defined for ${project.path}")
         }
     }
 
@@ -97,15 +93,29 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
     }
 
-    BuildInfoRecorderTask createBuildInfoTask(Project project) {
-        if (project.tasks.findByName(BUILD_INFO_TASK_NAME)) {
-            return
+    BuildInfoRecorderTask createBuildInfoTask(Project project, BuildInfoConfigTask bict) {
+        BuildInfoRecorderTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        if (buildInfo == null) {
+            def isRoot = project.equals(project.getRootProject())
+            log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
+            buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
+            buildInfo.setDescription("Generates build info from build artifacts")
+            buildInfo.dependsOn(bict)
         }
-        def isRoot = project.equals(project.getRootProject())
-        log.debug("Configuring buildInfo task for project ${project.name}: is root? ${isRoot}")
-        BuildInfoRecorderTask buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
-        buildInfo.setDescription("Generates build info from build artifacts");
         return buildInfo
+    }
+
+    BuildInfoConfigTask createBuildInfoConfigTask(Project rootProject) {
+        if (!rootProject.equals(rootProject.getRootProject())) {
+            throw new GradleException("Cannot add the buildInfoConfig task to a non root project ${rootProject.path}")
+        }
+        BuildInfoConfigTask buildInfoConfig = rootProject.tasks.findByName(BUILD_INFO_CONFIG_TASK_NAME)
+        if (buildInfoConfig == null) {
+            log.debug("Configuring buildInfoConfig task for project ${rootProject.path}")
+            buildInfoConfig = rootProject.getTasks().add(BUILD_INFO_CONFIG_TASK_NAME, BuildInfoConfigTask.class)
+            buildInfoConfig.setDescription("Configuration closures for build info and HTTP client setup")
+        }
+        return buildInfoConfig
     }
 }
 

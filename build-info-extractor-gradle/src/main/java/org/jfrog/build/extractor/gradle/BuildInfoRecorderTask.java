@@ -44,6 +44,7 @@ import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.*;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
@@ -160,6 +161,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
     }
 
+    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
+        BuildInfoConfigTask bict = (BuildInfoConfigTask) getProject().getRootProject().getTasks().getByName(ArtifactoryPluginUtils.BUILD_INFO_CONFIG_TASK_NAME);
+        return bict.acc;
+    }
+
     @TaskAction
     public void collectProjectBuildInfo() throws IOException {
         log.debug("BuildInfo task for project {} activated", getProject().getPath());
@@ -187,13 +193,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
     /**
      * This method will be activated only at the end of the build, when we reached the root project.
      *
-     * @param gbie The Build info extractor object will will assemble the {@link Build} object
      * @throws java.io.IOException In case the deployment fails.
      */
     private void closeAndDeploy() throws IOException {
         GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor();
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        String fileExportPath = clientConf.buildInfoConfig.getExportFile();
+        String fileExportPath = clientConf.getExportFile();
         String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
         String username = clientConf.publisher.getUserName();
@@ -216,7 +221,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                  */
                 Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
                 for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
-                    birt.uploadDescriptorsAndArtifacts(allDeployableDetails);
+                    ((BuildInfoRecorderTask)birt).uploadDescriptorsAndArtifacts(allDeployableDetails);
                 }
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(),
@@ -290,14 +295,20 @@ public class BuildInfoRecorderTask extends DefaultTask {
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 
-    public Set<DeployDetails> getDeployArtifactsProject(ArtifactoryClientConfiguration clientConf) {
+    private Set<DeployDetails> getDeployArtifactsProject() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         Set<DeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (configuration == null) {
             return deployDetails;
         }
         ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
         String pattern = publisherConf.getIvyArtifactPattern();
-        Set<PublishArtifact> artifacts = configuration.getAllArtifacts();
+        Map<String, String> matrixParams = publisherConf.getMatrixParams();
+        String gid = getProject().getGroup().toString();
+        if (publisherConf.isM2Compatible()) {
+            gid = gid.replace(".", "/");
+        }
+        Set<PublishArtifact> artifacts = configuration.getArtifacts();
         for (PublishArtifact publishArtifact : artifacts) {
             File file = publishArtifact.getFile();
             DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
@@ -314,10 +325,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
             if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
                 extraTokens.put("classifier", publishArtifact.getClassifier());
             }
-            String gid = getProject().getGroup().toString();
-            if (publisherConf.isM2Compatible()) {
-                gid = gid.replace(".", "/");
-            }
             artifactBuilder.artifactPath(
                     IvyPatternHelper.substitute(pattern, gid,
                             getArtifactName(),
@@ -325,8 +332,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
             artifactBuilder.targetRepository(publisherConf.getRepoKey());
-            Properties matrixParams = getMatrixParams(project);
-            artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
+            artifactBuilder.addProperties(matrixParams);
             DeployDetails details = artifactBuilder.build();
             deployDetails.add(details);
         }

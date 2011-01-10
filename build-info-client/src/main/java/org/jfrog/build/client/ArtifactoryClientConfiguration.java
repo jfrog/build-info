@@ -35,26 +35,24 @@ import static org.jfrog.build.api.LicenseControlFields.*;
  * @author freds
  */
 public class ArtifactoryClientConfiguration {
-    public static final Predicate<String> PUBLISH_MATRIX_PARAMS_PREDICATE = new Predicate<String>() {
-        public boolean apply(String input) {
-            return input.startsWith(PROP_DEPLOY_PARAM_PROP_PREFIX);
-        }
-    };
-
     private final PrefixPropertyHandler root;
-
-    public final ResolverHandler resolver = new ResolverHandler();
-    public final PublisherHandler publisher = new PublisherHandler();
     /**
-     * @deprecated Should be at root level and removed from here
+     * To configure the props builder itself, so all method of this classes delegated from here
      */
-    @Deprecated
-    public final BuildInfoConfigHandler buildInfoConfig = new BuildInfoConfigHandler();
-    public final BuildInfoHandler info = new BuildInfoHandler();
-    public final ProxyHandler proxy = new ProxyHandler();
+    private final PrefixPropertyHandler rootConfig;
+
+    public final ResolverHandler resolver;
+    public final PublisherHandler publisher;
+    public final BuildInfoHandler info;
+    public final ProxyHandler proxy;
 
     public ArtifactoryClientConfiguration(Log log) {
         this.root = new PrefixPropertyHandler(log, new TreeMap<String, String>());
+        this.rootConfig = new PrefixPropertyHandler(root, BUILD_INFO_CONFIG_PREFIX);
+        this.resolver = new ResolverHandler();
+        this.publisher = new PublisherHandler();
+        this.info = new BuildInfoHandler();
+        this.proxy = new ProxyHandler();
     }
 
     public void fillFromProperties(Map<String, String> props) {
@@ -89,6 +87,38 @@ public class ArtifactoryClientConfiguration {
         return root.getIntegerValue(PROP_TIMEOUT);
     }
 
+    public void setPropertiesFile(String propertyFile) {
+        rootConfig.setStringValue(PROPERTIES_FILE, propertyFile);
+    }
+
+    public String getPropertiesFile() {
+        return rootConfig.getStringValue(PROPERTIES_FILE);
+    }
+
+    public void setExportFile(String exportFile) {
+        rootConfig.setStringValue(EXPORT_FILE, exportFile);
+    }
+
+    public String getExportFile() {
+        return rootConfig.getStringValue(EXPORT_FILE);
+    }
+
+    public void setIncludeEnvVars(Boolean enabled) {
+        rootConfig.setBooleanValue(INCLUDE_ENV_VARS, enabled);
+    }
+
+    public Boolean isIncludeEnvVars() {
+        return rootConfig.getBooleanValue(INCLUDE_ENV_VARS);
+    }
+
+    public void setBuildListernerAdded(Boolean enabled) {
+        root.setBooleanValue("__ArtifactoryPlugin_buildListener__", enabled);
+    }
+
+    public Boolean isBuildListernerAdded() {
+        return root.getBooleanValue("__ArtifactoryPlugin_buildListener__");
+    }
+
     public class ResolverHandler extends RepositoryConfiguration {
         private final Predicate<String> matrixPredicate;
 
@@ -106,14 +136,17 @@ public class ArtifactoryClientConfiguration {
             return root.getStringValue("artifactory.downloadUrl");
         }
 
-        @Override
-        public String getMatrixParamPrefix() {
-            return getPrefix() + MATRIX;
+        public String getContextUrl() {
+            return root.getStringValue(PROP_CONTEXT_URL);
+        }
+
+        public void setContextUrl(String contextUrl) {
+            root.setStringValue(PROP_CONTEXT_URL, contextUrl);
         }
 
         @Override
-        public Predicate<String> getMatrixParamFilter() {
-            return matrixPredicate;
+        public String getMatrixParamPrefix() {
+            return getPrefix() + MATRIX;
         }
     }
 
@@ -166,12 +199,6 @@ public class ArtifactoryClientConfiguration {
         public String getMatrixParamPrefix() {
             return PROP_DEPLOY_PARAM_PROP_PREFIX;
         }
-
-        @Override
-        public Predicate<String> getMatrixParamFilter() {
-            return PUBLISH_MATRIX_PARAMS_PREDICATE;
-        }
-
     }
 
     public class ProxyHandler extends AuthenticationConfiguration {
@@ -306,48 +333,30 @@ public class ArtifactoryClientConfiguration {
 
         public abstract String getMatrixParamPrefix();
 
-        public abstract Predicate<String> getMatrixParamFilter();
-
         public void addMatrixParam(String key, String value) {
             setStringValue(getMatrixParamPrefix() + key, value);
         }
 
         public void addMatrixParams(Map<String, String> vars) {
-            props.putAll(Maps.filterKeys(vars, getMatrixParamFilter()));
+            String matrixPrefix = getMatrixParamPrefix();
+            for (Map.Entry<String, String> entry : vars.entrySet()) {
+                if (entry.getKey().startsWith(matrixPrefix)) {
+                    props.put(entry.getKey(), entry.getValue());
+                } else {
+                    props.put(matrixPrefix + entry.getKey(), entry.getValue());
+                }
+            }
         }
 
         public Map<String, String> getMatrixParams() {
-            return Maps.filterKeys(props, getMatrixParamFilter());
-        }
-    }
-
-    public class BuildInfoConfigHandler extends PrefixPropertyHandler {
-        public BuildInfoConfigHandler() {
-            super(root, BUILD_INFO_CONFIG_PREFIX);
-        }
-
-        public void setPropertiesFile(String propertyFile) {
-            setStringValue(PROPERTIES_FILE, propertyFile);
-        }
-
-        public String getPropertiesFile() {
-            return getStringValue(PROPERTIES_FILE);
-        }
-
-        public void setExportFile(String exportFile) {
-            setStringValue(EXPORT_FILE, exportFile);
-        }
-
-        public String getExportFile() {
-            return getStringValue(EXPORT_FILE);
-        }
-
-        public void setIncludeEnvVars(Boolean enabled) {
-            setBooleanValue(INCLUDE_ENV_VARS, enabled);
-        }
-
-        public Boolean isIncludeEnvVars() {
-            return getBooleanValue(INCLUDE_ENV_VARS);
+            Map<String, String> result = Maps.newHashMap();
+            String matrixPrefix = getMatrixParamPrefix();
+            for (Map.Entry<String, String> entry : props.entrySet()) {
+                if (entry.getKey().startsWith(matrixPrefix)) {
+                    result.put(entry.getKey().substring(matrixPrefix.length()), entry.getValue());
+                }
+            }
+            return result;
         }
     }
 
@@ -466,6 +475,22 @@ public class ArtifactoryClientConfiguration {
 
         public String getVcsRevision() {
             return getStringValue(VCS_REVISION);
+        }
+
+        public void setAgentName(String agentName) {
+            setStringValue(AGENT_NAME, agentName);
+        }
+
+        public String getAgentName() {
+            return getStringValue(AGENT_NAME);
+        }
+
+        public void setAgentVersion(String agentVersion) {
+            setStringValue(AGENT_VERSION, agentVersion);
+        }
+
+        public String getAgentVersion() {
+            return getStringValue(AGENT_VERSION);
         }
 
         public void setBuildAgentName(String buildAgentName) {
