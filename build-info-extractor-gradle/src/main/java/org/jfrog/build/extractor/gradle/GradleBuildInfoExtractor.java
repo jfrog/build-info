@@ -61,6 +61,7 @@ import java.util.Set;
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
 
 /**
  * An upload task uploads files to the repositories assigned to it.  The files that get uploaded are the artifacts of
@@ -73,36 +74,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
 
     private static final String SHA1 = "sha1";
     private static final String MD5 = "md5";
-    private Properties gradleProps;
-    private Properties startParamProps;
-    private Properties buildInfoProps;
-
-    public Properties getGradleProps() {
-        return gradleProps;
-    }
-
-    public Properties getStartParamProps() {
-        return startParamProps;
-    }
-
-    GradleBuildInfoExtractor(Project rootProject) {
-        StartParameter startParameter = rootProject.getGradle().getStartParameter();
-        startParamProps = new Properties();
-        startParamProps.putAll(startParameter.getProjectProperties());
-        gradleProps = new Properties();
-        gradleProps.putAll(startParamProps);
-        File projectPropsFile = new File(rootProject.getProjectDir(), Project.GRADLE_PROPERTIES);
-        if (projectPropsFile.exists()) {
-            Properties properties = GUtil.loadProperties(projectPropsFile);
-            gradleProps.putAll(properties);
-        }
-        Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(startParamProps);
-        buildInfoProps = new Properties();
-        buildInfoProps.putAll(BuildInfoExtractorUtils.filterDynamicProperties(mergedProps,
-                BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE));
-    }
 
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
+
         Project rootProject = buildInfoTask.getRootProject();
         long startTime = Long.parseLong(ArtifactoryPluginUtils.getProperty("build.start", rootProject));
         String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
@@ -119,36 +93,24 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
-        // If
-        String agentString = buildAgent.toString();
-        Agent agent = new Agent(agentString);
-        String buildAgentNameProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME,
+        String buildAgentNameProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_AGENT_NAME,
                 rootProject);
-        String buildAgentVersionProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION,
+        String buildAgentVersionProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_AGENT_VERSION,
                 rootProject);
         if (StringUtils.isNotBlank(buildAgentNameProp) && StringUtils.isNotBlank(buildAgentVersionProp)) {
-            agent = new Agent(buildAgentNameProp, buildAgentVersionProp);
+            buildInfoBuilder.agent(new Agent(buildAgentNameProp, buildAgentVersionProp));
         }
-        buildInfoBuilder.agent(agent)
-                .durationMillis(System.currentTimeMillis() - startTime)
+        buildInfoBuilder.durationMillis(System.currentTimeMillis() - startTime)
                 .startedDate(startedDate).number(buildNumber)
                 .buildAgent(buildAgent);
-        Set<Project> subProjects = rootProject.getSubprojects();
-        if (subProjects.isEmpty()) {
-            BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(rootProject);
+        Set<Project> allProjects = rootProject.getAllprojects();
+        for (Project project : allProjects) {
+            BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
             if (buildInfoRecorderTask != null) {
                 Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                if ((!configuration.getArtifacts().isEmpty())) {
-                    buildInfoBuilder.addModule(extractModule(configuration, rootProject));
-                }
-            }
-        } else {
-            for (Project subProject : subProjects) {
-                BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(subProject);
-                if (buildInfoRecorderTask != null) {
-                    Configuration configuration = buildInfoRecorderTask.getConfiguration();
+                if (configuration != null) {
                     if ((!configuration.getArtifacts().isEmpty())) {
-                        buildInfoBuilder.addModule(extractModule(configuration, subProject));
+                        buildInfoBuilder.addModule(extractModule(configuration, project));
                     }
                 }
             }

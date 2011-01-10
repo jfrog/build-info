@@ -46,32 +46,23 @@ class Version {
             timestampFile.createNewFile()
         }
         buildTime = new Date(timestampFile.lastModified())
-        if (!release)
-            this.versionNumber += "-" + getTimestamp()
-        /*
-                project.gradle.taskGraph.whenReady {graph ->
-                    if (graph.hasTask(':releaseVersion')) {
-                        release = true
-                    } else {
-                        this.versionNumber += "-" + getTimestamp()
-                        release = false
+        if (!release) {
+            def ts = new SimpleDateFormat('yyyyMMddHHmmssZ').format(buildTime)
+            this.versionNumber += "-" + ts
+            /*
+                    project.gradle.taskGraph.whenReady {graph ->
+                        if (graph.hasTask(':releaseVersion')) {
+                            release = true
+                        } else {
+                            this.versionNumber += "-" + getTimestamp()
+                            release = false
+                        }
                     }
-                }
-        */
+            */
+        }
     }
 
     String toString() {
         versionNumber
-    }
-
-    String getTimestamp() {
-        new SimpleDateFormat('yyyyMMddHHmmssZ').format(buildTime)
-    }
-
-    boolean isRelease() {
-        if (release == null) {
-            throw new GradleException("Can't determine whether this is a release build before the task graph is populated")
-        }
-        return release
     }
 }

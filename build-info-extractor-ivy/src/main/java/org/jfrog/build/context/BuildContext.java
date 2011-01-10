@@ -26,11 +26,13 @@ public class BuildContext {
     private Set<DeployDetails> deployDetails;
     private List<Module> modules;
     private List<Dependency> dependencies;
+    private long buildStartTime;
 
     public BuildContext() {
         deployDetails = new HashSet<DeployDetails>();
         modules = new ArrayList<Module>();
         dependencies = new ArrayList<Dependency>();
+        buildStartTime = System.currentTimeMillis();
     }
 
     public void addDeployDetailsForModule(DeployDetails deployDetails) {
@@ -55,5 +57,13 @@ public class BuildContext {
 
     public List<Dependency> getDependencies() {
         return dependencies;
+    }
+
+    public long getBuildStartTime() {
+        return buildStartTime;
+    }
+
+    public void setBuildStartTime(long buildStartTime) {
+        this.buildStartTime = buildStartTime;
     }
 }

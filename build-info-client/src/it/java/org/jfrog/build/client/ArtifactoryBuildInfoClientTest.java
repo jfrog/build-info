@@ -18,13 +18,16 @@ package org.jfrog.build.client;
 
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -37,7 +40,7 @@ import static org.testng.Assert.assertTrue;
 @Test
 public class ArtifactoryBuildInfoClientTest {
 
-    //private String artifactoryUrl = "http://localhost:8080/artifactory";
+    //    private String artifactoryUrl = "http://localhost:8080/artifactory";
     private String artifactoryUrl = "http://localhost:8081/artifactory";
 
     public void getLocalRepositoriesKeys() throws IOException {
@@ -78,6 +81,26 @@ public class ArtifactoryBuildInfoClientTest {
         }
     }
 
+    @Test(enabled = false)
+    public void deployFileWithChecksumHeader() throws IOException, NoSuchAlgorithmException {
+        //System.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog");
+        //System.setProperty("org.apache.commons.logging.simplelog.showdatetime", "true");
+        //System.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http", "debug");
+        ArtifactoryBuildInfoClient client =
+                new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password", new NullLog());
+        File testFile = new File(
+                ArtifactoryBuildInfoClientTest.class.getResource("/org/jfrog/build/client/testfile.txt").getFile());
+
+        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(testFile, "sha1");
+        for (int i = 0; i < 10; i++) {
+            String version = "1." + i;
+            DeployDetails details = new DeployDetails.Builder().targetRepository("libs-releases-local")
+                    .artifactPath(String.format("/test/test/%s/test-%s.gradle", version, version))
+                    .file(testFile).sha1(checksums.get("sha1")).addProperty("key" + i, "value " + i)
+                    .addProperty("key" + i + "b", "value " + i + "b").build();
+            client.deployArtifact(details);
+        }
+    }
     /*public void uploadChecksums() throws IOException {
         ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
         File file = new File("build-info-client/pom.xml");

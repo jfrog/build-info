@@ -24,11 +24,14 @@ public interface BuildInfoConfigProperties {
      * Prefix for all config/runtime properties
      */
     String BUILD_INFO_CONFIG_PREFIX = "buildInfoConfig.";
-    String PROP_PROPS_FILE = BUILD_INFO_CONFIG_PREFIX + "propertiesFile";
-    String PROP_EXPORT_FILE_PATH = BUILD_INFO_CONFIG_PREFIX + "exportFile";
+    String PROPERTIES_FILE = "propertiesFile";
+    String PROP_PROPS_FILE = BUILD_INFO_CONFIG_PREFIX + PROPERTIES_FILE;
+    String EXPORT_FILE = "exportFile";
+    String PROP_EXPORT_FILE_PATH = BUILD_INFO_CONFIG_PREFIX + EXPORT_FILE;
 
     /**
      * Property for whether to include all environment variables in the generic set of build info properties
      */
-    String PROP_INCLUDE_ENV_VARS = BUILD_INFO_CONFIG_PREFIX + "includeEnvVars";
+    String INCLUDE_ENV_VARS = "includeEnvVars";
+    String PROP_INCLUDE_ENV_VARS = BUILD_INFO_CONFIG_PREFIX + INCLUDE_ENV_VARS;
 }

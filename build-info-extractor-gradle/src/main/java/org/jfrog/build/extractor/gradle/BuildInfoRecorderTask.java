@@ -16,44 +16,42 @@
 
 package org.jfrog.build.extractor.gradle;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
+import org.apache.ivy.core.IvyPatternHelper;
+import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.maven.MavenPom;
-import org.gradle.api.internal.ConventionTask;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.*;
+import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
-import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
-import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_EXPORT_FILE_PATH;
-import static org.jfrog.build.client.ClientProperties.*;
 
 /**
  * @author Tomer Cohen
  */
-public class BuildInfoRecorderTask extends ConventionTask {
+public class BuildInfoRecorderTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(BuildInfoRecorderTask.class);
 
     @InputFile
@@ -70,11 +68,9 @@ public class BuildInfoRecorderTask extends ConventionTask {
 
     @Input
     @Optional
-    private MavenPom mavenPom;
-
-    @Input
-    @Optional
     private String artifactName;
+
+    private boolean lastInGraph = false;
 
     public Configuration getConfiguration() {
         return configuration;
@@ -100,15 +96,10 @@ public class BuildInfoRecorderTask extends ConventionTask {
         this.mavenDescriptor = mavenDescriptor;
     }
 
-    public MavenPom getMavenPom() {
-        return mavenPom;
-    }
-
-    public void setMavenPom(MavenPom mavenPom) {
-        this.mavenPom = mavenPom;
-    }
-
     public String getArtifactName() {
+        if (artifactName == null) {
+            return getProject().getName();
+        }
         return artifactName;
     }
 
@@ -116,25 +107,71 @@ public class BuildInfoRecorderTask extends ConventionTask {
         this.artifactName = artifactName;
     }
 
-    /**
-     * @return The root project.
-     */
-    public Project getRootProject() {
-        return getProject().getRootProject();
+    public void projectsEvaluated() {
+        Project project = getProject();
+        TaskContainer tasks = project.getTasks();
+        if (configuration == null) {
+            configuration = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+        }
+        for (Project sub : project.getSubprojects()) {
+            Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
+            if (subBiTask != null) {
+                dependsOn(subBiTask);
+            }
+        }
+
+        // If no configuration no descriptor
+        if (configuration == null) {
+            return;
+        }
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+
+        // Set ivy descriptor parameters
+        if (acc.publisher.isIvy()) {
+            if (ivyDescriptor == null) {
+                // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
+                Upload uploadTask = (Upload) tasks.getByName(configuration.getUploadTaskName());
+                if (!uploadTask.isUploadDescriptor()) {
+                    throw new GradleException("Cannot publish Ivy descriptor if ivyDescriptor not set in task: " + getPath() +
+                            "\nAnd flag uploadDescriptor not set in default task: " + uploadTask.getPath());
+                }
+                ivyDescriptor = uploadTask.getDescriptorDestination();
+                dependsOn(uploadTask);
+            }
+        } else {
+            ivyDescriptor = null;
+        }
+
+        // Set maven pom parameters
+        if (acc.publisher.isMaven()) {
+            if (mavenDescriptor == null) {
+                // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
+                // if the project doesn't have the maven install task, throw an exception
+                Upload installTask = tasks.withType(Upload.class).findByName("install");
+                if (installTask == null) {
+                    throw new GradleException("Cannot publish Maven descriptor if mavenDescriptor not set in task: " + getPath() +
+                            "\nAnd default install task for project " + project.getPath() + " is not an Upload task");
+                }
+                mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
+                dependsOn(installTask);
+            }
+        } else {
+            mavenDescriptor = null;
+        }
     }
 
     @TaskAction
     public void collectProjectBuildInfo() throws IOException {
-        log.debug("Starting extraction for project {}", getProject());
-        Project rootProject = getRootProject();
-        if (getProject().equals(rootProject)) {
-            GradleBuildInfoExtractor infoExtractor = new GradleBuildInfoExtractor(rootProject);
-            closeAndDeploy(infoExtractor);
+        log.debug("BuildInfo task for project {} activated", getProject().getPath());
+        // Only the last buildInfo execution activate the deployment
+        if (lastInGraph) {
+            log.debug("Starting build info extraction for last project {}", getProject().getPath());
+            closeAndDeploy();
         }
     }
 
-    private void uploadDescriptorsAndArtifacts(Project project, Set<DeployDetails> allDeployableDetails) throws IOException {
-        Set<DeployDetails> deployDetailsFromProject = ArtifactoryPluginUtils.getDeployArtifactsProject(project, artifactName);
+    private void uploadDescriptorsAndArtifacts(Set<DeployDetails> allDeployableDetails) throws IOException {
+        Set<DeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (ivyDescriptor != null && ivyDescriptor.exists()) {
             Set<DeployDetails> details =
@@ -153,14 +190,14 @@ public class BuildInfoRecorderTask extends ConventionTask {
      * @param gbie The Build info extractor object will will assemble the {@link Build} object
      * @throws java.io.IOException In case the deployment fails.
      */
-    private void closeAndDeploy(GradleBuildInfoExtractor gbie) throws IOException {
-        Project rootProject = getRootProject();
-        String uploadArtifactsProperty = getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT, rootProject);
-        String fileExportPath = getProperty(PROP_EXPORT_FILE_PATH, rootProject);
-        String contextUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, rootProject);
+    private void closeAndDeploy() throws IOException {
+        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor();
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        String fileExportPath = clientConf.buildInfoConfig.getExportFile();
+        String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
-        String username = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
-        String password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, rootProject);
+        String username = clientConf.publisher.getUserName();
+        String password = clientConf.publisher.getPassword();
         if (StringUtils.isBlank(username)) {
             username = "";
         }
@@ -170,7 +207,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
         ArtifactoryBuildInfoClient client =
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         try {
-            if (Boolean.parseBoolean(uploadArtifactsProperty)) {
+            if (clientConf.publisher.isPublishArtifacts()) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
                  * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
@@ -178,31 +215,23 @@ public class BuildInfoRecorderTask extends ConventionTask {
                  * only after a successful build. This is done before the build-info is sent.
                  */
                 Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
-                for (Project uploadingProject : rootProject.getAllprojects()) {
-                    BuildInfoRecorderTask upTasksBuildInfo =
-                            (BuildInfoRecorderTask) uploadingProject.getTasks().findByName(BUILD_INFO_TASK_NAME);
-                    if (upTasksBuildInfo != null) {
-                        upTasksBuildInfo.uploadDescriptorsAndArtifacts(uploadingProject, allDeployableDetails);
-                    }
+                for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
+                    birt.uploadDescriptorsAndArtifacts(allDeployableDetails);
                 }
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                        ArtifactoryPluginUtils
-                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
-                        ArtifactoryPluginUtils
-                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS, rootProject));
-                configureProxy(rootProject, client);
+                        clientConf.publisher.getIncludePatterns(),
+                        clientConf.publisher.getExcludePatterns());
+                configureProxy(clientConf, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
 
-            String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
-            boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
-            if (isPublishBuildInfo) {
+            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
+            if (clientConf.publisher.isPublishBuildInfo()) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
                  * After all the artifacts were uploaded successfully the next task is to send the build-info
                  * object.
                  */
-                Build build = gbie.extract(this, new BuildInfoExtractorSpec());
                 if (fileExportPath != null) {
                     // If export property set always save the file before sending it to artifactory
                     exportBuildInfo(build, new File(fileExportPath));
@@ -219,7 +248,6 @@ public class BuildInfoRecorderTask extends ConventionTask {
                 } else {
                     savedFile = new File(fileExportPath);
                 }
-                Build build = gbie.extract(this, new BuildInfoExtractorSpec());
                 exportBuildInfo(build, savedFile);
             }
         } finally {
@@ -228,27 +256,20 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
 
-    private void configureProxy(Project project, ArtifactoryBuildInfoClient client) {
-        String proxyHost = ArtifactoryPluginUtils.getProperty(PROP_PROXY_HOST, project);
-        if (StringUtils.isNotBlank(proxyHost)) {
+    private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
+        String proxyHost = proxy.getHost();
+        if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
             log.debug("Found proxy host '{}'", proxyHost);
-            String proxyPort = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PORT, project);
-            if (!StringUtils.isNumeric(proxyPort)) {
-                log.debug("Proxy port is not of numeric value '{}'", proxyPort);
-                return;
-            }
-            String proxyUserName = ArtifactoryPluginUtils.getProperty(PROP_PROXY_USERNAME, project);
+            String proxyUserName = proxy.getUserName();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
-                String proxyPassword = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PASSWORD, project);
-                log.debug("Using proxy password '{}'", proxyPassword);
-                client.setProxyConfiguration(proxyHost, Integer.parseInt(proxyPort), proxyUserName, proxyPassword);
+                client.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
             } else {
                 log.debug("No proxy user name and password found, using anonymous proxy");
-                client.setProxyConfiguration(proxyHost, Integer.parseInt(proxyPort));
+                client.setProxyConfiguration(proxyHost, proxy.getPort());
             }
         }
-
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> details,
@@ -267,5 +288,48 @@ public class BuildInfoRecorderTask extends ConventionTask {
     private void exportBuildInfo(Build build, File toFile) throws IOException {
         log.debug("Exporting generated build info to '{}'", toFile.getAbsolutePath());
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
+    }
+
+    public Set<DeployDetails> getDeployArtifactsProject(ArtifactoryClientConfiguration clientConf) {
+        Set<DeployDetails> deployDetails = Sets.newLinkedHashSet();
+        if (configuration == null) {
+            return deployDetails;
+        }
+        ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
+        String pattern = publisherConf.getIvyArtifactPattern();
+        Set<PublishArtifact> artifacts = configuration.getAllArtifacts();
+        for (PublishArtifact publishArtifact : artifacts) {
+            File file = publishArtifact.getFile();
+            DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
+            try {
+                Map<String, String> checksums =
+                        FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+                artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        "Failed to calculated checksums for artifact: " + file.getAbsolutePath(), e);
+            }
+            String revision = getProject().getVersion().toString();
+            Map<String, String> extraTokens = Maps.newHashMap();
+            if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
+                extraTokens.put("classifier", publishArtifact.getClassifier());
+            }
+            String gid = getProject().getGroup().toString();
+            if (publisherConf.isM2Compatible()) {
+                gid = gid.replace(".", "/");
+            }
+            artifactBuilder.artifactPath(
+                    IvyPatternHelper.substitute(pattern, gid,
+                            getArtifactName(),
+                            revision, null, publishArtifact.getType(),
+                            publishArtifact.getExtension(), configuration.getName(),
+                            extraTokens, null));
+            artifactBuilder.targetRepository(publisherConf.getRepoKey());
+            Properties matrixParams = getMatrixParams(project);
+            artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
+            DeployDetails details = artifactBuilder.build();
+            deployDetails.add(details);
+        }
+        return deployDetails;
     }
 }

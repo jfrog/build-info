@@ -15,6 +15,8 @@
  */
 package org.jfrog.build.client;
 
+import static org.jfrog.build.client.ClientConfigurationFields.*;
+
 /**
  * @author Tomer Cohen
  */
@@ -29,58 +31,16 @@ public interface ClientProperties {
 
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 
-    String PROP_PROXY_HOST = ARTIFACTORY_PREFIX + "proxy.host";
-
-    String PROP_PROXY_PORT = ARTIFACTORY_PREFIX + "proxy.port";
-
-    String PROP_PROXY_USERNAME = ARTIFACTORY_PREFIX + "proxy.username";
-
-    String PROP_PROXY_PASSWORD = ARTIFACTORY_PREFIX + "proxy.password";
-
+    String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */
-    String PROP_RESOLVE_REPOKEY = ARTIFACTORY_PREFIX + "resolve.repoKey";
+    String PROP_RESOLVE_PREFIX = ARTIFACTORY_PREFIX + "resolve.";
 
     /**
      * The repo key in Artifactory to where to publish release artifacts.
      */
-    String PROP_PUBLISH_REPOKEY = ARTIFACTORY_PREFIX + "publish.repoKey";
-
-    /**
-     * The repo key in Artifactory to where to publish snapshot artifacts.
-     */
-    String PROP_PUBLISH_SNAPSHOTS_REPOKEY = ARTIFACTORY_PREFIX + "publish.snapshots.repoKey";
-
-    /**
-     * The username to use when publishing artifacts to Artifactory.
-     */
-    String PROP_PUBLISH_USERNAME = ARTIFACTORY_PREFIX + "publish.username";
-
-    /**
-     * The password to use when publishing artifacts to Artifactory.
-     */
-    String PROP_PUBLISH_PASSWORD = ARTIFACTORY_PREFIX + "publish.password";
-
-    /**
-     * Property for whether to publish the generated build artifacts.
-     */
-    String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
-
-    /**
-     * Property for whitespace\comma separated artifact deployment include patterns
-     */
-    String PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".includePatterns";
-
-    /**
-     * Property for whitespace\comma separated artifact deployment exclude patterns
-     */
-    String PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS = PROP_PUBLISH_ARTIFACT + ".excludePatterns";
-
-    /**
-     * Property for whether to publish the generated build info.
-     */
-    String PROP_PUBLISH_BUILD_INFO = ARTIFACTORY_PREFIX + "publish.buildInfo";
+    String PROP_PUBLISH_PREFIX = ARTIFACTORY_PREFIX + "publish.";
 
     /**
      * Prefix for properties that are dynamically added to deployment (as matrix params)

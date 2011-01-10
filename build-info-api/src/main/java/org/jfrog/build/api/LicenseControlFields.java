@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jfrog.build.client;
+package org.jfrog.build.api;
 
 /**
- * @author Tomer Cohen
+ * @author freds
  */
-public interface ClientGradleProperties {
+public interface LicenseControlFields {
+    String RUN_CHECKS = "runChecks";
+    String VIOLATION_RECIPIENTS = "violationRecipients";
+    String INCLUDE_PUBLISHED_ARTIFACTS = "includePublishedArtifacts";
+    String SCOPES = "scopes";
+    String AUTO_DISCOVER = "autoDiscover";
 }

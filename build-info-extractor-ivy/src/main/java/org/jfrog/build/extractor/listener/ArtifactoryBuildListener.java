@@ -41,14 +41,13 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
  */
 public class ArtifactoryBuildListener extends BuildListenerAdapter {
     private BuildContext ctx = new BuildContext();
-    private long started;
     private static boolean isDidDeploy;
 
     @Override
     public void buildStarted(BuildEvent event) {
         IvyContext context = IvyContext.getContext();
         context.set(BuildContext.CONTEXT_NAME, ctx);
-        started = System.currentTimeMillis();
+        ctx.setBuildStartTime(System.currentTimeMillis());
         super.buildStarted(event);
     }
 
@@ -70,7 +69,8 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
             Set<DeployDetails> deployDetails = ctx.getDeployDetails();
             BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
-                    .number("0").durationMillis(System.currentTimeMillis() - started).startedDate(new Date(started))
+                    .number("0").durationMillis(System.currentTimeMillis() - ctx.getBuildStartTime())
+                    .startedDate(new Date(ctx.getBuildStartTime()))
                     .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
                     .agent(new Agent("Ivy", Ivy.getIvyVersion()));
             // This is here for backwards compatibility.
@@ -143,7 +143,8 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             if (StringUtils.isNotBlank(buildRetentionDays)) {
                 buildRetention.setCount(Integer.parseInt(buildRetentionDays));
             }
-            String buildRetentionMinimumDays = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
+            String buildRetentionMinimumDays = mergedProps.getProperty(
+                    BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
             if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
                 int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
                 if (minimumDays > -1) {
