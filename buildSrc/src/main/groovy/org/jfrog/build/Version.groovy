@@ -47,8 +47,8 @@ class Version {
         }
         buildTime = new Date(timestampFile.lastModified())
         if (!release) {
-            def ts = new SimpleDateFormat('yyyyMMddHHmmssZ').format(buildTime)
-            this.versionNumber += "-" + ts
+            //def ts = new SimpleDateFormat('yyyyMMddHHmmss').format(buildTime)
+            this.versionNumber += "-SNAPSHOT" // + ts
             /*
                     project.gradle.taskGraph.whenReady {graph ->
                         if (graph.hasTask(':releaseVersion')) {
@@ -60,6 +60,11 @@ class Version {
                     }
             */
         }
+    }
+
+    String getStatus() {
+        if (release) return 'release'
+        return 'integration'
     }
 
     String toString() {
