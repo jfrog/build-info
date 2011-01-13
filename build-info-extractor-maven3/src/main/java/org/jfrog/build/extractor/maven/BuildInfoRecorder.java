@@ -39,6 +39,7 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -76,6 +77,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
     private Properties allProps;
+    private ArtifactoryClientConfiguration clientConf;
     private Map<String, String> matrixParams;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
@@ -84,6 +86,20 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     public void setAllProps(Properties allProps) {
         this.allProps = allProps;
+        addCommonProperties(allProps);
+        this.clientConf = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
+        clientConf.fillFromProperties(allProps);
+    }
+
+    private void addCommonProperties(Properties allProps) {
+        allProps.setProperty("os.arch", System.getProperty("os.arch"));
+        allProps.setProperty("os.name", System.getProperty("os.name"));
+        allProps.setProperty("os.version", System.getProperty("os.version"));
+        allProps.setProperty("java.version", System.getProperty("java.version"));
+        allProps.setProperty("java.vm.info", System.getProperty("java.vm.info"));
+        allProps.setProperty("java.vm.name", System.getProperty("java.vm.name"));
+        allProps.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
+        allProps.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
     }
 
     @Override
@@ -96,7 +112,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     @Override
     public void sessionStarted(ExecutionEvent event) {
         logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
+        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, clientConf);
         deployableArtifactBuilderMap = Maps.newHashMap();
         matrixParams = Maps.newHashMap();
         Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
@@ -116,7 +132,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
         if (build != null) {
-            buildDeploymentHelper.deploy(build, isPublishArtifacts(), allProps, deployableArtifactBuilderMap);
+            buildDeploymentHelper.deploy(build, clientConf, deployableArtifactBuilderMap);
         }
         deployableArtifactBuilderMap.clear();
         if (wrappedListener != null) {
@@ -352,7 +368,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             module.addArtifact(artifact);
-            if (artifactFile != null && artifactFile.isFile() && isPublishArtifacts()) {
+            if (artifactFile != null && artifactFile.isFile() && clientConf.publisher.isPublishArtifacts()) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
@@ -369,7 +385,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         module.addArtifact(pomArtifact);
-                        if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
+                        if (pomFile != null && pomFile.isFile() && clientConf.publisher.isPublishArtifacts()) {
                             addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
                                     artifactId, artifactVersion,
                                     artifactClassifier, "pom");
@@ -406,12 +422,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
      *         and the deployed file is a snapshot.
      */
     public String getTargetRepository(String deployPath) {
-        String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
+        String snapshotsRepository = clientConf.publisher.getSnapshotRepoKey();
         if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
             return snapshotsRepository;
         }
-        String releasesRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
-        return releasesRepository;
+        return clientConf.publisher.getRepoKey();
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
@@ -479,10 +494,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
 
         return null;
-    }
-
-    private boolean isPublishArtifacts() {
-        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
     }
 
     private String getArtifactIdWithoutType(String groupId, String artifactId, String version) {

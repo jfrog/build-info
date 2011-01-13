@@ -2,13 +2,10 @@ package org.jfrog.build.util;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
-import org.jfrog.build.client.ClientIvyProperties;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.client.LayoutPatterns;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Properties;
 
 
 /**
@@ -23,11 +20,11 @@ public class IvyResolverHelper {
     /**
      * Calculate a repo path for a file
      *
-     * @param props
      * @param artifactFile    The file to be deployed.
      * @param extraAttributes
      */
-    public static String calculateArtifactPath(Properties props, File artifactFile, Map<String, String> attributes,
+    public static String calculateArtifactPath(ArtifactoryClientConfiguration.PublisherHandler publisher,
+            File artifactFile, Map<String, String> attributes,
             Map<String, String> extraAttributes) {
         String organization = attributes.get("organisation");
         String revision = attributes.get("revision");
@@ -35,50 +32,20 @@ public class IvyResolverHelper {
         String ext = attributes.get("ext");
         String type = attributes.get("type");
         String branch = attributes.get("branch");
-        String artifactPattern = getPattern(props, artifactFile.getName());
-        return IvyPatternHelper.substitute(artifactPattern, getGroupIdPatternByM2Compatible(props, organization),
+        String artifactPattern = getPattern(publisher, artifactFile.getName());
+        if (publisher.isM2Compatible()) {
+            organization = organization.replace(".", "/");
+        }
+        return IvyPatternHelper.substitute(artifactPattern, organization,
                 moduleName, revision, null, type, ext, branch, extraAttributes, null);
     }
 
-    private static String getExt(String path) {
-        int dot = path.lastIndexOf('.');
-        return path.substring(dot + 1);
-    }
-
-    private static String getPattern(Properties props, String fileName) {
+    private static String getPattern(ArtifactoryClientConfiguration.PublisherHandler props, String fileName) {
         if (isIvyFileName(fileName)) {
-            return getIvyDescriptorPattern(props);
+            return props.getIvyPattern();
         } else {
-            return getArtifactPattern(props);
+            return props.getIvyArtifactPattern();
         }
-    }
-
-    public static String getIvyDescriptorPattern(Properties props) {
-        String pattern = props.getProperty(ClientIvyProperties.PROP_IVY_IVY_PATTERN);
-        if (StringUtils.isNotBlank(pattern)) {
-            return pattern.trim();
-        }
-        return LayoutPatterns.DEFAULT_IVY_PATTERN;
-    }
-
-    private static String getArtifactPattern(Properties props) {
-        String pattern = props.getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN);
-        if (StringUtils.isBlank(pattern)) {
-            pattern = LayoutPatterns.M2_PATTERN;
-        }
-        return pattern.trim();
-    }
-
-    private static String getGroupIdPatternByM2Compatible(Properties props, String groupId) {
-        if (isM2Compatible(props)) {
-            groupId = groupId.replace(".", "/");
-        }
-        return groupId;
-    }
-
-    private static boolean isM2Compatible(Properties props) {
-        String m2Compatible = props.getProperty(ClientIvyProperties.PROP_M2_COMPATIBLE);
-        return Boolean.parseBoolean(m2Compatible);
     }
 
     public static boolean isIvyFileName(String fileName) {
@@ -88,19 +55,6 @@ public class IvyResolverHelper {
         return IVY_XML.equals(fileName) || (fileName.startsWith("ivy-") && fileName.endsWith(".xml")) ||
                 fileName.endsWith(".ivy") ||
                 fileName.endsWith("-" + IVY_XML);
-    }
-
-    /**
-     * Get the target repository from the resolver pattern.
-     *
-     * @return The target repository from the resolver pattern.
-     */
-    public static String getTargetRepository(Properties props) {
-        String targetRepository = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, "");
-        if (StringUtils.isBlank(targetRepository)) {
-            throw new IllegalArgumentException("Publishing repository key is blank");
-        }
-        return targetRepository;
     }
 
     public static String getClassifier(String artifactName) {

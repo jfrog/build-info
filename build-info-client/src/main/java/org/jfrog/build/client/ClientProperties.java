@@ -15,8 +15,6 @@
  */
 package org.jfrog.build.client;
 
-import static org.jfrog.build.client.ClientConfigurationFields.*;
-
 /**
  * @author Tomer Cohen
  */

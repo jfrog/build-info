@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor.trigger;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -18,17 +16,18 @@ import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.util.IvyBuildInfoLog;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
@@ -84,7 +83,6 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
                         dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
-
                         dependencyBuilder.id(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
@@ -154,60 +152,35 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String md5 = checksums.get("MD5");
         String sha1 = checksums.get("SHA1");
         artifactBuilder.md5(md5).sha1(sha1);
-
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
         Properties props = getMergedEnvAndSystemProps();
-        String artifactPath = IvyResolverHelper.calculateArtifactPath(props, artifactFile, map, extraAttributes);
-        builder.artifactPath(artifactPath);
-        String targetRepository = IvyResolverHelper.getTargetRepository(props);
-        builder.targetRepository(targetRepository);
-        String svnRevision = props.getProperty("SVN_REVISION");
-        if (StringUtils.isNotBlank(svnRevision)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), svnRevision);
+        ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
+        clientConf.fillFromProperties(props);
+        builder.artifactPath(
+                IvyResolverHelper.calculateArtifactPath(clientConf.publisher, artifactFile, map, extraAttributes));
+        builder.targetRepository(clientConf.publisher.getRepoKey());
+        if (StringUtils.isNotBlank(clientConf.info.getVcsRevision())) {
+            builder.addProperty(BuildInfoFields.VCS_REVISION, clientConf.info.getVcsRevision());
         }
-        String buildName = props.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
-        if (StringUtils.isNotBlank(buildName)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
-                    buildName);
+        if (StringUtils.isNotBlank(clientConf.info.getBuildName())) {
+            builder.addProperty(BuildInfoFields.BUILD_NAME, clientConf.info.getBuildName());
         }
-        String buildNumber = props.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
-        if (StringUtils.isNotBlank(buildNumber)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
+        if (StringUtils.isNotBlank(clientConf.info.getBuildNumber())) {
+            builder.addProperty(BuildInfoFields.BUILD_NUMBER, clientConf.info.getBuildNumber());
         }
-        String buildTimestamp = props.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP);
+        String buildTimestamp = clientConf.info.getBuildTimestamp();
         if (StringUtils.isBlank(buildTimestamp)) {
             buildTimestamp = ctx.getBuildStartTime() + "";
         }
-        builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_TIMESTAMP,
-                BuildInfoProperties.BUILD_INFO_PREFIX), buildTimestamp);
-
-        if (StringUtils.isNotBlank(buildNumber)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
+        builder.addProperty(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
+        if (StringUtils.isNotBlank(clientConf.info.getParentBuildName())) {
+            builder.addProperty(BuildInfoFields.BUILD_PARENT_NAME, clientConf.info.getParentBuildName());
         }
-        String parentBuildName = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
-        if (StringUtils.isNotBlank(parentBuildName)) {
-            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME,
-                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildName);
+        if (StringUtils.isNotBlank(clientConf.info.getParentBuildNumber())) {
+            builder.addProperty(BuildInfoFields.BUILD_PARENT_NUMBER, clientConf.info.getParentBuildNumber());
         }
-        String parentBuildNumber = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
-        if (StringUtils.isNotBlank(parentBuildNumber)) {
-            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER,
-                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildNumber);
-        }
-        Properties matrixParams =
-                BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
-        matrixParams = BuildInfoExtractorUtils
-                .stripPrefixFromProperties(matrixParams, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-        ImmutableMap<String, String> propertiesToAdd = Maps.fromProperties(matrixParams);
-        builder.addProperties(propertiesToAdd);
+        builder.addProperties(clientConf.publisher.getMatrixParams());
         DeployDetails deployDetails = builder.build();
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();

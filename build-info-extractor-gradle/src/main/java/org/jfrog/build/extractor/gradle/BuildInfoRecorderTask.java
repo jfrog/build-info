@@ -18,7 +18,6 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.api.DefaultTask;
@@ -28,24 +27,33 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.PublishArtifact;
-import org.gradle.api.artifacts.maven.MavenPom;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.*;
-import org.gradle.util.ConfigureUtil;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.Upload;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.LayoutPatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
 
@@ -133,8 +141,9 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
                 Upload uploadTask = (Upload) tasks.getByName(configuration.getUploadTaskName());
                 if (!uploadTask.isUploadDescriptor()) {
-                    throw new GradleException("Cannot publish Ivy descriptor if ivyDescriptor not set in task: " + getPath() +
-                            "\nAnd flag uploadDescriptor not set in default task: " + uploadTask.getPath());
+                    throw new GradleException(
+                            "Cannot publish Ivy descriptor if ivyDescriptor not set in task: " + getPath() +
+                                    "\nAnd flag uploadDescriptor not set in default task: " + uploadTask.getPath());
                 }
                 ivyDescriptor = uploadTask.getDescriptorDestination();
                 dependsOn(uploadTask);
@@ -150,8 +159,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 // if the project doesn't have the maven install task, throw an exception
                 Upload installTask = tasks.withType(Upload.class).findByName("install");
                 if (installTask == null) {
-                    throw new GradleException("Cannot publish Maven descriptor if mavenDescriptor not set in task: " + getPath() +
-                            "\nAnd default install task for project " + project.getPath() + " is not an Upload task");
+                    throw new GradleException(
+                            "Cannot publish Maven descriptor if mavenDescriptor not set in task: " + getPath() +
+                                    "\nAnd default install task for project " + project.getPath() +
+                                    " is not an Upload task");
                 }
                 mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
                 dependsOn(installTask);
@@ -162,7 +173,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
-        BuildInfoConfigTask bict = (BuildInfoConfigTask) getProject().getRootProject().getTasks().getByName(ArtifactoryPluginUtils.BUILD_INFO_CONFIG_TASK_NAME);
+        BuildInfoConfigTask bict = (BuildInfoConfigTask) getProject().getRootProject().getTasks()
+                .getByName(ArtifactoryPluginUtils.BUILD_INFO_CONFIG_TASK_NAME);
         return bict.acc;
     }
 
@@ -180,14 +192,57 @@ public class BuildInfoRecorderTask extends DefaultTask {
         Set<DeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (ivyDescriptor != null && ivyDescriptor.exists()) {
-            Set<DeployDetails> details =
-                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor, artifactName);
-            allDeployableDetails.addAll(details);
+            allDeployableDetails.add(getIvyDescriptorDeployDetails());
         }
 
         if (mavenDescriptor != null && mavenDescriptor.exists()) {
-            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor, artifactName));
+            allDeployableDetails.add(getMavenDeployDetails());
         }
+    }
+
+    private DeployDetails getIvyDescriptorDeployDetails() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(ivyDescriptor, "MD5", "SHA1");
+            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(),
+                    e);
+        }
+        String gid = getProject().getGroup().toString();
+        if (clientConf.publisher.isM2Compatible()) {
+            gid = gid.replace(".", "/");
+        }
+        artifactBuilder.artifactPath(IvyPatternHelper
+                .substitute(clientConf.publisher.getIvyPattern(), gid, getArtifactName(),
+                        getProject().getVersion().toString(),
+                        null, "ivy", "xml"));
+        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
+        return artifactBuilder.build();
+    }
+
+    private DeployDetails getMavenDeployDetails() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(mavenDescriptor, "MD5", "SHA1");
+            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new RuntimeException(
+                    "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
+        }
+        // for pom files always enforce the M2 pattern
+        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
+                getProject().getGroup().toString().replace(".", "/"), getArtifactName(),
+                getProject().getVersion().toString(), null, "pom", "pom"));
+        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
+        return artifactBuilder.build();
     }
 
     /**
@@ -196,8 +251,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
      * @throws java.io.IOException In case the deployment fails.
      */
     private void closeAndDeploy() throws IOException {
-        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor();
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf);
         String fileExportPath = clientConf.getExportFile();
         String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
@@ -211,6 +266,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
         ArtifactoryBuildInfoClient client =
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
+        Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
+        for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
+            ((BuildInfoRecorderTask) birt).uploadDescriptorsAndArtifacts(allDeployableDetails);
+        }
         try {
             if (clientConf.publisher.isPublishArtifacts()) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
@@ -219,10 +278,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                  * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
                  * only after a successful build. This is done before the build-info is sent.
                  */
-                Set<DeployDetails> allDeployableDetails = Sets.newHashSet();
-                for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
-                    ((BuildInfoRecorderTask)birt).uploadDescriptorsAndArtifacts(allDeployableDetails);
-                }
+
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(),
                         clientConf.publisher.getExcludePatterns());
@@ -230,7 +286,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
 
-            Build build = gbie.extract(this, new BuildInfoExtractorSpec());
+            Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
             if (clientConf.publisher.isPublishBuildInfo()) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
@@ -278,7 +334,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> details,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails detail : details) {
             String artifactPath = detail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
