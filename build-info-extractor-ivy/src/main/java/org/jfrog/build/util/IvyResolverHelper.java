@@ -29,15 +29,11 @@ public class IvyResolverHelper {
      */
     public static String calculateArtifactPath(Properties props, File artifactFile, Map<String, String> attributes,
             Map<String, String> extraAttributes) {
-        String organization = attributes.get("organisation");
-        String revision = attributes.get("revision");
-        String moduleName = attributes.get("module");
-        String ext = attributes.get("ext");
-        String type = attributes.get("type");
-        String branch = attributes.get("branch");
         String artifactPattern = getPattern(props, artifactFile.getName());
-        return IvyPatternHelper.substitute(artifactPattern, getGroupIdPatternByM2Compatible(props, organization),
-                moduleName, revision, null, type, ext, branch, extraAttributes, null);
+        return IvyPatternHelper.substitute(artifactPattern, getGroupIdPatternByM2Compatible(props,
+                attributes.get("organisation")), attributes.get("module"), attributes.get("revision"),
+                attributes.get("artifact"), attributes.get("type"), attributes.get("ext"), attributes.get("branch"),
+                extraAttributes, null);
     }
 
     private static String getExt(String path) {
