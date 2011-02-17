@@ -140,7 +140,7 @@ public class ArtifactoryPluginUtils {
             String name = getProjectName(project, artifactName);
             artifactBuilder.artifactPath(
                     IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), name,
-                            revision, null, publishArtifact.getType(),
+                            revision, publishArtifact.getName(), publishArtifact.getType(),
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
             String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
@@ -170,7 +170,7 @@ public class ArtifactoryPluginUtils {
     }
 
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor,
-                                                                   String artifactName) {
+            String artifactName) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
         String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
         String pattern = getIvyDescriptorPattern(project);
