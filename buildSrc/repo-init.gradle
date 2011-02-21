@@ -32,7 +32,14 @@ class ArtifactoryGradleSettings extends BuildAdapter implements BuildListener {
                 }
             }
             repositories {
-                ivyRepo name: 'gradle-ivy', root: "$artifactoryRoot/gradle-ivy"
+                //ivyRepo name: 'gradle-ivy', root: "$artifactoryRoot/gradle-ivy"
+                add (new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
+                    name = "ivy-resolver"
+                    artroot = "$artifactoryRoot/gradle-ivy"
+                    ivyroot = "$artifactoryRoot/gradle-ivy"
+                    artpattern = "[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+                    ivypattern = "[organisation]/[module]/ivy-[revision].xml"
+                }
                 mavenRepo name: 'libs-repo', urls: "$artifactoryRoot/gradle"
             }
         }
