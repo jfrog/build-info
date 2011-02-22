@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
+import org.jfrog.build.api.builder.StatusBuilder;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -74,6 +75,7 @@ public class BuildTest {
         String parentNumber = "5";
         String vcsRevision = "2421";
         List<Module> modules = Lists.newArrayList();
+        List<Status> statuses = Lists.newArrayList();
         Properties properties = new Properties();
 
         Build build = new Build();
@@ -89,6 +91,7 @@ public class BuildTest {
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
         build.setModules(modules);
+        build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
 
@@ -106,6 +109,8 @@ public class BuildTest {
         assertEquals(build.getVcsRevision(), vcsRevision, "Unexpected build vcs revision.");
         assertEquals(build.getModules(), modules, "Unexpected build modules.");
         assertTrue(build.getModules().isEmpty(), "Build modules list should not have been populated.");
+        assertEquals(build.getStatuses(), statuses, "Unexpected build statuses.");
+        assertTrue(build.getStatuses().isEmpty(), "Build statuses list should not have been populated.");
         assertEquals(build.getProperties(), properties, "Unexpected build properties.");
         assertTrue(build.getProperties().isEmpty(), "Build properties list should not have been populated.");
     }
@@ -126,5 +131,23 @@ public class BuildTest {
 
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         assertEquals(build.getStarted(), simpleDateFormat.format(startedDate), "Unexpected build started.");
+    }
+
+    public void testStatusAddMethod() {
+        Build build = new Build();
+        assertNull(build.getStatuses(), "Default status list should be null.");
+
+        Status status = new StatusBuilder(StatusType.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+        build.addStatus(status);
+
+        assertFalse(build.getStatuses().isEmpty(), "Status object should have been added.");
+        assertEquals(build.getStatuses().get(0), status, "Unexpected status object.");
+
+        Status anotherStatus =
+                new StatusBuilder(StatusType.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+        build.addStatus(anotherStatus);
+
+        assertEquals(build.getStatuses().size(), 2, "Second status object should have been added.");
+        assertEquals(build.getStatuses().get(1), anotherStatus, "Unexpected status object.");
     }
 }

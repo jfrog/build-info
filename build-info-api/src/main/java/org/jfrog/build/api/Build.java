@@ -15,6 +15,7 @@
  */
 package org.jfrog.build.api;
 
+import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import java.text.SimpleDateFormat;
@@ -57,6 +58,8 @@ public class Build extends BaseBuildBean {
 
     @XStreamAlias(MODULES)
     private List<Module> modules;
+
+    private List<Status> statuses;
 
     /**
      * Returns the version of the build
@@ -399,5 +402,21 @@ public class Build extends BaseBuildBean {
 
     public BuildRetention getBuildRetention() {
         return buildRetention;
+    }
+
+    public List<Status> getStatuses() {
+        return statuses;
+    }
+
+    public void addStatus(Status status) {
+        if (statuses == null) {
+            statuses = Lists.newArrayList();
+        }
+
+        statuses.add(status);
+    }
+
+    public void setStatuses(List<Status> statuses) {
+        this.statuses = statuses;
     }
 }
