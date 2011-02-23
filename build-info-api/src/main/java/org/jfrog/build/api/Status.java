@@ -7,11 +7,14 @@ import java.io.Serializable;
  */
 public class Status implements Serializable {
 
-    private final StatusType status;
-    private final String comment;
-    private final String repository;
-    private final String timestamp;
-    private final String user;
+    private StatusType status;
+    private String comment;
+    private String repository;
+    private String timestamp;
+    private String user;
+
+    public Status() {
+    }
 
     public Status(StatusType status, String comment, String repository, String timestamp, String user) {
         this.status = status;
