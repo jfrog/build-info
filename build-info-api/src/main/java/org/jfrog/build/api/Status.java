@@ -28,19 +28,39 @@ public class Status implements Serializable {
         return status;
     }
 
+    public void setStatus(StatusType status) {
+        this.status = status;
+    }
+
     public String getComment() {
         return comment;
+    }
+
+    public void setComment(String comment) {
+        this.comment = comment;
     }
 
     public String getRepository() {
         return repository;
     }
 
+    public void setRepository(String repository) {
+        this.repository = repository;
+    }
+
     public String getTimestamp() {
         return timestamp;
     }
 
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public String getUser() {
         return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 }
