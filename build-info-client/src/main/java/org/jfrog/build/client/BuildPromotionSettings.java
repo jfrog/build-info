@@ -89,7 +89,7 @@ public class BuildPromotionSettings {
         urlBuilder.append("/").append(encodeForUrl(buildName)).append("/").append(encodeForUrl(buildNumber)).
                 append("?").append("to=").append(encodeForUrl(targetRepo)).append("&").append("arts=").
                 append(booleanToInt(includeArtifacts)).append("&deps=").append(booleanToInt(includeDependencies)).
-                append("dry=").append(booleanToInt(dryRun));
+                append("&dry=").append(booleanToInt(dryRun));
 
         if (StringUtils.isNotBlank(buildStarted)) {
             urlBuilder.append("&started=").append(encodeForUrl(buildStarted));

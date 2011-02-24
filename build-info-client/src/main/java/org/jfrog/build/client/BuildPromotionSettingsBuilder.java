@@ -22,6 +22,20 @@ public class BuildPromotionSettingsBuilder {
     private String promotionStatus;
     private String promotionComment;
 
+    public BuildPromotionSettingsBuilder(BuildPromotionSettingsBuilder copy) {
+        this.buildName = copy.buildName;
+        this.buildNumber = copy.buildNumber;
+        this.buildStarted = copy.buildStarted;
+        this.targetRepo = copy.targetRepo;
+        this.includeArtifacts = copy.includeArtifacts;
+        this.includeDependencies = copy.includeDependencies;
+        this.scopes = copy.scopes;
+        this.properties = copy.properties;
+        this.dryRun = copy.dryRun;
+        this.promotionStatus = copy.promotionStatus;
+        this.promotionComment = copy.promotionComment;
+    }
+
     public BuildPromotionSettingsBuilder(String buildName, String buildNumber, String targetRepo) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
