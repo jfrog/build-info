@@ -16,6 +16,7 @@ public class StatusBuilder {
     private String repository;
     private String timestamp;
     private String user;
+    private String ciUser;
 
     public StatusBuilder(String status) {
         this.status = status;
@@ -49,6 +50,11 @@ public class StatusBuilder {
         return this;
     }
 
+    public StatusBuilder ciUser(String ciUser) {
+        this.ciUser = ciUser;
+        return this;
+    }
+
     public Status build() {
         if (status == null) {
             throw new IllegalArgumentException("Status must have a type.");
@@ -56,6 +62,6 @@ public class StatusBuilder {
         if (timestamp == null) {
             throw new IllegalArgumentException("Status must have a timestamp.");
         }
-        return new Status(status, comment, repository, timestamp, user);
+        return new Status(status, comment, repository, timestamp, user, ciUser);
     }
 }

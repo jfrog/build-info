@@ -17,23 +17,25 @@ import static org.testng.Assert.assertNull;
 public class StatusBuilderTest {
 
     public void testDefaultValues() {
-        Status status = new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+        Status status = new StatusBuilder(Status.RELEASED).timestamp("bla").build();
         assertEquals(status.getStatus(), Status.RELEASED, "Unexpected status type.");
         assertNull(status.getComment(), "Expected null comment by default.");
-        assertEquals(status.getRepository(), "bla", "Unexpected status repository.");
+        assertNull(status.getRepository(), "Expected null repository by default.");
+        assertNull(status.getUser(), "Expected null user by default.");
+        assertNull(status.getCiUser(), "Expected null CI user by default.");
         assertEquals(status.getTimestamp(), "bla", "Unexpected status timestamp.");
-        assertEquals(status.getUser(), "bla", "Unexpected status user.");
     }
 
     public void testNormalValues() {
         StatusBuilder builder = new StatusBuilder(Status.ROLLED_BACK).comment("momo").repository("popo").
-                timestamp("koko").user("jojo");
+                timestamp("koko").user("jojo").ciUser("bobo");
         Status status = builder.build();
         assertEquals(status.getStatus(), Status.ROLLED_BACK, "Unexpected status.");
         assertEquals(status.getComment(), "momo", "Unexpected comment.");
         assertEquals(status.getRepository(), "popo", "Unexpected repository.");
         assertEquals(status.getTimestamp(), "koko", "Unexpected timestamp.");
         assertEquals(status.getUser(), "jojo", "Unexpected user.");
+        assertEquals(status.getCiUser(), "bobo", "Unexpected ci user.");
 
         Date date = new Date();
         String expectedTimeStamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(date);

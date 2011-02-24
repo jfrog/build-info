@@ -16,16 +16,18 @@ public class Status implements Serializable {
     private String repository;
     private String timestamp;
     private String user;
+    private String ciUser;
 
     public Status() {
     }
 
-    public Status(String status, String comment, String repository, String timestamp, String user) {
+    public Status(String status, String comment, String repository, String timestamp, String user, String ciUser) {
         this.status = status;
         this.comment = comment;
         this.repository = repository;
         this.timestamp = timestamp;
         this.user = user;
+        this.ciUser = ciUser;
     }
 
     public String getStatus() {
@@ -66,5 +68,13 @@ public class Status implements Serializable {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public String getCiUser() {
+        return ciUser;
+    }
+
+    public void setCiUser(String ciUser) {
+        this.ciUser = ciUser;
     }
 }
