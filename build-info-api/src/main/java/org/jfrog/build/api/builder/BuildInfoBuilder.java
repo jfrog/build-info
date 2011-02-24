@@ -25,7 +25,7 @@ import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.Status;
+import org.jfrog.build.api.release.Status;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

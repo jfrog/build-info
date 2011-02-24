@@ -17,6 +17,7 @@ package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.jfrog.build.api.release.Status;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

@@ -1,5 +1,6 @@
 package org.jfrog.build.api;
 
+import org.jfrog.build.api.release.Status;
 import org.testng.annotations.Test;
 
 import static org.testng.Assert.assertEquals;

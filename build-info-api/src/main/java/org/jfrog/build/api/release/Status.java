@@ -1,4 +1,4 @@
-package org.jfrog.build.api;
+package org.jfrog.build.api.release;
 
 import java.io.Serializable;
 

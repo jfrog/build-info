@@ -1,7 +1,7 @@
 package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Status;
+import org.jfrog.build.api.release.Status;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;

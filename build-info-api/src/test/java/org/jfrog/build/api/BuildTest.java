@@ -18,6 +18,7 @@ package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
 import org.jfrog.build.api.builder.StatusBuilder;
+import org.jfrog.build.api.release.Status;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
