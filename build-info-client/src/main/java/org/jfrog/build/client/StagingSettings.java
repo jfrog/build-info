@@ -11,8 +11,9 @@ import java.util.Set;
 /**
  * @author Noam Y. Tenne
  */
-public class BuildPromotionSettings {
+public class StagingSettings {
 
+    private boolean move = true;
     private String buildName;
     private String buildNumber;
     private String buildStarted;
@@ -25,9 +26,10 @@ public class BuildPromotionSettings {
     private String promotionStatus;
     private String promotionComment;
 
-    public BuildPromotionSettings(String buildName, String buildNumber, String buildStarted, String targetRepo,
-            boolean includeArtifacts, boolean includeDependencies, Set<String> scopes,
+    public StagingSettings(boolean move, String buildName, String buildNumber, String buildStarted,
+            String targetRepo, boolean includeArtifacts, boolean includeDependencies, Set<String> scopes,
             Multimap<String, String> properties, boolean dryRun, String promotionStatus, String promotionComment) {
+        this.move = move;
         this.buildName = buildName;
         this.buildNumber = buildNumber;
         this.buildStarted = buildStarted;
@@ -39,6 +41,10 @@ public class BuildPromotionSettings {
         this.dryRun = dryRun;
         this.promotionStatus = promotionStatus;
         this.promotionComment = promotionComment;
+    }
+
+    public boolean isMove() {
+        return move;
     }
 
     public String getBuildName() {
@@ -86,10 +92,10 @@ public class BuildPromotionSettings {
     }
 
     public String buildUrl(StringBuilder urlBuilder) throws UnsupportedEncodingException {
-        urlBuilder.append("/").append(encodeForUrl(buildName)).append("/").append(encodeForUrl(buildNumber)).
-                append("?").append("to=").append(encodeForUrl(targetRepo)).append("&").append("arts=").
-                append(booleanToInt(includeArtifacts)).append("&deps=").append(booleanToInt(includeDependencies)).
-                append("&dry=").append(booleanToInt(dryRun));
+        urlBuilder.append("/").append(move ? "move" : "copy").append("/").append(encodeForUrl(buildName)).append("/").
+                append(encodeForUrl(buildNumber)).append("?").append("to=").append(encodeForUrl(targetRepo)).
+                append("&").append("arts=").append(booleanToInt(includeArtifacts)).append("&deps=").
+                append(booleanToInt(includeDependencies)).append("&dry=").append(booleanToInt(dryRun));
 
         if (StringUtils.isNotBlank(buildStarted)) {
             urlBuilder.append("&started=").append(encodeForUrl(buildStarted));

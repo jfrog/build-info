@@ -15,48 +15,48 @@ import static org.testng.Assert.assertEquals;
  * @author Noam Y. Tenne
  */
 @Test
-public class BuildPromotionSettingsTest {
+public class StagingSettingsTest {
 
-    private static final BuildPromotionSettingsBuilder BASIC_BUILDER =
-            new BuildPromotionSettingsBuilder("buildName", "buildNumber", "targetRepo").includeArtifacts(false).
+    private static final StagingSettingsBuilder BASIC_BUILDER =
+            new StagingSettingsBuilder("buildName", "buildNumber", "targetRepo").includeArtifacts(false).
                     includeDependencies(true).dryRun(true);
 
     public void testMinimalUrlConstruction() throws UnsupportedEncodingException {
         StringBuilder urlBuilder = new StringBuilder();
         BASIC_BUILDER.build().buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1",
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1",
                 "Unexpected URL.");
     }
 
     public void testUrlConstructionWithStartDate() throws UnsupportedEncodingException {
-        BuildPromotionSettings build = getBuilderCopy().buildStarted("started").build();
+        StagingSettings build = getBuilderCopy().buildStarted("started").build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "started=started", "Unexpected URL.");
     }
 
     public void testUrlConstructionWithPromotionStatus() throws UnsupportedEncodingException {
-        BuildPromotionSettings build = getBuilderCopy().promotionStatus("promotionStatus").build();
+        StagingSettings build = getBuilderCopy().promotionStatus("promotionStatus").build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "status=promotionStatus", "Unexpected URL.");
     }
 
     public void testUrlConstructionWithPromotionComment() throws UnsupportedEncodingException {
-        BuildPromotionSettings build = getBuilderCopy().promotionComment("promotionComment").build();
+        StagingSettings build = getBuilderCopy().promotionComment("promotionComment").build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "comment=promotionComment", "Unexpected URL.");
     }
 
     public void testUrlConstructionWithPromotionScopes() throws UnsupportedEncodingException {
-        BuildPromotionSettings build = getBuilderCopy().scopes(Sets.newHashSet("hey", "ho")).build();
+        StagingSettings build = getBuilderCopy().scopes(Sets.newHashSet("hey", "ho")).build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "scopes=hey,ho", "Unexpected URL.");
     }
 
@@ -68,10 +68,10 @@ public class BuildPromotionSettingsTest {
         properties.put("popo", "lopo");
         properties.put("popo", "kopo");
 
-        BuildPromotionSettings build = getBuilderCopy().properties(properties).build();
+        StagingSettings build = getBuilderCopy().properties(properties).build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "properties=popo=kopo,lopo|momo=komo,domo", "Unexpected URL.");
     }
 
@@ -83,17 +83,17 @@ public class BuildPromotionSettingsTest {
         properties.put("5", "6");
         properties.put("5", "7");
 
-        BuildPromotionSettings build = getBuilderCopy().buildStarted("started").promotionStatus("promotionStatus").
+        StagingSettings build = getBuilderCopy().buildStarted("started").promotionStatus("promotionStatus").
                 promotionComment("promotionComment").scopes(Sets.newHashSet("hey", "ho")).properties(properties).
                 build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
-        assertEquals(urlBuilder.toString(), "/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
                 "started=started&scopes=hey,ho&properties=1=3,2|5=7,6&status=promotionStatus&comment=promotionComment",
                 "Unexpected URL.");
     }
 
-    private BuildPromotionSettingsBuilder getBuilderCopy() {
-        return new BuildPromotionSettingsBuilder(BASIC_BUILDER);
+    private StagingSettingsBuilder getBuilderCopy() {
+        return new StagingSettingsBuilder(BASIC_BUILDER);
     }
 }

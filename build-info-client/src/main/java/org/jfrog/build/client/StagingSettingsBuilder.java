@@ -8,8 +8,9 @@ import java.util.Set;
 /**
  * @author Noam Y. Tenne
  */
-public class BuildPromotionSettingsBuilder {
+public class StagingSettingsBuilder {
 
+    private boolean move = true;
     private String buildName;
     private String buildNumber;
     private String buildStarted;
@@ -22,7 +23,8 @@ public class BuildPromotionSettingsBuilder {
     private String promotionStatus;
     private String promotionComment;
 
-    public BuildPromotionSettingsBuilder(BuildPromotionSettingsBuilder copy) {
+    public StagingSettingsBuilder(StagingSettingsBuilder copy) {
+        this.move = copy.move;
         this.buildName = copy.buildName;
         this.buildNumber = copy.buildNumber;
         this.buildStarted = copy.buildStarted;
@@ -36,68 +38,58 @@ public class BuildPromotionSettingsBuilder {
         this.promotionComment = copy.promotionComment;
     }
 
-    public BuildPromotionSettingsBuilder(String buildName, String buildNumber, String targetRepo) {
+    public StagingSettingsBuilder(String buildName, String buildNumber, String targetRepo) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
         this.targetRepo = targetRepo;
     }
 
-    public BuildPromotionSettingsBuilder buildName(String buildName) {
-        this.buildName = buildName;
+    public StagingSettingsBuilder move(boolean move) {
+        this.move = move;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder buildNumber(String buildNumber) {
-        this.buildNumber = buildNumber;
-        return this;
-    }
-
-    public BuildPromotionSettingsBuilder buildStarted(String buildStarted) {
+    public StagingSettingsBuilder buildStarted(String buildStarted) {
         this.buildStarted = buildStarted;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder targetRepo(String targetRepo) {
-        this.targetRepo = targetRepo;
-        return this;
-    }
-
-    public BuildPromotionSettingsBuilder includeArtifacts(boolean includeArtifacts) {
+    public StagingSettingsBuilder includeArtifacts(boolean includeArtifacts) {
         this.includeArtifacts = includeArtifacts;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder includeDependencies(boolean includeDependencies) {
+    public StagingSettingsBuilder includeDependencies(boolean includeDependencies) {
         this.includeDependencies = includeDependencies;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder scopes(Set<String> scopes) {
+    public StagingSettingsBuilder scopes(Set<String> scopes) {
         this.scopes = scopes;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder properties(Multimap<String, String> properties) {
+    public StagingSettingsBuilder properties(Multimap<String, String> properties) {
         this.properties = properties;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder dryRun(boolean dryRun) {
+    public StagingSettingsBuilder dryRun(boolean dryRun) {
         this.dryRun = dryRun;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder promotionStatus(String promotionStatus) {
+    public StagingSettingsBuilder promotionStatus(String promotionStatus) {
         this.promotionStatus = promotionStatus;
         return this;
     }
 
-    public BuildPromotionSettingsBuilder promotionComment(String promotionComment) {
+    public StagingSettingsBuilder promotionComment(String promotionComment) {
         this.promotionComment = promotionComment;
         return this;
     }
 
-    public BuildPromotionSettings build() {
+    public StagingSettings build() {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
@@ -107,7 +99,7 @@ public class BuildPromotionSettingsBuilder {
         if (StringUtils.isBlank(targetRepo)) {
             throw new IllegalArgumentException("Target repository is required for promotion.");
         }
-        return new BuildPromotionSettings(buildName, buildNumber, buildStarted, targetRepo, includeArtifacts,
+        return new StagingSettings(move, buildName, buildNumber, buildStarted, targetRepo, includeArtifacts,
                 includeDependencies, scopes, properties, dryRun, promotionStatus, promotionComment);
     }
 }

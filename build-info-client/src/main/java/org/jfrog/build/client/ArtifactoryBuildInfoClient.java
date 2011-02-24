@@ -318,12 +318,13 @@ public class ArtifactoryBuildInfoClient {
         return version;
     }
 
-    public HttpResponse copyBuild(BuildPromotionSettings settings) throws IOException {
-        return promoteBuild(false, settings);
-    }
+    public HttpResponse stageBuild(StagingSettings settings) throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL);
+        settings.buildUrl(urlBuilder);
 
-    public HttpResponse moveBuild(BuildPromotionSettings settings) throws IOException {
-        return promoteBuild(true, settings);
+        HttpPost httpPost = new HttpPost(urlBuilder.toString());
+        log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
+        return httpClient.getHttpClient().execute(httpPost);
     }
 
     /**
@@ -486,20 +487,5 @@ public class ArtifactoryBuildInfoClient {
             }
         }
         return artifactoryVersion;
-    }
-
-    private HttpResponse promoteBuild(boolean move, BuildPromotionSettings settings) throws IOException {
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/");
-        if (move) {
-            urlBuilder.append("move");
-        } else {
-            urlBuilder.append("copy");
-        }
-
-        settings.buildUrl(urlBuilder);
-
-        HttpPost httpPost = new HttpPost(urlBuilder.toString());
-        log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
-        return httpClient.getHttpClient().execute(httpPost);
     }
 }
