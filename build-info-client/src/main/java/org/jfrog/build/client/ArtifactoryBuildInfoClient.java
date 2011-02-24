@@ -324,11 +324,7 @@ public class ArtifactoryBuildInfoClient {
 
         HttpPost httpPost = new HttpPost(urlBuilder.toString());
         log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
-        HttpResponse response = httpClient.getHttpClient().execute(httpPost);
-        if (response.getEntity() != null) {
-            response.getEntity().consumeContent();
-        }
-        return response;
+        return httpClient.getHttpClient().execute(httpPost);
     }
 
     /**
