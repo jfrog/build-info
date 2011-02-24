@@ -30,11 +30,12 @@ public class StagingSettingsBuilderTest {
         boolean dryRun = true;
         String promotionStatus = "promotionStatus";
         String promotionComment = "promotionComment";
+        String ciUser = "ciUser";
 
         StagingSettingsBuilder builder = new StagingSettingsBuilder(buildName, buildNumber, targetRepo)
                 .buildStarted(buildStarted).includeArtifacts(includeArtifacts).includeDependencies(includeDependencies).
                         scopes(scopes).properties(properties).dryRun(dryRun).promotionStatus(promotionStatus).
-                        promotionComment(promotionComment);
+                        promotionComment(promotionComment).ciUser(ciUser);
         StagingSettings build = builder.build();
 
         assertEquals(build.isMove(), true, "Staging should move artifacts by default.");
@@ -50,6 +51,7 @@ public class StagingSettingsBuilderTest {
         assertEquals(build.isDryRun(), dryRun, "Unexpected dry run switch value.");
         assertEquals(build.getPromotionStatus(), promotionStatus, "Unexpected promotion status.");
         assertEquals(build.getPromotionComment(), promotionComment, "Unexpected promotion comment.");
+        assertEquals(build.getCiUser(), ciUser, "Unexpected ci user.");
     }
 
     public void testDefaultParams() {

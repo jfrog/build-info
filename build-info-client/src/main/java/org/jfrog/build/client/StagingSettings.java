@@ -25,10 +25,12 @@ public class StagingSettings {
     private boolean dryRun;
     private String promotionStatus;
     private String promotionComment;
+    private String ciUser;
 
     public StagingSettings(boolean move, String buildName, String buildNumber, String buildStarted,
             String targetRepo, boolean includeArtifacts, boolean includeDependencies, Set<String> scopes,
-            Multimap<String, String> properties, boolean dryRun, String promotionStatus, String promotionComment) {
+            Multimap<String, String> properties, boolean dryRun, String promotionStatus, String promotionComment,
+            String ciUser) {
         this.move = move;
         this.buildName = buildName;
         this.buildNumber = buildNumber;
@@ -41,6 +43,7 @@ public class StagingSettings {
         this.dryRun = dryRun;
         this.promotionStatus = promotionStatus;
         this.promotionComment = promotionComment;
+        this.ciUser = ciUser;
     }
 
     public boolean isMove() {
@@ -91,6 +94,10 @@ public class StagingSettings {
         return promotionComment;
     }
 
+    public String getCiUser() {
+        return ciUser;
+    }
+
     public String buildUrl(StringBuilder urlBuilder) throws UnsupportedEncodingException {
         urlBuilder.append("/").append(move ? "move" : "copy").append("/").append(encodeForUrl(buildName)).append("/").
                 append(encodeForUrl(buildNumber)).append("?").append("to=").append(encodeForUrl(targetRepo)).
@@ -110,6 +117,10 @@ public class StagingSettings {
 
         if (StringUtils.isNotBlank(promotionComment)) {
             urlBuilder.append("&comment=").append(encodeForUrl(promotionComment));
+        }
+
+        if (StringUtils.isNotBlank(ciUser)) {
+            urlBuilder.append("&ciUser=").append(encodeForUrl(ciUser));
         }
 
         return urlBuilder.toString();

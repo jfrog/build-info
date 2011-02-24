@@ -22,6 +22,7 @@ public class StagingSettingsBuilder {
     private boolean dryRun;
     private String promotionStatus;
     private String promotionComment;
+    private String ciUser;
 
     public StagingSettingsBuilder(StagingSettingsBuilder copy) {
         this.move = copy.move;
@@ -36,6 +37,7 @@ public class StagingSettingsBuilder {
         this.dryRun = copy.dryRun;
         this.promotionStatus = copy.promotionStatus;
         this.promotionComment = copy.promotionComment;
+        this.ciUser = copy.ciUser;
     }
 
     public StagingSettingsBuilder(String buildName, String buildNumber, String targetRepo) {
@@ -89,6 +91,11 @@ public class StagingSettingsBuilder {
         return this;
     }
 
+    public StagingSettingsBuilder ciUser(String ciUser) {
+        this.ciUser = ciUser;
+        return this;
+    }
+
     public StagingSettings build() {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for promotion.");
@@ -100,6 +107,6 @@ public class StagingSettingsBuilder {
             throw new IllegalArgumentException("Target repository is required for promotion.");
         }
         return new StagingSettings(move, buildName, buildNumber, buildStarted, targetRepo, includeArtifacts,
-                includeDependencies, scopes, properties, dryRun, promotionStatus, promotionComment);
+                includeDependencies, scopes, properties, dryRun, promotionStatus, promotionComment, ciUser);
     }
 }

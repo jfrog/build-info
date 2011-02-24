@@ -75,6 +75,14 @@ public class StagingSettingsTest {
                 "properties=popo=kopo,lopo|momo=komo,domo", "Unexpected URL.");
     }
 
+    public void testUrlConstructionWithCiUser() throws UnsupportedEncodingException {
+        StagingSettings build = getBuilderCopy().ciUser("ciUser").build();
+        StringBuilder urlBuilder = new StringBuilder();
+        build.buildUrl(urlBuilder);
+        assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
+                "ciUser=ciUser", "Unexpected URL.");
+    }
+
     public void testFullUrlConstruction() throws UnsupportedEncodingException {
         Multimap<String, String> properties = HashMultimap.create();
         properties.put("1", "2");
@@ -85,12 +93,12 @@ public class StagingSettingsTest {
 
         StagingSettings build = getBuilderCopy().buildStarted("started").promotionStatus("promotionStatus").
                 promotionComment("promotionComment").scopes(Sets.newHashSet("hey", "ho")).properties(properties).
-                build();
+                ciUser("ciUser").build();
         StringBuilder urlBuilder = new StringBuilder();
         build.buildUrl(urlBuilder);
         assertEquals(urlBuilder.toString(), "/move/buildName/buildNumber?to=targetRepo&arts=0&deps=1&dry=1&" +
-                "started=started&scopes=hey,ho&properties=1=3,2|5=7,6&status=promotionStatus&comment=promotionComment",
-                "Unexpected URL.");
+                "started=started&scopes=hey,ho&properties=1=3,2|5=7,6&status=promotionStatus&" +
+                "comment=promotionComment&ciUser=ciUser", "Unexpected URL.");
     }
 
     private StagingSettingsBuilder getBuilderCopy() {
