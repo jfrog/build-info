@@ -53,14 +53,8 @@ public class StatusBuilder {
         if (status == null) {
             throw new IllegalArgumentException("Status must have a type.");
         }
-        if (repository == null) {
-            throw new IllegalArgumentException("Status must have a target repository.");
-        }
         if (timestamp == null) {
             throw new IllegalArgumentException("Status must have a timestamp.");
-        }
-        if (user == null) {
-            throw new IllegalArgumentException("Status must have a user.");
         }
         return new Status(status, comment, repository, timestamp, user);
     }

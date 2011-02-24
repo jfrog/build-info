@@ -53,17 +53,7 @@ public class StatusBuilderTest {
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullRepository() {
-        new StatusBuilder(Status.STAGED).build();
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullTimestamp() {
         new StatusBuilder(Status.STAGED).repository("bla").build();
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class)
-    public void testNullUser() {
-        new StatusBuilder(Status.STAGED).repository("bla").timestamp("bla").build();
     }
 }

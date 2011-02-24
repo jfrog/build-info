@@ -287,6 +287,14 @@ public class BuildInfoBuilder {
         return this;
     }
 
+    public BuildInfoBuilder addStatus(Status status) {
+        if (statuses == null) {
+            statuses = Lists.newArrayList();
+        }
+        statuses.add(status);
+        return this;
+    }
+
     /**
      * Sets the violation notifications of the build
      *
