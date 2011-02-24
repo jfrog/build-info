@@ -86,9 +86,10 @@ public class BuildPromotionSettings {
     }
 
     public String buildUrl(StringBuilder urlBuilder) throws UnsupportedEncodingException {
-        urlBuilder.append("/").append(buildName).append("/").append(buildNumber).append("?").append("to=").
-                append(encodeForUrl(targetRepo)).append("&").append("arts=").append(booleanToInt(includeArtifacts)).
-                append("&deps=").append(booleanToInt(includeDependencies)).append("dry=").append(booleanToInt(dryRun));
+        urlBuilder.append("/").append(encodeForUrl(buildName)).append("/").append(encodeForUrl(buildNumber)).
+                append("?").append("to=").append(encodeForUrl(targetRepo)).append("&").append("arts=").
+                append(booleanToInt(includeArtifacts)).append("&deps=").append(booleanToInt(includeDependencies)).
+                append("dry=").append(booleanToInt(dryRun));
 
         if (StringUtils.isNotBlank(buildStarted)) {
             urlBuilder.append("&started=").append(encodeForUrl(buildStarted));
@@ -98,11 +99,11 @@ public class BuildPromotionSettings {
         appendPromotionProperties(urlBuilder);
 
         if (StringUtils.isNotBlank(promotionStatus)) {
-            urlBuilder.append("&status=").append(promotionStatus);
+            urlBuilder.append("&status=").append(encodeForUrl(promotionStatus));
         }
 
         if (StringUtils.isNotBlank(promotionComment)) {
-            urlBuilder.append("&comment=").append(promotionComment);
+            urlBuilder.append("&comment=").append(encodeForUrl(promotionComment));
         }
 
         return urlBuilder.toString();
