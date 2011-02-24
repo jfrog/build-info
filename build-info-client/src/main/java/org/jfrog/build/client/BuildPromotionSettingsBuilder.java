@@ -22,6 +22,12 @@ public class BuildPromotionSettingsBuilder {
     private String promotionStatus;
     private String promotionComment;
 
+    public BuildPromotionSettingsBuilder(String buildName, String buildNumber, String targetRepo) {
+        this.buildName = buildName;
+        this.buildNumber = buildNumber;
+        this.targetRepo = targetRepo;
+    }
+
     public BuildPromotionSettingsBuilder buildName(String buildName) {
         this.buildName = buildName;
         return this;
