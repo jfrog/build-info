@@ -1,6 +1,11 @@
 package org.jfrog.build.api.release;
 
+import org.jfrog.build.api.Build;
+
 import java.io.Serializable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @author Noam Y. Tenne
@@ -56,6 +61,18 @@ public class Status implements Serializable {
 
     public String getTimestamp() {
         return timestamp;
+    }
+
+    public Date getTimestampDate() {
+        if (timestamp == null) {
+            throw new IllegalArgumentException("Cannot parse a null timestamp as a date");
+        }
+        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
+        try {
+            return format.parse(timestamp);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void setTimestamp(String timestamp) {
