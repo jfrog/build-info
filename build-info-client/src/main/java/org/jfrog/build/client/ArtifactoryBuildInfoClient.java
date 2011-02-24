@@ -24,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
@@ -58,7 +59,7 @@ public class ArtifactoryBuildInfoClient {
 
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
-    private static final String BUILD_REST_RUL = "/api/build";
+    private static final String BUILD_REST_URL = "/api/build";
 
     /**
      * The http client used for deploying artifacts and build info. Created and cached on the first deploy request.
@@ -214,7 +215,7 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public void sendBuildInfo(Build buildInfo) throws IOException {
-        String url = artifactoryUrl + BUILD_REST_RUL;
+        String url = artifactoryUrl + BUILD_REST_URL;
         HttpPut httpPut = new HttpPut(url);
         String buildInfoJson;
         try {
@@ -315,6 +316,14 @@ public class ArtifactoryBuildInfoClient {
                     VersionCompatibilityType.INCOMPATIBLE);
         }
         return version;
+    }
+
+    public HttpResponse copyBuild(BuildPromotionSettings settings) throws IOException {
+        return promoteBuild(false, settings);
+    }
+
+    public HttpResponse moveBuild(BuildPromotionSettings settings) throws IOException {
+        return promoteBuild(true, settings);
     }
 
     /**
@@ -477,5 +486,20 @@ public class ArtifactoryBuildInfoClient {
             }
         }
         return artifactoryVersion;
+    }
+
+    private HttpResponse promoteBuild(boolean move, BuildPromotionSettings settings) throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/");
+        if (move) {
+            urlBuilder.append("move");
+        } else {
+            urlBuilder.append("copy");
+        }
+
+        settings.buildUrl(urlBuilder);
+
+        HttpPost httpPost = new HttpPost(urlBuilder.toString());
+        log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
+        return httpClient.getHttpClient().execute(httpPost);
     }
 }
