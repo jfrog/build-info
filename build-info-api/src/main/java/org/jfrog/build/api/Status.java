@@ -7,7 +7,11 @@ import java.io.Serializable;
  */
 public class Status implements Serializable {
 
-    private StatusType status;
+    public static final String STAGED = "Staged";
+    public static final String RELEASED = "Released";
+    public static final String ROLLED_BACK = "Rolled-back";
+
+    private String status;
     private String comment;
     private String repository;
     private String timestamp;
@@ -16,7 +20,7 @@ public class Status implements Serializable {
     public Status() {
     }
 
-    public Status(StatusType status, String comment, String repository, String timestamp, String user) {
+    public Status(String status, String comment, String repository, String timestamp, String user) {
         this.status = status;
         this.comment = comment;
         this.repository = repository;
@@ -24,11 +28,11 @@ public class Status implements Serializable {
         this.user = user;
     }
 
-    public StatusType getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(StatusType status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 

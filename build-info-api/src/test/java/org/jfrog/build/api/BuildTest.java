@@ -137,14 +137,14 @@ public class BuildTest {
         Build build = new Build();
         assertNull(build.getStatuses(), "Default status list should be null.");
 
-        Status status = new StatusBuilder(StatusType.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+        Status status = new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
         build.addStatus(status);
 
         assertFalse(build.getStatuses().isEmpty(), "Status object should have been added.");
         assertEquals(build.getStatuses().get(0), status, "Unexpected status object.");
 
         Status anotherStatus =
-                new StatusBuilder(StatusType.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+                new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
         build.addStatus(anotherStatus);
 
         assertEquals(build.getStatuses().size(), 2, "Second status object should have been added.");

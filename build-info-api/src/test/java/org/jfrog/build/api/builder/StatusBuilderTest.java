@@ -2,7 +2,6 @@ package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Status;
-import org.jfrog.build.api.StatusType;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
@@ -18,8 +17,8 @@ import static org.testng.Assert.assertNull;
 public class StatusBuilderTest {
 
     public void testDefaultValues() {
-        Status status = new StatusBuilder(StatusType.RELEASED).repository("bla").timestamp("bla").user("bla").build();
-        assertEquals(status.getStatus(), StatusType.RELEASED, "Unexpected status type.");
+        Status status = new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
+        assertEquals(status.getStatus(), Status.RELEASED, "Unexpected status type.");
         assertNull(status.getComment(), "Expected null comment by default.");
         assertEquals(status.getRepository(), "bla", "Unexpected status repository.");
         assertEquals(status.getTimestamp(), "bla", "Unexpected status timestamp.");
@@ -27,10 +26,10 @@ public class StatusBuilderTest {
     }
 
     public void testNormalValues() {
-        StatusBuilder builder = new StatusBuilder(StatusType.ROLLED_BACK).comment("momo").repository("popo").
+        StatusBuilder builder = new StatusBuilder(Status.ROLLED_BACK).comment("momo").repository("popo").
                 timestamp("koko").user("jojo");
         Status status = builder.build();
-        assertEquals(status.getStatus(), StatusType.ROLLED_BACK, "Unexpected status.");
+        assertEquals(status.getStatus(), Status.ROLLED_BACK, "Unexpected status.");
         assertEquals(status.getComment(), "momo", "Unexpected comment.");
         assertEquals(status.getRepository(), "popo", "Unexpected repository.");
         assertEquals(status.getTimestamp(), "koko", "Unexpected timestamp.");
@@ -55,16 +54,16 @@ public class StatusBuilderTest {
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullRepository() {
-        new StatusBuilder(StatusType.STAGED).build();
+        new StatusBuilder(Status.STAGED).build();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullTimestamp() {
-        new StatusBuilder(StatusType.STAGED).repository("bla").build();
+        new StatusBuilder(Status.STAGED).repository("bla").build();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullUser() {
-        new StatusBuilder(StatusType.STAGED).repository("bla").timestamp("bla").build();
+        new StatusBuilder(Status.STAGED).repository("bla").timestamp("bla").build();
     }
 }

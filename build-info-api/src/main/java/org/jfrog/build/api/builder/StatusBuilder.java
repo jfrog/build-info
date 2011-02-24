@@ -2,7 +2,6 @@ package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Status;
-import org.jfrog.build.api.StatusType;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -12,13 +11,13 @@ import java.util.Date;
  */
 public class StatusBuilder {
 
-    private StatusType status;
+    private String status;
     private String comment;
     private String repository;
     private String timestamp;
     private String user;
 
-    public StatusBuilder(StatusType status) {
+    public StatusBuilder(String status) {
         this.status = status;
     }
 
