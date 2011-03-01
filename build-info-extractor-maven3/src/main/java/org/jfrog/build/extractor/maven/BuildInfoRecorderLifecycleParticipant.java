@@ -24,6 +24,10 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener;
+import org.sonatype.aether.RepositoryListener;
+import org.sonatype.aether.util.DefaultRepositorySystemSession;
+import org.sonatype.aether.util.listener.ChainedRepositoryListener;
 
 import java.util.Properties;
 
@@ -39,6 +43,30 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
     @Requirement(role = BuildInfoRecorder.class, hint = "default", optional = false)
     BuildInfoRecorder recorder;
 
+    /**
+     * When the session starts, register {@link ArtifactoryRepositoryListener} as part of the listener chain that is
+     * used for repository manipulation.
+     *
+     * @param session The maven session.
+     * @throws MavenExecutionException A maven execution exception that can happen during the maven build.
+     */
+    @Override
+    public void afterSessionStart(MavenSession session) throws MavenExecutionException {
+        super.afterSessionStart(session);
+        if (session.getRepositorySession() instanceof DefaultRepositorySystemSession) {
+            DefaultRepositorySystemSession repositorySession =
+                    (DefaultRepositorySystemSession) session.getRepositorySession();
+            RepositoryListener listener = repositorySession.getRepositoryListener();
+            Properties allMavenProps = new Properties();
+            allMavenProps.putAll(session.getSystemProperties());
+            allMavenProps.putAll(session.getUserProperties());
+
+            Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
+            repositorySession.setRepositoryListener(
+                    new ChainedRepositoryListener(listener, new ArtifactoryRepositoryListener(allProps, logger)));
+        }
+    }
+
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
 
@@ -47,7 +75,6 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         allMavenProps.putAll(session.getUserProperties());
 
         Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
-
         Object activateRecorderObject = allProps.get(BuildInfoRecorder.ACTIVATE_RECORDER);
         if (activateRecorderObject == null) {
             logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
