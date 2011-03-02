@@ -39,8 +39,8 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
         this.logger = logger;
         this.url = props.getProperty(ClientProperties.PROP_CONTEXT_URL) + "/" +
                 props.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY);
-        this.username = props.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
-        this.password = props.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD);
+        this.username = props.getProperty(ClientProperties.PROP_RESOLVE_USERNAME);
+        this.password = props.getProperty(ClientProperties.PROP_RESOLVE_PASSWORD);
         this.matrixParams = getMatrixParams();
     }
 

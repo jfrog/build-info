@@ -63,6 +63,16 @@ public interface ClientProperties {
     String PROP_PUBLISH_PASSWORD = ARTIFACTORY_PREFIX + "publish.password";
 
     /**
+     * The username to use when resolving artifacts from Artifactory.
+     */
+    String PROP_RESOLVE_USERNAME = ARTIFACTORY_PREFIX + "resolve.username";
+
+    /**
+     * The password to use when resolving artifacts from Artifactory.
+     */
+    String PROP_RESOLVE_PASSWORD = ARTIFACTORY_PREFIX + "resolve.password";
+
+    /**
      * Property for whether to publish the generated build artifacts.
      */
     String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
