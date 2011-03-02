@@ -25,7 +25,6 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener;
-import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
 import org.sonatype.aether.util.listener.ChainedRepositoryListener;
 
@@ -56,14 +55,14 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         if (session.getRepositorySession() instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession repositorySession =
                     (DefaultRepositorySystemSession) session.getRepositorySession();
-            RepositoryListener listener = repositorySession.getRepositoryListener();
             Properties allMavenProps = new Properties();
             allMavenProps.putAll(session.getSystemProperties());
             allMavenProps.putAll(session.getUserProperties());
 
             Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
             repositorySession.setRepositoryListener(
-                    new ChainedRepositoryListener(listener, new ArtifactoryRepositoryListener(allProps, logger)));
+                    new ChainedRepositoryListener(repositorySession.getRepositoryListener(),
+                            new ArtifactoryRepositoryListener(allProps, logger)));
         }
     }
 
