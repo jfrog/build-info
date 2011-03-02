@@ -86,6 +86,7 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
                             .removeStart(entry.getKey(), ArtifactoryResolutionProperties.ARTIFACT_BUILD_ROOT_KEY))
                     .append("=").append(entry.getValue());
         }
+        builder.append(";");
         return builder.toString();
     }
 }
