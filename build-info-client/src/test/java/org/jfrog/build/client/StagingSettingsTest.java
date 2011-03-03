@@ -18,7 +18,7 @@ import static org.testng.Assert.assertEquals;
 public class StagingSettingsTest {
 
     private static final StagingSettingsBuilder BASIC_BUILDER =
-            new StagingSettingsBuilder("buildName", "buildNumber", "targetRepo").includeArtifacts(false).
+            new StagingSettingsBuilder("buildName", "buildNumber").targetRepo("targetRepo").includeArtifacts(false).
                     includeDependencies(true).dryRun(true);
 
     public void testMinimalUrlConstruction() throws UnsupportedEncodingException {
