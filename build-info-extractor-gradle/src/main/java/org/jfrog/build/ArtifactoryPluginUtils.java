@@ -25,6 +25,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
+import org.jfrog.build.api.ArtifactoryResolutionProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientIvyProperties;
@@ -300,6 +301,12 @@ public class ArtifactoryPluginUtils {
                     StringUtils
                             .removeStart(BuildInfoProperties.PROP_VCS_REVISION, BuildInfoProperties.BUILD_INFO_PREFIX),
                     vcsRevision);
+        }
+
+        String buildRoot = ArtifactoryPluginUtils
+                .getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
+        if (StringUtils.isNotBlank(buildRoot)) {
+            props.put(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, buildRoot);
         }
 
         Map properties = project.getProperties();
