@@ -32,7 +32,7 @@ public class StagingSettingsBuilderTest {
         String promotionComment = "promotionComment";
         String ciUser = "ciUser";
 
-        StagingSettingsBuilder builder = new StagingSettingsBuilder(buildName, buildNumber, targetRepo)
+        StagingSettingsBuilder builder = new StagingSettingsBuilder(buildName, buildNumber).targetRepo(targetRepo)
                 .buildStarted(buildStarted).includeArtifacts(includeArtifacts).includeDependencies(includeDependencies).
                         scopes(scopes).properties(properties).dryRun(dryRun).promotionStatus(promotionStatus).
                         promotionComment(promotionComment).ciUser(ciUser);
@@ -55,25 +55,20 @@ public class StagingSettingsBuilderTest {
     }
 
     public void testDefaultParams() {
-        StagingSettings build = new StagingSettingsBuilder("as", "as", "as").build();
+        StagingSettings build = new StagingSettingsBuilder("as", "as").targetRepo("as").build();
         assertTrue(build.isIncludeArtifacts(), "Artifacts should be included by default.");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "(.*)name is required(.*)")
     public void testNullBuildName() {
-        new StagingSettingsBuilder(null, null, null).build();
+        new StagingSettingsBuilder(null, null).build();
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "(.*)number is required(.*)")
     public void testNullBuildNumber() {
-        new StagingSettingsBuilder("asasds", null, null).build();
+        new StagingSettingsBuilder("asasds", null).build();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "(.*)repository is required(.*)")
-    public void testNullTargetRepo() {
-        new StagingSettingsBuilder("asasds", "asdasd", null).build();
-    }
 }
