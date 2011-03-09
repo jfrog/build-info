@@ -25,6 +25,7 @@ import org.gradle.api.artifacts.Dependency
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.TaskContainer
 import org.gradle.api.tasks.Upload
+import org.jfrog.build.api.ArtifactoryResolutionProperties
 import org.jfrog.build.client.ClientGradleProperties
 import org.jfrog.build.client.ClientIvyProperties
 import org.jfrog.build.client.ClientProperties
@@ -68,6 +69,10 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
+            String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
+            if (StringUtils.isNotBlank(buildRoot)) {
+                artifactoryDownloadUrl += ";" + buildRoot + ";"
+            }
             // add artifactory url to the list of repositories
             project.repositories {
                 mavenRepo urls: [artifactoryDownloadUrl]
