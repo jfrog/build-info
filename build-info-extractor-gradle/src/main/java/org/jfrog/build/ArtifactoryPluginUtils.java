@@ -306,7 +306,8 @@ public class ArtifactoryPluginUtils {
         String buildRoot = ArtifactoryPluginUtils
                 .getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
         if (StringUtils.isNotBlank(buildRoot)) {
-            props.put(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, buildRoot);
+            props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
+                    ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, buildRoot);
         }
 
         Map properties = project.getProperties();
