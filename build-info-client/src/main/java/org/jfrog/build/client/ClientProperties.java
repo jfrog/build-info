@@ -29,16 +29,53 @@ public interface ClientProperties {
 
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 
-    String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
+    String PROP_PROXY_HOST = ARTIFACTORY_PREFIX + "proxy.host";
+
+    String PROP_PROXY_PORT = ARTIFACTORY_PREFIX + "proxy.port";
+
+    String PROP_PROXY_USERNAME = ARTIFACTORY_PREFIX + "proxy.username";
+
+    String PROP_PROXY_PASSWORD = ARTIFACTORY_PREFIX + "proxy.password";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */
-    String PROP_RESOLVE_PREFIX = ARTIFACTORY_PREFIX + "resolve.";
+    String PROP_RESOLVE_REPOKEY = ARTIFACTORY_PREFIX + "resolve.repoKey";
 
     /**
      * The repo key in Artifactory to where to publish release artifacts.
      */
-    String PROP_PUBLISH_PREFIX = ARTIFACTORY_PREFIX + "publish.";
+    String PROP_PUBLISH_REPOKEY = ARTIFACTORY_PREFIX + "publish.repoKey";
+
+    /**
+     * The repo key in Artifactory to where to publish snapshot artifacts.
+     */
+    String PROP_PUBLISH_SNAPSHOTS_REPOKEY = ARTIFACTORY_PREFIX + "publish.snapshots.repoKey";
+
+    /**
+     * The username to use when publishing artifacts to Artifactory.
+     */
+    String PROP_PUBLISH_USERNAME = ARTIFACTORY_PREFIX + "publish.username";
+
+    /**
+     * The password to use when publishing artifacts to Artifactory.
+     */
+    String PROP_PUBLISH_PASSWORD = ARTIFACTORY_PREFIX + "publish.password";
+
+    /**
+     * The username to use when resolving artifacts from Artifactory.
+     */
+    String PROP_RESOLVE_USERNAME = ARTIFACTORY_PREFIX + "resolve.username";
+
+    /**
+     * The password to use when resolving artifacts from Artifactory.
+     */
+    String PROP_RESOLVE_PASSWORD = ARTIFACTORY_PREFIX + "resolve.password";
+
+    /**
+     * Property for whether to publish the generated build artifacts.
+     */
+    String PROP_PUBLISH_ARTIFACT = ARTIFACTORY_PREFIX + "publish.artifacts";
 
     /**
      * Prefix for properties that are dynamically added to deployment (as matrix params)

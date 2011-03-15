@@ -37,7 +37,7 @@ public class IvyResolverHelper {
             organization = organization.replace(".", "/");
         }
         return IvyPatternHelper.substitute(artifactPattern, organization,
-                moduleName, revision, attributes.get("artifact"), type, ext, branch, extraAttributes, null);
+                moduleName, branch, revision, attributes.get("artifact"), type, ext, extraAttributes, null);
     }
 
     private static String getPattern(ArtifactoryClientConfiguration.PublisherHandler props, String fileName) {

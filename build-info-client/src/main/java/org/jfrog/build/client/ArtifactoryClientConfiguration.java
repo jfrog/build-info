@@ -18,6 +18,7 @@ package org.jfrog.build.client;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ArtifactoryResolutionProperties;
 import org.jfrog.build.api.util.Log;
 
 import java.util.Map;
@@ -26,10 +27,11 @@ import java.util.TreeMap;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
-import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_LICENSE_CONTROL_PREFIX;
+import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PREFIX;
+import static org.jfrog.build.api.LicenseControlFields.*;
 import static org.jfrog.build.client.ClientConfigurationFields.*;
 import static org.jfrog.build.client.ClientProperties.*;
-import static org.jfrog.build.api.LicenseControlFields.*;
 
 /**
  * @author freds
@@ -142,6 +144,23 @@ public class ArtifactoryClientConfiguration {
 
         public void setContextUrl(String contextUrl) {
             root.setStringValue(PROP_CONTEXT_URL, contextUrl);
+        }
+
+        public void setBuildRoot(String buildRoot) {
+            root.setStringValue(ArtifactoryResolutionProperties.ARTIFACT_BUILD_ROOT_KEY, buildRoot);
+        }
+
+        public String getBuildRoot() {
+            return root.getStringValue(ArtifactoryResolutionProperties.ARTIFACT_BUILD_ROOT_KEY);
+        }
+
+        @Override
+        public Map<String, String> getMatrixParams() {
+            Map<String, String> params = super.getMatrixParams();
+            if (StringUtils.isNotBlank(getBuildRoot())) {
+                params.put(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, getBuildRoot());
+            }
+            return params;
         }
 
         @Override

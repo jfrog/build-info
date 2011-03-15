@@ -6,6 +6,7 @@ import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.ArtifactoryResolutionProperties;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.ClientProperties;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
@@ -14,7 +15,6 @@ import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.RemoteRepository;
 
 import java.util.Map;
-import java.util.Properties;
 
 /**
  * A repository listener that is used for interception of repository events (resolution and deployment) The repository
@@ -27,18 +27,18 @@ import java.util.Properties;
  */
 public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
 
-    private final Properties props;
+    private final ArtifactoryClientConfiguration.ResolverHandler resolverHandler;
     private final Logger logger;
     private final String url;
     private final String username;
     private final String password;
     private final String matrixParams;
 
-    public ArtifactoryRepositoryListener(Properties props, Logger logger) {
-        this.props = props;
+    public ArtifactoryRepositoryListener(ArtifactoryClientConfiguration.ResolverHandler resolverHandler,
+            Logger logger) {
+        this.resolverHandler = resolverHandler;
         this.logger = logger;
-        this.url = props.getProperty(ClientProperties.PROP_CONTEXT_URL) + "/" +
-                props.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY);
+        this.url = resolverHandler.getContextUrl() + resolverHandler.getRepoKey();
         this.username = props.getProperty(ClientProperties.PROP_RESOLVE_USERNAME);
         this.password = props.getProperty(ClientProperties.PROP_RESOLVE_PASSWORD);
         this.matrixParams = getMatrixParams();
@@ -73,6 +73,12 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
 
     private String getMatrixParams() {
         StringBuilder builder = new StringBuilder();
+        String buildRoot = resolverHandler.getBuildRoot();
+        if (StringUtils.isNotBlank(buildRoot)) {
+            builder.append(";").append(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY)
+                    .append("=").append(buildRoot);
+        }
+
         ImmutableMap<String, String> map = Maps.fromProperties(props);
         Map<String, String> filtered = Maps.filterKeys(map, new Predicate<String>() {
             @Override
