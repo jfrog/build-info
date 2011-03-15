@@ -17,6 +17,9 @@
 package org.jfrog.build
 
 import org.apache.commons.lang.StringUtils
+import org.apache.ivy.plugins.resolver.DependencyResolver
+import org.apache.ivy.plugins.resolver.IBiblioResolver
+import org.apache.ivy.plugins.resolver.IvyRepResolver
 import org.gradle.BuildAdapter
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -63,22 +66,35 @@ class ArtifactoryPlugin implements Plugin<Project> {
         while (artifactoryUrl.endsWith("/")) {
             artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
         }
+        String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
         String downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
         if (StringUtils.isNotBlank(downloadId)) {
             def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
-            String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
             if (StringUtils.isNotBlank(buildRoot)) {
                 artifactoryDownloadUrl += ";" + buildRoot + ";"
+                injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
             }
+
             // add artifactory url to the list of repositories
             project.repositories {
                 mavenRepo urls: [artifactoryDownloadUrl]
             }
         } else {
             log.debug("No repository resolution defined for ${project.name}")
+        }
+    }
+
+    private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+        for (DependencyResolver resolver: allResolvers) {
+            if (resolver instanceof IvyRepResolver) {
+                resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + buildRoot + ';'
+                resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + buildRoot + ';'
+            } else if (resolver instanceof IBiblioResolver) {
+                resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + buildRoot + ';'
+            }
         }
     }
 
