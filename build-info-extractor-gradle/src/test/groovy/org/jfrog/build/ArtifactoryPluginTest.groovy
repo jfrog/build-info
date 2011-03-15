@@ -6,10 +6,11 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.util.HelperUtil
+import org.jfrog.build.client.ClientConfigurationFields
+import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
-import static org.jfrog.build.client.ClientProperties.PROP_RESOLVE_REPOKEY
 
 /**
  * @author freds
@@ -21,7 +22,7 @@ public class ArtifactoryPluginTest extends Specification {
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
-        project.setProperty(PROP_RESOLVE_REPOKEY, '')
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
 
         artifactoryPlugin.apply(project)
 
@@ -37,7 +38,8 @@ public class ArtifactoryPluginTest extends Specification {
 
         String rootUrl = 'http://localhost:8081/artifactory/'
         project.setProperty(PROP_CONTEXT_URL, rootUrl)
-        project.setProperty(PROP_RESOLVE_REPOKEY, 'repo')
+        project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.REPO_KEY, 'repo')
+        project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.ENABLED, 'true')
         String expectedName = rootUrl + 'repo'
 
         artifactoryPlugin.apply(project)
@@ -58,7 +60,7 @@ public class ArtifactoryPluginTest extends Specification {
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
-        project.setProperty(PROP_RESOLVE_REPOKEY, '')
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -72,7 +74,9 @@ public class ArtifactoryPluginTest extends Specification {
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
-        project.setProperty(PROP_RESOLVE_REPOKEY, '')
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -88,7 +92,9 @@ public class ArtifactoryPluginTest extends Specification {
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
-        project.setProperty(PROP_RESOLVE_REPOKEY, '')
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'false')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -97,7 +103,7 @@ public class ArtifactoryPluginTest extends Specification {
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
-        buildInfoTask.dependsOn.size() == 1
+        buildInfoTask.dependsOn.size() == 2
     }
 
     private def evaluateSettings(Project project) {

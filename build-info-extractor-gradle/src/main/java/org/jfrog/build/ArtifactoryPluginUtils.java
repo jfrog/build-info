@@ -16,12 +16,16 @@
 
 package org.jfrog.build;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
 
+import javax.annotation.Nullable;
+import java.util.Map;
 import java.util.Properties;
 
 import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
@@ -76,6 +80,12 @@ public class ArtifactoryPluginUtils {
             // Parent first than me
             fillProperties(parent, props);
         }
-        props.putAll(project.getProperties());
+        Map<String, ?> projectProperties = project.getProperties();
+        projectProperties = Maps.filterValues(projectProperties, new Predicate<Object>() {
+            public boolean apply(@Nullable Object input) {
+                return input != null && input instanceof String;
+            }
+        });
+        props.putAll(projectProperties);
     }
 }

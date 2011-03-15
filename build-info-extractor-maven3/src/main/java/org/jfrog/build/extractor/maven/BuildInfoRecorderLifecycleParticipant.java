@@ -23,6 +23,7 @@ import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener;
 import org.sonatype.aether.util.DefaultRepositorySystemSession;
@@ -60,9 +61,11 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
             allMavenProps.putAll(session.getUserProperties());
 
             Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
+            ArtifactoryClientConfiguration conf = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
+            conf.fillFromProperties(allProps);
             repositorySession.setRepositoryListener(
                     new ChainedRepositoryListener(repositorySession.getRepositoryListener(),
-                            new ArtifactoryRepositoryListener(allProps, logger)));
+                            new ArtifactoryRepositoryListener(conf.resolver, logger)));
         }
     }
 

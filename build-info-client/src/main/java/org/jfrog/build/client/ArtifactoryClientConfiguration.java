@@ -270,6 +270,23 @@ public class ArtifactoryClientConfiguration {
         public String getPassword() {
             return getStringValue(PASSWORD);
         }
+
+        public void setResolveUserName(String username) {
+            setStringValue(RESOLVE_USERNAME, username);
+        }
+
+        public String getResolveUsername() {
+            return getStringValue(RESOLVE_USERNAME);
+        }
+
+        public void setResolvePassword(String password) {
+            setStringValue(RESOLVE_PASSWORD, password);
+        }
+
+        public String getResolvePassword() {
+            return getStringValue(RESOLVE_PASSWORD);
+        }
+
     }
 
     public abstract class RepositoryConfiguration extends AuthenticationConfiguration {

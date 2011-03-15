@@ -76,7 +76,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
-            String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
+            String buildRoot = resolverConf.getBuildRoot()
             if (StringUtils.isNotBlank(buildRoot)) {
                 artifactoryDownloadUrl += ";" + buildRoot + ";"
             }
