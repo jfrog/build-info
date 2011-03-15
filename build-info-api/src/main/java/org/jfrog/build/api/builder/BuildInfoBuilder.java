@@ -25,6 +25,7 @@ import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.api.release.Status;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -53,6 +54,7 @@ public class BuildInfoBuilder {
     private String parentNumber;
     private String vcsRevision;
     private List<Module> modules;
+    private List<Status> statuses;
     private Properties properties;
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
@@ -94,6 +96,7 @@ public class BuildInfoBuilder {
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
         build.setModules(modules);
+        build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
         build.setLicenseControl(licenseControl);
@@ -279,6 +282,19 @@ public class BuildInfoBuilder {
         return this;
     }
 
+    public BuildInfoBuilder statuses(List<Status> statuses) {
+        this.statuses = statuses;
+        return this;
+    }
+
+    public BuildInfoBuilder addStatus(Status status) {
+        if (statuses == null) {
+            statuses = Lists.newArrayList();
+        }
+        statuses.add(status);
+        return this;
+    }
+
     /**
      * Sets the violation notifications of the build
      *
@@ -290,7 +306,7 @@ public class BuildInfoBuilder {
         return this;
     }
 
-      /**
+    /**
      * Sets the post build retention period
      *
      * @param licenseControl Build violation  recipients.

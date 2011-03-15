@@ -206,16 +206,12 @@ project('build-info-extractor-ivy') {
   dependencies {
     uberJar "org.slf4j:slf4j-api:1.5.8"
     uberJar "org.aspectj:aspectjweaver:1.6.9"
-    provided("com.google.code.findbugs:jsr305:1.3.9") {
-      provided: true
-    }
-    provided("org.apache.ivy:ivy:2.1.0") {
-      provided: true
-    }
-    provided("org.apache.ant:ant:1.8.1") {
-      provided: true
-    }
+    provided "com.google.code.findbugs:jsr305:1.3.9",
+            "org.apache.ivy:ivy:2.1.0",
+            "org.apache.ant:ant:1.8.1"
   }
+
+  //Configure the Maven installer pom generation
   configure(install.repositories.mavenInstaller) {
     pom.project {
       issueManagement {
@@ -232,12 +228,8 @@ project('build-info-extractor-gradle') {
 
   dependencies {
     compile gradleApi()
-    provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
-      provided: true
-    }
-    provided("com.google.code.findbugs:jsr305:1.3.9") {
-      provided: true
-    }
+    provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
+            "com.google.code.findbugs:jsr305:1.3.9"
     compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
     compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
     groovy localGroovy()
@@ -266,13 +258,8 @@ project('build-info-extractor-maven3') {
   description = 'JFrog Build-Info Maven 3 Extractor'
 
   dependencies {
-    provided("org.codehaus.plexus:plexus-component-annotations:1.5.4") {
-      provided: true
-    }
-    provided("org.apache.maven:maven-core:3.0") {
-      provided: true
-    }
-
+    provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
+            "org.apache.maven:maven-core:3.0.2"
     testCompile "org.easymock:easymockclassextension:2.5.2"
   }
   configure(install.repositories.mavenInstaller) {
@@ -285,6 +272,22 @@ project('build-info-extractor-maven3') {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '0.9.1'
+ideaProject {
+  wildcards += ['?*.gradle']
+  javaVersion = '1.6'
+  withXml { provider ->
+    def node = provider.asNode()
+    // Use git
+    def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
+    vcsConfig.mapping[0].'@vcs' = 'Git'
+  }
+
+  whenConfigured { project ->
+    project.jdk.languageLevel = 'JDK_1_5'
+  }
 }
+
+
+/*task wrapper(type: Wrapper) {
+    gradleVersion = '1.0-milestone-1'
+}*/

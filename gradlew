@@ -65,6 +65,8 @@ fi
 STARTER_MAIN_CLASS=org.gradle.wrapper.GradleWrapperMain
 CLASSPATH=`dirname "$0"`/gradle/wrapper/gradle-wrapper.jar
 WRAPPER_PROPERTIES=`dirname "$0"`/gradle/wrapper/gradle-wrapper.properties
+REPO_INIT_SCRIPT=`dirname "$0"`/buildSrc/repo-init.gradle
+
 # Determine the Java command to use to start the JVM.
 if [ -z "$JAVACMD" ] ; then
     if [ -n "$JAVA_HOME" ] ; then
@@ -143,4 +145,5 @@ GRADLE_APP_BASE_NAME=`basename "$0"`
         -Dorg.gradle.wrapper.properties="$WRAPPER_PROPERTIES" \
         $STARTER_MAIN_CLASS \
         --wharf \
+	--init-script "$REPO_INIT_SCRIPT" \
         "$@"

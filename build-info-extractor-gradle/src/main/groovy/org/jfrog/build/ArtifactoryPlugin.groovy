@@ -76,6 +76,10 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
+            String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
+            if (StringUtils.isNotBlank(buildRoot)) {
+                artifactoryDownloadUrl += ";" + buildRoot + ";"
+            }
             // add artifactory url to the list of repositories
             project.repositories {
                 mavenRepo urls: [artifactoryDownloadUrl]
