@@ -17,6 +17,9 @@
 package org.jfrog.build
 
 import org.apache.commons.lang.StringUtils
+import org.apache.ivy.plugins.resolver.DependencyResolver
+import org.apache.ivy.plugins.resolver.IBiblioResolver
+import org.apache.ivy.plugins.resolver.IvyRepResolver
 import org.gradle.BuildAdapter
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -79,6 +82,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             String buildRoot = resolverConf.getBuildRoot()
             if (StringUtils.isNotBlank(buildRoot)) {
                 artifactoryDownloadUrl += ";" + buildRoot + ";"
+                injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
             }
             // add artifactory url to the list of repositories
             project.repositories {
@@ -86,6 +90,17 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
         } else {
             log.debug("No repository resolution defined for ${project.path}")
+        }
+    }
+
+    private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+        for (DependencyResolver resolver: allResolvers) {
+            if (resolver instanceof IvyRepResolver) {
+                resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + buildRoot + ';'
+                resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + buildRoot + ';'
+            } else if (resolver instanceof IBiblioResolver) {
+                resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + buildRoot + ';'
+            }
         }
     }
 
