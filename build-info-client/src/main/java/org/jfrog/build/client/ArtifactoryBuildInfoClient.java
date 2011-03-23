@@ -34,6 +34,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 
@@ -318,11 +319,17 @@ public class ArtifactoryBuildInfoClient {
         return version;
     }
 
-    public HttpResponse stageBuild(StagingSettings settings) throws IOException {
+    public HttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
+        if (StringUtils.isBlank(buildName)) {
+            throw new IllegalArgumentException("Build name is required for promotion.");
+        }
+        if (StringUtils.isBlank(buildNumber)) {
+            throw new IllegalArgumentException("Build number is required for promotion.");
+        }
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
-                append(settings.getBuildName()).append("/").append(settings.getBuildNumber());
+                append(buildName).append("/").append(buildNumber);
 
-        String promotionJson = toJsonString(settings.getPromotion());
+        String promotionJson = toJsonString(promotion);
 
         HttpPost httpPost = new HttpPost(urlBuilder.toString());
 
@@ -330,7 +337,7 @@ public class ArtifactoryBuildInfoClient {
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
         httpPost.setEntity(stringEntity);
 
-        log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
+        log.info("Promoting build " + buildName + ", #" + buildNumber);
         return httpClient.getHttpClient().execute(httpPost);
     }
 
