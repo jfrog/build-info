@@ -53,6 +53,13 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
         Properties props = getMergedEnvAndSystemProps()
+        props.putAll(startParamProps)
+        Map<String, ?> projectProps = project.properties
+        for (Map.Entry<String, ?> entry: projectProps.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                props.put(entry.getKey(), entry.getValue())
+            }
+        }
         defineResolvers(project, props)
         // add the build info task
         createBuildInfoTask(project);
