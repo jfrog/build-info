@@ -23,7 +23,7 @@ public class PromotionBuilder {
     private String targetRepo;
     private boolean copy;
     private boolean artifacts = true;
-    private boolean dependencies = true;
+    private boolean dependencies = false;
     private Set<String> scopes;
     private Multimap<String, String> properties;
 
