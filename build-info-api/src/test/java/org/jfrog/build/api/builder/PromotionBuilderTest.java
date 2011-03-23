@@ -36,8 +36,8 @@ public class PromotionBuilderTest {
         Multimap<String, String> properties = HashMultimap.create();
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
-                artifactoryUser("artifactoryUser").timestamp("timestamp").dryRun(true).targetRepo("targetRepo").
-                copy(false).artifacts(true).dependencies(false).scopes(scopes).properties(properties).build();
+                timestamp("timestamp").dryRun(true).targetRepo("targetRepo").copy(false).artifacts(true).
+                dependencies(false).scopes(scopes).properties(properties).build();
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");

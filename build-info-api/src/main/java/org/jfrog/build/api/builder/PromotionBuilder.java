@@ -45,10 +45,6 @@ public class PromotionBuilder {
         return this;
     }
 
-    public PromotionBuilder artifactoryUser(String artifactoryUser) {
-        return this;
-    }
-
     public PromotionBuilder timestamp(String timestamp) {
         this.timestamp = timestamp;
         return this;
