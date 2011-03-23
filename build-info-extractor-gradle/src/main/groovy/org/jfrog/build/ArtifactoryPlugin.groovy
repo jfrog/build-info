@@ -32,6 +32,7 @@ import org.jfrog.build.api.ArtifactoryResolutionProperties
 import org.jfrog.build.client.ClientGradleProperties
 import org.jfrog.build.client.ClientIvyProperties
 import org.jfrog.build.client.ClientProperties
+import org.jfrog.build.extractor.BuildInfoExtractorUtils
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.slf4j.Logger
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME
@@ -51,25 +52,26 @@ class ArtifactoryPlugin implements Plugin<Project> {
             startParamProps['build.start'] = "" + System.currentTimeMillis()
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
-        defineResolvers(project)
+        Properties props = getMergedEnvAndSystemProps()
+        defineResolvers(project, props)
         // add the build info task
         createBuildInfoTask(project);
         String buildListenerAdded = startParamProps['__ArtifactoryPlugin_buildListener__'];
         if (!buildListenerAdded) {
-            project.getGradle().addBuildListener(new ProjectEvaluatedBuildListener())
+            project.getGradle().addBuildListener(new ProjectEvaluatedBuildListener(props))
             startParamProps['__ArtifactoryPlugin_buildListener__'] = 'done'
         }
     }
 
-    private void defineResolvers(Project project) {
-        String artifactoryUrl = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_CONTEXT_URL, project) ?: 'http://gradle.artifactoryonline.com/gradle'
+    private void defineResolvers(Project project, Properties props) {
+        String artifactoryUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL) ?: 'http://gradle.artifactoryonline.com/gradle'
         while (artifactoryUrl.endsWith("/")) {
             artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
         }
-        String buildRoot = ArtifactoryPluginUtils.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
-        String downloadId = ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY, project)
+        String buildRoot = props.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY);
+        String downloadId = props.getProperty(ClientProperties.PROP_RESOLVE_REPOKEY)
         if (StringUtils.isNotBlank(downloadId)) {
-            def artifactoryDownloadUrl = ArtifactoryPluginUtils.getProperty('artifactory.downloadUrl', project) ?: "${artifactoryUrl}/${downloadId}"
+            def artifactoryDownloadUrl = props.getProperty('artifactory.downloadUrl') ?: "${artifactoryUrl}/${downloadId}"
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
@@ -98,15 +100,27 @@ class ArtifactoryPlugin implements Plugin<Project> {
         }
     }
 
+    private Properties getMergedEnvAndSystemProps() {
+        Properties props = new Properties();
+        props.putAll(System.getenv());
+        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
+    }
+
     private static class ProjectEvaluatedBuildListener extends BuildAdapter {
+        private final Properties props
+
+        ProjectEvaluatedBuildListener(Properties props) {
+            this.props = props
+        }
+
         def void projectsEvaluated(Gradle gradle) {
             gradle.rootProject.allprojects.each {
                 BuildInfoRecorderTask buildInfoTask = it.tasks.findByName(BUILD_INFO_TASK_NAME)
-                if (buildInfoTask != null) configureBuildInfoTask(it, buildInfoTask)
+                if (buildInfoTask != null) configureBuildInfoTask(it, buildInfoTask, props)
             }
         }
 
-        void configureBuildInfoTask(Project project, BuildInfoRecorderTask buildInfoTask) {
+        void configureBuildInfoTask(Project project, BuildInfoRecorderTask buildInfoTask, Properties props) {
             TaskContainer tasks = project.getTasks()
             if (buildInfoTask.getConfiguration() == null) {
                 buildInfoTask.configuration = project.configurations.findByName(Dependency.ARCHIVES_CONFIGURATION)
@@ -119,7 +133,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
 
             // Set ivy descriptor parameters
-            if (ArtifactoryPluginUtils.getBooleanProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project) &&
+            if (Boolean.parseBoolean(props.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY)) &&
                     buildInfoTask.ivyDescriptor == null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
                 Upload uploadTask = tasks.getByName(buildInfoTask.configuration.getUploadTaskName())
@@ -134,7 +148,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
 
             // Set maven pom parameters
-            if (ArtifactoryPluginUtils.getBooleanProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project) &&
+            if (Boolean.parseBoolean(props.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN)) &&
                     buildInfoTask.mavenDescriptor == null) {
                 // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
                 // if the project doesn't have the maven install task, throw an exception

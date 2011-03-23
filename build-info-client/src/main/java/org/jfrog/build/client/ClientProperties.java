@@ -93,6 +93,12 @@ public interface ClientProperties {
     String PROP_PUBLISH_BUILD_INFO = ARTIFACTORY_PREFIX + "publish.buildInfo";
 
     /**
+     * Property for whether to publish the artifacts even if the build is unstable
+     */
+    String PROP_PUBLISH_EVEN_UNSTABLE = ARTIFACTORY_PREFIX + "publish.unstable";
+
+
+    /**
      * Prefix for properties that are dynamically added to deployment (as matrix params)
      */
     String PROP_DEPLOY_PARAM_PROP_PREFIX = ARTIFACTORY_PREFIX + "deploy.";

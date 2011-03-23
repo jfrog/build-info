@@ -158,7 +158,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
         Properties props = getMergedEnvAndSystemProps();
-        String artifactPath = IvyResolverHelper.calculateArtifactPath(props, artifactFile, map, extraAttributes);
+        String artifactPath = IvyResolverHelper.calculateArtifactPath(props, map, extraAttributes);
         builder.artifactPath(artifactPath);
         String targetRepository = IvyResolverHelper.getTargetRepository(props);
         builder.targetRepository(targetRepository);

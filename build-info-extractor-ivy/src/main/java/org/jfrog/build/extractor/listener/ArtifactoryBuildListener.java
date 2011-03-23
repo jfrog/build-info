@@ -2,7 +2,12 @@ package org.jfrog.build.extractor.listener;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
+import org.apache.ivy.ant.IvyAntSettings;
 import org.apache.ivy.core.IvyContext;
+import org.apache.ivy.core.event.EventManager;
+import org.apache.ivy.core.event.publish.StartArtifactPublishEvent;
+import org.apache.ivy.core.event.resolve.EndResolveEvent;
+import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
@@ -22,6 +27,7 @@ import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
@@ -42,6 +48,13 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 public class ArtifactoryBuildListener extends BuildListenerAdapter {
     private BuildContext ctx = new BuildContext();
     private static boolean isDidDeploy;
+    private static final ArtifactoryBuildInfoTrigger DEPENDENCY_TRIGGER = new ArtifactoryBuildInfoTrigger();
+    private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger();
+
+    public ArtifactoryBuildListener() {
+        DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
+        PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
+    }
 
     @Override
     public void buildStarted(BuildEvent event) {
@@ -49,6 +62,22 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
         context.set(BuildContext.CONTEXT_NAME, ctx);
         ctx.setBuildStartTime(System.currentTimeMillis());
         super.buildStarted(event);
+    }
+
+
+    @Override
+    public void taskStarted(BuildEvent event) {
+        ResolveEngine engine = IvyAntSettings.getDefaultInstance(event.getTask()).
+                getConfiguredIvyInstance(event.getTask()).getResolveEngine();
+        EventManager engineEventManager = engine.getEventManager();
+        engineEventManager.removeIvyListener(DEPENDENCY_TRIGGER);
+        engineEventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
+        IvyContext context = IvyContext.getContext();
+        EventManager eventManager = context.getIvy().getEventManager();
+        eventManager.removeIvyListener(PUBLISH_TRIGGER);
+        eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
+        context.getIvy().bind();
+        super.taskStarted(event);
     }
 
     /**

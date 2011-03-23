@@ -6,7 +6,6 @@ import org.jfrog.build.client.ClientIvyProperties;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.LayoutPatterns;
 
-import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
@@ -17,33 +16,30 @@ import java.util.Properties;
  * @author Tomer Cohen
  */
 public class IvyResolverHelper {
-    private static final String IVY_XML = "ivy.xml";
-
 
     /**
      * Calculate a repo path for a file
      *
      * @param props
-     * @param artifactFile    The file to be deployed.
      * @param extraAttributes
      */
-    public static String calculateArtifactPath(Properties props, File artifactFile, Map<String, String> attributes,
+    public static String calculateArtifactPath(Properties props, Map<String, String> attributes,
             Map<String, String> extraAttributes) {
-        String artifactPattern = getPattern(props, artifactFile.getName());
-        return IvyPatternHelper.substitute(artifactPattern, getGroupIdPatternByM2Compatible(props,
-                attributes.get("organisation")), attributes.get("module"), attributes.get("branch"),
-                attributes.get("revision"),
-                attributes.get("artifact"), attributes.get("type"), attributes.get("ext"), attributes.get("conf"), null,
+        String organization = attributes.get("organisation");
+        String revision = attributes.get("revision");
+        String moduleName = attributes.get("module");
+        String ext = attributes.get("ext");
+        String branch = attributes.get("branch");
+        String type = attributes.get("type");
+        String artifactPattern = getPattern(props, type);
+        String orgPattern = getGroupIdPatternByM2Compatible(props, organization);
+        return IvyPatternHelper.substitute(artifactPattern, orgPattern,
+                moduleName, branch, revision, attributes.get("artifact"), type, ext, attributes.get("conf"), null,
                 extraAttributes, null);
     }
 
-    private static String getExt(String path) {
-        int dot = path.lastIndexOf('.');
-        return path.substring(dot + 1);
-    }
-
-    private static String getPattern(Properties props, String fileName) {
-        if (isIvyFileName(fileName)) {
+    private static String getPattern(Properties props, String type) {
+        if (isIvy(type)) {
             return getIvyDescriptorPattern(props);
         } else {
             return getArtifactPattern(props);
@@ -78,13 +74,11 @@ public class IvyResolverHelper {
         return Boolean.parseBoolean(m2Compatible);
     }
 
-    public static boolean isIvyFileName(String fileName) {
-        if (StringUtils.isBlank(fileName)) {
+    public static boolean isIvy(String type) {
+        if (StringUtils.isBlank(type)) {
             return false;
         }
-        return IVY_XML.equals(fileName) || (fileName.startsWith("ivy-") && fileName.endsWith(".xml")) ||
-                fileName.endsWith(".ivy") ||
-                fileName.endsWith("-" + IVY_XML);
+        return "ivy".equals(type);
     }
 
     /**

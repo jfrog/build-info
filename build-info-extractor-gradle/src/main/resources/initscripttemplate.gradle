@@ -6,10 +6,6 @@ initscript {
 
 addListener(new BuildInfoPluginListener())
 class BuildInfoPluginListener extends BuildAdapter {
-    def void settingsEvaluated(Settings settings) {
-        Map<String, String> projProps = settings.getStartParameter().getProjectProperties()
-        projProps.putAll([${allBuildInfoProperties}])
-    }
 
     def void projectsLoaded(Gradle gradle) {
         gradle.startParameter.getProjectProperties().put("build.start", Long.toString(System.currentTimeMillis()))

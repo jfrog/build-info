@@ -109,7 +109,7 @@ public class ArtifactoryPluginUtils {
                 .append(",").append(NEW_LINE);
     }
 
-    public static Set<DeployDetails> getDeployArtifactsProject(Project project, String artifactName) {
+    public static Set<DeployDetails> getDeployArtifactsProject(Project project, String artifactName, Properties props) {
         Set<DeployDetails> deployDetails = Sets.newLinkedHashSet();
         Set<Task> buildInfoTask = project.getTasksByName("buildInfo", false);
         if (buildInfoTask.isEmpty()) {
@@ -120,7 +120,7 @@ public class ArtifactoryPluginUtils {
         if (configuration == null) {
             return deployDetails;
         }
-        String pattern = getArtifactPattern(project);
+        String pattern = getArtifactPattern(props);
         Set<PublishArtifact> artifacts = configuration.getAllArtifacts();
         for (PublishArtifact publishArtifact : artifacts) {
             File file = publishArtifact.getFile();
@@ -140,13 +140,13 @@ public class ArtifactoryPluginUtils {
             }
             String name = getProjectName(project, artifactName);
             artifactBuilder.artifactPath(
-                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project), name,
+                    IvyPatternHelper.substitute(pattern, getGroupIdPatternByM2Compatible(project, props), name,
                             revision, publishArtifact.getName(), publishArtifact.getType(),
                             publishArtifact.getExtension(), configuration.getName(),
                             extraTokens, null));
-            String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
+            String uploadId = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
             artifactBuilder.targetRepository(uploadId);
-            Properties matrixParams = getMatrixParams(project);
+            Properties matrixParams = getMatrixParams(project, props);
             artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
             DeployDetails details = artifactBuilder.build();
             deployDetails.add(details);
@@ -154,16 +154,16 @@ public class ArtifactoryPluginUtils {
         return deployDetails;
     }
 
-    public static String getArtifactPattern(Project project) {
-        String pattern = getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN, project);
+    public static String getArtifactPattern(Properties props) {
+        String pattern = props.getProperty(ClientIvyProperties.PROP_IVY_ARTIFACT_PATTERN);
         if (StringUtils.isBlank(pattern)) {
             return LayoutPatterns.M2_PATTERN;
         }
         return pattern.trim();
     }
 
-    public static String getIvyDescriptorPattern(Project project) {
-        String pattern = getProperty(ClientIvyProperties.PROP_IVY_IVY_PATTERN, project);
+    public static String getIvyDescriptorPattern(Properties props) {
+        String pattern = props.getProperty(ClientIvyProperties.PROP_IVY_IVY_PATTERN);
         if (StringUtils.isNotBlank(pattern)) {
             return pattern.trim();
         }
@@ -171,10 +171,10 @@ public class ArtifactoryPluginUtils {
     }
 
     public static Set<DeployDetails> getIvyDescriptorDeployDetails(Project project, File ivyDescriptor,
-            String artifactName) {
+            String artifactName, Properties props) {
         Set<DeployDetails> deployDetails = Sets.newHashSet();
-        String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
-        String pattern = getIvyDescriptorPattern(project);
+        String uploadId = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
+        String pattern = getIvyDescriptorPattern(props);
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
         try {
             Map<String, String> checksums =
@@ -187,10 +187,11 @@ public class ArtifactoryPluginUtils {
         }
         String name = getProjectName(project, artifactName);
         artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(pattern, getGroupIdPatternByM2Compatible(project), name, project.getVersion().toString(),
+                .substitute(pattern, getGroupIdPatternByM2Compatible(project, props), name,
+                        project.getVersion().toString(),
                         null, "ivy", "xml"));
         artifactBuilder.targetRepository(uploadId);
-        Properties matrixParams = getMatrixParams(project);
+        Properties matrixParams = getMatrixParams(project, props);
         artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
         DeployDetails details = artifactBuilder.build();
         deployDetails.add(details);
@@ -205,21 +206,22 @@ public class ArtifactoryPluginUtils {
         return name;
     }
 
-    public static String getGroupIdPatternByM2Compatible(Project project) {
+    public static String getGroupIdPatternByM2Compatible(Project project, Properties props) {
         String groupId = project.getGroup().toString();
-        if (isM2Compatible(project)) {
+        if (isM2Compatible(props)) {
             groupId = groupId.replace(".", "/");
         }
         return groupId;
     }
 
-    private static boolean isM2Compatible(Project project) {
-        String m2Compatible = getProperty(ClientIvyProperties.PROP_M2_COMPATIBLE, project);
+    private static boolean isM2Compatible(Properties props) {
+        String m2Compatible = props.getProperty(ClientIvyProperties.PROP_M2_COMPATIBLE);
         return Boolean.parseBoolean(m2Compatible);
     }
 
-    public static DeployDetails getMavenDeployDetails(Project project, File mavenDescriptor, String artifactName) {
-        String uploadId = getProperty(ClientProperties.PROP_PUBLISH_REPOKEY, project);
+    public static DeployDetails getMavenDeployDetails(Project project, File mavenDescriptor, String artifactName,
+            Properties props) {
+        String uploadId = props.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
         try {
             Map<String, String> checksums =
@@ -235,23 +237,21 @@ public class ArtifactoryPluginUtils {
                 project.getGroup().toString().replace(".", "/"), name,
                 project.getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(uploadId);
-        Properties matrixParams = getMatrixParams(project);
+        Properties matrixParams = getMatrixParams(project, props);
         artifactBuilder.addProperties(Maps.fromProperties(matrixParams));
-        DeployDetails details = artifactBuilder.build();
-        return details;
+        return artifactBuilder.build();
     }
 
 
-    private static Properties getMatrixParams(Project project) {
+    private static Properties getMatrixParams(Project project, Properties envProps) {
         Properties props = new Properties();
-        props.putAll(project.getGradle().getStartParameter().getProjectProperties());
-        props.putAll(System.getProperties());
+        props.putAll(envProps);
 
         if (StringUtils.isBlank(System.getProperty("timestamp"))) {
             System.setProperty("timestamp", String.valueOf(System.currentTimeMillis()));
         }
 
-        String buildName = getProperty(BuildInfoProperties.PROP_BUILD_NAME, project);
+        String buildName = props.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
         if (StringUtils.isBlank(buildName)) {
             Project rootProject = project.getRootProject();
             buildName = rootProject.getName().replace(' ', '-');
@@ -260,7 +260,7 @@ public class ArtifactoryPluginUtils {
                 StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
                 buildName);
 
-        String buildNumber = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER, project);
+        String buildNumber = props.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = System.getProperty("timestamp");
         }
@@ -268,7 +268,7 @@ public class ArtifactoryPluginUtils {
                 StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER, BuildInfoProperties.BUILD_INFO_PREFIX),
                 buildNumber);
 
-        String buildTimestamp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP, project);
+        String buildTimestamp = props.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP);
         if (StringUtils.isBlank(buildTimestamp)) {
             buildTimestamp = System.getProperty("timestamp");   // this must hold value
         }
@@ -277,17 +277,15 @@ public class ArtifactoryPluginUtils {
                         BuildInfoProperties.BUILD_INFO_PREFIX),
                 buildTimestamp);
 
-        String buildParentNumber =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER, project);
+        String buildParentNumber = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
         if (StringUtils.isNotBlank(buildParentNumber)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
-                    StringUtils
-                            .removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER,
-                                    BuildInfoProperties.BUILD_INFO_PREFIX),
+                    StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER,
+                            BuildInfoProperties.BUILD_INFO_PREFIX),
                     buildParentNumber);
         }
 
-        String buildParentName = getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME, project);
+        String buildParentName = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
         if (StringUtils.isNotBlank(buildParentName)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
                     StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME,
@@ -295,16 +293,15 @@ public class ArtifactoryPluginUtils {
                     buildParentName);
         }
 
-        String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, project);
+        String vcsRevision = props.getProperty(BuildInfoProperties.PROP_VCS_REVISION);
         if (StringUtils.isNotBlank(vcsRevision)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
-                    StringUtils
-                            .removeStart(BuildInfoProperties.PROP_VCS_REVISION, BuildInfoProperties.BUILD_INFO_PREFIX),
+                    StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
+                            BuildInfoProperties.BUILD_INFO_PREFIX),
                     vcsRevision);
         }
 
-        String buildRoot = ArtifactoryPluginUtils
-                .getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, project);
+        String buildRoot = props.getProperty(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY);
         if (StringUtils.isNotBlank(buildRoot)) {
             props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX +
                     ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, buildRoot);

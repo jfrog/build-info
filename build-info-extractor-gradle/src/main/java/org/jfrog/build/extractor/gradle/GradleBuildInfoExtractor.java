@@ -77,6 +77,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
     private Properties gradleProps;
     private Properties startParamProps;
     private Properties buildInfoProps;
+    private final Properties mergedProps;
 
     public Properties getGradleProps() {
         return gradleProps;
@@ -86,7 +87,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         return startParamProps;
     }
 
-    GradleBuildInfoExtractor(Project rootProject) {
+    GradleBuildInfoExtractor(Project rootProject, Properties mergedProps) {
+        this.mergedProps = mergedProps;
         StartParameter startParameter = rootProject.getGradle().getStartParameter();
         startParamProps = new Properties();
         startParamProps.putAll(startParameter.getProjectProperties());
@@ -97,7 +99,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             Properties properties = GUtil.loadProperties(projectPropsFile);
             gradleProps.putAll(properties);
         }
-        Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(startParamProps);
         buildInfoProps = new Properties();
         Properties buildInfoProperties =
                 BuildInfoExtractorUtils.filterDynamicProperties(mergedProps, BUILD_INFO_PROP_PREDICATE);
@@ -106,10 +107,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         buildInfoProps.putAll(buildInfoProperties);
     }
 
+
     public Build extract(BuildInfoRecorderTask buildInfoTask, BuildInfoExtractorSpec spec) {
         Project rootProject = buildInfoTask.getRootProject();
-        long startTime = Long.parseLong(ArtifactoryPluginUtils.getProperty("build.start", rootProject));
-        String buildName = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NAME, rootProject);
+        long startTime = Long.parseLong(mergedProps.getProperty("build.start"));
+        String buildName = mergedProps.getProperty(PROP_BUILD_NAME);
         if (StringUtils.isBlank(buildName)) {
             buildName = rootProject.getName();
         }
@@ -117,16 +119,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
         Date startedDate = new Date();
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
-        String buildNumber = ArtifactoryPluginUtils.getProperty(PROP_BUILD_NUMBER, rootProject);
+        String buildNumber = mergedProps.getProperty(PROP_BUILD_NUMBER);
         if (buildNumber == null) {
             buildNumber = System.getProperty("timestamp", Long.toString(System.currentTimeMillis()));
         }
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
-        String buildAgentNameProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_AGENT_NAME,
-                rootProject);
-        String buildAgentVersionProp = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_AGENT_VERSION,
-                rootProject);
+        String buildAgentNameProp = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_NAME);
+        String buildAgentVersionProp = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_VERSION);
         if (StringUtils.isNotBlank(buildAgentNameProp) && StringUtils.isNotBlank(buildAgentVersionProp)) {
             buildInfoBuilder.agent(new Agent(buildAgentNameProp, buildAgentVersionProp));
         }
@@ -145,67 +145,62 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }
             }
         }
-        String parentName = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NAME, rootProject);
-        String parentNumber = ArtifactoryPluginUtils.getProperty(PROP_PARENT_BUILD_NUMBER, rootProject);
+        String parentName = mergedProps.getProperty(PROP_PARENT_BUILD_NAME);
+        String parentNumber = mergedProps.getProperty(PROP_PARENT_BUILD_NUMBER);
         if (parentName != null && parentNumber != null) {
             buildInfoBuilder.parentName(parentName);
             buildInfoBuilder.parentNumber(parentNumber);
         }
-        String principal = ArtifactoryPluginUtils.getProperty(PROP_PRINCIPAL, rootProject);
+        String principal = mergedProps.getProperty(PROP_PRINCIPAL);
         if (StringUtils.isBlank(principal)) {
             principal = System.getProperty("user.name");
         }
         buildInfoBuilder.principal(principal);
-        String artifactoryPrincipal =
-                ArtifactoryPluginUtils.getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
+        String artifactoryPrincipal = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
         if (StringUtils.isBlank(artifactoryPrincipal)) {
             artifactoryPrincipal = System.getProperty("user.name");
         }
         buildInfoBuilder.artifactoryPrincipal(artifactoryPrincipal);
-        String buildUrl = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_URL, rootProject);
+        String buildUrl = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
         if (StringUtils.isNotBlank(buildUrl)) {
             buildInfoBuilder.url(buildUrl);
         }
-        String vcsRevision = ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_VCS_REVISION, rootProject);
+        String vcsRevision = mergedProps.getProperty(BuildInfoProperties.PROP_VCS_REVISION);
         if (StringUtils.isNotBlank(vcsRevision)) {
             buildInfoBuilder.vcsRevision(vcsRevision);
         }
         boolean runLicenseChecks = true;
-        String runChecks =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS, rootProject);
+        String runChecks = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS);
         if (StringUtils.isNotBlank(runChecks)) {
             runLicenseChecks = Boolean.parseBoolean(runChecks);
         }
         LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-        String notificationRecipients = ArtifactoryPluginUtils
-                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS, rootProject);
+        String notificationRecipients = mergedProps
+                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
-        String includePublishedArtifacts = ArtifactoryPluginUtils
-                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS, rootProject);
+        String includePublishedArtifacts = mergedProps
+                .getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
         if (StringUtils.isNotBlank(includePublishedArtifacts)) {
             licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
         }
-        String scopes =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES, rootProject);
+        String scopes = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
         if (StringUtils.isNotBlank(scopes)) {
             licenseControl.setScopesList(scopes);
         }
-        String autoDiscover =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER, rootProject);
+        String autoDiscover = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
         if (StringUtils.isNotBlank(autoDiscover)) {
             licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
         }
         buildInfoBuilder.licenseControl(licenseControl);
         BuildRetention buildRetention = new BuildRetention();
-        String buildRetentionDays =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS, rootProject);
+        String buildRetentionDays = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS);
         if (StringUtils.isNotBlank(buildRetentionDays)) {
             buildRetention.setCount(Integer.parseInt(buildRetentionDays));
         }
         String buildRetentionMinimumDays =
-                ArtifactoryPluginUtils.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE, rootProject);
+                mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
         if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
             int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
             if (minimumDays > -1) {
@@ -284,7 +279,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             File artifactFile = from.getFile();
                             if (artifactFile != null && artifactFile.exists()) {
                                 Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
-                                String pattern = ArtifactoryPluginUtils.getArtifactPattern(project);
+                                String pattern = ArtifactoryPluginUtils.getArtifactPattern(mergedProps);
                                 Map<String, String> extraTokens = Maps.newHashMap();
                                 if (StringUtils.isNotBlank(from.getClassifier())) {
                                     extraTokens.put("classifier", from.getClassifier());
@@ -297,7 +292,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                                     }
                                 }
                                 String finalPattern = IvyPatternHelper.substitute(pattern,
-                                        ArtifactoryPluginUtils.getGroupIdPatternByM2Compatible(project),
+                                        ArtifactoryPluginUtils.getGroupIdPatternByM2Compatible(project, mergedProps),
                                         projectName,
                                         project.getVersion().toString(), null, from.getType(),
                                         from.getExtension(), configuration.getName(),
@@ -314,7 +309,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                 }));
 
         File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        String publishPom = ArtifactoryPluginUtils.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN, project);
+        String publishPom = mergedProps.getProperty(ClientGradleProperties.PROP_PUBLISH_MAVEN);
         boolean isPublishPom = StringUtils.isNotBlank(publishPom) && Boolean.parseBoolean(publishPom);
         if (mavenPom.exists() && isPublishPom) {
             Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
@@ -332,7 +327,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
                             .build();
             artifacts.add(pom);
         }
-        String publishIvy = ArtifactoryPluginUtils.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY, project);
+        String publishIvy = mergedProps.getProperty(ClientIvyProperties.PROP_PUBLISH_IVY);
         boolean isPublishIvy = StringUtils.isNotBlank(publishIvy) && Boolean.parseBoolean(publishIvy);
         File ivy = new File(project.getBuildDir(), "ivy.xml");
         if (ivy.exists() && isPublishIvy) {

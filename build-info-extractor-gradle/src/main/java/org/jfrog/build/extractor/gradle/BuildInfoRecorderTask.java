@@ -43,10 +43,11 @@ import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
-import static org.jfrog.build.ArtifactoryPluginUtils.getProperty;
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_EXPORT_FILE_PATH;
 import static org.jfrog.build.client.ClientProperties.*;
 
@@ -128,39 +129,48 @@ public class BuildInfoRecorderTask extends ConventionTask {
         log.debug("Starting extraction for project {}", getProject());
         Project rootProject = getRootProject();
         if (getProject().equals(rootProject)) {
-            GradleBuildInfoExtractor infoExtractor = new GradleBuildInfoExtractor(rootProject);
-            closeAndDeploy(infoExtractor);
+            Properties envProps = new Properties();
+            Map<String, String> startParamProps = rootProject.getGradle().getStartParameter().getProjectProperties();
+            envProps.putAll(startParamProps);
+            envProps.putAll(System.getenv());
+            Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
+            GradleBuildInfoExtractor infoExtractor = new GradleBuildInfoExtractor(rootProject, mergedProps);
+            closeAndDeploy(infoExtractor, mergedProps);
         }
     }
 
-    private void uploadDescriptorsAndArtifacts(Project project, Set<DeployDetails> allDeployableDetails) throws IOException {
-        Set<DeployDetails> deployDetailsFromProject = ArtifactoryPluginUtils.getDeployArtifactsProject(project, artifactName);
+    private void uploadDescriptorsAndArtifacts(Project project, Set<DeployDetails> allDeployableDetails,
+            Properties props) throws IOException {
+        Set<DeployDetails> deployDetailsFromProject =
+                ArtifactoryPluginUtils.getDeployArtifactsProject(project, artifactName, props);
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (ivyDescriptor != null && ivyDescriptor.exists()) {
             Set<DeployDetails> details =
-                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor, artifactName);
+                    ArtifactoryPluginUtils.getIvyDescriptorDeployDetails(project, ivyDescriptor, artifactName, props);
             allDeployableDetails.addAll(details);
         }
 
         if (mavenDescriptor != null && mavenDescriptor.exists()) {
-            allDeployableDetails.add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor, artifactName));
+            allDeployableDetails
+                    .add(ArtifactoryPluginUtils.getMavenDeployDetails(project, mavenDescriptor, artifactName, props));
         }
     }
 
     /**
      * This method will be activated only at the end of the build, when we reached the root project.
      *
-     * @param gbie The Build info extractor object will will assemble the {@link Build} object
+     * @param gbie  The Build info extractor object will will assemble the {@link org.jfrog.build.api.Build} object
+     * @param props
      * @throws java.io.IOException In case the deployment fails.
      */
-    private void closeAndDeploy(GradleBuildInfoExtractor gbie) throws IOException {
+    private void closeAndDeploy(GradleBuildInfoExtractor gbie, Properties props) throws IOException {
         Project rootProject = getRootProject();
-        String uploadArtifactsProperty = getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT, rootProject);
-        String fileExportPath = getProperty(PROP_EXPORT_FILE_PATH, rootProject);
-        String contextUrl = getProperty(ClientProperties.PROP_CONTEXT_URL, rootProject);
+        String uploadArtifactsProperty = props.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT);
+        String fileExportPath = props.getProperty(PROP_EXPORT_FILE_PATH);
+        String contextUrl = props.getProperty(ClientProperties.PROP_CONTEXT_URL);
         log.debug("Context URL for deployment '{}", contextUrl);
-        String username = getProperty(ClientProperties.PROP_PUBLISH_USERNAME, rootProject);
-        String password = getProperty(ClientProperties.PROP_PUBLISH_PASSWORD, rootProject);
+        String username = props.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
+        String password = props.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD);
         if (StringUtils.isBlank(username)) {
             username = "";
         }
@@ -182,19 +192,17 @@ public class BuildInfoRecorderTask extends ConventionTask {
                     BuildInfoRecorderTask upTasksBuildInfo =
                             (BuildInfoRecorderTask) uploadingProject.getTasks().findByName(BUILD_INFO_TASK_NAME);
                     if (upTasksBuildInfo != null) {
-                        upTasksBuildInfo.uploadDescriptorsAndArtifacts(uploadingProject, allDeployableDetails);
+                        upTasksBuildInfo.uploadDescriptorsAndArtifacts(uploadingProject, allDeployableDetails, props);
                     }
                 }
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                        ArtifactoryPluginUtils
-                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS, rootProject),
-                        ArtifactoryPluginUtils
-                                .getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS, rootProject));
-                configureProxy(rootProject, client);
+                        props.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS),
+                        props.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS));
+                configureProxy(rootProject, client, props);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
 
-            String publishBuildInfo = getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO, rootProject);
+            String publishBuildInfo = props.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO);
             boolean isPublishBuildInfo = Boolean.parseBoolean(publishBuildInfo);
             if (isPublishBuildInfo) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
@@ -228,19 +236,19 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
 
-    private void configureProxy(Project project, ArtifactoryBuildInfoClient client) {
-        String proxyHost = ArtifactoryPluginUtils.getProperty(PROP_PROXY_HOST, project);
+    private void configureProxy(Project project, ArtifactoryBuildInfoClient client, Properties props) {
+        String proxyHost = props.getProperty(PROP_PROXY_HOST);
         if (StringUtils.isNotBlank(proxyHost)) {
             log.debug("Found proxy host '{}'", proxyHost);
-            String proxyPort = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PORT, project);
+            String proxyPort = props.getProperty(PROP_PROXY_PORT);
             if (!StringUtils.isNumeric(proxyPort)) {
                 log.debug("Proxy port is not of numeric value '{}'", proxyPort);
                 return;
             }
-            String proxyUserName = ArtifactoryPluginUtils.getProperty(PROP_PROXY_USERNAME, project);
+            String proxyUserName = props.getProperty(PROP_PROXY_USERNAME);
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
-                String proxyPassword = ArtifactoryPluginUtils.getProperty(PROP_PROXY_PASSWORD, project);
+                String proxyPassword = props.getProperty(PROP_PROXY_PASSWORD);
                 log.debug("Using proxy password '{}'", proxyPassword);
                 client.setProxyConfiguration(proxyHost, Integer.parseInt(proxyPort), proxyUserName, proxyPassword);
             } else {
@@ -252,7 +260,7 @@ public class BuildInfoRecorderTask extends ConventionTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<DeployDetails> details,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails detail : details) {
             String artifactPath = detail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {

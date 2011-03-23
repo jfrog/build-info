@@ -19,6 +19,7 @@ package org.jfrog.build.extractor.maven;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
@@ -44,8 +45,16 @@ import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.xml.sax.InputSource;
 
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +83,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<ModuleBuilder>();
     private ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<Set<Artifact>>();
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
+    private ThreadLocal<Map<MavenProject, Boolean>> projectTestFailures = new ThreadLocal<Map<MavenProject, Boolean>>();
+
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
     private Properties allProps;
     private Map<String, String> matrixParams;
@@ -95,6 +106,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionStarted(ExecutionEvent event) {
+        projectTestFailures.set(Maps.<MavenProject, Boolean>newHashMap());
         logger.info("Initializing Artifactory Build-Info Recording");
         buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
         deployableArtifactBuilderMap = Maps.newHashMap();
@@ -219,11 +231,56 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
+        // future devel.
+        /* if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
+            List<File> resultsFile = getSurefireResultsFile(project);
+            boolean failed = isTestsFailed(resultsFile);
+            projectTestFailures.get().put(project, failed);
+        }*/
         extractModuleDependencies(project);
 
         if (wrappedListener != null) {
             wrappedListener.mojoSucceeded(event);
         }
+    }
+
+    private List<File> getSurefireResultsFile(MavenProject project) {
+        List<File> surefireReports = Lists.newArrayList();
+        File surefireDirectory = new File(new File(project.getFile().getParentFile(), "target"), "surefire-reports");
+        String[] xmls = surefireDirectory.list(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith("xml");
+            }
+        });
+        for (String xml : xmls) {
+            surefireReports.add(new File(surefireDirectory, xml));
+        }
+        return surefireReports;
+    }
+
+    private boolean isTestsFailed(List<File> surefireReports) {
+        XPathFactory factory = XPathFactory.newInstance();
+        XPath path = factory.newXPath();
+        for (File report : surefireReports) {
+            FileInputStream stream = null;
+            try {
+                stream = new FileInputStream(report);
+                Object evaluate = path.evaluate("/testsuite/@failures", new InputSource(stream),
+                        XPathConstants.STRING);
+                if (evaluate != null && StringUtils.isNumeric(evaluate.toString())) {
+                    int testsFailed = Integer.parseInt(evaluate.toString());
+                    return testsFailed != 0;
+                }
+            } catch (FileNotFoundException e) {
+                logger.error("File '" + report.getAbsolutePath() + "' does not exist.");
+            } catch (XPathExpressionException e) {
+                logger.error("Expression /testsuite/@failures is invalid.");
+            } finally {
+                Closeables.closeQuietly(stream);
+            }
+        }
+        return false;
     }
 
     @Override
@@ -380,6 +437,16 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
+    private boolean wereThereTestFailures() {
+        Map<MavenProject, Boolean> testFailures = projectTestFailures.get();
+        for (Boolean testFailed : testFailures.values()) {
+            if (testFailed.equals(Boolean.TRUE)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private String getArtifactName(String artifactId, String version, String classifier, String fileExtension) {
         StringBuilder nameBuilder = new StringBuilder(artifactId).append("-").append(version);
         if (StringUtils.isNotBlank(classifier)) {
@@ -410,8 +477,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
             return snapshotsRepository;
         }
-        String releasesRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
-        return releasesRepository;
+        return allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
@@ -482,7 +548,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private boolean isPublishArtifacts() {
-        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
+        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT)); /*&&
+                Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_EVEN_UNSTABLE)) &&
+                !wereThereTestFailures();*/
     }
 
     private String getArtifactIdWithoutType(String groupId, String artifactId, String version) {
