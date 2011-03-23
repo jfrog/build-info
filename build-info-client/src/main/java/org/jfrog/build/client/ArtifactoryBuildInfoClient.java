@@ -319,10 +319,17 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public HttpResponse stageBuild(StagingSettings settings) throws IOException {
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL);
-        settings.buildUrl(urlBuilder);
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
+                append(settings.getBuildName()).append("/").append(settings.getBuildNumber());
+
+        String promotionJson = toJsonString(settings.getPromotion());
 
         HttpPost httpPost = new HttpPost(urlBuilder.toString());
+
+        StringEntity stringEntity = new StringEntity(promotionJson);
+        stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
+        httpPost.setEntity(stringEntity);
+
         log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
         return httpClient.getHttpClient().execute(httpPost);
     }
@@ -356,12 +363,12 @@ public class ArtifactoryBuildInfoClient {
         return toJsonString(buildInfo);
     }
 
-    String toJsonString(Build buildInfo) throws IOException {
+    String toJsonString(Object object) throws IOException {
         JsonFactory jsonFactory = httpClient.createJsonFactory();
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
         jsonGenerator.useDefaultPrettyPrinter();
-        jsonGenerator.writeObject(buildInfo);
+        jsonGenerator.writeObject(object);
         String result = writer.getBuffer().toString();
         return result;
     }

@@ -17,8 +17,9 @@
 package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.builder.StatusBuilder;
-import org.jfrog.build.api.release.Status;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.release.Promotion;
+import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -76,7 +77,7 @@ public class BuildTest {
         String parentNumber = "5";
         String vcsRevision = "2421";
         List<Module> modules = Lists.newArrayList();
-        List<Status> statuses = Lists.newArrayList();
+        List<PromotionStatus> statuses = Lists.newArrayList();
         Properties properties = new Properties();
 
         Build build = new Build();
@@ -138,17 +139,18 @@ public class BuildTest {
         Build build = new Build();
         assertNull(build.getStatuses(), "Default status list should be null.");
 
-        Status status = new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
-        build.addStatus(status);
+        PromotionStatus promotionStatus = new PromotionStatusBuilder(Promotion.RELEASED).repository("bla").
+                timestamp("bla").user("bla").build();
+        build.addStatus(promotionStatus);
 
         assertFalse(build.getStatuses().isEmpty(), "Status object should have been added.");
-        assertEquals(build.getStatuses().get(0), status, "Unexpected status object.");
+        assertEquals(build.getStatuses().get(0), promotionStatus, "Unexpected status object.");
 
-        Status anotherStatus =
-                new StatusBuilder(Status.RELEASED).repository("bla").timestamp("bla").user("bla").build();
-        build.addStatus(anotherStatus);
+        PromotionStatus anotherPromotionStatus = new PromotionStatusBuilder(Promotion.RELEASED).repository("bla").
+                timestamp("bla").user("bla").build();
+        build.addStatus(anotherPromotionStatus);
 
         assertEquals(build.getStatuses().size(), 2, "Second status object should have been added.");
-        assertEquals(build.getStatuses().get(1), anotherStatus, "Unexpected status object.");
+        assertEquals(build.getStatuses().get(1), anotherPromotionStatus, "Unexpected status object.");
     }
 }

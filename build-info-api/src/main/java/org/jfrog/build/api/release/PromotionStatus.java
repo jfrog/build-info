@@ -10,11 +10,7 @@ import java.util.Date;
 /**
  * @author Noam Y. Tenne
  */
-public class Status implements Serializable {
-
-    public static final String STAGED = "Staged";
-    public static final String RELEASED = "Released";
-    public static final String ROLLED_BACK = "Rolled-back";
+public class PromotionStatus implements Serializable {
 
     private String status;
     private String comment;
@@ -23,10 +19,11 @@ public class Status implements Serializable {
     private String user;
     private String ciUser;
 
-    public Status() {
+    public PromotionStatus() {
     }
 
-    public Status(String status, String comment, String repository, String timestamp, String user, String ciUser) {
+    public PromotionStatus(String status, String comment, String repository, String timestamp, String user,
+            String ciUser) {
         this.status = status;
         this.comment = comment;
         this.repository = repository;

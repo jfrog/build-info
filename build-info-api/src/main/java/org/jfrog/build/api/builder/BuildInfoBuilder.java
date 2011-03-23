@@ -25,7 +25,7 @@ import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.release.Status;
+import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -54,7 +54,7 @@ public class BuildInfoBuilder {
     private String parentNumber;
     private String vcsRevision;
     private List<Module> modules;
-    private List<Status> statuses;
+    private List<PromotionStatus> statuses;
     private Properties properties;
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
@@ -282,16 +282,16 @@ public class BuildInfoBuilder {
         return this;
     }
 
-    public BuildInfoBuilder statuses(List<Status> statuses) {
+    public BuildInfoBuilder statuses(List<PromotionStatus> statuses) {
         this.statuses = statuses;
         return this;
     }
 
-    public BuildInfoBuilder addStatus(Status status) {
+    public BuildInfoBuilder addStatus(PromotionStatus promotionStatus) {
         if (statuses == null) {
             statuses = Lists.newArrayList();
         }
-        statuses.add(status);
+        statuses.add(promotionStatus);
         return this;
     }
 
