@@ -83,10 +83,9 @@ public class PromotionTest {
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullTimestampDateGetter() {
         Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null);
-        promotion.getTimestampDate();
+        assertNull(promotion.getTimestampDate(), "No timestamp was set. Should have received null");
     }
 
     public void testTimestampDateGetters() {

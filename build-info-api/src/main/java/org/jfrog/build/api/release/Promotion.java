@@ -143,7 +143,7 @@ public class Promotion implements Serializable {
 
     private Date getTimestampAsDate(String timestamp) {
         if (timestamp == null) {
-            throw new IllegalArgumentException("Cannot parse a null timestamp as a date");
+            return null;
         }
         SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
         try {
