@@ -1,11 +1,12 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -33,7 +34,7 @@ public class PromotionBuilderTest {
 
     public void testNormalValues() {
         Set<String> scopes = Sets.newHashSet();
-        Multimap<String, String> properties = HashMultimap.create();
+        Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
                 timestamp("timestamp").dryRun(true).targetRepo("targetRepo").copy(false).artifacts(true).
@@ -55,7 +56,7 @@ public class PromotionBuilderTest {
     public void testAddScopesAndPropertiesToEmptyDefaults() {
         Promotion build = new PromotionBuilder().addProperty("momo", "popo").addScope("koko").build();
 
-        Multimap<String, String> properties = build.getProperties();
+        Map<String, Collection<String>> properties = build.getProperties();
         Set<String> scopes = build.getScopes();
 
         assertNotNull(properties, "Properties multimap should have been created.");
@@ -70,13 +71,13 @@ public class PromotionBuilderTest {
 
     public void testAddScopesAndPropertiesToExistingCollections() {
         Set<String> initialScopes = Sets.newHashSet("koko");
-        Multimap<String, String> initialProperties = HashMultimap.create();
-        initialProperties.put("momo", "popo");
+        Map<String, Collection<String>> initialProperties = Maps.newHashMap();
+        initialProperties.put("momo", Sets.<String>newHashSet("popo"));
 
         Promotion build = new PromotionBuilder().properties(initialProperties).addProperty("jojo", "lolo").
                 scopes(initialScopes).addScope("bobo").build();
 
-        Multimap<String, String> properties = build.getProperties();
+        Map<String, Collection<String>> properties = build.getProperties();
         Set<String> scopes = build.getScopes();
 
         assertNotNull(properties, "Properties multimap should have been created.");

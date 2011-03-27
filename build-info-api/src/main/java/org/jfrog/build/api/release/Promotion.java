@@ -1,12 +1,13 @@
 package org.jfrog.build.api.release;
 
-import com.google.common.collect.Multimap;
 import org.jfrog.build.api.Build;
 
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -28,14 +29,14 @@ public class Promotion implements Serializable {
     private boolean artifacts = true;
     private boolean dependencies = false;
     private Set<String> scopes;
-    private Multimap<String, String> properties;
+    private Map<String, Collection<String>> properties;
 
     public Promotion() {
     }
 
     public Promotion(String status, String comment, String ciUser, String timestamp, boolean dryRun, String targetRepo,
             boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
-            Multimap<String, String> properties) {
+            Map<String, Collection<String>> properties) {
         this.status = status;
         this.comment = comment;
         this.ciUser = ciUser;
@@ -133,11 +134,11 @@ public class Promotion implements Serializable {
         this.scopes = scopes;
     }
 
-    public Multimap<String, String> getProperties() {
+    public Map<String, Collection<String>> getProperties() {
         return properties;
     }
 
-    public void setProperties(Multimap<String, String> properties) {
+    public void setProperties(Map<String, Collection<String>> properties) {
         this.properties = properties;
     }
 
