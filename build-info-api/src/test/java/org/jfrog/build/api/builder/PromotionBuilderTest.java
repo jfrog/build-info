@@ -30,6 +30,7 @@ public class PromotionBuilderTest {
         assertFalse(promotion.isDependencies(), "Unexpected default dependencies state.");
         assertNull(promotion.getScopes(), "Unexpected default scopes.");
         assertNull(promotion.getProperties(), "Unexpected default properties.");
+        assertTrue(promotion.isFailFast(), "Unexpected default fail-fast state.");
     }
 
     public void testNormalValues() {
@@ -38,7 +39,7 @@ public class PromotionBuilderTest {
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
                 timestamp("timestamp").dryRun(true).targetRepo("targetRepo").copy(false).artifacts(true).
-                dependencies(false).scopes(scopes).properties(properties).build();
+                dependencies(false).scopes(scopes).properties(properties).failFast(false).build();
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -51,6 +52,7 @@ public class PromotionBuilderTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testAddScopesAndPropertiesToEmptyDefaults() {

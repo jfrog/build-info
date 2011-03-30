@@ -27,6 +27,7 @@ public class PromotionBuilder {
     private boolean dependencies = false;
     private Set<String> scopes;
     private Map<String, Collection<String>> properties;
+    private boolean failFast = true;
 
     public PromotionBuilder() {
     }
@@ -119,8 +120,13 @@ public class PromotionBuilder {
         return this;
     }
 
+    public PromotionBuilder failFast(boolean failFast) {
+        this.failFast = failFast;
+        return this;
+    }
+
     public Promotion build() {
         return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, copy, artifacts, dependencies,
-                scopes, properties);
+                scopes, properties, failFast);
     }
 }

@@ -39,7 +39,7 @@ public class PromotionTest {
         Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
-                true, "targetRepo", false, true, false, scopes, properties);
+                true, "targetRepo", false, true, false, scopes, properties, false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -52,6 +52,7 @@ public class PromotionTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testSetters() {
@@ -70,6 +71,7 @@ public class PromotionTest {
         promotion.setDependencies(false);
         promotion.setScopes(scopes);
         promotion.setProperties(properties);
+        promotion.setFailFast(false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -82,10 +84,11 @@ public class PromotionTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testNullTimestampDateGetter() {
-        Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null);
+        Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null, false);
         assertNull(promotion.getTimestampDate(), "No timestamp was set. Should have received null");
     }
 
@@ -95,7 +98,7 @@ public class PromotionTest {
         Date timestampDate = new Date();
 
         Promotion promotion = new Promotion(null, null, null, format.format(timestampDate), true, null, true, true,
-                true, null, null);
+                true, null, null, false);
         assertEquals(promotion.getTimestampDate(), timestampDate, "Unexpected timestamp date.");
     }
 }

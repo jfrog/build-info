@@ -30,13 +30,14 @@ public class Promotion implements Serializable {
     private boolean dependencies = false;
     private Set<String> scopes;
     private Map<String, Collection<String>> properties;
+    private boolean failFast = true;
 
     public Promotion() {
     }
 
     public Promotion(String status, String comment, String ciUser, String timestamp, boolean dryRun, String targetRepo,
             boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
-            Map<String, Collection<String>> properties) {
+            Map<String, Collection<String>> properties, boolean failFast) {
         this.status = status;
         this.comment = comment;
         this.ciUser = ciUser;
@@ -48,6 +49,7 @@ public class Promotion implements Serializable {
         this.dependencies = dependencies;
         this.scopes = scopes;
         this.properties = properties;
+        this.failFast = failFast;
     }
 
     public String getStatus() {
@@ -140,6 +142,14 @@ public class Promotion implements Serializable {
 
     public void setProperties(Map<String, Collection<String>> properties) {
         this.properties = properties;
+    }
+
+    public boolean isFailFast() {
+        return failFast;
+    }
+
+    public void setFailFast(boolean failFast) {
+        this.failFast = failFast;
     }
 
     private Date getTimestampAsDate(String timestamp) {
