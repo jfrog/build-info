@@ -47,6 +47,8 @@ public interface BuildInfoProperties {
     String PROP_PARENT_BUILD_NUMBER = BUILD_INFO_PREFIX + "build.parentNumber";
     String PROP_VCS_REVISION = BUILD_INFO_PREFIX + "vcs.revision";
     String PROP_PRINCIPAL = BUILD_INFO_PREFIX + "principal";
+    String PROP_RELEASE_ENABLED = BUILD_INFO_PROP_PREFIX + "promotion.enabled";
+    String PROP_RELEASE_COMMENT = BUILD_INFO_PROP_PREFIX + "promotion.comment";
     /**
      * A timestamp to add to deployed artifacts as matrix param. Usually same as build start time.
      */
@@ -63,7 +65,8 @@ public interface BuildInfoProperties {
 
     String PROP_LICENSE_CONTROL_RUN_CHECKS = BUILD_INFO_PREFIX + "licenseControl.runChecks";
     String PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS = BUILD_INFO_PREFIX + "licenseControl.violationRecipients";
-    String PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS = BUILD_INFO_PREFIX + "licenseControl.includePublishedArtifacts";
+    String PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS =
+            BUILD_INFO_PREFIX + "licenseControl.includePublishedArtifacts";
     String PROP_LICENSE_CONTROL_SCOPES = BUILD_INFO_PREFIX + "licenseControl.scopes";
     String PROP_LICENSE_CONTROL_AUTO_DISCOVER = BUILD_INFO_PREFIX + "licenseControl.autoDiscover";
 

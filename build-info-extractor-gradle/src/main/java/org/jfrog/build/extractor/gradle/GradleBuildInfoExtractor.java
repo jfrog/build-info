@@ -39,6 +39,8 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ClientGradleProperties;
 import org.jfrog.build.client.ClientIvyProperties;
@@ -210,6 +212,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<BuildInfoRec
             }
         }
         buildInfoBuilder.buildRetention(buildRetention);
+        String buildInfoEnabled = mergedProps.getProperty(BuildInfoProperties.PROP_RELEASE_ENABLED);
+        if (StringUtils.isNotBlank(buildInfoEnabled) && Boolean.parseBoolean(buildInfoEnabled)) {
+            String stagingRepository = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
+            String comment = mergedProps.getProperty(BuildInfoProperties.PROP_RELEASE_COMMENT, "");
+            buildInfoBuilder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(startedDate)
+                    .comment(comment).repository(stagingRepository)
+                    .ciUser(principal).user(artifactoryPrincipal).build());
+        }
         Properties properties = gatherSysPropInfo();
         properties.putAll(buildInfoProps);
         properties.putAll(BuildInfoExtractorUtils.getEnvProperties(startParamProps));
