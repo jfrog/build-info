@@ -1,11 +1,12 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -29,15 +30,16 @@ public class PromotionBuilderTest {
         assertFalse(promotion.isDependencies(), "Unexpected default dependencies state.");
         assertNull(promotion.getScopes(), "Unexpected default scopes.");
         assertNull(promotion.getProperties(), "Unexpected default properties.");
+        assertTrue(promotion.isFailFast(), "Unexpected default fail-fast state.");
     }
 
     public void testNormalValues() {
         Set<String> scopes = Sets.newHashSet();
-        Multimap<String, String> properties = HashMultimap.create();
+        Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
                 timestamp("timestamp").dryRun(true).targetRepo("targetRepo").copy(false).artifacts(true).
-                dependencies(false).scopes(scopes).properties(properties).build();
+                dependencies(false).scopes(scopes).properties(properties).failFast(false).build();
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -50,12 +52,13 @@ public class PromotionBuilderTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testAddScopesAndPropertiesToEmptyDefaults() {
         Promotion build = new PromotionBuilder().addProperty("momo", "popo").addScope("koko").build();
 
-        Multimap<String, String> properties = build.getProperties();
+        Map<String, Collection<String>> properties = build.getProperties();
         Set<String> scopes = build.getScopes();
 
         assertNotNull(properties, "Properties multimap should have been created.");
@@ -70,13 +73,13 @@ public class PromotionBuilderTest {
 
     public void testAddScopesAndPropertiesToExistingCollections() {
         Set<String> initialScopes = Sets.newHashSet("koko");
-        Multimap<String, String> initialProperties = HashMultimap.create();
-        initialProperties.put("momo", "popo");
+        Map<String, Collection<String>> initialProperties = Maps.newHashMap();
+        initialProperties.put("momo", Sets.<String>newHashSet("popo"));
 
         Promotion build = new PromotionBuilder().properties(initialProperties).addProperty("jojo", "lolo").
                 scopes(initialScopes).addScope("bobo").build();
 
-        Multimap<String, String> properties = build.getProperties();
+        Map<String, Collection<String>> properties = build.getProperties();
         Set<String> scopes = build.getScopes();
 
         assertNotNull(properties, "Properties multimap should have been created.");

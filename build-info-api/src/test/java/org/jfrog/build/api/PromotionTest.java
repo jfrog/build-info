@@ -1,13 +1,14 @@
 package org.jfrog.build.api;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 import static org.testng.Assert.*;
@@ -35,10 +36,10 @@ public class PromotionTest {
 
     public void testConstructor() {
         Set<String> scopes = Sets.newHashSet();
-        Multimap<String, String> properties = HashMultimap.create();
+        Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
-                true, "targetRepo", false, true, false, scopes, properties);
+                true, "targetRepo", false, true, false, scopes, properties, false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -51,11 +52,12 @@ public class PromotionTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testSetters() {
         Set<String> scopes = Sets.newHashSet();
-        Multimap<String, String> properties = HashMultimap.create();
+        Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new Promotion();
         promotion.setStatus(Promotion.ROLLED_BACK);
@@ -69,6 +71,7 @@ public class PromotionTest {
         promotion.setDependencies(false);
         promotion.setScopes(scopes);
         promotion.setProperties(properties);
+        promotion.setFailFast(false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -81,10 +84,11 @@ public class PromotionTest {
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
+        assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
     }
 
     public void testNullTimestampDateGetter() {
-        Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null);
+        Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null, false);
         assertNull(promotion.getTimestampDate(), "No timestamp was set. Should have received null");
     }
 
@@ -94,7 +98,7 @@ public class PromotionTest {
         Date timestampDate = new Date();
 
         Promotion promotion = new Promotion(null, null, null, format.format(timestampDate), true, null, true, true,
-                true, null, null);
+                true, null, null, false);
         assertEquals(promotion.getTimestampDate(), timestampDate, "Unexpected timestamp date.");
     }
 }

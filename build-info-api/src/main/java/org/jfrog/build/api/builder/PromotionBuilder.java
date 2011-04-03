@@ -1,13 +1,14 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.Promotion;
 
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -25,7 +26,8 @@ public class PromotionBuilder {
     private boolean artifacts = true;
     private boolean dependencies = false;
     private Set<String> scopes;
-    private Multimap<String, String> properties;
+    private Map<String, Collection<String>> properties;
+    private boolean failFast = true;
 
     public PromotionBuilder() {
     }
@@ -96,21 +98,35 @@ public class PromotionBuilder {
         return this;
     }
 
-    public PromotionBuilder properties(Multimap<String, String> properties) {
+    public PromotionBuilder properties(Map<String, Collection<String>> properties) {
         this.properties = properties;
         return this;
     }
 
     public PromotionBuilder addProperty(String key, String value) {
         if (properties == null) {
-            properties = HashMultimap.create();
+            properties = Maps.newHashMap();
         }
-        properties.put(key, value);
+        Collection<String> collection;
+
+        if (!properties.containsKey(key)) {
+            collection = Sets.newHashSet();
+        } else {
+            collection = properties.get(key);
+        }
+        collection.add(value);
+
+        properties.put(key, collection);
+        return this;
+    }
+
+    public PromotionBuilder failFast(boolean failFast) {
+        this.failFast = failFast;
         return this;
     }
 
     public Promotion build() {
         return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, copy, artifacts, dependencies,
-                scopes, properties);
+                scopes, properties, failFast);
     }
 }
