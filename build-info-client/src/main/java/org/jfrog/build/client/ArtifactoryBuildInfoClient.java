@@ -27,6 +27,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.protocol.HTTP;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
@@ -38,6 +39,7 @@ import org.jfrog.build.api.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -63,6 +65,10 @@ public class ArtifactoryBuildInfoClient {
      */
     private ArtifactoryHttpClient httpClient;
     private String artifactoryUrl;
+    /**
+     * Version of Artifactory we work with.
+     */
+    private Version artifactoryVersion;
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -130,10 +136,13 @@ public class ArtifactoryBuildInfoClient {
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
         StatusLine statusLine = response.getStatusLine();
+        HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (entity != null) {
+                entity.consumeContent();
+            }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
-            HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
                 InputStream content = entity.getContent();
@@ -169,10 +178,13 @@ public class ArtifactoryBuildInfoClient {
         HttpGet httpget = new HttpGet(localReposUrl);
         HttpResponse response = client.execute(httpget);
         StatusLine statusLine = response.getStatusLine();
+        HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (entity != null) {
+                entity.consumeContent();
+            }
             throwHttpIOException("Failed to obtain list of repositories:", statusLine);
         } else {
-            HttpEntity entity = response.getEntity();
             if (entity != null) {
                 repositories = new ArrayList<String>();
                 InputStream content = entity.getContent();
@@ -273,7 +285,10 @@ public class ArtifactoryBuildInfoClient {
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
         uploadFile(details, deploymentPath);
-        uploadChecksums(details, deploymentPath);
+        // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
+        if (!getArtifactoryVersion().isAtLeast(new Version("2.3.2"))) {
+            uploadChecksums(details, deploymentPath);
+        }
     }
 
     /**
@@ -355,17 +370,15 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-
     private void uploadFile(DeployDetails details, String uploadUrl) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
-        if (details.properties != null) {
-            for (Map.Entry<String, String> property : details.properties.entrySet()) {
-                deploymentPathBuilder.append(";").append(httpClient.urlEncode(property.getKey()))
-                        .append("=").append(httpClient.urlEncode(property.getValue()));
-            }
-        }
+        deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.sha1);
+        httpPut.addHeader("X-Checksum-Md5", details.md5);
+        // add the 100 continue directive
+        httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         int statusCode = statusLine.getStatusCode();
@@ -379,23 +392,11 @@ public class ArtifactoryBuildInfoClient {
     public void uploadChecksums(DeployDetails details, String uploadUrl) throws IOException {
         Map<String, String> checksums = getChecksumMap(details);
         String fileAbsolutePath = details.file.getAbsolutePath();
-        String md5 = checksums.get("MD5");
-        if (StringUtils.isNotBlank(md5)) {
-            log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
-            HttpPut putMd5 = new HttpPut(uploadUrl + ".md5");
-            StringEntity md5StringEntity = new StringEntity(md5);
-            StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
-            int md5StatusCode = md5StatusLine.getStatusCode();
-
-            //Accept both 200, and 201 for backwards-compatibility reasons
-            if ((md5StatusCode != HttpStatus.SC_CREATED) && (md5StatusCode != HttpStatus.SC_OK)) {
-                throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
-            }
-        }
         String sha1 = checksums.get("SHA1");
         if (StringUtils.isNotBlank(sha1)) {
             log.debug("Uploading SHA1 for file " + fileAbsolutePath + " : " + sha1);
-            HttpPut putSha1 = new HttpPut(uploadUrl + ".sha1");
+            String sha1Url = uploadUrl + ".sha1" + buildMatrixParamsString(details.properties);
+            HttpPut putSha1 = new HttpPut(sha1Url);
             StringEntity sha1StringEntity = new StringEntity(sha1);
             StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
             int sha1StatusCode = sha1StatusLine.getStatusCode();
@@ -405,6 +406,31 @@ public class ArtifactoryBuildInfoClient {
                 throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
             }
         }
+        String md5 = checksums.get("MD5");
+        if (StringUtils.isNotBlank(md5)) {
+            log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
+            String md5Url = uploadUrl + ".md5" + buildMatrixParamsString(details.properties);
+            HttpPut putMd5 = new HttpPut(md5Url);
+            StringEntity md5StringEntity = new StringEntity(md5);
+            StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
+            int md5StatusCode = md5StatusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((md5StatusCode != HttpStatus.SC_CREATED) && (md5StatusCode != HttpStatus.SC_OK)) {
+                throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
+            }
+        }
+    }
+
+    private String buildMatrixParamsString(Map<String, String> matrixParams) throws UnsupportedEncodingException {
+        StringBuilder matrix = new StringBuilder();
+        if (matrixParams != null && !matrixParams.isEmpty()) {
+            for (Map.Entry<String, String> property : matrixParams.entrySet()) {
+                matrix.append(";").append(httpClient.urlEncode(property.getKey()))
+                        .append("=").append(httpClient.urlEncode(property.getValue()));
+            }
+        }
+        return matrix.toString();
     }
 
     private Map<String, String> getChecksumMap(DeployDetails details) throws IOException {
@@ -440,5 +466,16 @@ public class ArtifactoryBuildInfoClient {
                 append(statusLine.getStatusCode()).append(". HTTP response message: ").
                 append(statusLine.getReasonPhrase()).toString();
         throw new IOException(errorMessage);
+    }
+
+    private Version getArtifactoryVersion() {
+        if (artifactoryVersion == null) {
+            try {
+                artifactoryVersion = httpClient.getVersion();
+            } catch (IOException e) {
+                artifactoryVersion = Version.NOT_FOUND;
+            }
+        }
+        return artifactoryVersion;
     }
 }

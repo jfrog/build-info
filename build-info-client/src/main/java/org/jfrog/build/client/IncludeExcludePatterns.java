@@ -1,8 +1,7 @@
 package org.jfrog.build.client;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-
-import java.util.Arrays;
 
 /**
  * Holds include and exclude patterns to be used by the build server and extractor deployers
@@ -56,10 +55,10 @@ public class IncludeExcludePatterns {
     }
 
     public String[] getIncludePatterns() {
-        return Arrays.copyOf(includePatterns, includePatterns.length);
+        return ((String[]) ArrayUtils.clone(includePatterns));
     }
 
     public String[] getExcludePatterns() {
-        return Arrays.copyOf(excludePatterns, excludePatterns.length);
+        return ((String[]) ArrayUtils.clone(excludePatterns));
     }
 }
