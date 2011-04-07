@@ -91,6 +91,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ArtifactoryClientConfiguration clientConf;
     private Map<String, String> matrixParams;
 
+    // future development
+    private static final boolean ACTIVATE_UNSTABLE = false;
+
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
     }
@@ -247,12 +250,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        // future devel.
-        /* if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
-            List<File> resultsFile = getSurefireResultsFile(project);
-            boolean failed = isTestsFailed(resultsFile);
-            projectTestFailures.get().put(project, failed);
-        }*/
+        if (ACTIVATE_UNSTABLE) {
+            if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
+               List<File> resultsFile = getSurefireResultsFile(project);
+               boolean failed = isTestsFailed(resultsFile);
+               projectTestFailures.get().put(project, failed);
+           }
+        }
         extractModuleDependencies(project);
 
         if (wrappedListener != null) {
@@ -372,6 +376,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if (moduleDependencies == null) {
             logger.warn(
                     "Skipping Artifactory Build-Info project dependency extraction: Null current module dependencies.");
+            return;
         }
         Set<Artifact> projectDependencies = project.getArtifacts();
         if (projectDependencies != null) {
@@ -425,7 +430,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             module.addArtifact(artifact);
-            if (artifactFile != null && artifactFile.isFile() && clientConf.publisher.isPublishArtifacts()) {
+            if (isPublishArtifacts(artifactFile)) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
@@ -442,7 +447,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         module.addArtifact(pomArtifact);
-                        if (pomFile != null && pomFile.isFile() && clientConf.publisher.isPublishArtifacts()) {
+                        if (isPublishArtifacts(pomFile)) {
                             addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
                                     artifactId, artifactVersion,
                                     artifactClassifier, "pom");
@@ -451,6 +456,15 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 }
             }
         }
+    }
+
+    private boolean isPublishArtifacts(File fileToDeploy) {
+        if (fileToDeploy == null || !fileToDeploy.isFile()) return false;
+        if (!clientConf.publisher.isPublishArtifacts()) return false;
+        if (ACTIVATE_UNSTABLE) {
+            return clientConf.publisher.isEvenUnstable() || !wereThereTestFailures();
+        }
+        return true;
     }
 
     private boolean wereThereTestFailures() {
@@ -485,6 +499,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
+     * @param deployPath the full path string to extract the repo from
      * @return Return the target deployment repository. Either the releases repository (default) or snapshots if defined
      *         and the deployed file is a snapshot.
      */

@@ -38,4 +38,5 @@ public interface BuildInfoFields {
     String BUILD_RETENTION_MINIMUM_DATE = "buildRetention.minimumDate";
     String RELEASE_ENABLED = "promotion.enabled";
     String RELEASE_COMMENT = "promotion.comment";
+    String BUILD_ROOT = "build.root";
 }

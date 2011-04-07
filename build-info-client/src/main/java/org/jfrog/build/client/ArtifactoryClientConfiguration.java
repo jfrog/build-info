@@ -17,10 +17,13 @@ package org.jfrog.build.client;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ArtifactoryResolutionProperties;
 import org.jfrog.build.api.util.Log;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -71,6 +74,20 @@ public class ArtifactoryClientConfiguration {
 
     public Map<String, String> getAllProperties() {
         return root.props;
+    }
+
+    public void persistToPropertiesFile() {
+        Properties props = new Properties();
+        props.putAll(root.props);
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(new File(getPropertiesFile()));
+            props.store(fos, "BuildInfo configuration property file");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            Closeables.closeQuietly(fos);
+        }
     }
 
     public String getContextUrl() {
@@ -147,20 +164,11 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void setBuildRoot(String buildRoot) {
-            root.setStringValue(ArtifactoryResolutionProperties.ARTIFACT_BUILD_ROOT_KEY, buildRoot);
+            addMatrixParam(BUILD_ROOT, buildRoot);
         }
 
         public String getBuildRoot() {
-            return root.getStringValue(ArtifactoryResolutionProperties.ARTIFACT_BUILD_ROOT_KEY);
-        }
-
-        @Override
-        public Map<String, String> getMatrixParams() {
-            Map<String, String> params = super.getMatrixParams();
-            if (StringUtils.isNotBlank(getBuildRoot())) {
-                params.put(ArtifactoryResolutionProperties.ARTIFACTORY_BUILD_ROOT_MATRIX_PARAM_KEY, getBuildRoot());
-            }
-            return params;
+            return getMatrixParams().get(BUILD_ROOT);
         }
 
         @Override

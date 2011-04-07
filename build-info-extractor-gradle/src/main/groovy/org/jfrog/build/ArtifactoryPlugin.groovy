@@ -79,6 +79,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory URL: $artifactoryUrl")
             log.debug("Artifactory Download ID: $downloadId")
             log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
+            resolverConf.getMatrixParams()
             String buildRoot = resolverConf.getBuildRoot()
             if (StringUtils.isNotBlank(buildRoot)) {
                 artifactoryDownloadUrl += ";" + buildRoot + ";"

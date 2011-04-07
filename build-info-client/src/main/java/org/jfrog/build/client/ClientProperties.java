@@ -24,10 +24,8 @@ public interface ClientProperties {
     /**
      * The URL of the artifactory web application (typically ending with '/artifactory')
      */
-    @Deprecated
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
 
-    @Deprecated
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 
     String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
