@@ -24,9 +24,10 @@ public interface ClientProperties {
     /**
      * The URL of the artifactory web application (typically ending with '/artifactory')
      */
+    @Deprecated
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
 
-
+    @Deprecated
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 
     String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
@@ -40,17 +41,6 @@ public interface ClientProperties {
      * The repo key in Artifactory to where to publish release artifacts.
      */
     String PROP_PUBLISH_PREFIX = ARTIFACTORY_PREFIX + "publish.";
-
-
-    /**
-     * The username to use when resolving artifacts from Artifactory.
-     */
-    String PROP_RESOLVE_USERNAME = ARTIFACTORY_PREFIX + "resolve.username";
-
-    /**
-     * The password to use when resolving artifacts from Artifactory.
-     */
-    String PROP_RESOLVE_PASSWORD = ARTIFACTORY_PREFIX + "resolve.password";
 
     /**
      * Prefix for properties that are dynamically added to deployment (as matrix params)

@@ -22,7 +22,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.release.Status;
+import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -128,10 +128,10 @@ public class BuildInfoBuilderTest {
         Module module = new Module();
         String propertyKey = "key";
         String propertyValue = "value";
-        Status status = new StatusBuilder("momo").timestampDate(new Date()).build();
+        PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();
 
         Build build = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
-                .addProperty(propertyKey, propertyValue).addStatus(status).build();
+                .addProperty(propertyKey, propertyValue).addStatus(promotionStatus).build();
         List<Module> modules = build.getModules();
         assertFalse(modules.isEmpty(), "A build module should have been added.");
         assertEquals(modules.get(0), module, "Unexpected build module.");
@@ -139,8 +139,8 @@ public class BuildInfoBuilderTest {
         assertTrue(build.getProperties().containsKey(propertyKey), "A build property should have been added.");
         assertEquals(build.getProperties().get(propertyKey), propertyValue, "Unexpected build property value.");
 
-        List<Status> statuses = build.getStatuses();
+        List<PromotionStatus> statuses = build.getStatuses();
         assertFalse(statuses.isEmpty(), "Expected a status to be added.");
-        assertEquals(statuses.get(0), status, "Unexpected added status.");
+        assertEquals(statuses.get(0), promotionStatus, "Unexpected added status.");
     }
 }

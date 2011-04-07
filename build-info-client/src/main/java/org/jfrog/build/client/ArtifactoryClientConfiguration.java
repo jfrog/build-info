@@ -214,6 +214,14 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(EXCLUDE_PATTERNS);
         }
 
+        public void setEvenUnstable(Boolean enabled) {
+            setBooleanValue(EVEN_UNSTABLE, enabled);
+        }
+
+        public Boolean isEvenUnstable() {
+            return getBooleanValue(EVEN_UNSTABLE);
+        }
+
         @Override
         public String getMatrixParamPrefix() {
             return PROP_DEPLOY_PARAM_PROP_PREFIX;
@@ -575,6 +583,22 @@ public class ArtifactoryClientConfiguration {
 
         public String getBuildRetentionMinimumDate() {
             return getStringValue(BUILD_RETENTION_MINIMUM_DATE);
+        }
+
+        public void setReleaseComment(String comment) {
+            setStringValue(RELEASE_COMMENT, comment);
+        }
+
+        public String getReleaseComment() {
+            return getStringValue(RELEASE_COMMENT);
+        }
+
+        public void setReleaseEnabled(Boolean enabled) {
+            setBooleanValue(RELEASE_ENABLED, enabled);
+        }
+
+        public Boolean isReleaseEnabled() {
+            return getBooleanValue(RELEASE_ENABLED);
         }
 
         public void addBuildVariables(Map<String, String> buildVariables) {

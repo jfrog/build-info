@@ -4,8 +4,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 
-import java.io.File;
 import java.util.Map;
+import java.util.Properties;
 
 
 /**
@@ -14,49 +14,48 @@ import java.util.Map;
  * @author Tomer Cohen
  */
 public class IvyResolverHelper {
-    private static final String IVY_XML = "ivy.xml";
-
 
     /**
      * Calculate a repo path for a file
      *
-     * @param artifactFile    The file to be deployed.
+     * @param publisher
+     * @param attributes
      * @param extraAttributes
      */
     public static String calculateArtifactPath(ArtifactoryClientConfiguration.PublisherHandler publisher,
-            File artifactFile, Map<String, String> attributes,
+            Map<String, String> attributes,
             Map<String, String> extraAttributes) {
         String organization = attributes.get("organisation");
         String revision = attributes.get("revision");
         String moduleName = attributes.get("module");
         String ext = attributes.get("ext");
-        String type = attributes.get("type");
         String branch = attributes.get("branch");
-        String artifactPattern = getPattern(publisher, artifactFile.getName());
+        String type = attributes.get("type");
+        String artifactPattern = getPattern(publisher, type);
         if (publisher.isM2Compatible()) {
             organization = organization.replace(".", "/");
         }
         return IvyPatternHelper.substitute(artifactPattern, organization,
-                moduleName, branch, revision, attributes.get("artifact"), type, ext, extraAttributes, null);
+                moduleName, branch, revision, attributes.get("artifact"), type, ext, attributes.get("conf"), null,
+                extraAttributes, null);
     }
 
-    private static String getPattern(ArtifactoryClientConfiguration.PublisherHandler props, String fileName) {
-        if (isIvyFileName(fileName)) {
-            return props.getIvyPattern();
+    private static String getPattern(ArtifactoryClientConfiguration.PublisherHandler pub, String type) {
+        if (isIvy(type)) {
+            return pub.getIvyPattern();
         } else {
-            return props.getIvyArtifactPattern();
+            return pub.getIvyArtifactPattern();
         }
     }
 
-    public static boolean isIvyFileName(String fileName) {
-        if (StringUtils.isBlank(fileName)) {
+    public static boolean isIvy(String type) {
+        if (StringUtils.isBlank(type)) {
             return false;
         }
-        return IVY_XML.equals(fileName) || (fileName.startsWith("ivy-") && fileName.endsWith(".xml")) ||
-                fileName.endsWith(".ivy") ||
-                fileName.endsWith("-" + IVY_XML);
+        return "ivy".equals(type);
     }
 
+    @Deprecated
     public static String getClassifier(String artifactName) {
         int index = artifactName.indexOf('-');
         if (index == -1) {

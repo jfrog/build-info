@@ -40,10 +40,8 @@ import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.*;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -160,6 +158,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             }
         }
         buildInfoBuilder.buildRetention(buildRetention);
+        if (clientConf.info.isReleaseEnabled()) {
+            String stagingRepository = clientConf.publisher.getRepoKey();
+            String comment = clientConf.info.getReleaseComment();
+            if (comment == null) {
+                comment = "";
+            }
+            buildInfoBuilder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(startedDate)
+                    .comment(comment).repository(stagingRepository)
+                    .ciUser(principal).user(artifactoryPrincipal).build());
+        }
         Properties properties = gatherSysPropInfo();
         properties.putAll(clientConf.info.getBuildVariables(clientConf.getAllProperties()));
         buildInfoBuilder.properties(properties);

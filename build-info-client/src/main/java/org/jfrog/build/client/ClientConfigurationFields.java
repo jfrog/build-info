@@ -41,4 +41,5 @@ public interface ClientConfigurationFields {
     String MATRIX = "matrix";
     String INCLUDE_PATTERNS = "includePatterns";
     String EXCLUDE_PATTERNS = "excludePatterns";
+    String EVEN_UNSTABLE = "unstable";
 }

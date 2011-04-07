@@ -34,6 +34,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 
@@ -318,12 +319,25 @@ public class ArtifactoryBuildInfoClient {
         return version;
     }
 
-    public HttpResponse stageBuild(StagingSettings settings) throws IOException {
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL);
-        settings.buildUrl(urlBuilder);
+    public HttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
+        if (StringUtils.isBlank(buildName)) {
+            throw new IllegalArgumentException("Build name is required for promotion.");
+        }
+        if (StringUtils.isBlank(buildNumber)) {
+            throw new IllegalArgumentException("Build number is required for promotion.");
+        }
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
+                append(buildName).append("/").append(buildNumber);
+
+        String promotionJson = toJsonString(promotion);
 
         HttpPost httpPost = new HttpPost(urlBuilder.toString());
-        log.info("Promoting build " + settings.getBuildName() + ", #" + settings.getBuildNumber());
+
+        StringEntity stringEntity = new StringEntity(promotionJson);
+        stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
+        httpPost.setEntity(stringEntity);
+
+        log.info("Promoting build " + buildName + ", #" + buildNumber);
         return httpClient.getHttpClient().execute(httpPost);
     }
 
@@ -356,12 +370,12 @@ public class ArtifactoryBuildInfoClient {
         return toJsonString(buildInfo);
     }
 
-    String toJsonString(Build buildInfo) throws IOException {
+    String toJsonString(Object object) throws IOException {
         JsonFactory jsonFactory = httpClient.createJsonFactory();
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
         jsonGenerator.useDefaultPrettyPrinter();
-        jsonGenerator.writeObject(buildInfo);
+        jsonGenerator.writeObject(object);
         String result = writer.getBuffer().toString();
         return result;
     }

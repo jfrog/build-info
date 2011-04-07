@@ -1,7 +1,7 @@
 package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.release.Status;
+import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -9,7 +9,7 @@ import java.util.Date;
 /**
  * @author Noam Y. Tenne
  */
-public class StatusBuilder {
+public class PromotionStatusBuilder {
 
     private String status;
     private String comment;
@@ -18,26 +18,26 @@ public class StatusBuilder {
     private String user;
     private String ciUser;
 
-    public StatusBuilder(String status) {
+    public PromotionStatusBuilder(String status) {
         this.status = status;
     }
 
-    public StatusBuilder comment(String comment) {
+    public PromotionStatusBuilder comment(String comment) {
         this.comment = comment;
         return this;
     }
 
-    public StatusBuilder repository(String repository) {
+    public PromotionStatusBuilder repository(String repository) {
         this.repository = repository;
         return this;
     }
 
-    public StatusBuilder timestamp(String timestamp) {
+    public PromotionStatusBuilder timestamp(String timestamp) {
         this.timestamp = timestamp;
         return this;
     }
 
-    public StatusBuilder timestampDate(Date timestampDate) {
+    public PromotionStatusBuilder timestampDate(Date timestampDate) {
         if (timestampDate == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
@@ -45,23 +45,23 @@ public class StatusBuilder {
         return this;
     }
 
-    public StatusBuilder user(String user) {
+    public PromotionStatusBuilder user(String user) {
         this.user = user;
         return this;
     }
 
-    public StatusBuilder ciUser(String ciUser) {
+    public PromotionStatusBuilder ciUser(String ciUser) {
         this.ciUser = ciUser;
         return this;
     }
 
-    public Status build() {
+    public PromotionStatus build() {
         if (status == null) {
             throw new IllegalArgumentException("Status must have a type.");
         }
         if (timestamp == null) {
             throw new IllegalArgumentException("Status must have a timestamp.");
         }
-        return new Status(status, comment, repository, timestamp, user, ciUser);
+        return new PromotionStatus(status, comment, repository, timestamp, user, ciUser);
     }
 }

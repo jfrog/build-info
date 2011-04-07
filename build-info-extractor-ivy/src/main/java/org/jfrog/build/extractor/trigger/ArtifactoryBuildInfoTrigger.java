@@ -158,7 +158,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
         clientConf.fillFromProperties(props);
         builder.artifactPath(
-                IvyResolverHelper.calculateArtifactPath(clientConf.publisher, artifactFile, map, extraAttributes));
+                IvyResolverHelper.calculateArtifactPath(clientConf.publisher, map, extraAttributes));
         builder.targetRepository(clientConf.publisher.getRepoKey());
         if (StringUtils.isNotBlank(clientConf.info.getVcsRevision())) {
             builder.addProperty(BuildInfoFields.VCS_REVISION, clientConf.info.getVcsRevision());

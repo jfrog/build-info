@@ -36,4 +36,6 @@ public interface BuildInfoFields {
     String ENVIRONMENT_PREFIX = "env.";
     String BUILD_RETENTION_DAYS = "buildRetention.daysToKeep";
     String BUILD_RETENTION_MINIMUM_DATE = "buildRetention.minimumDate";
+    String RELEASE_ENABLED = "promotion.enabled";
+    String RELEASE_COMMENT = "promotion.comment";
 }
