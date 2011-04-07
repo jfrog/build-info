@@ -132,7 +132,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public Boolean isIncludeEnvVars() {
-        return rootConfig.getBooleanValue(INCLUDE_ENV_VARS);
+        return rootConfig.getBooleanValue(INCLUDE_ENV_VARS, false);
     }
 
     public void setBuildListernerAdded(Boolean enabled) {
@@ -140,7 +140,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public Boolean isBuildListernerAdded() {
-        return root.getBooleanValue("__ArtifactoryPlugin_buildListener__");
+        return root.getBooleanValue("__ArtifactoryPlugin_buildListener__", false);
     }
 
     public void setActivateRecorder(Boolean activateRecorder) {
@@ -148,7 +148,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public Boolean isActivateRecorder() {
-        return root.getBooleanValue(ACTIVATE_RECORDER);
+        return root.getBooleanValue(ACTIVATE_RECORDER, false);
     }
 
     public class ResolverHandler extends RepositoryConfiguration {
@@ -208,7 +208,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isPublishArtifacts() {
-            return getBooleanValue(PUBLISH_ARTIFACTS);
+            return getBooleanValue(PUBLISH_ARTIFACTS, true);
         }
 
         public void setPublishBuildInfo(Boolean enabled) {
@@ -216,7 +216,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isPublishBuildInfo() {
-            return getBooleanValue(PUBLISH_BUILD_INFO);
+            return getBooleanValue(PUBLISH_BUILD_INFO, true);
         }
 
         public void setIncludePatterns(String patterns) {
@@ -240,7 +240,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isEvenUnstable() {
-            return getBooleanValue(EVEN_UNSTABLE);
+            return getBooleanValue(EVEN_UNSTABLE, false);
         }
 
         public void setBuildRoot(String buildRoot) {
@@ -361,7 +361,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isMaven() {
-            return getBooleanValue(MAVEN);
+            return getBooleanValue(MAVEN, false);
         }
 
         public void setIvy(Boolean enabled) {
@@ -369,7 +369,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIvy() {
-            return getBooleanValue(IVY);
+            return getBooleanValue(IVY, false);
         }
 
         public void setM2Compatible(Boolean enabled) {
@@ -377,7 +377,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isM2Compatible() {
-            return getBooleanValue(IVY_M2_COMPATIBLE);
+            return getBooleanValue(IVY_M2_COMPATIBLE, true);
         }
 
         public void setIvyArtifactPattern(String artPattern) {
@@ -443,7 +443,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isRunChecks() {
-            return getBooleanValue(RUN_CHECKS);
+            return getBooleanValue(RUN_CHECKS, false);
         }
 
         public void setViolationRecipients(String recipients) {
@@ -459,7 +459,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIncludePublishedArtifacts() {
-            return getBooleanValue(INCLUDE_PUBLISHED_ARTIFACTS);
+            return getBooleanValue(INCLUDE_PUBLISHED_ARTIFACTS, false);
         }
 
         public void setScopes(String scopes) {
@@ -475,7 +475,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isAutoDiscover() {
-            return getBooleanValue(AUTO_DISCOVER);
+            return getBooleanValue(AUTO_DISCOVER, false);
         }
 
     }
@@ -627,7 +627,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isReleaseEnabled() {
-            return getBooleanValue(RELEASE_ENABLED);
+            return getBooleanValue(RELEASE_ENABLED, false);
         }
 
         public void setBuildRoot(String buildRoot) {

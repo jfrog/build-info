@@ -35,9 +35,16 @@ public class PrefixPropertyHandler {
     }
 
     protected String getStringValue(String key) {
+        return getStringValue(key, null);
+    }
+
+    protected String getStringValue(String key, String def) {
         String s = props.get(prefix + key);
         if (s == null && parent != null) {
-            return parent.getStringValue(prefix + key);
+            s = parent.getStringValue(prefix + key);
+        }
+        if (s == null) {
+            s = def;
         }
         return s;
     }
@@ -51,12 +58,20 @@ public class PrefixPropertyHandler {
     }
 
     protected Boolean getBooleanValue(String key) {
+        return getBooleanValue(key, null);
+    }
+
+    protected Boolean getBooleanValue(String key, Boolean def) {
         String s = props.get(prefix + key);
-        if (s == null && parent != null) {
-            return parent.getBooleanValue(prefix + key);
-        }
         // TODO: throw exception if not true or false. If prop set to something else
-        return (s == null) ? null : Boolean.parseBoolean(s);
+        Boolean result = (s == null) ? null : Boolean.parseBoolean(s);
+        if (result == null && parent != null) {
+            result = parent.getBooleanValue(prefix + key);
+        }
+        if (result == null) {
+            result = def;
+        }
+        return result;
     }
 
     protected void setBooleanValue(String key, Boolean value) {
@@ -68,19 +83,25 @@ public class PrefixPropertyHandler {
     }
 
     protected Integer getIntegerValue(String key) {
-        String s = props.get(prefix + key);
-        if (s == null) {
-            if (parent != null) {
-                return parent.getIntegerValue(prefix + key);
-            }
-            return null;
-        }
-        if (!StringUtils.isNumeric(s)) {
-            log.debug("Property '" + prefix + key + "' is not of numeric value '" + s + "'");
-            return null;
-        }
+        return getIntegerValue(key, null);
+    }
 
-        return (s == null) ? null : Integer.parseInt(s);
+    protected Integer getIntegerValue(String key, Integer def) {
+        Integer result = null;
+        String s = props.get(prefix + key);
+        if (s != null && !StringUtils.isNumeric(s)) {
+            log.debug("Property '" + prefix + key + "' is not of numeric value '" + s + "'");
+            result = null;
+        } else {
+            result = (s == null) ? null : Integer.parseInt(s);
+        }
+        if (result == null && parent != null) {
+            result = parent.getIntegerValue(prefix + key);
+        }
+        if (result == null) {
+            result = def;
+        }
+        return result;
     }
 
     protected void setIntegerValue(String key, Integer value) {
