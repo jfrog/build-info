@@ -36,7 +36,7 @@ public class BuildInfoModelPropertyResolver {
 
 
     public BuildInfoBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
-        Map<String, String> buildInfoProps = clientConf.info.getBuildVariables(clientConf.getAllProperties());
+        Map<String, String> buildInfoProps = clientConf.info.getBuildVariables();
         Properties props = new Properties();
         props.putAll(buildInfoProps);
         BuildInfoBuilder builder = resolveCoreProperties(event, clientConf).

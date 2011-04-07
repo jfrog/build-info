@@ -168,9 +168,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                     .comment(comment).repository(stagingRepository)
                     .ciUser(principal).user(artifactoryPrincipal).build());
         }
-        Properties properties = gatherSysPropInfo();
-        properties.putAll(clientConf.info.getBuildVariables(clientConf.getAllProperties()));
-        buildInfoBuilder.properties(properties);
+        clientConf.info.fillCommonSysProps();
+        Properties props = new Properties();
+        props.putAll(clientConf.info.getBuildVariables());
+        buildInfoBuilder.properties(props);
         log.debug("buildInfoBuilder = " + buildInfoBuilder);
         // for backward compatibility for Artifactory 2.2.3
         Build build = buildInfoBuilder.build();
@@ -188,18 +189,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         return (BuildInfoRecorderTask) tasks.iterator().next();
     }
 
-    private Properties gatherSysPropInfo() {
-        Properties props = new Properties();
-        props.setProperty("os.arch", System.getProperty("os.arch"));
-        props.setProperty("os.name", System.getProperty("os.name"));
-        props.setProperty("os.version", System.getProperty("os.version"));
-        props.setProperty("java.version", System.getProperty("java.version"));
-        props.setProperty("java.vm.info", System.getProperty("java.vm.info"));
-        props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
-        props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
-        props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
-        return props;
-    }
 
     public Module extractModule(Configuration configuration, Project project) {
         String projectName = project.getName();

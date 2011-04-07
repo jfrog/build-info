@@ -76,9 +76,14 @@ public class ArtifactoryClientConfiguration {
         return root.props;
     }
 
+    public Map<String, String> getAllRootConfig() {
+        return rootConfig.props;
+    }
+
     public void persistToPropertiesFile() {
         Properties props = new Properties();
         props.putAll(root.props);
+        props.putAll(rootConfig.props);
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(new File(getPropertiesFile()));
@@ -136,6 +141,14 @@ public class ArtifactoryClientConfiguration {
 
     public Boolean isBuildListernerAdded() {
         return root.getBooleanValue("__ArtifactoryPlugin_buildListener__");
+    }
+
+    public void setActivateRecorder(Boolean activateRecorder) {
+        root.setBooleanValue(ACTIVATE_RECORDER, activateRecorder);
+    }
+
+    public Boolean isActivateRecorder() {
+        return root.getBooleanValue(ACTIVATE_RECORDER);
     }
 
     public class ResolverHandler extends RepositoryConfiguration {
@@ -228,6 +241,14 @@ public class ArtifactoryClientConfiguration {
 
         public Boolean isEvenUnstable() {
             return getBooleanValue(EVEN_UNSTABLE);
+        }
+
+        public void setBuildRoot(String buildRoot) {
+            addMatrixParam(BUILD_ROOT, buildRoot);
+        }
+
+        public String getBuildRoot() {
+            return getMatrixParams().get(BUILD_ROOT);
         }
 
         @Override
@@ -609,13 +630,35 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(RELEASE_ENABLED);
         }
 
+        public void setBuildRoot(String buildRoot) {
+            publisher.setBuildRoot(buildRoot);
+            resolver.setBuildRoot(buildRoot);
+            setStringValue(BUILD_ROOT, buildRoot);
+        }
+
+        public String getBuildRoot() {
+            return getStringValue(BUILD_ROOT);
+        }
+
         public void addBuildVariables(Map<String, String> buildVariables) {
             for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-                setStringValue(ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+                addBuildVariable(entry.getKey(), entry.getValue());
             }
         }
 
-        public Map<String, String> getBuildVariables(Map<String, String> buildVariables) {
+        public void addBuildVariable(String key, String value) {
+            setStringValue(ENVIRONMENT_PREFIX + key, value);
+        }
+
+        public void fillCommonSysProps() {
+            String[] commonSysProps = {"os.arch", "os.name", "os.version", "java.version", "java.vm.info",
+                    "java.vm.name", "java.vm.specification.name", "java.vm.vendor"};
+            for (String prop : commonSysProps) {
+                addBuildVariable(prop, System.getProperty(prop));
+            }
+        }
+
+        public Map<String, String> getBuildVariables() {
             return Maps.filterKeys(props, buildVariablesPredicate);
         }
     }

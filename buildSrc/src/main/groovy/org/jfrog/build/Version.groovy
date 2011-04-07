@@ -41,7 +41,7 @@ class Version {
     def Version(Project project, List<String> subProjects) {
         this.versionNumber = project.getProperty("${project.name}-version")
         this.release = true
-        if (versionNumber.contains('SNAPSHOT')) {
+        if (versionNumber.endsWith('SNAPSHOT')) {
             this.release = false
             this.indexOfSnapshot = this.versionNumber.indexOf('SNAPSHOT')
         }
@@ -77,7 +77,7 @@ class Version {
         buildTime = new Date(timestampFile.lastModified())
         if (!release) {
             this.versionNumber = this.versionNumber.substring(0, indexOfSnapshot - 1)
-            this.versionNumber += "-" + getTimestamp()
+            this.versionNumber += "-" + "SNAPSHOT"
         }
     }
 

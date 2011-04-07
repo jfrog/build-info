@@ -24,6 +24,7 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.easymock.EasyMock;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.sonatype.aether.RepositorySystemSession;
 import org.testng.Assert;
 
@@ -81,7 +82,7 @@ public class BuildInfoRecorderLifecycleParticipantTest {
         MavenExecutionRequest requestMock = EasyMock.createMock(MavenExecutionRequest.class);
 
         Properties mockSessionProperties = new Properties();
-        mockSessionProperties.setProperty(BuildInfoRecorder.ACTIVATE_RECORDER, "true");
+        mockSessionProperties.setProperty(BuildInfoConfigProperties.ACTIVATE_RECORDER, "true");
         EasyMock.expect(requestMock.getSystemProperties()).andReturn(mockSessionProperties).once();
         EasyMock.expect(requestMock.getUserProperties()).andReturn(mockSessionProperties).once();
 

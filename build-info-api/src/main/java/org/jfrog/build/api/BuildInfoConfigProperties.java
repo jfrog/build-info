@@ -29,6 +29,8 @@ public interface BuildInfoConfigProperties {
     String EXPORT_FILE = "exportFile";
     String PROP_EXPORT_FILE_PATH = BUILD_INFO_CONFIG_PREFIX + EXPORT_FILE;
 
+    String ACTIVATE_RECORDER = "org.jfrog.build.extractor.maven.recorder.activate";
+
     /**
      * Property for whether to include all environment variables in the generic set of build info properties
      */

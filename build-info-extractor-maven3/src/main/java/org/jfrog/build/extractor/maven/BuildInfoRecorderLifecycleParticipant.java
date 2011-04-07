@@ -23,6 +23,7 @@ import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener;
@@ -43,6 +44,8 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
     @Requirement(role = BuildInfoRecorder.class, hint = "default", optional = false)
     BuildInfoRecorder recorder;
 
+    private ArtifactoryClientConfiguration internalConfiguration = null;
+
     /**
      * When the session starts, register {@link ArtifactoryRepositoryListener} as part of the listener chain that is
      * used for repository manipulation.
@@ -56,44 +59,46 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         if (session.getRepositorySession() instanceof DefaultRepositorySystemSession) {
             DefaultRepositorySystemSession repositorySession =
                     (DefaultRepositorySystemSession) session.getRepositorySession();
-            Properties allMavenProps = new Properties();
-            allMavenProps.putAll(session.getSystemProperties());
-            allMavenProps.putAll(session.getUserProperties());
-
-            Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
-            ArtifactoryClientConfiguration conf = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
-            conf.fillFromProperties(allProps);
             repositorySession.setRepositoryListener(
                     new ChainedRepositoryListener(repositorySession.getRepositoryListener(),
-                            new ArtifactoryRepositoryListener(conf.resolver, logger)));
+                            new ArtifactoryRepositoryListener(getConfiguration(session).resolver, logger)));
         }
     }
 
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
+        ArtifactoryClientConfiguration configuration = getConfiguration(session);
+        Object activateRecorderObject = configuration.isActivateRecorder();
+        if (activateRecorderObject == null) {
+            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
+                    BuildInfoConfigProperties.ACTIVATE_RECORDER + ") not found.");
+            return;
+        }
+        if (!Boolean.valueOf(activateRecorderObject.toString())) {
+            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
+                    BuildInfoConfigProperties.ACTIVATE_RECORDER + ") value is either false or invalid.");
+            return;
+        }
+        logger.debug("Activating Artifactory Maven3 Build-Info Recorder: activation property (" +
+                BuildInfoConfigProperties.ACTIVATE_RECORDER + ") value is true.");
+        ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
+        recorder.setListenerToWrap(existingExecutionListener);
+        recorder.setConfiguration(configuration);
+        session.getRequest().setExecutionListener(recorder);
+    }
 
+    private ArtifactoryClientConfiguration getConfiguration(MavenSession session) {
+        if (internalConfiguration != null) {
+            return internalConfiguration;
+        }
         Properties allMavenProps = new Properties();
         allMavenProps.putAll(session.getSystemProperties());
         allMavenProps.putAll(session.getUserProperties());
 
         Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
-        Object activateRecorderObject = allProps.get(BuildInfoRecorder.ACTIVATE_RECORDER);
-        if (activateRecorderObject == null) {
-            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
-                    BuildInfoRecorder.ACTIVATE_RECORDER + ") not found.");
-            return;
-        }
-        if (!Boolean.valueOf(activateRecorderObject.toString())) {
-            logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
-                    BuildInfoRecorder.ACTIVATE_RECORDER + ") value is either false or invalid.");
-            return;
-        }
-        logger.debug("Activating Artifactory Maven3 Build-Info Recorder: activation property (" +
-                BuildInfoRecorder.ACTIVATE_RECORDER + ") value is true.");
-
-        ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
-        recorder.setListenerToWrap(existingExecutionListener);
-        recorder.setAllProps(allProps);
-        session.getRequest().setExecutionListener(recorder);
+        internalConfiguration = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
+        internalConfiguration.fillFromProperties(allProps);
+        internalConfiguration.info.fillCommonSysProps();
+        return internalConfiguration;
     }
 }
