@@ -9,7 +9,6 @@ import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.logger.GradleClientLogger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -17,9 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author freds
- *         Date: 1/10/11
- *         Time: 3:59 PM
+ * @author freds Date: 1/10/11 Time: 3:59 PM
  */
 public class BuildInfoConfigTask extends DefaultTask {
 
@@ -38,21 +35,30 @@ public class BuildInfoConfigTask extends DefaultTask {
 
     @TaskAction
     void fillClientConfiguration() {
-        ArtifactoryClientConfiguration finalAcc = ArtifactoryPluginUtils.getArtifactoryClientConfiguration(getProject());
+        ArtifactoryClientConfiguration finalAcc =
+                ArtifactoryPluginUtils.getArtifactoryClientConfiguration(getProject());
         // TODO: Should copy only root fields
         finalAcc.fillFromProperties(acc.getAllProperties());
         acc = finalAcc;
-        for (Closure closure : resolverConfigure) {
-            ConfigureUtil.configure(closure, acc.resolver);
+        if (resolverConfigure != null) {
+            for (Closure closure : resolverConfigure) {
+                ConfigureUtil.configure(closure, acc.resolver);
+            }
         }
-        for (Closure closure : publisherConfigure) {
-            ConfigureUtil.configure(closure, acc.publisher);
+        if (publisherConfigure != null) {
+            for (Closure closure : publisherConfigure) {
+                ConfigureUtil.configure(closure, acc.publisher);
+            }
         }
-        for (Closure closure : infoConfigure) {
-            ConfigureUtil.configure(closure, acc.info);
+        if (infoConfigure != null) {
+            for (Closure closure : infoConfigure) {
+                ConfigureUtil.configure(closure, acc.info);
+            }
         }
-        for (Closure closure : proxyConfigure) {
-            ConfigureUtil.configure(closure, acc.proxy);
+        if (proxyConfigure != null) {
+            for (Closure closure : proxyConfigure) {
+                ConfigureUtil.configure(closure, acc.proxy);
+            }
         }
 
         // Ensure build name and number are not empty

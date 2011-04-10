@@ -21,22 +21,22 @@ public class ClientPropertyResolver {
     private Logger logger;
 
     public ArtifactoryBuildInfoClient resolveProperties(ArtifactoryClientConfiguration clientConf) {
-        ArtifactoryBuildInfoClient client = resolveClientProps(clientConf.publisher);
+        ArtifactoryBuildInfoClient client = resolveClientProps(clientConf);
         resolveTimeout(clientConf, client);
         resolveProxy(clientConf.proxy, client);
         return client;
     }
 
-    private ArtifactoryBuildInfoClient resolveClientProps(ArtifactoryClientConfiguration.PublisherHandler clientConf) {
-        String contextUrl = clientConf.getUrl();
+    private ArtifactoryBuildInfoClient resolveClientProps(ArtifactoryClientConfiguration clientConf) {
+        String contextUrl = clientConf.getContextUrl();
         if (StringUtils.isBlank(contextUrl)) {
             throw new IllegalArgumentException(
                     "Unable to resolve Artifactory Build Info Client properties: no context URL was found.");
         }
         logResolvedProperty(PROP_CONTEXT_URL, contextUrl);
 
-        String username = clientConf.getUserName();
-        String password = clientConf.getPassword();
+        String username = clientConf.publisher.getUserName();
+        String password = clientConf.publisher.getPassword();
 
         if (StringUtils.isNotBlank(username)) {
             logResolvedProperty(ClientConfigurationFields.USERNAME, username);

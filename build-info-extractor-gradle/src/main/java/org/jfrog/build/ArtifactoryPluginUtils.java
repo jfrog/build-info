@@ -39,7 +39,6 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_
 public class ArtifactoryPluginUtils {
 
     public static final String BUILD_INFO_TASK_NAME = "buildInfo";
-    public static final String BUILD_INFO_CONFIG_TASK_NAME = "buildInfoConfig";
 
     /**
      * Returns a new client configuration handler object out of a Gradle project. This method will aggregate the
@@ -70,7 +69,7 @@ public class ArtifactoryPluginUtils {
         props.putAll(buildInfoProperties);
         ArtifactoryClientConfiguration result =
                 new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()));
-        result.fillFromProperties(props);
+        result.fillFromProperties(mergedProps);
         return result;
     }
 

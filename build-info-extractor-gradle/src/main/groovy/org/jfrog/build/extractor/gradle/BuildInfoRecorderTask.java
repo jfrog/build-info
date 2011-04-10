@@ -37,7 +37,6 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
-import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
@@ -49,6 +48,7 @@ import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.logger.GradleClientLogger;
+import org.jfrog.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,6 +80,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private String artifactName;
 
     private boolean lastInGraph = false;
+
+    public void setLastInGraph(boolean lastInGraph) {
+        this.lastInGraph = lastInGraph;
+    }
 
     public Configuration getConfiguration() {
         return configuration;
@@ -133,7 +137,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (configuration == null) {
             return;
         }
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration(getProject());
 
         // Set ivy descriptor parameters
         if (acc.publisher.isIvy()) {
@@ -172,10 +176,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
     }
 
-    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
-        BuildInfoConfigTask bict = (BuildInfoConfigTask) getProject().getRootProject().getTasks()
-                .getByName(ArtifactoryPluginUtils.BUILD_INFO_CONFIG_TASK_NAME);
-        return bict.acc;
+    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {
+        return project.getRootProject().getConvention().getPlugin(ArtifactoryPluginConvention.class).getConfiguration();
     }
 
     @TaskAction
@@ -201,7 +203,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private DeployDetails getIvyDescriptorDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
         try {
             Map<String, String> checksums =
@@ -226,7 +228,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private DeployDetails getMavenDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
         try {
             Map<String, String> checksums =
@@ -251,9 +253,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
      * @throws java.io.IOException In case the deployment fails.
      */
     private void closeAndDeploy() throws IOException {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf);
-        String fileExportPath = clientConf.getExportFile();
         String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
         String username = clientConf.publisher.getUserName();
@@ -293,29 +294,29 @@ public class BuildInfoRecorderTask extends DefaultTask {
                  * After all the artifacts were uploaded successfully the next task is to send the build-info
                  * object.
                  */
-                if (fileExportPath != null) {
-                    // If export property set always save the file before sending it to artifactory
-                    exportBuildInfo(build, new File(fileExportPath));
-                }
+                // If export property set always save the file before sending it to artifactory
+                exportBuildInfo(build, getExportFile(clientConf));
                 client.sendBuildInfo(build);
             } else {
                 /**
                  * If we do not deploy any artifacts or build-info, the build-info will be written to a file in its
                  * JSON form.
                  */
-                File savedFile;
-                if (fileExportPath == null) {
-                    savedFile = new File(getProject().getBuildDir(), "build-info.json");
-                } else {
-                    savedFile = new File(fileExportPath);
-                }
-                exportBuildInfo(build, savedFile);
+                exportBuildInfo(build, getExportFile(clientConf));
             }
         } finally {
             client.shutdown();
         }
     }
 
+    private File getExportFile(ArtifactoryClientConfiguration clientConf) {
+        String fileExportPath = clientConf.getExportFile();
+        if (StringUtils.isNotBlank(fileExportPath)) {
+            return new File(fileExportPath);
+        }
+        Project rootProject = getProject().getRootProject();
+        return new File(rootProject.getBuildDir(), "build-info.json");
+    }
 
     private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
@@ -352,7 +353,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private Set<DeployDetails> getDeployArtifactsProject() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         Set<DeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (configuration == null) {
             return deployDetails;
