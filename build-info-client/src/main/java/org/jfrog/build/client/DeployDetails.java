@@ -75,6 +75,14 @@ public class DeployDetails {
         return properties;
     }
 
+    public String getSha1() {
+        return sha1;
+    }
+
+    public String getMd5() {
+        return md5;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

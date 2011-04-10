@@ -18,9 +18,8 @@ package org.jfrog.build.extractor.gradle;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringUtils;
-import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -31,6 +30,7 @@ import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -40,10 +40,15 @@ import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.*;
+import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 
@@ -73,9 +78,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     private static final String SHA1 = "sha1";
     private static final String MD5 = "md5";
     private final ArtifactoryClientConfiguration clientConf;
+    private final Set<GradleDeployDetails> gradleDeployDetails;
 
-    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf) {
+
+    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
+            Set<GradleDeployDetails> gradleDeployDetails) {
         this.clientConf = clientConf;
+        this.gradleDeployDetails = gradleDeployDetails;
     }
 
     public Build extract(Project rootProject, BuildInfoExtractorSpec spec) {
@@ -97,13 +106,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
             BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
-            if (buildInfoRecorderTask != null) {
-                Configuration configuration = buildInfoRecorderTask.getConfiguration();
-                if (configuration != null) {
-                    if ((!configuration.getArtifacts().isEmpty())) {
-                        buildInfoBuilder.addModule(extractModule(configuration, project));
-                    }
-                }
+            if (buildInfoRecorderTask != null && buildInfoRecorderTask.hasConfigurations()) {
+                buildInfoBuilder.addModule(extractModule(project));
             }
         }
         String parentName = clientConf.info.getParentBuildName();
@@ -182,7 +186,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     private BuildInfoRecorderTask getBuildInfoRecorderTask(Project project) {
-        Set<Task> tasks = project.getTasksByName("buildInfo", false);
+        Set<Task> tasks = project.getTasksByName(ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME, false);
         if (tasks.isEmpty()) {
             return null;
         }
@@ -190,7 +194,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
 
-    public Module extractModule(Configuration configuration, Project project) {
+    public Module extractModule(Project project) {
         String projectName = project.getName();
         BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
         if (task != null) {
@@ -201,89 +205,43 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }
         ModuleBuilder builder = new ModuleBuilder()
                 .id(project.getGroup() + ":" + projectName + ":" + project.getVersion().toString());
-        if (configuration != null) {
-            try {
-                builder.artifacts(calculateArtifacts(configuration, project))
-                        .dependencies(calculateDependencies(project));
-            } catch (Exception e) {
-                log.error("Error during extraction: ", e);
-            }
+        try {
+            builder.artifacts(calculateArtifacts(project))
+                    .dependencies(calculateDependencies(project));
+        } catch (Exception e) {
+            log.error("Error during extraction: ", e);
         }
         return builder.build();
     }
 
-    private List<Artifact> calculateArtifacts(final Configuration configuration, final Project project)
-            throws Exception {
-        List<Artifact> artifacts = newArrayList(
-                transform(configuration.getAllArtifacts(), new Function<PublishArtifact, Artifact>() {
-                    public Artifact apply(PublishArtifact from) {
-                        try {
-                            String type = from.getType();
-                            if (StringUtils.isNotBlank(from.getClassifier())) {
-                                type = type + "-" + from.getClassifier();
-                            }
-                            File artifactFile = from.getFile();
-                            if (artifactFile != null && artifactFile.exists()) {
-                                Map<String, String> checkSums = calculateChecksumsForFile(artifactFile);
-                                String pattern = clientConf.publisher.getIvyArtifactPattern();
-                                Map<String, String> extraTokens = Maps.newHashMap();
-                                if (StringUtils.isNotBlank(from.getClassifier())) {
-                                    extraTokens.put("classifier", from.getClassifier());
-                                }
-                                String projectName = project.getName();
-                                BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
-                                if (task != null) {
-                                    if (StringUtils.isNotBlank(task.getArtifactName())) {
-                                        projectName = task.getArtifactName();
-                                    }
-                                }
-                                String gid = project.getGroup().toString();
-                                if (clientConf.publisher.isM2Compatible()) {
-                                    gid = gid.replace(".", "/");
-                                }
-                                String finalPattern = IvyPatternHelper.substitute(pattern, gid, projectName,
-                                        project.getVersion().toString(), null, from.getType(),
-                                        from.getExtension(), configuration.getName(),
-                                        extraTokens, null);
-                                int index = finalPattern.lastIndexOf('/');
-                                return new ArtifactBuilder(finalPattern.substring(index + 1)).type(type)
-                                        .md5(checkSums.get(MD5)).sha1(checkSums.get(SHA1)).build();
-                            }
-                        } catch (Exception e) {
-                            log.error("Error during artifact calculation: ", e);
-                        }
-                        return new Artifact();
-                    }
-                }));
-
-        File mavenPom = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-        if (mavenPom.exists() && clientConf.publisher.isMaven()) {
-            Map<String, String> checksums = calculateChecksumsForFile(mavenPom);
-            BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
-            String artifactName;
-            if (task != null) {
-                artifactName = task.getArtifactName();
-            } else {
-                artifactName = project.getName();
+    private List<Artifact> calculateArtifacts(final Project project) throws Exception {
+        Iterable<GradleDeployDetails> filter = getProjectDeployDetails(project);
+        List<Artifact> artifacts = newArrayList(transform(filter, new Function<GradleDeployDetails, Artifact>() {
+            public Artifact apply(GradleDeployDetails from) {
+                PublishArtifact publishArtifact = from.getPublishArtifact();
+                DeployDetails deployDetails = from.getDeployDetails();
+                int index = deployDetails.getArtifactPath().lastIndexOf('/');
+                String type = StringUtils.isBlank(publishArtifact.getClassifier()) ? publishArtifact.getType() :
+                        publishArtifact.getType() + "-" + publishArtifact.getClassifier();
+                return new ArtifactBuilder(deployDetails.getArtifactPath().substring(index + 1))
+                        .type(type).md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
             }
-            Artifact pom =
-                    new ArtifactBuilder(artifactName + "-" + project.getVersion() + ".pom").md5(checksums.get(MD5))
-                            .sha1(checksums.get(SHA1)).type("pom")
-                            .build();
-            artifacts.add(pom);
-        }
-        File ivy = new File(project.getBuildDir(), "ivy.xml");
-        if (ivy.exists() && clientConf.publisher.isIvy()) {
-            Map<String, String> checksums = calculateChecksumsForFile(ivy);
-            Artifact ivyArtifact = new ArtifactBuilder("ivy-" + project.getVersion() + ".xml").md5(checksums.get(MD5))
-                    .sha1(checksums.get(SHA1)).type("ivy").build();
-            artifacts.add(ivyArtifact);
-        }
+        }));
         return artifacts;
     }
 
+    private Iterable<GradleDeployDetails> getProjectDeployDetails(final Project project) {
+        return Iterables.filter(gradleDeployDetails, new Predicate<GradleDeployDetails>() {
+            @Override
+            public boolean apply(@Nullable GradleDeployDetails input) {
+                return input.getProject().equals(project);
+            }
+        });
+    }
+
     private List<Dependency> calculateDependencies(Project project) throws Exception {
-        Set<Configuration> configurationSet = project.getConfigurations().getAll();
+        BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
+        Set<Configuration> configurationSet = buildInfoRecorderTask.getPublishConfigurations();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
