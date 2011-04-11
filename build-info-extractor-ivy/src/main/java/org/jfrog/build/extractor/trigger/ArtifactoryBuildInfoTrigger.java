@@ -140,18 +140,25 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
             type = type + "-" + extraAttributes.get("classifier");
         }
         artifactBuilder.type(type);
-        Map<String, String> checksums;
-        try {
-            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5, SHA1);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        Map<String, String> checksums = calculateFileChecksum(artifactFile);
         String md5 = checksums.get(MD5);
         String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
-        module.getArtifacts().add(artifactBuilder.build());
-        DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
+        Artifact artifact = artifactBuilder.build();
+        module.getArtifacts().add(artifact);
+        DeployDetails deployDetails = buildDeployDetails(artifactFile, artifact, ctx, map, extraAttributes);
+        ctx.addDeployDetailsForModule(deployDetails);
+        List<Module> contextModules = ctx.getModules();
+        if (contextModules.indexOf(module) == -1) {
+            ctx.addModule(module);
+        }
+    }
+
+    private DeployDetails buildDeployDetails(File artifactFile, Artifact artifact,
+            BuildContext ctx, Map<String, String> map, Map<String, String> extraAttributes) {
         ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
+        DeployDetails.Builder builder =
+                new DeployDetails.Builder().file(artifactFile).sha1(artifact.getSha1()).md5(artifact.getMd5());
         builder.artifactPath(
                 IvyResolverHelper.calculateArtifactPath(clientConf.publisher, map, extraAttributes));
         builder.targetRepository(clientConf.publisher.getRepoKey());
@@ -176,12 +183,17 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
             builder.addProperty(BuildInfoFields.BUILD_PARENT_NUMBER, clientConf.info.getParentBuildNumber());
         }
         builder.addProperties(clientConf.publisher.getMatrixParams());
-        DeployDetails deployDetails = builder.build();
-        ctx.addDeployDetailsForModule(deployDetails);
-        List<Module> contextModules = ctx.getModules();
-        if (contextModules.indexOf(module) == -1) {
-            ctx.addModule(module);
+        return builder.build();
+    }
+
+    private Map<String, String> calculateFileChecksum(File file) {
+        Map<String, String> checksums;
+        try {
+            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+        return checksums;
     }
 
     private String generateModuleIdFromAttributes(Map<String, String> attributes) {
