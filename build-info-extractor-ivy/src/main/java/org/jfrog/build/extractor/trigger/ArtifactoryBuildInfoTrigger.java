@@ -45,6 +45,9 @@ import java.util.Properties;
  */
 public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
+    private static final String MD5 = "MD5";
+    private static final String SHA1 = "SHA1";
+
     public void progress(IvyEvent event) {
         if (EndResolveEvent.NAME.equals(event.getName())) {
             collectDependencyInformation(event);
@@ -87,12 +90,12 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
-                            checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+                            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                        String md5 = checksums.get("MD5");
-                        String sha1 = checksums.get("SHA1");
+                        String md5 = checksums.get(MD5);
+                        String sha1 = checksums.get(SHA1);
                         dependencyBuilder.md5(md5).sha1(sha1);
                         moduleDependencies.add(dependencyBuilder.build());
                     } else {
@@ -136,27 +139,23 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("Module location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         String type = map.get("type");
-        String classifier = IvyResolverHelper.getClassifier(artifactFile.getName());
-        Map<String, String> extraAttributes = new HashMap<String, String>();
-        if (StringUtils.isNotBlank(classifier)) {
-            type = type + "-" + classifier;
-            extraAttributes.put("classifier", classifier);
+        Map<String, String> extraAttributes = ((StartArtifactPublishEvent) event).getArtifact().getExtraAttributes();
+        if (extraAttributes.get("classifier") != null) {
+            type = type + "-" + extraAttributes.get("classifier");
         }
         artifactBuilder.type(type);
         Map<String, String> checksums;
         try {
-            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "MD5", "SHA1");
+            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5, SHA1);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        String md5 = checksums.get("MD5");
-        String sha1 = checksums.get("SHA1");
+        String md5 = checksums.get(MD5);
+        String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
         module.getArtifacts().add(artifactBuilder.build());
         DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
-        Properties props = getMergedEnvAndSystemProps();
-        ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
-        clientConf.fillFromProperties(props);
+        ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
         builder.artifactPath(
                 IvyResolverHelper.calculateArtifactPath(clientConf.publisher, map, extraAttributes));
         builder.targetRepository(clientConf.publisher.getRepoKey());
@@ -207,12 +206,6 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         } catch (NoSuchElementException e) {
             return null;
         }
-    }
-
-    private Properties getMergedEnvAndSystemProps() {
-        Properties props = new Properties();
-        props.putAll(System.getenv());
-        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
     }
 
     private boolean isModuleExists(List<Module> modules, final String moduleName) {

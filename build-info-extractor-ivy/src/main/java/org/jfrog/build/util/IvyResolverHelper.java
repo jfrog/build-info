@@ -5,7 +5,6 @@ import org.apache.ivy.core.IvyPatternHelper;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 
 import java.util.Map;
-import java.util.Properties;
 
 
 /**
@@ -48,7 +47,7 @@ public class IvyResolverHelper {
         }
     }
 
-    public static boolean isIvy(String type) {
+    private static boolean isIvy(String type) {
         if (StringUtils.isBlank(type)) {
             return false;
         }

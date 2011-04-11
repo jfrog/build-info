@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.listener;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.ant.IvyAntSettings;
+import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.StartArtifactPublishEvent;
@@ -21,7 +22,6 @@ import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
@@ -36,8 +36,6 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
-
 
 /**
  * A listener which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
@@ -46,7 +44,7 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
  * @author Tomer Cohen
  */
 public class ArtifactoryBuildListener extends BuildListenerAdapter {
-    private final BuildContext ctx = new BuildContext();
+    private final BuildContext ctx;
     private static boolean isDidDeploy;
     private static final ArtifactoryBuildInfoTrigger DEPENDENCY_TRIGGER = new ArtifactoryBuildInfoTrigger();
     private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger();
@@ -54,6 +52,17 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     public ArtifactoryBuildListener() {
         DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
         PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
+        Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+        ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
+        Properties props = getMergedEnvAndSystemProps();
+        clientConf.fillFromProperties(props);
+        ctx = new BuildContext(clientConf);
+    }
+
+    private Properties getMergedEnvAndSystemProps() {
+        Properties props = new Properties();
+        props.putAll(System.getenv());
+        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
     }
 
     @Override
@@ -104,12 +113,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                     .agent(new Agent("Ivy", Ivy.getIvyVersion()));
             // This is here for backwards compatibility.
             builder.type(BuildType.IVY);
-            Properties envProps = new Properties();
-            envProps.putAll(System.getenv());
-            Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
-            ArtifactoryClientConfiguration clientConf =
-                    new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
-            clientConf.fillFromProperties(mergedProps);
+            ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
             String agentName = clientConf.info.getAgentName();
             String agentVersion = clientConf.info.getAgentVersion();
             if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
@@ -170,14 +174,11 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                 }
             }
             builder.buildRetention(buildRetention);
-            Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
-            Properties propsFromSys = BuildInfoExtractorUtils
-                    .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
-            props.putAll(propsFromSys);
-            props = BuildInfoExtractorUtils.stripPrefixFromProperties(props, BUILD_INFO_PROP_PREFIX);
+            Properties props = new Properties();
+            props.putAll(clientConf.info.getBuildVariables());
             builder.properties(props);
             Build build = builder.build();
-            String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
+            String contextUrl = clientConf.getContextUrl();
             String username = clientConf.publisher.getUserName();
             String password = clientConf.publisher.getPassword();
             try {
