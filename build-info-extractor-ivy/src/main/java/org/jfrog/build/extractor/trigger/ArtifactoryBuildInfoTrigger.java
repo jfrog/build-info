@@ -26,16 +26,12 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.util.IvyBuildInfoLog;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 
 /**
  * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
