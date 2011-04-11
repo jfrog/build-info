@@ -416,7 +416,6 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void addMatrixParams(Map<String, String> vars) {
-            String matrixPrefix = getMatrixParamPrefix();
             for (Map.Entry<String, String> entry : vars.entrySet()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
