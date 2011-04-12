@@ -35,6 +35,7 @@ public interface BuildInfoFields {
     String OUTPUT_FILE = "output.file";
     String ENVIRONMENT_PREFIX = "env.";
     String BUILD_RETENTION_DAYS = "buildRetention.daysToKeep";
+    String DELETE_BUILD_ARTIFACTS = "buildRetention.deleteBuildArtifacts";
     String BUILD_RETENTION_MINIMUM_DATE = "buildRetention.minimumDate";
     String RELEASE_ENABLED = "promotion.enabled";
     String RELEASE_COMMENT = "promotion.comment";

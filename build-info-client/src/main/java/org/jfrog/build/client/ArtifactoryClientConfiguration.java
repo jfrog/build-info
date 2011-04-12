@@ -598,6 +598,14 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(BUILD_PARENT_NUMBER);
         }
 
+        public void setDeleteBuildArtifacts(Boolean deleteBuildArtifacts) {
+            setBooleanValue(DELETE_BUILD_ARTIFACTS, deleteBuildArtifacts);
+        }
+
+        public Boolean isDeleteBuildArtifacts() {
+            return getBooleanValue(DELETE_BUILD_ARTIFACTS, true);
+        }
+
         public void setBuildRetentionDays(Integer daysToKeep) {
             setIntegerValue(BUILD_RETENTION_DAYS, daysToKeep);
         }

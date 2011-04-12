@@ -147,7 +147,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         buildInfoBuilder.licenseControl(licenseControl);
-        BuildRetention buildRetention = new BuildRetention();
+        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         Integer count = clientConf.info.getBuildRetentionDays();
         if (count != null) {
             buildRetention.setCount(count);

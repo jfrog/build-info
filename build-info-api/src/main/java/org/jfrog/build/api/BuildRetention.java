@@ -15,6 +15,12 @@ public class BuildRetention implements Serializable{
 
     private Date minimumBuildDate;
 
+    private final boolean deleteBuildArtifacts;
+
+    public BuildRetention(boolean deleteBuildArtifacts) {
+        this.deleteBuildArtifacts = deleteBuildArtifacts;
+    }
+
     public int getCount() {
         return count;
     }
@@ -29,5 +35,9 @@ public class BuildRetention implements Serializable{
 
     public void setMinimumBuildDate(Date minimumBuildDate) {
         this.minimumBuildDate = minimumBuildDate;
+    }
+
+    public boolean isDeleteBuildArtifacts() {
+        return deleteBuildArtifacts;
     }
 }

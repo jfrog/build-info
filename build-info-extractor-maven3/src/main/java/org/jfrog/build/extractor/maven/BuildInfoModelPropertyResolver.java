@@ -71,7 +71,7 @@ public class BuildInfoModelPropertyResolver {
         licenseControl.setScopesList(clientConf.info.licenseControl.getScopes());
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
-        BuildRetention buildRetention = new BuildRetention();
+        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         if (clientConf.info.getBuildRetentionDays() != null) {
             buildRetention.setCount(clientConf.info.getBuildRetentionDays());
         }
