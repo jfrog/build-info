@@ -272,7 +272,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
-        DefaultPublishArtifact artifact = new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null,null, ivyDescriptor);
+        DefaultPublishArtifact artifact =
+                new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
 
@@ -293,7 +294,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
-        DefaultPublishArtifact artifact = new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null,null, mavenDescriptor);
+        DefaultPublishArtifact artifact =
+                new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
 
@@ -337,6 +339,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
             }
             GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
             Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
+            /**
+             * The build-info will be always written to a file in its JSON form.
+             */
+            exportBuildInfo(build, getExportFile(clientConf));
             if (clientConf.publisher.isPublishBuildInfo()) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
@@ -346,12 +352,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 // If export property set always save the file before sending it to artifactory
                 exportBuildInfo(build, getExportFile(clientConf));
                 client.sendBuildInfo(build);
-            } else {
-                /**
-                 * If we do not deploy any artifacts or build-info, the build-info will be written to a file in its
-                 * JSON form.
-                 */
-                exportBuildInfo(build, getExportFile(clientConf));
             }
         } finally {
             client.shutdown();
