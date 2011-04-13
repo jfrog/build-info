@@ -51,7 +51,7 @@ class ArtifactoryPluginConvention {
     }
 
     def resolve(Closure closure) {
-        ConfigureUtil.configure(closure, configuration.resolver)
+        new ResolverConfig(configuration.resolver).config(closure)
     }
 
     def buildInfo(Closure closure) {
