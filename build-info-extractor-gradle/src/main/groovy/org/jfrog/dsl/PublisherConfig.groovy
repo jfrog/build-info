@@ -46,11 +46,6 @@ class PublisherConfig {
         ConfigureUtil.configure(closure, this)
     }
 
-
-    def setBuildInfo(boolean buildinfo) {
-        handler.setPublishBuildInfo(buildinfo)
-    }
-
     def setPublishPom(boolean publishPom) {
         handler.setMaven(publishPom)
     }
