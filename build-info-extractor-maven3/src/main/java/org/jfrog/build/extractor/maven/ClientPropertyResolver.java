@@ -5,10 +5,11 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.ClientConfigurationFields;
 
-import java.util.Properties;
-
-import static org.jfrog.build.client.ClientProperties.*;
+import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL;
+import static org.jfrog.build.client.ClientProperties.PROP_TIMEOUT;
 
 /**
  * @author Noam Y. Tenne
@@ -19,34 +20,37 @@ public class ClientPropertyResolver {
     @Requirement
     private Logger logger;
 
-    public ArtifactoryBuildInfoClient resolveProperties(Properties clientProperties) {
-        ArtifactoryBuildInfoClient client = resolveClientProps(clientProperties);
-        resolveTimeout(clientProperties, client);
-        resolveProxy(clientProperties, client);
+    public ArtifactoryBuildInfoClient resolveProperties(ArtifactoryClientConfiguration clientConf) {
+        ArtifactoryBuildInfoClient client = resolveClientProps(clientConf);
+        resolveTimeout(clientConf, client);
+        resolveProxy(clientConf.proxy, client);
         return client;
     }
 
-    private ArtifactoryBuildInfoClient resolveClientProps(Properties clientProperties) {
-        String contextUrl = clientProperties.getProperty(PROP_CONTEXT_URL);
+    private ArtifactoryBuildInfoClient resolveClientProps(ArtifactoryClientConfiguration clientConf) {
+        String contextUrl = clientConf.getContextUrl();
         if (StringUtils.isBlank(contextUrl)) {
             throw new IllegalArgumentException(
                     "Unable to resolve Artifactory Build Info Client properties: no context URL was found.");
         }
         logResolvedProperty(PROP_CONTEXT_URL, contextUrl);
 
-        String username = clientProperties.getProperty(PROP_PUBLISH_USERNAME);
-        String password = clientProperties.getProperty(PROP_PUBLISH_PASSWORD);
+        String username = clientConf.publisher.getUserName();
+        String password = clientConf.publisher.getPassword();
 
         if (StringUtils.isNotBlank(username)) {
-            logResolvedProperty(PROP_PUBLISH_USERNAME, username);
+            logResolvedProperty(ClientConfigurationFields.USERNAME, username);
             return new ArtifactoryBuildInfoClient(contextUrl, username, password, new Maven3BuildInfoLogger(logger));
         } else {
             return new ArtifactoryBuildInfoClient(contextUrl, new Maven3BuildInfoLogger(logger));
         }
     }
 
-    private void resolveTimeout(Properties clientProperties, ArtifactoryBuildInfoClient client) {
-        String timeout = clientProperties.getProperty(PROP_TIMEOUT);
+    private void resolveTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getTimeout() == null) {
+            return;
+        }
+        String timeout = clientConf.getTimeout().toString();
         if (StringUtils.isNotBlank(timeout)) {
             logResolvedProperty(PROP_TIMEOUT, timeout);
             if (!StringUtils.isNumeric(timeout)) {
@@ -57,25 +61,22 @@ public class ClientPropertyResolver {
         }
     }
 
-    private void resolveProxy(Properties clientProperties, ArtifactoryBuildInfoClient client) {
-        String proxyHost = clientProperties.getProperty(PROP_PROXY_HOST);
+    private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,
+            ArtifactoryBuildInfoClient client) {
+        String proxyHost = proxyConf.getHost();
 
         if (StringUtils.isNotBlank(proxyHost)) {
-            logResolvedProperty(PROP_PROXY_HOST, proxyHost);
-
-            String proxyPort = clientProperties.getProperty(PROP_PROXY_PORT);
-            if (!StringUtils.isNumeric(proxyPort)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client proxy port: value is non-numeric.");
+            logResolvedProperty(ClientConfigurationFields.HOST, proxyHost);
+            if (proxyConf.getPort() == null) {
                 return;
             }
-
-            String proxyUsername = clientProperties.getProperty(PROP_PROXY_USERNAME);
+            String proxyUsername = proxyConf.getUserName();
             if (StringUtils.isNotBlank(proxyUsername)) {
-                logResolvedProperty(PROP_PROXY_USERNAME, proxyUsername);
-                client.setProxyConfiguration(proxyHost, Integer.valueOf(proxyPort), proxyUsername,
-                        clientProperties.getProperty(PROP_PROXY_PASSWORD));
+                logResolvedProperty(ClientConfigurationFields.USERNAME, proxyUsername);
+                client.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,
+                        proxyConf.getPassword());
             } else {
-                client.setProxyConfiguration(proxyHost, Integer.valueOf(proxyPort));
+                client.setProxyConfiguration(proxyHost, proxyConf.getPort());
             }
         }
     }

@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.listener;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.ant.IvyAntSettings;
+import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.StartArtifactPublishEvent;
@@ -15,13 +16,12 @@ import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
@@ -36,8 +36,6 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
-
 
 /**
  * A listener which listens to the {@link Ant} builds, and is invoking different events during the build of {@code Ant}
@@ -46,7 +44,7 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
  * @author Tomer Cohen
  */
 public class ArtifactoryBuildListener extends BuildListenerAdapter {
-    private BuildContext ctx = new BuildContext();
+    private final BuildContext ctx;
     private static boolean isDidDeploy;
     private static final ArtifactoryBuildInfoTrigger DEPENDENCY_TRIGGER = new ArtifactoryBuildInfoTrigger();
     private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger();
@@ -54,6 +52,17 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     public ArtifactoryBuildListener() {
         DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
         PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
+        Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+        ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
+        Properties props = getMergedEnvAndSystemProps();
+        clientConf.fillFromProperties(props);
+        ctx = new BuildContext(clientConf);
+    }
+
+    private Properties getMergedEnvAndSystemProps() {
+        Properties props = new Properties();
+        props.putAll(System.getenv());
+        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
     }
 
     @Override
@@ -104,76 +113,58 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                     .agent(new Agent("Ivy", Ivy.getIvyVersion()));
             // This is here for backwards compatibility.
             builder.type(BuildType.IVY);
-            Properties envProps = new Properties();
-            envProps.putAll(System.getenv());
-            Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(envProps);
-
-            String agentName = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_NAME);
-            String agentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_AGENT_VERSION);
+            ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
+            String agentName = clientConf.info.getAgentName();
+            String agentVersion = clientConf.info.getAgentVersion();
             if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
                 builder.agent(new Agent(agentName, agentVersion));
             }
-            String buildAgentName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_NAME);
-            String buildAgentVersion = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_AGENT_VERSION);
+            String buildAgentName = clientConf.info.getBuildAgentName();
+            String buildAgentVersion = clientConf.info.getBuildAgentVersion();
             if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
                 builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
             }
-            String buildName = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
+            String buildName = clientConf.info.getBuildName();
             if (StringUtils.isNotBlank(buildName)) {
                 builder.name(buildName);
             }
-            String buildNumber = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
+            String buildNumber = clientConf.info.getBuildNumber();
             if (StringUtils.isNotBlank(buildNumber)) {
                 builder.number(buildNumber);
             }
-            String buildUrl = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_URL);
+            String buildUrl = clientConf.info.getBuildUrl();
             if (StringUtils.isNotBlank(buildUrl)) {
                 builder.url(buildUrl);
             }
-            String principal = mergedProps.getProperty(BuildInfoProperties.PROP_PRINCIPAL);
+            String principal = clientConf.info.getPrincipal();
             if (StringUtils.isNotBlank(principal)) {
                 builder.principal(principal);
             }
-            String parentBuildName = mergedProps.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
+            String parentBuildName = clientConf.info.getParentBuildName();
             if (StringUtils.isNotBlank(parentBuildName)) {
                 builder.parentName(parentBuildName);
             }
-            String parentBuildNumber = mergedProps.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
+            String parentBuildNumber = clientConf.info.getParentBuildNumber();
             if (StringUtils.isNotBlank(parentBuildNumber)) {
                 builder.parentNumber(parentBuildNumber);
             }
-            boolean runLicenseChecks = true;
-            String runChecks = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS);
-            if (StringUtils.isNotBlank(runChecks)) {
-                runLicenseChecks = Boolean.parseBoolean(runChecks);
-            }
-            LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-            String notificationRecipients =
-                    mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+            LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
+            String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
             if (StringUtils.isNotBlank(notificationRecipients)) {
                 licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
             }
-            String includePublishedArtifacts =
-                    mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
-            if (StringUtils.isNotBlank(includePublishedArtifacts)) {
-                licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
-            }
-            String scopes = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
+            licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
+            String scopes = clientConf.info.licenseControl.getScopes();
             if (StringUtils.isNotBlank(scopes)) {
                 licenseControl.setScopesList(scopes);
             }
-            String autoDiscover = mergedProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
-            if (StringUtils.isNotBlank(autoDiscover)) {
-                licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
-            }
+            licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
             builder.licenseControl(licenseControl);
-            BuildRetention buildRetention = new BuildRetention();
-            String buildRetentionDays = mergedProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS);
-            if (StringUtils.isNotBlank(buildRetentionDays)) {
-                buildRetention.setCount(Integer.parseInt(buildRetentionDays));
+            BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
+            if (clientConf.info.getBuildRetentionDays() != null) {
+                buildRetention.setCount(clientConf.info.getBuildRetentionDays());
             }
-            String buildRetentionMinimumDays = mergedProps.getProperty(
-                    BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
+            String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
             if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
                 int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
                 if (minimumDays > -1) {
@@ -183,31 +174,23 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                 }
             }
             builder.buildRetention(buildRetention);
-            Properties props = BuildInfoExtractorUtils.getEnvProperties(mergedProps);
-            Properties propsFromSys = BuildInfoExtractorUtils
-                    .filterDynamicProperties(mergedProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
-            props.putAll(propsFromSys);
-            props = BuildInfoExtractorUtils.stripPrefixFromProperties(props, BUILD_INFO_PROP_PREFIX);
+            Properties props = new Properties();
+            props.putAll(clientConf.info.getBuildVariables());
             builder.properties(props);
             Build build = builder.build();
-            String contextUrl = mergedProps.getProperty(ClientProperties.PROP_CONTEXT_URL);
-            String username = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME);
-            String password = mergedProps.getProperty(ClientProperties.PROP_PUBLISH_PASSWORD);
+            String contextUrl = clientConf.getContextUrl();
+            String username = clientConf.publisher.getUserName();
+            String password = clientConf.publisher.getPassword();
             try {
                 ArtifactoryBuildInfoClient client =
                         new ArtifactoryBuildInfoClient(contextUrl, username, password, new IvyBuildInfoLog(project));
-                boolean isDeployArtifacts =
-                        Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT));
-                if (isDeployArtifacts) {
+                if (clientConf.publisher.isPublishArtifacts()) {
                     IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                            mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS),
-                            mergedProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS));
+                            clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
 
                     deployArtifacts(project, client, deployDetails, patterns);
                 }
-                boolean isDeployBuildInfo =
-                        Boolean.parseBoolean(mergedProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
-                if (isDeployBuildInfo) {
+                if (clientConf.publisher.isPublishBuildInfo()) {
                     deployBuildInfo(client, build);
                 }
                 isDidDeploy = true;

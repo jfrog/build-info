@@ -192,9 +192,13 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps) {
-        String propertiesFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
+        String propertiesFilePath = System.getProperty(key);
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
-            propertiesFilePath = additionalProps.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            propertiesFilePath = additionalProps.getProperty(key);
+            if (StringUtils.isBlank(propertiesFilePath)) {
+                propertiesFilePath = System.getenv(key);
+            }
         }
         return propertiesFilePath;
     }

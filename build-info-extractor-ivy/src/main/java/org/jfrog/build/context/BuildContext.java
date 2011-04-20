@@ -3,6 +3,7 @@ package org.jfrog.build.context;
 import org.apache.ivy.core.IvyContext;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 
 import java.util.ArrayList;
@@ -23,12 +24,14 @@ public class BuildContext {
      */
     public static final String CONTEXT_NAME = "artifactory.ant.context";
 
-    private Set<DeployDetails> deployDetails;
-    private List<Module> modules;
-    private List<Dependency> dependencies;
+    private final Set<DeployDetails> deployDetails;
+    private final List<Module> modules;
+    private final List<Dependency> dependencies;
+    private final ArtifactoryClientConfiguration clientConf;
     private long buildStartTime;
 
-    public BuildContext() {
+    public BuildContext(ArtifactoryClientConfiguration clientConf) {
+        this.clientConf = clientConf;
         deployDetails = new HashSet<DeployDetails>();
         modules = new ArrayList<Module>();
         dependencies = new ArrayList<Dependency>();
@@ -57,6 +60,10 @@ public class BuildContext {
 
     public List<Dependency> getDependencies() {
         return dependencies;
+    }
+
+    public ArtifactoryClientConfiguration getClientConf() {
+        return clientConf;
     }
 
     public long getBuildStartTime() {

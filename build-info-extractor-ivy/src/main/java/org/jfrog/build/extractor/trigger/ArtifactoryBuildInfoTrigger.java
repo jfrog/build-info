@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor.trigger;
 
 import com.google.common.base.Predicate;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -18,25 +16,22 @@ import org.apache.ivy.core.report.ResolveReport;
 import org.apache.ivy.plugins.trigger.AbstractTrigger;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Properties;
 
 /**
  * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
@@ -45,6 +40,9 @@ import java.util.Properties;
  * @author Tomer Cohen
  */
 public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
+
+    private static final String MD5 = "MD5";
+    private static final String SHA1 = "SHA1";
 
     public void progress(IvyEvent event) {
         if (EndResolveEvent.NAME.equals(event.getName())) {
@@ -84,17 +82,16 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
                         dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
-
                         dependencyBuilder.id(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
-                            checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+                            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                        String md5 = checksums.get("MD5");
-                        String sha1 = checksums.get("SHA1");
+                        String md5 = checksums.get(MD5);
+                        String sha1 = checksums.get(SHA1);
                         dependencyBuilder.md5(md5).sha1(sha1);
                         moduleDependencies.add(dependencyBuilder.build());
                     } else {
@@ -138,82 +135,65 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("Module location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         String type = map.get("type");
-        String classifier = IvyResolverHelper.getClassifier(artifactFile.getName());
-        Map<String, String> extraAttributes = new HashMap<String, String>();
-        if (StringUtils.isNotBlank(classifier)) {
-            type = type + "-" + classifier;
-            extraAttributes.put("classifier", classifier);
+        Map<String, String> extraAttributes = ((StartArtifactPublishEvent) event).getArtifact().getExtraAttributes();
+        if (extraAttributes.get("classifier") != null) {
+            type = type + "-" + extraAttributes.get("classifier");
         }
         artifactBuilder.type(type);
-        Map<String, String> checksums;
-        try {
-            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "MD5", "SHA1");
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        String md5 = checksums.get("MD5");
-        String sha1 = checksums.get("SHA1");
+        Map<String, String> checksums = calculateFileChecksum(artifactFile);
+        String md5 = checksums.get(MD5);
+        String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
-
-        module.getArtifacts().add(artifactBuilder.build());
-        DeployDetails.Builder builder = new DeployDetails.Builder().file(artifactFile).sha1(sha1).md5(md5);
-        Properties props = getMergedEnvAndSystemProps();
-        String artifactPath = IvyResolverHelper.calculateArtifactPath(props, map, extraAttributes);
-        builder.artifactPath(artifactPath);
-        String targetRepository = IvyResolverHelper.getTargetRepository(props);
-        builder.targetRepository(targetRepository);
-        String svnRevision = props.getProperty("SVN_REVISION");
-        if (StringUtils.isNotBlank(svnRevision)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_VCS_REVISION,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), svnRevision);
-        }
-        String buildName = props.getProperty(BuildInfoProperties.PROP_BUILD_NAME);
-        if (StringUtils.isNotBlank(buildName)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NAME, BuildInfoProperties.BUILD_INFO_PREFIX),
-                    buildName);
-        }
-        String buildNumber = props.getProperty(BuildInfoProperties.PROP_BUILD_NUMBER);
-        if (StringUtils.isNotBlank(buildNumber)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
-        }
-        String buildTimestamp = props.getProperty(BuildInfoProperties.PROP_BUILD_TIMESTAMP);
-        if (StringUtils.isBlank(buildTimestamp)) {
-            buildTimestamp = ctx.getBuildStartTime() + "";
-        }
-        builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_TIMESTAMP,
-                BuildInfoProperties.BUILD_INFO_PREFIX), buildTimestamp);
-
-        if (StringUtils.isNotBlank(buildNumber)) {
-            builder.addProperty(
-                    StringUtils.removeStart(BuildInfoProperties.PROP_BUILD_NUMBER,
-                            BuildInfoProperties.BUILD_INFO_PREFIX), buildNumber);
-        }
-        String parentBuildName = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NAME);
-        if (StringUtils.isNotBlank(parentBuildName)) {
-            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NAME,
-                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildName);
-        }
-        String parentBuildNumber = props.getProperty(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER);
-        if (StringUtils.isNotBlank(parentBuildNumber)) {
-            builder.addProperty(StringUtils.removeStart(BuildInfoProperties.PROP_PARENT_BUILD_NUMBER,
-                    BuildInfoProperties.BUILD_INFO_PREFIX), parentBuildNumber);
-        }
-        Properties matrixParams =
-                BuildInfoExtractorUtils.filterDynamicProperties(props, BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
-        matrixParams = BuildInfoExtractorUtils
-                .stripPrefixFromProperties(matrixParams, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-        ImmutableMap<String, String> propertiesToAdd = Maps.fromProperties(matrixParams);
-        builder.addProperties(propertiesToAdd);
-        DeployDetails deployDetails = builder.build();
+        Artifact artifact = artifactBuilder.build();
+        module.getArtifacts().add(artifact);
+        DeployDetails deployDetails = buildDeployDetails(artifactFile, artifact, ctx, map, extraAttributes);
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();
         if (contextModules.indexOf(module) == -1) {
             ctx.addModule(module);
         }
+    }
+
+    private DeployDetails buildDeployDetails(File artifactFile, Artifact artifact,
+            BuildContext ctx, Map<String, String> map, Map<String, String> extraAttributes) {
+        ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
+        DeployDetails.Builder builder =
+                new DeployDetails.Builder().file(artifactFile).sha1(artifact.getSha1()).md5(artifact.getMd5());
+        builder.artifactPath(
+                IvyResolverHelper.calculateArtifactPath(clientConf.publisher, map, extraAttributes));
+        builder.targetRepository(clientConf.publisher.getRepoKey());
+        if (StringUtils.isNotBlank(clientConf.info.getVcsRevision())) {
+            builder.addProperty(BuildInfoFields.VCS_REVISION, clientConf.info.getVcsRevision());
+        }
+        if (StringUtils.isNotBlank(clientConf.info.getBuildName())) {
+            builder.addProperty(BuildInfoFields.BUILD_NAME, clientConf.info.getBuildName());
+        }
+        if (StringUtils.isNotBlank(clientConf.info.getBuildNumber())) {
+            builder.addProperty(BuildInfoFields.BUILD_NUMBER, clientConf.info.getBuildNumber());
+        }
+        String buildTimestamp = clientConf.info.getBuildTimestamp();
+        if (StringUtils.isBlank(buildTimestamp)) {
+            buildTimestamp = ctx.getBuildStartTime() + "";
+        }
+        builder.addProperty(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
+        if (StringUtils.isNotBlank(clientConf.info.getParentBuildName())) {
+            builder.addProperty(BuildInfoFields.BUILD_PARENT_NAME, clientConf.info.getParentBuildName());
+        }
+        if (StringUtils.isNotBlank(clientConf.info.getParentBuildNumber())) {
+            builder.addProperty(BuildInfoFields.BUILD_PARENT_NUMBER, clientConf.info.getParentBuildNumber());
+        }
+        builder.addProperties(clientConf.publisher.getMatrixParams());
+        return builder.build();
+    }
+
+    private Map<String, String> calculateFileChecksum(File file) {
+        Map<String, String> checksums;
+        try {
+            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return checksums;
     }
 
     private String generateModuleIdFromAttributes(Map<String, String> attributes) {
@@ -234,12 +214,6 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         } catch (NoSuchElementException e) {
             return null;
         }
-    }
-
-    private Properties getMergedEnvAndSystemProps() {
-        Properties props = new Properties();
-        props.putAll(System.getenv());
-        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
     }
 
     private boolean isModuleExists(List<Module> modules, final String moduleName) {

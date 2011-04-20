@@ -33,9 +33,9 @@ public interface BuildInfoExtractor<C, O> {
      * <p/>
      * <li>Export the collected buildInfo according to the type of output O supplied (typically to a file)</li> </ol>
      *
-     * @param context The build context (build technology specific)
-     * @param spec    A specification object for how to execute the extractor
+     * @param buildInfoTask
+     * @param spec          A specification object for how to execute the extractor
      * @return A handle for the exported buildInfo (typically, the path of the exported file)
      */
-    O extract(C context, BuildInfoExtractorSpec spec);
+    O extract(C buildInfoTask, BuildInfoExtractorSpec spec);
 }

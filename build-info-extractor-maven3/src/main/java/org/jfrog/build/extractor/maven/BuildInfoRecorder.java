@@ -34,12 +34,12 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -67,8 +67,6 @@ import java.util.Set;
 @Component(role = BuildInfoRecorder.class)
 public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, Build> {
 
-    public static final String ACTIVATE_RECORDER = "org.jfrog.build.extractor.maven.recorder.activate";
-
     @Requirement
     private Logger logger;
 
@@ -86,15 +84,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ThreadLocal<Map<MavenProject, Boolean>> projectTestFailures = new ThreadLocal<Map<MavenProject, Boolean>>();
 
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
-    private Properties allProps;
+    private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
+
+    // future development
+    private static final boolean ACTIVATE_UNSTABLE = false;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
     }
 
-    public void setAllProps(Properties allProps) {
-        this.allProps = allProps;
+    public void setConfiguration(ArtifactoryClientConfiguration conf) {
+        this.conf = conf;
     }
 
     @Override
@@ -108,15 +109,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionStarted(ExecutionEvent event) {
         projectTestFailures.set(Maps.<MavenProject, Boolean>newHashMap());
         logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, allProps);
+        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
         deployableArtifactBuilderMap = Maps.newHashMap();
         matrixParams = Maps.newHashMap();
-        Properties matrixParamProps = BuildInfoExtractorUtils.filterDynamicProperties(allProps,
-                BuildInfoExtractorUtils.MATRIX_PARAM_PREDICATE);
-        for (Map.Entry<Object, Object> matrixParamProp : matrixParamProps.entrySet()) {
-            String key = (String) matrixParamProp.getKey();
+        Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
+        for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
+            String key = matrixParamProp.getKey();
             key = StringUtils.removeStartIgnoreCase(key, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-            matrixParams.put(key, ((String) matrixParamProp.getValue()));
+            matrixParams.put(key, matrixParamProp.getValue());
         }
 
         if (wrappedListener != null) {
@@ -128,7 +128,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
         if (build != null) {
-            buildDeploymentHelper.deploy(build, isPublishArtifacts(), allProps, deployableArtifactBuilderMap);
+            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap);
         }
         deployableArtifactBuilderMap.clear();
         if (wrappedListener != null) {
@@ -231,12 +231,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        // future devel.
-        /* if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
-            List<File> resultsFile = getSurefireResultsFile(project);
-            boolean failed = isTestsFailed(resultsFile);
-            projectTestFailures.get().put(project, failed);
-        }*/
+        if (ACTIVATE_UNSTABLE) {
+            if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
+                List<File> resultsFile = getSurefireResultsFile(project);
+                boolean failed = isTestsFailed(resultsFile);
+                projectTestFailures.get().put(project, failed);
+            }
+        }
         extractModuleDependencies(project);
 
         if (wrappedListener != null) {
@@ -248,7 +249,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         List<File> surefireReports = Lists.newArrayList();
         File surefireDirectory = new File(new File(project.getFile().getParentFile(), "target"), "surefire-reports");
         String[] xmls = surefireDirectory.list(new FilenameFilter() {
-            @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith("xml");
             }
@@ -356,6 +356,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if (moduleDependencies == null) {
             logger.warn(
                     "Skipping Artifactory Build-Info project dependency extraction: Null current module dependencies.");
+            return;
         }
         Set<Artifact> projectDependencies = project.getArtifacts();
         if (projectDependencies != null) {
@@ -409,7 +410,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             module.addArtifact(artifact);
-            if (artifactFile != null && artifactFile.isFile() && isPublishArtifacts()) {
+            if (isPublishArtifacts(artifactFile)) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
@@ -426,7 +427,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         module.addArtifact(pomArtifact);
-                        if (pomFile != null && pomFile.isFile() && isPublishArtifacts()) {
+                        if (isPublishArtifacts(pomFile)) {
                             addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
                                     artifactId, artifactVersion,
                                     artifactClassifier, "pom");
@@ -435,6 +436,19 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 }
             }
         }
+    }
+
+    private boolean isPublishArtifacts(File fileToDeploy) {
+        if (fileToDeploy == null || !fileToDeploy.isFile()) {
+            return false;
+        }
+        if (!conf.publisher.isPublishArtifacts()) {
+            return false;
+        }
+        if (ACTIVATE_UNSTABLE) {
+            return conf.publisher.isEvenUnstable() || !wereThereTestFailures();
+        }
+        return true;
     }
 
     private boolean wereThereTestFailures() {
@@ -463,21 +477,22 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         String targetRepository = getTargetRepository(deploymentPath);
 
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
-                targetRepository(targetRepository).addProperties(matrixParams).build();
+                targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
 
         deployableArtifactBuilderMap.put(artifact, deployable);
     }
 
     /**
+     * @param deployPath the full path string to extract the repo from
      * @return Return the target deployment repository. Either the releases repository (default) or snapshots if defined
      *         and the deployed file is a snapshot.
      */
     public String getTargetRepository(String deployPath) {
-        String snapshotsRepository = allProps.getProperty(ClientProperties.PROP_PUBLISH_SNAPSHOTS_REPOKEY);
+        String snapshotsRepository = conf.publisher.getSnapshotRepoKey();
         if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
             return snapshotsRepository;
         }
-        return allProps.getProperty(ClientProperties.PROP_PUBLISH_REPOKEY);
+        return conf.publisher.getRepoKey();
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
@@ -529,15 +544,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         MavenSession session = event.getSession();
 
         if (!session.getResult().hasExceptions()) {
-
-            if (Boolean.valueOf(allProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS))) {
-                Properties envProperties = BuildInfoExtractorUtils.getEnvProperties(allProps);
+            if (conf.isIncludeEnvVars()) {
+                Properties envProperties = new Properties();
+                envProperties.putAll(conf.getAllProperties());
+                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
                 for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                     buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
                 }
-
             }
-
             Date finish = new Date();
             long time = finish.getTime() - session.getRequest().getStartTime().getTime();
 
@@ -545,12 +559,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
 
         return null;
-    }
-
-    private boolean isPublishArtifacts() {
-        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT)); /*&&
-                Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_EVEN_UNSTABLE)) &&
-                !wereThereTestFailures();*/
     }
 
     private String getArtifactIdWithoutType(String groupId, String artifactId, String version) {

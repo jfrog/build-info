@@ -23,11 +23,11 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
@@ -37,7 +37,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -52,13 +51,11 @@ public class BuildDeploymentHelper {
     @Requirement
     private ClientPropertyResolver clientPropertyResolver;
 
-    public void deploy(Build build, boolean isPublishArtifacts, Properties allProps,
+    public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
             Map<Artifact, DeployDetails> deployableArtifactBuilders) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
-
-        String outputFile = allProps.getProperty(BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE);
-        logger.debug(
-                "Build Info Recorder: " + BuildInfoProperties.PROP_BUILD_INFO_OUTPUT_FILE + " = " + outputFile);
+        String outputFile = clientConf.getExportFile();
+        logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
         if (StringUtils.isNotBlank(outputFile)) {
             try {
                 logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
@@ -67,18 +64,18 @@ public class BuildDeploymentHelper {
                 throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
             }
         }
-
-        boolean publishBuildInfo = isPublishBuildInfo(allProps);
-        logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_BUILD_INFO + " = " + publishBuildInfo);
-        logger.debug("Build Info Recorder: " + ClientProperties.PROP_PUBLISH_ARTIFACT + " = " + isPublishArtifacts);
-        if (publishBuildInfo || isPublishArtifacts) {
-            ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(allProps);
+        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " +
+                clientConf.publisher.isPublishBuildInfo());
+        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
+        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
+            ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(clientConf);
             try {
-                if (isPublishArtifacts && (deployableArtifacts != null) && !deployableArtifacts.isEmpty()) {
-                    deployArtifacts(allProps, deployableArtifacts, client);
+                if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
+                        !deployableArtifacts.isEmpty()) {
+                    deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
-                if (publishBuildInfo) {
+                if (clientConf.publisher.isPublishBuildInfo()) {
                     try {
                         logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                         client.sendBuildInfo(build);
@@ -113,12 +110,12 @@ public class BuildDeploymentHelper {
         return deployableArtifacts;
     }
 
-    private void deployArtifacts(Properties allProps, Set<DeployDetails> deployableArtifacts,
+    private void deployArtifacts(ArtifactoryClientConfiguration.PublisherHandler publishConf,
+            Set<DeployDetails> deployableArtifacts,
             ArtifactoryBuildInfoClient client) {
-        logger.info("Artifactory Build Info Recorder: Deploying artifacts to " +
-                allProps.getProperty(ClientProperties.PROP_CONTEXT_URL));
+        logger.info("Artifactory Build Info Recorder: Deploying artifacts to " + publishConf.getUrl());
 
-        IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(allProps);
+        IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(publishConf);
         for (DeployDetails artifact : deployableArtifacts) {
             String artifactPath = artifact.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, includeExcludePatterns)) {
@@ -149,12 +146,8 @@ public class BuildDeploymentHelper {
         }
     }
 
-    private boolean isPublishBuildInfo(Properties allProps) {
-        return Boolean.valueOf(allProps.getProperty(ClientProperties.PROP_PUBLISH_BUILD_INFO));
-    }
-
-    private IncludeExcludePatterns getArtifactDeploymentPatterns(Properties allProps) {
-        return new IncludeExcludePatterns(allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_INCLUDE_PATTERNS),
-                allProps.getProperty(ClientProperties.PROP_PUBLISH_ARTIFACT_EXCLUDE_PATTERNS));
+    private IncludeExcludePatterns getArtifactDeploymentPatterns(
+            ArtifactoryClientConfiguration.PublisherHandler publishConf) {
+        return new IncludeExcludePatterns(publishConf.getIncludePatterns(), publishConf.getExcludePatterns());
     }
 }

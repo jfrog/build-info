@@ -9,11 +9,21 @@ import java.util.Date;
  * @author Tomer Cohen
  */
 @XStreamAlias("buildretention")
-public class BuildRetention implements Serializable{
+public class BuildRetention implements Serializable {
 
     private int count = -1;
 
     private Date minimumBuildDate;
+
+    private boolean deleteBuildArtifacts;
+
+    // for json instantiation
+    public BuildRetention() {
+    }
+
+    public BuildRetention(boolean deleteBuildArtifacts) {
+        this.deleteBuildArtifacts = deleteBuildArtifacts;
+    }
 
     public int getCount() {
         return count;
@@ -29,5 +39,13 @@ public class BuildRetention implements Serializable{
 
     public void setMinimumBuildDate(Date minimumBuildDate) {
         this.minimumBuildDate = minimumBuildDate;
+    }
+
+    public void setDeleteBuildArtifacts(boolean deleteBuildArtifacts) {
+        this.deleteBuildArtifacts = deleteBuildArtifacts;
+    }
+
+    public boolean isDeleteBuildArtifacts() {
+        return deleteBuildArtifacts;
     }
 }

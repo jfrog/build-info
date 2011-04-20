@@ -9,13 +9,11 @@ import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,7 +23,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.BuildInfoFields.*;
 
 /**
  * @author Noam Y. Tenne
@@ -36,72 +34,48 @@ public class BuildInfoModelPropertyResolver {
     @Requirement
     private Logger logger;
 
-    public BuildInfoBuilder resolveProperties(ExecutionEvent event, Properties allProps) {
-        Properties buildInfoProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PREDICATE);
 
-        Properties clientProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
+    public BuildInfoBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
+        Map<String, String> buildInfoProps = clientConf.info.getBuildVariables();
+        Properties props = new Properties();
+        props.putAll(buildInfoProps);
+        BuildInfoBuilder builder = resolveCoreProperties(event, clientConf).
+                artifactoryPrincipal(clientConf.publisher.getName()).
+                url(clientConf.publisher.getUrl()).
+                principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
+                clientConf.info.getParentBuildName()).
+                parentNumber(clientConf.info.getParentBuildNumber()).properties(props);
 
-        BuildInfoBuilder builder = resolveCoreProperties(event, allProps).
-                artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME)).
-                url(buildInfoProps.getProperty(PROP_BUILD_URL)).
-                principal(buildInfoProps.getProperty(PROP_PRINCIPAL)).
-                type(BuildType.MAVEN).
-                parentName(buildInfoProps.getProperty(PROP_PARENT_BUILD_NAME)).
-                parentNumber(buildInfoProps.getProperty(PROP_PARENT_BUILD_NUMBER)).
-                properties(gatherBuildInfoProperties(allProps));
-
-        String vcsRevision = buildInfoProps.getProperty(PROP_VCS_REVISION);
+        String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
-            addMatrixParamIfNeeded(allProps, "vcs.revision", vcsRevision);
             builder.vcsRevision(vcsRevision);
         }
-
         BuildAgent buildAgent = new BuildAgent("Maven", getMavenVersion());
         builder.buildAgent(buildAgent);
 
-        String agentName = buildInfoProps.getProperty(PROP_AGENT_NAME);
+        String agentName = clientConf.info.getAgentName();
         if (StringUtils.isBlank(agentName)) {
             agentName = buildAgent.getName();
         }
-        String agentVersion = buildInfoProps.getProperty(PROP_AGENT_VERSION);
+        String agentVersion = clientConf.info.getAgentVersion();
         if (StringUtils.isBlank(agentVersion)) {
             agentVersion = buildAgent.getVersion();
         }
         builder.agent(new Agent(agentName, agentVersion));
-        boolean runLicenseChecks = true;
-        String runChecks = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_RUN_CHECKS);
-        if (StringUtils.isNotBlank(runChecks)) {
-            runLicenseChecks = Boolean.parseBoolean(runChecks);
-        }
-        LicenseControl licenseControl = new LicenseControl(runLicenseChecks);
-        String notificationRecipients =
-                buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_VIOLATION_RECIPIENTS);
+        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
+        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
         if (StringUtils.isNotBlank(notificationRecipients)) {
             licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
         }
-        String includePublishedArtifacts =
-                buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_INCLUDE_PUBLISHED_ARTIFACTS);
-        if (StringUtils.isNotBlank(includePublishedArtifacts)) {
-            licenseControl.setIncludePublishedArtifacts(Boolean.parseBoolean(includePublishedArtifacts));
-        }
-        String scopes = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_SCOPES);
-        if (StringUtils.isNotBlank(scopes)) {
-            licenseControl.setScopesList(scopes);
-        }
-        String autoDiscover = buildInfoProps.getProperty(BuildInfoProperties.PROP_LICENSE_CONTROL_AUTO_DISCOVER);
-        if (StringUtils.isNotBlank(autoDiscover)) {
-            licenseControl.setAutoDiscover(Boolean.parseBoolean(autoDiscover));
-        }
+        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
+        licenseControl.setScopesList(clientConf.info.licenseControl.getScopes());
+        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
-        BuildRetention buildRetention = new BuildRetention();
-        String buildRetentionDays = buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_DAYS);
-        if (StringUtils.isNotBlank(buildRetentionDays)) {
-            buildRetention.setCount(Integer.parseInt(buildRetentionDays));
+        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
+        if (clientConf.info.getBuildRetentionDays() != null) {
+            buildRetention.setCount(clientConf.info.getBuildRetentionDays());
         }
-        String buildRetentionMinimumDays =
-                buildInfoProps.getProperty(BuildInfoProperties.PROP_BUILD_RETENTION_MINIMUM_DATE);
+        String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
         if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
             int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
             if (minimumDays > -1) {
@@ -111,47 +85,34 @@ public class BuildInfoModelPropertyResolver {
             }
         }
         builder.buildRetention(buildRetention);
-        resolveArtifactoryPrincipalProperty(allProps, builder);
+        builder.artifactoryPrincipal(clientConf.publisher.getName());
         return builder;
     }
 
-    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, Properties allProps) {
-        String buildName = allProps.getProperty(PROP_BUILD_NAME);
+    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
+        String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
         }
-        addMatrixParamIfNeeded(allProps, PROP_BUILD_NAME, buildName);
-
-        String buildNumber = allProps.getProperty(PROP_BUILD_NUMBER);
+        String buildNumber = clientConf.info.getBuildNumber();
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = Long.toString(System.currentTimeMillis());
         }
-        addMatrixParamIfNeeded(allProps, PROP_BUILD_NUMBER, buildNumber);
-
         Date buildStartedDate = event.getSession().getRequest().getStartTime();
-
-        String buildStarted = allProps.getProperty(PROP_BUILD_STARTED);
+        String buildStarted = clientConf.info.getBuildStarted();
         if (StringUtils.isBlank(buildStarted)) {
             buildStarted = new SimpleDateFormat(Build.STARTED_FORMAT).format(buildStartedDate);
         }
 
-        String buildTimestamp = allProps.getProperty(PROP_BUILD_TIMESTAMP);
+        String buildTimestamp = clientConf.info.getBuildTimestamp();
         if (StringUtils.isBlank(buildTimestamp)) {
             buildTimestamp = Long.toString(buildStartedDate.getTime());
         }
-        addMatrixParamIfNeeded(allProps, PROP_BUILD_TIMESTAMP, buildTimestamp);
-
-        logResolvedProperty(PROP_BUILD_NAME, buildName);
-        logResolvedProperty(PROP_BUILD_NUMBER, buildNumber);
-        logResolvedProperty(PROP_BUILD_STARTED, buildStarted);
-        logResolvedProperty(PROP_BUILD_TIMESTAMP, buildTimestamp);
+        logResolvedProperty(BUILD_NAME, buildName);
+        logResolvedProperty(BUILD_NUMBER, buildNumber);
+        logResolvedProperty(BUILD_STARTED, buildStarted);
+        logResolvedProperty(BUILD_TIMESTAMP, buildTimestamp);
         return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
-    }
-
-    private void resolveArtifactoryPrincipalProperty(Properties allProps, BuildInfoBuilder builder) {
-        Properties clientProps =
-                BuildInfoExtractorUtils.filterDynamicProperties(allProps, BuildInfoExtractorUtils.CLIENT_PREDICATE);
-        builder.artifactoryPrincipal(clientProps.getProperty(ClientProperties.PROP_PUBLISH_USERNAME));
     }
 
     private String getMavenVersion() {
@@ -180,37 +141,7 @@ public class BuildInfoModelPropertyResolver {
         return version;
     }
 
-    private Properties gatherBuildInfoProperties(Properties allProps) {
-        Properties props = new Properties();
-        props.setProperty("os.arch", System.getProperty("os.arch"));
-        props.setProperty("os.name", System.getProperty("os.name"));
-        props.setProperty("os.version", System.getProperty("os.version"));
-        props.setProperty("java.version", System.getProperty("java.version"));
-        props.setProperty("java.vm.info", System.getProperty("java.vm.info"));
-        props.setProperty("java.vm.name", System.getProperty("java.vm.name"));
-        props.setProperty("java.vm.specification.name", System.getProperty("java.vm.specification.name"));
-        props.setProperty("java.vm.vendor", System.getProperty("java.vm.vendor"));
-
-        Properties propertiesToAttach = BuildInfoExtractorUtils
-                .filterDynamicProperties(allProps, BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
-        for (Map.Entry<Object, Object> propertyToAttach : propertiesToAttach.entrySet()) {
-            String key = StringUtils.removeStart(((String) propertyToAttach.getKey()), BUILD_INFO_PROP_PREFIX);
-            props.setProperty(key, (String) propertyToAttach.getValue());
-        }
-
-        return props;
-    }
-
     private void logResolvedProperty(String key, String value) {
         logger.debug("Artifactory Build Info Model Property Resolver: " + key + " = " + value);
-    }
-
-    private void addMatrixParamIfNeeded(Properties allProps, String propName, String paramValue) {
-        // TODO [by YS]: I don't like doing it here, should encapsulate in an object
-        propName = StringUtils.removeStart(propName, BuildInfoProperties.BUILD_INFO_PREFIX);
-        String matrixParamKey = ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + propName;
-        if (!allProps.containsKey(matrixParamKey)) {
-            allProps.put(matrixParamKey, paramValue);
-        }
     }
 }
