@@ -253,8 +253,7 @@ public class Build extends BaseBuildBean {
      * @param startedDate Build start date to set
      */
     public void setStartedDate(Date startedDate) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
-        this.started = dateFormat.format(startedDate);
+        this.started = formatBuildStarted(startedDate.getTime());
     }
 
     /**
@@ -419,5 +418,16 @@ public class Build extends BaseBuildBean {
 
     public void setStatuses(List<PromotionStatus> statuses) {
         this.statuses = statuses;
+    }
+
+    /**
+     * Formats the timestamp to the ISO date time string format expected by the build info API.
+     *
+     * @param timestamp The build start time timestamp
+     * @return ISO date time formatted string
+     */
+    public static String formatBuildStarted(long timestamp) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
+        return dateFormat.format(timestamp);
     }
 }

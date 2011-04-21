@@ -19,6 +19,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
 
 import java.io.File;
@@ -518,8 +519,12 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(BUILD_TIMESTAMP);
         }
 
-        public void setBuildStarted(String timestamp) {
-            setStringValue(BUILD_STARTED, timestamp);
+        public void setBuildStarted(String isoStarted) {
+            setStringValue(BUILD_STARTED, isoStarted);
+        }
+
+        public void setBuildStarted(long timestamp) {
+            setBuildStarted(Build.formatBuildStarted(timestamp));
         }
 
         public String getBuildStarted() {

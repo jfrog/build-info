@@ -16,14 +16,15 @@
 
 package org.jfrog.build
 
-import org.apache.commons.lang.StringUtils
-import org.apache.ivy.plugins.resolver.DependencyResolver
-import org.apache.ivy.plugins.resolver.IBiblioResolver
-import org.apache.ivy.plugins.resolver.IvyRepResolver
 import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
+
+import org.apache.commons.lang.StringUtils
+import org.apache.ivy.plugins.resolver.DependencyResolver
+import org.apache.ivy.plugins.resolver.IBiblioResolver
+import org.apache.ivy.plugins.resolver.IvyRepResolver
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.jfrog.dsl.ArtifactoryPluginConvention
@@ -44,7 +45,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
     ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
     createBuildInfoTask(project)
     if (!info.configuration.info.buildStarted) {
-      info.configuration.info.buildStarted = "" + System.currentTimeMillis()
+      info.configuration.info.buildStarted = System.currentTimeMillis()
     }
     log.debug("Using Artifactory Plugin for ${project.path}")
     defineResolvers(project, info.configuration.resolver)
