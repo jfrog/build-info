@@ -24,6 +24,7 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
@@ -195,16 +196,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
 
     public Module extractModule(Project project) {
-        String projectName = project.getName();
+        String artifactName = project.getName();
         BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
         if (task != null) {
-            String artifactName = task.getArtifactName();
-            if (StringUtils.isNotBlank(artifactName)) {
-                projectName = clientConf.info.getBuildName();
-            }
+            artifactName = task.getArtifactName();
         }
         ModuleBuilder builder = new ModuleBuilder()
-                .id(project.getGroup() + ":" + projectName + ":" + project.getVersion().toString());
+                .id(project.getGroup() + ":" + artifactName + ":" + project.getVersion().toString());
         try {
             builder.artifacts(calculateArtifacts(project))
                     .dependencies(calculateDependencies(project));
@@ -232,6 +230,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     private Iterable<GradleDeployDetails> getProjectDeployDetails(final Project project) {
         return Iterables.filter(gradleDeployDetails, new Predicate<GradleDeployDetails>() {
+            @Override
             public boolean apply(@Nullable GradleDeployDetails input) {
                 return input.getProject().equals(project);
             }
@@ -239,12 +238,17 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     private List<Dependency> calculateDependencies(Project project) throws Exception {
-        BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
-        Set<Configuration> configurationSet = buildInfoRecorderTask.getPublishConfigurations();
+        Set<Configuration> configurationSet = project.getConfigurations().getAll();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
-            Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
+            Set<ResolvedArtifact> resolvedArtifactSet = null;
+            try {
+                resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
+            } catch (ResolveException e) {
+                log.debug("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
+                continue;
+            }
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 ResolvedDependency resolvedDependency = artifact.getResolvedDependency();
                 /**

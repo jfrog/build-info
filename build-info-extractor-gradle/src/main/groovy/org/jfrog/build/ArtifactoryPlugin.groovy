@@ -16,15 +16,15 @@
 
 package org.jfrog.build
 
-import org.gradle.BuildAdapter
-import org.gradle.api.Plugin
-import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
-
 import org.apache.commons.lang.StringUtils
 import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.apache.ivy.plugins.resolver.IvyRepResolver
+import org.gradle.BuildAdapter
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.invocation.Gradle
+import org.jfrog.build.api.BuildInfoFields
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.jfrog.dsl.ArtifactoryPluginConvention
@@ -94,10 +94,10 @@ class ArtifactoryPlugin implements Plugin<Project> {
   private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
     for (DependencyResolver resolver: allResolvers) {
       if (resolver instanceof IvyRepResolver) {
-        resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + buildRoot + ';'
-        resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + buildRoot + ';'
+        resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+        resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
       } else if (resolver instanceof IBiblioResolver) {
-        resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + buildRoot + ';'
+        resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
       }
     }
   }
