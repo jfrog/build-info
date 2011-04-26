@@ -57,6 +57,10 @@ public class BuildRetention implements Serializable {
         buildNumbersNotToBeDiscarded.add(buildNumber);
     }
 
+    public void setBuildNumbersNotToBeDiscarded(List<String> buildNumbersNotToBeDiscarded) {
+        this.buildNumbersNotToBeDiscarded = buildNumbersNotToBeDiscarded;
+    }
+
     public List<String> getBuildNumbersNotToBeDiscarded() {
         return buildNumbersNotToBeDiscarded;
     }
