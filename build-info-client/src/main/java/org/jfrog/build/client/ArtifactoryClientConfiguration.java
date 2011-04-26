@@ -634,7 +634,7 @@ public class ArtifactoryClientConfiguration {
         public String[] getBuildNumbersNotToDelete() {
             String value = getStringValue(BUILD_NUMBERS_NOT_TO_DELETE);
             if (StringUtils.isNotBlank(value)) {
-                return StringUtils.split(",");
+                return StringUtils.split(value, ",");
             }
             return new String[0];
         }
