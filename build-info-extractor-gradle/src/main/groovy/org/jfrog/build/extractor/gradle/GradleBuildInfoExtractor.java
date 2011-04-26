@@ -89,9 +89,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     public Build extract(Project rootProject, BuildInfoExtractorSpec spec) {
-        BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(clientConf.info.getBuildName());
+        BuildInfoBuilder buildInfoBuilder =
+                new BuildInfoBuilder(clientConf.info.getBuildName()).started(clientConf.info.getBuildStarted());
         Date startedDate = new Date();
-        long startTime = Long.parseLong(clientConf.info.getBuildStarted());
+        long startTime = Long.parseLong(clientConf.info.getBuildTimestamp());
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
