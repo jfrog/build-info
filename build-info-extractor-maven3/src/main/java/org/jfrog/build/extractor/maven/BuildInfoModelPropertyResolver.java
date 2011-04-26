@@ -84,6 +84,10 @@ public class BuildInfoModelPropertyResolver {
                 buildRetention.setMinimumBuildDate(calendar.getTime());
             }
         }
+        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
+        for (String notToDel : notToDelete) {
+            buildRetention.addBuildNotToBeDiscarded(notToDel);
+        }
         builder.buildRetention(buildRetention);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
         return builder;

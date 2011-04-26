@@ -173,6 +173,10 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
                     buildRetention.setMinimumBuildDate(calendar.getTime());
                 }
             }
+            String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
+            for (String notToDel : notToDelete) {
+                buildRetention.addBuildNotToBeDiscarded(notToDel);
+            }
             builder.buildRetention(buildRetention);
             Properties props = new Properties();
             props.putAll(clientConf.info.getBuildVariables());

@@ -163,6 +163,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 buildRetention.setMinimumBuildDate(calendar.getTime());
             }
         }
+        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
+        for (String notToDel : notToDelete) {
+            buildRetention.addBuildNotToBeDiscarded(notToDel);
+        }
         buildInfoBuilder.buildRetention(buildRetention);
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();

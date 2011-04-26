@@ -627,6 +627,18 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(BUILD_RETENTION_MINIMUM_DATE);
         }
 
+        public void setBuildNumbersNotToDelete(String buildNumbersNotToDelete) {
+            setStringValue(BUILD_NUMBERS_NOT_TO_DELETE, buildNumbersNotToDelete);
+        }
+
+        public String[] getBuildNumbersNotToDelete() {
+            String value = getStringValue(BUILD_NUMBERS_NOT_TO_DELETE);
+            if (StringUtils.isNotBlank(value)) {
+                return StringUtils.split(",");
+            }
+            return new String[0];
+        }
+
         public void setReleaseComment(String comment) {
             setStringValue(RELEASE_COMMENT, comment);
         }
