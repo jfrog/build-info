@@ -31,7 +31,7 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
             Logger logger) {
         this.resolverHandler = resolverHandler;
         this.logger = logger;
-        this.url = resolverHandler.getContextUrl() + resolverHandler.getRepoKey();
+        this.url = resolverHandler.getContextUrl() + "/" + resolverHandler.getRepoKey();
         this.username = resolverHandler.getResolveUsername();
         this.password = resolverHandler.getResolvePassword();
         this.buildRoot = resolverHandler.getBuildRoot();
