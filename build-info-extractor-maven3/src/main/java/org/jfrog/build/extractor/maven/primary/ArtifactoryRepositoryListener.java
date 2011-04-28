@@ -55,6 +55,14 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
         ArtifactRepository repository = event.getRepository();
         if (repository instanceof RemoteRepository) {
             logger.debug("Enforcing repository URL: " + url + " for event: " + event);
+            if (StringUtils.isBlank(url)) {
+                return;
+            }
+            if (StringUtils.isBlank(buildRoot)) {
+                ((RemoteRepository) repository).setUrl(url);
+            } else {
+                ((RemoteRepository) repository).setUrl(url + ";" + buildRoot + ";");
+            }
             ((RemoteRepository) repository).setUrl(url + buildRoot);
             if (StringUtils.isNotBlank(username)) {
                 Authentication authentication = new Authentication(username, password);
