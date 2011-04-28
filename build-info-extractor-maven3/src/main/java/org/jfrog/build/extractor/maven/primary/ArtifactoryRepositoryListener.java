@@ -61,7 +61,8 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
             if (StringUtils.isBlank(buildRoot)) {
                 ((RemoteRepository) repository).setUrl(url);
             } else {
-                ((RemoteRepository) repository).setUrl(url + ";" + buildRoot + ";");
+                String newUrl = StringUtils.removeEnd(url, "/");
+                ((RemoteRepository) repository).setUrl(newUrl + ";build.root=" + buildRoot + ";");
             }
             ((RemoteRepository) repository).setUrl(url + buildRoot);
             if (StringUtils.isNotBlank(username)) {
