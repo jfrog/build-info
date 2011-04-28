@@ -64,7 +64,6 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
                 String newUrl = StringUtils.removeEnd(url, "/");
                 ((RemoteRepository) repository).setUrl(newUrl + ";build.root=" + buildRoot + ";");
             }
-            ((RemoteRepository) repository).setUrl(url + buildRoot);
             if (StringUtils.isNotBlank(username)) {
                 Authentication authentication = new Authentication(username, password);
                 logger.debug("Enforcing repository authentication: " + authentication + " for event: " + event);
