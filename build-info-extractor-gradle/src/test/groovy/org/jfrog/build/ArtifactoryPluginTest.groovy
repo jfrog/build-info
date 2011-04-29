@@ -1,6 +1,5 @@
 package org.jfrog.build
 
-import org.gradle.util.HelperUtil
 
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.gradle.BuildListener
@@ -12,6 +11,7 @@ import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
+import org.gradle.testfixtures.ProjectBuilder
 
 /**
  * @author freds
@@ -19,7 +19,7 @@ import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 public class ArtifactoryPluginTest extends Specification {
 
   def nothingApplyPlugin() {
-    Project project = HelperUtil.createRootProject()
+    Project project = ProjectBuilder.builder().build()
     ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
     // Disable resolving
@@ -34,7 +34,7 @@ public class ArtifactoryPluginTest extends Specification {
   }
 
   def resolverApplyPlugin() {
-    Project project = HelperUtil.createRootProject()
+    Project project = ProjectBuilder.builder().build()
     ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
     String rootUrl = 'http://localhost:8081/artifactory/'
@@ -56,7 +56,7 @@ public class ArtifactoryPluginTest extends Specification {
   }
 
   def buildInfoJavaPlugin() {
-    Project project = HelperUtil.createRootProject()
+    Project project = ProjectBuilder.builder().build()
     JavaPlugin javaPlugin = new JavaPlugin()
     ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
@@ -70,7 +70,7 @@ public class ArtifactoryPluginTest extends Specification {
   }
 
   def buildInfoTaskConfiguration() {
-    Project project = HelperUtil.createRootProject()
+    Project project = ProjectBuilder.builder().build()
     JavaPlugin javaPlugin = new JavaPlugin()
     ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
@@ -88,7 +88,7 @@ public class ArtifactoryPluginTest extends Specification {
   }
 
   def buildInfoTaskDependsOn() {
-    Project project = HelperUtil.createRootProject()
+    Project project = ProjectBuilder.builder().build()
     JavaPlugin javaPlugin = new JavaPlugin()
     ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
