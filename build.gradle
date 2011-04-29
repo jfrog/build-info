@@ -232,6 +232,7 @@ project('build-info-extractor-gradle') {
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
         compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         groovy localGroovy()
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.4-groovy-1.7')
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
 
