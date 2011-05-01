@@ -29,7 +29,9 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import org.jfrog.dsl.ArtifactoryPluginConvention
 import org.slf4j.Logger
-import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME
+import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME
+import org.jfrog.build.extractor.gradle.GradlePluginUtils
+import org.jfrog.build.client.ArtifactoryClientConfiguration
 
 class ArtifactoryPlugin implements Plugin<Project> {
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -48,7 +50,6 @@ class ArtifactoryPlugin implements Plugin<Project> {
       info.configuration.info.buildStarted = System.currentTimeMillis()
     }
     log.debug("Using Artifactory Plugin for ${project.path}")
-    defineResolvers(project, info.configuration.resolver)
 
     if (!info.configuration.isBuildListernerAdded()) {
       def gradle = project.getGradle()
@@ -67,45 +68,43 @@ class ArtifactoryPlugin implements Plugin<Project> {
     }
   }
 
-  private void defineResolvers(Project project, ResolverHandler resolverConf) {
-    String downloadId = resolverConf.repoKey
-    if (resolverConf.isEnabled() && StringUtils.isNotBlank(downloadId)) {
-      String artifactoryUrl = resolverConf.contextUrl ?: 'http://gradle.artifactoryonline.com/gradle'
-      while (artifactoryUrl.endsWith("/")) {
-        artifactoryUrl = StringUtils.removeEnd(artifactoryUrl, "/")
-      }
-      def artifactoryDownloadUrl = resolverConf.getDownloadUrl() ?: "${artifactoryUrl}/${downloadId}"
-      log.debug("Artifactory URL: $artifactoryUrl")
-      log.debug("Artifactory Download ID: $downloadId")
-      log.debug("Artifactory Download URL: $artifactoryDownloadUrl")
-      // add artifactory url to the list of repositories
-      project.repositories {
-        mavenRepo urls: [artifactoryDownloadUrl]
-      }
-    } else {
-      log.debug("No repository resolution defined for ${project.path}")
-    }
-    String buildRoot = resolverConf.getBuildRoot()
-    if (StringUtils.isNotBlank(buildRoot)) {
-      injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
-    }
-  }
-
-  private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
-    for (DependencyResolver resolver: allResolvers) {
-      if (resolver instanceof IvyRepResolver) {
-        resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-        resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-      } else if (resolver instanceof IBiblioResolver) {
-        resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-      }
-    }
-  }
 
   private static class ProjectEvaluatedBuildListener extends BuildAdapter {
     def void projectsEvaluated(Gradle gradle) {
+      gradle.rootProject.allprojects.each {
+        ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(it).getConfiguration()
+        defineResolvers(it, configuration.resolver)
+      }
       gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
         it.projectsEvaluated()
+      }
+    }
+
+    private void defineResolvers(Project project, ResolverHandler resolverConf) {
+      String url = resolverConf.getUrl()
+      if (StringUtils.isNotBlank(url)) {
+        log.debug("Artifactory URL: $url")
+        // add artifactory url to the list of repositories
+        project.repositories {
+          mavenRepo urls: [url]
+        }
+      } else {
+        log.debug("No repository resolution defined for ${project.path}")
+      }
+      String buildRoot = resolverConf.getBuildRoot()
+      if (StringUtils.isNotBlank(buildRoot)) {
+        injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
+      }
+    }
+
+    private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+      for (DependencyResolver resolver: allResolvers) {
+        if (resolver instanceof IvyRepResolver) {
+          resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+          resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+        } else if (resolver instanceof IBiblioResolver) {
+          resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+        }
       }
     }
   }

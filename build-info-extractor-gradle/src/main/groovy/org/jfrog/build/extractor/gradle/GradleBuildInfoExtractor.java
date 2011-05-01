@@ -31,7 +31,6 @@ import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.ArtifactoryPluginUtils;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -89,10 +88,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     public Build extract(Project rootProject, BuildInfoExtractorSpec spec) {
+        String buildName = clientConf.info.getBuildName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = rootProject.getName();
+        }
         BuildInfoBuilder buildInfoBuilder =
-                new BuildInfoBuilder(clientConf.info.getBuildName()).started(clientConf.info.getBuildStarted());
+                new BuildInfoBuilder(buildName).started(clientConf.info.getBuildStarted());
         Date startedDate = new Date();
-        long startTime = Long.parseLong(clientConf.info.getBuildTimestamp());
+        long startTime = Long.parseLong(clientConf.info.getBuildStarted());
         startedDate.setTime(startTime);
         buildInfoBuilder.type(BuildType.GRADLE);
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
@@ -102,8 +105,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
             buildInfoBuilder.agent(new Agent(agentName, agentVersion));
         }
+        String buildNumber = clientConf.info.getBuildNumber();
+        if (StringUtils.isBlank(buildNumber)) {
+            buildNumber = new Date().getTime() + "";
+        }
         buildInfoBuilder.durationMillis(System.currentTimeMillis() - startTime)
-                .startedDate(startedDate).number(clientConf.info.getBuildNumber())
+                .startedDate(startedDate).number(buildNumber)
                 .buildAgent(buildAgent);
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
@@ -192,7 +199,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     private BuildInfoRecorderTask getBuildInfoRecorderTask(Project project) {
-        Set<Task> tasks = project.getTasksByName(ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME, false);
+        Set<Task> tasks = project.getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, false);
         if (tasks.isEmpty()) {
             return null;
         }

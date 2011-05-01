@@ -50,7 +50,7 @@ import org.jfrog.build.client.LayoutPatterns;
 import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.logger.GradleClientLogger;
+import org.jfrog.build.extractor.gradle.logger.GradleClientLogger;
 import org.jfrog.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
@@ -59,7 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jfrog.build.ArtifactoryPluginUtils.BUILD_INFO_TASK_NAME;
+import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME;
 
 /**
  * @author Tomer Cohen
@@ -161,7 +161,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     public void projectsEvaluated() {
         Project project = getProject();
-        ArtifactoryPluginConvention convention = getArtifactoryConvention(project);
+        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(project);
         List<Closure> configurationClosures = convention.getProjectDefaultClosures();
         for (Closure closure : configurationClosures) {
             ConfigureUtil.configure(closure, this);
@@ -222,11 +222,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {
-        return getArtifactoryConvention(project).getConfiguration();
-    }
-
-    private ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
-        return project.getRootProject().getConvention().getPlugin(ArtifactoryPluginConvention.class);
+        return GradlePluginUtils.getArtifactoryConvention(project).getConfiguration();
     }
 
     @TaskAction

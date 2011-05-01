@@ -76,8 +76,8 @@ class PublisherConfig {
       handler.setIvyArtifactPattern(artifactLayout)
     }
 
-    def setUrl(String url) {
-      handler.setUrl(url)
+    def setRepoKey(String repoKey) {
+      handler.setRepoKey(repoKey)
     }
 
     def ivy(Closure closure) {

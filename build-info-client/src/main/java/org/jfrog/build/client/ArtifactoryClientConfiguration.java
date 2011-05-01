@@ -285,14 +285,6 @@ public class ArtifactoryClientConfiguration {
             super(root, prefix);
         }
 
-        public void setEnabled(Boolean enabled) {
-            setBooleanValue(ENABLED, enabled);
-        }
-
-        public Boolean isEnabled() {
-            return getBooleanValue(ENABLED);
-        }
-
         public void setUserName(String userName) {
             setStringValue(USERNAME, userName);
         }
@@ -346,7 +338,16 @@ public class ArtifactoryClientConfiguration {
         }
 
         public String getUrl() {
-            return getStringValue(URL);
+            String value = getStringValue(URL);
+            if (StringUtils.isBlank(value)) {
+                String repoKey = getRepoKey();
+                if (StringUtils.isNotBlank(repoKey)) {
+                    String contextUrl = getContextUrl();
+                    contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
+                    return contextUrl + "/" + getRepoKey();
+                }
+            }
+            return value;
         }
 
         public void setRepoKey(String repoKey) {

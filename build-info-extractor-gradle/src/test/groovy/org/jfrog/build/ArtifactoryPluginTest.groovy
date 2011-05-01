@@ -40,10 +40,10 @@ public class ArtifactoryPluginTest extends Specification {
     String rootUrl = 'http://localhost:8081/artifactory/'
     project.setProperty(PROP_CONTEXT_URL, rootUrl)
     project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.REPO_KEY, 'repo')
-    project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.ENABLED, 'true')
     String expectedName = rootUrl + 'repo'
 
     artifactoryPlugin.apply(project)
+    evaluateProject(project)
 
     // TODO: Test the buildSrc project issue
     List libsResolvers = project.repositories.resolvers
@@ -82,7 +82,7 @@ public class ArtifactoryPluginTest extends Specification {
     artifactoryPlugin.apply(project)
 
     BuildInfoRecorderTask buildInfoTask = project.tasks.findByName('buildInfo')
-    evaluateSettings(project)
+    evaluateProject(project)
     expect:
     buildInfoTask.configuration != null
   }
@@ -100,14 +100,14 @@ public class ArtifactoryPluginTest extends Specification {
     artifactoryPlugin.apply(project)
 
     Task buildInfoTask = project.tasks.findByName('buildInfo')
-    evaluateSettings(project)
+    evaluateProject(project)
     expect:
     buildInfoTask.dependsOn != null
     !buildInfoTask.dependsOn.isEmpty()
     buildInfoTask.dependsOn.size() == 1
   }
 
-  private def evaluateSettings(Project project) {
+  private def evaluateProject(Project project) {
     BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
     next.projectsEvaluated(project.getGradle())
   }

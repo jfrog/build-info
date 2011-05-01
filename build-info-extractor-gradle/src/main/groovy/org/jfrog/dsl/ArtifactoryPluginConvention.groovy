@@ -20,7 +20,7 @@ import com.google.common.collect.Lists
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.util.ConfigureUtil
-import org.jfrog.build.ArtifactoryPluginUtils
+import org.jfrog.build.extractor.gradle.GradlePluginUtils
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 
 /**
@@ -33,13 +33,17 @@ class ArtifactoryPluginConvention {
 
   ArtifactoryPluginConvention(Project project) {
     this.logger = project.logger
-    configuration = ArtifactoryPluginUtils.getArtifactoryClientConfiguration(project)
+    configuration = GradlePluginUtils.getArtifactoryClientConfiguration(project)
   }
 
   def artifactory(Closure closure) {
     closure.delegate = this
     closure()
     logger.debug("Artifactory Plugin configured")
+  }
+
+  def setContextUrl(String contextUrl) {
+    configuration.setContextUrl(contextUrl)
   }
 
   def projectDefaults(Closure closure) {

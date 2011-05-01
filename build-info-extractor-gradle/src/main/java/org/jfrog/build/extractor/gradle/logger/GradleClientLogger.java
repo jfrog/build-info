@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.logger;
+package org.jfrog.build.extractor.gradle.logger;
 
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;

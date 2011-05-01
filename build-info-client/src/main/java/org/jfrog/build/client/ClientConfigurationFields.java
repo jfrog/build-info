@@ -26,7 +26,6 @@ public interface ClientConfigurationFields {
     String PASSWORD = "password";
     String RESOLVE_USERNAME = "resolve.username";
     String RESOLVE_PASSWORD = "resolve.password";
-    String ENABLED = "enabled";
     String MAVEN = "maven";
     String IVY = "ivy";
     String IVY_M2_COMPATIBLE = "ivy.m2compatible";
