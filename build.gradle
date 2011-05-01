@@ -301,7 +301,7 @@ ideaProject {
 }
 
 boolean ciBuild() {
-    println System.getenv('buildInfoConfig.propertiesFile') + " " + System.getProperty('buildInfoConfig.propertiesFile')
+    System.out.println(System.getenv('buildInfoConfig.propertiesFile') + " " + System.getProperty('buildInfoConfig.propertiesFile'))
     return System.getenv('buildInfoConfig.propertiesFile') != null ||
             System.getProperty('buildInfoConfig.propertiesFile') != null
 }
