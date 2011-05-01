@@ -1,13 +1,19 @@
 def artifactoryPluginUrl = 'http://repo.jfrog.org/artifactory/libs-releases/org/jfrog/buildinfo/build-info-extractor-gradle/2.0.0/build-info-extractor-gradle-2.0.0-uber.jar'
 
 def file = file(".artifactory-tmp/artifactory-uber.jar")
-if (!file.exists()) {
+if (!file.exists() && !ciBuild()) {
     file.parentFile.mkdirs()
     file << artifactoryPluginUrl.toURL().openStream()
 }
 
 gradle.projectsLoaded {
+    if (ciBuild()) return
     rootProject.allprojects {
         buildscript.dependencies.classpath files(file)
     }
+}
+
+boolean ciBuild() {
+    return System.getenv('buildInfoConfig.propertiesFile') != null ||
+            System.getProperty('buildInfoConfig.propertiesFile') != null
 }
