@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,57 +24,57 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
  */
 class ResolverConfig {
 
-  private ResolverHandler handler;
-  private Repository repository;
+    private ResolverHandler handler;
+    private Repository repository;
 
-  ResolverConfig(ResolverHandler handler) {
-    this.handler = handler
-    this.repository = new Repository()
-  }
-
-  def methodMissing(String name, args) {
-    //println "1: missing method $name"
-    ConfigureUtil.configure(args[0], handler)
-  }
-
-  def propertyMissing(String name, value) {
-    handler[name] = value
-  }
-
-  def config(Closure closure) {
-    ConfigureUtil.configure(closure, this)
-  }
-
-  def repository(Closure closure) {
-    ConfigureUtil.configure(closure, repository)
-  }
-
-  public class Repository {
-
-    def setUsername(String username) {
-      handler.setUserName(username)
+    ResolverConfig(ResolverHandler handler) {
+        this.handler = handler
+        this.repository = new Repository()
     }
 
-    def setPassword(String password) {
-      handler.setPassword(password)
+    def methodMissing(String name, args) {
+        //println "1: missing method $name"
+        ConfigureUtil.configure(args[0], handler)
     }
 
-    def setIvyLayout(String ivyLayout) {
-      handler.setIvyPattern(ivyLayout)
+    def propertyMissing(String name, value) {
+        handler[name] = value
     }
 
-    def setArtifactLayout(String artifactLayout) {
-      handler.setIvyArtifactPattern(artifactLayout)
+    def config(Closure closure) {
+        ConfigureUtil.configure(closure, this)
     }
 
-    def setRepoKey(String repoKey) {
-      handler.setRepoKey(repoKey)
+    def repository(Closure closure) {
+        ConfigureUtil.configure(closure, repository)
     }
 
-    def ivy(Closure closure) {
-      ConfigureUtil.configure(closure, this)
+    public class Repository {
+
+        def setUsername(String username) {
+            handler.setUserName(username)
+        }
+
+        def setPassword(String password) {
+            handler.setPassword(password)
+        }
+
+        def setIvyLayout(String ivyLayout) {
+            handler.setIvyPattern(ivyLayout)
+        }
+
+        def setArtifactLayout(String artifactLayout) {
+            handler.setIvyArtifactPattern(artifactLayout)
+        }
+
+        def setRepoKey(String repoKey) {
+            handler.setRepoKey(repoKey)
+        }
+
+        def ivy(Closure closure) {
+            ConfigureUtil.configure(closure, this)
+        }
     }
-  }
 }
 
 

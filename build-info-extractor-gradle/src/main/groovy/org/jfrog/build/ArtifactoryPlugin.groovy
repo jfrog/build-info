@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,97 +34,97 @@ import org.slf4j.Logger
 import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME
 
 class ArtifactoryPlugin implements Plugin<Project> {
-  private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
-  public static final String ENCODING = "UTF-8"
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
+    public static final String ENCODING = "UTF-8"
 
-  def void apply(Project project) {
-    if ("buildSrc".equals(project.name)) {
-      log.debug("Artifactory Plugin disabled for ${project.path}")
-      return
-    }
-    // First add the build info config task to the root project if needed
-    // Then add the build info task
-    ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
-    createBuildInfoTask(project)
-    if (!info.configuration.info.buildStarted) {
-      info.configuration.info.setBuildStarted(System.currentTimeMillis())
-    }
-    log.debug("Using Artifactory Plugin for ${project.path}")
-
-    if (!info.configuration.isBuildListernerAdded()) {
-      def gradle = project.getGradle()
-      gradle.addBuildListener(new ProjectEvaluatedBuildListener())
-      // Flag the last buildInfo task in the execution graph
-      gradle.getTaskGraph().whenReady {
-        boolean last = true
-        gradle.getTaskGraph().getAllTasks().reverseEach {
-          if (BUILD_INFO_TASK_NAME.equals(it.name)) {
-            it.lastInGraph = last
-            last = false
-          }
+    def void apply(Project project) {
+        if ("buildSrc".equals(project.name)) {
+            log.debug("Artifactory Plugin disabled for ${project.path}")
+            return
         }
-      }
-      info.configuration.setBuildListernerAdded(true)
-    }
-  }
-
-
-  private static class ProjectEvaluatedBuildListener extends BuildAdapter {
-    def void projectsEvaluated(Gradle gradle) {
-      gradle.rootProject.allprojects.each {
-        ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(it).getConfiguration()
-        defineResolvers(it, configuration.resolver)
-      }
-      gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
-        it.projectsEvaluated()
-      }
-    }
-
-    private void defineResolvers(Project project, ResolverHandler resolverConf) {
-      String url = resolverConf.getUrl()
-      if (StringUtils.isNotBlank(url)) {
-        log.debug("Artifactory URL: $url")
-        // add artifactory url to the list of repositories
-        project.repositories {
-          mavenRepo urls: [url]
+        // First add the build info config task to the root project if needed
+        // Then add the build info task
+        ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
+        createBuildInfoTask(project)
+        if (!info.configuration.info.buildStarted) {
+            info.configuration.info.setBuildStarted(System.currentTimeMillis())
         }
-      } else {
-        log.debug("No repository resolution defined for ${project.path}")
-      }
-      String buildRoot = resolverConf.getBuildRoot()
-      if (StringUtils.isNotBlank(buildRoot)) {
-        injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
-      }
-    }
+        log.debug("Using Artifactory Plugin for ${project.path}")
 
-    private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
-      for (DependencyResolver resolver: allResolvers) {
-        if (resolver instanceof IvyRepResolver) {
-          resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-          resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-        } else if (resolver instanceof IBiblioResolver) {
-          resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+        if (!info.configuration.isBuildListernerAdded()) {
+            def gradle = project.getGradle()
+            gradle.addBuildListener(new ProjectEvaluatedBuildListener())
+            // Flag the last buildInfo task in the execution graph
+            gradle.getTaskGraph().whenReady {
+                boolean last = true
+                gradle.getTaskGraph().getAllTasks().reverseEach {
+                    if (BUILD_INFO_TASK_NAME.equals(it.name)) {
+                        it.lastInGraph = last
+                        last = false
+                    }
+                }
+            }
+            info.configuration.setBuildListernerAdded(true)
         }
-      }
     }
-  }
 
-  ArtifactoryPluginConvention getArtifactoryPluginInfo(Project project) {
-    if (project.rootProject.convention.plugins.artifactory == null) {
-      project.rootProject.convention.plugins.artifactory = new ArtifactoryPluginConvention(project)
-    }
-    return project.rootProject.convention.plugins.artifactory
-  }
 
-  BuildInfoRecorderTask createBuildInfoTask(Project project) {
-    BuildInfoRecorderTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
-    if (buildInfo == null) {
-      def isRoot = project.equals(project.getRootProject())
-      log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
-      buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
-      buildInfo.setDescription("Generates build info from build artifacts")
+    private static class ProjectEvaluatedBuildListener extends BuildAdapter {
+        def void projectsEvaluated(Gradle gradle) {
+            gradle.rootProject.allprojects.each {
+                ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(it).getConfiguration()
+                defineResolvers(it, configuration.resolver)
+            }
+            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
+                it.projectsEvaluated()
+            }
+        }
+
+        private void defineResolvers(Project project, ResolverHandler resolverConf) {
+            String url = resolverConf.getUrl()
+            if (StringUtils.isNotBlank(url)) {
+                log.debug("Artifactory URL: $url")
+                // add artifactory url to the list of repositories
+                project.repositories {
+                    mavenRepo urls: [url]
+                }
+            } else {
+                log.debug("No repository resolution defined for ${project.path}")
+            }
+            String buildRoot = resolverConf.getBuildRoot()
+            if (StringUtils.isNotBlank(buildRoot)) {
+                injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
+            }
+        }
+
+        private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+            for (DependencyResolver resolver: allResolvers) {
+                if (resolver instanceof IvyRepResolver) {
+                    resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+                    resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+                } else if (resolver instanceof IBiblioResolver) {
+                    resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+                }
+            }
+        }
     }
-    return buildInfo
-  }
+
+    ArtifactoryPluginConvention getArtifactoryPluginInfo(Project project) {
+        if (project.rootProject.convention.plugins.artifactory == null) {
+            project.rootProject.convention.plugins.artifactory = new ArtifactoryPluginConvention(project)
+        }
+        return project.rootProject.convention.plugins.artifactory
+    }
+
+    BuildInfoRecorderTask createBuildInfoTask(Project project) {
+        BuildInfoRecorderTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        if (buildInfo == null) {
+            def isRoot = project.equals(project.getRootProject())
+            log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
+            buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
+            buildInfo.setDescription("Generates build info from build artifacts")
+        }
+        return buildInfo
+    }
 }
 

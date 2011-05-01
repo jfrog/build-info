@@ -1,18 +1,18 @@
 configurations {
-  spi
+    spi
 }
 
 dependencies {
-  compile project(':shared')
-  compile module("commons-lang:commons-lang:2.4") {
-    dependency("commons-io:commons-io:1.2")
-  }
-  compile group: 'org.apache.wicket', name: 'wicket', version: '1.3.7'
+    compile project(':shared')
+    compile module("commons-lang:commons-lang:2.4") {
+        dependency("commons-io:commons-io:1.2")
+    }
+    compile group: 'org.apache.wicket', name: 'wicket', version: '1.3.7'
 
 }
 
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.

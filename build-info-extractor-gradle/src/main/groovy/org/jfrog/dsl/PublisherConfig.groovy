@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,66 +24,66 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
  */
 class PublisherConfig {
 
-  private PublisherHandler handler;
-  private Repository repository;
+    private PublisherHandler handler;
+    private Repository repository;
 
-  PublisherConfig(PublisherHandler handler) {
-    this.handler = handler
-    this.repository = new Repository()
-  }
-
-  def methodMissing(String name, args) {
-    //println "1: missing method $name"
-    ConfigureUtil.configure(args[0], handler)
-  }
-
-  def propertyMissing(String name, value) {
-    handler[name] = value
-  }
-
-
-  def config(Closure closure) {
-    ConfigureUtil.configure(closure, this)
-  }
-
-  def setPublishPom(boolean publishPom) {
-    handler.setMaven(publishPom)
-  }
-
-  def setPublishIvy(boolean publishIvy) {
-    handler.setIvy(publishIvy)
-  }
-
-  def repository(Closure closure) {
-    ConfigureUtil.configure(closure, repository)
-  }
-
-  public class Repository {
-
-    def setUsername(String username) {
-      handler.setUserName(username)
+    PublisherConfig(PublisherHandler handler) {
+        this.handler = handler
+        this.repository = new Repository()
     }
 
-    def setPassword(String password) {
-      handler.setPassword(password)
+    def methodMissing(String name, args) {
+        //println "1: missing method $name"
+        ConfigureUtil.configure(args[0], handler)
     }
 
-    def setIvyLayout(String ivyLayout) {
-      handler.setIvyPattern(ivyLayout)
+    def propertyMissing(String name, value) {
+        handler[name] = value
     }
 
-    def setArtifactLayout(String artifactLayout) {
-      handler.setIvyArtifactPattern(artifactLayout)
+
+    def config(Closure closure) {
+        ConfigureUtil.configure(closure, this)
     }
 
-    def setRepoKey(String repoKey) {
-      handler.setRepoKey(repoKey)
+    def setPublishPom(boolean publishPom) {
+        handler.setMaven(publishPom)
     }
 
-    def ivy(Closure closure) {
-      ConfigureUtil.configure(closure, this)
+    def setPublishIvy(boolean publishIvy) {
+        handler.setIvy(publishIvy)
     }
-  }
+
+    def repository(Closure closure) {
+        ConfigureUtil.configure(closure, repository)
+    }
+
+    public class Repository {
+
+        def setUsername(String username) {
+            handler.setUserName(username)
+        }
+
+        def setPassword(String password) {
+            handler.setPassword(password)
+        }
+
+        def setIvyLayout(String ivyLayout) {
+            handler.setIvyPattern(ivyLayout)
+        }
+
+        def setArtifactLayout(String artifactLayout) {
+            handler.setIvyArtifactPattern(artifactLayout)
+        }
+
+        def setRepoKey(String repoKey) {
+            handler.setRepoKey(repoKey)
+        }
+
+        def ivy(Closure closure) {
+            ConfigureUtil.configure(closure, this)
+        }
+    }
 }
 
 

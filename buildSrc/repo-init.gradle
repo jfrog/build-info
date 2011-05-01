@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,15 @@ class ArtifactoryGradleSettings extends BuildAdapter implements BuildListener {
             }
             repositories {
                 ivyRepo name: 'gradle-ivy', root: "$artifactoryRoot/wharf"
-/*
-                add (new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
-                    name = "ivy-resolver"
-                    artroot = "$artifactoryRoot/wharf"
-                    ivyroot = "$artifactoryRoot/wharf"
-                    artpattern = "[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
-                    ivypattern = "[organisation]/[module]/ivy-[revision].xml"
-                }
-*/
+                /*
+                                add (new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
+                                    name = "ivy-resolver"
+                                    artroot = "$artifactoryRoot/wharf"
+                                    ivyroot = "$artifactoryRoot/wharf"
+                                    artpattern = "[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"
+                                    ivypattern = "[organisation]/[module]/ivy-[revision].xml"
+                                }
+                */
                 mavenRepo name: 'libs-repo', urls: "$artifactoryRoot/gradle"
             }
         }

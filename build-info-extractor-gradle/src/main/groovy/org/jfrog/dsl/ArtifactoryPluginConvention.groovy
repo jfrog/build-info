@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,43 +27,43 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration
  * @author Tomer Cohen
  */
 class ArtifactoryPluginConvention {
-  private Logger logger
-  ArtifactoryClientConfiguration configuration
-  final List<Closure> projectDefaultClosures = Lists.newArrayList()
+    private Logger logger
+    ArtifactoryClientConfiguration configuration
+    final List<Closure> projectDefaultClosures = Lists.newArrayList()
 
-  ArtifactoryPluginConvention(Project project) {
-    this.logger = project.logger
-    configuration = GradlePluginUtils.getArtifactoryClientConfiguration(project)
-  }
+    ArtifactoryPluginConvention(Project project) {
+        this.logger = project.logger
+        configuration = GradlePluginUtils.getArtifactoryClientConfiguration(project)
+    }
 
-  def artifactory(Closure closure) {
-    closure.delegate = this
-    closure()
-    logger.debug("Artifactory Plugin configured")
-  }
+    def artifactory(Closure closure) {
+        closure.delegate = this
+        closure()
+        logger.debug("Artifactory Plugin configured")
+    }
 
-  def setContextUrl(String contextUrl) {
-    configuration.setContextUrl(contextUrl)
-  }
+    def setContextUrl(String contextUrl) {
+        configuration.setContextUrl(contextUrl)
+    }
 
-  def projectDefaults(Closure closure) {
-    projectDefaultClosures.add(closure)
-  }
+    def projectDefaults(Closure closure) {
+        projectDefaultClosures.add(closure)
+    }
 
-  def publish(Closure closure) {
-    new PublisherConfig(configuration.publisher).config(closure)
-  }
+    def publish(Closure closure) {
+        new PublisherConfig(configuration.publisher).config(closure)
+    }
 
-  def resolve(Closure closure) {
-    new ResolverConfig(configuration.resolver).config(closure)
-  }
+    def resolve(Closure closure) {
+        new ResolverConfig(configuration.resolver).config(closure)
+    }
 
-  def buildInfo(Closure closure) {
-    ConfigureUtil.configure(closure, configuration.info)
-  }
+    def buildInfo(Closure closure) {
+        ConfigureUtil.configure(closure, configuration.info)
+    }
 
-  def proxy(Closure closure) {
-    ConfigureUtil.configure(closure, configuration.proxy)
-  }
+    def proxy(Closure closure) {
+        ConfigureUtil.configure(closure, configuration.proxy)
+    }
 }
 
