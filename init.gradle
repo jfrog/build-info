@@ -1,0 +1,13 @@
+def artifactoryPluginUrl = 'http://repo.jfrog.org/artifactory/libs-releases/org/jfrog/buildinfo/build-info-extractor-gradle/2.0.0/build-info-extractor-gradle-2.0.0-uber.jar'
+
+def file = file(".artifactory-tmp/artifactory-uber.jar")
+if (!file.exists()) {
+    file.parentFile.mkdirs()
+    file << artifactoryPluginUrl.toURL().openStream()
+}
+
+gradle.projectsLoaded {
+    rootProject.allprojects {
+        buildscript.dependencies.classpath files(file)
+    }
+}

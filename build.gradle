@@ -24,14 +24,18 @@ baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor
 
 allprojects {
     apply plugin: 'idea'
+    apply plugin: 'artifactory'
     group = 'org.jfrog.buildinfo'
 }
-if(Boolean.parseBoolean(rootProject.getProperty('build-info-with-plugin'))){
-  artifactory {
+
+artifactory {
+    contextUrl = 'http://repo.jfrog.org/artifactory'
     projectDefaults {
-      publishConfigs('archives', 'published')
+        publishConfigs('archives', 'published')
     }
-  }
+    resolve {
+        repoKey = 'gradle'
+    }
 }
 
 def baseProjects() {
