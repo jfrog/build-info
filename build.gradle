@@ -27,6 +27,12 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 }
 
+artifactory {
+  projectDefaults {
+    publishConfigs('archives', 'published')
+  }
+}
+
 def baseProjects() {
     subprojects.findAll { p -> baseProjectNames.contains(p.name) }
 }
