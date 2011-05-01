@@ -56,6 +56,8 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -92,11 +94,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (StringUtils.isBlank(buildName)) {
             buildName = rootProject.getName();
         }
-        BuildInfoBuilder buildInfoBuilder =
-                new BuildInfoBuilder(buildName).started(clientConf.info.getBuildStarted());
-        Date startedDate = new Date();
-        long startTime = Long.parseLong(clientConf.info.getBuildStarted());
-        startedDate.setTime(startTime);
+        String buildStartedIso = clientConf.info.getBuildStarted();
+        Date buildStartDate;
+        try {
+            buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("Build start date format error: " + buildStartedIso, e);
+        }
+        BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName).started(buildStartedIso);
         buildInfoBuilder.type(BuildType.GRADLE);
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
@@ -109,8 +114,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = new Date().getTime() + "";
         }
-        buildInfoBuilder.durationMillis(System.currentTimeMillis() - startTime)
-                .startedDate(startedDate).number(buildNumber)
+        buildInfoBuilder.durationMillis(System.currentTimeMillis() - buildStartDate.getTime())
+                .started(buildStartedIso).number(buildNumber)
                 .buildAgent(buildAgent);
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
@@ -181,7 +186,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             if (comment == null) {
                 comment = "";
             }
-            buildInfoBuilder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(startedDate)
+            buildInfoBuilder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
                     .comment(comment).repository(stagingRepository)
                     .ciUser(principal).user(artifactoryPrincipal).build());
         }
@@ -242,7 +247,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     private Iterable<GradleDeployDetails> getProjectDeployDetails(final Project project) {
         return Iterables.filter(gradleDeployDetails, new Predicate<GradleDeployDetails>() {
-            @Override
             public boolean apply(@Nullable GradleDeployDetails input) {
                 return input.getProject().equals(project);
             }

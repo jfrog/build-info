@@ -25,13 +25,13 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.api.BuildInfoFields
+import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
+import org.jfrog.build.extractor.gradle.GradlePluginUtils
 import org.jfrog.dsl.ArtifactoryPluginConvention
 import org.slf4j.Logger
 import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME
-import org.jfrog.build.extractor.gradle.GradlePluginUtils
-import org.jfrog.build.client.ArtifactoryClientConfiguration
 
 class ArtifactoryPlugin implements Plugin<Project> {
   private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -47,7 +47,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
     ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
     createBuildInfoTask(project)
     if (!info.configuration.info.buildStarted) {
-      info.configuration.info.buildStarted = System.currentTimeMillis()
+      info.configuration.info.setBuildStarted(System.currentTimeMillis())
     }
     log.debug("Using Artifactory Plugin for ${project.path}")
 
