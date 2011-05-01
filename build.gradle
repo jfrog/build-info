@@ -26,10 +26,11 @@ allprojects {
     apply plugin: 'idea'
     group = 'org.jfrog.buildinfo'
 }
-
-artifactory {
-  projectDefaults {
-    publishConfigs('archives', 'published')
+if(Boolean.parseBoolean(rootProject.getProperty('build-info-with-plugin'))){
+  artifactory {
+    projectDefaults {
+      publishConfigs('archives', 'published')
+    }
   }
 }
 
