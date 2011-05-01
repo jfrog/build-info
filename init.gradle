@@ -7,13 +7,7 @@ if (!file.exists() && !ciBuild()) {
 }
 
 gradle.projectsLoaded {
-    if (ciBuild()) return
     rootProject.allprojects {
         buildscript.dependencies.classpath files(file)
     }
-}
-
-boolean ciBuild() {
-    return System.getenv('buildInfoConfig.propertiesFile') != null ||
-            System.getProperty('buildInfoConfig.propertiesFile') != null
 }

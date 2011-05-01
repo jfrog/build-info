@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 JFrog Ltd.
+ * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,15 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 }
 
-artifactory {
-    contextUrl = 'http://repo.jfrog.org/artifactory'
-    projectDefaults {
-        publishConfigs('archives', 'published')
-    }
-    resolve {
-        repoKey = 'gradle'
+if (!ciBuild()) {
+    artifactory {
+        contextUrl = 'http://repo.jfrog.org/artifactory'
+        projectDefaults {
+            publishConfigs('archives', 'published')
+        }
+        resolve {
+            repoKey = 'gradle'
+        }
     }
 }
 
@@ -296,6 +298,10 @@ ideaProject {
     }
 }
 
+boolean ciBuild() {
+    return System.getenv('buildInfoConfig.propertiesFile') != null ||
+            System.getProperty('buildInfoConfig.propertiesFile') != null
+}
 
 /*task wrapper(type: Wrapper) {
     gradleVersion = '1.0-milestone-1'
