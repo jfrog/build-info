@@ -97,7 +97,11 @@ public class ArtifactoryClientConfiguration {
     }
 
     public String getContextUrl() {
-        return root.getStringValue(PROP_CONTEXT_URL);
+        String value = root.getStringValue(PROP_CONTEXT_URL);
+        if (StringUtils.isBlank(value)) {
+            throw new IllegalStateException("Context URL cannot be empty");
+        }
+        return value;
     }
 
     public void setContextUrl(String contextUrl) {
