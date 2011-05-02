@@ -136,16 +136,28 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return ivyDescriptor;
     }
 
-    public void setIvyDescriptor(File ivyDescriptor) {
-        this.ivyDescriptor = ivyDescriptor;
+    public void setIvyDescriptor(Object ivyDescriptor) {
+        if (ivyDescriptor instanceof File) {
+            this.ivyDescriptor = (File) ivyDescriptor;
+        } else if (ivyDescriptor instanceof CharSequence) {
+            this.ivyDescriptor = new File(ivyDescriptor.toString());
+        } else{
+            log.info("Unknown ivy descriptor: " + ivyDescriptor);
+        }
     }
 
     public File getMavenDescriptor() {
         return mavenDescriptor;
     }
 
-    public void setMavenDescriptor(File mavenDescriptor) {
-        this.mavenDescriptor = mavenDescriptor;
+    public void setMavenDescriptor(Object mavenDescriptor) {
+        if (mavenDescriptor instanceof File) {
+            this.mavenDescriptor = (File) mavenDescriptor;
+        } else if (mavenDescriptor instanceof CharSequence) {
+            this.mavenDescriptor = new File(mavenDescriptor.toString());
+        } else {
+            log.info("Unknown maven descriptor: " + mavenDescriptor);
+        }
     }
 
     public String getArtifactName() {
