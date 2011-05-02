@@ -23,7 +23,6 @@ version = '2'
 baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor']
 
 allprojects {
-    apply plugin: 'artifactory'
     apply plugin: 'idea'
     group = 'org.jfrog.buildinfo'
 }
@@ -110,6 +109,7 @@ subprojects {
     }
 
     install {
+        configuration = configurations.published
         dependsOn: jar
         dependsOn: sourceJar
     }
