@@ -98,6 +98,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 Configuration projectConf = getProject().getConfigurations().findByName(conf.toString());
                 if (projectConf != null) {
                     publishConfigurations.add(projectConf);
+                } else {
+                    log.info("Unknown configuration: " + conf);
                 }
             } else if (conf instanceof Configuration) {
                 publishConfigurations.add((Configuration) conf);
