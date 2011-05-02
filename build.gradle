@@ -24,7 +24,7 @@ baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor
 
 allprojects {
     apply plugin: 'idea'
-    apply plugin: 'artifactory'
+    //apply plugin: 'artifactory'
     group = 'org.jfrog.buildinfo'
 }
 
