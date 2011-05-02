@@ -23,9 +23,7 @@ version = '2'
 baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor']
 
 allprojects {
-    if (!ciBuild()) {
-        apply plugin: 'artifactory'
-    }
+    apply plugin: 'artifactory'
     apply plugin: 'idea'
     group = 'org.jfrog.buildinfo'
 }
@@ -38,6 +36,12 @@ if (!ciBuild()) {
         }
         resolve {
             repoKey = 'gradle'
+        }
+    }
+} else {
+    artifactory {
+        projectDefaults {
+            publishConfigs('archives', 'published')
         }
     }
 }
@@ -94,9 +98,15 @@ subprojects {
             }
         }
     }
-    task sourceJar(type: Jar, dependsOn: jar) {
+
+    task sourceJar(type: Jar) {
         from sourceSets.main.allSource
         classifier = 'sources'
+    }
+
+    // Add the sourceJars to non-extractor modules
+    artifacts {
+        published sourceJar
     }
 
     install {
@@ -114,10 +124,6 @@ configure(baseProjects()) {
     }
     test.useTestNG()
 
-    // Add the sourceJars to non-extractor modules
-    artifacts {
-        published sourceJar
-    }
 }
 
 // Create configurations for the extractor projects
@@ -172,8 +178,7 @@ configure(extractorProjects()) {
 
     // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
     artifacts {
-        archives jarAll
-        published sourceJar
+        published jarAll
     }
 
     // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope
