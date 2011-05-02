@@ -343,8 +343,10 @@ public class ArtifactoryClientConfiguration {
                 String repoKey = getRepoKey();
                 if (StringUtils.isNotBlank(repoKey)) {
                     String contextUrl = getContextUrl();
-                    contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
-                    return contextUrl + "/" + getRepoKey();
+                    if(StringUtils.isNotBlank(contextUrl)){
+                        contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
+                        return contextUrl + "/" + getRepoKey();
+                    }
                 }
             }
             return value;
