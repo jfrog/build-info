@@ -73,6 +73,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
         def void projectsEvaluated(Gradle gradle) {
             gradle.rootProject.allprojects.each {
                 ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(it).getConfiguration()
+                GradlePluginUtils.fillArtifactoryClientConfiguration(configuration, it)
                 defineResolvers(it, configuration.resolver)
             }
             gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {

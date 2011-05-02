@@ -22,7 +22,6 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.gradle.logger.GradleClientLogger;
 import org.jfrog.dsl.ArtifactoryPluginConvention;
 
 import javax.annotation.Nullable;
@@ -42,18 +41,18 @@ public class GradlePluginUtils {
     public static final String BUILD_INFO_TASK_NAME = "buildInfo";
 
     /**
-     * Returns a new client configuration handler object out of a Gradle project. This method will aggregate the
-     * properties in our defined hierarchy.<br/> <ol><li>First search for the property as a system property, if found
-     * return it.</li> <li>Second search for the property in the Gradle {@link org.gradle.StartParameter#getProjectProperties}
-     * container and if found there, then return it.</li> <li>Third search for the property in {@link
+     * Returns a  configuration handler object out of a Gradle project. This method will aggregate the properties in our
+     * defined hierarchy.<br/> <ol><li>First search for the property as a system property, if found return it.</li>
+     * <li>Second search for the property in the Gradle {@link org.gradle.StartParameter#getProjectProperties} container
+     * and if found there, then return it.</li> <li>Third search for the property in {@link
      * org.gradle.api.Project#property(String)}</li> <li>if not found, search upwards in the project hierarchy until
      * reach the root project.</li> <li> if not found at all in this hierarchy return null</li></ol>
      *
      * @param project the gradle project with properties for build info client configuration (Usually in start parameter
      *                from CI Server)
-     * @return a new client configuration for this project
      */
-    public static ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {
+    public static void fillArtifactoryClientConfiguration(ArtifactoryClientConfiguration configuration,
+            Project project) {
         Properties props = new Properties();
         // First aggregate properties from parent to child
         fillProperties(project, props);
@@ -68,10 +67,7 @@ public class GradlePluginUtils {
         buildInfoProperties =
                 BuildInfoExtractorUtils.stripPrefixFromProperties(buildInfoProperties, BUILD_INFO_PROP_PREFIX);
         props.putAll(buildInfoProperties);
-        ArtifactoryClientConfiguration result =
-                new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()));
-        result.fillFromProperties(mergedProps);
-        return result;
+        configuration.fillFromProperties(mergedProps);
     }
 
     private static void fillProperties(Project project, Properties props) {
