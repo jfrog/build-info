@@ -238,12 +238,15 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private void uploadDescriptorsAndArtifacts(Set<GradleDeployDetails> allDeployableDetails) throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
         allDeployableDetails.addAll(deployDetailsFromProject);
-        if (ivyDescriptor != null && ivyDescriptor.exists()) {
-            allDeployableDetails.add(getIvyDescriptorDeployDetails());
-        }
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        if (clientConf.publisher.isPublishArtifacts()) {
+            if (ivyDescriptor != null && ivyDescriptor.exists()) {
+                allDeployableDetails.add(getIvyDescriptorDeployDetails());
+            }
 
-        if (mavenDescriptor != null && mavenDescriptor.exists()) {
-            allDeployableDetails.add(getMavenDeployDetails());
+            if (mavenDescriptor != null && mavenDescriptor.exists()) {
+                allDeployableDetails.add(getMavenDeployDetails());
+            }
         }
     }
 
@@ -401,6 +404,9 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private Set<GradleDeployDetails> getDeployArtifactsProject() {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
+        if (!clientConf.publisher.isPublishArtifacts()) {
+            return deployDetails;
+        }
         if (!hasConfigurations()) {
             return deployDetails;
         }
