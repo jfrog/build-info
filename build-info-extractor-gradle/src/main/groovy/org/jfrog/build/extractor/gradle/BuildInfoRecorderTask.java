@@ -33,7 +33,6 @@ import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
@@ -141,16 +140,18 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setIvyDescriptor(Object ivyDescriptor) {
-        if (ivyDescriptor instanceof File) {
-            this.ivyDescriptor = (File) ivyDescriptor;
-        } else if (ivyDescriptor instanceof CharSequence) {
-            if (FileUtils.isAbsolutePath(ivyDescriptor.toString())) {
-                this.ivyDescriptor = new File(ivyDescriptor.toString());
+        if (this.ivyDescriptor == null) {
+            if (ivyDescriptor instanceof File) {
+                this.ivyDescriptor = (File) ivyDescriptor;
+            } else if (ivyDescriptor instanceof CharSequence) {
+                if (FileUtils.isAbsolutePath(ivyDescriptor.toString())) {
+                    this.ivyDescriptor = new File(ivyDescriptor.toString());
+                } else {
+                    this.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
+                }
             } else {
-                this.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
+                log.info("Unknown ivy descriptor: " + ivyDescriptor);
             }
-        } else{
-            log.info("Unknown ivy descriptor: " + ivyDescriptor);
         }
     }
 
@@ -159,16 +160,18 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setMavenDescriptor(Object mavenDescriptor) {
-        if (mavenDescriptor instanceof File) {
-            this.mavenDescriptor = (File) mavenDescriptor;
-        } else if (mavenDescriptor instanceof CharSequence) {
-            if (FileUtils.isAbsolutePath(mavenDescriptor.toString())) {
-                this.mavenDescriptor = new File(mavenDescriptor.toString());
+        if (this.mavenDescriptor == null) {
+            if (mavenDescriptor instanceof File) {
+                this.mavenDescriptor = (File) mavenDescriptor;
+            } else if (mavenDescriptor instanceof CharSequence) {
+                if (FileUtils.isAbsolutePath(mavenDescriptor.toString())) {
+                    this.mavenDescriptor = new File(mavenDescriptor.toString());
+                } else {
+                    this.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
+                }
             } else {
-                this.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
+                log.info("Unknown maven descriptor: " + mavenDescriptor);
             }
-        } else {
-            log.info("Unknown maven descriptor: " + mavenDescriptor);
         }
     }
 
