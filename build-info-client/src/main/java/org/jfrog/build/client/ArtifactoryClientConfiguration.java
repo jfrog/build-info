@@ -433,7 +433,8 @@ public class ArtifactoryClientConfiguration {
                 props.put(matrixParamPrefix + key, value);
             }
         }
-
+        
+        // INTERNAL METHOD
         public void addMatrixParams(Map<String, String> vars) {
             for (Map.Entry<String, String> entry : vars.entrySet()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
