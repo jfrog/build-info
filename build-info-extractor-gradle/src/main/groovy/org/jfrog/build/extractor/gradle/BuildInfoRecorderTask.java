@@ -16,7 +16,9 @@
 
 package org.jfrog.build.extractor.gradle;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
@@ -80,15 +82,22 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private Set<Configuration> publishConfigurations = Sets.newHashSet();
 
     private boolean lastInGraph = false;
-
-    private final Map<String, String> props = Maps.newHashMap();
+    private final Multimap<String, String> props = HashMultimap.create();
+    private Map<String, String> propsToAdd;
 
     public void setLastInGraph(boolean lastInGraph) {
         this.lastInGraph = lastInGraph;
     }
 
     public void setProperties(Map<String, String> props) {
-        this.props.putAll(props);
+        if (props == null) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : props.entrySet()) {
+            if (StringUtils.isNotBlank(entry.getKey())) {
+                this.props.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     public void publishConfigs(Object... confs) {
@@ -255,7 +264,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     private void uploadDescriptorsAndArtifacts(Set<GradleDeployDetails> allDeployableDetails) throws IOException {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
-        props.putAll(clientConf.publisher.getMatrixParams());
+        Map<String, String> params = clientConf.publisher.getMatrixParams();
+        for (Map.Entry<String, String> entry : params.entrySet()) {
+            if (StringUtils.isNotBlank(entry.getKey())) {
+                props.put(entry.getKey(), entry.getValue());
+            }
+        }
         Set<GradleDeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (clientConf.publisher.isPublishArtifacts()) {
@@ -289,7 +303,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        artifactBuilder.addProperties(props);
+        Map<String, String> propsToAdd = getPropsToAdd();
+        artifactBuilder.addProperties(propsToAdd);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
@@ -311,7 +326,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        artifactBuilder.addProperties(props);
+        Map<String, String> propsToAdd = getPropsToAdd();
+        artifactBuilder.addProperties(propsToAdd);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
@@ -458,11 +474,30 @@ public class BuildInfoRecorderTask extends DefaultTask {
                         publishArtifact.getExtension(), configuration.getName(),
                         extraTokens, null));
                 artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                artifactBuilder.addProperties(props);
+                Map<String, String> propsToAdd = getPropsToAdd();
+                artifactBuilder.addProperties(propsToAdd);
                 DeployDetails details = artifactBuilder.build();
                 deployDetails.add(new GradleDeployDetails(publishArtifact, details, getProject()));
             }
         }
         return deployDetails;
+    }
+
+    private Map<String, String> getPropsToAdd() {
+        if (this.propsToAdd == null) {
+            this.propsToAdd = Maps.newHashMap();
+            for (Map.Entry<String, String> entry : props.entries()) {
+                if (!this.propsToAdd.containsKey(entry.getKey())) {
+                    this.propsToAdd.put(entry.getKey(), entry.getValue());
+                } else {
+                    String value = this.propsToAdd.get(entry.getKey());
+                    value = value + ", " + entry.getValue();
+                    this.propsToAdd.put(entry.getKey(), value);
+                }
+            }
+            ArtifactoryClientConfiguration configuration = getArtifactoryClientConfiguration(getProject());
+            propsToAdd.putAll(configuration.publisher.getMatrixParams());
+        }
+        return propsToAdd;
     }
 }
