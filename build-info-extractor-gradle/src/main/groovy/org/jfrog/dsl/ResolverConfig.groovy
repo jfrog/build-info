@@ -18,6 +18,7 @@ package org.jfrog.dsl
 
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
+import java.lang.reflect.Method
 
 /**
  * @author Tomer Cohen
@@ -34,7 +35,9 @@ class ResolverConfig {
 
     def methodMissing(String name, args) {
         //println "1: missing method $name"
-        ConfigureUtil.configure(args[0], handler)
+        Method[] methods = handler.getClass().getMethods()
+        def method = methods.find {it.name.matches(name)}
+        method.invoke(handler, args[0])
     }
 
     def propertyMissing(String name, value) {
