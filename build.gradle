@@ -31,7 +31,7 @@ allprojects {
 if (!ciBuild()) {
     artifactory {
         contextUrl = 'http://repo.jfrog.org/artifactory'
-        projectDefaults {
+        projectPublish {
             publishConfigs('archives', 'published')
         }
         resolve {
