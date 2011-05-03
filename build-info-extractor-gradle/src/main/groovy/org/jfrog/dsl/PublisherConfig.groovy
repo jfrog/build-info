@@ -83,6 +83,10 @@ class PublisherConfig {
             handler.setRepoKey(repoKey)
         }
 
+        def setMavenCompatible(boolean mavenCompatible) {
+            handler.setM2Compatible(mavenCompatible)
+        }
+
         def ivy(Closure closure) {
             ConfigureUtil.configure(closure, this)
         }
