@@ -423,6 +423,9 @@ public class ArtifactoryClientConfiguration {
         public abstract String getMatrixParamPrefix();
 
         public void addMatrixParam(String key, String value) {
+            if (StringUtils.isBlank(key)) {
+                return;
+            }
             String matrixParamPrefix = getMatrixParamPrefix();
             if (key.startsWith(matrixParamPrefix)) {
                 props.put(key, value);
