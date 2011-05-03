@@ -80,10 +80,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Optional
     private Set<Configuration> publishConfigurations = Sets.newHashSet();
 
-    @Input
-    @Optional
-    private String artifactName;
-
     private boolean lastInGraph = false;
 
     public void setLastInGraph(boolean lastInGraph) {
@@ -176,16 +172,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
     }
 
-    public String getArtifactName() {
-        if (artifactName == null) {
-            return getProject().getName();
-        }
-        return artifactName;
-    }
-
-    public void setArtifactName(String artifactName) {
-        this.artifactName = artifactName;
-    }
 
     public void projectsEvaluated() {
         Project project = getProject();
@@ -295,7 +281,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
             gid = gid.replace(".", "/");
         }
         artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(clientConf.publisher.getIvyPattern(), gid, getArtifactName(),
+                .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
@@ -317,7 +303,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
         // for pom files always enforce the M2 pattern
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
-                getProject().getGroup().toString().replace(".", "/"), getArtifactName(),
+                getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
@@ -463,7 +449,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
                     extraTokens.put("classifier", publishArtifact.getClassifier());
                 }
-                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getArtifactName(),
+                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getProject().getName(),
                         revision, publishArtifact.getName(), publishArtifact.getType(),
                         publishArtifact.getExtension(), configuration.getName(),
                         extraTokens, null));
