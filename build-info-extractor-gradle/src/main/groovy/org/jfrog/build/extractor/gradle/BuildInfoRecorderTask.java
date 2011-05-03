@@ -35,12 +35,7 @@ import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.Upload;
+import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -81,8 +76,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Optional
     private Set<Configuration> publishConfigurations = Sets.newHashSet();
 
+    @Input
+    private final Multimap<String, String> properties = HashMultimap.create();
+
     private boolean lastInGraph = false;
-    private final Multimap<String, String> props = HashMultimap.create();
+
     private Map<String, String> propsToAdd;
 
     public void setLastInGraph(boolean lastInGraph) {
@@ -90,12 +88,17 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setProperties(Map<String, String> props) {
-        if (props == null) {
+        if (props == null || props.isEmpty()) {
             return;
         }
         for (Map.Entry<String, String> entry : props.entrySet()) {
-            if (StringUtils.isNotBlank(entry.getKey())) {
-                this.props.put(entry.getKey(), entry.getValue());
+            String key = entry.getKey();
+            if (StringUtils.isNotBlank(key)) {
+                String value = entry.getValue();
+                if (value != null) {
+                    // Make sure all GString are now Java Strings
+                    this.properties.put(key.toString(), value.toString());
+                }
             }
         }
     }
@@ -267,7 +270,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         Map<String, String> params = clientConf.publisher.getMatrixParams();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (StringUtils.isNotBlank(entry.getKey())) {
-                props.put(entry.getKey(), entry.getValue());
+                properties.put(entry.getKey(), entry.getValue());
             }
         }
         Set<GradleDeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
@@ -486,13 +489,15 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private Map<String, String> getPropsToAdd() {
         if (this.propsToAdd == null) {
             this.propsToAdd = Maps.newHashMap();
-            for (Map.Entry<String, String> entry : props.entries()) {
-                if (!this.propsToAdd.containsKey(entry.getKey())) {
-                    this.propsToAdd.put(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, String> entry : properties.entries()) {
+                // Make sure all GString are now Java Strings
+                String key = entry.getKey().toString();
+                String value = entry.getValue().toString();
+                if (!this.propsToAdd.containsKey(key)) {
+                    this.propsToAdd.put(key, value);
                 } else {
-                    String value = this.propsToAdd.get(entry.getKey());
-                    value = value + ", " + entry.getValue();
-                    this.propsToAdd.put(entry.getKey(), value);
+                    value = this.propsToAdd.get(key) + ", " + value;
+                    this.propsToAdd.put(key, value);
                 }
             }
             ArtifactoryClientConfiguration configuration = getArtifactoryClientConfiguration(getProject());

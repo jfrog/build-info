@@ -24,25 +24,20 @@ baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor
 
 allprojects {
     apply plugin: 'idea'
-    //apply plugin: 'artifactory'
+    if (!ciBuild()) {
+        apply plugin: 'artifactory'
+    }
     group = 'org.jfrog.buildinfo'
 }
 
-if (!ciBuild()) {
-    artifactory {
-        contextUrl = 'http://repo.jfrog.org/artifactory'
-        projectPublish {
-            publishConfigs('archives', 'published')
-        }
-        resolve {
-            repoKey = 'gradle'
-        }
+artifactory {
+    contextUrl = 'http://repo.jfrog.org/artifactory'
+    projectPublish {
+        publishConfigs('archives', 'published')
+        properties = ['build.status': "$it.project.status".toString()]
     }
-} else {
-    artifactory {
-        projectPublish {
-            publishConfigs('archives', 'published')
-        }
+    resolve {
+        repoKey = 'gradle'
     }
 }
 
@@ -62,9 +57,7 @@ subprojects {
     buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {
-        published {
-            extendsFrom archives
-        }
+        published
     }
 
     dependencies {

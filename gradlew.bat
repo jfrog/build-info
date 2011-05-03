@@ -103,12 +103,11 @@ set CMD_LINE_ARGS=%$
 set STARTER_MAIN_CLASS=org.gradle.wrapper.GradleWrapperMain
 set CLASSPATH=%DIRNAME%\gradle\wrapper\gradle-wrapper.jar
 set WRAPPER_PROPERTIES=%DIRNAME%\gradle\wrapper\gradle-wrapper.properties
-set REPO_INIT_SCRIPT=%DIRNAME%\buildSrc\repo-init.gradle
 set JAVA_EXE=%JAVA_HOME%\bin\java.exe
 
 set GRADLE_OPTS=%JAVA_OPTS% %GRADLE_OPTS% -Dorg.gradle.wrapper.properties="%WRAPPER_PROPERTIES%"
 
-"%JAVA_EXE%" %GRADLE_OPTS% -classpath "%CLASSPATH%" %STARTER_MAIN_CLASS% --wharf --init-script %REPO_INIT_SCRIPT% %CMD_LINE_ARGS%
+"%JAVA_EXE%" %GRADLE_OPTS% -classpath "%CLASSPATH%" %STARTER_MAIN_CLASS% %CMD_LINE_ARGS%
 
 :end
 @rem End local scope for the variables with windows NT shell

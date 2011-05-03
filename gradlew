@@ -144,6 +144,4 @@ GRADLE_APP_BASE_NAME=`basename "$0"`
         -Dorg.gradle.appname="$GRADLE_APP_BASE_NAME" \
         -Dorg.gradle.wrapper.properties="$WRAPPER_PROPERTIES" \
         $STARTER_MAIN_CLASS \
-        --wharf \
-	--init-script "$REPO_INIT_SCRIPT" \
         "$@"
