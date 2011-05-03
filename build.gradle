@@ -40,7 +40,7 @@ if (!ciBuild()) {
     }
 } else {
     artifactory {
-        projectDefaults {
+        projectPublish {
             publishConfigs('archives', 'published')
         }
     }
