@@ -90,6 +90,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
         this.lastInGraph = lastInGraph;
     }
 
+    public void setProperties(Map<String, String> props) {
+        ArtifactoryClientConfiguration configuration = getArtifactoryClientConfiguration(getProject());
+        configuration.publisher.addMatrixParams(props);
+    }
+
     public void publishConfigs(Object... confs) {
         if (confs == null) {
             return;
