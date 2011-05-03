@@ -30,6 +30,7 @@ public interface ClientConfigurationFields {
     String IVY = "ivy";
     String IVY_M2_COMPATIBLE = "ivy.m2compatible";
     String IVY_ART_PATTERN = "ivy.artPattern";
+    String IVY_REPO_DEFINED = "ivy.repo.defined";
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
     String URL = "url";
     String REPO_KEY = "repoKey";

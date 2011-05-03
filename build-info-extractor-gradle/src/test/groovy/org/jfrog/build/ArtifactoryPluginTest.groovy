@@ -12,6 +12,7 @@ import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import org.gradle.testfixtures.ProjectBuilder
+import org.jfrog.build.extractor.gradle.GradlePluginUtils
 
 /**
  * @author freds
@@ -30,7 +31,7 @@ public class ArtifactoryPluginTest extends Specification {
     expect:
     project.buildscript.repositories.resolvers.isEmpty()
     project.repositories.resolvers.isEmpty()
-    project.tasks.findByName('buildInfo') != null
+    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
   }
 
   def resolverApplyPlugin() {
@@ -52,7 +53,7 @@ public class ArtifactoryPluginTest extends Specification {
     libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
     libsResolvers.get(0).name == expectedName
     ((IBiblioResolver) libsResolvers.get(0)).root == expectedName + '/'
-    project.tasks.findByName('buildInfo') != null
+    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
   }
 
   def buildInfoJavaPlugin() {
@@ -66,7 +67,7 @@ public class ArtifactoryPluginTest extends Specification {
     artifactoryPlugin.apply(project)
 
     expect:
-    project.tasks.findByName('buildInfo') != null
+    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
   }
 
   def buildInfoTaskConfiguration() {
@@ -81,7 +82,7 @@ public class ArtifactoryPluginTest extends Specification {
     javaPlugin.apply(project)
     artifactoryPlugin.apply(project)
 
-    BuildInfoRecorderTask buildInfoTask = project.tasks.findByName('buildInfo')
+    BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
     evaluateProject(project)
     expect:
     buildInfoTask.configuration != null
@@ -99,7 +100,7 @@ public class ArtifactoryPluginTest extends Specification {
     javaPlugin.apply(project)
     artifactoryPlugin.apply(project)
 
-    Task buildInfoTask = project.tasks.findByName('buildInfo')
+    Task buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
     evaluateProject(project)
     expect:
     buildInfoTask.dependsOn != null

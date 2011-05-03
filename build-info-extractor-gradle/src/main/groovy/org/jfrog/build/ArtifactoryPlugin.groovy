@@ -71,9 +71,9 @@ class ArtifactoryPlugin implements Plugin<Project> {
 
     private static class ProjectEvaluatedBuildListener extends BuildAdapter {
         def void projectsEvaluated(Gradle gradle) {
+            ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(gradle.rootProject).getConfiguration()
+            GradlePluginUtils.fillArtifactoryClientConfiguration(configuration, gradle.rootProject)
             gradle.rootProject.allprojects.each {
-                ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(it).getConfiguration()
-                GradlePluginUtils.fillArtifactoryClientConfiguration(configuration, it)
                 defineResolvers(it, configuration.resolver)
             }
             gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
@@ -86,8 +86,12 @@ class ArtifactoryPlugin implements Plugin<Project> {
             if (StringUtils.isNotBlank(url)) {
                 log.debug("Artifactory URL: $url")
                 // add artifactory url to the list of repositories
-                project.repositories {
-                    mavenRepo urls: [url]
+                if (resolverConf.isIvyRepositoryDefined()) {
+                    addIvyRepoToProject(project, url, resolverConf)
+                } else {
+                    project.repositories {
+                        mavenRepo urls: [url]
+                    }
                 }
                 if (StringUtils.isNotBlank(resolverConf.userName) && StringUtils.isNotBlank(resolverConf.password)) {
                     String host = new URL(url).getHost()
@@ -98,11 +102,27 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
             String buildRoot = resolverConf.getBuildRoot()
             if (StringUtils.isNotBlank(buildRoot)) {
-                injectPropertyIntoExistingResolvers(project.repositories.getAll(), buildRoot)
+                injectBuildInfontoExistingResolvers(project.repositories.getAll(), buildRoot)
+            }
+            Map<String, String> matrixParams = resolverConf.getMatrixParams()
+            for (Map.Entry<String, String> entry: matrixParams.entrySet()) {
+                injectMatrixParamExistingResolvers(project.repositories.getAll(), entry.getKey(), entry.getValue())
             }
         }
 
-        private def injectPropertyIntoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+        private def addIvyRepoToProject(Project project, String url, ResolverHandler resolverConf) {
+            project.repositories {
+                add(new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
+                    name = "ivy-resolver"
+                    artroot = url
+                    ivyroot = url
+                    artpattern = resolverConf.getIvyArtifactPattern()
+                    ivypattern = resolverConf.getIvyPattern()
+                }
+            }
+        }
+
+        private def injectBuildInfontoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
             for (DependencyResolver resolver: allResolvers) {
                 if (resolver instanceof IvyRepResolver) {
                     resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
@@ -111,6 +131,28 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
                 }
             }
+        }
+
+        private def injectMatrixParamExistingResolvers(Set<DependencyResolver> allResolvers, String key, String value) {
+            for (DependencyResolver resolver: allResolvers) {
+                if (resolver instanceof IvyRepResolver) {
+                    resolver.artroot = cleanRepoRoot(resolver.artroot) + ';' + key + '=' + value + ';'
+                    resolver.ivyroot = cleanRepoRoot(resolver.ivyroot) + ';' + key + '=' + value + ';'
+                } else if (resolver instanceof IBiblioResolver) {
+                    resolver.root = cleanRepoRoot(resolver.root) + ';' + key + '=' + value + ';'
+                }
+            }
+        }
+
+        private String cleanRepoRoot(String repoRoot) {
+            String cleanRepoRoot = repoRoot
+            if (StringUtils.endsWith(repoRoot, '/')) {
+                cleanRepoRoot = StringUtils.removeEnd(repoRoot, '/')
+            }
+            if (StringUtils.endsWith(repoRoot, ';')) {
+                cleanRepoRoot = StringUtils.removeEnd(repoRoot, ';')
+            }
+            return cleanRepoRoot
         }
     }
 

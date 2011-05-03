@@ -21,6 +21,7 @@ import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
+import org.apache.tools.ant.util.FileUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
@@ -142,7 +143,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (ivyDescriptor instanceof File) {
             this.ivyDescriptor = (File) ivyDescriptor;
         } else if (ivyDescriptor instanceof CharSequence) {
-            this.ivyDescriptor = new File(ivyDescriptor.toString());
+            if (FileUtils.isAbsolutePath(ivyDescriptor.toString())) {
+                this.ivyDescriptor = new File(ivyDescriptor.toString());
+            } else {
+                this.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
+            }
         } else{
             log.info("Unknown ivy descriptor: " + ivyDescriptor);
         }
@@ -156,7 +161,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (mavenDescriptor instanceof File) {
             this.mavenDescriptor = (File) mavenDescriptor;
         } else if (mavenDescriptor instanceof CharSequence) {
-            this.mavenDescriptor = new File(mavenDescriptor.toString());
+            if (FileUtils.isAbsolutePath(mavenDescriptor.toString())) {
+                this.mavenDescriptor = new File(mavenDescriptor.toString());
+            } else {
+                this.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
+            }
         } else {
             log.info("Unknown maven descriptor: " + mavenDescriptor);
         }
@@ -449,7 +458,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
                     extraTokens.put("classifier", publishArtifact.getClassifier());
                 }
-                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, publishArtifact.getName(),
+                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getArtifactName(),
                         revision, publishArtifact.getName(), publishArtifact.getType(),
                         publishArtifact.getExtension(), configuration.getName(),
                         extraTokens, null));

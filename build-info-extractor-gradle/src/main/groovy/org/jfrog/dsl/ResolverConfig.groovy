@@ -61,10 +61,12 @@ class ResolverConfig {
 
         def setIvyLayout(String ivyLayout) {
             handler.setIvyPattern(ivyLayout)
+            handler.setIvyRepositoryDefined(true)
         }
 
         def setArtifactLayout(String artifactLayout) {
             handler.setIvyArtifactPattern(artifactLayout)
+            handler.setIvyRepositoryDefined(true)
         }
 
         def setRepoKey(String repoKey) {

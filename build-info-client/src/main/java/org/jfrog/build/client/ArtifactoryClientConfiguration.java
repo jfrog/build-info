@@ -185,6 +185,14 @@ public class ArtifactoryClientConfiguration {
             addMatrixParam(BUILD_ROOT, buildRoot);
         }
 
+        public void setIvyRepositoryDefined(boolean ivyRepositoryDefined) {
+            root.setBooleanValue(IVY_REPO_DEFINED, ivyRepositoryDefined);
+        }
+
+        public boolean isIvyRepositoryDefined() {
+            return root.getBooleanValue(IVY_REPO_DEFINED, false);
+        }
+
         public String getBuildRoot() {
             return getMatrixParams().get(BUILD_ROOT);
         }
@@ -347,7 +355,7 @@ public class ArtifactoryClientConfiguration {
                 String repoKey = getRepoKey();
                 if (StringUtils.isNotBlank(repoKey)) {
                     String contextUrl = getContextUrl();
-                    if(StringUtils.isNotBlank(contextUrl)){
+                    if (StringUtils.isNotBlank(contextUrl)) {
                         contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
                         return contextUrl + "/" + getRepoKey();
                     }

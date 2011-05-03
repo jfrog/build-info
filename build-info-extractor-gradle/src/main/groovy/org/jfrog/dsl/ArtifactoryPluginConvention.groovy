@@ -46,7 +46,7 @@ class ArtifactoryPluginConvention {
         configuration.setContextUrl(contextUrl)
     }
 
-    def projectDefaults(Closure closure) {
+    def projectPublish(Closure closure) {
         projectDefaultClosures.add(closure)
     }
 
