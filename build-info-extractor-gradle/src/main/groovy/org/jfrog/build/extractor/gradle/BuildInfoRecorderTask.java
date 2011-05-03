@@ -81,13 +81,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     private boolean lastInGraph = false;
 
+    private final Map<String, String> props = Maps.newHashMap();
+
     public void setLastInGraph(boolean lastInGraph) {
         this.lastInGraph = lastInGraph;
     }
 
     public void setProperties(Map<String, String> props) {
-        ArtifactoryClientConfiguration configuration = getArtifactoryClientConfiguration(getProject());
-        configuration.publisher.addMatrixParams(props);
+        this.props.putAll(props);
     }
 
     public void publishConfigs(Object... confs) {
@@ -253,9 +254,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private void uploadDescriptorsAndArtifacts(Set<GradleDeployDetails> allDeployableDetails) throws IOException {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        props.putAll(clientConf.publisher.getMatrixParams());
         Set<GradleDeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
         allDeployableDetails.addAll(deployDetailsFromProject);
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         if (clientConf.publisher.isPublishArtifacts()) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
                 allDeployableDetails.add(getIvyDescriptorDeployDetails());
@@ -287,7 +289,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
+        artifactBuilder.addProperties(props);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
@@ -309,7 +311,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        artifactBuilder.addProperties(clientConf.publisher.getMatrixParams());
+        artifactBuilder.addProperties(props);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
@@ -429,7 +431,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
         ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
         String pattern = publisherConf.getIvyArtifactPattern();
-        Map<String, String> matrixParams = publisherConf.getMatrixParams();
         String gid = getProject().getGroup().toString();
         if (publisherConf.isM2Compatible()) {
             gid = gid.replace(".", "/");
@@ -457,7 +458,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                         publishArtifact.getExtension(), configuration.getName(),
                         extraTokens, null));
                 artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                artifactBuilder.addProperties(matrixParams);
+                artifactBuilder.addProperties(props);
                 DeployDetails details = artifactBuilder.build();
                 deployDetails.add(new GradleDeployDetails(publishArtifact, details, getProject()));
             }
