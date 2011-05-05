@@ -87,9 +87,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
 
-    // future development
-    private static final boolean ACTIVATE_UNSTABLE = false;
-
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
     }
@@ -231,12 +228,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        if (ACTIVATE_UNSTABLE) {
-            if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
-                List<File> resultsFile = getSurefireResultsFile(project);
-                boolean failed = isTestsFailed(resultsFile);
-                projectTestFailures.get().put(project, failed);
-            }
+        if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
+            List<File> resultsFile = getSurefireResultsFile(project);
+            boolean failed = isTestsFailed(resultsFile);
+            projectTestFailures.get().put(project, failed);
         }
         extractModuleDependencies(project);
 
@@ -445,10 +440,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if (!conf.publisher.isPublishArtifacts()) {
             return false;
         }
-        if (ACTIVATE_UNSTABLE) {
-            return conf.publisher.isEvenUnstable() || !wereThereTestFailures();
-        }
-        return true;
+        return conf.publisher.isEvenUnstable() || !wereThereTestFailures();
     }
 
     private boolean wereThereTestFailures() {
