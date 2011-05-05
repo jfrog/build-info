@@ -52,7 +52,7 @@ public class BuildDeploymentHelper {
     private ClientPropertyResolver clientPropertyResolver;
 
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
-            Map<Artifact, DeployDetails> deployableArtifactBuilders) {
+            Map<Artifact, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
         String outputFile = clientConf.getExportFile();
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
@@ -75,7 +75,7 @@ public class BuildDeploymentHelper {
                     deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
-                if (clientConf.publisher.isPublishBuildInfo()) {
+                if (clientConf.publisher.isPublishBuildInfo() && (clientConf.publisher.isEvenUnstable() || wereThereTestFailures)) {
                     try {
                         logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                         client.sendBuildInfo(build);

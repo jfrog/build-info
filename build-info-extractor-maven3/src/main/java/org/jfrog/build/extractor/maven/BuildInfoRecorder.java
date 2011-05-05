@@ -125,7 +125,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionEnded(ExecutionEvent event) {
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
         if (build != null) {
-            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap);
+            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, wereThereTestFailures());
         }
         deployableArtifactBuilderMap.clear();
         if (wrappedListener != null) {
