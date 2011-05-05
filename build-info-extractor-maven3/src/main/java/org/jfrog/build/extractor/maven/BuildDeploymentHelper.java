@@ -75,7 +75,7 @@ public class BuildDeploymentHelper {
                     deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
-                if (clientConf.publisher.isPublishBuildInfo() && (clientConf.publisher.isEvenUnstable() || wereThereTestFailures)) {
+                if (clientConf.publisher.isPublishBuildInfo() && (clientConf.publisher.isEvenUnstable() || !wereThereTestFailures)) {
                     try {
                         logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                         client.sendBuildInfo(build);
