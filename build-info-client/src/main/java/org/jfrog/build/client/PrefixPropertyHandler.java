@@ -34,11 +34,11 @@ public class PrefixPropertyHandler {
         return prefix;
     }
 
-    protected String getStringValue(String key) {
+    public String getStringValue(String key) {
         return getStringValue(key, null);
     }
 
-    protected String getStringValue(String key, String def) {
+    public String getStringValue(String key, String def) {
         String s = props.get(prefix + key);
         if (s == null && parent != null) {
             s = parent.getStringValue(prefix + key);
@@ -49,7 +49,7 @@ public class PrefixPropertyHandler {
         return s;
     }
 
-    protected void setStringValue(String key, String value) {
+    public void setStringValue(String key, String value) {
         if (value == null) {
             props.remove(prefix + key);
         } else {
@@ -57,11 +57,11 @@ public class PrefixPropertyHandler {
         }
     }
 
-    protected Boolean getBooleanValue(String key) {
+    public Boolean getBooleanValue(String key) {
         return getBooleanValue(key, null);
     }
 
-    protected Boolean getBooleanValue(String key, Boolean def) {
+    public Boolean getBooleanValue(String key, Boolean def) {
         String s = props.get(prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else
         Boolean result = (s == null) ? null : Boolean.parseBoolean(s);
@@ -74,7 +74,7 @@ public class PrefixPropertyHandler {
         return result;
     }
 
-    protected void setBooleanValue(String key, Boolean value) {
+    public void setBooleanValue(String key, Boolean value) {
         if (value == null) {
             props.remove(prefix + key);
         } else {
@@ -82,11 +82,11 @@ public class PrefixPropertyHandler {
         }
     }
 
-    protected Integer getIntegerValue(String key) {
+    public Integer getIntegerValue(String key) {
         return getIntegerValue(key, null);
     }
 
-    protected Integer getIntegerValue(String key, Integer def) {
+    public Integer getIntegerValue(String key, Integer def) {
         Integer result = null;
         String s = props.get(prefix + key);
         if (s != null && !StringUtils.isNumeric(s)) {
@@ -104,7 +104,7 @@ public class PrefixPropertyHandler {
         return result;
     }
 
-    protected void setIntegerValue(String key, Integer value) {
+    public void setIntegerValue(String key, Integer value) {
         if (value == null) {
             props.remove(prefix + key);
         } else {
