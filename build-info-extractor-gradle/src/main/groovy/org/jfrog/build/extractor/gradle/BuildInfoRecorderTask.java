@@ -16,10 +16,7 @@
 
 package org.jfrog.build.extractor.gradle;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
@@ -32,6 +29,7 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
+import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -39,12 +37,7 @@ import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.LayoutPatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.gradle.logger.GradleClientLogger;
@@ -52,6 +45,7 @@ import org.jfrog.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -77,7 +71,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private Set<Configuration> publishConfigurations = Sets.newHashSet();
 
     @Input
-    private final Multimap<String, String> properties = HashMultimap.create();
+    private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 
     private boolean lastInGraph = false;
 
@@ -87,17 +81,20 @@ public class BuildInfoRecorderTask extends DefaultTask {
         this.lastInGraph = lastInGraph;
     }
 
-    public void setProperties(Map<String, String> props) {
+    public void setProperties(Map<String, CharSequence> props) {
         if (props == null || props.isEmpty()) {
             return;
         }
-        for (Map.Entry<String, String> entry : props.entrySet()) {
+        for (Map.Entry<String, CharSequence> entry : props.entrySet()) {
+            // The key cannot be lazy eval, but we keep the value as GString as long as possible
             String key = entry.getKey();
             if (StringUtils.isNotBlank(key)) {
-                String value = entry.getValue();
+                CharSequence value = entry.getValue();
                 if (value != null) {
-                    // Make sure all GString are now Java Strings
-                    this.properties.put(key.toString(), value.toString());
+                    // Make sure all GString are now Java Strings for key,
+                    // and don't call toString for value (keep lazy eval as long as possible)
+                    // So, don't use HashMultimap this will call equals on the GString
+                    this.properties.put(key.toString(), value);
                 }
             }
         }
@@ -113,12 +110,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 if (projectConf != null) {
                     publishConfigurations.add(projectConf);
                 } else {
-                    log.info("Unknown configuration: " + conf);
+                    log.info("Configuration named '{}' does not exists for project '{}' in task '{}'",
+                            new Object[]{conf, getProject().getPath(), getPath()});
                 }
             } else if (conf instanceof Configuration) {
                 publishConfigurations.add((Configuration) conf);
             } else {
-                log.info("Unknown configuration: " + conf);
+                log.info("Configuration type '{}' not supported in task '{}'",
+                        new Object[]{conf.getClass().getName(), getPath()});
             }
         }
     }
@@ -153,7 +152,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setIvyDescriptor(Object ivyDescriptor) {
-        if (this.ivyDescriptor == null) {
+        if (ivyDescriptor != null) {
             if (ivyDescriptor instanceof File) {
                 this.ivyDescriptor = (File) ivyDescriptor;
             } else if (ivyDescriptor instanceof CharSequence) {
@@ -163,8 +162,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     this.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
                 }
             } else {
-                log.info("Unknown ivy descriptor: " + ivyDescriptor);
+                log.warn("Unknown type '{}' for ivy descriptor in task '{}'",
+                        new Object[]{ivyDescriptor.getClass().getName(), getPath()});
             }
+        } else {
+            this.ivyDescriptor = null;
         }
     }
 
@@ -173,7 +175,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setMavenDescriptor(Object mavenDescriptor) {
-        if (this.mavenDescriptor == null) {
+        if (mavenDescriptor != null) {
             if (mavenDescriptor instanceof File) {
                 this.mavenDescriptor = (File) mavenDescriptor;
             } else if (mavenDescriptor instanceof CharSequence) {
@@ -183,8 +185,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     this.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
                 }
             } else {
-                log.info("Unknown maven descriptor: " + mavenDescriptor);
+                log.warn("Unknown type '{}' for maven descriptor in task '{}'",
+                        new Object[]{mavenDescriptor.getClass().getName(), getPath()});
             }
+        } else {
+            this.mavenDescriptor = null;
         }
     }
 
@@ -196,8 +201,9 @@ public class BuildInfoRecorderTask extends DefaultTask {
         for (Closure closure : configurationClosures) {
             ConfigureUtil.configure(closure, this);
         }
-        Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
         if (!hasConfigurations()) {
+            // If no configurations set and the archives conf exists, adding it by default
+            Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
             setConfiguration(archiveConf);
         }
         for (Project sub : project.getSubprojects()) {
@@ -216,16 +222,19 @@ public class BuildInfoRecorderTask extends DefaultTask {
         // Set ivy descriptor parameters
         TaskContainer tasks = project.getTasks();
         if (acc.publisher.isIvy()) {
-            if (ivyDescriptor == null) {
+            Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+            if (ivyDescriptor == null && archiveConf != null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
-                Upload uploadTask = (Upload) tasks.getByName(archiveConf.getUploadTaskName());
-                if (!uploadTask.isUploadDescriptor()) {
-                    throw new GradleException(
-                            "Cannot publish Ivy descriptor if ivyDescriptor not set in task: " + getPath() +
-                                    "\nAnd flag uploadDescriptor not set in default task: " + uploadTask.getPath());
+                Upload uploadTask = tasks.withType(Upload.class).findByName(archiveConf.getUploadTaskName());
+                if (uploadTask == null || !uploadTask.isUploadDescriptor()) {
+                    log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
+                            "\nAnd task '{}' does not export the Ivy descriptor.",
+                            new Object[]{getPath(), archiveConf.getUploadTaskName()});
+                    ivyDescriptor = null;
+                } else {
+                    ivyDescriptor = uploadTask.getDescriptorDestination();
+                    dependsOn(uploadTask);
                 }
-                ivyDescriptor = uploadTask.getDescriptorDestination();
-                dependsOn(uploadTask);
             }
         } else {
             ivyDescriptor = null;
@@ -238,13 +247,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 // if the project doesn't have the maven install task, throw an exception
                 Upload installTask = tasks.withType(Upload.class).findByName("install");
                 if (installTask == null) {
-                    throw new GradleException(
-                            "Cannot publish Maven descriptor if mavenDescriptor not set in task: " + getPath() +
-                                    "\nAnd default install task for project " + project.getPath() +
-                                    " is not an Upload task");
+                    log.warn("Cannot publish Maven descriptor if mavenDescriptor not set in task '{}' " +
+                            "\nAnd default install task for project '{}' is not an Upload task",
+                            new Object[]{getPath(), project.getPath()});
+                    mavenDescriptor = null;
+                } else {
+                    mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
+                    dependsOn(installTask);
                 }
-                mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
-                dependsOn(installTask);
             }
         } else {
             mavenDescriptor = null;
@@ -257,10 +267,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     @TaskAction
     public void collectProjectBuildInfo() throws IOException {
-        log.debug("BuildInfo task for project {} activated", getProject().getPath());
+        log.debug("Task '{}' activated", getPath());
         // Only the last buildInfo execution activate the deployment
         if (lastInGraph) {
-            log.debug("Starting build info extraction for last project {}", getProject().getPath());
+            log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
+                    new Object[]{getProject().getPath(), getPath()});
             closeAndDeploy();
         }
     }
@@ -294,9 +305,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     FileChecksumCalculator.calculateChecksums(ivyDescriptor, "MD5", "SHA1");
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
-            throw new RuntimeException(
-                    "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(),
-                    e);
+            throw new ResourceException(
+                    "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(), e);
         }
         String gid = getProject().getGroup().toString();
         if (clientConf.publisher.isM2Compatible()) {
@@ -321,7 +331,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     FileChecksumCalculator.calculateChecksums(mavenDescriptor, "MD5", "SHA1");
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
-            throw new RuntimeException(
+            throw new ResourceException(
                     "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
         }
         // for pom files always enforce the M2 pattern
@@ -421,7 +431,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<GradleDeployDetails> details,
-            IncludeExcludePatterns patterns) throws IOException {
+                                 IncludeExcludePatterns patterns) throws IOException {
         for (GradleDeployDetails detail : details) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();
@@ -464,7 +474,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                             FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
                     artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
                 } catch (Exception e) {
-                    throw new RuntimeException(
+                    throw new ResourceException(
                             "Failed to calculated checksums for artifact: " + file.getAbsolutePath(), e);
                 }
                 String revision = getProject().getVersion().toString();
@@ -489,7 +499,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private Map<String, String> getPropsToAdd() {
         if (this.propsToAdd == null) {
             this.propsToAdd = Maps.newHashMap();
-            for (Map.Entry<String, String> entry : properties.entries()) {
+            for (Map.Entry<String, CharSequence> entry : properties.entries()) {
                 // Make sure all GString are now Java Strings
                 String key = entry.getKey().toString();
                 String value = entry.getValue().toString();

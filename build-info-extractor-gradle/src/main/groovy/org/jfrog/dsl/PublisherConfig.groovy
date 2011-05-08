@@ -37,6 +37,7 @@ class PublisherConfig {
         //println "1: missing method $name"
         Method[] methods = handler.getClass().getMethods()
         def method = methods.find {it.name.matches(name)}
+        // TODO: [by fsi] Why only one parameter?
         method.invoke(handler, args[0])
     }
 
