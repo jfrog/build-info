@@ -38,7 +38,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_
  */
 public class GradlePluginUtils {
 
-    public static final String BUILD_INFO_TASK_NAME = "artifactoryProjectPublish";
+    public static final String BUILD_INFO_TASK_NAME = "artifactoryPublish";
 
     /**
      * Returns a  configuration handler object out of a Gradle project. This method will aggregate the properties in our
