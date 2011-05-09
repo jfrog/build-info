@@ -19,6 +19,7 @@ package org.jfrog.dsl
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
+import com.google.common.collect.Lists
 
 /**
  * @author Tomer Cohen
@@ -27,10 +28,12 @@ class PublisherConfig {
 
     private PublisherHandler handler;
     private Repository repository;
+    private List<Closure> taskDefaultClosures
 
-    PublisherConfig(PublisherHandler handler) {
+    PublisherConfig(PublisherHandler handler, List<Closure> taskDefaultClosures) {
         this.handler = handler
         this.repository = new Repository()
+        this.taskDefaultClosures = taskDefaultClosures
     }
 
     def methodMissing(String name, args) {
@@ -45,6 +48,9 @@ class PublisherConfig {
         handler[name] = value
     }
 
+    def defaults(Closure closure) {
+        taskDefaultClosures.add(closure)
+    }
 
     def config(Closure closure) {
         ConfigureUtil.configure(closure, this)

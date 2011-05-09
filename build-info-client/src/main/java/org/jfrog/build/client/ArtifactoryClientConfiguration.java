@@ -275,6 +275,8 @@ public class ArtifactoryClientConfiguration {
             super(PROP_PROXY_PREFIX);
         }
 
+        // TODO: Support proxy type SSL or not
+
         public void setHost(String host) {
             setStringValue(HOST, host);
         }
@@ -312,23 +314,6 @@ public class ArtifactoryClientConfiguration {
         public String getPassword() {
             return getStringValue(PASSWORD);
         }
-
-        public void setResolveUserName(String username) {
-            setStringValue(RESOLVE_USERNAME, username);
-        }
-
-        public String getResolveUsername() {
-            return getStringValue(RESOLVE_USERNAME);
-        }
-
-        public void setResolvePassword(String password) {
-            setStringValue(RESOLVE_PASSWORD, password);
-        }
-
-        public String getResolvePassword() {
-            return getStringValue(RESOLVE_PASSWORD);
-        }
-
     }
 
     public abstract class RepositoryConfiguration extends AuthenticationConfiguration {
@@ -349,6 +334,25 @@ public class ArtifactoryClientConfiguration {
             setStringValue(URL, url);
         }
 
+        public String injectMatrixParams(String rootUrl) {
+            rootUrl = StringUtils.stripEnd(rootUrl, "/;");
+            Map<String, String> matrixParams = getMatrixParams();
+            if (matrixParams.isEmpty()) {
+                return rootUrl;
+            } else {
+                StringBuilder builder = new StringBuilder(rootUrl);
+                for (Map.Entry<String, String> entry : matrixParams.entrySet()) {
+                    builder.append(';').append(entry.getKey()).append('=').append(entry.getValue());
+                }
+                builder.append(';');
+                return builder.toString();
+            }
+        }
+
+        public String getUrlWithMatrixParams() {
+            return injectMatrixParams(getUrl());
+        }
+
         public String getUrl() {
             String value = getStringValue(URL);
             if (StringUtils.isBlank(value)) {
@@ -361,7 +365,7 @@ public class ArtifactoryClientConfiguration {
                     }
                 }
             }
-            return value;
+            return StringUtils.removeEnd(value, "/");
         }
 
         public void setRepoKey(String repoKey) {

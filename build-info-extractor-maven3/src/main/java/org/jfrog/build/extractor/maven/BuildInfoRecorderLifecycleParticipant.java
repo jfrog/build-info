@@ -61,7 +61,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
                     (DefaultRepositorySystemSession) session.getRepositorySession();
             repositorySession.setRepositoryListener(
                     new ChainedRepositoryListener(repositorySession.getRepositoryListener(),
-                            new ArtifactoryRepositoryListener(getConfiguration(session).resolver, logger)));
+                            new ArtifactoryRepositoryListener(getConfiguration(session), logger)));
         }
     }
 

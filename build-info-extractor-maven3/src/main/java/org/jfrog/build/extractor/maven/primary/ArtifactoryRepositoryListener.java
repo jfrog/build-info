@@ -7,6 +7,7 @@ import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.repository.ArtifactRepository;
 import org.sonatype.aether.repository.Authentication;
+import org.sonatype.aether.repository.Proxy;
 import org.sonatype.aether.repository.RemoteRepository;
 
 /**
@@ -20,21 +21,12 @@ import org.sonatype.aether.repository.RemoteRepository;
  */
 public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
 
-    private final ArtifactoryClientConfiguration.ResolverHandler resolverHandler;
+    private final ArtifactoryClientConfiguration clientConf;
     private final Logger logger;
-    private final String url;
-    private final String username;
-    private final String password;
-    private final String buildRoot;
 
-    public ArtifactoryRepositoryListener(ArtifactoryClientConfiguration.ResolverHandler resolverHandler,
-            Logger logger) {
-        this.resolverHandler = resolverHandler;
+    public ArtifactoryRepositoryListener(ArtifactoryClientConfiguration clientConf, Logger logger) {
+        this.clientConf = clientConf;
         this.logger = logger;
-        this.url = resolverHandler.getContextUrl() + "/" + resolverHandler.getRepoKey();
-        this.username = resolverHandler.getResolveUsername();
-        this.password = resolverHandler.getResolvePassword();
-        this.buildRoot = resolverHandler.getBuildRoot();
     }
 
     @Override
@@ -54,20 +46,22 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
     private void enforceRepository(RepositoryEvent event) {
         ArtifactRepository repository = event.getRepository();
         if (repository instanceof RemoteRepository) {
+            ArtifactoryClientConfiguration.ResolverHandler resolverHandler = clientConf.resolver;
+            String url = resolverHandler.getUrlWithMatrixParams();
             logger.debug("Enforcing repository URL: " + url + " for event: " + event);
             if (StringUtils.isBlank(url)) {
                 return;
             }
-            if (StringUtils.isBlank(buildRoot)) {
-                ((RemoteRepository) repository).setUrl(url);
-            } else {
-                String newUrl = StringUtils.removeEnd(url, "/");
-                ((RemoteRepository) repository).setUrl(newUrl + ";build.root=" + buildRoot + ";");
-            }
-            if (StringUtils.isNotBlank(username)) {
-                Authentication authentication = new Authentication(username, password);
+            ((RemoteRepository) repository).setUrl(url);
+            if (StringUtils.isNotBlank(resolverHandler.getUserName())) {
+                Authentication authentication = new Authentication(resolverHandler.getUserName(), resolverHandler.getPassword());
                 logger.debug("Enforcing repository authentication: " + authentication + " for event: " + event);
                 ((RemoteRepository) repository).setAuthentication(authentication);
+            }
+            ArtifactoryClientConfiguration.ProxyHandler proxyHandler = clientConf.proxy;
+            if (StringUtils.isNotBlank(proxyHandler.getHost())) {
+                Proxy proxy = new Proxy(null, proxyHandler.getHost(), proxyHandler.getPort(), new Authentication(proxyHandler.getUserName(), proxyHandler.getPassword()));
+                ((RemoteRepository) repository).setProxy(proxy);
             }
         }
     }

@@ -100,14 +100,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             } else {
                 log.debug("No repository resolution defined for ${project.path}")
             }
-            String buildRoot = resolverConf.getBuildRoot()
-            if (StringUtils.isNotBlank(buildRoot)) {
-                injectBuildInfontoExistingResolvers(project.repositories.getAll(), buildRoot)
-            }
-            Map<String, String> matrixParams = resolverConf.getMatrixParams()
-            for (Map.Entry<String, String> entry: matrixParams.entrySet()) {
-                injectMatrixParamExistingResolvers(project.repositories.getAll(), entry.getKey(), entry.getValue())
-            }
+            injectMatrixParamExistingResolvers(project.repositories.getAll(), resolverConf)
         }
 
         private def addIvyRepoToProject(Project project, String url, ResolverHandler resolverConf) {
@@ -122,37 +115,15 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
         }
 
-        private def injectBuildInfontoExistingResolvers(Set<DependencyResolver> allResolvers, String buildRoot) {
+        private def injectMatrixParamExistingResolvers(Set<DependencyResolver> allResolvers, ArtifactoryClientConfiguration.ResolverHandler resolverConf) {
             for (DependencyResolver resolver: allResolvers) {
                 if (resolver instanceof IvyRepResolver) {
-                    resolver.artroot = StringUtils.removeEnd(resolver.artroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
-                    resolver.ivyroot = StringUtils.removeEnd(resolver.ivyroot, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+                    resolver.artroot = resolverConf.injectMatrixParams(resolver.artroot)
+                    resolver.ivyroot = resolverConf.injectMatrixParams(resolver.ivyroot)
                 } else if (resolver instanceof IBiblioResolver) {
-                    resolver.root = StringUtils.removeEnd(resolver.root, '/') + ';' + BuildInfoFields.BUILD_ROOT + '=' + buildRoot + ';'
+                    resolver.root = resolverConf.injectMatrixParams(resolver.root)
                 }
             }
-        }
-
-        private def injectMatrixParamExistingResolvers(Set<DependencyResolver> allResolvers, String key, String value) {
-            for (DependencyResolver resolver: allResolvers) {
-                if (resolver instanceof IvyRepResolver) {
-                    resolver.artroot = cleanRepoRoot(resolver.artroot) + ';' + key + '=' + value + ';'
-                    resolver.ivyroot = cleanRepoRoot(resolver.ivyroot) + ';' + key + '=' + value + ';'
-                } else if (resolver instanceof IBiblioResolver) {
-                    resolver.root = cleanRepoRoot(resolver.root) + ';' + key + '=' + value + ';'
-                }
-            }
-        }
-
-        private String cleanRepoRoot(String repoRoot) {
-            String cleanRepoRoot = repoRoot
-            if (StringUtils.endsWith(repoRoot, '/')) {
-                cleanRepoRoot = StringUtils.removeEnd(repoRoot, '/')
-            }
-            if (StringUtils.endsWith(repoRoot, ';')) {
-                cleanRepoRoot = StringUtils.removeEnd(repoRoot, ';')
-            }
-            return cleanRepoRoot
         }
     }
 
