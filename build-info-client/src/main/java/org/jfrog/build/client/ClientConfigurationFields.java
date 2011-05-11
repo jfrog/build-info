@@ -24,8 +24,6 @@ public interface ClientConfigurationFields {
     String HOST = "host";
     String PORT = "port";
     String PASSWORD = "password";
-    String RESOLVE_USERNAME = "resolve.username";
-    String RESOLVE_PASSWORD = "resolve.password";
     String MAVEN = "maven";
     String IVY = "ivy";
     String IVY_M2_COMPATIBLE = "ivy.m2compatible";

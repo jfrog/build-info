@@ -55,6 +55,10 @@ import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK
  */
 public class BuildInfoRecorderTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(BuildInfoRecorderTask.class);
+    public static final String PUBLISH_IVY = "publishIvy";
+    public static final String PUBLISH_POM = "publishPom";
+    public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
+    public static final String PUBLISH_BUILD_INFO = "publishBuildInfo";
 
     @InputFile
     @Optional
@@ -74,6 +78,71 @@ public class BuildInfoRecorderTask extends DefaultTask {
     private boolean lastInGraph = false;
 
     private Map<String, String> propsToAdd;
+    private static final ImmutableMap<String, String> PROP_TRANSLATE = ImmutableMap.of(
+            PUBLISH_IVY, ClientConfigurationFields.IVY,
+            PUBLISH_POM, ClientConfigurationFields.MAVEN,
+            PUBLISH_ARTIFACTS, ClientConfigurationFields.PUBLISH_ARTIFACTS,
+            PUBLISH_BUILD_INFO, ClientConfigurationFields.PUBLISH_BUILD_INFO
+    );
+
+    @Input
+    @Optional
+    public Boolean getPublishBuildInfo() {
+        return getFlag(PUBLISH_BUILD_INFO);
+    }
+
+    public void setPublishBuildInfo(Boolean publishBuildInfo) {
+        validateFlag(PUBLISH_BUILD_INFO, publishBuildInfo);
+    }
+
+    @Input
+    @Optional
+    public Boolean getPublishArtifacts() {
+        return getFlag(PUBLISH_ARTIFACTS);
+    }
+
+    public void setPublishArtifacts(Boolean publishArtifacts) {
+        validateFlag(PUBLISH_ARTIFACTS, publishArtifacts);
+    }
+
+    @Input
+    @Optional
+    public Boolean getPublishIvy() {
+        return getFlag(PUBLISH_IVY);
+    }
+
+    public void setPublishIvy(Boolean publishIvy) {
+        validateFlag(PUBLISH_IVY, publishIvy);
+    }
+
+    @Input
+    @Optional
+    public Boolean getPublishPom() {
+        return getFlag(PUBLISH_POM);
+    }
+
+    public void setPublishPom(Boolean publishPom) {
+        validateFlag(PUBLISH_POM, publishPom);
+    }
+
+    private Boolean getFlag(String flagName) {
+        String publisherPropKey = PROP_TRANSLATE.get(flagName);
+        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(getProject());
+        ArtifactoryClientConfiguration.PublisherHandler publisherHandler = convention.getConfiguration().publisher;
+        return publisherHandler.getBooleanValue(publisherPropKey);
+    }
+
+    private void validateFlag(String flagName, Boolean newValue) {
+        String publisherPropKey = PROP_TRANSLATE.get(flagName);
+        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(getProject());
+        ArtifactoryClientConfiguration.PublisherHandler publisherHandler = convention.getConfiguration().publisher;
+        Boolean currentValue = publisherHandler.getBooleanValue(publisherPropKey);
+        if (newValue != null && currentValue != null && !currentValue.equals(newValue)) {
+            throw new GradleException("Support for build info recording settings on per project basis, not supported yet!\n" +
+                    "Task " + getPath() + " validation for " + flagName + " flag failed.");
+        }
+        publisherHandler.setBooleanValue(publisherPropKey, newValue);
+    }
 
     public void setLastInGraph(boolean lastInGraph) {
         this.lastInGraph = lastInGraph;
@@ -195,7 +264,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     public void projectsEvaluated() {
         Project project = getProject();
         ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(project);
-        List<Closure> configurationClosures = convention.getProjectDefaultClosures();
+        List<Closure> configurationClosures = convention.getTaskDefaultClosures();
         for (Closure closure : configurationClosures) {
             ConfigureUtil.configure(closure, this);
         }

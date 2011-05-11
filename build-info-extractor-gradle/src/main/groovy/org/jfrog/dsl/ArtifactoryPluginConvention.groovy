@@ -28,12 +28,17 @@ import org.jfrog.build.extractor.gradle.logger.GradleClientLogger
  */
 class ArtifactoryPluginConvention {
     private Logger logger
-    ArtifactoryClientConfiguration configuration
-    final List<Closure> projectDefaultClosures = Lists.newArrayList()
+    final ArtifactoryClientConfiguration configuration
+    final List<Closure> taskDefaultClosures
 
     ArtifactoryPluginConvention(Project project) {
         this.logger = project.logger
         configuration = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
+        taskDefaultClosures = Lists.newArrayList()
+    }
+
+    List<Closure> getTaskDefaults() {
+        return taskDefaultClosures
     }
 
     def artifactory(Closure closure) {
@@ -46,12 +51,8 @@ class ArtifactoryPluginConvention {
         configuration.setContextUrl(contextUrl)
     }
 
-    def projectPublish(Closure closure) {
-        projectDefaultClosures.add(closure)
-    }
-
     def publish(Closure closure) {
-        new PublisherConfig(configuration.publisher).config(closure)
+        new PublisherConfig(configuration.publisher, taskDefaultClosures).config(closure)
     }
 
     def resolve(Closure closure) {
