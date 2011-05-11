@@ -93,9 +93,9 @@ class ArtifactoryPlugin implements Plugin<Project> {
                         mavenRepo urls: [url]
                     }
                 }
-                if (StringUtils.isNotBlank(resolverConf.userName) && StringUtils.isNotBlank(resolverConf.password)) {
+                if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     String host = new URL(url).getHost()
-                    org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials('Artifactory Realm', host, resolverConf.userName, resolverConf.password);
+                    org.apache.ivy.util.url.CredentialsStore.INSTANCE.addCredentials('Artifactory Realm', host, resolverConf.username, resolverConf.password);
                 }
             } else {
                 log.debug("No repository resolution defined for ${project.path}")

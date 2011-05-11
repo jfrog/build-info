@@ -297,11 +297,11 @@ public class ArtifactoryClientConfiguration {
             super(root, prefix);
         }
 
-        public void setUserName(String userName) {
+        public void setUsername(String userName) {
             setStringValue(USERNAME, userName);
         }
 
-        public String getUserName() {
+        public String getUsername() {
             return getStringValue(USERNAME);
         }
 

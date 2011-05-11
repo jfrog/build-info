@@ -35,7 +35,7 @@ public class ClientPropertyResolver {
         }
         logResolvedProperty(PROP_CONTEXT_URL, contextUrl);
 
-        String username = clientConf.publisher.getUserName();
+        String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
 
         if (StringUtils.isNotBlank(username)) {
@@ -70,7 +70,7 @@ public class ClientPropertyResolver {
             if (proxyConf.getPort() == null) {
                 return;
             }
-            String proxyUsername = proxyConf.getUserName();
+            String proxyUsername = proxyConf.getUsername();
             if (StringUtils.isNotBlank(proxyUsername)) {
                 logResolvedProperty(ClientConfigurationFields.USERNAME, proxyUsername);
                 client.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,

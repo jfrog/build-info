@@ -22,7 +22,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.tools.ant.util.FileUtils;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -45,7 +44,6 @@ import org.jfrog.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -355,7 +353,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
-        String username = clientConf.publisher.getUserName();
+        String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
         if (StringUtils.isBlank(username)) {
             username = "";
@@ -419,7 +417,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         String proxyHost = proxy.getHost();
         if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
             log.debug("Found proxy host '{}'", proxyHost);
-            String proxyUserName = proxy.getUserName();
+            String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
                 client.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());

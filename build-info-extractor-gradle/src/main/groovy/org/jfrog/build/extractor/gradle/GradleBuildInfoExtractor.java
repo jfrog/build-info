@@ -135,7 +135,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             principal = System.getProperty("user.name");
         }
         buildInfoBuilder.principal(principal);
-        String artifactoryPrincipal = clientConf.publisher.getUserName();
+        String artifactoryPrincipal = clientConf.publisher.getUsername();
         if (StringUtils.isBlank(artifactoryPrincipal)) {
             artifactoryPrincipal = System.getProperty("user.name");
         }

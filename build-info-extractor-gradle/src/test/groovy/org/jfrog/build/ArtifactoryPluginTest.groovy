@@ -1,18 +1,17 @@
 package org.jfrog.build
 
-
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.gradle.BuildListener
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
+import org.gradle.testfixtures.ProjectBuilder
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
+import org.jfrog.build.extractor.gradle.GradlePluginUtils
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
-import org.gradle.testfixtures.ProjectBuilder
-import org.jfrog.build.extractor.gradle.GradlePluginUtils
 
 /**
  * @author freds
@@ -106,6 +105,25 @@ public class ArtifactoryPluginTest extends Specification {
     buildInfoTask.dependsOn != null
     !buildInfoTask.dependsOn.isEmpty()
     buildInfoTask.dependsOn.size() == 1
+  }
+
+  def populateConfigurationFromDsl() {
+    URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
+    Project project = ProjectBuilder.builder().withProjectDir(new File(resource.toURI()).getParentFile()).build()
+    JavaPlugin javaPlugin = new JavaPlugin()
+    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+
+    // Disable resolving
+    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
+    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+    javaPlugin.apply(project)
+    artifactoryPlugin.apply(project)
+
+    BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+    evaluateProject(project)
+    expect:
+    buildInfoTask.configuration != null
   }
 
   private def evaluateProject(Project project) {

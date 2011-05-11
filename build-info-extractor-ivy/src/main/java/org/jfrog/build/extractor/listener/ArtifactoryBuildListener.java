@@ -183,7 +183,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             builder.properties(props);
             Build build = builder.build();
             String contextUrl = clientConf.getContextUrl();
-            String username = clientConf.publisher.getUserName();
+            String username = clientConf.publisher.getUsername();
             String password = clientConf.publisher.getPassword();
             try {
                 ArtifactoryBuildInfoClient client =

@@ -56,7 +56,7 @@ class ResolverConfig {
     public class Repository {
 
         def setUsername(String username) {
-            handler.setUserName(username)
+            handler.setUsername(username)
         }
 
         def setPassword(String password) {
