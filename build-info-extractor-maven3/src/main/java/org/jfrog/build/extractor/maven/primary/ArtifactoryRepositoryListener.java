@@ -53,14 +53,14 @@ public class ArtifactoryRepositoryListener extends AbstractRepositoryListener {
                 return;
             }
             ((RemoteRepository) repository).setUrl(url);
-            if (StringUtils.isNotBlank(resolverHandler.getUserName())) {
-                Authentication authentication = new Authentication(resolverHandler.getUserName(), resolverHandler.getPassword());
+            if (StringUtils.isNotBlank(resolverHandler.getUsername())) {
+                Authentication authentication = new Authentication(resolverHandler.getUsername(), resolverHandler.getPassword());
                 logger.debug("Enforcing repository authentication: " + authentication + " for event: " + event);
                 ((RemoteRepository) repository).setAuthentication(authentication);
             }
             ArtifactoryClientConfiguration.ProxyHandler proxyHandler = clientConf.proxy;
             if (StringUtils.isNotBlank(proxyHandler.getHost())) {
-                Proxy proxy = new Proxy(null, proxyHandler.getHost(), proxyHandler.getPort(), new Authentication(proxyHandler.getUserName(), proxyHandler.getPassword()));
+                Proxy proxy = new Proxy(null, proxyHandler.getHost(), proxyHandler.getPort(), new Authentication(proxyHandler.getUsername(), proxyHandler.getPassword()));
                 ((RemoteRepository) repository).setProxy(proxy);
             }
         }
