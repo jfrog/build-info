@@ -16,9 +16,9 @@
 
 package org.jfrog.dsl
 
+import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
-import java.lang.reflect.Method
 
 /**
  * @author Tomer Cohen
@@ -71,6 +71,10 @@ class ResolverConfig {
         def setArtifactLayout(String artifactLayout) {
             handler.setIvyArtifactPattern(artifactLayout)
             handler.setIvyRepositoryDefined(true)
+        }
+
+        def setMavenCompatible(boolean mavenCompatible) {
+            handler.setM2Compatible(mavenCompatible)
         }
 
         def setRepoKey(String repoKey) {

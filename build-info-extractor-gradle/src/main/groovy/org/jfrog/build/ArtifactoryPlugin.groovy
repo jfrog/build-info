@@ -24,7 +24,6 @@ import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
-import org.jfrog.build.api.BuildInfoFields
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
@@ -103,14 +102,14 @@ class ArtifactoryPlugin implements Plugin<Project> {
             injectMatrixParamExistingResolvers(project.repositories.getAll(), resolverConf)
         }
 
-        private def addIvyRepoToProject(Project project, String url, ResolverHandler resolverConf) {
+        private def addIvyRepoToProject(Project project, String configuredUrl, ResolverHandler resolverConf) {
             project.repositories {
-                add(new org.apache.ivy.plugins.resolver.IvyRepResolver()) {
+                add(new org.apache.ivy.plugins.resolver.URLResolver()) {
                     name = "ivy-resolver"
-                    artroot = url
-                    ivyroot = url
-                    artpattern = resolverConf.getIvyArtifactPattern()
-                    ivypattern = resolverConf.getIvyPattern()
+                    url = configuredUrl
+                    m2compatible = resolverConf.m2Compatible
+                    addArtifactPattern(configuredUrl + '/' + resolverConf.getIvyArtifactPattern())
+                    addIvyPattern(configuredUrl + '/' + resolverConf.getIvyPattern())
                 }
             }
         }
