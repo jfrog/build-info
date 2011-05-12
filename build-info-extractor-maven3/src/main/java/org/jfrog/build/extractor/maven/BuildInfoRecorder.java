@@ -243,13 +243,22 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private List<File> getSurefireResultsFile(MavenProject project) {
         List<File> surefireReports = Lists.newArrayList();
         File surefireDirectory = new File(new File(project.getFile().getParentFile(), "target"), "surefire-reports");
-        String[] xmls = surefireDirectory.list(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.endsWith("xml");
+        String[] xmls;
+        try {
+            xmls = surefireDirectory.list(new FilenameFilter() {
+                public boolean accept(File dir, String name) {
+                    return name.endsWith("xml");
+                }
+            });
+        } catch (Exception e) {
+            logger.error("Error occurred: " + e.getMessage() + " while retrieving surefire descriptors at: " +
+                    surefireDirectory.getAbsolutePath(), e);
+            return Lists.newArrayList();
+        }
+        if (xmls != null) {
+            for (String xml : xmls) {
+                surefireReports.add(new File(surefireDirectory, xml));
             }
-        });
-        for (String xml : xmls) {
-            surefireReports.add(new File(surefireDirectory, xml));
         }
         return surefireReports;
     }
