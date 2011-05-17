@@ -543,7 +543,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
         MavenSession session = event.getSession();
-
         if (!session.getResult().hasExceptions()) {
             if (conf.isIncludeEnvVars()) {
                 Properties envProperties = new Properties();

@@ -13,10 +13,13 @@ import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -88,9 +91,30 @@ public class BuildInfoModelPropertyResolver {
         for (String notToDel : notToDelete) {
             buildRetention.addBuildNotToBeDiscarded(notToDel);
         }
+        attachStagingIfNeeded(clientConf, builder);
         builder.buildRetention(buildRetention);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
         return builder;
+    }
+
+    private void attachStagingIfNeeded(ArtifactoryClientConfiguration clientConf, BuildInfoBuilder builder) {
+        if (clientConf.info.isReleaseEnabled()) {
+            String stagingRepository = clientConf.publisher.getRepoKey();
+            String comment = clientConf.info.getReleaseComment();
+            if (comment == null) {
+                comment = "";
+            }
+            String buildStartedIso = clientConf.info.getBuildStarted();
+            Date buildStartDate;
+            try {
+                buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+            } catch (ParseException e) {
+                throw new IllegalArgumentException("Build start date format error: " + buildStartedIso, e);
+            }
+            builder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
+                    .comment(comment).repository(stagingRepository)
+                    .ciUser(clientConf.info.getPrincipal()).user(clientConf.publisher.getName()).build());
+        }
     }
 
     private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
