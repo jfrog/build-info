@@ -44,11 +44,14 @@ public class BuildInfoModelPropertyResolver {
         props.putAll(buildInfoProps);
         BuildInfoBuilder builder = resolveCoreProperties(event, clientConf).
                 artifactoryPrincipal(clientConf.publisher.getName()).
-                url(clientConf.publisher.getUrl()).
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber()).properties(props);
-
+        
+        String buildUrl = clientConf.info.getBuildUrl();
+        if (StringUtils.isNotBlank(buildUrl)) {
+            builder.url(buildUrl);
+        }
         String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
             builder.vcsRevision(vcsRevision);
