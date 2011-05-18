@@ -99,6 +99,10 @@ subprojects {
         classifier = 'sources'
     }
 
+    artifactoryPublish {
+        dependsOn build
+    }
+
     // Add the sourceJars to non-extractor modules
     artifacts {
         published sourceJar
@@ -126,7 +130,7 @@ configure(baseProjects()) {
 configure(extractorProjects()) {
     it.version = new Version(it)
     it.status = version.status
-
+    boolean extractorRelease = project.hasProperty('extractorRelease')
     configurations {
         provided
         tools
@@ -142,7 +146,8 @@ configure(extractorProjects()) {
     }
 
     dependencies {
-        if (version.release && !buildInfoVersion.release) {
+        if (extractorRelease || (version.release && !buildInfoVersion.release)) {
+            // don't build dependencies
             uberJar group: "$group", name: 'build-info-extractor', version: project.getProperty('build-info-latest-release-version')
         } else {
             uberJar project(':build-info-extractor')
