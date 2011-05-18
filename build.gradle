@@ -32,9 +32,11 @@ allprojects {
 
 artifactory {
     contextUrl = 'http://repo.jfrog.org/artifactory'
-    projectPublish {
-        publishConfigs('archives', 'published')
-        properties = ['build.status': "$it.project.status".toString()]
+    publish {
+        defaults {
+            publishConfigs('archives', 'published')
+            properties = ['build.status': "$it.project.status".toString()]
+        }
     }
     resolve {
         repoKey = 'gradle'
