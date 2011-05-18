@@ -208,7 +208,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (tasks.isEmpty()) {
             return null;
         }
-        return (BuildInfoRecorderTask) tasks.iterator().next();
+        BuildInfoRecorderTask buildInfoRecorderTask = (BuildInfoRecorderTask) tasks.iterator().next();
+        if (buildInfoRecorderTask.getState().getDidWork()) {
+            return buildInfoRecorderTask;
+        }
+        return null;
     }
 
 
