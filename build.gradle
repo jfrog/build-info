@@ -99,6 +99,10 @@ subprojects {
         classifier = 'sources'
     }
 
+    uploadArchives{
+        uploadDescriptor = true
+    }
+
     artifactoryPublish {
         dependsOn build
     }
