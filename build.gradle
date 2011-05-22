@@ -24,9 +24,7 @@ baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor
 
 allprojects {
     apply plugin: 'idea'
-    if (!ciBuild()) {
-        apply plugin: 'artifactory'
-    }
+    apply plugin: 'artifactory'
     group = 'org.jfrog.buildinfo'
 }
 
@@ -308,11 +306,6 @@ ideaProject {
     whenConfigured { project ->
         project.jdk.languageLevel = 'JDK_1_5'
     }
-}
-
-boolean ciBuild() {
-    return System.getenv('buildInfoConfig.propertiesFile') != null ||
-            System.getProperty('buildInfoConfig.propertiesFile') != null
 }
 
 /*task wrapper(type: Wrapper) {
