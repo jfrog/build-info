@@ -16,13 +16,15 @@
 
 package org.jfrog.build.extractor.gradle;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.tools.ant.util.FileUtils;
 import org.gradle.api.DefaultTask;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -76,15 +78,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Input
     private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 
+    private final Map<String, Boolean> flags = Maps.newHashMap();
+
     private boolean lastInGraph = false;
 
     private Map<String, String> propsToAdd;
-    private static final ImmutableMap<String, String> PROP_TRANSLATE = ImmutableMap.of(
-            PUBLISH_IVY, ClientConfigurationFields.IVY,
-            PUBLISH_POM, ClientConfigurationFields.MAVEN,
-            PUBLISH_ARTIFACTS, ClientConfigurationFields.PUBLISH_ARTIFACTS,
-            PUBLISH_BUILD_INFO, ClientConfigurationFields.PUBLISH_BUILD_INFO
-    );
 
     @Input
     @Optional
@@ -93,7 +91,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setPublishBuildInfo(Boolean publishBuildInfo) {
-        validateFlag(PUBLISH_BUILD_INFO, publishBuildInfo);
+        setFlag(PUBLISH_BUILD_INFO, publishBuildInfo);
     }
 
     @Input
@@ -103,7 +101,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setPublishArtifacts(Boolean publishArtifacts) {
-        validateFlag(PUBLISH_ARTIFACTS, publishArtifacts);
+        setFlag(PUBLISH_ARTIFACTS, publishArtifacts);
     }
 
     @Input
@@ -113,7 +111,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setPublishIvy(Boolean publishIvy) {
-        validateFlag(PUBLISH_IVY, publishIvy);
+        setFlag(PUBLISH_IVY, publishIvy);
     }
 
     @Input
@@ -123,26 +121,15 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     public void setPublishPom(Boolean publishPom) {
-        validateFlag(PUBLISH_POM, publishPom);
+        setFlag(PUBLISH_POM, publishPom);
     }
 
     private Boolean getFlag(String flagName) {
-        String publisherPropKey = PROP_TRANSLATE.get(flagName);
-        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(getProject());
-        ArtifactoryClientConfiguration.PublisherHandler publisherHandler = convention.getConfiguration().publisher;
-        return publisherHandler.getBooleanValue(publisherPropKey);
+        return flags.get(flagName);
     }
 
-    private void validateFlag(String flagName, Boolean newValue) {
-        String publisherPropKey = PROP_TRANSLATE.get(flagName);
-        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(getProject());
-        ArtifactoryClientConfiguration.PublisherHandler publisherHandler = convention.getConfiguration().publisher;
-        Boolean currentValue = publisherHandler.getBooleanValue(publisherPropKey);
-        if (newValue != null && currentValue != null && !currentValue.equals(newValue)) {
-            throw new GradleException("Support for build info recording settings on per project basis, not supported yet!\n" +
-                    "Task " + getPath() + " validation for " + flagName + " flag failed.");
-        }
-        publisherHandler.setBooleanValue(publisherPropKey, newValue);
+    private void setFlag(String flagName, Boolean newValue) {
+        flags.put(flagName, newValue);
     }
 
     public void setLastInGraph(boolean lastInGraph) {
@@ -289,7 +276,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
         // Set ivy descriptor parameters
         TaskContainer tasks = project.getTasks();
-        if (acc.publisher.isIvy()) {
+        if (this.isPublishIvy(acc.publisher.isIvy())) {
             Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
             if (ivyDescriptor == null && archiveConf != null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
@@ -309,7 +296,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
 
         // Set maven pom parameters
-        if (acc.publisher.isMaven()) {
+        if (isPublishMaven(acc)) {
             if (mavenDescriptor == null) {
                 // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
                 // if the project doesn't have the maven install task, throw an exception
@@ -327,6 +314,18 @@ public class BuildInfoRecorderTask extends DefaultTask {
         } else {
             mavenDescriptor = null;
         }
+    }
+
+    private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
+        if (getPublishPom() == null)
+            return acc.publisher.isMaven();
+        return getPublishPom();
+    }
+
+    private boolean isPublishIvy(Boolean defaultValue) {
+        if (getPublishIvy() == null)
+            return defaultValue;
+        return getPublishIvy();
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {

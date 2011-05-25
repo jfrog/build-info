@@ -1,6 +1,7 @@
 .gradle
 *.iml
-build
-out
+/build
+/*/build
+/*/out
 build-info.ipr
 build-info.iws
