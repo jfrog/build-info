@@ -326,8 +326,9 @@ public class ArtifactoryBuildInfoClient {
         if (StringUtils.isBlank(buildNumber)) {
             throw new IllegalArgumentException("Build number is required for promotion.");
         }
+
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
-                append(buildName).append("/").append(buildNumber);
+                append(httpClient.urlEncode(buildName)).append("/").append(httpClient.urlEncode(buildNumber));
 
         String promotionJson = toJsonString(promotion);
 
