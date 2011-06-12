@@ -81,6 +81,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         }
         logger.debug("Activating Artifactory Maven3 Build-Info Recorder: activation property (" +
                 BuildInfoConfigProperties.ACTIVATE_RECORDER + ") value is true.");
+        configuration.info.setBuildStarted(System.currentTimeMillis());
         ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
         recorder.setListenerToWrap(existingExecutionListener);
         recorder.setConfiguration(configuration);

@@ -61,7 +61,7 @@ public class BuildDeploymentHelper {
                 logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
                 BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile));
             } else {
-                File buildInfo = new File(basedir, "target");
+                File buildInfo = new File(basedir, "target/build-info.json");
                 BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfo);
             }
         } catch (IOException e) {
