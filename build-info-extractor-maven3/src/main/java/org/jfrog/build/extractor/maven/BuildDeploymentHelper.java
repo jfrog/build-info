@@ -52,17 +52,20 @@ public class BuildDeploymentHelper {
     private ClientPropertyResolver clientPropertyResolver;
 
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
-            Map<Artifact, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures) {
+            Map<Artifact, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
         String outputFile = clientConf.getExportFile();
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
-        if (StringUtils.isNotBlank(outputFile)) {
-            try {
+        try {
+            if (StringUtils.isNotBlank(outputFile)) {
                 logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
                 BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile));
-            } catch (IOException e) {
-                throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
+            } else {
+                File buildInfo = new File(basedir, "target");
+                BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfo);
             }
+        } catch (IOException e) {
+            throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
         }
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " +
                 clientConf.publisher.isPublishBuildInfo());
@@ -75,7 +78,8 @@ public class BuildDeploymentHelper {
                     deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
-                if (clientConf.publisher.isPublishBuildInfo() && (clientConf.publisher.isEvenUnstable() || !wereThereTestFailures)) {
+                if (clientConf.publisher.isPublishBuildInfo() &&
+                        (clientConf.publisher.isEvenUnstable() || !wereThereTestFailures)) {
                     try {
                         logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                         client.sendBuildInfo(build);
