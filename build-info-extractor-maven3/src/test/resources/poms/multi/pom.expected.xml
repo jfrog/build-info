@@ -1,0 +1,64 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jfrog.test</groupId>
+        <artifactId>parent</artifactId>
+        <version>3</version>
+        <relativePath>../pom/bla/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>two</artifactId>
+    <version>3.6</version>
+    <packaging>pom</packaging>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- included in the reactor projects -->
+            <dependency>
+                <groupId>org.jfrog.test.nested</groupId>
+                <artifactId>nested1</artifactId>
+                <version>3.6</version>
+            </dependency>
+
+            <!-- included in the reactor projects -->
+            <dependency>
+                <groupId>org.jfrog.test.nested</groupId>
+                <artifactId>nested2</artifactId>
+                <version>3.6</version>
+            </dependency>
+
+            <!-- not included in the reactor projects -->
+            <dependency>
+                <groupId>org.jfrog.test.nested</groupId>
+                <artifactId>nestedX</artifactId>
+                <version>1.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- included in the reactor projects -->
+        <dependency>
+            <groupId>org.jfrog.test.nested</groupId>
+            <artifactId>nested1</artifactId>
+            <version>3.6</version>
+        </dependency>
+
+        <!-- included in the reactor projects -->
+        <dependency>
+            <groupId>org.jfrog.test.nested</groupId>
+            <artifactId>nested2</artifactId>
+        </dependency>
+
+        <!-- not included in the reactor projects -->
+        <dependency>
+            <groupId>org.jfrog.test.nested</groupId>
+            <artifactId>nestedX</artifactId>
+            <version>1.1</version>
+        </dependency>
+
+    </dependencies>
+
+</project>

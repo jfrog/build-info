@@ -97,7 +97,7 @@ subprojects {
         classifier = 'sources'
     }
 
-    uploadArchives{
+    uploadArchives {
         uploadDescriptor = true
     }
 
@@ -279,6 +279,7 @@ project('build-info-extractor-maven3') {
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
+        compile group: 'org.jdom', name: 'jdom', version: '1.1'
         provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
                 "org.apache.maven:maven-core:3.0.2"
         testCompile "org.easymock:easymockclassextension:2.5.2"
