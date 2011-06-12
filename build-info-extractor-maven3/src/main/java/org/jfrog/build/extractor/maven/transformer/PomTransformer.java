@@ -80,7 +80,7 @@ public class PomTransformer {
      *
      * @return True if the file was modified.
      */
-    public Boolean transform(File pomFile) throws IOException, InterruptedException {
+    public Boolean transform(File pomFile) throws IOException {
         this.pomFile = pomFile;
         if (!pomFile.exists()) {
             throw new IllegalArgumentException("Couldn't find pom file: " + pomFile);
