@@ -27,6 +27,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -156,6 +157,7 @@ public abstract class BuildInfoExtractorUtils {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
         mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         mapper.getDeserializationConfig().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
