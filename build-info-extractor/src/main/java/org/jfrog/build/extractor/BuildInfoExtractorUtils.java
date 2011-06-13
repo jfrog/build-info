@@ -174,12 +174,9 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static Build jsonStringToBuildInfo(String json) throws IOException {
-        JsonFactory jsonFactory = new JsonFactory();
-        ObjectMapper mapper = new ObjectMapper(jsonFactory);
-        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        jsonFactory.setCodec(mapper);
+        JsonFactory jsonFactory = createJsonFactory();
         JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
-        return mapper.readValue(parser, Build.class);
+        return jsonFactory.getCodec().readValue(parser, Build.class);
     }
 
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
