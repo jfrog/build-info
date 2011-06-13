@@ -277,20 +277,30 @@ public class BuildInfoRecorderTask extends DefaultTask {
             Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
             if (ivyDescriptor == null && archiveConf != null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
-                Upload uploadTask = tasks.withType(Upload.class).findByName(archiveConf.getUploadTaskName());
-                if (uploadTask == null) {
+                // ATTENTION: Task not part of the execution graph have withType(Upload.class) false ?!? Need to check for type our self.
+                Task mayBeUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
+                if (mayBeUploadTask == null) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
                             "\nAnd task '{}' does not exists." +
                             "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will solve this issue.",
                             new Object[]{getPath(), archiveConf.getUploadTaskName()});
                     ivyDescriptor = null;
                 } else {
-                    if (!uploadTask.isUploadDescriptor()) {
-                        log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.", uploadTask.getPath());
-                        uploadTask.setUploadDescriptor(true);
+                    if (!(mayBeUploadTask instanceof Upload)) {
+                        log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
+                                "\nAnd task '{}' is not an Upload task." +
+                                "\nYou'll need to set publishIvy=false or provide a path to the ivy file to publish to solve this issue.",
+                                new Object[]{getPath(), archiveConf.getUploadTaskName()});
+                        ivyDescriptor = null;
+                    } else {
+                        Upload uploadTask = (Upload) mayBeUploadTask;
+                        if (!uploadTask.isUploadDescriptor()) {
+                            log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.", uploadTask.getPath());
+                            uploadTask.setUploadDescriptor(true);
+                        }
+                        ivyDescriptor = uploadTask.getDescriptorDestination();
+                        dependsOn(mayBeUploadTask);
                     }
-                    ivyDescriptor = uploadTask.getDescriptorDestination();
-                    dependsOn(uploadTask);
                 }
             }
         } else {
