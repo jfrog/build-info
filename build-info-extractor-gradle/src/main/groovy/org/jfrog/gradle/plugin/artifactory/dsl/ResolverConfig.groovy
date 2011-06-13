@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.dsl
+package org.jfrog.gradle.plugin.artifactory.dsl
 
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil

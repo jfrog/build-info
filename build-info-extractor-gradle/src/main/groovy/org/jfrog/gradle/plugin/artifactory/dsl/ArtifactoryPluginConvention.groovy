@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.jfrog.dsl
+package org.jfrog.gradle.plugin.artifactory.dsl
 
 import com.google.common.collect.Lists
 import org.gradle.api.Project
 import org.gradle.api.logging.Logger
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration
-import org.jfrog.build.extractor.gradle.logger.GradleClientLogger
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
 
 /**
  * @author Tomer Cohen

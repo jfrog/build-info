@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.jfrog.dsl
+package org.jfrog.gradle.plugin.artifactory.dsl
 
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
-import com.google.common.collect.Lists
 
 /**
  * @author Tomer Cohen
@@ -40,7 +39,6 @@ class PublisherConfig {
         //println "1: missing method $name"
         Method[] methods = handler.getClass().getMethods()
         def method = methods.find {it.name.matches(name)}
-        // TODO: [by fsi] Why only one parameter?
         method.invoke(handler, args[0])
     }
 

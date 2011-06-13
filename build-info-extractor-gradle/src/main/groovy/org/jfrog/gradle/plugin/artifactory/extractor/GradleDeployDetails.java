@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.extractor.gradle;
+package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.PublishArtifact;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.extractor.gradle;
+package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
@@ -22,7 +22,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.dsl.ArtifactoryPluginConvention;
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 import javax.annotation.Nullable;
 import java.util.Map;
@@ -52,7 +52,7 @@ public class GradlePluginUtils {
      *                from CI Server)
      */
     public static void fillArtifactoryClientConfiguration(ArtifactoryClientConfiguration configuration,
-            Project project) {
+                                                          Project project) {
         Properties props = new Properties();
         // First aggregate properties from parent to child
         fillProperties(project, props);

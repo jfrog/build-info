@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build
+package org.jfrog.gradle.plugin.artifactory
 
 import org.apache.commons.lang.StringUtils
 import org.apache.ivy.plugins.resolver.DependencyResolver
@@ -26,11 +26,11 @@ import org.gradle.api.Project
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
-import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
-import org.jfrog.build.extractor.gradle.GradlePluginUtils
-import org.jfrog.dsl.ArtifactoryPluginConvention
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
+import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
 import org.slf4j.Logger
-import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils.BUILD_INFO_TASK_NAME
 
 class ArtifactoryPlugin implements Plugin<Project> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);

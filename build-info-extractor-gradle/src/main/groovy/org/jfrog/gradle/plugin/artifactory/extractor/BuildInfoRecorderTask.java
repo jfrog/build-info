@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.extractor.gradle;
+package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
@@ -42,16 +42,13 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.gradle.logger.GradleClientLogger;
-import org.jfrog.dsl.ArtifactoryPluginConvention;
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import static org.jfrog.build.extractor.gradle.GradlePluginUtils.BUILD_INFO_TASK_NAME;
 
 /**
  * @author Tomer Cohen
@@ -262,7 +259,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
             setConfiguration(archiveConf);
         }
         for (Project sub : project.getSubprojects()) {
-            Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
+            Task subBiTask = sub.getTasks().findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME);
             if (subBiTask != null) {
                 dependsOn(subBiTask);
             }
@@ -281,12 +278,17 @@ public class BuildInfoRecorderTask extends DefaultTask {
             if (ivyDescriptor == null && archiveConf != null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
                 Upload uploadTask = tasks.withType(Upload.class).findByName(archiveConf.getUploadTaskName());
-                if (uploadTask == null || !uploadTask.isUploadDescriptor()) {
+                if (uploadTask == null) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                            "\nAnd task '{}' does not export the Ivy descriptor.",
+                            "\nAnd task '{}' does not exists." +
+                            "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will solve this issue.",
                             new Object[]{getPath(), archiveConf.getUploadTaskName()});
                     ivyDescriptor = null;
                 } else {
+                    if (!uploadTask.isUploadDescriptor()) {
+                        log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.", uploadTask.getPath());
+                        uploadTask.setUploadDescriptor(true);
+                    }
                     ivyDescriptor = uploadTask.getDescriptorDestination();
                     dependsOn(uploadTask);
                 }
@@ -433,7 +435,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         ArtifactoryBuildInfoClient client =
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
-        for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
+        for (Task birt : getProject().getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, true)) {
             ((BuildInfoRecorderTask) birt).uploadDescriptorsAndArtifacts(allDeployableDetails);
         }
         try {

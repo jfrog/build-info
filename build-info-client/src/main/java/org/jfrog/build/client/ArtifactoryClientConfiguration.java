@@ -389,7 +389,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIvy() {
-            return getBooleanValue(IVY, true);
+            return getBooleanValue(IVY, false);
         }
 
         public void setM2Compatible(Boolean enabled) {
@@ -437,7 +437,7 @@ public class ArtifactoryClientConfiguration {
                 props.put(matrixParamPrefix + key, value);
             }
         }
-        
+
         // INTERNAL METHOD
         public void addMatrixParams(Map<String, String> vars) {
             for (Map.Entry<String, String> entry : vars.entrySet()) {

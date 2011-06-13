@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.extractor.gradle;
+package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
@@ -22,29 +22,14 @@ import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.PublishArtifact;
-import org.gradle.api.artifacts.ResolveException;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
@@ -58,12 +43,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -84,7 +64,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
 
     public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-            Set<GradleDeployDetails> gradleDeployDetails) {
+                                    Set<GradleDeployDetails> gradleDeployDetails) {
         this.clientConf = clientConf;
         this.gradleDeployDetails = gradleDeployDetails;
     }

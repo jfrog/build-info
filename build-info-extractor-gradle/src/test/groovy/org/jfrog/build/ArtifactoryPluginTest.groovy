@@ -8,8 +8,9 @@ import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.client.ClientProperties
-import org.jfrog.build.extractor.gradle.BuildInfoRecorderTask
-import org.jfrog.build.extractor.gradle.GradlePluginUtils
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
+import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 
@@ -18,116 +19,116 @@ import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
  */
 public class ArtifactoryPluginTest extends Specification {
 
-  def nothingApplyPlugin() {
-    Project project = ProjectBuilder.builder().build()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def nothingApplyPlugin() {
+        Project project = ProjectBuilder.builder().build()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    // Disable resolving
-    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        // Disable resolving
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
 
-    artifactoryPlugin.apply(project)
+        artifactoryPlugin.apply(project)
 
-    expect:
-    project.buildscript.repositories.resolvers.isEmpty()
-    project.repositories.resolvers.isEmpty()
-    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
-  }
+        expect:
+        project.buildscript.repositories.resolvers.isEmpty()
+        project.repositories.resolvers.isEmpty()
+        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+    }
 
-  def resolverApplyPlugin() {
-    Project project = ProjectBuilder.builder().build()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def resolverApplyPlugin() {
+        Project project = ProjectBuilder.builder().build()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    String rootUrl = 'http://localhost:8081/artifactory/'
-    project.setProperty(PROP_CONTEXT_URL, rootUrl)
-    project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.REPO_KEY, 'repo')
-    String expectedName = rootUrl + 'repo'
+        String rootUrl = 'http://localhost:8081/artifactory/'
+        project.setProperty(PROP_CONTEXT_URL, rootUrl)
+        project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.REPO_KEY, 'repo')
+        String expectedName = rootUrl + 'repo'
 
-    artifactoryPlugin.apply(project)
-    evaluateProject(project)
+        artifactoryPlugin.apply(project)
+        evaluateProject(project)
 
-    // TODO: Test the buildSrc project issue
-    List libsResolvers = project.repositories.resolvers
-    expect:
-    libsResolvers.size() == 1
-    libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
-    libsResolvers.get(0).name == expectedName
-    ((IBiblioResolver) libsResolvers.get(0)).root == expectedName + '/'
-    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
-  }
+        // TODO: Test the buildSrc project issue
+        List libsResolvers = project.repositories.resolvers
+        expect:
+        libsResolvers.size() == 1
+        libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
+        libsResolvers.get(0).name == expectedName
+        ((IBiblioResolver) libsResolvers.get(0)).root == expectedName + '/'
+        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+    }
 
-  def buildInfoJavaPlugin() {
-    Project project = ProjectBuilder.builder().build()
-    JavaPlugin javaPlugin = new JavaPlugin()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def buildInfoJavaPlugin() {
+        Project project = ProjectBuilder.builder().build()
+        JavaPlugin javaPlugin = new JavaPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    // Disable resolving
-    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-    javaPlugin.apply(project)
-    artifactoryPlugin.apply(project)
+        // Disable resolving
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        javaPlugin.apply(project)
+        artifactoryPlugin.apply(project)
 
-    expect:
-    project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
-  }
+        expect:
+        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+    }
 
-  def buildInfoTaskConfiguration() {
-    Project project = ProjectBuilder.builder().build()
-    JavaPlugin javaPlugin = new JavaPlugin()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def buildInfoTaskConfiguration() {
+        Project project = ProjectBuilder.builder().build()
+        JavaPlugin javaPlugin = new JavaPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    // Disable resolving
-    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
-    javaPlugin.apply(project)
-    artifactoryPlugin.apply(project)
+        // Disable resolving
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        javaPlugin.apply(project)
+        artifactoryPlugin.apply(project)
 
-    BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-    evaluateProject(project)
-    expect:
-    buildInfoTask.configuration != null
-  }
+        BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+        evaluateProject(project)
+        expect:
+        buildInfoTask.configuration != null
+    }
 
-  def buildInfoTaskDependsOn() {
-    Project project = ProjectBuilder.builder().build()
-    JavaPlugin javaPlugin = new JavaPlugin()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def buildInfoTaskDependsOn() {
+        Project project = ProjectBuilder.builder().build()
+        JavaPlugin javaPlugin = new JavaPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    // Disable resolving
-    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'false')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
-    javaPlugin.apply(project)
-    artifactoryPlugin.apply(project)
+        // Disable resolving
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'false')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        javaPlugin.apply(project)
+        artifactoryPlugin.apply(project)
 
-    Task buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-    evaluateProject(project)
-    expect:
-    buildInfoTask.dependsOn != null
-    !buildInfoTask.dependsOn.isEmpty()
-    buildInfoTask.dependsOn.size() == 1
-  }
+        Task buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+        evaluateProject(project)
+        expect:
+        buildInfoTask.dependsOn != null
+        !buildInfoTask.dependsOn.isEmpty()
+        buildInfoTask.dependsOn.size() == 1
+    }
 
-  def populateConfigurationFromDsl() {
-    URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
-    Project project = ProjectBuilder.builder().withProjectDir(new File(resource.toURI()).getParentFile()).build()
-    JavaPlugin javaPlugin = new JavaPlugin()
-    ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
+    def populateConfigurationFromDsl() {
+        URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
+        Project project = ProjectBuilder.builder().withProjectDir(new File(resource.toURI()).getParentFile()).build()
+        JavaPlugin javaPlugin = new JavaPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-    // Disable resolving
-    project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
-    project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
-    javaPlugin.apply(project)
-    artifactoryPlugin.apply(project)
+        // Disable resolving
+        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        javaPlugin.apply(project)
+        artifactoryPlugin.apply(project)
 
-    BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-    evaluateProject(project)
-    expect:
-    buildInfoTask.configuration != null
-  }
+        BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+        evaluateProject(project)
+        expect:
+        buildInfoTask.configuration != null
+    }
 
-  private def evaluateProject(Project project) {
-    BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
-    next.projectsEvaluated(project.getGradle())
-  }
+    private def evaluateProject(Project project) {
+        BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
+        next.projectsEvaluated(project.getGradle())
+    }
 }
