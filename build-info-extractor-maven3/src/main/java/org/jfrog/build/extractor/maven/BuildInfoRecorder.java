@@ -273,7 +273,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 stream = new FileInputStream(report);
                 Object evaluate = path.evaluate("/testsuite/@failures", new InputSource(stream),
                         XPathConstants.STRING);
-                if (evaluate != null && StringUtils.isNumeric(evaluate.toString())) {
+                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString())
+                        && StringUtils.isNumeric(evaluate.toString())) {
                     int testsFailed = Integer.parseInt(evaluate.toString());
                     return testsFailed != 0;
                 }
