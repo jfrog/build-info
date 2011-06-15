@@ -45,12 +45,12 @@ class ArtifactoryPlugin implements Plugin<Project> {
         // Then add the build info task
         ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
         createBuildInfoTask(project)
-        if (!info.configuration.info.buildStarted) {
-            info.configuration.info.setBuildStarted(System.currentTimeMillis())
+        if (!info.clientConfig.info.buildStarted) {
+            info.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
-        if (!info.configuration.isBuildListernerAdded()) {
+        if (!info.clientConfig.isBuildListernerAdded()) {
             def gradle = project.getGradle()
             gradle.addBuildListener(new ProjectEvaluatedBuildListener())
             // Flag the last buildInfo task in the execution graph
@@ -63,14 +63,14 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     }
                 }
             }
-            info.configuration.setBuildListernerAdded(true)
+            info.clientConfig.setBuildListernerAdded(true)
         }
     }
 
 
     private static class ProjectEvaluatedBuildListener extends BuildAdapter {
         def void projectsEvaluated(Gradle gradle) {
-            ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(gradle.rootProject).getConfiguration()
+            ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(gradle.rootProject).getClientConfig()
             GradlePluginUtils.fillArtifactoryClientConfiguration(configuration, gradle.rootProject)
             gradle.rootProject.allprojects.each {
                 defineResolvers(it, configuration.resolver)
@@ -139,7 +139,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
             def isRoot = project.equals(project.getRootProject())
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
             buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
-            buildInfo.setDescription("Generates build info from build artifacts")
+            buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactiory, and resolves
+depnedncies from Artifactory.''')
         }
         return buildInfo
     }

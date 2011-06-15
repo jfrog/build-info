@@ -18,7 +18,6 @@ package org.jfrog.gradle.plugin.artifactory.dsl
 
 import com.google.common.collect.Lists
 import org.gradle.api.Project
-import org.gradle.api.logging.Logger
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
@@ -27,44 +26,52 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
  * @author Tomer Cohen
  */
 class ArtifactoryPluginConvention {
-    private Logger logger
-    final ArtifactoryClientConfiguration configuration
+    final Project project
+    final ArtifactoryClientConfiguration clientConfig
     final List<Closure> taskDefaultClosures
+    final Closure propsResolver
 
     ArtifactoryPluginConvention(Project project) {
-        this.logger = project.logger
-        configuration = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
+        this.project = project
+        clientConfig = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
         taskDefaultClosures = Lists.newArrayList()
-    }
-
-    List<Closure> getTaskDefaults() {
-        return taskDefaultClosures
+        propsResolver = {String name ->
+            project.logger.debug "Resolving property '${name}''"
+            def val = project.properties[name]
+            project.logger.debug "Property '${name}' resolved to '${project.properties[name]}'"
+            val
+        }
+        ArtifactoryPluginConvention.metaClass.propertyMissing = propsResolver
     }
 
     def artifactory(Closure closure) {
         closure.delegate = this
         closure()
-        logger.debug("Artifactory Plugin configured")
+        project.logger.debug("Artifactory Plugin configured")
     }
 
     def setContextUrl(String contextUrl) {
-        configuration.setContextUrl(contextUrl)
+        clientConfig.setContextUrl(contextUrl)
     }
 
     def publish(Closure closure) {
-        new PublisherConfig(configuration.publisher, taskDefaultClosures).config(closure)
+        PublisherConfig.metaClass.propertyMissing = propsResolver
+        new PublisherConfig(this).config(closure)
     }
 
     def resolve(Closure closure) {
-        new ResolverConfig(configuration.resolver).config(closure)
+        ResolverConfig.metaClass.propertyMissing = propsResolver
+        new ResolverConfig(this).config(closure)
     }
 
     def buildInfo(Closure closure) {
-        ConfigureUtil.configure(closure, configuration.info)
+        ArtifactoryClientConfiguration.BuildInfoHandler.metaClass.propertyMissing = propsResolver
+        ConfigureUtil.configure(closure, clientConfig.info)
     }
 
     def proxy(Closure closure) {
-        ConfigureUtil.configure(closure, configuration.proxy)
+        ArtifactoryClientConfiguration.ProxyHandler.metaClass.propertyMissing = propsResolver
+        ConfigureUtil.configure(closure, clientConfig.proxy)
     }
 }
 

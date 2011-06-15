@@ -25,24 +25,25 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
  */
 class ResolverConfig {
 
-    private ResolverHandler handler;
+    private ResolverHandler resolver;
     private Repository repository;
 
-    ResolverConfig(ResolverHandler handler) {
-        this.handler = handler
-        this.repository = new Repository()
+    ResolverConfig(ArtifactoryPluginConvention conv) {
+        resolver = conv.clientConfig.resolver
+        repository = new Repository()
+        repository.metaClass.propertyMissing = conv.propsResolver
     }
 
     def methodMissing(String name, args) {
         //println "1: missing method $name"
-        Method[] methods = handler.getClass().getMethods()
+        Method[] methods = resolver.getClass().getMethods()
         Method method = methods.find {it.name.matches(name)}
         // TODO: [by fsi] Why only one parameter?
-        method.invoke(handler, args[0])
+        method.invoke(resolver, args[0])
     }
 
     def propertyMissing(String name, value) {
-        handler[name] = value
+        resolver[name] = value
     }
 
     def config(Closure closure) {
@@ -56,29 +57,29 @@ class ResolverConfig {
     public class Repository {
 
         def setUsername(String username) {
-            handler.setUsername(username)
+            ResolverConfig.this.resolver.setUsername(username)
         }
 
         def setPassword(String password) {
-            handler.setPassword(password)
+            ResolverConfig.this.resolver.setPassword(password)
         }
 
         def setIvyLayout(String ivyLayout) {
-            handler.setIvyPattern(ivyLayout)
-            handler.setIvyRepositoryDefined(true)
+            ResolverConfig.this.resolver.setIvyPattern(ivyLayout)
+            ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
         }
 
         def setArtifactLayout(String artifactLayout) {
-            handler.setIvyArtifactPattern(artifactLayout)
-            handler.setIvyRepositoryDefined(true)
+            ResolverConfig.this.resolver.setIvyArtifactPattern(artifactLayout)
+            ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
         }
 
         def setMavenCompatible(boolean mavenCompatible) {
-            handler.setM2Compatible(mavenCompatible)
+            ResolverConfig.this.resolver.setM2Compatible(mavenCompatible)
         }
 
         def setRepoKey(String repoKey) {
-            handler.setRepoKey(repoKey)
+            ResolverConfig.this.resolver.setRepoKey(repoKey)
         }
 
         def ivy(Closure closure) {

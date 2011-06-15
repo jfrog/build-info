@@ -25,25 +25,26 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
  */
 class PublisherConfig {
 
-    private PublisherHandler handler;
-    private Repository repository;
-    private List<Closure> taskDefaultClosures
+    private final PublisherHandler publisher;
+    private final List<Closure> taskDefaultClosures
+    private final Repository repository;
 
-    PublisherConfig(PublisherHandler handler, List<Closure> taskDefaultClosures) {
-        this.handler = handler
-        this.repository = new Repository()
-        this.taskDefaultClosures = taskDefaultClosures
+    PublisherConfig(ArtifactoryPluginConvention conv) {
+        publisher = conv.clientConfig.publisher
+        taskDefaultClosures = conv.taskDefaultClosures
+        repository = new Repository()
+        repository.metaClass.propertyMissing = conv.propsResolver
     }
 
     def methodMissing(String name, args) {
         //println "1: missing method $name"
-        Method[] methods = handler.getClass().getMethods()
+        Method[] methods = publisher.getClass().getMethods()
         def method = methods.find {it.name.matches(name)}
-        method.invoke(handler, args[0])
+        method.invoke(publisher, args[0])
     }
 
     def propertyMissing(String name, value) {
-        handler[name] = value
+        publisher[name] = value
     }
 
     def defaults(Closure closure) {
@@ -55,11 +56,11 @@ class PublisherConfig {
     }
 
     def setPublishPom(boolean publishPom) {
-        handler.setMaven(publishPom)
+        publisher.setMaven(publishPom)
     }
 
     def setPublishIvy(boolean publishIvy) {
-        handler.setIvy(publishIvy)
+        publisher.setIvy(publishIvy)
     }
 
     def repository(Closure closure) {
@@ -69,27 +70,27 @@ class PublisherConfig {
     public class Repository {
 
         def setUsername(String username) {
-            handler.setUsername(username)
+            PublisherConfig.this.publisher.setUsername(username)
         }
 
         def setPassword(String password) {
-            handler.setPassword(password)
+            PublisherConfig.this.publisher.setPassword(password)
         }
 
         def setIvyLayout(String ivyLayout) {
-            handler.setIvyPattern(ivyLayout)
+            PublisherConfig.this.publisher.setIvyPattern(ivyLayout)
         }
 
         def setArtifactLayout(String artifactLayout) {
-            handler.setIvyArtifactPattern(artifactLayout)
+            PublisherConfig.this.publisher.setIvyArtifactPattern(artifactLayout)
         }
 
         def setRepoKey(String repoKey) {
-            handler.setRepoKey(repoKey)
+            PublisherConfig.this.publisher.setRepoKey(repoKey)
         }
 
         def setMavenCompatible(boolean mavenCompatible) {
-            handler.setM2Compatible(mavenCompatible)
+            PublisherConfig.this.publisher.setM2Compatible(mavenCompatible)
         }
 
         def ivy(Closure closure) {
@@ -97,5 +98,3 @@ class PublisherConfig {
         }
     }
 }
-
-

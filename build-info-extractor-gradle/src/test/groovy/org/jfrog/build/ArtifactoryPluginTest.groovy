@@ -44,7 +44,7 @@ public class ArtifactoryPluginTest extends Specification {
         String expectedName = rootUrl + 'repo'
 
         artifactoryPlugin.apply(project)
-        evaluateProject(project)
+        projectEvaluated(project)
 
         // TODO: Test the buildSrc project issue
         List libsResolvers = project.repositories.resolvers
@@ -83,7 +83,7 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-        evaluateProject(project)
+        projectEvaluated(project)
         expect:
         buildInfoTask.configuration != null
     }
@@ -101,7 +101,7 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         Task buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-        evaluateProject(project)
+        projectEvaluated(project)
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
@@ -110,25 +110,51 @@ public class ArtifactoryPluginTest extends Specification {
 
     def populateConfigurationFromDsl() {
         URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
-        Project project = ProjectBuilder.builder().withProjectDir(new File(resource.toURI()).getParentFile()).build()
+        def projDir = new File(resource.toURI()).getParentFile()
+
+        Project project = ProjectBuilder.builder().withProjectDir(projDir).build()
+        project.setProperty('username', 'user1')
+        project.setProperty('passwd', 'p33p')
+        project.setProperty('ppom', false)
+
         JavaPlugin javaPlugin = new JavaPlugin()
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-        // Disable resolving
-        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        //project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'true')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
         BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-        evaluateProject(project)
+        def clientConfig = GradlePluginUtils.getArtifactoryConvention(project).getClientConfig()
+        project.evaluate()
+        projectEvaluated(project)
+
         expect:
         buildInfoTask.configuration != null
+        '[ext]user1' == clientConfig.publisher.username
+        'p33p' == clientConfig.publisher.password
+        !clientConfig.publisher.isMaven()
     }
 
-    private def evaluateProject(Project project) {
+    private def projectEvaluated(Project project) {
         BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
         next.projectsEvaluated(project.getGradle())
     }
 }
+
+
+/*GradleLauncher.injectCustomFactory(
+        new DefaultGradleLauncherFactory(LoggingServiceRegistry.newEmbeddableLogging()))
+StartParameter parameter = new StartParameter();
+parameter.projectProperties = ['username': 'user1', 'passwd': 'p33p', 'ppom': 'false',
+        "${ClientConfigurationFields.REPO_KEY}": '',
+        "${ClientProperties.PROP_PUBLISH_PREFIX}${ClientConfigurationFields.IVY}": 'true']
+parameter.setProjectDir(projDir)
+GradleLauncher gradleLauncher = GradleLauncher.newInstance(parameter);
+def project
+gradleLauncher.addListener(new BuildAdapter() {
+    public void buildFinished(BuildResult result) {
+        project = result.gradle.rootProject;
+    }
+})
+gradleLauncher.run()*/

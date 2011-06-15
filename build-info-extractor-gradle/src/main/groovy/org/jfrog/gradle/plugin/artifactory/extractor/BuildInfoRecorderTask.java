@@ -35,11 +35,22 @@ import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.Upload;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.LayoutPatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
@@ -249,8 +260,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
     public void projectsEvaluated() {
         Project project = getProject();
         ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(project);
-        List<Closure> configurationClosures = convention.getTaskDefaultClosures();
-        for (Closure closure : configurationClosures) {
+        List<Closure> defaultsClosures = convention.getTaskDefaultClosures();
+        for (Closure closure : defaultsClosures) {
             ConfigureUtil.configure(closure, this);
         }
         if (!hasConfigurations()) {
@@ -269,7 +280,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (!hasConfigurations()) {
             return;
         }
-        ArtifactoryClientConfiguration acc = convention.getConfiguration();
+        ArtifactoryClientConfiguration acc = convention.getClientConfig();
 
         // Set ivy descriptor parameters
         TaskContainer tasks = project.getTasks();
@@ -281,21 +292,24 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 Task mayBeUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
                 if (mayBeUploadTask == null) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                            "\nAnd task '{}' does not exists." +
-                            "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will solve this issue.",
+                            "and task '{}' does not exists." +
+                            "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will " +
+                            "solve this issue.",
                             new Object[]{getPath(), archiveConf.getUploadTaskName()});
                     ivyDescriptor = null;
                 } else {
                     if (!(mayBeUploadTask instanceof Upload)) {
                         log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                                "\nAnd task '{}' is not an Upload task." +
-                                "\nYou'll need to set publishIvy=false or provide a path to the ivy file to publish to solve this issue.",
+                                "and task '{}' is not an Upload task." +
+                                "\nYou'll need to set publishIvy=false or provide a path to the ivy file to publish to " +
+                                "solve this issue.",
                                 new Object[]{getPath(), archiveConf.getUploadTaskName()});
                         ivyDescriptor = null;
                     } else {
                         Upload uploadTask = (Upload) mayBeUploadTask;
                         if (!uploadTask.isUploadDescriptor()) {
-                            log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.", uploadTask.getPath());
+                            log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.",
+                                    uploadTask.getPath());
                             uploadTask.setUploadDescriptor(true);
                         }
                         ivyDescriptor = uploadTask.getDescriptorDestination();
@@ -315,7 +329,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 Upload installTask = tasks.withType(Upload.class).findByName("install");
                 if (installTask == null) {
                     log.warn("Cannot publish Maven descriptor if mavenDescriptor not set in task '{}' " +
-                            "\nAnd default install task for project '{}' is not an Upload task",
+                            "\nand default install task for project '{}' is not an Upload task",
                             new Object[]{getPath(), project.getPath()});
                     mavenDescriptor = null;
                 } else {
@@ -329,19 +343,21 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
-        if (getPublishPom() == null)
+        if (getPublishPom() == null) {
             return acc.publisher.isMaven();
+        }
         return getPublishPom();
     }
 
     private boolean isPublishIvy(Boolean defaultValue) {
-        if (getPublishIvy() == null)
+        if (getPublishIvy() == null) {
             return defaultValue;
+        }
         return getPublishIvy();
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {
-        return GradlePluginUtils.getArtifactoryConvention(project).getConfiguration();
+        return GradlePluginUtils.getArtifactoryConvention(project).getClientConfig();
     }
 
     @TaskAction
@@ -355,7 +371,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
     }
 
-    private void uploadDescriptorsAndArtifacts(Set<GradleDeployDetails> allDeployableDetails) throws IOException {
+    private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
+            throws IOException {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
         Map<String, String> params = clientConf.publisher.getMatrixParams();
         for (Map.Entry<String, String> entry : params.entrySet()) {
@@ -446,7 +463,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
         for (Task birt : getProject().getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, true)) {
-            ((BuildInfoRecorderTask) birt).uploadDescriptorsAndArtifacts(allDeployableDetails);
+            ((BuildInfoRecorderTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
         }
         try {
             if (clientConf.publisher.isPublishArtifacts()) {
@@ -510,7 +527,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<GradleDeployDetails> details,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (GradleDeployDetails detail : details) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();
@@ -589,8 +606,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     this.propsToAdd.put(key, value);
                 }
             }
-            ArtifactoryClientConfiguration configuration = getArtifactoryClientConfiguration(getProject());
-            propsToAdd.putAll(configuration.publisher.getMatrixParams());
+            ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+            propsToAdd.putAll(clientConf.publisher.getMatrixParams());
         }
         return propsToAdd;
     }

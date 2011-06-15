@@ -17,19 +17,22 @@
 // Root project version should not be used
 version = '2'
 
+//apply plugin: 'java'
+//apply plugin: 'artifactory'
+
 artifactory {
     contextUrl = 'http://localhost:8080/artifactory'
-    projectPublish {
-        publishConfigs('archives', 'published')
-        properties = ['qa.level': 'basic']
-    }
     publish {
         repository {
             repoKey = 'libs-snapshot-local' //The Artifactory repository key to publish to
-            username = 'admin' //The publisher user name
-            password = 'password' //The publisher password
+            username = "[ext]${username}" //The publisher user name
+            password = passwd //The publisher password
         }
-        publishPom = false
+        publishPom = ppom
+        defaults {
+            publishConfigs('archives', 'published')
+            properties = ['qa.level': 'basic']
+        }
     }
     resolve {
         repository {
