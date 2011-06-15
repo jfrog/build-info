@@ -98,8 +98,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getFlag(PUBLISH_BUILD_INFO);
     }
 
-    public void setPublishBuildInfo(Boolean publishBuildInfo) {
-        setFlag(PUBLISH_BUILD_INFO, publishBuildInfo);
+    public void setPublishBuildInfo(Object publishBuildInfo) {
+        setFlag(PUBLISH_BUILD_INFO, toBoolean(publishBuildInfo));
     }
 
     @Input
@@ -108,8 +108,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getFlag(PUBLISH_ARTIFACTS);
     }
 
-    public void setPublishArtifacts(Boolean publishArtifacts) {
-        setFlag(PUBLISH_ARTIFACTS, publishArtifacts);
+    public void setPublishArtifacts(Object publishArtifacts) {
+        setFlag(PUBLISH_ARTIFACTS, toBoolean(publishArtifacts));
     }
 
     @Input
@@ -118,8 +118,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getFlag(PUBLISH_IVY);
     }
 
-    public void setPublishIvy(Boolean publishIvy) {
-        setFlag(PUBLISH_IVY, publishIvy);
+    public void setPublishIvy(Object publishIvy) {
+        setFlag(PUBLISH_IVY, toBoolean(publishIvy));
+    }
+
+    private Boolean toBoolean(Object publishIvy) {
+        return Boolean.valueOf(publishIvy.toString());
     }
 
     @Input
@@ -128,8 +132,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getFlag(PUBLISH_POM);
     }
 
-    public void setPublishPom(Boolean publishPom) {
-        setFlag(PUBLISH_POM, publishPom);
+    public void setPublishPom(Object publishPom) {
+        setFlag(PUBLISH_POM, toBoolean(publishPom));
     }
 
     private Boolean getFlag(String flagName) {
@@ -349,7 +353,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getPublishPom();
     }
 
-    private boolean isPublishIvy(Boolean defaultValue) {
+    private boolean isPublishIvy(boolean defaultValue) {
         if (getPublishIvy() == null) {
             return defaultValue;
         }

@@ -48,6 +48,7 @@ class PublisherConfig {
     }
 
     def defaults(Closure closure) {
+        //Add for later evaluation by the task iteslf after all projects evaluated
         taskDefaultClosures.add(closure)
     }
 
