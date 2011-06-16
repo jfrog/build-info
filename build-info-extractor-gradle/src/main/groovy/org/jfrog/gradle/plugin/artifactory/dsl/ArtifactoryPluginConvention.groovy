@@ -37,7 +37,7 @@ class ArtifactoryPluginConvention {
         taskDefaultClosures = Lists.newArrayList()
         propsResolver = {String name ->
             project.logger.debug "Resolving property '${name}''"
-            def val = project.properties[name]
+            def val = project.property(name)
             project.logger.debug "Property '${name}' resolved to '${project.properties[name]}'"
             val
         }

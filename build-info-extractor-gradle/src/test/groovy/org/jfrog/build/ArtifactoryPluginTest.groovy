@@ -16,6 +16,7 @@ import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 
 /**
  * @author freds
+ * @author Yoav Landman
  */
 public class ArtifactoryPluginTest extends Specification {
 
@@ -133,7 +134,8 @@ public class ArtifactoryPluginTest extends Specification {
         buildInfoTask.configuration != null
         '[ext]user1' == clientConfig.publisher.username
         'p33p' == clientConfig.publisher.password
-        !clientConfig.publisher.isMaven()
+        //Cannot call clientConfig.publisher.isMaven() since it is only assigned at task execution
+        !buildInfoTask.getPublishPom()
     }
 
     private def projectEvaluated(Project project) {

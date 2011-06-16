@@ -28,8 +28,8 @@ artifactory {
             username = "[ext]${username}" //The publisher user name
             password = passwd //The publisher password
         }
-        publishPom = ppom
         defaults {
+            publishPom = ppom
             publishConfigs('archives', 'published')
             properties = ['qa.level': 'basic']
         }
