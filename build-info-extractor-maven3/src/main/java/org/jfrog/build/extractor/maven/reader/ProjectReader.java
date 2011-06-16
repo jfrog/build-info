@@ -2,14 +2,16 @@ package org.jfrog.build.extractor.maven.reader;
 
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
+import com.google.common.io.Files;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 
@@ -72,15 +74,15 @@ public class ProjectReader {
      * @return Construct a Maven {@link Model} from the pom.
      */
     private Model readModel(File pom) throws IOException {
-        FileInputStream stream;
         MavenXpp3Reader reader = new MavenXpp3Reader();
-        stream = new FileInputStream(pom);
+        StringReader stringReader = null;
         try {
-            return reader.read(stream);
+            stringReader = new StringReader(Files.toString(pom, Charset.forName("UTF-8")));
+            return reader.read(stringReader);
         } catch (XmlPullParserException e) {
             throw new IOException(e);
         } finally {
-            Closeables.closeQuietly(stream);
+            Closeables.closeQuietly(stringReader);
         }
     }
 
