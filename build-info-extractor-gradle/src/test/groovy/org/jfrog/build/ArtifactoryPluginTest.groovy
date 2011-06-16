@@ -109,7 +109,7 @@ public class ArtifactoryPluginTest extends Specification {
         buildInfoTask.dependsOn.size() == 1
     }
 
-    def populateConfigurationFromDsl() {
+    /* def populateConfigurationFromDsl() {
         URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
         def projDir = new File(resource.toURI()).getParentFile()
 
@@ -131,12 +131,12 @@ public class ArtifactoryPluginTest extends Specification {
         projectEvaluated(project)
 
         expect:
-        /* buildInfoTask.configuration != null
+        buildInfoTask.configuration != null
         '[ext]user1' == clientConfig.publisher.username
         'p33p' == clientConfig.publisher.password
         //Cannot call clientConfig.publisher.isMaven() since it is only assigned at task execution
-        !buildInfoTask.getPublishPom()*/
-    }
+        !buildInfoTask.getPublishPom()
+    }*/
 
     private def projectEvaluated(Project project) {
         BuildListener next = project.getGradle().listenerManager.allListeners.iterator().next()
