@@ -267,6 +267,7 @@ project('build-info-extractor-gradle') {
 
     test {
         systemProperties['buildInfoConfig.propertiesFile'] = ''
+        environment['buildInfoConfig.propertiesFile'] = ''
     }
 
     configure(install.repositories.mavenInstaller) {

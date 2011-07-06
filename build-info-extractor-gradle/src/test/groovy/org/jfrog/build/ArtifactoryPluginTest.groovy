@@ -13,6 +13,7 @@ import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
 import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
 import spock.lang.Specification
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
+import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 
 /**
  * @author freds
@@ -110,12 +111,20 @@ public class ArtifactoryPluginTest extends Specification {
     }
 
     def populateConfigurationFromDsl() {
+        // Make sure no system props are set
+        def propFileEnv = System.getenv(PROP_PROPS_FILE)
+        if (propFileEnv != null && propFileEnv.length() > 0) {
+            throw new RuntimeException("Cannot run test if environment variable "+PROP_PROPS_FILE+ " is set")
+        }
+        if (System.getProperty(PROP_PROPS_FILE)) {
+            System.clearProperty(PROP_PROPS_FILE)
+        }
         URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
         def projDir = new File(resource.toURI()).getParentFile()
 
         Project project = ProjectBuilder.builder().withProjectDir(projDir).build()
-        project.setProperty('username', 'user1')
-        project.setProperty('passwd', 'p33p')
+        project.setProperty('testUserName', 'user1')
+        project.setProperty('testPassword', 'p33p')
         project.setProperty('ppom', false)
 
         JavaPlugin javaPlugin = new JavaPlugin()
