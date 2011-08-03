@@ -65,7 +65,7 @@ public class ProjectReader {
             if (!child.endsWith("pom.xml")) {
                 child += "/pom.xml";
             }
-            File childPom = new File(rootPom.getParentFile().getAbsolutePath(), child);
+            File childPom = new File(current.getParentFile().getAbsolutePath(), child);
             readRecursive(modules, childPom);
         }
     }
