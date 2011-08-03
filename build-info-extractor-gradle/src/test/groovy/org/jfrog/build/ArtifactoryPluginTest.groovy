@@ -12,8 +12,8 @@ import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
 import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
 import spock.lang.Specification
-import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
+import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 
 /**
  * @author freds
@@ -114,7 +114,7 @@ public class ArtifactoryPluginTest extends Specification {
         // Make sure no system props are set
         def propFileEnv = System.getenv(PROP_PROPS_FILE)
         if (propFileEnv != null && propFileEnv.length() > 0) {
-            throw new RuntimeException("Cannot run test if environment variable "+PROP_PROPS_FILE+ " is set")
+            throw new RuntimeException("Cannot run test if environment variable " + PROP_PROPS_FILE + " is set")
         }
         if (System.getProperty(PROP_PROPS_FILE)) {
             System.clearProperty(PROP_PROPS_FILE)
@@ -143,6 +143,7 @@ public class ArtifactoryPluginTest extends Specification {
         buildInfoTask.configuration != null
         '[ext]user1' == clientConfig.publisher.username
         'p33p' == clientConfig.publisher.password
+        !clientConfig.resolver.maven
         //Cannot call clientConfig.publisher.isMaven() since it is only assigned at task execution
         !buildInfoTask.getPublishPom()
     }
