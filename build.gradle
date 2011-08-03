@@ -265,6 +265,11 @@ project('build-info-extractor-gradle') {
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
 
+    test {
+        systemProperties['buildInfoConfig.propertiesFile'] = ''
+        environment['buildInfoConfig.propertiesFile'] = ''
+    }
+
     configure(install.repositories.mavenInstaller) {
         pom.project {
             issueManagement {

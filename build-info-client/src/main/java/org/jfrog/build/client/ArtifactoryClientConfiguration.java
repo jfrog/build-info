@@ -376,6 +376,13 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(REPO_KEY);
         }
 
+        /**
+         * In the context of a publisher it is used to publish a pom. In the context of a resolver it is used to add a
+         * maven resolver (e.g. in Gradle).
+         *
+         * @param maven
+         * @return
+         */
         public void setMaven(boolean enabled) {
             setBooleanValue(MAVEN, enabled);
         }

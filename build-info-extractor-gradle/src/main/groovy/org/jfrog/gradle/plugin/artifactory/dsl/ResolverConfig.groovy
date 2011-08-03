@@ -51,6 +51,8 @@ class ResolverConfig {
     }
 
     def repository(Closure closure) {
+        //Initialize the defaults and configure the repo
+        repository.setMaven(true)
         ConfigureUtil.configure(closure, repository)
     }
 
@@ -80,6 +82,10 @@ class ResolverConfig {
 
         def setRepoKey(String repoKey) {
             ResolverConfig.this.resolver.setRepoKey(repoKey)
+        }
+
+        def setMaven(Boolean maven) {
+            ResolverConfig.this.resolver.setMaven(maven)
         }
 
         def ivy(Closure closure) {

@@ -87,7 +87,8 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 // add artifactory url to the list of repositories
                 if (resolverConf.isIvyRepositoryDefined()) {
                     addIvyRepoToProject(project, url, resolverConf)
-                } else {
+                }
+                if (resolverConf.isMaven()) {
                     project.repositories {
                         mavenRepo urls: [url]
                     }

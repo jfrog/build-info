@@ -25,8 +25,8 @@ artifactory {
     publish {
         repository {
             repoKey = 'libs-snapshot-local' //The Artifactory repository key to publish to
-            username = "[ext]${username}" //The publisher user name
-            password = passwd //The publisher password
+            username = "[ext]${testUserName}" //The publisher user name
+            password = testPassword //The publisher password
         }
         defaults {
             publishPom = ppom
@@ -38,6 +38,7 @@ artifactory {
         repository {
             repoKey = 'repo'
             addMatrixParams(['key': 'value'])
+            maven = false
             ivy {
                 //An optional section for configuring Ivy publication. If not specified, assume maven repo layout
                 ivyLayout = '[organization]/[module]/[revision]/[type]s/ivy-[revision].xml'
