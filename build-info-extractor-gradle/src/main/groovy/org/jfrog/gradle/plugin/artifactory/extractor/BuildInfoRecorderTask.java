@@ -161,7 +161,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     // Make sure all GString are now Java Strings for key,
                     // and don't call toString for value (keep lazy eval as long as possible)
                     // So, don't use HashMultimap this will call equals on the GString
-                    this.properties.put(key.toString(), value);
+                    this.properties.put(key, value);
                 }
             }
         }
@@ -329,11 +329,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (isPublishMaven(acc)) {
             if (mavenDescriptor == null) {
                 // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
-                // if the project doesn't have the maven install task, throw an exception
+                // if the project doesn't have the maven install task, warn
                 Upload installTask = tasks.withType(Upload.class).findByName("install");
                 if (installTask == null) {
-                    log.warn("Cannot publish Maven descriptor if mavenDescriptor not set in task '{}' " +
-                            "\nand default install task for project '{}' is not an Upload task",
+                    log.warn(
+                            "Cannot publish Maven descriptor if mavenDescriptor not set in task '{}' and default " +
+                                    "install task for project '{}' is not an Upload task",
                             new Object[]{getPath(), project.getPath()});
                     mavenDescriptor = null;
                 } else {
@@ -360,8 +361,8 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getPublishIvy();
     }
 
-    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration(Project project) {
-        return GradlePluginUtils.getArtifactoryConvention(project).getClientConfig();
+    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
+        return GradlePluginUtils.getArtifactoryConvention(getProject()).getClientConfig();
     }
 
     @TaskAction
@@ -377,14 +378,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
             throws IOException {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         Map<String, String> params = clientConf.publisher.getMatrixParams();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (StringUtils.isNotBlank(entry.getKey())) {
                 properties.put(entry.getKey(), entry.getValue());
             }
         }
-        Set<GradleDeployDetails> deployDetailsFromProject = getDeployArtifactsProject();
+        Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetailsFromClientConf();
         allDeployableDetails.addAll(deployDetailsFromProject);
         if (clientConf.publisher.isPublishArtifacts()) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
@@ -398,7 +399,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
         try {
             Map<String, String> checksums =
@@ -424,7 +425,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     }
 
     private GradleDeployDetails getMavenDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
         try {
             Map<String, String> checksums =
@@ -452,7 +453,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
      * @throws java.io.IOException In case the deployment fails.
      */
     private void closeAndDeploy() throws IOException {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         String contextUrl = clientConf.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
         String username = clientConf.publisher.getUsername();
@@ -466,6 +467,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
         ArtifactoryBuildInfoClient client =
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
+
+        //Extract build info and update the clientConf info accordingly (build name, num, etc.)
+        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
+        Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
+
+        //Update the artifacts
         for (Task birt : getProject().getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, true)) {
             ((BuildInfoRecorderTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
         }
@@ -484,8 +491,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 configureProxy(clientConf, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
-            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
-            Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
             /**
              * The build-info will be always written to a file in its JSON form.
              */
@@ -549,8 +554,9 @@ public class BuildInfoRecorderTask extends DefaultTask {
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 
-    private Set<GradleDeployDetails> getDeployArtifactsProject() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+    private Set<GradleDeployDetails> getArtifactDeployDetailsFromClientConf() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (!clientConf.publisher.isPublishArtifacts()) {
             return deployDetails;
@@ -564,6 +570,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (publisherConf.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
+
         for (Configuration configuration : publishConfigurations) {
             Set<PublishArtifact> artifacts = configuration.getArtifacts();
             for (PublishArtifact publishArtifact : artifacts) {
@@ -610,7 +617,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                     this.propsToAdd.put(key, value);
                 }
             }
-            ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration(getProject());
+            ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
             propsToAdd.putAll(clientConf.publisher.getMatrixParams());
         }
         return propsToAdd;

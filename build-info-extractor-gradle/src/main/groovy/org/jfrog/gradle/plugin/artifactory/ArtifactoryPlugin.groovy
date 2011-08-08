@@ -100,7 +100,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             } else {
                 log.debug("No repository resolution defined for ${project.path}")
             }
-            injectMatrixParamExistingResolvers(project.repositories.getAll(), resolverConf)
+            injectMatrixParamExistingResolvers(project.repositories, resolverConf)
         }
 
         private def addIvyRepoToProject(Project project, String configuredUrl, ResolverHandler resolverConf) {

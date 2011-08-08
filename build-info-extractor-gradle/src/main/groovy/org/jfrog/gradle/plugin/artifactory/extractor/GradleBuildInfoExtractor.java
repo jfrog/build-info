@@ -22,14 +22,21 @@ import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.*;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.artifacts.ResolveException;
+import org.gradle.api.artifacts.ResolvedArtifact;
+import org.gradle.api.artifacts.ResolvedConfiguration;
+import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.*;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.*;
+import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
@@ -43,7 +50,12 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -64,7 +76,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
 
     public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-                                    Set<GradleDeployDetails> gradleDeployDetails) {
+            Set<GradleDeployDetails> gradleDeployDetails) {
         this.clientConf = clientConf;
         this.gradleDeployDetails = gradleDeployDetails;
     }
@@ -74,6 +86,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (StringUtils.isBlank(buildName)) {
             buildName = rootProject.getName();
         }
+        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
+
         String buildStartedIso = clientConf.info.getBuildStarted();
         Date buildStartDate;
         try {
@@ -81,8 +95,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         } catch (ParseException e) {
             throw new IllegalArgumentException("Build start date format error: " + buildStartedIso, e);
         }
+        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP,
+                String.valueOf(buildStartDate.getTime()));
+
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName).started(buildStartedIso);
-        buildInfoBuilder.type(BuildType.GRADLE);
+        buildInfoBuilder.type(BuildType.GRADLE); //backward copat
         GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
         BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
         String agentName = clientConf.info.getAgentName();
@@ -90,10 +107,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
             buildInfoBuilder.agent(new Agent(agentName, agentVersion));
         }
+
         String buildNumber = clientConf.info.getBuildNumber();
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = new Date().getTime() + "";
         }
+        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
+
         buildInfoBuilder.durationMillis(System.currentTimeMillis() - buildStartDate.getTime())
                 .started(buildStartedIso).number(buildNumber)
                 .buildAgent(buildAgent);
