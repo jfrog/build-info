@@ -51,8 +51,7 @@ public class GradlePluginUtils {
      * @param project the gradle project with properties for build info client configuration (Usually in start parameter
      *                from CI Server)
      */
-    public static void fillArtifactoryClientConfiguration(ArtifactoryClientConfiguration configuration,
-                                                          Project project) {
+    public static void fillArtifactoryClientConfiguration(ArtifactoryClientConfiguration config, Project project) {
         Properties props = new Properties();
         // First aggregate properties from parent to child
         fillProperties(project, props);
@@ -67,7 +66,7 @@ public class GradlePluginUtils {
         buildInfoProperties =
                 BuildInfoExtractorUtils.stripPrefixFromProperties(buildInfoProperties, BUILD_INFO_PROP_PREFIX);
         props.putAll(buildInfoProperties);
-        configuration.fillFromProperties(mergedProps);
+        config.fillFromProperties(mergedProps);
     }
 
     private static void fillProperties(Project project, Properties props) {

@@ -468,10 +468,6 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
 
-        //Extract build info and update the clientConf info accordingly (build name, num, etc.)
-        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
-        Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
-
         //Update the artifacts
         for (Task birt : getProject().getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, true)) {
             ((BuildInfoRecorderTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
@@ -491,6 +487,10 @@ public class BuildInfoRecorderTask extends DefaultTask {
                 configureProxy(clientConf, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
+
+            //Extract build info and update the clientConf info accordingly (build name, num, etc.)
+            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
+            Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
             /**
              * The build-info will be always written to a file in its JSON form.
              */
