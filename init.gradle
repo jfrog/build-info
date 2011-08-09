@@ -1,5 +1,5 @@
 //String pluginVersion='2.0.x-20110503.140016-63'
-String pluginVersion = '2.0.4a'
+String pluginVersion = '2.0.5'
 //def artifactoryPluginUrl = "http://repo.jfrog.org/artifactory/gradle-plugins-snapshots/org/jfrog/buildinfo/build-info-extractor-gradle/2.0.x-SNAPSHOT/build-info-extractor-gradle-$pluginVersion-uber.jar"
 def artifactoryPluginUrl = "http://repo.jfrog.org/artifactory/libs-releases/org/jfrog/buildinfo/build-info-extractor-gradle/$pluginVersion/build-info-extractor-gradle-$pluginVersion-uber.jar"
 
