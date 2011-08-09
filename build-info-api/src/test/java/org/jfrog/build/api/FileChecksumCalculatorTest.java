@@ -63,7 +63,7 @@ public class FileChecksumCalculatorTest {
     @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Checksum algorithms cannot be null.")
     public void testNullAlgorithms() throws IOException, NoSuchAlgorithmException {
-        FileChecksumCalculator.calculateChecksums(File.createTempFile("moo", "bla"), null);
+        FileChecksumCalculator.calculateChecksums(File.createTempFile("moo", "bla"), (String) null);
     }
 
     /**
