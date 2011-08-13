@@ -53,19 +53,23 @@ import org.jfrog.build.client.LayoutPatterns;
 import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Tomer Cohen
  */
-public class BuildInfoRecorderTask extends DefaultTask {
-    private static final Logger log = Logging.getLogger(BuildInfoRecorderTask.class);
+public class BuildInfoTask extends DefaultTask {
+
+    private static final Logger log = Logging.getLogger(BuildInfoTask.class);
+
+    public static final String BUILD_INFO_TASK_NAME = "artifactoryPublish";
+
     public static final String PUBLISH_IVY = "publishIvy";
     public static final String PUBLISH_POM = "publishPom";
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
@@ -92,10 +96,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     private Map<String, String> propsToAdd;
 
+    //TODO: [by yl] Task flags are not merged into ArtifactoryClientConfiguration, leading to double checking -
+    // against the class and against acc (e.g. isPublishIvy() here)
     @Input
     @Optional
     public Boolean getPublishBuildInfo() {
-        return getFlag(PUBLISH_BUILD_INFO);
+        return getFlag(PUBLISH_BUILD_INFO, true);
     }
 
     public void setPublishBuildInfo(Object publishBuildInfo) {
@@ -105,7 +111,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Input
     @Optional
     public Boolean getPublishArtifacts() {
-        return getFlag(PUBLISH_ARTIFACTS);
+        return getFlag(PUBLISH_ARTIFACTS, true);
     }
 
     public void setPublishArtifacts(Object publishArtifacts) {
@@ -115,7 +121,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Input
     @Optional
     public Boolean getPublishIvy() {
-        return getFlag(PUBLISH_IVY);
+        return getFlag(PUBLISH_IVY, true);
     }
 
     public void setPublishIvy(Object publishIvy) {
@@ -129,11 +135,16 @@ public class BuildInfoRecorderTask extends DefaultTask {
     @Input
     @Optional
     public Boolean getPublishPom() {
-        return getFlag(PUBLISH_POM);
+        return getFlag(PUBLISH_POM, true);
     }
 
     public void setPublishPom(Object publishPom) {
         setFlag(PUBLISH_POM, toBoolean(publishPom));
+    }
+
+    private Boolean getFlag(String flagName, boolean defVal) {
+        Boolean val = flags.get(flagName);
+        return val != null ? val : defVal;
     }
 
     private Boolean getFlag(String flagName) {
@@ -263,18 +274,17 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
     public void projectsEvaluated() {
         Project project = getProject();
-        ArtifactoryPluginConvention convention = GradlePluginUtils.getArtifactoryConvention(project);
-        List<Closure> defaultsClosures = convention.getTaskDefaultClosures();
-        for (Closure closure : defaultsClosures) {
-            ConfigureUtil.configure(closure, this);
-        }
+        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
+        Closure defaultsClosure = convention.getTaskDefaultClosure();
+        //Configure the task using the defaults (delegate to the task)
+        ConfigureUtil.configure(defaultsClosure, this);
         if (!hasConfigurations()) {
             // If no configurations set and the archives conf exists, adding it by default
             Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
             setConfiguration(archiveConf);
         }
         for (Project sub : project.getSubprojects()) {
-            Task subBiTask = sub.getTasks().findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME);
+            Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
             if (subBiTask != null) {
                 dependsOn(subBiTask);
             }
@@ -288,13 +298,13 @@ public class BuildInfoRecorderTask extends DefaultTask {
 
         // Set ivy descriptor parameters
         TaskContainer tasks = project.getTasks();
-        if (this.isPublishIvy(acc.publisher.isIvy())) {
+        if (isPublishIvy(acc)) {
             Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
             if (ivyDescriptor == null && archiveConf != null) {
                 // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
-                // ATTENTION: Task not part of the execution graph have withType(Upload.class) false ?!? Need to check for type our self.
-                Task mayBeUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
-                if (mayBeUploadTask == null) {
+                // ATTENTION: Tasks not part of the execution graph have withType(Upload.class) false ?!? Need to check for type our self.
+                Task candidateUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
+                if (candidateUploadTask == null) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
                             "and task '{}' does not exists." +
                             "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will " +
@@ -302,7 +312,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
                             new Object[]{getPath(), archiveConf.getUploadTaskName()});
                     ivyDescriptor = null;
                 } else {
-                    if (!(mayBeUploadTask instanceof Upload)) {
+                    if (!(candidateUploadTask instanceof Upload)) {
                         log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
                                 "and task '{}' is not an Upload task." +
                                 "\nYou'll need to set publishIvy=false or provide a path to the ivy file to publish to " +
@@ -310,14 +320,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
                                 new Object[]{getPath(), archiveConf.getUploadTaskName()});
                         ivyDescriptor = null;
                     } else {
-                        Upload uploadTask = (Upload) mayBeUploadTask;
+                        Upload uploadTask = (Upload) candidateUploadTask;
                         if (!uploadTask.isUploadDescriptor()) {
-                            log.info("Task '{}' does not upload its Ivy descriptor. Forcing true to export it.",
+                            log.info("Forcing task '{}' to upload its Ivy descriptor (uploadDescriptor was false).",
                                     uploadTask.getPath());
                             uploadTask.setUploadDescriptor(true);
                         }
                         ivyDescriptor = uploadTask.getDescriptorDestination();
-                        dependsOn(mayBeUploadTask);
+                        dependsOn(candidateUploadTask);
                     }
                 }
             }
@@ -347,6 +357,20 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
     }
 
+    private Boolean isPublishArtifacts(ArtifactoryClientConfiguration acc) {
+        if (getPublishArtifacts() == null) {
+            return acc.publisher.isPublishArtifacts();
+        }
+        return getPublishArtifacts();
+    }
+
+    private Boolean isPublishBuildInfo(ArtifactoryClientConfiguration acc) {
+        if (getPublishBuildInfo() == null) {
+            return acc.publisher.isPublishBuildInfo();
+        }
+        return getPublishArtifacts();
+    }
+
     private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
         if (getPublishPom() == null) {
             return acc.publisher.isMaven();
@@ -354,15 +378,15 @@ public class BuildInfoRecorderTask extends DefaultTask {
         return getPublishPom();
     }
 
-    private boolean isPublishIvy(boolean defaultValue) {
+    private boolean isPublishIvy(ArtifactoryClientConfiguration acc) {
         if (getPublishIvy() == null) {
-            return defaultValue;
+            return acc.publisher.isIvy();
         }
         return getPublishIvy();
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
-        return GradlePluginUtils.getArtifactoryConvention(getProject()).getClientConfig();
+        return ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
     }
 
     @TaskAction
@@ -372,14 +396,15 @@ public class BuildInfoRecorderTask extends DefaultTask {
         if (lastInGraph) {
             log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                     new Object[]{getProject().getPath(), getPath()});
-            closeAndDeploy();
+            prepareAndDeploy();
         }
     }
 
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
             throws IOException {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        Map<String, String> params = clientConf.publisher.getMatrixParams();
+        //Add the publisher matrix params as props that will be added to all deployable artifatcs
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        Map<String, String> params = acc.publisher.getMatrixParams();
         for (Map.Entry<String, String> entry : params.entrySet()) {
             if (StringUtils.isNotBlank(entry.getKey())) {
                 properties.put(entry.getKey(), entry.getValue());
@@ -387,11 +412,14 @@ public class BuildInfoRecorderTask extends DefaultTask {
         }
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetailsFromClientConf();
         allDeployableDetails.addAll(deployDetailsFromProject);
-        if (clientConf.publisher.isPublishArtifacts()) {
+
+        //Add the ivy and maven descriptors if they exist
+        if (isPublishIvy(acc)) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
                 allDeployableDetails.add(getIvyDescriptorDeployDetails());
             }
-
+        }
+        if (isPublishMaven(acc)) {
             if (mavenDescriptor != null && mavenDescriptor.exists()) {
                 allDeployableDetails.add(getMavenDeployDetails());
             }
@@ -452,12 +480,12 @@ public class BuildInfoRecorderTask extends DefaultTask {
      *
      * @throws java.io.IOException In case the deployment fails.
      */
-    private void closeAndDeploy() throws IOException {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        String contextUrl = clientConf.getContextUrl();
+    private void prepareAndDeploy() throws IOException {
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        String contextUrl = acc.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
-        String username = clientConf.publisher.getUsername();
-        String password = clientConf.publisher.getPassword();
+        String username = acc.publisher.getUsername();
+        String password = acc.publisher.getPassword();
         if (StringUtils.isBlank(username)) {
             username = "";
         }
@@ -469,11 +497,11 @@ public class BuildInfoRecorderTask extends DefaultTask {
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
 
         //Update the artifacts
-        for (Task birt : getProject().getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, true)) {
-            ((BuildInfoRecorderTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
+        for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
+            ((BuildInfoTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
         }
         try {
-            if (clientConf.publisher.isPublishArtifacts()) {
+            if (acc.publisher.isPublishArtifacts()) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
                  * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
@@ -482,27 +510,27 @@ public class BuildInfoRecorderTask extends DefaultTask {
                  */
 
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                        clientConf.publisher.getIncludePatterns(),
-                        clientConf.publisher.getExcludePatterns());
-                configureProxy(clientConf, client);
+                        acc.publisher.getIncludePatterns(),
+                        acc.publisher.getExcludePatterns());
+                configureProxy(acc, client);
                 deployArtifacts(client, allDeployableDetails, patterns);
             }
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
-            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(clientConf, allDeployableDetails);
+            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployableDetails);
             Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
             /**
              * The build-info will be always written to a file in its JSON form.
              */
-            exportBuildInfo(build, getExportFile(clientConf));
-            if (clientConf.publisher.isPublishBuildInfo()) {
+            exportBuildInfo(build, getExportFile(acc));
+            if (isPublishBuildInfo(acc)) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
                  * After all the artifacts were uploaded successfully the next task is to send the build-info
                  * object.
                  */
                 // If export property set always save the file before sending it to artifactory
-                exportBuildInfo(build, getExportFile(clientConf));
+                exportBuildInfo(build, getExportFile(acc));
                 client.sendBuildInfo(build);
             }
         } finally {
@@ -558,7 +586,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
 
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
-        if (!clientConf.publisher.isPublishArtifacts()) {
+        if (!isPublishArtifacts(clientConf)) {
             return deployDetails;
         }
         if (!hasConfigurations()) {
@@ -608,7 +636,7 @@ public class BuildInfoRecorderTask extends DefaultTask {
             this.propsToAdd = Maps.newHashMap();
             for (Map.Entry<String, CharSequence> entry : properties.entries()) {
                 // Make sure all GString are now Java Strings
-                String key = entry.getKey().toString();
+                String key = entry.getKey();
                 String value = entry.getValue().toString();
                 if (!this.propsToAdd.containsKey(key)) {
                     this.propsToAdd.put(key, value);

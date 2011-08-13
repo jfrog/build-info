@@ -28,10 +28,17 @@ import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.artifacts.ResolvedDependency;
-import org.gradle.api.internal.GradleInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.LicenseControl;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -83,70 +90,69 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     public Build extract(Project rootProject, BuildInfoExtractorSpec spec) {
         String buildName = clientConf.info.getBuildName();
-        if (StringUtils.isBlank(buildName)) {
-            buildName = rootProject.getName();
-        }
-        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
+        BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
+
+        bib.type(BuildType.GRADLE); //backward compat
+
+        String buildNumber = clientConf.info.getBuildNumber();
+        bib.number(buildNumber);
 
         String buildStartedIso = clientConf.info.getBuildStarted();
-        Date buildStartDate;
+        Date buildStartDate = null;
         try {
             buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
         } catch (ParseException e) {
-            throw new IllegalArgumentException("Build start date format error: " + buildStartedIso, e);
+            log.error("Build start date format error: " + buildStartedIso, e);
         }
-        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP,
-                String.valueOf(buildStartDate.getTime()));
+        bib.started(buildStartedIso);
 
-        BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(buildName).started(buildStartedIso);
-        buildInfoBuilder.type(BuildType.GRADLE); //backward copat
-        GradleInternal gradleInternals = (GradleInternal) rootProject.getGradle();
-        BuildAgent buildAgent = new BuildAgent("Gradle", gradleInternals.getGradleVersion());
+        BuildAgent buildAgent =
+                new BuildAgent(clientConf.info.getBuildAgentName(), clientConf.info.getBuildAgentVersion());
+        bib.buildAgent(buildAgent);
+
+        //CI agent
         String agentName = clientConf.info.getAgentName();
         String agentVersion = clientConf.info.getAgentVersion();
         if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
-            buildInfoBuilder.agent(new Agent(agentName, agentVersion));
+            bib.agent(new Agent(agentName, agentVersion));
+        } else {
+            //Fallback for standalone builds
+            bib.agent(new Agent(buildAgent.getName(), buildAgent.getVersion()));
         }
 
-        String buildNumber = clientConf.info.getBuildNumber();
-        if (StringUtils.isBlank(buildNumber)) {
-            buildNumber = new Date().getTime() + "";
-        }
-        clientConf.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
+        long durationMillis = buildStartDate != null ? System.currentTimeMillis() - buildStartDate.getTime() : 0;
+        bib.durationMillis(durationMillis);
 
-        buildInfoBuilder.durationMillis(System.currentTimeMillis() - buildStartDate.getTime())
-                .started(buildStartedIso).number(buildNumber)
-                .buildAgent(buildAgent);
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
-            BuildInfoRecorderTask buildInfoRecorderTask = getBuildInfoRecorderTask(project);
-            if (buildInfoRecorderTask != null && buildInfoRecorderTask.hasConfigurations()) {
-                buildInfoBuilder.addModule(extractModule(project));
+            BuildInfoTask buildInfoTask = getBuildInfoTask(project);
+            if (buildInfoTask != null && buildInfoTask.hasConfigurations()) {
+                bib.addModule(extractModule(project));
             }
         }
         String parentName = clientConf.info.getParentBuildName();
         String parentNumber = clientConf.info.getParentBuildNumber();
         if (parentName != null && parentNumber != null) {
-            buildInfoBuilder.parentName(parentName);
-            buildInfoBuilder.parentNumber(parentNumber);
+            bib.parentName(parentName);
+            bib.parentNumber(parentNumber);
         }
         String principal = clientConf.info.getPrincipal();
         if (StringUtils.isBlank(principal)) {
             principal = System.getProperty("user.name");
         }
-        buildInfoBuilder.principal(principal);
+        bib.principal(principal);
         String artifactoryPrincipal = clientConf.publisher.getUsername();
         if (StringUtils.isBlank(artifactoryPrincipal)) {
             artifactoryPrincipal = System.getProperty("user.name");
         }
-        buildInfoBuilder.artifactoryPrincipal(artifactoryPrincipal);
+        bib.artifactoryPrincipal(artifactoryPrincipal);
         String buildUrl = clientConf.info.getBuildUrl();
         if (StringUtils.isNotBlank(buildUrl)) {
-            buildInfoBuilder.url(buildUrl);
+            bib.url(buildUrl);
         }
         String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
-            buildInfoBuilder.vcsRevision(vcsRevision);
+            bib.vcsRevision(vcsRevision);
         }
 
         LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
@@ -160,7 +166,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             licenseControl.setScopesList(scopes);
         }
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-        buildInfoBuilder.licenseControl(licenseControl);
+        bib.licenseControl(licenseControl);
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         Integer count = clientConf.info.getBuildRetentionDays();
         if (count != null) {
@@ -179,38 +185,38 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         for (String notToDel : notToDelete) {
             buildRetention.addBuildNotToBeDiscarded(notToDel);
         }
-        buildInfoBuilder.buildRetention(buildRetention);
+        bib.buildRetention(buildRetention);
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
             String comment = clientConf.info.getReleaseComment();
             if (comment == null) {
                 comment = "";
             }
-            buildInfoBuilder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
+            bib.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
                     .comment(comment).repository(stagingRepository)
                     .ciUser(principal).user(artifactoryPrincipal).build());
         }
         clientConf.info.fillCommonSysProps();
         Properties props = new Properties();
         props.putAll(clientConf.info.getBuildVariables());
-        buildInfoBuilder.properties(props);
-        log.debug("buildInfoBuilder = " + buildInfoBuilder);
+        bib.properties(props);
+        log.debug("buildInfoBuilder = " + bib);
         // for backward compatibility for Artifactory 2.2.3
-        Build build = buildInfoBuilder.build();
+        Build build = bib.build();
         if (parentName != null && parentNumber != null) {
             build.setParentBuildId(parentName);
         }
         return build;
     }
 
-    private BuildInfoRecorderTask getBuildInfoRecorderTask(Project project) {
-        Set<Task> tasks = project.getTasksByName(GradlePluginUtils.BUILD_INFO_TASK_NAME, false);
+    private BuildInfoTask getBuildInfoTask(Project project) {
+        Set<Task> tasks = project.getTasksByName(BuildInfoTask.BUILD_INFO_TASK_NAME, false);
         if (tasks.isEmpty()) {
             return null;
         }
-        BuildInfoRecorderTask buildInfoRecorderTask = (BuildInfoRecorderTask) tasks.iterator().next();
-        if (buildInfoRecorderTask.getState().getDidWork()) {
-            return buildInfoRecorderTask;
+        BuildInfoTask buildInfoTask = (BuildInfoTask) tasks.iterator().next();
+        if (buildInfoTask.getState().getDidWork()) {
+            return buildInfoTask;
         }
         return null;
     }
@@ -218,7 +224,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     public Module extractModule(Project project) {
         String artifactName = project.getName();
-        BuildInfoRecorderTask task = getBuildInfoRecorderTask(project);
+        BuildInfoTask task = getBuildInfoTask(project);
         if (task != null) {
             artifactName = project.getName();
         }

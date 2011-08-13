@@ -16,6 +16,7 @@
 package org.jfrog.build.client;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
@@ -157,15 +158,9 @@ public class ArtifactoryClientConfiguration {
     }
 
     public class ResolverHandler extends RepositoryConfiguration {
-        private final Predicate<String> matrixPredicate;
 
         public ResolverHandler() {
             super(PROP_RESOLVE_PREFIX);
-            matrixPredicate = new Predicate<String>() {
-                public boolean apply(String input) {
-                    return input.startsWith(getMatrixParamPrefix());
-                }
-            };
         }
 
         public String getDownloadUrl() {
@@ -318,6 +313,8 @@ public class ArtifactoryClientConfiguration {
 
     public abstract class RepositoryConfiguration extends AuthenticationConfiguration {
 
+        private ImmutableMap<String, String> calculatedMatrixParams;
+
         protected RepositoryConfiguration(String prefix) {
             super(prefix);
         }
@@ -334,7 +331,7 @@ public class ArtifactoryClientConfiguration {
             setStringValue(URL, url);
         }
 
-        public String injectMatrixParams(String rootUrl) {
+        public String urlWithMatrixParams(String rootUrl) {
             rootUrl = StringUtils.stripEnd(rootUrl, "/;");
             Map<String, String> matrixParams = getMatrixParams();
             if (matrixParams.isEmpty()) {
@@ -350,7 +347,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public String getUrlWithMatrixParams() {
-            return injectMatrixParams(getUrl());
+            return urlWithMatrixParams(getUrl());
         }
 
         public String getUrl() {
@@ -396,7 +393,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIvy() {
-            return getBooleanValue(IVY, false);
+            return getBooleanValue(IVY, true);
         }
 
         public void setM2Compatible(Boolean enabled) {
@@ -434,6 +431,7 @@ public class ArtifactoryClientConfiguration {
         public abstract String getMatrixParamPrefix();
 
         public void addMatrixParam(String key, String value) {
+            ensureImmutableMatrixParams();
             if (StringUtils.isBlank(key)) {
                 return;
             }
@@ -447,12 +445,16 @@ public class ArtifactoryClientConfiguration {
 
         // INTERNAL METHOD
         public void addMatrixParams(Map<String, String> vars) {
+            ensureImmutableMatrixParams();
             for (Map.Entry<String, String> entry : vars.entrySet()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
         }
 
-        public Map<String, String> getMatrixParams() {
+        public ImmutableMap<String, String> getMatrixParams() {
+            if (calculatedMatrixParams != null) {
+                return calculatedMatrixParams;
+            }
             Map<String, String> result = Maps.newHashMap();
             String matrixPrefix = getMatrixParamPrefix();
             for (Map.Entry<String, String> entry : props.entrySet()) {
@@ -460,8 +462,16 @@ public class ArtifactoryClientConfiguration {
                     result.put(entry.getKey().substring(matrixPrefix.length()), entry.getValue());
                 }
             }
-            return result;
+            this.calculatedMatrixParams = ImmutableMap.copyOf(result);
+            return calculatedMatrixParams;
         }
+
+        private void ensureImmutableMatrixParams() {
+            if (calculatedMatrixParams != null) {
+                throw new IllegalStateException("Matrix params already set and cannot be modified");
+            }
+        }
+
     }
 
     public class LicenseControlHandler extends PrefixPropertyHandler {
@@ -508,7 +518,6 @@ public class ArtifactoryClientConfiguration {
         public Boolean isAutoDiscover() {
             return getBooleanValue(AUTO_DISCOVER, false);
         }
-
     }
 
     public class BuildInfoHandler extends PrefixPropertyHandler {

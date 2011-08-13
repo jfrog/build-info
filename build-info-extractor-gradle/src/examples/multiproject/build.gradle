@@ -27,17 +27,18 @@
 
 buildscript {
     repositories {
-        mavenRepo name: 'build-plugins-repo', urls: "http://localhost:8081/artifactory/plugins-snapshot"
+        mavenRepo(urls: 'http://repo.jfrog.org/artifactory/repo').setChecksums('sha1')
     }
+
     dependencies {
-        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:1.0+'
+        classpath files("${projectDir}/../../../build/libs/build-info-extractor-gradle-2.0.x-SNAPSHOT-uber.jar")
     }
 }
 
 allprojects {
     apply {
         apply plugin: 'maven'
-        apply plugin: 'artifactoryplugin'
+        apply plugin: 'artifactory'
     }
     group = 'org.gradle'
     version = '1.0'
@@ -55,3 +56,27 @@ subprojects {
 }
 
 dependsOnChildren()
+
+artifactory {
+    contextUrl = 'http://localhost:8080/artifactory'
+    publish {
+        repository {
+            repoKey = 'Framework'
+            username = 'admin'
+            password = 'password'
+            ivy {
+                ivyLayout = '[organization]/[module]/[revision]/ivy-[revision].xml'
+            }
+        }
+        defaults {
+            //publishIvy & publishPom are true by default
+            publishArtifacts = true
+            //publishIvy = false
+            //publishPom = false
+            properties = ['qa.level': 'basic']
+        }
+    }
+    resolve {
+        repoKey = 'repo'
+    }
+}

@@ -9,11 +9,12 @@ import org.gradle.testfixtures.ProjectBuilder
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
-import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
-import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
 import spock.lang.Specification
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
+import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 
 /**
  * @author freds
@@ -33,7 +34,7 @@ public class ArtifactoryPluginTest extends Specification {
         expect:
         project.buildscript.repositories.resolvers.isEmpty()
         project.repositories.resolvers.isEmpty()
-        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+        project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
     }
 
     def resolverApplyPlugin() {
@@ -55,7 +56,7 @@ public class ArtifactoryPluginTest extends Specification {
         libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
         libsResolvers.get(0).name == expectedName
         ((IBiblioResolver) libsResolvers.get(0)).root == expectedName + '/'
-        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+        project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
     }
 
     def buildInfoJavaPlugin() {
@@ -69,7 +70,7 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         expect:
-        project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME) != null
+        project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
     }
 
     def buildInfoTaskConfiguration() {
@@ -84,7 +85,7 @@ public class ArtifactoryPluginTest extends Specification {
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
-        BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+        BuildInfoTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         projectEvaluated(project)
         expect:
         buildInfoTask.configuration != null
@@ -99,15 +100,16 @@ public class ArtifactoryPluginTest extends Specification {
         project.setProperty(ClientConfigurationFields.REPO_KEY, '')
         project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'false')
         project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.PUBLISH_ARTIFACTS, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
-        Task buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
+        Task buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         projectEvaluated(project)
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
-        buildInfoTask.dependsOn.size() == 1
+        buildInfoTask.dependsOn.size() == 2
     }
 
     def populateConfigurationFromDsl() {
@@ -134,8 +136,8 @@ public class ArtifactoryPluginTest extends Specification {
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
-        BuildInfoRecorderTask buildInfoTask = project.tasks.findByName(GradlePluginUtils.BUILD_INFO_TASK_NAME)
-        def clientConfig = GradlePluginUtils.getArtifactoryConvention(project).getClientConfig()
+        BuildInfoTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        def clientConfig = ArtifactoryPluginUtil.getArtifactoryConvention(project).getClientConfig()
         project.evaluate()
         projectEvaluated(project)
 

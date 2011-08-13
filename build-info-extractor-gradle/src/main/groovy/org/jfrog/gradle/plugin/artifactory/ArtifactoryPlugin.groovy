@@ -27,10 +27,10 @@ import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
-import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoRecorderTask
-import org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.slf4j.Logger
-import static org.jfrog.gradle.plugin.artifactory.extractor.GradlePluginUtils.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 
 class ArtifactoryPlugin implements Plugin<Project> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -41,18 +41,18 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Artifactory Plugin disabled for ${project.path}")
             return
         }
-        // First add the build info config task to the root project if needed
+        // Add a singleton artifactory plugin convention to the root project if needed
         // Then add the build info task
-        ArtifactoryPluginConvention info = getArtifactoryPluginInfo(project)
+        ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
         createBuildInfoTask(project)
-        if (!info.clientConfig.info.buildStarted) {
-            info.clientConfig.info.setBuildStarted(System.currentTimeMillis())
+        if (!conv.clientConfig.info.buildStarted) {
+            conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
-        if (!info.clientConfig.isBuildListernerAdded()) {
+        if (!conv.clientConfig.isBuildListernerAdded()) {
             def gradle = project.getGradle()
-            gradle.addBuildListener(new ProjectEvaluatedBuildListener())
+            gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
             // Flag the last buildInfo task in the execution graph
             gradle.getTaskGraph().whenReady {
                 boolean last = true
@@ -63,18 +63,22 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     }
                 }
             }
-            info.clientConfig.setBuildListernerAdded(true)
+            conv.clientConfig.setBuildListernerAdded(true)
         }
     }
 
 
-    private static class ProjectEvaluatedBuildListener extends BuildAdapter {
+    private static class ProjectsEvaluatedBuildListener extends BuildAdapter {
         def void projectsEvaluated(Gradle gradle) {
-            ArtifactoryClientConfiguration configuration = GradlePluginUtils.getArtifactoryConvention(gradle.rootProject).getClientConfig()
-            GradlePluginUtils.fillArtifactoryClientConfiguration(configuration, gradle.rootProject)
+            ArtifactoryClientConfiguration configuration =
+            ArtifactoryPluginUtil.getArtifactoryConvention(gradle.rootProject).getClientConfig()
+            //Fill-in the client config for the global, then adjust children project
+            GradleArtifactoryClientConfigUpdater.update(configuration, gradle.rootProject)
             gradle.rootProject.allprojects.each {
+                //pass in the resolver of the cc
                 defineResolvers(it, configuration.resolver)
             }
+            //Config the tasks. Deploymenet happens on task execution
             gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
                 it.projectsEvaluated()
             }
@@ -100,7 +104,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             } else {
                 log.debug("No repository resolution defined for ${project.path}")
             }
-            injectMatrixParamExistingResolvers(project.repositories, resolverConf)
+            injectMatrixParamToResolvers(project.repositories, resolverConf)
         }
 
         private def addIvyRepoToProject(Project project, String configuredUrl, ResolverHandler resolverConf) {
@@ -115,31 +119,33 @@ class ArtifactoryPlugin implements Plugin<Project> {
             }
         }
 
-        private def injectMatrixParamExistingResolvers(Set<DependencyResolver> allResolvers, ArtifactoryClientConfiguration.ResolverHandler resolverConf) {
+        private def injectMatrixParamToResolvers(Set<DependencyResolver> allResolvers,
+                ArtifactoryClientConfiguration.ResolverHandler resolverConf) {
             for (DependencyResolver resolver: allResolvers) {
+                //Change the resolver URLs to include matrix params
                 if (resolver instanceof IvyRepResolver) {
-                    resolver.artroot = resolverConf.injectMatrixParams(resolver.artroot)
-                    resolver.ivyroot = resolverConf.injectMatrixParams(resolver.ivyroot)
+                    resolver.artroot = resolverConf.urlWithMatrixParams(resolver.artroot)
+                    resolver.ivyroot = resolverConf.urlWithMatrixParams(resolver.ivyroot)
                 } else if (resolver instanceof IBiblioResolver) {
-                    resolver.root = resolverConf.injectMatrixParams(resolver.root)
+                    resolver.root = resolverConf.urlWithMatrixParams(resolver.root)
                 }
             }
         }
     }
 
-    ArtifactoryPluginConvention getArtifactoryPluginInfo(Project project) {
+    ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
         if (project.rootProject.convention.plugins.artifactory == null) {
             project.rootProject.convention.plugins.artifactory = new ArtifactoryPluginConvention(project)
         }
         return project.rootProject.convention.plugins.artifactory
     }
 
-    BuildInfoRecorderTask createBuildInfoTask(Project project) {
-        BuildInfoRecorderTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+    BuildInfoTask createBuildInfoTask(Project project) {
+        BuildInfoTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         if (buildInfo == null) {
             def isRoot = project.equals(project.getRootProject())
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
-            buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoRecorderTask.class)
+            buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoTask.class)
             buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactiory, and resolves
 depnedncies from Artifactory.''')
         }

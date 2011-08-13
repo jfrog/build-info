@@ -16,7 +16,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
-import com.google.common.collect.Lists
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration
@@ -28,13 +27,12 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
 class ArtifactoryPluginConvention {
     final Project project
     final ArtifactoryClientConfiguration clientConfig
-    final List<Closure> taskDefaultClosures
+    Closure taskDefaultClosure
     final Closure propsResolver
 
     ArtifactoryPluginConvention(Project project) {
         this.project = project
         clientConfig = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
-        taskDefaultClosures = Lists.newArrayList()
         propsResolver = {String name ->
             project.logger.debug "Resolving property '${name}''"
             def val = project.property(name)
@@ -56,7 +54,9 @@ class ArtifactoryPluginConvention {
 
     def publish(Closure closure) {
         PublisherConfig.metaClass.propertyMissing = propsResolver
-        new PublisherConfig(this).config(closure)
+        def publisherConfig = new PublisherConfig(this)
+        publisherConfig.config(closure)
+        taskDefaultClosure = publisherConfig.taskDefaultClosure
     }
 
     def resolve(Closure closure) {

@@ -26,12 +26,11 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
 class PublisherConfig {
 
     private final PublisherHandler publisher;
-    private final List<Closure> taskDefaultClosures
     private final Repository repository;
+    Closure taskDefaultClosure
 
     PublisherConfig(ArtifactoryPluginConvention conv) {
         publisher = conv.clientConfig.publisher
-        taskDefaultClosures = conv.taskDefaultClosures
         repository = new Repository()
         repository.metaClass.propertyMissing = conv.propsResolver
     }
@@ -49,7 +48,7 @@ class PublisherConfig {
 
     def defaults(Closure closure) {
         //Add for later evaluation by the task iteslf after all projects evaluated
-        taskDefaultClosures.add(closure)
+        taskDefaultClosure = closure
     }
 
     def config(Closure closure) {

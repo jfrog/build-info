@@ -18,13 +18,18 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 import javax.annotation.Nullable;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 
@@ -32,13 +37,11 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
 
 /**
- * Utility class for the Artifactory-Gradle plugin.
+ * Populator util for filling up an ArtifactoryClientConfiguration based on a gradle project + environemnt properties
  *
  * @author Tomer Cohen
  */
-public class GradlePluginUtils {
-
-    public static final String BUILD_INFO_TASK_NAME = "artifactoryPublish";
+public class GradleArtifactoryClientConfigUpdater {
 
     /**
      * Returns a  configuration handler object out of a Gradle project. This method will aggregate the properties in our
@@ -51,7 +54,7 @@ public class GradlePluginUtils {
      * @param project the gradle project with properties for build info client configuration (Usually in start parameter
      *                from CI Server)
      */
-    public static void fillArtifactoryClientConfiguration(ArtifactoryClientConfiguration config, Project project) {
+    public static void update(ArtifactoryClientConfiguration config, Project project) {
         Properties props = new Properties();
         // First aggregate properties from parent to child
         fillProperties(project, props);
@@ -65,8 +68,48 @@ public class GradlePluginUtils {
                 BuildInfoExtractorUtils.filterDynamicProperties(mergedProps, BUILD_INFO_PROP_PREDICATE);
         buildInfoProperties =
                 BuildInfoExtractorUtils.stripPrefixFromProperties(buildInfoProperties, BUILD_INFO_PROP_PREFIX);
-        props.putAll(buildInfoProperties);
+        mergedProps.putAll(buildInfoProperties);
+
         config.fillFromProperties(mergedProps);
+
+        //After props are set, apply missing project props (not set by CI-plugin generated props)
+        setMissingBuildAttributes(config, project);
+    }
+
+    private static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
+        //Build name
+        String buildName = config.info.getBuildName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = project.getName();
+            config.info.setBuildName(buildName);
+        }
+        config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
+
+        //Build number
+        String buildNumber = config.info.getBuildNumber();
+        if (StringUtils.isBlank(buildNumber)) {
+            buildNumber = new Date().getTime() + "";
+            config.info.setBuildNumber(buildNumber);
+        }
+        config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
+
+        //Build start (was set by the plugin - no need to make up a fallback val)
+        String buildStartedIso = config.info.getBuildStarted();
+        Date buildStartDate;
+        try {
+            buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+        } catch (ParseException e) {
+            throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
+        }
+        config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, String.valueOf(buildStartDate.getTime()));
+
+        //Build agent
+        String buildAgentName = config.info.getBuildAgentName();
+        String buildAgentVersion = config.info.getBuildAgentVersion();
+        if (StringUtils.isBlank(buildAgentName) && StringUtils.isBlank(buildAgentVersion)) {
+            config.info.setBuildAgentName("Gradle");
+            config.info.setBuildAgentVersion(project.getGradle().getGradleVersion());
+        }
     }
 
     private static void fillProperties(Project project, Properties props) {
@@ -82,9 +125,5 @@ public class GradlePluginUtils {
             }
         });
         props.putAll(projectProperties);
-    }
-
-    public static ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
-        return project.getRootProject().getConvention().getPlugin(ArtifactoryPluginConvention.class);
     }
 }
