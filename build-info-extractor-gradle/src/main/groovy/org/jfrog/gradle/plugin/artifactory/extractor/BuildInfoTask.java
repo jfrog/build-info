@@ -368,7 +368,7 @@ public class BuildInfoTask extends DefaultTask {
         if (getPublishBuildInfo() == null) {
             return acc.publisher.isPublishBuildInfo();
         }
-        return getPublishArtifacts();
+        return getPublishBuildInfo();
     }
 
     private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
