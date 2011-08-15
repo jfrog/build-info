@@ -16,6 +16,10 @@
 
 package org.jfrog.gradle.plugin.artifactory
 
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
+
+import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 import org.apache.commons.lang.StringUtils
 import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.apache.ivy.plugins.resolver.IBiblioResolver
@@ -27,10 +31,7 @@ import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
-import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.slf4j.Logger
-import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 
 class ArtifactoryPlugin implements Plugin<Project> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -66,7 +67,6 @@ class ArtifactoryPlugin implements Plugin<Project> {
             conv.clientConfig.setBuildListernerAdded(true)
         }
     }
-
 
     private static class ProjectsEvaluatedBuildListener extends BuildAdapter {
         def void projectsEvaluated(Gradle gradle) {
@@ -104,7 +104,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             } else {
                 log.debug("No repository resolution defined for ${project.path}")
             }
-            injectMatrixParamToResolvers(project.repositories, resolverConf)
+            injectMatrixParamToResolvers(project.repositories.getAll(), resolverConf)
         }
 
         private def addIvyRepoToProject(Project project, String configuredUrl, ResolverHandler resolverConf) {
