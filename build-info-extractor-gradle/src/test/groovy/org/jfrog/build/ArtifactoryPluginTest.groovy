@@ -1,5 +1,7 @@
 package org.jfrog.build
 
+import spock.lang.Specification
+
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.gradle.BuildListener
 import org.gradle.api.Project
@@ -11,7 +13,6 @@ import org.jfrog.build.client.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
-import spock.lang.Specification
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
@@ -44,7 +45,7 @@ public class ArtifactoryPluginTest extends Specification {
         String rootUrl = 'http://localhost:8081/artifactory/'
         project.setProperty(PROP_CONTEXT_URL, rootUrl)
         project.setProperty(ClientProperties.PROP_RESOLVE_PREFIX + ClientConfigurationFields.REPO_KEY, 'repo')
-        String expectedName = rootUrl + 'repo'
+        String expectedName = 'artifactory-maven-resolver'
 
         artifactoryPlugin.apply(project)
         projectEvaluated(project)
@@ -55,7 +56,7 @@ public class ArtifactoryPluginTest extends Specification {
         libsResolvers.size() == 1
         libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
         libsResolvers.get(0).name == expectedName
-        ((IBiblioResolver) libsResolvers.get(0)).root == expectedName + '/'
+        ((IBiblioResolver) libsResolvers.get(0)).root == rootUrl + 'repo/'
         project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
     }
 

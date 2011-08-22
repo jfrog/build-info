@@ -16,11 +16,8 @@
 
 package org.jfrog.gradle.plugin.artifactory
 
-import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
-
-import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 import org.apache.commons.lang.StringUtils
+import org.apache.ivy.plugins.resolver.ChainResolver
 import org.apache.ivy.plugins.resolver.DependencyResolver
 import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.apache.ivy.plugins.resolver.IvyRepResolver
@@ -31,7 +28,10 @@ import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.slf4j.Logger
+import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 
 class ArtifactoryPlugin implements Plugin<Project> {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
@@ -89,13 +89,20 @@ class ArtifactoryPlugin implements Plugin<Project> {
             if (StringUtils.isNotBlank(url)) {
                 log.debug("Artifactory URL: $url")
                 // add artifactory url to the list of repositories
-                if (resolverConf.isIvyRepositoryDefined()) {
-                    addIvyRepoToProject(project, url, resolverConf)
-                }
-                if (resolverConf.isMaven()) {
-                    project.repositories {
-                        mavenRepo urls: [url]
-                    }
+                if (resolverConf.isIvyRepositoryDefined() && resolverConf.isMaven()) {
+                    def ivyRepo = createIvyRepo(project, url, resolverConf)
+                    def mavenRepo = createMavenRepo(project, url)
+                    def resolver = new ChainResolver();
+                    resolver.setName("artifactory-chain-resolver")
+                    resolver.add(mavenRepo)
+                    resolver.add(ivyRepo)
+                    project.repositories.add(resolver)
+                } else if (resolverConf.isMaven()) {
+                    def mavenRepo = createMavenRepo(project, url)
+                    project.repositories.add(mavenRepo)
+                } else if (resolverConf.isIvyRepositoryDefined()) {
+                    def ivyRepo = createIvyRepo(project, url, resolverConf)
+                    project.repositories.add(ivyRepo)
                 }
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     String host = new URL(url).getHost()
@@ -107,16 +114,17 @@ class ArtifactoryPlugin implements Plugin<Project> {
             injectMatrixParamToResolvers(project.repositories.getAll(), resolverConf)
         }
 
-        private def addIvyRepoToProject(Project project, String configuredUrl, ResolverHandler resolverConf) {
-            project.repositories {
-                add(new org.apache.ivy.plugins.resolver.URLResolver()) {
-                    name = "ivy-resolver"
-                    url = configuredUrl
-                    m2compatible = resolverConf.m2Compatible
-                    addArtifactPattern(configuredUrl + '/' + resolverConf.getIvyArtifactPattern())
-                    addIvyPattern(configuredUrl + '/' + resolverConf.getIvyPattern())
-                }
-            }
+        private def createMavenRepo(Project project, String url) {
+            return project.repositories.resolverFactory.createMavenRepoResolver("artifactory-maven-resolver", url)
+        }
+
+        private def createIvyRepo(Project project, String url, ResolverHandler resolverConf) {
+            def ivyResolver = new org.apache.ivy.plugins.resolver.URLResolver()
+            ivyResolver.name = "artifactory-ivy-resolver"
+            ivyResolver.m2compatible = resolverConf.m2Compatible
+            ivyResolver.addArtifactPattern(url + '/' + resolverConf.getIvyArtifactPattern())
+            ivyResolver.addIvyPattern(url + '/' + resolverConf.getIvyPattern())
+            return ivyResolver
         }
 
         private def injectMatrixParamToResolvers(Set<DependencyResolver> allResolvers,
