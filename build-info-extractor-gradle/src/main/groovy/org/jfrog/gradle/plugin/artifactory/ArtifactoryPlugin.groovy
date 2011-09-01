@@ -155,7 +155,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
             buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoTask.class)
             buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactiory, and resolves
-depnedncies from Artifactory.''')
+dependencies from Artifactory.''')
         }
         return buildInfo
     }
