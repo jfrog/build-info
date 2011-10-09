@@ -25,6 +25,7 @@ import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jfrog.build.extractor.EolDetectingInputStream;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 
 import java.io.File;
@@ -123,13 +124,7 @@ public class PomTransformer {
             FileWriter fileWriter = new FileWriter(pomFile);
             try {
                 XMLOutputter outputter = new XMLOutputter();
-                String eol = "";
-                if (eolDetectingStream.isCr()) {
-                    eol += "\r";
-                }
-                if (eolDetectingStream.isLf()) {
-                    eol += "\n";
-                }
+                String eol = eolDetectingStream.getEol();
                 if (!"".equals(eol)) {
                     Format format = Format.getRawFormat();
                     format.setLineSeparator(eol);

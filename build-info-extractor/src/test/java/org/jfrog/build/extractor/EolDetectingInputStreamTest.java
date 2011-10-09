@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.maven.transformer;
+package org.jfrog.build.extractor;
 
 import org.apache.commons.io.IOUtils;
 import org.testng.annotations.Test;

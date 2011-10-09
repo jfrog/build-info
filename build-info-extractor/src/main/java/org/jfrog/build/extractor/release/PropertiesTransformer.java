@@ -17,10 +17,13 @@ package org.jfrog.build.extractor.release;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.extractor.EolDetectingInputStream;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
@@ -49,7 +52,18 @@ public class PropertiesTransformer {
         if (!propertiesFile.exists()) {
             throw new IllegalArgumentException("Couldn't find properties file: " + propertiesFile.getAbsolutePath());
         }
-        String properties = Files.toString(propertiesFile, Charsets.UTF_8);
+        String properties;
+        EolDetectingInputStream eolDetectingInputStream = null;
+        try {
+            eolDetectingInputStream = new EolDetectingInputStream(new FileInputStream(propertiesFile));
+            properties = IOUtils.toString(eolDetectingInputStream);
+        } finally {
+            IOUtils.closeQuietly(eolDetectingInputStream);
+        }
+        String eol = eolDetectingInputStream.getEol();
+        boolean hasEol = !"".equals(eol);
+        boolean contentEndsWithEol = hasEol && properties.endsWith(eol);
+
         StringBuilder result = new StringBuilder();
         BufferedReader reader = new BufferedReader(new StringReader(properties));
         String line;
@@ -66,12 +80,19 @@ public class PropertiesTransformer {
                     }
                 }
             }
-            result.append(line).append("\n");
+            result.append(line);
+            if (hasEol) {
+                result.append(eol);
+            }
         }
 
         if (modified) {
             propertiesFile.delete();
-            Files.write(result, propertiesFile, Charsets.UTF_8);
+            String toWrite = result.toString();
+            if (!contentEndsWithEol) {
+                toWrite = StringUtils.removeEnd(toWrite, eol);
+            }
+            Files.write(toWrite, propertiesFile, Charsets.UTF_8);
         }
         return modified;
     }

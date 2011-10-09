@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.maven.transformer;
+package org.jfrog.build.extractor;
 
 import com.google.common.primitives.Bytes;
 
@@ -91,6 +91,17 @@ public class EolDetectingInputStream extends InputStream {
 
     public boolean isCr() {
         return cr;
+    }
+
+    public String getEol() {
+        String eol = "";
+        if (cr) {
+            eol += "\r";
+        }
+        if (lf) {
+            eol += "\n";
+        }
+        return eol;
     }
 
     private void isByteEol(byte[] bytes) {

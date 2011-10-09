@@ -63,6 +63,7 @@ subprojects {
   dependencies {
     compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
     compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
+    compile group: 'commons-io', name: 'commons-io', version: '2.0.1'
     testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
   }
 
@@ -289,7 +290,6 @@ project('build-info-extractor-maven3') {
     provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
             "org.apache.maven:maven-core:3.0.2"
     testCompile "org.easymock:easymockclassextension:2.5.2"
-    testCompile "commons-io:commons-io:2.0.1"
   }
   configure(install.repositories.mavenInstaller) {
     pom.project {
