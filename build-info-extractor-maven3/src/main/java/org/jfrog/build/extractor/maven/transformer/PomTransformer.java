@@ -126,8 +126,9 @@ public class PomTransformer {
                 XMLOutputter outputter = new XMLOutputter();
                 String eol = eolDetectingStream.getEol();
                 if (!"".equals(eol)) {
-                    Format format = Format.getRawFormat();
+                    Format format = outputter.getFormat();
                     format.setLineSeparator(eol);
+                    format.setTextMode(Format.TextMode.PRESERVE);
                     outputter.setFormat(format);
                 }
                 outputter.output(document, fileWriter);
