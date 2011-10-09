@@ -23,10 +23,12 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.Namespace;
 import org.jdom.input.SAXBuilder;
+import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -88,10 +90,16 @@ public class PomTransformer {
 
         SAXBuilder saxBuilder = createSaxBuilder();
         Document document;
+        EolDetectingInputStream eolDetectingStream = null;
         try {
-            document = saxBuilder.build(pomFile);
+            eolDetectingStream = new EolDetectingInputStream(new FileInputStream(pomFile));
+            document = saxBuilder.build(eolDetectingStream);
         } catch (JDOMException e) {
             throw new IOException("Failed to parse pom: " + pomFile.getAbsolutePath());
+        } finally {
+            if (eolDetectingStream != null) {
+                eolDetectingStream.close();
+            }
         }
 
         Element rootElement = document.getRootElement();
@@ -114,7 +122,20 @@ public class PomTransformer {
         if (modified) {
             FileWriter fileWriter = new FileWriter(pomFile);
             try {
-                new XMLOutputter().output(document, fileWriter);
+                XMLOutputter outputter = new XMLOutputter();
+                String eol = "";
+                if (eolDetectingStream.isCr()) {
+                    eol += "\r";
+                }
+                if (eolDetectingStream.isLf()) {
+                    eol += "\n";
+                }
+                if (!"".equals(eol)) {
+                    Format format = Format.getRawFormat();
+                    format.setLineSeparator(eol);
+                    outputter.setFormat(format);
+                }
+                outputter.output(document, fileWriter);
             } finally {
                 Closeables.closeQuietly(fileWriter);
             }
@@ -241,5 +262,4 @@ public class PomTransformer {
         sb.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         return sb;
     }
-
 }

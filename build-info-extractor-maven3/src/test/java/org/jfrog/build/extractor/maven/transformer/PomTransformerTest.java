@@ -24,6 +24,7 @@ import org.jfrog.build.extractor.maven.reader.ModuleName;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -153,11 +154,51 @@ public class PomTransformerTest {
         }
     }
 
+    @Test
+    public void testCrEolArePreserved() throws Exception {
+        String transformedValue = transformPomWithEol("\r");
+        assertTrue(transformedValue.contains("\r"));
+        assertFalse(transformedValue.contains("\n"));
+    }
+
+    @Test
+    public void testLfEolArePreserved() throws Exception {
+        String transformedValue = transformPomWithEol("\n");
+        assertFalse(transformedValue.contains("\r"));
+        assertTrue(transformedValue.contains("\n"));
+    }
+
+    @Test
+    public void testCrLfEolArePreserved() throws Exception {
+        String transformedValue = transformPomWithEol("\r\n");
+        assertTrue(transformedValue.contains("\r"));
+        assertTrue(transformedValue.contains("\n"));
+    }
+
+    private String getPomContent(String eol) {
+        return new StringBuilder(pomHeader).append(eol).append("<modelVersion>4.0.0</modelVersion>").append(eol)
+                .append("<groupId>group</groupId>").append(eol).append("<artifactId>artifact</artifactId>").append(eol)
+                .append("<version>111</version>").append(eol).append("</project>").toString();
+    }
+
+    private static final String pomHeader = "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" " +
+            "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" " +
+            "xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd\">";
+
     private File getResourceAsFile(String path) {
         URL resource = getClass().getResource(path);
         if (resource == null) {
             throw new IllegalArgumentException("Resource not found: " + path);
         }
         return new File(resource.getFile());
+    }
+
+    private String transformPomWithEol(String eol) throws IOException {
+        File file = File.createTempFile("temp", "pom");
+        Files.write(getPomContent(eol), file, Charset.forName("utf-8"));
+        Map<ModuleName, String> modules = Maps.newHashMap();
+        modules.put(new ModuleName("group", "artifact"), "112");
+        new PomTransformer(new ModuleName("group", "artifact"), modules, "").transform(file);
+        return Files.toString(file, Charset.forName("utf-8"));
     }
 }
