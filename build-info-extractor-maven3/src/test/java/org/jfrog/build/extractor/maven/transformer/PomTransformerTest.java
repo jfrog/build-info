@@ -48,12 +48,12 @@ public class PomTransformerTest {
 
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "").transform(pomFile);
 
-        String pomStr = Files.toString(pomFile, Charset.defaultCharset());
+        String pomStr = getFileAsString(pomFile);
         Document expected = PomTransformer.createSaxBuilder().build(
                 getResourceAsFile("/poms/parentonly/pom.expected.xml"));
         String expectedStr = new XMLOutputter().outputString(expected);
 
-        assertEquals(expectedStr, pomStr);
+        assertEquals(pomStr, expectedStr);
     }
 
     @Test
@@ -66,28 +66,38 @@ public class PomTransformerTest {
 
         new PomTransformer(new ModuleName("org.jfrog.test.nested", "two"), modules, "").transform(pomFile);
 
-        String pomStr = Files.toString(pomFile, Charset.defaultCharset());
+        String pomStr = getFileAsString(pomFile);
         Document expected = PomTransformer.createSaxBuilder().build(getResourceAsFile("/poms/multi/pom.expected.xml"));
         String expectedStr = new XMLOutputter().outputString(expected);
 
-        assertEquals(expectedStr, pomStr);
+        assertEquals(pomStr, expectedStr);
     }
 
     @Test
-    public void transformScm() throws Exception {
-        File pomFile = getResourceAsFile("/poms/scm/pom.xml");
+    public void transformGitScm() throws Exception {
+        File pomFile = getResourceAsFile("/poms/scm/git/pom.xml");
+        HashMap<ModuleName, String> modules = Maps.newHashMap();
+        modules.put(new ModuleName("org.jfrog.test", "parent"), "1");
+
+        new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, null).transform(pomFile);
+
+        String pomStr = getFileAsString(pomFile);
+        String expectedStr = getFileAsString(getResourceAsFile("/poms/scm/git/pom.expected.xml"));
+        assertEquals(pomStr, expectedStr);
+    }
+
+    @Test
+    public void transformSvnScm() throws Exception {
+        File pomFile = getResourceAsFile("/poms/scm/svn/pom.xml");
         HashMap<ModuleName, String> modules = Maps.newHashMap();
         modules.put(new ModuleName("org.jfrog.test", "parent"), "1");
 
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules,
                 "http://subversion.jfrog.org/test/tags/1").transform(pomFile);
 
-        String pomStr = Files.toString(pomFile, Charset.defaultCharset());
-        Document expected = PomTransformer.createSaxBuilder().build(
-                getResourceAsFile("/poms/scm/pom.expected.xml"));
-        String expectedStr = new XMLOutputter().outputString(expected);
-
-        assertEquals(expectedStr, pomStr);
+        String pomStr = getFileAsString(pomFile);
+        String expectedStr = getFileAsString(getResourceAsFile("/poms/scm/svn/pom.expected.xml"));
+        assertEquals(pomStr, expectedStr);
     }
 
     @Test
@@ -195,10 +205,14 @@ public class PomTransformerTest {
 
     private String transformPomWithEol(String eol) throws IOException {
         File file = File.createTempFile("temp", "pom");
-        Files.write(getPomContent(eol), file, Charset.forName("utf-8"));
+        Files.write(getPomContent(eol), file, Charset.defaultCharset());
         Map<ModuleName, String> modules = Maps.newHashMap();
         modules.put(new ModuleName("group", "artifact"), "112");
         new PomTransformer(new ModuleName("group", "artifact"), modules, "").transform(file);
-        return Files.toString(file, Charset.forName("utf-8"));
+        return getFileAsString(file);
+    }
+
+    private String getFileAsString(File file) throws IOException {
+        return Files.toString(file, Charset.defaultCharset());
     }
 }
