@@ -96,13 +96,13 @@ class ArtifactoryPlugin implements Plugin<Project> {
                     resolver.setName("artifactory-chain-resolver")
                     resolver.add(mavenRepo)
                     resolver.add(ivyRepo)
-                    project.repositories.add(resolver)
+                    addOrReplaceResolver(project,resolver)
                 } else if (resolverConf.isMaven()) {
                     def mavenRepo = createMavenRepo(project, url)
-                    project.repositories.add(mavenRepo)
+                    addOrReplaceResolver(project,mavenRepo)
                 } else if (resolverConf.isIvyRepositoryDefined()) {
                     def ivyRepo = createIvyRepo(project, url, resolverConf)
-                    project.repositories.add(ivyRepo)
+                    addOrReplaceResolver(project, ivyRepo)
                 }
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     String host = new URL(url).getHost()
@@ -114,8 +114,16 @@ class ArtifactoryPlugin implements Plugin<Project> {
             injectMatrixParamToResolvers(project.repositories.getAll(), resolverConf)
         }
 
-        private def createMavenRepo(Project project, String url) {
-            return project.repositories.resolverFactory.createMavenRepoResolver("artifactory-maven-resolver", url)
+      private def addOrReplaceResolver(Project project, def repo) {
+        def existing = project.repositories.findByName(repo.name)
+        if (existing) {
+          project.repositories.remove(existing)
+        }
+        project.repositories.add(repo)
+      }
+
+      private def createMavenRepo(Project project, String url) {
+            return project.repositories.mavenRepo(["name":"artifactory-maven-resolver", "url":url])
         }
 
         private def createIvyRepo(Project project, String url, ResolverHandler resolverConf) {

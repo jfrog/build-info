@@ -30,11 +30,13 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.PublishArtifact;
+import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
 import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.plugins.MavenPluginConvention;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
@@ -348,7 +350,9 @@ public class BuildInfoTask extends DefaultTask {
                             new Object[]{getPath(), project.getPath()});
                     mavenDescriptor = null;
                 } else {
-                    mavenDescriptor = new File(project.getRepositories().getMavenPomDir(), "pom-default.xml");
+                    mavenDescriptor = new File(
+                            project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
+                            "pom-default.xml");
                     dependsOn(installTask);
                 }
             }
@@ -600,7 +604,7 @@ public class BuildInfoTask extends DefaultTask {
         }
 
         for (Configuration configuration : publishConfigurations) {
-            Set<PublishArtifact> artifacts = configuration.getArtifacts();
+            PublishArtifactSet artifacts = configuration.getArtifacts();
             for (PublishArtifact publishArtifact : artifacts) {
                 File file = publishArtifact.getFile();
                 DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
