@@ -18,15 +18,14 @@ package org.jfrog.build.extractor.release;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.EolDetectingInputStream;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.StringReader;
+import java.util.Enumeration;
 import java.util.Map;
+import java.util.Properties;
 
 /**
  * Rewrites the given properties in the input properties file.
@@ -52,112 +51,47 @@ public class PropertiesTransformer {
         if (!propertiesFile.exists()) {
             throw new IllegalArgumentException("Couldn't find properties file: " + propertiesFile.getAbsolutePath());
         }
-        String properties;
+        Properties properties = new Properties();
         EolDetectingInputStream eolDetectingInputStream = null;
         try {
             eolDetectingInputStream = new EolDetectingInputStream(new FileInputStream(propertiesFile));
-            properties = IOUtils.toString(eolDetectingInputStream);
+            properties.load(eolDetectingInputStream);
         } finally {
             IOUtils.closeQuietly(eolDetectingInputStream);
         }
         String eol = eolDetectingInputStream.getEol();
         boolean hasEol = !"".equals(eol);
-        boolean contentEndsWithEol = hasEol && properties.endsWith(eol);
 
-        StringBuilder result = new StringBuilder();
-        BufferedReader reader = new BufferedReader(new StringReader(properties));
-        String line;
+        StringBuilder resultBuilder = new StringBuilder();
         boolean modified = false;
-        while ((line = reader.readLine()) != null) {
-            if (line.contains("=")) {
-                String[] keyValue = StringUtils.split(line, "=");
-                String value = versionsByName.get(unescape(keyValue[0]));
-                if (value != null) {
-                    if (!value.equals(unescape(keyValue[1]))) {
-                        modified = true;
-                        keyValue[1] = escape(value, false);
-                        line = keyValue[0] + "=" + keyValue[1];
-                    }
+        Enumeration<?> propertyNames = properties.propertyNames();
+        while (propertyNames.hasMoreElements()) {
+            String propertyName = (String) propertyNames.nextElement();
+            String propertyValue = properties.getProperty(propertyName);
+
+            StringBuilder lineBuilder = new StringBuilder(propertyName).append("=");
+
+            String newPropertyValue = versionsByName.get(propertyName);
+            if ((newPropertyValue != null) && !newPropertyValue.equals(propertyValue)) {
+                if (!modified) {
+                    modified = true;
                 }
+                lineBuilder.append(newPropertyValue);
+            } else {
+                lineBuilder.append(propertyValue);
             }
-            result.append(line);
+            resultBuilder.append(lineBuilder.toString());
             if (hasEol) {
-                result.append(eol);
+                resultBuilder.append(eol);
             }
         }
 
         if (modified) {
             propertiesFile.delete();
-            String toWrite = result.toString();
-            if (!contentEndsWithEol) {
-                toWrite = StringUtils.removeEnd(toWrite, eol);
-            }
+            String toWrite = resultBuilder.toString();
             Files.write(toWrite, propertiesFile, Charsets.UTF_8);
         }
+
         return modified;
-    }
-
-    // escape the value of the properties file so it will be in accordance with the properties spec.
-    private static String escape(String str, boolean isKey) {
-        int len = str.length();
-        StringBuilder result = new StringBuilder(len * 2);
-        for (int index = 0; index < len; index++) {
-            char c = str.charAt(index);
-            switch (c) {
-                case ' ':
-                    if (index == 0 || isKey) {
-                        result.append('\\');
-                    }
-                    result.append(' ');
-                    break;
-                case '\\':
-                    result.append("\\\\");
-                    break;
-                case '\t':
-                    result.append("\\t");
-                    break;
-                case '\n':
-                    result.append("\\n");
-                    break;
-                case '\r':
-                    result.append("\\r");
-                    break;
-                case '\f':
-                    result.append("\\f");
-                    break;
-                default:
-                    if ("=: \t\r\n\f#!".indexOf(c) != -1) {
-                        result.append('\\');
-                    }
-                    result.append(c);
-            }
-        }
-        return result.toString();
-    }
-
-    private static String unescape(String str) {
-        StringBuilder result = new StringBuilder(str.length());
-        for (int index = 0; index < str.length(); ) {
-            char c = str.charAt(index++);
-            if (c == '\\') {
-                c = str.charAt(index++);
-                switch (c) {
-                    case 't':
-                        c = '\t';
-                        break;
-                    case 'r':
-                        c = '\r';
-                        break;
-                    case 'n':
-                        c = '\n';
-                        break;
-                    case 'f':
-                        c = '\f';
-                        break;
-                }
-            }
-            result.append(c);
-        }
-        return result.toString();
     }
 }
