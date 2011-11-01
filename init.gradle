@@ -1,6 +1,6 @@
-String pluginVersion='2.0.x-20111018.094543-127'
+String pluginVersion='2.0.x-20111019.122049-129'
 //String pluginVersion = '2.0.4'
-def artifactoryPluginUrl = "http://repo.jfrog.org/artifactory/libs-snapshots-local/org/jfrog/buildinfo/build-info-extractor-gradle/2.0.x-SNAPSHOT/build-info-extractor-gradle-2.0.x-20111018.094543-127.jar"
+def artifactoryPluginUrl = "http://repo.jfrog.org/artifactory/libs-snapshots-local/org/jfrog/buildinfo/build-info-extractor-gradle/2.0.x-SNAPSHOT/build-info-extractor-gradle-${pluginVersion}-uber.jar"
 //def artifactoryPluginUrl = "http://repo.jfrog.org/artifactory/libs-releases/org/jfrog/buildinfo/build-info-extractor-gradle/$pluginVersion/build-info-extractor-gradle-$pluginVersion-uber.jar"
 
 def file = new File(gradle.gradleUserHomeDir, "plugins/artifactory-$pluginVersion-uber.jar")
@@ -16,3 +16,4 @@ gradle.projectsLoaded {
         buildscript.dependencies.classpath files(file)
     }
 }
+
