@@ -268,7 +268,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
-            Set<ResolvedArtifact> resolvedArtifactSet = null;
+            Set<ResolvedArtifact> resolvedArtifactSet;
             try {
                 resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             } catch (ResolveException e) {
@@ -314,8 +314,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     private Map<String, String> calculateChecksumsForFile(File file)
             throws NoSuchAlgorithmException, IOException {
-        Map<String, String> checkSums =
-                FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+        Map<String, String> checkSums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
         return checkSums;
     }
 }
