@@ -604,7 +604,7 @@ public class BuildInfoTask extends DefaultTask {
         }
 
         for (Configuration configuration : publishConfigurations) {
-            PublishArtifactSet artifacts = configuration.getArtifacts();
+            PublishArtifactSet artifacts = configuration.getAllArtifacts();
             for (PublishArtifact publishArtifact : artifacts) {
                 File file = publishArtifact.getFile();
                 DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
