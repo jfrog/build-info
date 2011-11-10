@@ -81,7 +81,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<ModuleBuilder>();
     private ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<Set<Artifact>>();
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
-    private ThreadLocal<Map<MavenProject, Boolean>> projectTestFailures = new ThreadLocal<Map<MavenProject, Boolean>>();
+    private volatile boolean projectHasTestFailures;
 
     private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
@@ -104,7 +104,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionStarted(ExecutionEvent event) {
-        projectTestFailures.set(Maps.<MavenProject, Boolean>newHashMap());
         logger.info("Initializing Artifactory Build-Info Recording");
         buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
         deployableArtifactBuilderMap = Maps.newHashMap();
@@ -126,7 +125,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
         if (build != null) {
             File basedir = event.getSession().getTopLevelProject().getBasedir();
-            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, wereThereTestFailures(), basedir);
+            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
         }
         deployableArtifactBuilderMap.clear();
         if (wrappedListener != null) {
@@ -231,9 +230,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
             List<File> resultsFile = getSurefireResultsFile(project);
-            boolean failed = isTestsFailed(resultsFile);
-            projectTestFailures.get().put(project, failed);
+            if (isTestsFailed(resultsFile)) {
+                projectHasTestFailures = true;
+            }
         }
+
         extractModuleDependencies(project);
 
         if (wrappedListener != null) {
@@ -451,17 +452,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if (!conf.publisher.isPublishArtifacts()) {
             return false;
         }
-        return conf.publisher.isEvenUnstable() || !wereThereTestFailures();
-    }
-
-    private boolean wereThereTestFailures() {
-        Map<MavenProject, Boolean> testFailures = projectTestFailures.get();
-        for (Boolean testFailed : testFailures.values()) {
-            if (testFailed.equals(Boolean.TRUE)) {
-                return true;
-            }
-        }
-        return false;
+        return conf.publisher.isEvenUnstable() || !projectHasTestFailures;
     }
 
     private String getArtifactName(String artifactId, String version, String classifier, String fileExtension) {
