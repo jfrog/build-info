@@ -70,7 +70,7 @@ public class ArtifactoryBuildInfoClient {
     /**
      * Version of Artifactory we work with.
      */
-    private Version artifactoryVersion;
+    private ArtifactoryVersion artifactoryVersion;
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -288,7 +288,7 @@ public class ArtifactoryBuildInfoClient {
         log.info("Deploying artifact: " + deploymentPath);
         uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
-        if (!getArtifactoryVersion().isAtLeast(new Version("2.3.2"))) {
+        if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
             uploadChecksums(details, deploymentPath);
         }
     }
@@ -297,8 +297,8 @@ public class ArtifactoryBuildInfoClient {
      * @return Artifactory version if working against a compatible version of Artifactory
      * @throws IOException If server not found or it doesn't answer to the version query or it is too old
      */
-    public Version verifyCompatibleArtifactoryVersion() throws VersionException {
-        Version version;
+    public ArtifactoryVersion verifyCompatibleArtifactoryVersion() throws VersionException {
+        ArtifactoryVersion version;
         try {
             version = httpClient.getVersion();
         } catch (IOException e) {
@@ -352,7 +352,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     private String buildInfoToJsonString(Build buildInfo) throws Exception {
-        Version version = verifyCompatibleArtifactoryVersion();
+        ArtifactoryVersion version = verifyCompatibleArtifactoryVersion();
         //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
         //JSON parsing. Our JSON writer is configured to discard null values.
         if (!version.isAtLeast(UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION)) {
@@ -493,12 +493,12 @@ public class ArtifactoryBuildInfoClient {
         throw new IOException(errorMessage);
     }
 
-    private Version getArtifactoryVersion() {
+    private ArtifactoryVersion getArtifactoryVersion() {
         if (artifactoryVersion == null) {
             try {
                 artifactoryVersion = httpClient.getVersion();
             } catch (IOException e) {
-                artifactoryVersion = Version.NOT_FOUND;
+                artifactoryVersion = ArtifactoryVersion.NOT_FOUND;
             }
         }
         return artifactoryVersion;

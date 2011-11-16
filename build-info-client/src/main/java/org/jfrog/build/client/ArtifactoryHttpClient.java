@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.StringTokenizer;
 
 /**
  * @author Noam Y. Tenne
@@ -44,11 +43,12 @@ public class ArtifactoryHttpClient {
 
     private final Log log;
 
-    public static final Version UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.3");
-    public static final Version NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION = new Version("2.2.4");
-    public static final Version MINIMAL_ARTIFACTORY_VERSION = new Version("2.2.3");
+    public static final ArtifactoryVersion UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION =
+            new ArtifactoryVersion("2.2.3");
+    public static final ArtifactoryVersion NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION =
+            new ArtifactoryVersion("2.2.4");
+    public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
-    public static final String ARTIFACTORY_WEBAPP_URI = "/webapp/simplebrowserroot.html";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
 
     private final String artifactoryUrl;
@@ -123,7 +123,7 @@ public class ArtifactoryHttpClient {
         return deployClient;
     }
 
-    public Version getVersion() throws IOException {
+    public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
         PreemptiveHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(versionUrl);
@@ -134,7 +134,7 @@ public class ArtifactoryHttpClient {
             if (httpEntity != null) {
                 httpEntity.consumeContent();
             }
-            return Version.NOT_FOUND;
+            return ArtifactoryVersion.NOT_FOUND;
         }
         if (statusCode != HttpStatus.SC_OK) {
             if (response.getEntity() != null) {
@@ -152,17 +152,14 @@ public class ArtifactoryHttpClient {
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
                 String version = result.get("version").getTextValue();
-
-                JsonNode addonsNode = result.get("addons");
-                boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
-                return new Version(version, hasAddons);
+                return new ArtifactoryVersion(version);
             } finally {
                 if (content != null) {
                     content.close();
                 }
             }
         }
-        return Version.NOT_FOUND;
+        return ArtifactoryVersion.NOT_FOUND;
     }
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
@@ -191,69 +188,5 @@ public class ArtifactoryHttpClient {
             response.getEntity().consumeContent();
         }
         return statusLine;
-    }
-
-    public static class Version {
-        static final Version NOT_FOUND = new Version("0.0.0", false);
-
-        private static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
-
-        private final int[] numbers = {2, 2, 2};
-        private boolean snapshot;
-        private boolean hasAddons;
-
-        public Version(String version) {
-            this(version, false);
-        }
-
-        Version(String version, boolean hasAddons) {
-            StringTokenizer stringTokenizer = new StringTokenizer(version, ".", false);
-            try {
-                numbers[0] = Integer.parseInt(stringTokenizer.nextToken());
-                numbers[1] = Integer.parseInt(stringTokenizer.nextToken());
-                String miniminor = stringTokenizer.nextToken();
-                snapshot = miniminor.endsWith(SNAPSHOT_SUFFIX);
-                if (snapshot) {
-                    numbers[2] =
-                            Integer.parseInt(miniminor.substring(0, miniminor.length() - SNAPSHOT_SUFFIX.length()));
-                } else {
-                    numbers[2] = Integer.parseInt(miniminor);
-                }
-            } catch (NumberFormatException nfe) {
-                snapshot = true;
-            } catch (ArrayIndexOutOfBoundsException aioobe) {
-                snapshot = true;
-            }
-            this.hasAddons = hasAddons;
-        }
-
-        boolean isSnapshot() {
-            return snapshot;
-        }
-
-        public boolean hasAddons() {
-            return hasAddons;
-        }
-
-        @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAtLeast(Version version) {
-            if (isSnapshot()) {
-                return true;
-            }
-            return weight() >= version.weight();
-        }
-
-        boolean isNotFound() {
-            return weight() == NOT_FOUND.weight();
-        }
-
-        int weight() {
-            return numbers[0] * 100 + numbers[1] * 10 + numbers[2];
-        }
-
-        @Override
-        public String toString() {
-            return numbers[0] + "." + numbers[1] + "." + numbers[2];
-        }
     }
 }
