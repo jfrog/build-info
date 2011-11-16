@@ -11,17 +11,27 @@ public class ArtifactoryVersion {
 
     private final String version;
     private final String[] versionTokens;
+    private boolean addons;
 
     public ArtifactoryVersion(String version) {
+        this(version, false);
+    }
+
+    public ArtifactoryVersion(String version, boolean addons) {
         if (StringUtils.isBlank(version)) {
             throw new IllegalArgumentException("Please provide a valid version.");
         }
         this.version = version;
+        this.addons = addons;
         versionTokens = StringUtils.split(version, ".");
     }
 
     public boolean isNotFound() {
         return NOT_FOUND.equals(this);
+    }
+
+    public boolean hasAddons() {
+        return addons;
     }
 
     public boolean isAtLeast(ArtifactoryVersion atLeast) {

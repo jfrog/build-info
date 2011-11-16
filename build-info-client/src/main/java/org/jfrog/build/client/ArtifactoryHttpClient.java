@@ -152,7 +152,9 @@ public class ArtifactoryHttpClient {
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
                 String version = result.get("version").getTextValue();
-                return new ArtifactoryVersion(version);
+                JsonNode addonsNode = result.get("addons");
+                boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
+                return new ArtifactoryVersion(version, hasAddons);
             } finally {
                 if (content != null) {
                     content.close();
