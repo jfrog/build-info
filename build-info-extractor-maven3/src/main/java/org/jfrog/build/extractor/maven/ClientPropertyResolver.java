@@ -14,6 +14,7 @@ import static org.jfrog.build.client.ClientProperties.PROP_TIMEOUT;
 /**
  * @author Noam Y. Tenne
  */
+//TODO: [by YS] rename class and method
 @Component(role = ClientPropertyResolver.class)
 public class ClientPropertyResolver {
 
@@ -28,7 +29,7 @@ public class ClientPropertyResolver {
     }
 
     private ArtifactoryBuildInfoClient resolveClientProps(ArtifactoryClientConfiguration clientConf) {
-        String contextUrl = clientConf.getContextUrl();
+        String contextUrl = clientConf.publisher.getContextUrl();
         if (StringUtils.isBlank(contextUrl)) {
             throw new IllegalArgumentException(
                     "Unable to resolve Artifactory Build Info Client properties: no context URL was found.");

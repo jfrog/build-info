@@ -55,6 +55,10 @@ class PublisherConfig {
         ConfigureUtil.configure(closure, this)
     }
 
+    def setContextUrl(String contextUrl) {
+        publisher.setContextUrl(contextUrl)
+    }
+
     def setPublishPom(boolean publishPom) {
         publisher.setMaven(publishPom)
     }

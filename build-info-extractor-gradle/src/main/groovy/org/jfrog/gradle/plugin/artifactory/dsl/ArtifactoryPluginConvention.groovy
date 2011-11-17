@@ -49,7 +49,8 @@ class ArtifactoryPluginConvention {
     }
 
     def setContextUrl(String contextUrl) {
-        clientConfig.setContextUrl(contextUrl)
+        clientConfig.publisher.setContextUrl(contextUrl)
+        clientConfig.resolver.setContextUrl(contextUrl)
     }
 
     def publish(Closure closure) {

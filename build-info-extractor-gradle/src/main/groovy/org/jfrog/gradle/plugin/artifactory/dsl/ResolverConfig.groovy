@@ -46,6 +46,10 @@ class ResolverConfig {
         resolver[name] = value
     }
 
+    def setContextUrl(String contextUrl) {
+        resolver.setContextUrl(contextUrl)
+    }
+
     def config(Closure closure) {
         ConfigureUtil.configure(closure, this)
     }

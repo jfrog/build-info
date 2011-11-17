@@ -12,21 +12,19 @@ import java.util.Map;
 public class PrefixPropertyHandler {
     protected final Map<String, String> props;
     protected final Log log;
-    private final PrefixPropertyHandler parent;
     private final String prefix;
 
     public PrefixPropertyHandler(Log log, Map<String, String> props) {
-        this(log, props, "", null);
+        this(log, props, "");
     }
 
     public PrefixPropertyHandler(PrefixPropertyHandler root, String prefix) {
-        this(root.log, root.props, prefix, null);
+        this(root.log, root.props, prefix);
     }
 
-    private PrefixPropertyHandler(Log log, Map<String, String> props, String prefix, PrefixPropertyHandler parent) {
+    private PrefixPropertyHandler(Log log, Map<String, String> props, String prefix) {
         this.log = log;
         this.props = props;
-        this.parent = parent;
         this.prefix = prefix;
     }
 
@@ -40,9 +38,6 @@ public class PrefixPropertyHandler {
 
     public String getStringValue(String key, String def) {
         String s = props.get(prefix + key);
-        if (s == null && parent != null) {
-            s = parent.getStringValue(prefix + key);
-        }
         if (s == null) {
             s = def;
         }
@@ -65,9 +60,6 @@ public class PrefixPropertyHandler {
         String s = props.get(prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else
         Boolean result = (s == null) ? null : Boolean.parseBoolean(s);
-        if (result == null && parent != null) {
-            result = parent.getBooleanValue(prefix + key);
-        }
         if (result == null) {
             result = def;
         }
@@ -87,16 +79,13 @@ public class PrefixPropertyHandler {
     }
 
     public Integer getIntegerValue(String key, Integer def) {
-        Integer result = null;
+        Integer result;
         String s = props.get(prefix + key);
         if (s != null && !StringUtils.isNumeric(s)) {
             log.debug("Property '" + prefix + key + "' is not of numeric value '" + s + "'");
             result = null;
         } else {
             result = (s == null) ? null : Integer.parseInt(s);
-        }
-        if (result == null && parent != null) {
-            result = parent.getIntegerValue(prefix + key);
         }
         if (result == null) {
             result = def;

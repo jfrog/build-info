@@ -97,6 +97,14 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    /**
+     * A fallback method for backward compatibility. If publisher/resolver context url is requested but not found this
+     * method is called.
+     *
+     * @return URL of Artifactory server from the property artifactory.contextUrl
+     * @deprecated Use only as a fallback when explicit publisher/resolver context url is missing
+     */
+    @Deprecated
     public String getContextUrl() {
         String value = root.getStringValue(PROP_CONTEXT_URL);
         if (StringUtils.isBlank(value)) {
@@ -105,9 +113,9 @@ public class ArtifactoryClientConfiguration {
         return value;
     }
 
-    public void setContextUrl(String contextUrl) {
+    /*public void setContextUrl(String contextUrl) {
         root.setStringValue(PROP_CONTEXT_URL, contextUrl);
-    }
+    }*/
 
     public void setTimeout(Integer timeout) {
         root.setIntegerValue(PROP_TIMEOUT, timeout);
@@ -168,12 +176,18 @@ public class ArtifactoryClientConfiguration {
             return root.getStringValue("artifactory.downloadUrl");
         }
 
+        @SuppressWarnings({"deprecation"})
         public String getContextUrl() {
-            return root.getStringValue(PROP_CONTEXT_URL);
+            String contextUrl = getStringValue(PROP_CONTEXT_URL);
+            if (StringUtils.isBlank(contextUrl)) {
+                // fallback to root contextUrl for backward compatibility
+                contextUrl = ArtifactoryClientConfiguration.this.getContextUrl();
+            }
+            return contextUrl;
         }
 
         public void setContextUrl(String contextUrl) {
-            root.setStringValue(PROP_CONTEXT_URL, contextUrl);
+            setStringValue(PROP_CONTEXT_URL, contextUrl);
         }
 
         public void setBuildRoot(String buildRoot) {
@@ -201,6 +215,20 @@ public class ArtifactoryClientConfiguration {
     public class PublisherHandler extends RepositoryConfiguration {
         public PublisherHandler() {
             super(PROP_PUBLISH_PREFIX);
+        }
+
+        @SuppressWarnings({"deprecation"})
+        public String getContextUrl() {
+            String contextUrl = getStringValue(PROP_CONTEXT_URL);
+            if (StringUtils.isBlank(contextUrl)) {
+                // fallback to root contextUrl for backward compatibility
+                contextUrl = ArtifactoryClientConfiguration.this.getContextUrl();
+            }
+            return contextUrl;
+        }
+
+        public void setContextUrl(String contextUrl) {
+            setStringValue(PROP_CONTEXT_URL, contextUrl);
         }
 
         public void setSnapshotRepoKey(String repoKey) {
@@ -429,6 +457,8 @@ public class ArtifactoryClientConfiguration {
         }
 
         public abstract String getMatrixParamPrefix();
+
+        public abstract String getContextUrl();
 
         public void addMatrixParam(String key, String value) {
             ensureImmutableMatrixParams();

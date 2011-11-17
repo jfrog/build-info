@@ -486,7 +486,7 @@ public class BuildInfoTask extends DefaultTask {
      */
     private void prepareAndDeploy() throws IOException {
         ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
-        String contextUrl = acc.getContextUrl();
+        String contextUrl = acc.publisher.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
         String username = acc.publisher.getUsername();
         String password = acc.publisher.getPassword();
