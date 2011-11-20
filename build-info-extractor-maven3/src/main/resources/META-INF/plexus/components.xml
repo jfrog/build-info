@@ -58,8 +58,8 @@
             </requirements>
         </component>
         <component>
-            <role>org.jfrog.build.extractor.maven.ClientPropertyResolver</role>
-            <implementation>org.jfrog.build.extractor.maven.ClientPropertyResolver</implementation>
+            <role>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</role>
+            <implementation>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</implementation>
             <role-hint>default</role-hint>
             <isolated-realm>false</isolated-realm>
             <requirements>
@@ -95,7 +95,7 @@
                     <field-name>logger</field-name>
                 </requirement>
                 <requirement>
-                    <role>org.jfrog.build.extractor.maven.ClientPropertyResolver</role>
+                    <role>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</role>
                     <role-hint>default</role-hint>
                     <field-name>clientPropertyResolver</field-name>
                 </requirement>

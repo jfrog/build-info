@@ -11,11 +11,12 @@ import org.jfrog.build.client.ClientConfigurationFields;
 import static org.jfrog.build.client.ClientProperties.PROP_TIMEOUT;
 
 /**
+ * Simple class to build {@link org.jfrog.build.client.ArtifactoryBuildInfoClient} for deployment.
+ *
  * @author Noam Y. Tenne
  */
-//TODO: [by YS] rename class and method
-@Component(role = ClientPropertyResolver.class)
-public class ClientPropertyResolver {
+@Component(role = BuildInfoClientBuilder.class)
+public class BuildInfoClientBuilder {
 
     @Requirement
     private Logger logger;

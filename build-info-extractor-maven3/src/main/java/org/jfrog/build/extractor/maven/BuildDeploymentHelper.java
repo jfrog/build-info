@@ -49,7 +49,7 @@ public class BuildDeploymentHelper {
     private Logger logger;
 
     @Requirement
-    private ClientPropertyResolver clientPropertyResolver;
+    private BuildInfoClientBuilder buildInfoClientBuilder;
 
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
             Map<Artifact, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
@@ -71,7 +71,7 @@ public class BuildDeploymentHelper {
                 clientConf.publisher.isPublishBuildInfo());
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
         if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
-            ArtifactoryBuildInfoClient client = clientPropertyResolver.resolveProperties(clientConf);
+            ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
             try {
                 if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
                         !deployableArtifacts.isEmpty()) {
