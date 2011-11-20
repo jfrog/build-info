@@ -40,4 +40,5 @@ public interface ClientConfigurationFields {
     String INCLUDE_PATTERNS = "includePatterns";
     String EXCLUDE_PATTERNS = "excludePatterns";
     String EVEN_UNSTABLE = "unstable";
+    String CONTEXT_URL = "contextUrl";
 }

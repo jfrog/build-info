@@ -23,8 +23,13 @@ public interface ClientProperties {
 
     /**
      * The URL of the artifactory web application (typically ending with '/artifactory')
+     *
+     * @deprecated See org.jfrog.build.client.ArtifactoryClientConfiguration#getContextUrl(). Should not be used as a
+     *             top level property.
      */
+    @Deprecated
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
+
 
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 

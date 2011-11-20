@@ -178,7 +178,7 @@ public class ArtifactoryClientConfiguration {
 
         @SuppressWarnings({"deprecation"})
         public String getContextUrl() {
-            String contextUrl = getStringValue(PROP_CONTEXT_URL);
+            String contextUrl = getStringValue(CONTEXT_URL);
             if (StringUtils.isBlank(contextUrl)) {
                 // fallback to root contextUrl for backward compatibility
                 contextUrl = ArtifactoryClientConfiguration.this.getContextUrl();
@@ -187,7 +187,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void setContextUrl(String contextUrl) {
-            setStringValue(PROP_CONTEXT_URL, contextUrl);
+            setStringValue(CONTEXT_URL, contextUrl);
         }
 
         public void setBuildRoot(String buildRoot) {
@@ -219,7 +219,7 @@ public class ArtifactoryClientConfiguration {
 
         @SuppressWarnings({"deprecation"})
         public String getContextUrl() {
-            String contextUrl = getStringValue(PROP_CONTEXT_URL);
+            String contextUrl = getStringValue(CONTEXT_URL);
             if (StringUtils.isBlank(contextUrl)) {
                 // fallback to root contextUrl for backward compatibility
                 contextUrl = ArtifactoryClientConfiguration.this.getContextUrl();
@@ -228,7 +228,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void setContextUrl(String contextUrl) {
-            setStringValue(PROP_CONTEXT_URL, contextUrl);
+            setStringValue(CONTEXT_URL, contextUrl);
         }
 
         public void setSnapshotRepoKey(String repoKey) {

@@ -8,7 +8,6 @@ import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.ClientConfigurationFields;
 
-import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL;
 import static org.jfrog.build.client.ClientProperties.PROP_TIMEOUT;
 
 /**
@@ -34,7 +33,7 @@ public class ClientPropertyResolver {
             throw new IllegalArgumentException(
                     "Unable to resolve Artifactory Build Info Client properties: no context URL was found.");
         }
-        logResolvedProperty(PROP_CONTEXT_URL, contextUrl);
+        logResolvedProperty(clientConf.publisher.getPrefix() + "." + ClientConfigurationFields.CONTEXT_URL, contextUrl);
 
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
