@@ -47,7 +47,7 @@ public class BuildInfoModelPropertyResolver {
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber()).properties(props);
-        
+
         String buildUrl = clientConf.info.getBuildUrl();
         if (StringUtils.isNotBlank(buildUrl)) {
             builder.url(buildUrl);
@@ -116,7 +116,7 @@ public class BuildInfoModelPropertyResolver {
             }
             builder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
                     .comment(comment).repository(stagingRepository)
-                    .ciUser(clientConf.info.getPrincipal()).user(clientConf.publisher.getName()).build());
+                    .ciUser(clientConf.info.getPrincipal()).user(clientConf.publisher.getUsername()).build());
         }
     }
 
