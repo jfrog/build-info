@@ -265,7 +265,9 @@ project('build-info-extractor-gradle') {
     compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
     compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
     groovy localGroovy()
-    testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.4-groovy-1.7')
+    testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
+      transitive = false
+    }
     testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
   }
 
@@ -303,18 +305,19 @@ project('build-info-extractor-maven3') {
   }
 }
 
-ideaProject {
-  wildcards += ['?*.gradle']
-  javaVersion = '1.6'
-  withXml { provider ->
-    def node = provider.asNode()
-    // Use git
-    def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
-    vcsConfig.mapping[0].'@vcs' = 'Git'
-  }
-
-  whenConfigured { project ->
-    project.jdk.languageLevel = 'JDK_1_5'
+idea {
+  project {
+    jdkName = '1.6'
+    languageLevel = '1.5'
+    wildcards += '?*.gradle'
+    ipr {
+      withXml { provider ->
+        def node = provider.asNode()
+        // Use git
+        def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
+        vcsConfig.mapping[0].'@vcs' = 'Git'
+      }
+    }
   }
 }
 

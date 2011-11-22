@@ -19,6 +19,7 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -264,7 +265,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     private List<Dependency> calculateDependencies(Project project) throws Exception {
-        Set<Configuration> configurationSet = project.getConfigurations().getAll();
+        Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
