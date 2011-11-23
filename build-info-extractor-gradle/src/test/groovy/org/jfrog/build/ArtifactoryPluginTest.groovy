@@ -16,6 +16,9 @@ import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
+import static org.spockframework.util.Assert.that
+import static org.spockframework.util.Assert.notNull
+import org.jfrog.wharf.ivy.resolver.IBiblioWharfResolver
 
 /**
  * @author freds
@@ -33,9 +36,9 @@ public class ArtifactoryPluginTest extends Specification {
         artifactoryPlugin.apply(project)
 
         expect:
-        project.buildscript.repositories.resolvers.isEmpty()
-        project.repositories.resolvers.isEmpty()
-        project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
+        that(project.buildscript.repositories.resolvers.isEmpty())
+        that(project.repositories.resolvers.isEmpty())
+        notNull(project.tasks.findByName(BUILD_INFO_TASK_NAME))
     }
 
     def resolverApplyPlugin() {
@@ -53,11 +56,10 @@ public class ArtifactoryPluginTest extends Specification {
         // TODO: Test the buildSrc project issue
         List libsResolvers = project.repositories.resolvers
         expect:
-        libsResolvers.size() == 1
-        libsResolvers.get(0) instanceof org.apache.ivy.plugins.resolver.IBiblioResolver
-        libsResolvers.get(0).name == expectedName
-        ((IBiblioResolver) libsResolvers.get(0)).root == rootUrl + 'repo/'
-        project.tasks.findByName(BUILD_INFO_TASK_NAME) != null
+        that libsResolvers.size() == 1
+        that libsResolvers.get(0).name == expectedName
+        that libsResolvers.get(0).root == rootUrl + 'repo/'
+        notNull project.tasks.findByName(BUILD_INFO_TASK_NAME)
     }
 
     def buildInfoJavaPlugin() {
