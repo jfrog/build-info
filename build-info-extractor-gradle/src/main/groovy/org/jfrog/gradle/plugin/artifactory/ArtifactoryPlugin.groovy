@@ -116,7 +116,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
 
         private def createIvyRepo(Project project, String pUrl, ResolverHandler resolverConf) {
             return project.repositories.ivy {
-                name = 'artifactory-maven-resolver'
+                name = 'artifactory-ivy-resolver'
                 url = resolverConf.urlWithMatrixParams(pUrl)
                 layout 'pattern', {
                     artifact resolverConf.getIvyArtifactPattern()
