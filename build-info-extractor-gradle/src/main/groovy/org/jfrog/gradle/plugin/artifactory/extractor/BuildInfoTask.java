@@ -123,7 +123,8 @@ public class BuildInfoTask extends DefaultTask {
     @Input
     @Optional
     public Boolean getPublishIvy() {
-        return getFlag(PUBLISH_IVY, true);
+        // TODO: Need to take the default from ACC
+        return getFlag(PUBLISH_IVY, false);
     }
 
     public void setPublishIvy(Object publishIvy) {
