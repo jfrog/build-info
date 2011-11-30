@@ -93,6 +93,7 @@ class ResolverConfig {
         }
 
         def ivy(Closure closure) {
+            ResolverConfig.this.resolver.setIvy(true)
             ConfigureUtil.configure(closure, this)
         }
     }

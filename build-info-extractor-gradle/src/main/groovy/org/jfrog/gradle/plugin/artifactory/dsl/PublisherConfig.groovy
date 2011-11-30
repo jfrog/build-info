@@ -98,6 +98,7 @@ class PublisherConfig {
         }
 
         def ivy(Closure closure) {
+            PublisherConfig.this.publisher.setIvy(true)
             ConfigureUtil.configure(closure, this)
         }
     }

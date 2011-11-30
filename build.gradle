@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
+buildscript {
+    repositories {
+        maven {
+            url "http://repo.jfrog.org/artifactory/gradle-plugins-snapshots"
+        }
+        dependencies {
+            classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.x-SNAPSHOT')
+        }
+    }
+    configurations.classpath {
+        resolutionStrategy {
+            failOnVersionConflict()
+            cacheDynamicVersionsFor 0, 'seconds'
+            cacheChangingModulesFor 0, 'seconds'
+        }
+    }
+}
+
 import org.jfrog.build.Version
 
 import org.apache.tools.ant.filters.ReplaceTokens
@@ -23,302 +41,301 @@ version = '2'
 baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor']
 
 allprojects {
-  apply plugin: 'idea'
-  apply plugin: 'artifactory'
-  group = 'org.jfrog.buildinfo'
+    apply plugin: 'idea'
+    apply plugin: 'artifactory'
+    group = 'org.jfrog.buildinfo'
 }
 
 artifactory {
-  contextUrl = 'http://repo.jfrog.org/artifactory'
-  publish {
-    defaults {
-      publishConfigs('archives', 'published')
-      properties = ['build.status': "$it.project.status".toString()]
-      publishIvy = false
+    contextUrl = 'http://repo.jfrog.org/artifactory'
+    publish {
+        defaults {
+            publishConfigs('archives', 'published')
+            properties = ['build.status': "$it.project.status".toString()]
+        }
     }
-  }
-  resolve {
-    repoKey = 'gradle'
-  }
+    resolve {
+        repoKey = 'gradle'
+    }
 }
 
 def baseProjects() {
-  subprojects.findAll { p -> baseProjectNames.contains(p.name) }
+    subprojects.findAll { p -> baseProjectNames.contains(p.name) }
 }
 
 def extractorProjects() {
-  subprojects.findAll { p -> !baseProjectNames.contains(p.name) }
+    subprojects.findAll { p -> !baseProjectNames.contains(p.name) }
 }
 
 subprojects {
-  apply plugin: 'maven'
-  apply plugin: 'java'
-  sourceCompatibility = 1.5
-  targetCompatibility = 1.5
-  buildInfoVersion = new Version(rootProject, baseProjectNames)
+    apply plugin: 'maven'
+    apply plugin: 'java'
+    sourceCompatibility = 1.5
+    targetCompatibility = 1.5
+    buildInfoVersion = new Version(rootProject, baseProjectNames)
 
-  configurations {
-    published
-  }
-
-  dependencies {
-    compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
-    compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
-    compile group: 'commons-io', name: 'commons-io', version: '2.0.1'
-    testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
-  }
-
-  // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
-  // MavenResolver (mavenInstaller) take the pomFilterContainer (pom) and configure the maven project
-  configure(install.repositories.mavenInstaller) {
-    pom.project {
-      url 'http://wiki.jfrog.org/confluence/display/RTF/Build+Integration'
-      licenses {
-        license {
-          name 'The Apache Software License, Version 2.0'
-          url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-          distribution 'repo'
-        }
-      }
-      mailingLists {
-        mailingList {
-          name 'JFrog Mailing List'
-          subscribe 'https://lists.sourceforge.net/lists/listinfo/artifactory-users'
-          archive 'http://forums.jfrog.org/Artifactory-Users-f2377369.html'
-        }
-      }
-      issueManagement {
-        system 'jira'
-        url 'http://issues.jfrog.org/jira/browse/BI'
-      }
+    configurations {
+        published
     }
-  }
 
-  task sourceJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
-  }
+    dependencies {
+        compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
+        compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
+        compile group: 'commons-io', name: 'commons-io', version: '2.0.1'
+        testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
+    }
 
-  uploadArchives {
-    uploadDescriptor = true
-  }
+    // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
+    // MavenResolver (mavenInstaller) take the pomFilterContainer (pom) and configure the maven project
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            url 'http://wiki.jfrog.org/confluence/display/RTF/Build+Integration'
+            licenses {
+                license {
+                    name 'The Apache Software License, Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    distribution 'repo'
+                }
+            }
+            mailingLists {
+                mailingList {
+                    name 'JFrog Mailing List'
+                    subscribe 'https://lists.sourceforge.net/lists/listinfo/artifactory-users'
+                    archive 'http://forums.jfrog.org/Artifactory-Users-f2377369.html'
+                }
+            }
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/BI'
+            }
+        }
+    }
 
-  artifactoryPublish {
-    dependsOn build
-  }
+    task sourceJar(type: Jar) {
+        from sourceSets.main.allSource
+        classifier = 'sources'
+    }
 
-  // Add the sourceJars to non-extractor modules
-  artifacts {
-    published jar
-    published sourceJar
-  }
+    uploadArchives {
+        uploadDescriptor = true
+    }
 
-  install {
-    configuration = configurations.published
-    dependsOn: jar
-    dependsOn: sourceJar
-  }
+    artifactoryPublish {
+        dependsOn build
+    }
+
+    // Add the sourceJars to non-extractor modules
+    artifacts {
+        published jar
+        published sourceJar
+    }
+
+    install {
+        configuration = configurations.published
+        dependsOn: jar
+        dependsOn: sourceJar
+    }
 }
 
 configure(baseProjects()) {
-  version = buildInfoVersion
-  status = version.status
-  dependencies {
-    compile "com.google.guava:guava:r07"
-    compile "com.thoughtworks.xstream:xstream:1.3.1"
-  }
-  test.useTestNG()
+    version = buildInfoVersion
+    status = version.status
+    dependencies {
+        compile "com.google.guava:guava:r07"
+        compile "com.thoughtworks.xstream:xstream:1.3.1"
+    }
+    test.useTestNG()
 
 }
 
 // Create configurations for the extractor projects
 configure(extractorProjects()) {
-  it.version = new Version(it)
-  it.status = version.status
-  boolean extractorRelease = project.hasProperty('extractorRelease')
-  configurations {
-    provided
-    tools
-    sources
-    uberJar {
-      description = 'All jars that should be included in the Uber Jar'
-      transitive = true
-    }
-    compile {
-      extendsFrom uberJar
-      extendsFrom provided
-    }
-  }
-
-  dependencies {
-    if (extractorRelease || (version.release && !buildInfoVersion.release)) {
-      // don't build dependencies
-      uberJar group: "$group", name: 'build-info-extractor', version: project.getProperty('build-info-latest-release-version')
-    } else {
-      uberJar project(':build-info-extractor')
-    }
-    tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
-  }
-
-  task jarAll(type: Jar, dependsOn: jar) {
-    //Add the directory of the archive as the input files for this task
-    classifier = 'uber'
-    doLast {
-      boolean debugJarJar = project.hasProperty('debugJarJar')
-      project.ant {
-        taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
-        //Zip the  project's jar (jar.archivePath) and the dependencies defined for the uberJar conf into archivePath (with classifier)
-        if (debugJarJar) println "Creating Uber jar $archivePath with:"
-        jarjar(jarfile: archivePath) {
-          zipfileset(src: jar.archivePath)
-          configurations.uberJar.files.each {jarjarFile ->
-            if (!jarjarFile.name.endsWith("-sources.jar")) {
-              zipfileset(src: jarjarFile)
-              if (debugJarJar) println "\t$jarjarFile"
-            }
-          }
+    it.version = new Version(it)
+    it.status = version.status
+    boolean extractorRelease = project.hasProperty('extractorRelease')
+    configurations {
+        provided
+        tools
+        sources
+        uberJar {
+            description = 'All jars that should be included in the Uber Jar'
+            transitive = true
         }
-      }
+        compile {
+            extendsFrom uberJar
+            extendsFrom provided
+        }
     }
-  }
 
-  // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
-  artifacts {
-    published jarAll
-  }
+    dependencies {
+        if (extractorRelease || (version.release && !buildInfoVersion.release)) {
+            // don't build dependencies
+            uberJar group: "$group", name: 'build-info-extractor', version: project.getProperty('build-info-latest-release-version')
+        } else {
+            uberJar project(':build-info-extractor')
+        }
+        tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+    }
 
-  // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope
-  // dependencies in generated extractor poms
-  configure(install.repositories.mavenInstaller) {
-    pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 1, configurations.uberJar, "compile")
-    pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
-  }
+    task jarAll(type: Jar, dependsOn: jar) {
+        //Add the directory of the archive as the input files for this task
+        classifier = 'uber'
+        doLast {
+            boolean debugJarJar = project.hasProperty('debugJarJar')
+            project.ant {
+                taskdef name: "jarjar", classname: "com.tonicsystems.jarjar.JarJarTask", classpath: configurations.tools.asPath
+                //Zip the  project's jar (jar.archivePath) and the dependencies defined for the uberJar conf into archivePath (with classifier)
+                if (debugJarJar) println "Creating Uber jar $archivePath with:"
+                jarjar(jarfile: archivePath) {
+                    zipfileset(src: jar.archivePath)
+                    configurations.uberJar.files.each {jarjarFile ->
+                        if (!jarjarFile.name.endsWith("-sources.jar")) {
+                            zipfileset(src: jarjarFile)
+                            if (debugJarJar) println "\t$jarjarFile"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
+    artifacts {
+        published jarAll
+    }
+
+    // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope
+    // dependencies in generated extractor poms
+    configure(install.repositories.mavenInstaller) {
+        pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 1, configurations.uberJar, "compile")
+        pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
+    }
 }
 
 // Declare the root project to build its children first
 dependsOnChildren()
 
 project('build-info-api') {
-  description = 'JFrog Build-Info API'
+    description = 'JFrog Build-Info API'
 }
 
 project('build-info-client') {
-  description = 'JFrog Build-Info Client'
-  dependencies {
-    compile project(':build-info-api')
-    compile "org.apache.httpcomponents:httpclient:4.0"
-    compile "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
-  }
-  sourceSets {
-    main {
-      resources {
-        srcDir 'src/main/filtered-resources'
-      }
+    description = 'JFrog Build-Info Client'
+    dependencies {
+        compile project(':build-info-api')
+        compile "org.apache.httpcomponents:httpclient:4.0"
+        compile "org.codehaus.jackson:jackson-mapper-asl:1.5.1"
     }
-  }
-  processResources {
-    from(sourceSets.main.resources.srcDirs) {
-      include '**/*bi.client.properties'
-      filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
+    sourceSets {
+        main {
+            resources {
+                srcDir 'src/main/filtered-resources'
+            }
+        }
     }
-  }
+    processResources {
+        from(sourceSets.main.resources.srcDirs) {
+            include '**/*bi.client.properties'
+            filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
+        }
+    }
 
 }
 
 project('build-info-extractor') {
-  description = 'JFrog Build-Info Extractor'
-  dependencies {
-    compile project(':build-info-client')
-    testCompile "org.easymock:easymockclassextension:2.5.2"
-  }
+    description = 'JFrog Build-Info Extractor'
+    dependencies {
+        compile project(':build-info-client')
+        testCompile "org.easymock:easymockclassextension:2.5.2"
+    }
 }
 
 project('build-info-extractor-ivy') {
-  description = 'JFrog Build-Info Ivy Extractor'
-  dependencies {
-    uberJar "org.slf4j:slf4j-api:1.5.8"
-    provided "com.google.code.findbugs:jsr305:1.3.9",
-            "org.apache.ivy:ivy:2.1.0",
-            "org.apache.ant:ant:1.8.1"
-  }
-
-  //Configure the Maven installer pom generation
-  configure(install.repositories.mavenInstaller) {
-    pom.project {
-      issueManagement {
-        system 'jira'
-        url 'http://issues.jfrog.org/jira/browse/IAP'
-      }
+    description = 'JFrog Build-Info Ivy Extractor'
+    dependencies {
+        uberJar "org.slf4j:slf4j-api:1.5.8"
+        provided "com.google.code.findbugs:jsr305:1.3.9",
+                "org.apache.ivy:ivy:2.1.0",
+                "org.apache.ant:ant:1.8.1"
     }
-  }
+
+    //Configure the Maven installer pom generation
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/IAP'
+            }
+        }
+    }
 }
 
 project('build-info-extractor-gradle') {
-  apply plugin: 'groovy'
-  description = 'JFrog Build-Info Gradle Extractor'
+    apply plugin: 'groovy'
+    description = 'JFrog Build-Info Gradle Extractor'
 
-  dependencies {
-    compile gradleApi()
-    compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
-    provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
-            "com.google.code.findbugs:jsr305:1.3.9"
-    compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
-    compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
-    groovy localGroovy()
-    testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
-      transitive = false
+    dependencies {
+        compile gradleApi()
+        compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
+        provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
+                "com.google.code.findbugs:jsr305:1.3.9"
+        compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
+        compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
+        groovy localGroovy()
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
+            transitive = false
+        }
+        testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
-    testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
-  }
 
-  test {
-    systemProperties['buildInfoConfig.propertiesFile'] = ''
-    environment['buildInfoConfig.propertiesFile'] = ''
-  }
-
-  configure(install.repositories.mavenInstaller) {
-    pom.project {
-      issueManagement {
-        system 'jira'
-        url 'http://issues.jfrog.org/jira/browse/GAP'
-      }
+    test {
+        systemProperties['buildInfoConfig.propertiesFile'] = ''
+        environment['buildInfoConfig.propertiesFile'] = ''
     }
-  }
+
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/GAP'
+            }
+        }
+    }
 }
 
 project('build-info-extractor-maven3') {
-  description = 'JFrog Build-Info Maven 3 Extractor'
+    description = 'JFrog Build-Info Maven 3 Extractor'
 
-  dependencies {
-    compile group: 'org.jdom', name: 'jdom', version: '1.1.1'
-    provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
-            "org.apache.maven:maven-core:3.0.2"
-    testCompile "org.easymock:easymockclassextension:2.5.2"
-  }
-  configure(install.repositories.mavenInstaller) {
-    pom.project {
-      issueManagement {
-        system 'jira'
-        url 'http://issues.jfrog.org/jira/browse/MAP'
-      }
+    dependencies {
+        compile group: 'org.jdom', name: 'jdom', version: '1.1.1'
+        provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
+                "org.apache.maven:maven-core:3.0.2"
+        testCompile "org.easymock:easymockclassextension:2.5.2"
     }
-  }
+    configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/MAP'
+            }
+        }
+    }
 }
 
 idea {
-  project {
-    jdkName = '1.6'
-    languageLevel = '1.5'
-    wildcards += '?*.gradle'
-    ipr {
-      withXml { provider ->
-        def node = provider.asNode()
-        // Use git
-        def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
-        vcsConfig.mapping[0].'@vcs' = 'Git'
-      }
+    project {
+        jdkName = '1.6'
+        languageLevel = '1.5'
+        wildcards += '?*.gradle'
+        ipr {
+            withXml { provider ->
+                def node = provider.asNode()
+                // Use git
+                def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
+                vcsConfig.mapping[0].'@vcs' = 'Git'
+            }
+        }
     }
-  }
 }
 
 /*task wrapper(type: Wrapper) {

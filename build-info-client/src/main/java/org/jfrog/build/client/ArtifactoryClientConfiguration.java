@@ -405,8 +405,7 @@ public class ArtifactoryClientConfiguration {
          * In the context of a publisher it is used to publish a pom. In the context of a resolver it is used to add a
          * maven resolver (e.g. in Gradle).
          *
-         * @param maven
-         * @return
+         * @param enabled true for enabling Maven resolution
          */
         public void setMaven(boolean enabled) {
             setBooleanValue(MAVEN, enabled);
@@ -421,7 +420,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIvy() {
-            return getBooleanValue(IVY, true);
+            return getBooleanValue(IVY, false);
         }
 
         public void setM2Compatible(Boolean enabled) {
