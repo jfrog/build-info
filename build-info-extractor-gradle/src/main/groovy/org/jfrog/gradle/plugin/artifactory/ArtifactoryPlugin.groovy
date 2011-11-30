@@ -77,9 +77,9 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 //pass in the resolver of the cc
                 defineResolvers(it, configuration.resolver)
             }
-            //Config the tasks. Deploymenet happens on task execution
-            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each {
-                it.projectsEvaluated()
+            //Configure the artifactoryPublish tasks. Deployment happens on task execution
+            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each { BuildInfoTask bit ->
+                bit.projectsEvaluated()
             }
         }
 
