@@ -19,7 +19,6 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -28,7 +27,6 @@ import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
-import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.Agent;
@@ -277,14 +275,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 continue;
             }
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
-                ResolvedDependency resolvedDependency = artifact.getResolvedDependency();
                 /**
                  * If including sources jar the jars will have the same ID despite one of them having a sources
                  * classifier, this fix will remain until GAP-13 is fixed, on both our side and the Gradle side.
                  */
                 File file = artifact.getFile();
                 if (file != null && file.exists() && !file.getName().endsWith("-sources.jar")) {
-                    String depId = resolvedDependency.getName();
+                    String depId = artifact.getModuleVersion().getId().getName();
                     final String finalDepId = depId;
                     Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
                         public boolean apply(@Nullable Dependency input) {
