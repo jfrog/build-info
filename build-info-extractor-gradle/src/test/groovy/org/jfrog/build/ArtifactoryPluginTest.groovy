@@ -112,7 +112,7 @@ public class ArtifactoryPluginTest extends Specification {
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
-        buildInfoTask.dependsOn.size() == 2
+        buildInfoTask.dependsOn.size() == 1
     }
 
     def populateConfigurationFromDsl() {
