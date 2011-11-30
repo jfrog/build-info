@@ -38,7 +38,6 @@ class ResolverConfig {
         //println "1: missing method $name"
         Method[] methods = resolver.getClass().getMethods()
         Method method = methods.find {it.name.matches(name)}
-        // TODO: [by fsi] Why only one parameter?
         method.invoke(resolver, args[0])
     }
 

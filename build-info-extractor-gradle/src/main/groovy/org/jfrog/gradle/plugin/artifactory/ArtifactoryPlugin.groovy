@@ -107,7 +107,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 url = resolverConf.urlWithMatrixParams(pUrl)
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     credentials {
-                        userName = resolverConf.username
+                        username = resolverConf.username
                         password = resolverConf.password
                     }
                 }
@@ -124,7 +124,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 }
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     credentials {
-                        userName = resolverConf.username
+                        username = resolverConf.username
                         password = resolverConf.password
                     }
                 }
