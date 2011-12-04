@@ -58,6 +58,8 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -102,8 +104,9 @@ public class BuildInfoTask extends DefaultTask {
     // against the class and against acc (e.g. isPublishIvy() here)
     @Input
     @Optional
+    @Nullable
     public Boolean getPublishBuildInfo() {
-        return getFlag(PUBLISH_BUILD_INFO, true);
+        return getFlag(PUBLISH_BUILD_INFO);
     }
 
     public void setPublishBuildInfo(Object publishBuildInfo) {
@@ -112,8 +115,9 @@ public class BuildInfoTask extends DefaultTask {
 
     @Input
     @Optional
+    @Nullable
     public Boolean getPublishArtifacts() {
-        return getFlag(PUBLISH_ARTIFACTS, true);
+        return getFlag(PUBLISH_ARTIFACTS);
     }
 
     public void setPublishArtifacts(Object publishArtifacts) {
@@ -122,9 +126,10 @@ public class BuildInfoTask extends DefaultTask {
 
     @Input
     @Optional
+    @Nullable
     public Boolean getPublishIvy() {
         // TODO: Need to take the default from ACC
-        return getFlag(PUBLISH_IVY, false);
+        return getFlag(PUBLISH_IVY);
     }
 
     public void setPublishIvy(Object publishIvy) {
@@ -137,19 +142,16 @@ public class BuildInfoTask extends DefaultTask {
 
     @Input
     @Optional
+    @Nullable
     public Boolean getPublishPom() {
-        return getFlag(PUBLISH_POM, true);
+        return getFlag(PUBLISH_POM);
     }
 
     public void setPublishPom(Object publishPom) {
         setFlag(PUBLISH_POM, toBoolean(publishPom));
     }
 
-    private Boolean getFlag(String flagName, boolean defVal) {
-        Boolean val = flags.get(flagName);
-        return val != null ? val : defVal;
-    }
-
+    @Nullable
     private Boolean getFlag(String flagName) {
         return flags.get(flagName);
     }
@@ -362,6 +364,7 @@ public class BuildInfoTask extends DefaultTask {
         }
     }
 
+    @Nonnull
     private Boolean isPublishArtifacts(ArtifactoryClientConfiguration acc) {
         if (getPublishArtifacts() == null) {
             return acc.publisher.isPublishArtifacts();
@@ -369,6 +372,7 @@ public class BuildInfoTask extends DefaultTask {
         return getPublishArtifacts();
     }
 
+    @Nonnull
     private Boolean isPublishBuildInfo(ArtifactoryClientConfiguration acc) {
         if (getPublishBuildInfo() == null) {
             return acc.publisher.isPublishBuildInfo();
@@ -376,6 +380,7 @@ public class BuildInfoTask extends DefaultTask {
         return getPublishBuildInfo();
     }
 
+    @Nonnull
     private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
         if (getPublishPom() == null) {
             return acc.publisher.isMaven();
@@ -383,7 +388,8 @@ public class BuildInfoTask extends DefaultTask {
         return getPublishPom();
     }
 
-    private boolean isPublishIvy(ArtifactoryClientConfiguration acc) {
+    @Nonnull
+    private Boolean isPublishIvy(ArtifactoryClientConfiguration acc) {
         if (getPublishIvy() == null) {
             return acc.publisher.isIvy();
         }
