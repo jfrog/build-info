@@ -366,34 +366,38 @@ public class BuildInfoTask extends DefaultTask {
 
     @Nonnull
     private Boolean isPublishArtifacts(ArtifactoryClientConfiguration acc) {
-        if (getPublishArtifacts() == null) {
+        Boolean publishArtifacts = getPublishArtifacts();
+        if (publishArtifacts == null) {
             return acc.publisher.isPublishArtifacts();
         }
-        return getPublishArtifacts();
+        return publishArtifacts;
     }
 
     @Nonnull
     private Boolean isPublishBuildInfo(ArtifactoryClientConfiguration acc) {
-        if (getPublishBuildInfo() == null) {
+        Boolean publishBuildInfo = getPublishBuildInfo();
+        if (publishBuildInfo == null) {
             return acc.publisher.isPublishBuildInfo();
         }
-        return getPublishBuildInfo();
+        return publishBuildInfo;
     }
 
     @Nonnull
     private Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
-        if (getPublishPom() == null) {
+        Boolean publishPom = getPublishPom();
+        if (publishPom == null) {
             return acc.publisher.isMaven();
         }
-        return getPublishPom();
+        return publishPom;
     }
 
     @Nonnull
     private Boolean isPublishIvy(ArtifactoryClientConfiguration acc) {
-        if (getPublishIvy() == null) {
+        Boolean publishIvy = getPublishIvy();
+        if (publishIvy == null) {
             return acc.publisher.isIvy();
         }
-        return getPublishIvy();
+        return publishIvy;
     }
 
     private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
