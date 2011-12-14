@@ -58,7 +58,8 @@ subprojects {
 dependsOnChildren()
 
 artifactory {
-    contextUrl = 'http://localhost:8080/artifactory'
+    contextUrl = 'http://repo.jfrog.org/artifactory'
+    //contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
             repoKey = 'Framework'
@@ -74,6 +75,10 @@ artifactory {
             //publishIvy = false
             //publishPom = false
             properties = ['qa.level': 'basic']
+            properties {
+                ccc 'g1.2.3:a:v:c@ext', kkk: 'sds', yyy: 'xxx'
+                any 'g:a1:v1:*@ext', kkk: 'sds'
+            }
         }
     }
     resolve {

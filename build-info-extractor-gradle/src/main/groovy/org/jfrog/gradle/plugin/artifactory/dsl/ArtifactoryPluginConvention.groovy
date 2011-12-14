@@ -27,8 +27,8 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
 class ArtifactoryPluginConvention {
     final Project project
     final ArtifactoryClientConfiguration clientConfig
-    Closure taskDefaultClosure
     final Closure propsResolver
+    def PublisherConfig publisherConfig
 
     ArtifactoryPluginConvention(Project project) {
         this.project = project
@@ -55,9 +55,8 @@ class ArtifactoryPluginConvention {
 
     def publish(Closure closure) {
         PublisherConfig.metaClass.propertyMissing = propsResolver
-        def publisherConfig = new PublisherConfig(this)
+        publisherConfig = new PublisherConfig(this)
         publisherConfig.config(closure)
-        taskDefaultClosure = publisherConfig.taskDefaultClosure
     }
 
     def resolve(Closure closure) {

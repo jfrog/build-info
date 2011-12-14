@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.tools.ant.util.FileUtils;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
@@ -32,7 +33,6 @@ import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
-import org.gradle.api.internal.resource.ResourceException;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -57,6 +57,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
+import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -165,6 +166,7 @@ public class BuildInfoTask extends DefaultTask {
     }
 
     public void setProperties(Map<String, CharSequence> props) {
+        //TODO: [by yl] Add the props from the publishers props
         if (props == null || props.isEmpty()) {
             return;
         }
@@ -280,7 +282,7 @@ public class BuildInfoTask extends DefaultTask {
     public void projectsEvaluated() {
         Project project = getProject();
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
-        Closure defaultsClosure = convention.getTaskDefaultClosure();
+        Closure defaultsClosure = convention.getPublisherConfig().getDefaultsClosure();
         //Configure the task using the defaults (delegate to the task)
         ConfigureUtil.configure(defaultsClosure, this);
         if (!hasConfigurations()) {
@@ -415,6 +417,12 @@ public class BuildInfoTask extends DefaultTask {
         }
     }
 
+    public void properties(Closure closure) {
+        Project project = getProject();
+        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
+        ConfigureUtil.configure(closure, new PropertiesConfig(project));
+    }
+
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
             throws IOException {
         //Add the publisher matrix params as props that will be added to all deployable artifatcs
@@ -449,7 +457,7 @@ public class BuildInfoTask extends DefaultTask {
                     FileChecksumCalculator.calculateChecksums(ivyDescriptor, "MD5", "SHA1");
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
-            throw new ResourceException(
+            throw new GradleException(
                     "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(), e);
         }
         String gid = getProject().getGroup().toString();
@@ -475,7 +483,7 @@ public class BuildInfoTask extends DefaultTask {
                     FileChecksumCalculator.calculateChecksums(mavenDescriptor, "MD5", "SHA1");
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
-            throw new ResourceException(
+            throw new GradleException(
                     "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
         }
         // for pom files always enforce the M2 pattern
@@ -624,7 +632,7 @@ public class BuildInfoTask extends DefaultTask {
                             FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
                     artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
                 } catch (Exception e) {
-                    throw new ResourceException(
+                    throw new GradleException(
                             "Failed to calculated checksums for artifact: " + file.getAbsolutePath(), e);
                 }
                 String revision = getProject().getVersion().toString();

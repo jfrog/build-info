@@ -17,9 +17,6 @@
 package org.jfrog.gradle.plugin.artifactory
 
 import org.apache.commons.lang.StringUtils
-import org.apache.ivy.plugins.resolver.DependencyResolver
-import org.apache.ivy.plugins.resolver.IBiblioResolver
-import org.apache.ivy.plugins.resolver.IvyRepResolver
 import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -103,7 +100,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
 
         private def createMavenRepo(Project project, String pUrl, ResolverHandler resolverConf) {
             return project.repositories.maven {
-                name= 'artifactory-maven-resolver'
+                name = 'artifactory-maven-resolver'
                 url = resolverConf.urlWithMatrixParams(pUrl)
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                     credentials {
@@ -119,7 +116,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 name = 'artifactory-ivy-resolver'
                 url = resolverConf.urlWithMatrixParams(pUrl)
                 layout 'pattern', {
-                    artifact resolverConf.getIvyArtifactPattern()
+                    name resolverConf.getIvyArtifactPattern()
                     ivy resolverConf.getIvyPattern()
                 }
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {

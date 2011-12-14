@@ -22,6 +22,7 @@ version = '2'
 
 artifactory {
     contextUrl = 'http://localhost:8080/artifactory'
+    //clientConfig.info.licenseControl.violationRecipients = 'yoavl@jfrog.com'
     publish {
         repository {
             repoKey = 'libs-snapshot-local' //The Artifactory repository key to publish to

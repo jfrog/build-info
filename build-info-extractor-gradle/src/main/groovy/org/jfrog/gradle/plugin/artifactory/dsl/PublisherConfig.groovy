@@ -27,7 +27,7 @@ class PublisherConfig {
 
     private final PublisherHandler publisher;
     private final Repository repository;
-    Closure taskDefaultClosure
+    Closure defaultsClosure
 
     PublisherConfig(ArtifactoryPluginConvention conv) {
         publisher = conv.clientConfig.publisher
@@ -47,8 +47,8 @@ class PublisherConfig {
     }
 
     def defaults(Closure closure) {
-        //Add for later evaluation by the task iteslf after all projects evaluated
-        taskDefaultClosure = closure
+        //Add for later evaluation by the task itself after all projects evaluated
+        defaultsClosure = closure
     }
 
     def config(Closure closure) {
