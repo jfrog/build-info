@@ -36,7 +36,6 @@ buildscript {
 }
 
 
-//apply plugin: 'artifactory'
 apply plugin: 'groovy'
 
 group = 'org.jfrog'
@@ -56,8 +55,7 @@ sourceSets {
     }
 }
 
-
-repositories {
+/*repositories {
     mavenRepo(urls: 'http://localhost:8080/artifactory/libs-release').setChecksums('sha1')
     add(new org.apache.ivy.plugins.resolver.URLResolver()) {
         name = 'ivyRepo'
@@ -65,5 +63,35 @@ repositories {
         addArtifactPattern "http://localhost:8080/artifactory/gradle-new/[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]"
         descriptor = 'optional'
         checkmodified = true
+    }
+}*/
+
+apply plugin: 'artifactory'
+artifactory {
+    contextUrl = 'http://localhost:8080/artifactory'
+    publish {
+        repository {
+            repoKey = 'libs-release-local'
+            ivy {
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
+                mavenCompatible = false
+            }
+        }
+        defaults {
+            publishPom = false
+        }
+    }
+
+    resolve {
+        repository {
+            repoKey = 'libs-release'
+            maven = true
+            ivy {
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
+                mavenCompatible = false
+            }
+        }
     }
 }
