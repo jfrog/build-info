@@ -425,18 +425,11 @@ public class BuildInfoTask extends DefaultTask {
 
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
             throws IOException {
-        //Add the publisher matrix params as props that will be added to all deployable artifatcs
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
-        Map<String, String> params = acc.publisher.getMatrixParams();
-        for (Map.Entry<String, String> entry : params.entrySet()) {
-            if (StringUtils.isNotBlank(entry.getKey())) {
-                properties.put(entry.getKey(), entry.getValue());
-            }
-        }
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetailsFromClientConf();
         allDeployableDetails.addAll(deployDetailsFromProject);
 
         //Add the ivy and maven descriptors if they exist
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
         if (isPublishIvy(acc)) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
                 allDeployableDetails.add(getIvyDescriptorDeployDetails());
