@@ -17,7 +17,7 @@ public class ArtifactSpecTest {
         ArtifactSpec standard = ArtifactSpec.newSpec("conf grp:art:ver:cls@jar k1:v1, k2:v2 , k3:   v3");
         ArtifactSpec noPropSpaces = ArtifactSpec.newSpec("conf grp:art:ver:cls@jar k1:v1,k2:v2,k3:v3");
         ArtifactSpec noConf = ArtifactSpec.newSpec("grp:art:ver:cls@jar k1:v1, k2:v2 , k3:   v3");
-        ArtifactSpec anyConf = ArtifactSpec.newSpec("any grp:art:ver:cls@jar k1:v1 , k2:v2 ,k3:v3");
+        ArtifactSpec allConf = ArtifactSpec.newSpec("all grp:art:ver:cls@jar k1:v1 , k2:v2 ,k3:v3");
 
         assertEquals(standard.getConfiguration(), "conf");
         assertEquals(standard.getGroup(), "grp");
@@ -44,18 +44,18 @@ public class ArtifactSpecTest {
         assertEquals(noConf.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
 
         try {
-            ArtifactSpec noProps = ArtifactSpec.newSpec("any grp:art:ver:cls@jar");
+            ArtifactSpec noProps = ArtifactSpec.newSpec("all grp:art:ver:cls@jar");
             fail("Artifact spec cannot be constructed from string without a properties notation.");
         } catch (IllegalArgumentException e) {
             //Expected
         }
-        assertEquals(anyConf.getConfiguration(), "*");
-        assertEquals(anyConf.getGroup(), "grp");
-        assertEquals(anyConf.getName(), "art");
-        assertEquals(anyConf.getVersion(), "ver");
-        assertEquals(anyConf.getClassifier(), "cls");
-        assertEquals(anyConf.getType(), "jar");
-        assertEquals(anyConf.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
+        assertEquals(allConf.getConfiguration(), "*");
+        assertEquals(allConf.getGroup(), "grp");
+        assertEquals(allConf.getName(), "art");
+        assertEquals(allConf.getVersion(), "ver");
+        assertEquals(allConf.getClassifier(), "cls");
+        assertEquals(allConf.getType(), "jar");
+        assertEquals(allConf.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
     }
 
     @Test

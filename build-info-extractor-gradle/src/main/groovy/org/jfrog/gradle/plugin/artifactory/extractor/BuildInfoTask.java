@@ -47,6 +47,8 @@ import org.gradle.api.tasks.Upload;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.client.ArtifactSpec;
+import org.jfrog.build.client.ArtifactSpecs;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
@@ -99,7 +101,8 @@ public class BuildInfoTask extends DefaultTask {
 
     private boolean lastInGraph = false;
 
-    private Map<String, String> propsToAdd;
+    private Map<String, String> defaultProps;
+    private ArtifactSpecs artifactSpecs;
 
     //TODO: [by yl] Task flags are not merged into ArtifactoryClientConfiguration, leading to double checking -
     // against the class and against acc (e.g. isPublishIvy() here)
@@ -166,7 +169,6 @@ public class BuildInfoTask extends DefaultTask {
     }
 
     public void setProperties(Map<String, CharSequence> props) {
-        //TODO: [by yl] Add the props from the publishers props
         if (props == null || props.isEmpty()) {
             return;
         }
@@ -282,14 +284,17 @@ public class BuildInfoTask extends DefaultTask {
     public void projectsEvaluated() {
         Project project = getProject();
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
+        //Configure the task using the defaults closure (delegate to the task)
         Closure defaultsClosure = convention.getPublisherConfig().getDefaultsClosure();
-        //Configure the task using the defaults (delegate to the task)
         ConfigureUtil.configure(defaultsClosure, this);
+
         if (!hasConfigurations()) {
-            // If no configurations set and the archives conf exists, adding it by default
-            Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-            setConfiguration(archiveConf);
+            // If no configurations set and the archives config exists, adding it by default
+            Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+            setConfiguration(archiveConfig);
         }
+
+        //Depend on buildInfo task in sub-projects
         for (Project sub : project.getSubprojects()) {
             Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
             if (subBiTask != null) {
@@ -419,8 +424,9 @@ public class BuildInfoTask extends DefaultTask {
 
     public void properties(Closure closure) {
         Project project = getProject();
-        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
-        ConfigureUtil.configure(closure, new PropertiesConfig(project));
+        PropertiesConfig propertiesConfig = new PropertiesConfig(project);
+        ConfigureUtil.configure(closure, propertiesConfig);
+        artifactSpecs = propertiesConfig.getArtifactSpecs();
     }
 
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
@@ -461,10 +467,10 @@ public class BuildInfoTask extends DefaultTask {
                 .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        Map<String, String> propsToAdd = getPropsToAdd();
-        artifactBuilder.addProperties(propsToAdd);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifact);
+        artifactBuilder.addProperties(propsToAdd);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
 
@@ -484,10 +490,10 @@ public class BuildInfoTask extends DefaultTask {
                 getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        Map<String, String> propsToAdd = getPropsToAdd();
-        artifactBuilder.addProperties(propsToAdd);
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifact);
+        artifactBuilder.addProperties(propsToAdd);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
 
@@ -521,8 +527,8 @@ public class BuildInfoTask extends DefaultTask {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
                  * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
-                 * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be published
-                 * only after a successful build. This is done before the build-info is sent.
+                 * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be
+                 * published only after a successful build. This is done before the build-info is sent.
                  */
 
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
@@ -617,8 +623,8 @@ public class BuildInfoTask extends DefaultTask {
 
         for (Configuration configuration : publishConfigurations) {
             PublishArtifactSet artifacts = configuration.getAllArtifacts();
-            for (PublishArtifact publishArtifact : artifacts) {
-                File file = publishArtifact.getFile();
+            for (PublishArtifact artifact : artifacts) {
+                File file = artifact.getFile();
                 DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
                 try {
                     Map<String, String> checksums =
@@ -630,40 +636,57 @@ public class BuildInfoTask extends DefaultTask {
                 }
                 String revision = getProject().getVersion().toString();
                 Map<String, String> extraTokens = Maps.newHashMap();
-                if (StringUtils.isNotBlank(publishArtifact.getClassifier())) {
-                    extraTokens.put("classifier", publishArtifact.getClassifier());
+                if (StringUtils.isNotBlank(artifact.getClassifier())) {
+                    extraTokens.put("classifier", artifact.getClassifier());
                 }
                 artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getProject().getName(),
-                        revision, publishArtifact.getName(), publishArtifact.getType(),
-                        publishArtifact.getExtension(), configuration.getName(),
+                        revision, artifact.getName(), artifact.getType(),
+                        artifact.getExtension(), configuration.getName(),
                         extraTokens, null));
                 artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                Map<String, String> propsToAdd = getPropsToAdd();
+                Map<String, String> propsToAdd = getPropsToAdd(artifact);
                 artifactBuilder.addProperties(propsToAdd);
                 DeployDetails details = artifactBuilder.build();
-                deployDetails.add(new GradleDeployDetails(publishArtifact, details, getProject()));
+                deployDetails.add(new GradleDeployDetails(artifact, details, getProject()));
             }
         }
         return deployDetails;
     }
 
-    private Map<String, String> getPropsToAdd() {
-        if (this.propsToAdd == null) {
-            this.propsToAdd = Maps.newHashMap();
-            for (Map.Entry<String, CharSequence> entry : properties.entries()) {
-                // Make sure all GString are now Java Strings
-                String key = entry.getKey();
-                String value = entry.getValue().toString();
-                if (!this.propsToAdd.containsKey(key)) {
-                    this.propsToAdd.put(key, value);
-                } else {
-                    value = this.propsToAdd.get(key) + ", " + value;
-                    this.propsToAdd.put(key, value);
-                }
-            }
+    private Map<String, String> getPropsToAdd(PublishArtifact artifact) {
+        if (defaultProps == null) {
+            defaultProps = Maps.newHashMap();
+            addProps(defaultProps, properties);
+            //Add the publisher properties
             ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-            propsToAdd.putAll(clientConf.publisher.getMatrixParams());
+            defaultProps.putAll(clientConf.publisher.getMatrixParams());
         }
+
+        Map<String, String> propsToAdd = Maps.newHashMap(defaultProps);
+        //Apply artifact-specific props from the artifact specs
+        Project project = getProject();
+        ArtifactSpec spec =
+                ArtifactSpec.builder().configuration(getConfiguration().getName()).group(project.getGroup().toString())
+                        .name(artifact.getName()).version(project.getVersion().toString())
+                        .classifier(artifact.getClassifier())
+                        .type(artifact.getExtension()).build();
+        Multimap<String, CharSequence> artifactSpecsProperties = artifactSpecs.getProperties(spec);
+        addProps(propsToAdd, artifactSpecsProperties);
         return propsToAdd;
+    }
+
+    private void addProps(Map<String, String> target, Multimap<String, CharSequence> props) {
+        for (Map.Entry<String, CharSequence> entry : props.entries()) {
+            // Make sure all GString are now Java Strings
+            String key = entry.getKey();
+            String value = entry.getValue().toString();
+            //Accumulate multi-value props
+            if (!target.containsKey(key)) {
+                target.put(key, value);
+            } else {
+                value = target.get(key) + ", " + value;
+                target.put(key, value);
+            }
+        }
     }
 }

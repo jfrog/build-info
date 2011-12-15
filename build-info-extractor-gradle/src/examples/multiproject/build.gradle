@@ -40,7 +40,7 @@ allprojects {
         apply plugin: 'maven'
         apply plugin: 'artifactory'
     }
-    group = 'org.gradle'
+    group = 'org.jfrog'
     version = '1.0'
 }
 
@@ -58,11 +58,11 @@ subprojects {
 dependsOnChildren()
 
 artifactory {
-    contextUrl = 'http://repo.jfrog.org/artifactory'
-    //contextUrl = 'http://localhost:8080/artifactory'
+    //contextUrl = 'http://repo.jfrog.org/artifactory'
+    contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
-            repoKey = 'Framework'
+            repoKey = 'libs-release-local'
             username = 'admin'
             password = 'password'
             ivy {
@@ -76,8 +76,10 @@ artifactory {
             //publishPom = false
             properties = ['qa.level': 'basic']
             properties {
-                ccc 'g1.2.3:a:v:c@ext', kkk: 'sds', yyy: 'xxx'
-                any 'g:a1:v1:*@ext', kkk: 'sds'
+                archives 'org.jfrog:*:*:*@*', key1: 'val1', key2: 'val2'
+                all 'org.jfrog:shared:1.?:*@*', key3: 'val3', key4: 'val4'
+                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
+                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
             }
         }
     }

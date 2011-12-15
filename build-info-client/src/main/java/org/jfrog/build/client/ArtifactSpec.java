@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
  */
 public class ArtifactSpec {
 
-    public static final String CONFIG_ANY = "any";
+    public static final String CONFIG_ALL = "all";
     public static final String WILDCARD = "*";
 
     private String group;
@@ -38,7 +38,7 @@ public class ArtifactSpec {
     private String type;
     private String configuration;
 
-    private final Map<String, String> properties = new HashMap<String, String>();
+    private final Map<String, CharSequence> properties = new HashMap<String, CharSequence>();
 
     private static final Pattern ARTIFACT_NOTATION =
             Pattern.compile("^([^:]+):([^:]+):([^:]+):([^:]+?)(?:\\@([^:]+$)){0,1}$");
@@ -72,7 +72,7 @@ public class ArtifactSpec {
                 spec = builder.build();
             } else if (splits.length == 3) {
                 //Convert 'any' config to a wild card
-                builder.configuration(splits[0].equalsIgnoreCase(CONFIG_ANY) ? WILDCARD : splits[0]);
+                builder.configuration(splits[0].equalsIgnoreCase(CONFIG_ALL) ? WILDCARD : splits[0]);
                 builder.artifactNotation(splits[1]);
                 builder.properties(splits[2]);
                 spec = builder.build();
@@ -123,7 +123,7 @@ public class ArtifactSpec {
         return type;
     }
 
-    public Map<String, String> getProperties() {
+    public Map<String, CharSequence> getProperties() {
         return properties;
     }
 
@@ -198,50 +198,32 @@ public class ArtifactSpec {
         }
 
         public Builder group(String group) {
-            if (group == null) {
-                throw new IllegalArgumentException("Group cannot be null");
-            }
-            spec.group = group;
+            spec.group = group != null ? group : WILDCARD;
             return this;
         }
 
         public Builder name(String name) {
-            if (name == null) {
-                throw new IllegalArgumentException("Artifact name cannot be null");
-            }
-            spec.name = name;
+            spec.name = name != null ? name : WILDCARD;
             return this;
         }
 
         public Builder version(String version) {
-            if (version == null) {
-                throw new IllegalArgumentException("Version cannot be null");
-            }
-            spec.version = version;
+            spec.version = version != null ? version : WILDCARD;
             return this;
         }
 
         public Builder classifier(String classifier) {
-            if (classifier == null) {
-                throw new IllegalArgumentException("Classifier cannot be null");
-            }
-            spec.classifier = classifier;
+            spec.classifier = classifier != null ? classifier : WILDCARD;
             return this;
         }
 
         public Builder type(String type) {
-            if (type == null) {
-                throw new IllegalArgumentException("Type cannot be null");
-            }
-            spec.type = type;
+            spec.type = type != null ? type : WILDCARD;
             return this;
         }
 
         public Builder configuration(String configuration) {
-            if (configuration == null) {
-                throw new IllegalArgumentException("Configuration cannot be null");
-            }
-            spec.configuration = configuration;
+            spec.configuration = configuration != null ? configuration : WILDCARD;
             return this;
         }
 

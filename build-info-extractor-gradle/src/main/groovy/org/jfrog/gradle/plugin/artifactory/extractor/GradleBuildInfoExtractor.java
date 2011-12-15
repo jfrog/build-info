@@ -239,15 +239,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
     private List<Artifact> calculateArtifacts(final Project project) throws Exception {
-        Iterable<GradleDeployDetails> filter = getProjectDeployDetails(project);
-        List<Artifact> artifacts = newArrayList(transform(filter, new Function<GradleDeployDetails, Artifact>() {
+        Iterable<GradleDeployDetails> deployDetails = getProjectDeployDetails(project);
+        List<Artifact> artifacts = newArrayList(transform(deployDetails, new Function<GradleDeployDetails, Artifact>() {
             public Artifact apply(GradleDeployDetails from) {
                 PublishArtifact publishArtifact = from.getPublishArtifact();
                 DeployDetails deployDetails = from.getDeployDetails();
-                int index = deployDetails.getArtifactPath().lastIndexOf('/');
+                String artifactPath = deployDetails.getArtifactPath();
+                int index = artifactPath.lastIndexOf('/');
                 String type = StringUtils.isBlank(publishArtifact.getClassifier()) ? publishArtifact.getType() :
                         publishArtifact.getType() + "-" + publishArtifact.getClassifier();
-                return new ArtifactBuilder(deployDetails.getArtifactPath().substring(index + 1))
+                return new ArtifactBuilder(artifactPath.substring(index + 1))
                         .type(type).md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
             }
         }));
