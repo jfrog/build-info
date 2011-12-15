@@ -223,7 +223,8 @@ public class ArtifactSpec {
         }
 
         public Builder configuration(String configuration) {
-            spec.configuration = configuration != null ? configuration : WILDCARD;
+            spec.configuration =
+                    configuration != null && !configuration.equalsIgnoreCase(CONFIG_ALL) ? configuration : WILDCARD;
             return this;
         }
 
