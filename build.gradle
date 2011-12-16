@@ -63,8 +63,8 @@ def extractorProjects() {
 subprojects {
     apply plugin: 'maven'
     apply plugin: 'java'
-    sourceCompatibility = 1.5
-    targetCompatibility = 1.5
+    sourceCompatibility = 1.6
+    targetCompatibility = 1.6
     buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {

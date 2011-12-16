@@ -39,10 +39,12 @@ class PropertiesConfig {
         switch (args.length) {
             case 2:
                 //Verify the configuration exists
-                try {
-                    project.getConfigurations().getByName(name)
-                } catch (UnknownConfigurationException e) {
-                    project.logger.error(e.message)
+                if (ArtifactSpec.CONFIG_ALL != name) {
+                    try {
+                        project.getConfigurations().getByName(name)
+                    } catch (UnknownConfigurationException e) {
+                        project.logger.error(e.message)
+                    }
                 }
                 artifactSpecNotation = args[1]
                 props = args[0]
