@@ -60,6 +60,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
+import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -293,8 +294,11 @@ public class BuildInfoTask extends DefaultTask {
         Project project = getProject();
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
         //Configure the task using the defaults closure (delegate to the task)
-        Closure defaultsClosure = convention.getPublisherConfig().getDefaultsClosure();
-        ConfigureUtil.configure(defaultsClosure, this);
+        PublisherConfig config = convention.getPublisherConfig();
+        if (config != null) {
+            Closure defaultsClosure = config.getDefaultsClosure();
+            ConfigureUtil.configure(defaultsClosure, this);
+        }
 
         if (!hasConfigurations()) {
             // If no configurations set and the archives config exists, adding it by default
