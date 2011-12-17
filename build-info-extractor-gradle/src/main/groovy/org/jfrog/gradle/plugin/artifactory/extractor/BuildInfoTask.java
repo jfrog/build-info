@@ -187,6 +187,11 @@ public class BuildInfoTask extends DefaultTask {
         }
     }
 
+    //For testing
+    public ArtifactSpecs getArtifactSpecs() {
+        return artifactSpecs;
+    }
+
     public void publishConfigs(Object... confs) {
         if (confs == null) {
             return;
@@ -197,7 +202,7 @@ public class BuildInfoTask extends DefaultTask {
                 if (projectConf != null) {
                     publishConfigurations.add(projectConf);
                 } else {
-                    log.info("Configuration named '{}' does not exists for project '{}' in task '{}'",
+                    log.info("Configuration named '{}' does not exist for project '{}' in task '{}'",
                             new Object[]{conf, getProject().getPath(), getPath()});
                 }
             } else if (conf instanceof Configuration) {
@@ -320,7 +325,7 @@ public class BuildInfoTask extends DefaultTask {
                 Task candidateUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
                 if (candidateUploadTask == null) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                            "and task '{}' does not exists." +
+                            "and task '{}' does not exist." +
                             "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will " +
                             "solve this issue.",
                             new Object[]{getPath(), archiveConf.getUploadTaskName()});

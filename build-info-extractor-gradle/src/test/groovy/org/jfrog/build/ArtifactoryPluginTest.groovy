@@ -1,8 +1,5 @@
 package org.jfrog.build
 
-import spock.lang.Specification
-
-import org.apache.ivy.plugins.resolver.IBiblioResolver
 import org.gradle.BuildListener
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -13,12 +10,12 @@ import org.jfrog.build.client.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
+import spock.lang.Specification
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
 import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
-import static org.spockframework.util.Assert.that
 import static org.spockframework.util.Assert.notNull
-import org.jfrog.wharf.ivy.resolver.IBiblioWharfResolver
+import static org.spockframework.util.Assert.that
 
 /**
  * @author freds
@@ -132,6 +129,10 @@ public class ArtifactoryPluginTest extends Specification {
         project.setProperty('testPassword', 'p33p')
         project.setProperty('ppom', false)
 
+        //Set artifact specs
+        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
+                'archives com.jfrog:*:*:docs@* key1: val1, key2: val2')
+
         JavaPlugin javaPlugin = new JavaPlugin()
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
@@ -151,6 +152,8 @@ public class ArtifactoryPluginTest extends Specification {
         !clientConfig.resolver.maven
         //Cannot call clientConfig.publisher.isMaven() since it is only assigned at task execution
         !buildInfoTask.getPublishPom()
+        buildInfoTask.artifactSpecs[0].group == 'com.jfrog'
+        buildInfoTask.artifactSpecs[1].group == 'org.jfrog'
     }
 
     private def projectEvaluated(Project project) {
