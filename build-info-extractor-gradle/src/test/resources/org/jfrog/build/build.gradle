@@ -34,7 +34,7 @@ artifactory {
             publishConfigs('archives', 'published')
             properties = ['qa.level': 'basic']
             properties {
-                archives 'org.jfrog:*:*:sources@*', key1: 'val1', key2: 'val2'
+                archives 'org.jfrog:*:*:*@*', key1: 'val1', key2: 'val2'
             }
         }
     }

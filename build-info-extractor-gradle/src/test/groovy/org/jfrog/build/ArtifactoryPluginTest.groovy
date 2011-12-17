@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
+import org.jfrog.build.client.ArtifactSpec
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.client.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
@@ -131,7 +132,8 @@ public class ArtifactoryPluginTest extends Specification {
 
         //Set artifact specs
         project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
-                'archives com.jfrog:*:*:docs@* key1: val1, key2: val2')
+                'archives com.jfrog:*:*:doc@* key1: val1, key2: val2\n' +
+                        'archives com.jfrog:*:*:src@* key1: val1')
 
         JavaPlugin javaPlugin = new JavaPlugin()
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
@@ -153,7 +155,11 @@ public class ArtifactoryPluginTest extends Specification {
         //Cannot call clientConfig.publisher.isMaven() since it is only assigned at task execution
         !buildInfoTask.getPublishPom()
         buildInfoTask.artifactSpecs[0].group == 'com.jfrog'
-        buildInfoTask.artifactSpecs[1].group == 'org.jfrog'
+        buildInfoTask.artifactSpecs[0].classifier == 'doc'
+        buildInfoTask.artifactSpecs[1].group == 'com.jfrog'
+        buildInfoTask.artifactSpecs[1].classifier == 'src'
+        buildInfoTask.artifactSpecs[2].group == 'org.jfrog'
+        buildInfoTask.artifactSpecs[2].classifier == ArtifactSpec.WILDCARD
     }
 
     private def projectEvaluated(Project project) {
