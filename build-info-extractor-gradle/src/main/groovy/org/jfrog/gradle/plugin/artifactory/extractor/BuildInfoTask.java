@@ -361,10 +361,9 @@ public class BuildInfoTask extends DefaultTask {
                 // if the project doesn't have the maven install task, warn
                 Upload installTask = tasks.withType(Upload.class).findByName("install");
                 if (installTask == null) {
-                    log.warn(
-                            "Cannot publish Maven descriptor if mavenDescriptor not set in task '{}' and default " +
-                                    "install task for project '{}' is not an Upload task",
-                            new Object[]{getPath(), project.getPath()});
+                    log.warn("Cannot publish pom for project '{}' since it does not contain the Maven " +
+                            "plugin install task and task '{}' does not specify a custom pom path.",
+                            new Object[]{project.getPath(), getPath()});
                     mavenDescriptor = null;
                 } else {
                     mavenDescriptor = new File(
