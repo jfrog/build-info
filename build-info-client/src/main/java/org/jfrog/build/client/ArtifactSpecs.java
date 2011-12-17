@@ -29,6 +29,25 @@ import java.util.Map;
  */
 public class ArtifactSpecs extends LinkedList<ArtifactSpec> {
 
+    public ArtifactSpecs() {
+    }
+
+    /**
+     * Build a new ArtifactSpecs from a newline separated string
+     *
+     * @param specsNotation A sting containing artifact spec notations separated by the newline (\n) or (\r\n)
+     *                      character(s)
+     */
+    public ArtifactSpecs(String specsNotation) {
+        if (specsNotation != null) {
+            String[] notations = specsNotation.split("\r{0,1}\n");
+            for (String notation : notations) {
+                ArtifactSpec spec = ArtifactSpec.newSpec(notation);
+                add(spec);
+            }
+        }
+    }
+
     /**
      * Iterate over all the specs and if matches add the properties
      *

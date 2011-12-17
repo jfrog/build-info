@@ -37,6 +37,7 @@ public interface ClientConfigurationFields {
     String PUBLISH_BUILD_INFO = "buildInfo";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";
     String MATRIX = "matrix";
+    String ARTIFACT_SPECS = "artifactSpecs";
     String INCLUDE_PATTERNS = "includePatterns";
     String EXCLUDE_PATTERNS = "excludePatterns";
     String EVEN_UNSTABLE = "unstable";

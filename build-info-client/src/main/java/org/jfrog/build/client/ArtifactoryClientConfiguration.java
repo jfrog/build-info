@@ -291,6 +291,15 @@ public class ArtifactoryClientConfiguration {
         public String getMatrixParamPrefix() {
             return PROP_DEPLOY_PARAM_PROP_PREFIX;
         }
+
+        public void setArtifactSpecs(String artifactSpecs) {
+            setStringValue(ARTIFACT_SPECS, artifactSpecs);
+        }
+
+        public ArtifactSpecs getArtifactSpecs() {
+            String specs = getStringValue(ARTIFACT_SPECS);
+            return new ArtifactSpecs(specs);
+        }
     }
 
     public class ProxyHandler extends AuthenticationConfiguration {
@@ -454,6 +463,7 @@ public class ArtifactoryClientConfiguration {
             }
             return value.trim();
         }
+
 
         public abstract String getMatrixParamPrefix();
 

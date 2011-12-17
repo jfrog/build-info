@@ -282,6 +282,9 @@ public class BuildInfoTask extends DefaultTask {
 
 
     public void projectsEvaluated() {
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        artifactSpecs = acc.publisher.getArtifactSpecs();
+
         Project project = getProject();
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
         //Configure the task using the defaults closure (delegate to the task)
@@ -306,7 +309,6 @@ public class BuildInfoTask extends DefaultTask {
         if (!hasConfigurations()) {
             return;
         }
-        ArtifactoryClientConfiguration acc = convention.getClientConfig();
 
         // Set ivy descriptor parameters
         TaskContainer tasks = project.getTasks();
@@ -426,7 +428,7 @@ public class BuildInfoTask extends DefaultTask {
         Project project = getProject();
         PropertiesConfig propertiesConfig = new PropertiesConfig(project);
         ConfigureUtil.configure(closure, propertiesConfig);
-        artifactSpecs = propertiesConfig.getArtifactSpecs();
+        artifactSpecs.addAll(propertiesConfig.getArtifactSpecs());
     }
 
     private void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
