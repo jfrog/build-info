@@ -27,7 +27,9 @@
 
 buildscript {
     repositories {
-        mavenRepo(urls: 'http://repo.jfrog.org/artifactory/repo').setChecksums('sha1')
+        maven {
+            url 'http://repo.jfrog.org/artifactory/repo'
+        }
     }
 
     dependencies {
