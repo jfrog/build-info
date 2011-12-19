@@ -43,14 +43,14 @@ class PropertiesConfig {
                     try {
                         project.getConfigurations().getByName(name)
                     } catch (UnknownConfigurationException e) {
-                        project.logger.error(e.message)
+                        project.logger.info("Artifactory plugin: configuration '$name' not found in project '${project.path}'")
                     }
                 }
                 artifactSpecNotation = args[1]
                 props = args[0]
                 break
             default:
-                throw new GradleException("Invalid artifact properties spec: $name, $args.\nExpected: configName artifactSpec key:val, key:val")
+                throw new GradleException("Invalid artifact properties spec: $name, $args.\nExpected: configName artifactSpec, key1:val1, key2:val2")
         }
         def spec = ArtifactSpec.builder().artifactNotation(artifactSpecNotation).configuration(name).properties(props).build()
         artifactSpecs.add(spec)

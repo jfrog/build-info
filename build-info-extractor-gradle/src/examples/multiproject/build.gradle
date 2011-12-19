@@ -25,21 +25,23 @@
  *
  */
 
+import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
+
 buildscript {
+    /*
     repositories {
         maven {
             url 'http://repo.jfrog.org/artifactory/repo'
         }
     }
-
+    */
     dependencies {
-        classpath files("${projectDir}/../../../build/libs/build-info-extractor-gradle-2.0.x-SNAPSHOT-uber.jar")
+        classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.0.x-SNAPSHOT-uber.jar"))
     }
 }
 
 allprojects {
     apply {
-        apply plugin: 'maven'
         apply plugin: 'artifactory'
     }
     group = 'org.jfrog'
@@ -48,6 +50,7 @@ allprojects {
 
 subprojects {
     apply {
+        apply plugin: 'maven'
         apply plugin: 'java'
     }
 
@@ -59,16 +62,34 @@ subprojects {
 
 dependsOnChildren()
 
+configurations {
+    simpleFile
+}
+
+artifacts {
+    simpleFile new DefaultPublishArtifact("settings.gradle", "txt", "text", null,
+                            new Date(), file("$rootDir/settings.gradle"))
+}
+
+artifactoryPublish {
+    publishConfigs configurations.simpleFile
+    publishIvy = false
+    publishPom = false
+    properties {
+        simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
+    }
+}
+
 artifactory {
     //contextUrl = 'http://repo.jfrog.org/artifactory'
     contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
-            repoKey = 'libs-release-local'
+            repoKey = 'gradle-plugin-test'
             username = 'admin'
             password = 'password'
             ivy {
-                ivyLayout = '[organization]/[module]/[revision]/ivy-[revision].xml'
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
             }
         }
         defaults {
@@ -78,8 +99,9 @@ artifactory {
             //publishPom = false
             properties = ['qa.level': 'basic']
             properties {
-                archives 'org.jfrog:*:*:*@*', key1: 'val1', key2: 'val2'
-                all 'org.jfrog:shared:1.?:*@*', key3: 'val3', key4: 'val4'
+                archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
+                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
+                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
                 all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
                 foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
             }

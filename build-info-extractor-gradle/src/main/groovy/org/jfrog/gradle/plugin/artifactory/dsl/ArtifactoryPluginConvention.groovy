@@ -34,9 +34,9 @@ class ArtifactoryPluginConvention {
         this.project = project
         clientConfig = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
         propsResolver = {String name ->
-            project.logger.debug "Resolving property '${name}''"
+            project.logger.debug "Artifactory plugin: resolving property '${name}''"
             def val = project.property(name)
-            project.logger.debug "Property '${name}' resolved to '${project.properties[name]}'"
+            project.logger.debug "Artifactory plugin: property '${name}' resolved to '${project.properties[name]}'"
             val
         }
         ArtifactoryPluginConvention.metaClass.propertyMissing = propsResolver
@@ -45,7 +45,7 @@ class ArtifactoryPluginConvention {
     def artifactory(Closure closure) {
         closure.delegate = this
         closure()
-        project.logger.debug("Artifactory Plugin configured")
+        project.logger.debug("Artifactory plugin: configured")
     }
 
     def setContextUrl(String contextUrl) {

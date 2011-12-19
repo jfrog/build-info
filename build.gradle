@@ -125,8 +125,6 @@ subprojects {
 
     install {
         configuration = configurations.published
-        dependsOn: jar
-        dependsOn: sourceJar
     }
 }
 
@@ -171,7 +169,8 @@ configure(extractorProjects()) {
         tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
     }
 
-    task jarAll(type: Jar, dependsOn: jar) {
+    task jarAll(type: Jar) {
+        dependsOn jar
         //Add the directory of the archive as the input files for this task
         classifier = 'uber'
         doLast {
@@ -196,6 +195,10 @@ configure(extractorProjects()) {
     // Add the published artifact of the jarAll task to the list of published artifacts for the archives configuration
     artifacts {
         published jarAll
+    }
+
+    assemble {
+        dependsOn jarAll
     }
 
     // Treat the uberJar conf as a maven compile scope so that uberJar depenedncies are transformed into compile-scope

@@ -98,12 +98,13 @@ public class BuildInfoTask extends DefaultTask {
     @Input
     private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 
+    @Input
+    private final ArtifactSpecs artifactSpecs = new ArtifactSpecs();
+
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
     private boolean lastInGraph = false;
-
     private Map<String, String> defaultProps;
-    private ArtifactSpecs artifactSpecs;
 
     //TODO: [by yl] Task flags are not merged into ArtifactoryClientConfiguration, leading to double checking -
     // against the class and against acc (e.g. isPublishIvy() here)
@@ -219,6 +220,11 @@ public class BuildInfoTask extends DefaultTask {
         return publishConfigurations;
     }
 
+    /**
+     * @return the first configuration in the list
+     * @deprecated Use the list of configurations. We do not support the single conf anymore.
+     */
+    @Deprecated
     public Configuration getConfiguration() {
         if (!hasConfigurations()) {
             return null;
@@ -289,7 +295,7 @@ public class BuildInfoTask extends DefaultTask {
 
     public void projectsEvaluated() {
         ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
-        artifactSpecs = acc.publisher.getArtifactSpecs();
+        artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
         Project project = getProject();
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
@@ -479,7 +485,7 @@ public class BuildInfoTask extends DefaultTask {
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifact);
+        Map<String, String> propsToAdd = getPropsToAdd(artifact, null);
         artifactBuilder.addProperties(propsToAdd);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
@@ -502,7 +508,7 @@ public class BuildInfoTask extends DefaultTask {
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         DefaultPublishArtifact artifact =
                 new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifact);
+        Map<String, String> propsToAdd = getPropsToAdd(artifact, null);
         artifactBuilder.addProperties(propsToAdd);
         return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
     }
@@ -654,7 +660,7 @@ public class BuildInfoTask extends DefaultTask {
                         artifact.getExtension(), configuration.getName(),
                         extraTokens, null));
                 artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                Map<String, String> propsToAdd = getPropsToAdd(artifact);
+                Map<String, String> propsToAdd = getPropsToAdd(artifact, configuration);
                 artifactBuilder.addProperties(propsToAdd);
                 DeployDetails details = artifactBuilder.build();
                 deployDetails.add(new GradleDeployDetails(artifact, details, getProject()));
@@ -663,7 +669,7 @@ public class BuildInfoTask extends DefaultTask {
         return deployDetails;
     }
 
-    private Map<String, String> getPropsToAdd(PublishArtifact artifact) {
+    private Map<String, String> getPropsToAdd(PublishArtifact artifact, Configuration configuration) {
         if (defaultProps == null) {
             defaultProps = Maps.newHashMap();
             addProps(defaultProps, properties);
@@ -676,8 +682,9 @@ public class BuildInfoTask extends DefaultTask {
         //Apply artifact-specific props from the artifact specs
         Project project = getProject();
         ArtifactSpec spec =
-                ArtifactSpec.builder().configuration(getConfiguration().getName()).group(project.getGroup().toString())
-                        .name(artifact.getName()).version(project.getVersion().toString())
+                ArtifactSpec.builder().configuration(configuration != null ? configuration.getName() : null)
+                        .group(project.getGroup().toString())
+                        .name(project.getName()).version(project.getVersion().toString())
                         .classifier(artifact.getClassifier())
                         .type(artifact.getType()).build();
         Multimap<String, CharSequence> artifactSpecsProperties = artifactSpecs.getProperties(spec);
