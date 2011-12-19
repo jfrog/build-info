@@ -679,7 +679,7 @@ public class BuildInfoTask extends DefaultTask {
                 ArtifactSpec.builder().configuration(getConfiguration().getName()).group(project.getGroup().toString())
                         .name(artifact.getName()).version(project.getVersion().toString())
                         .classifier(artifact.getClassifier())
-                        .type(artifact.getExtension()).build();
+                        .type(artifact.getType()).build();
         Multimap<String, CharSequence> artifactSpecsProperties = artifactSpecs.getProperties(spec);
         addProps(propsToAdd, artifactSpecsProperties);
         return propsToAdd;
