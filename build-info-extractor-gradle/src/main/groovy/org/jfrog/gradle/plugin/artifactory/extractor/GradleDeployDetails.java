@@ -28,10 +28,10 @@ import org.jfrog.build.client.DeployDetails;
 public class GradleDeployDetails {
 
     private final DeployDetails deployDetails;
-    private final PublishArtifact publishArtifact;
+    private final PublishArtifactInfo publishArtifact;
     private final Project project;
 
-    public GradleDeployDetails(PublishArtifact publishArtifact, DeployDetails deployDetails, Project project) {
+    public GradleDeployDetails(PublishArtifactInfo publishArtifact, DeployDetails deployDetails, Project project) {
         this.deployDetails = deployDetails;
         this.publishArtifact = publishArtifact;
         this.project = project;
@@ -45,7 +45,7 @@ public class GradleDeployDetails {
         return project;
     }
 
-    public PublishArtifact getPublishArtifact() {
+    public PublishArtifactInfo getPublishArtifact() {
         return publishArtifact;
     }
 }

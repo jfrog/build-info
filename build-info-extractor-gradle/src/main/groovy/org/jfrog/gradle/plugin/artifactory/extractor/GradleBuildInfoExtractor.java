@@ -23,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
@@ -242,7 +241,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         Iterable<GradleDeployDetails> deployDetails = getProjectDeployDetails(project);
         List<Artifact> artifacts = newArrayList(transform(deployDetails, new Function<GradleDeployDetails, Artifact>() {
             public Artifact apply(GradleDeployDetails from) {
-                PublishArtifact publishArtifact = from.getPublishArtifact();
+                PublishArtifactInfo publishArtifact = from.getPublishArtifact();
                 DeployDetails deployDetails = from.getDeployDetails();
                 String artifactPath = deployDetails.getArtifactPath();
                 int index = artifactPath.lastIndexOf('/');

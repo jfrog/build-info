@@ -32,7 +32,6 @@ import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.Dependency;
 import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.PublishArtifactSet;
-import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -483,11 +482,11 @@ public class BuildInfoTask extends DefaultTask {
                 .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        DefaultPublishArtifact artifact =
-                new DefaultPublishArtifact(ivyDescriptor.getName(), "xml", "ivy", null, null, ivyDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifact, null);
+        PublishArtifactInfo artifactInfo =
+                new PublishArtifactInfo(ivyDescriptor.getName(), "xml", "ivy", null, ivyDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
         artifactBuilder.addProperties(propsToAdd);
-        return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
+        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
     }
 
     private GradleDeployDetails getMavenDeployDetails() {
@@ -506,11 +505,11 @@ public class BuildInfoTask extends DefaultTask {
                 getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        DefaultPublishArtifact artifact =
-                new DefaultPublishArtifact(mavenDescriptor.getName(), "pom", "pom", null, null, mavenDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifact, null);
+        PublishArtifactInfo artifactInfo =
+                new PublishArtifactInfo(mavenDescriptor.getName(), "pom", "pom", null, mavenDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
         artifactBuilder.addProperties(propsToAdd);
-        return new GradleDeployDetails(artifact, artifactBuilder.build(), getProject());
+        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
     }
 
     /**
@@ -660,16 +659,17 @@ public class BuildInfoTask extends DefaultTask {
                         artifact.getExtension(), configuration.getName(),
                         extraTokens, null));
                 artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                Map<String, String> propsToAdd = getPropsToAdd(artifact, configuration);
+                PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
+                Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration);
                 artifactBuilder.addProperties(propsToAdd);
                 DeployDetails details = artifactBuilder.build();
-                deployDetails.add(new GradleDeployDetails(artifact, details, getProject()));
+                deployDetails.add(new GradleDeployDetails(artifactInfo, details, getProject()));
             }
         }
         return deployDetails;
     }
 
-    private Map<String, String> getPropsToAdd(PublishArtifact artifact, Configuration configuration) {
+    private Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, Configuration configuration) {
         if (defaultProps == null) {
             defaultProps = Maps.newHashMap();
             addProps(defaultProps, properties);

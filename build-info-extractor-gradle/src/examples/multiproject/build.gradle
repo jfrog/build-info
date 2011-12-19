@@ -68,7 +68,7 @@ configurations {
 
 artifacts {
     simpleFile new DefaultPublishArtifact("settings.gradle", "txt", "text", null,
-                            new Date(), file("$rootDir/settings.gradle"))
+            new Date(), file("$rootDir/settings.gradle"))
 }
 
 artifactoryPublish {
@@ -85,7 +85,7 @@ artifactory {
     contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
-            repoKey = 'gradle-plugin-test'
+            repoKey = 'libs-release-local'
             username = 'admin'
             password = 'password'
             ivy {
