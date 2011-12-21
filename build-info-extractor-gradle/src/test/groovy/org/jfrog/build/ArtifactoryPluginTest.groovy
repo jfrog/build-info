@@ -133,7 +133,7 @@ public class ArtifactoryPluginTest extends Specification {
         //Set artifact specs
         project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
                 'archives com.jfrog:*:*:doc@* key1: val1, key2: val2\n' +
-                        'archives com.jfrog:*:*:src@* key1: val1')
+                        'archives com.jfrog:*:*:src@* key3: val 3')
 
         JavaPlugin javaPlugin = new JavaPlugin()
         ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
@@ -158,6 +158,7 @@ public class ArtifactoryPluginTest extends Specification {
         buildInfoTask.artifactSpecs[0].classifier == 'doc'
         buildInfoTask.artifactSpecs[1].group == 'com.jfrog'
         buildInfoTask.artifactSpecs[1].classifier == 'src'
+        buildInfoTask.artifactSpecs[1].properties['key3'] == 'val 3'
         buildInfoTask.artifactSpecs[2].group == 'org.jfrog'
         buildInfoTask.artifactSpecs[2].classifier == ArtifactSpec.WILDCARD
     }
