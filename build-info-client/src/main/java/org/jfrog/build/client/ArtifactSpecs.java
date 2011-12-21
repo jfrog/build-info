@@ -18,6 +18,7 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -39,11 +40,13 @@ public class ArtifactSpecs extends LinkedList<ArtifactSpec> {
      *                      character(s)
      */
     public ArtifactSpecs(String specsNotation) {
-        if (specsNotation != null) {
+        if (StringUtils.isNotBlank(specsNotation)) {
             String[] notations = specsNotation.split("\r{0,1}\n");
             for (String notation : notations) {
-                ArtifactSpec spec = ArtifactSpec.newSpec(notation);
-                add(spec);
+                if (StringUtils.isNotBlank(notation)) {
+                    ArtifactSpec spec = ArtifactSpec.newSpec(notation);
+                    add(spec);
+                }
             }
         }
     }
