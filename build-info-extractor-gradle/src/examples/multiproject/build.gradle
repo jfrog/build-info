@@ -93,6 +93,7 @@ artifactory {
             }
         }
         defaults {
+            publishConfigs('simpleFile')
             //publishIvy & publishPom are true by default
             publishArtifacts = true
             //publishIvy = false

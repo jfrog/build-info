@@ -104,6 +104,7 @@ public class BuildInfoTask extends DefaultTask {
 
     private boolean lastInGraph = false;
     private Map<String, String> defaultProps;
+    private boolean publishConfigsSpecified;
 
     //TODO: [by yl] Task flags are not merged into ArtifactoryClientConfiguration, leading to double checking -
     // against the class and against acc (e.g. isPublishIvy() here)
@@ -199,50 +200,29 @@ public class BuildInfoTask extends DefaultTask {
         }
         for (Object conf : confs) {
             if (conf instanceof CharSequence) {
-                Configuration projectConf = getProject().getConfigurations().findByName(conf.toString());
-                if (projectConf != null) {
-                    publishConfigurations.add(projectConf);
+                Configuration projectConfig = getProject().getConfigurations().findByName(conf.toString());
+                if (projectConfig != null) {
+                    publishConfigurations.add(projectConfig);
                 } else {
-                    log.info("Configuration named '{}' does not exist for project '{}' in task '{}'",
+                    log.error("Configuration named '{}' does not exist for project '{}' in task '{}'.",
                             new Object[]{conf, getProject().getPath(), getPath()});
                 }
             } else if (conf instanceof Configuration) {
                 publishConfigurations.add((Configuration) conf);
             } else {
-                log.info("Configuration type '{}' not supported in task '{}'",
+                log.error("Configuration type '{}' not supported in task '{}'.",
                         new Object[]{conf.getClass().getName(), getPath()});
             }
         }
+        publishConfigsSpecified = true;
     }
 
     public Set<Configuration> getPublishConfigurations() {
         return publishConfigurations;
     }
 
-    /**
-     * @return the first configuration in the list
-     * @deprecated Use the list of configurations. We do not support the single conf anymore.
-     */
-    @Deprecated
-    public Configuration getConfiguration() {
-        if (!hasConfigurations()) {
-            return null;
-        }
-        return publishConfigurations.iterator().next();
-    }
-
     public boolean hasConfigurations() {
-        return publishConfigurations != null && !publishConfigurations.isEmpty();
-    }
-
-    public void setConfiguration(Configuration configuration) {
-        if (configuration == null) {
-            return;
-        }
-        if (publishConfigurations == null) {
-            publishConfigurations = Sets.newHashSet();
-        }
-        publishConfigurations.add(configuration);
+        return !publishConfigurations.isEmpty();
     }
 
     public File getIvyDescriptor() {
@@ -305,12 +285,6 @@ public class BuildInfoTask extends DefaultTask {
             ConfigureUtil.configure(defaultsClosure, this);
         }
 
-        if (!hasConfigurations()) {
-            // If no configurations set and the archives config exists, adding it by default
-            Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-            setConfiguration(archiveConfig);
-        }
-
         //Depend on buildInfo task in sub-projects
         for (Project sub : project.getSubprojects()) {
             Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
@@ -319,45 +293,17 @@ public class BuildInfoTask extends DefaultTask {
             }
         }
 
-        // If no configuration no descriptor
-        if (!hasConfigurations()) {
+        // If no configuration no descriptors
+        if (!hasConfigurations() && publishConfigsSpecified) {
+            log.warn("Non of the specified publish configurations matched for project '{}' - nothing to publish.",
+                    project.getPath());
             return;
         }
 
         // Set ivy descriptor parameters
-        TaskContainer tasks = project.getTasks();
         if (isPublishIvy(acc)) {
-            Configuration archiveConf = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-            if (ivyDescriptor == null && archiveConf != null) {
-                // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
-                // ATTENTION: Tasks not part of the execution graph have withType(Upload.class) false ?!? Need to check for type our self.
-                Task candidateUploadTask = tasks.findByName(archiveConf.getUploadTaskName());
-                if (candidateUploadTask == null) {
-                    log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                            "and task '{}' does not exist." +
-                            "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin will " +
-                            "solve this issue.",
-                            new Object[]{getPath(), archiveConf.getUploadTaskName()});
-                    ivyDescriptor = null;
-                } else {
-                    if (!(candidateUploadTask instanceof Upload)) {
-                        log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                                "and task '{}' is not an Upload task." +
-                                "\nYou'll need to set publishIvy=false or provide a path to the ivy file to publish to " +
-                                "solve this issue.",
-                                new Object[]{getPath(), archiveConf.getUploadTaskName()});
-                        ivyDescriptor = null;
-                    } else {
-                        Upload uploadTask = (Upload) candidateUploadTask;
-                        if (!uploadTask.isUploadDescriptor()) {
-                            log.info("Forcing task '{}' to upload its Ivy descriptor (uploadDescriptor was false).",
-                                    uploadTask.getPath());
-                            uploadTask.setUploadDescriptor(true);
-                        }
-                        ivyDescriptor = uploadTask.getDescriptorDestination();
-                        dependsOn(candidateUploadTask);
-                    }
-                }
+            if (ivyDescriptor == null) {
+                setDefaultIvyDescriptor();
             }
         } else {
             ivyDescriptor = null;
@@ -366,23 +312,68 @@ public class BuildInfoTask extends DefaultTask {
         // Set maven pom parameters
         if (isPublishMaven(acc)) {
             if (mavenDescriptor == null) {
-                // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
-                // if the project doesn't have the maven install task, warn
-                Upload installTask = tasks.withType(Upload.class).findByName("install");
-                if (installTask == null) {
-                    log.warn("Cannot publish pom for project '{}' since it does not contain the Maven " +
-                            "plugin install task and task '{}' does not specify a custom pom path.",
-                            new Object[]{project.getPath(), getPath()});
-                    mavenDescriptor = null;
-                } else {
-                    mavenDescriptor = new File(
-                            project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
-                            "pom-default.xml");
-                    dependsOn(installTask);
-                }
+                setDefaultMavenDescriptor();
             }
         } else {
             mavenDescriptor = null;
+        }
+    }
+
+    private void setDefaultIvyDescriptor() {
+        Project project = getProject();
+        TaskContainer tasks = project.getTasks();
+        Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+        if (archiveConfig == null) {
+            log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
+                    "and no '{}' configuration exists in project '{}'.", Dependency.ARCHIVES_CONFIGURATION,
+                    project.getPath());
+        } else {
+            // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
+            // ATTENTION: Tasks not part of the execution graph have withType(Upload.class) false ?!? Need to check for type our self.
+            Task candidateUploadTask = tasks.findByName(archiveConfig.getUploadTaskName());
+            if (candidateUploadTask == null) {
+                log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
+                        "and task '{}' does not exist." +
+                        "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin" +
+                        "will solve this issue.",
+                        new Object[]{getPath(), archiveConfig.getUploadTaskName()});
+            } else {
+                if (!(candidateUploadTask instanceof Upload)) {
+                    log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
+                            "and task '{}' is not an Upload task." +
+                            "\nYou'll need to set publishIvy=false or provide a path to the ivy file to " +
+                            "publish to solve this issue.",
+                            new Object[]{getPath(), archiveConfig.getUploadTaskName()});
+                } else {
+                    Upload uploadTask = (Upload) candidateUploadTask;
+                    if (!uploadTask.isUploadDescriptor()) {
+                        log.info("Forcing task '{}' to upload its Ivy descriptor (uploadDescriptor was false).",
+                                uploadTask.getPath());
+                        uploadTask.setUploadDescriptor(true);
+                    }
+                    ivyDescriptor = uploadTask.getDescriptorDestination();
+                    dependsOn(candidateUploadTask);
+                }
+            }
+        }
+    }
+
+    private void setDefaultMavenDescriptor() {
+        // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
+        // if the project doesn't have the maven install task, warn
+        Project project = getProject();
+        TaskContainer tasks = project.getTasks();
+        Upload installTask = tasks.withType(Upload.class).findByName("install");
+        if (installTask == null) {
+            log.warn("Cannot publish pom for project '{}' since it does not contain the Maven " +
+                    "plugin install task and task '{}' does not specify a custom pom path.",
+                    new Object[]{project.getPath(), getPath()});
+            mavenDescriptor = null;
+        } else {
+            mavenDescriptor = new File(
+                    project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
+                    "pom-default.xml");
+            dependsOn(installTask);
         }
     }
 
@@ -624,9 +615,11 @@ public class BuildInfoTask extends DefaultTask {
 
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (!isPublishArtifacts(clientConf)) {
+            log.info("Skipping artifact publishing for project '{}'.", getProject().getPath());
             return deployDetails;
         }
         if (!hasConfigurations()) {
+            log.info("No configurations to publish for project '{}'.", getProject().getPath());
             return deployDetails;
         }
         ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;

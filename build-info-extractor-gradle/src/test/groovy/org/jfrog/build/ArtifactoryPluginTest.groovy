@@ -89,7 +89,7 @@ public class ArtifactoryPluginTest extends Specification {
         BuildInfoTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         projectEvaluated(project)
         expect:
-        buildInfoTask.configuration != null
+        buildInfoTask.ivyDescriptor != null
     }
 
     def buildInfoTaskDependsOn() {
@@ -148,7 +148,7 @@ public class ArtifactoryPluginTest extends Specification {
         projectEvaluated(project)
 
         expect:
-        buildInfoTask.configuration != null
+        !buildInfoTask.publishConfigurations.isEmpty()
         '[ext]user1' == clientConfig.publisher.username
         'p33p' == clientConfig.publisher.password
         !clientConfig.resolver.maven
