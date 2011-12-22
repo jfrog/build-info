@@ -294,10 +294,21 @@ public class BuildInfoTask extends DefaultTask {
         }
 
         // If no configuration no descriptors
-        if (!hasConfigurations() && publishConfigsSpecified) {
-            log.warn("Non of the specified publish configurations matched for project '{}' - nothing to publish.",
-                    project.getPath());
-            return;
+        if (!hasConfigurations()) {
+            if (publishConfigsSpecified) {
+                log.warn("None of the specified publish configurations matched for project '{}' - nothing to publish.",
+                        project.getPath());
+                return;
+            } else {
+                Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+                if (archiveConfig != null) {
+                    publishConfigurations.add(archiveConfig);
+                } else {
+                    log.warn("No publish configurations specified for project '{}' and teh default '{}' " +
+                            "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
+                    return;
+                }
+            }
         }
 
         // Set ivy descriptor parameters
