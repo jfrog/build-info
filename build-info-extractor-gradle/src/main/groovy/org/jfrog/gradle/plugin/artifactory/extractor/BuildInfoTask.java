@@ -302,9 +302,11 @@ public class BuildInfoTask extends DefaultTask {
             } else {
                 Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
                 if (archiveConfig != null) {
+                    log.info("No publish configurations specified for project '{}' - using the default '{}' " +
+                            "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
                     publishConfigurations.add(archiveConfig);
                 } else {
-                    log.warn("No publish configurations specified for project '{}' and teh default '{}' " +
+                    log.warn("No publish configurations specified for project '{}' and the default '{}' " +
                             "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
                     return;
                 }
