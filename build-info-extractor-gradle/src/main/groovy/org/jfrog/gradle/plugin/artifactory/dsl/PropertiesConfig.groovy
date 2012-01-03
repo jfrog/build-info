@@ -47,7 +47,7 @@ class PropertiesConfig {
                     }
                 }
                 artifactSpecNotation = args[1]
-                props = args[0]
+                props = args[0].each {it.value = it.value.toString()}
                 break
             default:
                 throw new GradleException("Invalid artifact properties spec: $name, $args.\nExpected: configName artifactSpec, key1:val1, key2:val2")
