@@ -132,7 +132,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile "com.google.guava:guava:10.0.1"
+        compile "com.google.guava:guava:r08"
         compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
     test.useTestNG()
