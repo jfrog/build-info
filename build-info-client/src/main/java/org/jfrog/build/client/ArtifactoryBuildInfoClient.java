@@ -45,6 +45,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -340,6 +341,60 @@ public class ArtifactoryBuildInfoClient {
 
         log.info("Promoting build " + buildName + ", #" + buildNumber);
         return httpClient.getHttpClient().execute(httpPost);
+    }
+
+    public Map<String, List<Map<String, String>>> getUserPluginInfo() throws IOException {
+        String url = new StringBuilder(artifactoryUrl).append("/api/plugins").toString();
+        HttpGet getPlugins = new HttpGet(url);
+        HttpResponse getResponse = httpClient.getHttpClient().execute(getPlugins);
+        StatusLine statusLine = getResponse.getStatusLine();
+        HttpEntity responseEntity = getResponse.getEntity();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (responseEntity != null) {
+                responseEntity.consumeContent();
+            }
+            throwHttpIOException("Failed to obtain user plugin information:", statusLine);
+        } else {
+            if (responseEntity != null) {
+                InputStream content = responseEntity.getContent();
+                JsonParser parser;
+                try {
+                    parser = httpClient.createJsonParser(content);
+                    return parser.readValueAs(Map.class);
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                }
+            }
+        }
+        return Maps.newHashMap();
+    }
+
+    public HttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/execute/")
+                .append(executionName);
+        if (!requestParams.isEmpty()) {
+            urlBuilder.append("?params=");
+            Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
+            String encodedPipe = httpClient.urlEncode("|");
+            while (paramEntryIterator.hasNext()) {
+                Map.Entry<String, String> paramEntry = paramEntryIterator.next();
+                urlBuilder.append(httpClient.urlEncode(paramEntry.getKey()));
+                String paramValue = paramEntry.getValue();
+                if (StringUtils.isNotBlank(paramValue)) {
+                    urlBuilder.append("=").append(httpClient.urlEncode(paramValue));
+                }
+
+                if (paramEntryIterator.hasNext()) {
+
+                    urlBuilder.append(encodedPipe);
+                }
+            }
+        }
+
+        HttpPost postRequest = new HttpPost(urlBuilder.toString());
+        return httpClient.getHttpClient().execute(postRequest);
     }
 
     /**
