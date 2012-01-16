@@ -1,7 +1,12 @@
 .gradle
 *.iml
+/out
 /build
 /*/build
 /*/out
+/build-info-extractor-gradle/src/examples/multiproject/build
+/build-info-extractor-gradle/src/examples/multiproject/*/build
+/build-info-extractor-gradle/src/examples/multiproject/*/*/build
 build-info.ipr
 build-info.iws
+atlassian-*.xml
