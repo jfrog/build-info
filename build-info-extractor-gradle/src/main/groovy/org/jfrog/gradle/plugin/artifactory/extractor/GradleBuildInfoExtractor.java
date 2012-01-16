@@ -266,14 +266,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
-            ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
-            Set<ResolvedArtifact> resolvedArtifactSet;
-            try {
-                resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
-            } catch (ResolveException e) {
-                log.debug("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
+            if (configuration.getState() != Configuration.State.RESOLVED) {
+                log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
+            ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
+            Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 /**
                  * If including sources jar the jars will have the same ID despite one of them having a sources
