@@ -65,6 +65,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -644,8 +645,13 @@ public class BuildInfoTask extends DefaultTask {
 
         for (Configuration configuration : publishConfigurations) {
             PublishArtifactSet artifacts = configuration.getAllArtifacts();
+            Set<String> processedFiles = Sets.newHashSet();
             for (PublishArtifact artifact : artifacts) {
                 File file = artifact.getFile();
+                if (processedFiles.contains(file.getAbsolutePath())) {
+                    continue;
+                }
+                processedFiles.add(file.getAbsolutePath());
                 DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
                 try {
                     Map<String, String> checksums =
