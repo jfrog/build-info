@@ -116,7 +116,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 name = 'artifactory-ivy-resolver'
                 url = resolverConf.urlWithMatrixParams(pUrl)
                 layout 'pattern', {
-                    name resolverConf.getIvyArtifactPattern()
+                    artifact resolverConf.getIvyArtifactPattern()
                     ivy resolverConf.getIvyPattern()
                 }
                 if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
