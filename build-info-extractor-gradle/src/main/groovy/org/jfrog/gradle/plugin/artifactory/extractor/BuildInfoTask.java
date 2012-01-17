@@ -65,9 +65,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Tomer Cohen
@@ -435,11 +433,31 @@ public class BuildInfoTask extends DefaultTask {
     public void collectProjectBuildInfo() throws IOException {
         log.debug("Task '{}' activated", getPath());
         // Only the last buildInfo execution activate the deployment
-        if (lastInGraph) {
+        List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
+        int myIndex = orderedTasks.indexOf(this);
+        if (myIndex == -1) {
+            log.error("Could not find my own task {} in the task graph!",getPath());
+            return;
+        }
+        if (myIndex == orderedTasks.size()-1) {
             log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                     new Object[]{getProject().getPath(), getPath()});
             prepareAndDeploy();
         }
+    }
+
+    /**
+     * Analyze the task graph ordered and extract a list of build info tasks
+     * @return An ordered list of build info tasks
+     */
+    private List<BuildInfoTask> getAllBuildInfoTasks() {
+        List<BuildInfoTask> result = new ArrayList<BuildInfoTask>();
+        for (Task task : getProject().getGradle().getTaskGraph().getAllTasks()) {
+            if (task instanceof BuildInfoTask) {
+                result.add((BuildInfoTask)task);
+            }
+        }
+        return result;
     }
 
     public void properties(Closure closure) {
@@ -538,9 +556,11 @@ public class BuildInfoTask extends DefaultTask {
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
 
-        //Update the artifacts
-        for (Task birt : getProject().getTasksByName(BUILD_INFO_TASK_NAME, true)) {
-            ((BuildInfoTask) birt).collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
+        // Update the artifacts for all project build info task
+        List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
+        for (BuildInfoTask birt : orderedTasks) {
+            if (birt.getDidWork())
+                birt.collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
         }
         try {
             if (acc.publisher.isPublishArtifacts()) {
