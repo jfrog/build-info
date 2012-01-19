@@ -63,11 +63,24 @@ public class ArtifactSpecTest {
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration("conf").group("grp").name("art").version("ver").classifier("cls")
                         .type("jar").build();
+        assertTrue(ArtifactSpec.newSpec("conf grp:art:ver:cls k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("* grp:art:ver:cls k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("* g?p:art:ver:cls k1:v1").matches(spec));
+        assertFalse(ArtifactSpec.newSpec("* noGrp:art:ver:cls k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("conf grp:*:*:cls k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("* *:*:*er:cl* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("conf *:*:*er:cl* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("conf *:*:*:* k1:v1").matches(spec));
+        assertFalse(ArtifactSpec.newSpec("conf1 *:*:*er:cl* k1:v1").matches(spec));
+        assertFalse(ArtifactSpec.newSpec("* *:*:*et:* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("* *:*:*er:* k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("conf grp:art:ver:cls@jar k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("* grp:art:ver:cls@jar k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("* g?p:art:ver:cls@jar k1:v1").matches(spec));
+        assertFalse(ArtifactSpec.newSpec("* noGrp:art:ver:cls@jar k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("* *:*:*er:cl*@* k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("conf *:*:*er:cl*@* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("conf *:*:*:*@jar k1:v1").matches(spec));
         assertFalse(ArtifactSpec.newSpec("conf1 *:*:*er:cl*@* k1:v1").matches(spec));
         assertFalse(ArtifactSpec.newSpec("* *:*:*et:*@* k1:v1").matches(spec));
         assertTrue(ArtifactSpec.newSpec("* *:*:*er:*@j?? k1:v1").matches(spec));

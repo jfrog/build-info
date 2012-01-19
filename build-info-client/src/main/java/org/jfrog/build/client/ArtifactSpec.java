@@ -180,20 +180,15 @@ public class ArtifactSpec {
         public Builder artifactNotation(String artifactNotation) {
             Matcher matcher = ARTIFACT_NOTATION.matcher(artifactNotation);
             int matchGroups = matcher.groupCount();
-            if (!matcher.matches() || matchGroups < 5 || matchGroups > 6) {
+            if (!matcher.matches() || matchGroups != 5) {
                 throw new IllegalArgumentException("Invalid module notation: " + artifactNotation +
                         ". Expected: group:artifact:version:classifier[@ext].");
             }
-            switch (matchGroups) {
-                case (5):
-                    spec.group = matcher.group(1);
-                    spec.name = matcher.group(2);
-                    spec.version = matcher.group(3);
-                    spec.classifier = matcher.group(4);
-                    spec.type = WILDCARD;
-                case (6):
-                    spec.type = matcher.group(5);
-            }
+            group(matcher.group(1));
+            name(matcher.group(2));
+            version(matcher.group(3));
+            classifier(matcher.group(4));
+            type(matcher.group(5));
             return this;
         }
 
@@ -239,7 +234,7 @@ public class ArtifactSpec {
         /**
          * Accepts a string in the format key1:val1, key2:val2, ...
          *
-         * @param propString
+         * @param propsString a string list of properties values
          */
         public void properties(String propsString) {
             String[] keyVals = propsString.split(",");
