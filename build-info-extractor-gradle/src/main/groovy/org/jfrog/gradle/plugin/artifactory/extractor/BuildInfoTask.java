@@ -65,7 +65,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Tomer Cohen
@@ -436,10 +439,10 @@ public class BuildInfoTask extends DefaultTask {
         List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
         int myIndex = orderedTasks.indexOf(this);
         if (myIndex == -1) {
-            log.error("Could not find my own task {} in the task graph!",getPath());
+            log.error("Could not find my own task {} in the task graph!", getPath());
             return;
         }
-        if (myIndex == orderedTasks.size()-1) {
+        if (myIndex == orderedTasks.size() - 1) {
             log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                     new Object[]{getProject().getPath(), getPath()});
             prepareAndDeploy();
@@ -448,13 +451,14 @@ public class BuildInfoTask extends DefaultTask {
 
     /**
      * Analyze the task graph ordered and extract a list of build info tasks
+     *
      * @return An ordered list of build info tasks
      */
     private List<BuildInfoTask> getAllBuildInfoTasks() {
         List<BuildInfoTask> result = new ArrayList<BuildInfoTask>();
         for (Task task : getProject().getGradle().getTaskGraph().getAllTasks()) {
             if (task instanceof BuildInfoTask) {
-                result.add((BuildInfoTask)task);
+                result.add((BuildInfoTask) task);
             }
         }
         return result;
@@ -502,7 +506,7 @@ public class BuildInfoTask extends DefaultTask {
             gid = gid.replace(".", "/");
         }
         artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(clientConf.publisher.getIvyPattern(), gid, getProject().getName(),
+                .substitute(clientConf.publisher.getIvyPattern(), gid, getModuleName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         PublishArtifactInfo artifactInfo =
@@ -525,7 +529,7 @@ public class BuildInfoTask extends DefaultTask {
         }
         // for pom files always enforce the M2 pattern
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
-                getProject().getGroup().toString().replace(".", "/"), getProject().getName(),
+                getProject().getGroup().toString().replace(".", "/"), getModuleName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
         artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
         PublishArtifactInfo artifactInfo =
@@ -559,8 +563,9 @@ public class BuildInfoTask extends DefaultTask {
         // Update the artifacts for all project build info task
         List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
         for (BuildInfoTask birt : orderedTasks) {
-            if (birt.getDidWork())
+            if (birt.getDidWork()) {
                 birt.collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
+            }
         }
         try {
             if (acc.publisher.isPublishArtifacts()) {
@@ -598,6 +603,12 @@ public class BuildInfoTask extends DefaultTask {
         } finally {
             client.shutdown();
         }
+    }
+
+    private String getModuleName() {
+        //Take into account the archivesBaseName if applied to the project by the Java plugin
+        Object archivesBaseName = getProject().getProperties().get("archivesBaseName");
+        return archivesBaseName != null ? archivesBaseName.toString() : getProject().getName();
     }
 
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
@@ -679,14 +690,14 @@ public class BuildInfoTask extends DefaultTask {
                     artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
                 } catch (Exception e) {
                     throw new GradleException(
-                            "Failed to calculated checksums for artifact: " + file.getAbsolutePath(), e);
+                            "Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
                 }
                 String revision = getProject().getVersion().toString();
                 Map<String, String> extraTokens = Maps.newHashMap();
                 if (StringUtils.isNotBlank(artifact.getClassifier())) {
                     extraTokens.put("classifier", artifact.getClassifier());
                 }
-                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getProject().getName(),
+                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getModuleName(),
                         revision, artifact.getName(), artifact.getType(),
                         artifact.getExtension(), configuration.getName(),
                         extraTokens, null));
