@@ -17,19 +17,19 @@
 buildscript {
     repositories {
         maven {
-            url "http://repo.jfrog.org/artifactory/gradle-plugins-snapshots"
+            url "http://repo.jfrog.org/artifactory/libs-releases-local"
         }
         dependencies {
-            classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.x-SNAPSHOT')
+            classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.10')
         }
     }
-    configurations.classpath {
+    /*configurations.classpath {
         resolutionStrategy {
             failOnVersionConflict()
             cacheDynamicVersionsFor 0, 'seconds'
             cacheChangingModulesFor 0, 'seconds'
         }
-    }
+    }*/
 }
 
 
