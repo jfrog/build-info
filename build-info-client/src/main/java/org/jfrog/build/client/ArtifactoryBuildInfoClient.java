@@ -343,7 +343,7 @@ public class ArtifactoryBuildInfoClient {
         return httpClient.getHttpClient().execute(httpPost);
     }
 
-    public Map<String, List<Map<String, String>>> getUserPluginInfo() throws IOException {
+    public Map<String, List<Map>> getUserPluginInfo() throws IOException {
         String url = new StringBuilder(artifactoryUrl).append("/api/plugins").toString();
         HttpGet getPlugins = new HttpGet(url);
         HttpResponse getResponse = httpClient.getHttpClient().execute(getPlugins);
