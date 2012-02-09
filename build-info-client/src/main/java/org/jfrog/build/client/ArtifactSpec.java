@@ -91,12 +91,24 @@ public class ArtifactSpec {
     }
 
     public boolean matches(ArtifactSpec spec) {
-        return PatternMatcher.match(this.configuration, spec.configuration, false) &&
-                PatternMatcher.match(this.group, spec.group, false) &&
-                PatternMatcher.match(this.name, spec.name, false) &&
-                PatternMatcher.match(this.version, spec.version, false) &&
-                PatternMatcher.match(this.classifier, spec.classifier, false) &&
-                PatternMatcher.match(this.type, spec.type, false);
+        return specValueMatch(this.configuration, spec.configuration) &&
+                specValueMatch(this.group, spec.group) &&
+                specValueMatch(this.name, spec.name) &&
+                specValueMatch(this.version, spec.version) &&
+                specValueMatch(this.classifier, spec.classifier) &&
+                specValueMatch(this.type, spec.type);
+    }
+
+    private boolean specValueMatch(String pattern, String str) {
+        // If pattern null or * always valid
+        if (pattern == null || WILDCARD.equals(pattern)) {
+            return true;
+        }
+        if (str == null || WILDCARD.equals(str)) {
+            // Only null or wildcard matches, so should have return true above
+            return false;
+        }
+        return PatternMatcher.match(pattern, str, false);
     }
 
     public String getConfiguration() {

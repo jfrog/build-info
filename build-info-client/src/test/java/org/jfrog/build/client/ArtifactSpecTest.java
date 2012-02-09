@@ -86,4 +86,29 @@ public class ArtifactSpecTest {
         assertTrue(ArtifactSpec.newSpec("* *:*:*er:*@j?? k1:v1").matches(spec));
         assertFalse(ArtifactSpec.newSpec("* *:*:*er:*@j??? k1:v1").matches(spec));
     }
+
+    @Test
+    public void matchesWithNull1() throws Exception {
+        ArtifactSpec spec =
+                ArtifactSpec.builder().configuration(null).group("org.jfrog").name("shared")
+                        .version("1.0")
+                        .classifier(null)
+                        .type("jar").build();
+        someTests(spec);
+    }
+
+    @Test
+    public void matchesWithNull2() throws Exception {
+        ArtifactSpec spec = ArtifactSpec.builder().group("org.jfrog").name("shared")
+                        .version("1.0").build();
+        someTests(spec);
+    }
+
+    private void someTests(ArtifactSpec spec) {
+        assertFalse(ArtifactSpec.newSpec("archives org.jfrog:*:*:*@* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("all org.jfrog:shared:?.?:* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("all org.jfrog:*:*.?:* k1:v1").matches(spec));
+        assertTrue(ArtifactSpec.newSpec("all org.jfrog:*:?.?:* k1:v1").matches(spec));
+        assertFalse(ArtifactSpec.newSpec("foo org.jfrog:*:?.?:* k1:v1").matches(spec));
+    }
 }
