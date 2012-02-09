@@ -96,7 +96,7 @@ public class PomTransformer {
             eolDetectingStream = new EolDetectingInputStream(new FileInputStream(pomFile));
             document = saxBuilder.build(eolDetectingStream);
         } catch (JDOMException e) {
-            throw new IOException("Failed to parse pom: " + pomFile.getAbsolutePath());
+            throw new IOException("Failed to parse pom: " + pomFile.getAbsolutePath(), e);
         } finally {
             if (eolDetectingStream != null) {
                 eolDetectingStream.close();

@@ -226,7 +226,7 @@ public class ArtifactoryBuildInfoClient {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
-        StringEntity stringEntity = new StringEntity(buildInfoJson);
+        StringEntity stringEntity = new StringEntity(buildInfoJson, "UTF-8");
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         httpPut.setEntity(stringEntity);
         log.info("Deploying build info to: " + url);
