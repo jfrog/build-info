@@ -125,7 +125,7 @@ public class BuildTest {
         assertTrue(build.getStatuses().isEmpty(), "Build statuses list should not have been populated.");
         assertEquals(build.getProperties(), properties, "Unexpected build properties.");
         assertTrue(build.getProperties().isEmpty(), "Build properties list should not have been populated.");
-        assertTrue(build.getBuildDependencies().isEmpty(), "Build dependencies list should not have been populated.");
+        assertEquals(build.getBuildDependencies(), buildDependencies, "Unexpected build dependencies list.");
     }
 
     /**
