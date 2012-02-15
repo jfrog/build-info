@@ -62,6 +62,8 @@ public class Build extends BaseBuildBean {
 
     private List<PromotionStatus> statuses;
 
+    private List<BuildDependency> buildDependencies;
+
     /**
      * Returns the version of the build
      *
@@ -194,7 +196,7 @@ public class Build extends BaseBuildBean {
 
     /**
      * Returns the agent that triggered the build (e.g. Hudson, TeamCity etc.). In case that the build was triggered by
-     * the build agent itself, this value would be equal to the {@link getBuildAgent}
+     * the build agent itself, this value would be equal to the {@link #getBuildAgent()}
      *
      * @return Triggering agent
      */
@@ -223,7 +225,7 @@ public class Build extends BaseBuildBean {
     /**
      * Sets the agent that executed the build
      *
-     * @param agent Executing agent
+     * @param buildAgent Executing agent
      */
     public void setBuildAgent(BuildAgent buildAgent) {
         this.buildAgent = buildAgent;
@@ -429,5 +431,32 @@ public class Build extends BaseBuildBean {
     public static String formatBuildStarted(long timestamp) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
         return dateFormat.format(timestamp);
+    }
+
+    /**
+     * Returns the build dependencies of this build
+     * @return list of #BuildDependency objects
+     */
+    public List<BuildDependency> getBuildDependencies() {
+        return buildDependencies;
+    }
+
+    /**
+     * Adds one #BuildDependency to build dependencies list
+     * @param buildDependency the #BuildDependency to add
+     */
+    public void addBuildDependency(BuildDependency buildDependency){
+        if(buildDependencies == null){
+            buildDependencies = Lists.newArrayList();
+        }
+        buildDependencies.add(buildDependency);
+    }
+
+    /**
+     * Sets build dependencies for this build
+     * @param buildDependencies List of #BuildDependency objects
+     */
+    public void setBuildDependencies(List<BuildDependency> buildDependencies) {
+        this.buildDependencies = buildDependencies;
     }
 }

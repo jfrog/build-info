@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
+import org.jfrog.build.api.builder.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -24,10 +25,13 @@ import org.testng.annotations.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import static com.google.common.collect.Iterables.getLast;
+import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.jfrog.build.api.BuildType.GRADLE;
 import static org.testng.Assert.*;
 
@@ -58,6 +62,7 @@ public class BuildTest {
         assertNull(build.getParentBuildId(), "Build parent build ID should have not been initialized.");
         assertNull(build.getModules(), "Build modules should have not been initialized.");
         assertNull(build.getProperties(), "Build properties should have not been initialized.");
+        assertNull(build.getBuildDependencies(), "Build dependencies should have not been initialized.");
     }
 
     /**
@@ -78,6 +83,10 @@ public class BuildTest {
         String vcsRevision = "2421";
         List<Module> modules = Lists.newArrayList();
         List<PromotionStatus> statuses = Lists.newArrayList();
+        List<BuildDependency> buildDependencies = Arrays.asList(
+                new BuildDependencyBuilder().name("foo").number("123").timestampDate(new Date()).build(),
+                new BuildDependencyBuilder().name("bar").number("456").timestampDate(new Date()).build()
+        );
         Properties properties = new Properties();
 
         Build build = new Build();
@@ -96,6 +105,7 @@ public class BuildTest {
         build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
+        build.setBuildDependencies(buildDependencies);
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
@@ -115,6 +125,7 @@ public class BuildTest {
         assertTrue(build.getStatuses().isEmpty(), "Build statuses list should not have been populated.");
         assertEquals(build.getProperties(), properties, "Unexpected build properties.");
         assertTrue(build.getProperties().isEmpty(), "Build properties list should not have been populated.");
+        assertTrue(build.getBuildDependencies().isEmpty(), "Build dependencies list should not have been populated.");
     }
 
     /**
@@ -152,5 +163,23 @@ public class BuildTest {
 
         assertEquals(build.getStatuses().size(), 2, "Second status object should have been added.");
         assertEquals(build.getStatuses().get(1), anotherPromotionStatus, "Unexpected status object.");
+    }
+
+    public void testAddBuildDependencyMethod() {
+        Build build = new Build();
+        assertNull(build.getBuildDependencies(), "Default buildDependencies list should be null.");
+
+        BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").timestampDate(new Date()).build();
+
+        build.addBuildDependency(buildDependency);
+
+        assertFalse(build.getBuildDependencies().isEmpty(), "BuildDependency object should have been added.");
+        assertEquals(getOnlyElement(build.getBuildDependencies()), buildDependency, "Unexpected build dependency object.");
+
+        BuildDependency otherBuildDependency = new BuildDependencyBuilder().name("bar").number("456").timestampDate(new Date()).build();
+        build.addBuildDependency(otherBuildDependency);
+
+        assertEquals(build.getBuildDependencies().size(), 2, "Second BuildDependency object should have been added.");
+        assertEquals(getLast(build.getBuildDependencies()), otherBuildDependency, "Unexpected build dependency object.");
     }
 }
