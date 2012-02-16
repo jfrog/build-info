@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api;
+package org.jfrog.build.api.dependency;
 
 /**
  * Contains build dependency.

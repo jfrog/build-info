@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.client;
+package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.BuildDependencyBuilder;
+import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
+import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
-import org.testng.Assert;
+import org.jfrog.build.util.JsonSerializer;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
@@ -76,7 +76,7 @@ public class BuildInfoSerializationTest {
         build.setVcsRevision(vcsRevision);
         build.setBuildDependencies(buildDependencies);
 
-        String buildInfoJSON = BuildInfoSerializer.toJSON(build);
+        String buildInfoJSON = new JsonSerializer<Build>().toJSON(build);
         System.out.println("buildInfoJSON = " + buildInfoJSON);
 
     }

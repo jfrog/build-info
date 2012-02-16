@@ -17,8 +17,9 @@
 package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.builder.BuildDependencyBuilder;
+import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;

@@ -17,7 +17,8 @@
 package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildDependency;
+import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
+import org.jfrog.build.api.dependency.BuildDependency;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;

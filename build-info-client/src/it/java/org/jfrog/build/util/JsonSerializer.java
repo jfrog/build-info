@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.client;
+package org.jfrog.build.util;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -29,9 +29,9 @@ import java.io.StringWriter;
  * @author jbaruch
  * @since 15/02/12
  */
-public class BuildInfoSerializer {
+public class JsonSerializer<T> {
 
-    public static String toJSON(Build buildInfo) throws Exception {
+    public String toJSON(T object) throws Exception {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
         mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
@@ -40,7 +40,7 @@ public class BuildInfoSerializer {
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
         jsonGenerator.useDefaultPrettyPrinter();
-        jsonGenerator.writeObject(buildInfo);
+        jsonGenerator.writeObject(object);
         return writer.getBuffer().toString();
     }
 }

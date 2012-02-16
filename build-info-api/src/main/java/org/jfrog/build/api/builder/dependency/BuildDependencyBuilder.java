@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api.builder;
+package org.jfrog.build.api.builder.dependency;
 
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildDependency;
+import org.jfrog.build.api.dependency.BuildDependency;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
