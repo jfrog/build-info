@@ -37,7 +37,7 @@ import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
 
 /**
- * Populator util for filling up an ArtifactoryClientConfiguration based on a gradle project + environemnt properties
+ * Populator util for filling up an ArtifactoryClientConfiguration based on a gradle project + environment properties
  *
  * @author Tomer Cohen
  */

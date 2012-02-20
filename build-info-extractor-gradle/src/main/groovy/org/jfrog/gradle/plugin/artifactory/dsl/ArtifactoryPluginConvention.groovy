@@ -36,7 +36,7 @@ class ArtifactoryPluginConvention {
         propsResolver = {String name ->
             project.logger.debug "Artifactory plugin: resolving property '${name}''"
             def val = project.property(name)
-            project.logger.debug "Artifactory plugin: property '${name}' resolved to '${project.properties[name]}'"
+            project.logger.debug "Artifactory plugin: property '${name}' resolved to '${val}'"
             val
         }
         ArtifactoryPluginConvention.metaClass.propertyMissing = propsResolver

@@ -83,6 +83,7 @@ public class BuildInfoTask extends DefaultTask {
     public static final String PUBLISH_POM = "publishPom";
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
     public static final String PUBLISH_BUILD_INFO = "publishBuildInfo";
+    public static final String ARCHIVES_BASE_NAME = "archivesBaseName";
 
     @InputFile
     @Optional
@@ -102,9 +103,11 @@ public class BuildInfoTask extends DefaultTask {
     @Input
     private final ArtifactSpecs artifactSpecs = new ArtifactSpecs();
 
+    @Input
+    private boolean skip = false;
+
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
-    private boolean lastInGraph = false;
     private Map<String, String> defaultProps;
     private boolean publishConfigsSpecified;
 
@@ -168,8 +171,12 @@ public class BuildInfoTask extends DefaultTask {
         flags.put(flagName, newValue);
     }
 
-    public void setLastInGraph(boolean lastInGraph) {
-        this.lastInGraph = lastInGraph;
+    public boolean isSkip() {
+        return skip;
+    }
+
+    public void setSkip(boolean skip) {
+        this.skip = skip;
     }
 
     public void setProperties(Map<String, CharSequence> props) {
@@ -275,11 +282,16 @@ public class BuildInfoTask extends DefaultTask {
 
 
     public void projectsEvaluated() {
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        Project project = getProject();
+        if (isSkip()) {
+            log.debug("Artifactory plugin artifactoryPublish task '{}' skipped for project '{}'.",
+                    this.getPath(), project.getName());
+            return;
+        }
+        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
+        ArtifactoryClientConfiguration acc = convention.getClientConfig();
         artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
-        Project project = getProject();
-        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
         //Configure the task using the defaults closure (delegate to the task)
         PublisherConfig config = convention.getPublisherConfig();
         if (config != null) {
@@ -606,9 +618,12 @@ public class BuildInfoTask extends DefaultTask {
     }
 
     private String getModuleName() {
+        Project project = getProject();
         //Take into account the archivesBaseName if applied to the project by the Java plugin
-        Object archivesBaseName = getProject().getProperties().get("archivesBaseName");
-        return archivesBaseName != null ? archivesBaseName.toString() : getProject().getName();
+        if (project.hasProperty(ARCHIVES_BASE_NAME)) {
+            return project.property(ARCHIVES_BASE_NAME).toString();
+        }
+        return project.getName();
     }
 
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
@@ -674,9 +689,9 @@ public class BuildInfoTask extends DefaultTask {
             gid = gid.replace(".", "/");
         }
 
+        Set<String> processedFiles = Sets.newHashSet();
         for (Configuration configuration : publishConfigurations) {
             PublishArtifactSet artifacts = configuration.getAllArtifacts();
-            Set<String> processedFiles = Sets.newHashSet();
             for (PublishArtifact artifact : artifacts) {
                 File file = artifact.getFile();
                 if (processedFiles.contains(file.getAbsolutePath())) {

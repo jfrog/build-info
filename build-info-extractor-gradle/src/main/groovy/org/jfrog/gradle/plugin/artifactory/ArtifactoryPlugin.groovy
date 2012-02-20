@@ -50,16 +50,6 @@ class ArtifactoryPlugin implements Plugin<Project> {
         if (!conv.clientConfig.isBuildListernerAdded()) {
             def gradle = project.getGradle()
             gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
-            // Flag the last buildInfo task in the execution graph
-            gradle.getTaskGraph().whenReady {
-                boolean last = true
-                gradle.getTaskGraph().getAllTasks().reverseEach {
-                    if (BUILD_INFO_TASK_NAME.equals(it.name)) {
-                        it.lastInGraph = last
-                        last = false
-                    }
-                }
-            }
             conv.clientConfig.setBuildListernerAdded(true)
         }
     }
