@@ -41,9 +41,7 @@ buildscript {
 }
 
 allprojects {
-    apply {
-        apply plugin: 'artifactory'
-    }
+    apply plugin: 'artifactory'
     group = 'org.jfrog'
     version = '1.0'
 }
@@ -62,23 +60,27 @@ subprojects {
 
 dependsOnChildren()
 
-configurations {
-    simpleFile
-}
+project('api') {
+    configurations {
+        simpleFile
+    }
 
-artifacts {
-    simpleFile new DefaultPublishArtifact("settings.gradle", "txt", "text", null,
-            new Date(), file("$rootDir/settings.gradle"))
-}
+    artifacts {
+        simpleFile new DefaultPublishArtifact("settings.gradle", "txt", "text", null,
+                new Date(), file("$rootDir/settings.gradle"))
+    }
 
-artifactoryPublish {
-    publishConfigs configurations.simpleFile
-    publishIvy = false
-    publishPom = false
-    properties {
-        simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
+    artifactoryPublish {
+        publishConfigs configurations.simpleFile
+        publishIvy = false
+        publishPom = false
+        properties {
+            simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
+        }
     }
 }
+
+artifactoryPublish.skip = true
 
 artifactory {
     //contextUrl = 'http://repo.jfrog.org/artifactory'
@@ -95,6 +97,7 @@ artifactory {
         defaults {
             //publishIvy & publishPom are true by default
             publishArtifacts = true
+            publishConfigs('archives')
             //publishIvy = false
             //publishPom = false
             properties = ['qa.level': 'basic']
