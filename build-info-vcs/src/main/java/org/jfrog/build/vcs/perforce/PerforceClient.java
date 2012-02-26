@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.List;
@@ -65,7 +66,7 @@ public class PerforceClient {
     }
 
     /**
-     * Creates a new changelist and returns its id number
+     * Creates a new changelist and returns it's id number
      * @return The id of the newly created changelist
      * @throws IOException In case of errors communicating with perforce server
      */
@@ -87,8 +88,11 @@ public class PerforceClient {
         try {
             List<IFileSpec> fileSpecs = FileSpecBuilder.makeFileSpecList(file.getAbsolutePath());
             List<IFileSpec> fileSpecsResult = client.editFiles(fileSpecs, false, false, changeListId, null);
-            if (!FileSpecOpStatus.VALID.equals(fileSpecsResult.get(0).getOpStatus())) {
-                reopenFile(changeListId, fileSpecs);
+            for (IFileSpec fileSpec : fileSpecsResult) {
+                if (!FileSpecOpStatus.VALID.equals(fileSpec.getOpStatus())) {
+                    reopenFile(changeListId, fileSpecs);
+                    break;
+                }
             }
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
@@ -175,7 +179,16 @@ public class PerforceClient {
         }
     }
 
-    public static class Builder {
+    public void closeConnection() throws IOException {
+        try {
+            server.disconnect();
+        } catch (P4JavaException e) {
+            throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
+        }
+    }
+
+    public static class Builder implements Serializable {
+
         /**
          * The Perforce server address in the format of hostname[:port]
          */
