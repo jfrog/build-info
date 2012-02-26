@@ -84,16 +84,19 @@ public class PerforceClient {
         }
     }
 
-    public void editFile(int changeListId, File file) throws IOException {
+    public String editFile(int changeListId, File file) throws IOException {
         try {
             List<IFileSpec> fileSpecs = FileSpecBuilder.makeFileSpecList(file.getAbsolutePath());
             List<IFileSpec> fileSpecsResult = client.editFiles(fileSpecs, false, false, changeListId, null);
+            String statusMessage = "OK";
             for (IFileSpec fileSpec : fileSpecsResult) {
                 if (!FileSpecOpStatus.VALID.equals(fileSpec.getOpStatus())) {
+                    statusMessage = fileSpec.getStatusMessage();
                     reopenFile(changeListId, fileSpecs);
                     break;
                 }
             }
+            return statusMessage;
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
         }
