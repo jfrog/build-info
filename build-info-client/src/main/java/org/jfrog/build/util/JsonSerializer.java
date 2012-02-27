@@ -21,8 +21,8 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
-import org.jfrog.build.api.Build;
 
+import java.io.IOException;
 import java.io.StringWriter;
 
 /**
@@ -31,7 +31,7 @@ import java.io.StringWriter;
  */
 public class JsonSerializer<T> {
 
-    public String toJSON(T object) throws Exception {
+    public String toJSON(T object) throws IOException {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
         mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
