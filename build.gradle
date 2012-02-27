@@ -23,13 +23,13 @@ buildscript {
             classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.12')
         }
     }
-    configurations.classpath {
+   /* configurations.classpath {
         resolutionStrategy {
             failOnVersionConflict()
             cacheDynamicVersionsFor 0, 'seconds'
             cacheChangingModulesFor 0, 'seconds'
         }
-    }
+    }**/
 }
 
 
@@ -39,7 +39,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
 version = '2'
-baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor']
+baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
 
 allprojects {
     apply plugin: 'idea'
@@ -60,7 +60,6 @@ artifactory {
     }
 }
 
-// To activate when 2.0.12 is released
 artifactoryPublish.skip = true
 
 def baseProjects() {
@@ -256,6 +255,13 @@ project('build-info-extractor') {
     dependencies {
         compile project(':build-info-client')
         testCompile "org.easymock:easymockclassextension:2.5.2"
+    }
+}
+
+project('build-info-vcs') {
+    description = 'JFrog Build-Info VCS'
+    dependencies {
+        compile "com.perforce:p4java:2011.1.297684"
     }
 }
 
