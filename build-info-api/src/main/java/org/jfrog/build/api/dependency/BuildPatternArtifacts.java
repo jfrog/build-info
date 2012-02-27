@@ -21,24 +21,22 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
- * Represents build outputs: build dependencies and built artifacts, filtered by patterns in request.
- * @see BuildOutputsRequest
+ * Represents built artifacts, filtered by patterns in request.
+ * @see BuildPatternArtifactsRequest
  * @author jbaruch
  * @since 16/02/12
  */
-public class BuildOutputs {
+public class BuildPatternArtifacts {
 
     private String buildName;
     private String buildNumber;
-    private List<BuildDependency> buildDependencies;
     private List<PatternResult> patternResults;
 
-    public BuildOutputs() {
-        buildDependencies = Lists.newArrayList();
+    public BuildPatternArtifacts() {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildOutputs(String buildName, String buildNumber) {
+    public BuildPatternArtifacts(String buildName, String buildNumber) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
     }
@@ -57,21 +55,6 @@ public class BuildOutputs {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
-    }
-
-    public List<BuildDependency> getBuildDependencies() {
-        return buildDependencies;
-    }
-
-    public void setBuildDependencies(List<BuildDependency> buildDependencies) {
-        this.buildDependencies = buildDependencies;
-    }
-
-    public void addBuildDependency(BuildDependency buildDependency){
-        if(buildDependencies == null){
-            buildDependencies = Lists.newArrayList();
-        }
-        buildDependencies.add(buildDependency);
     }
 
     public List<PatternResult> getPatternResults() {

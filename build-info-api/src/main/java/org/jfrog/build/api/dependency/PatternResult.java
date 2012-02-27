@@ -21,10 +21,10 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
- * Represents group of results for pattern request in {@link BuildOutputsRequest}. Part of {@link BuildOutputs}.
+ * Represents group of results for pattern request in {@link BuildPatternArtifactsRequest}. Part of {@link BuildPatternArtifacts}.
  *
  * @author jbaruch
- * @see BuildOutputs
+ * @see BuildPatternArtifacts
  * @since 16/02/12
  */
 public class PatternResult {

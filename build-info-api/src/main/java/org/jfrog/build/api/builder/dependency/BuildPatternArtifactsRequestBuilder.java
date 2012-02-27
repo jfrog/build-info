@@ -17,7 +17,7 @@
 package org.jfrog.build.api.builder.dependency;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.dependency.BuildOutputsRequest;
+import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.Pattern;
 
 import java.util.List;
@@ -26,43 +26,43 @@ import java.util.List;
  * @author jbaruch
  * @since 16/02/12
  */
-public class BuildOutputsRequestBuilder {
+public class BuildPatternArtifactsRequestBuilder {
 
     private String buildName;
         private String buildNumber;
         private boolean transitive;
         private List<Pattern> patterns;
 
-    public BuildOutputsRequestBuilder() {
+    public BuildPatternArtifactsRequestBuilder() {
         patterns = Lists.newArrayList();
     }
 
-    public BuildOutputsRequest build(){
+    public BuildPatternArtifactsRequest build(){
         if (buildName == null) {
-            throw new IllegalArgumentException("BuildOutputsRequest must have a build name.");
+            throw new IllegalArgumentException("BuildPatternArtifactsRequest must have a build name.");
         }
         if (buildNumber == null) {
-            throw new IllegalArgumentException("BuildOutputsRequest must have a build number.");
+            throw new IllegalArgumentException("BuildPatternArtifactsRequest must have a build number.");
         }
 
-        BuildOutputsRequest request = new BuildOutputsRequest(buildName, buildNumber);
+        BuildPatternArtifactsRequest request = new BuildPatternArtifactsRequest(buildName, buildNumber);
         request.setTransitive(transitive);
         request.setPatterns(patterns);
         return request;
     }
 
-    public BuildOutputsRequestBuilder buildName(String buildName){
+    public BuildPatternArtifactsRequestBuilder buildName(String buildName){
         this.buildName = buildName;
         return this;
     }
 
-    public BuildOutputsRequestBuilder buildNumber(String buildNumber){
+    public BuildPatternArtifactsRequestBuilder buildNumber(String buildNumber){
         this.buildNumber = buildNumber;
         return this;
     }
     //no support for transitivity
 
-    public BuildOutputsRequestBuilder pattern(String pattern){
+    public BuildPatternArtifactsRequestBuilder pattern(String pattern){
         patterns.add(new Pattern(pattern));
         return this;
     }

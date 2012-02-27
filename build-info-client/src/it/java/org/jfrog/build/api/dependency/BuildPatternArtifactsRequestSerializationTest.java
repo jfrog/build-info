@@ -16,7 +16,7 @@
 
 package org.jfrog.build.api.dependency;
 
-import org.jfrog.build.api.builder.dependency.BuildOutputsRequestBuilder;
+import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
 import org.jfrog.build.util.JsonSerializer;
 import org.testng.annotations.Test;
 
@@ -24,14 +24,14 @@ import org.testng.annotations.Test;
  * @author jbaruch
  * @since 16/02/12
  */
-public class BuildOutputsRequestSerializationTest {
+public class BuildPatternArtifactsRequestSerializationTest {
 
     @Test
     public void testBuildOutputsRequestSerialisation() throws Exception {
-        BuildOutputsRequest request = new BuildOutputsRequestBuilder().buildName("foo").buildNumber("LATEST")
+        BuildPatternArtifactsRequest request = new BuildPatternArtifactsRequestBuilder().buildName("foo").buildNumber("LATEST")
                 .pattern("*:dir/*/bob/**/*.zip").pattern("*:**/*.*;status+=prod").build();
 
-        String requstJson = new JsonSerializer<BuildOutputsRequest>().toJSON(request);
+        String requstJson = new JsonSerializer<BuildPatternArtifactsRequest>().toJSON(request);
         System.out.println("requstJson = " + requstJson);
     }
 }

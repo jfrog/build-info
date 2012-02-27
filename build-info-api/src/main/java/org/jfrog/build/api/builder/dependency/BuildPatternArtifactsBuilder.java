@@ -17,8 +17,7 @@
 package org.jfrog.build.api.builder.dependency;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.dependency.BuildDependency;
-import org.jfrog.build.api.dependency.BuildOutputs;
+import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.PatternResult;
 
 import java.util.List;
@@ -27,46 +26,38 @@ import java.util.List;
  * @author jbaruch
  * @since 16/02/12
  */
-public class BuildOutputsBuilder {
+public class BuildPatternArtifactsBuilder {
     private String buildName;
     private String buildNumber;
-    private List<BuildDependency> buildDependencies;
     private List<PatternResult> patternResults;
 
-    public BuildOutputsBuilder() {
-        buildDependencies = Lists.newArrayList();
+    public BuildPatternArtifactsBuilder() {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildOutputs build() {
+    public BuildPatternArtifacts build() {
         if (buildName == null) {
-            throw new IllegalArgumentException("BuildOutputs must have a name.");
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a name.");
         }
         if (buildNumber == null) {
-            throw new IllegalArgumentException("BuildOutputs must have a number.");
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a number.");
         }
-        BuildOutputs buildOutputs = new BuildOutputs(buildName, buildNumber);
-        buildOutputs.setBuildDependencies(buildDependencies);
-        buildOutputs.setPatternResults(patternResults);
-        return buildOutputs;
+        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber);
+        buildPatternArtifacts.setPatternResults(patternResults);
+        return buildPatternArtifacts;
     }
 
-    public BuildOutputsBuilder buildName(String buildName) {
+    public BuildPatternArtifactsBuilder buildName(String buildName) {
         this.buildName = buildName;
         return this;
     }
 
-    public BuildOutputsBuilder buildNumber(String buildNumber) {
+    public BuildPatternArtifactsBuilder buildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
         return this;
     }
 
-    public BuildOutputsBuilder buildDependency(BuildDependency buildDependency) {
-        buildDependencies.add(buildDependency);
-        return this;
-    }
-
-    public BuildOutputsBuilder patternResult(PatternResult patternResult) {
+    public BuildPatternArtifactsBuilder patternResult(PatternResult patternResult) {
         patternResults.add(patternResult);
         return this;
     }

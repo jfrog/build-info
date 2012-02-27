@@ -20,7 +20,7 @@ package org.jfrog.build.api.dependency;
  * Represents artifact matched by requested pattern. Part of {@link PatternResult}.
  *
  * @author jbaruch
- * @see BuildOutputs
+ * @see BuildPatternArtifacts
  * @since 16/02/12
  */
 public class PatternArtifact {

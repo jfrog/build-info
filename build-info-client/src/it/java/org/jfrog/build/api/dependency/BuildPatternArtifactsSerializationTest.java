@@ -17,8 +17,7 @@
 
 package org.jfrog.build.api.dependency;
 
-import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
-import org.jfrog.build.api.builder.dependency.BuildOutputsBuilder;
+import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsBuilder;
 import org.jfrog.build.api.builder.dependency.PatternArtifactBuilder;
 import org.jfrog.build.util.JsonSerializer;
 import org.testng.annotations.Test;
@@ -29,7 +28,7 @@ import java.util.Date;
  * @author jbaruch
  * @since 16/02/12
  */
-public class BuildOutputsSerializationTest {
+public class BuildPatternArtifactsSerializationTest {
 
     @Test
     public void testBuildOutputsSerialisation() throws Exception {
@@ -43,12 +42,10 @@ public class BuildOutputsSerializationTest {
         prod.addArtifact(new PatternArtifactBuilder().uri("345654").size(456546743).lastModifiedDate(new Date()).sha1("sha1").build());
 
 
-        BuildOutputs buildOutputs = new BuildOutputsBuilder().buildName("foo").buildNumber("123")
-                .buildDependency(new BuildDependencyBuilder().number("456").name("bar").timestampDate(new Date()).uri("http://myhostB.com/artifactory/builds/bar/456/").build())
-                .buildDependency(new BuildDependencyBuilder().number("789").name("baz").timestampDate(new Date()).uri("http://myhostA.com/artifactory/builds/baz/789/").build())
+        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifactsBuilder().buildName("foo").buildNumber("123")
                 .patternResult(bobZips).patternResult(prod).build();
 
-        String buildOutputsJson = new JsonSerializer<BuildOutputs>().toJSON(buildOutputs);
+        String buildOutputsJson = new JsonSerializer<BuildPatternArtifacts>().toJSON(buildPatternArtifacts);
         System.out.println("buildOutputsJson = " + buildOutputsJson);
     }
 }
