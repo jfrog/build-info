@@ -39,7 +39,7 @@ public class BuildPatternArtifactsSerializationTest {
 
         PatternResult prod = new PatternResult();
         prod.addArtifact(new PatternArtifactBuilder().uri("lib-releases-local:mmm.jar").size(345654).lastModifiedDate(new Date()).sha1("sha1").build());
-        prod.addArtifact(new PatternArtifactBuilder().uri("345654").size(456546743).lastModifiedDate(new Date()).sha1("sha1").build());
+        prod.addArtifact(new PatternArtifactBuilder().uri("lib-releases-local:kkk/lll.war").size(456546743).lastModifiedDate(new Date()).sha1("sha1").build());
 
 
         BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifactsBuilder().buildName("foo").buildNumber("123")
