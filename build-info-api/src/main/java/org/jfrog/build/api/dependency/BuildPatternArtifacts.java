@@ -30,6 +30,9 @@ public class BuildPatternArtifacts {
 
     private String buildName;
     private String buildNumber;
+    private String timestamp;
+    private String uri;
+
     private List<PatternResult> patternResults;
 
     public BuildPatternArtifacts() {
@@ -55,6 +58,22 @@ public class BuildPatternArtifacts {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(String timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    public String getUri() {
+        return uri;
+    }
+
+    public void setUri(String uri) {
+        this.uri = uri;
     }
 
     public List<PatternResult> getPatternResults() {
