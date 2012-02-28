@@ -50,7 +50,7 @@ public class PatternArtifactBuilder {
         if (sha1 == null) {
             throw new IllegalArgumentException("PatternArtifact must have a sha1 checksum.");
         }
-        return new PatternArtifact("", uri, size, lastModified, sha1);
+        return new PatternArtifact(artifactoryUrl, uri, size, lastModified, sha1);
     }
 
     public PatternArtifactBuilder artifactoryUrl(String artifactoryUrl) {
