@@ -381,7 +381,7 @@ public class ArtifactoryBuildInfoClient {
 
     public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams)
             throws IOException {
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/staging/")
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/builds/staging/")
                 .append(httpClient.urlEncode(strategyName)).append("?buildName=")
                 .append(httpClient.urlEncode(buildName));
         appendParamsToUrl(requestParams, urlBuilder);
