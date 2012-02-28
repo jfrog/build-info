@@ -32,7 +32,7 @@ public class BuildPatternArtifacts {
     private String buildName;
     private String buildNumber;
     private String started;
-    private String uri;
+    private String url;
 
     private List<PatternResult> patternResults;
 
@@ -40,11 +40,11 @@ public class BuildPatternArtifacts {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildPatternArtifacts(String buildName, String buildNumber, String started, String uri) {
+    public BuildPatternArtifacts(String buildName, String buildNumber, String started, String url) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
         this.started = started;
-        this.uri = uri;
+        this.url = url;
     }
 
     public String getBuildName() {
@@ -71,12 +71,12 @@ public class BuildPatternArtifacts {
         this.started = started;
     }
 
-    public String getUri() {
-        return uri;
+    public String getUrl() {
+        return url;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public List<PatternResult> getPatternResults() {

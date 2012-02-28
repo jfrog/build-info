@@ -33,7 +33,7 @@ public class BuildPatternArtifactsBuilder {
     private String buildName;
     private String buildNumber;
     private String started;
-    private String uri;
+    private String url;
     private List<PatternResult> patternResults;
 
     public BuildPatternArtifactsBuilder() {
@@ -50,10 +50,10 @@ public class BuildPatternArtifactsBuilder {
         if (started == null) {
             throw new IllegalArgumentException("BuildPatternArtifacts must have a started.");
         }
-        if (uri == null) {
-            throw new IllegalArgumentException("BuildPatternArtifacts must have a uri.");
+        if (url == null) {
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a url.");
         }
-        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber, started, uri);
+        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber, started, url);
         buildPatternArtifacts.setPatternResults(patternResults);
         return buildPatternArtifacts;
     }
@@ -87,8 +87,8 @@ public class BuildPatternArtifactsBuilder {
     }
 
 
-    public BuildPatternArtifactsBuilder uri(String uri) {
-        this.uri = uri;
+    public BuildPatternArtifactsBuilder url(String url) {
+        this.url = url;
         return this;
     }
 }

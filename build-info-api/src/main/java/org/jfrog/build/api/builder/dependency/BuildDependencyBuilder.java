@@ -32,7 +32,7 @@ public class BuildDependencyBuilder {
     private String name;
     private String number;
     private String started;
-    private String uri;
+    private String url;
 
     /**
      * Assembles the build dependency class
@@ -54,7 +54,7 @@ public class BuildDependencyBuilder {
         buildDependency.setName(name);
         buildDependency.setNumber(number);
         buildDependency.setStarted(started);
-        buildDependency.setUri(uri);
+        buildDependency.setUrl(url);
         return buildDependency;
     }
 
@@ -108,13 +108,13 @@ public class BuildDependencyBuilder {
 
 
     /**
-     * Sets the uri of the build dependency
+     * Sets the url of the build dependency
      *
-     * @param uri build dependency uri
+     * @param url build dependency url
      * @return Builder instance
      */
-    public BuildDependencyBuilder uri(String uri) {
-        this.uri = uri;
+    public BuildDependencyBuilder url(String url) {
+        this.url = url;
         return this;
     }
 

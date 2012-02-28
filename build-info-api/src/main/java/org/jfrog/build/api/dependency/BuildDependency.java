@@ -27,7 +27,7 @@ public class BuildDependency {
     private String name;
     private String number;
     private String started;
-    private String uri;
+    private String url;
 
     public BuildDependency() {
     }
@@ -56,11 +56,11 @@ public class BuildDependency {
         this.started = started;
     }
 
-    public String getUri() {
-        return uri;
+    public String getUrl() {
+        return url;
     }
 
-    public void setUri(String uri) {
-        this.uri = uri;
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

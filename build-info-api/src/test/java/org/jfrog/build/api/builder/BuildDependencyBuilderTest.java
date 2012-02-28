@@ -42,7 +42,7 @@ public class BuildDependencyBuilderTest {
      */
     public void testDefaultBuild() {
         BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").started(timestamp).build();
-        assertNull(buildDependency.getUri(), "URI should have not been initialized.");
+        assertNull(buildDependency.getUrl(), "URI should have not been initialized.");
     }
 
     /**
@@ -51,14 +51,14 @@ public class BuildDependencyBuilderTest {
     public void testBuilderSetters() {
         String name = "foo";
         String number = "123";
-        String uri = "http://myhostA.com/artifactory/builds/foo/123/";
+        String url = "http://myhostA.com/artifactory/builds/foo/123/";
 
-        BuildDependency buildDependency = new BuildDependencyBuilder().name(name).number(number).started(timestamp).uri(uri).build();
+        BuildDependency buildDependency = new BuildDependencyBuilder().name(name).number(number).started(timestamp).url(url).build();
 
         assertEquals(buildDependency.getName(), name, "Unexpected name.");
         assertEquals(buildDependency.getNumber(), number, "Unexpected number.");
         assertEquals(buildDependency.getStarted(), timestamp, "Unexpected started.");
-        assertEquals(buildDependency.getUri(), uri, "Unexpected uri.");
+        assertEquals(buildDependency.getUrl(), url, "Unexpected url.");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
