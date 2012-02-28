@@ -374,7 +374,55 @@ public class ArtifactoryBuildInfoClient {
     public HttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/execute/")
                 .append(executionName);
-        if (!requestParams.isEmpty()) {
+        appendParamsToUrl(requestParams, urlBuilder);
+        HttpPost postRequest = new HttpPost(urlBuilder.toString());
+        return httpClient.getHttpClient().execute(postRequest);
+    }
+
+    public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams)
+            throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/staging/")
+                .append(httpClient.urlEncode(strategyName)).append("?buildName=")
+                .append(httpClient.urlEncode(buildName));
+        appendParamsToUrl(requestParams, urlBuilder);
+        HttpGet getRequest = new HttpGet(urlBuilder.toString());
+        HttpResponse response = httpClient.getHttpClient().execute(getRequest);
+        StatusLine statusLine = response.getStatusLine();
+        HttpEntity responseEntity = response.getEntity();
+        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (responseEntity != null) {
+                responseEntity.consumeContent();
+            }
+            throwHttpIOException("Failed to obtain staging strategy:", statusLine);
+        } else {
+            if (responseEntity != null) {
+                InputStream content = responseEntity.getContent();
+                JsonParser parser;
+                try {
+                    parser = httpClient.createJsonParser(content);
+                    return parser.readValueAs(Map.class);
+                } finally {
+                    if (content != null) {
+                        content.close();
+                    }
+                }
+            }
+        }
+        return Maps.newHashMap();
+    }
+
+    /**
+     * Release all connection and cleanup resources.
+     */
+    public void shutdown() {
+        if (httpClient != null) {
+            httpClient.shutdown();
+        }
+    }
+
+    private void appendParamsToUrl(Map<String, String> requestParams, StringBuilder urlBuilder)
+            throws UnsupportedEncodingException {
+        if ((requestParams != null) && !requestParams.isEmpty()) {
             urlBuilder.append("?params=");
             Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
             String encodedPipe = httpClient.urlEncode("|");
@@ -391,18 +439,6 @@ public class ArtifactoryBuildInfoClient {
                     urlBuilder.append(encodedPipe);
                 }
             }
-        }
-
-        HttpPost postRequest = new HttpPost(urlBuilder.toString());
-        return httpClient.getHttpClient().execute(postRequest);
-    }
-
-    /**
-     * Release all connection and cleanup resources.
-     */
-    public void shutdown() {
-        if (httpClient != null) {
-            httpClient.shutdown();
         }
     }
 
