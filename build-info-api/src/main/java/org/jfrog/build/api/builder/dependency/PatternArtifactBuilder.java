@@ -28,14 +28,18 @@ import java.util.Date;
  */
 public class PatternArtifactBuilder {
 
+    private String artifactoryUrl;
     private String uri;
     private long size;
     private String lastModified;
     private String sha1;
 
-    public PatternArtifact build(){
+    public PatternArtifact build() {
+        if (artifactoryUrl == null) {
+            throw new IllegalArgumentException("PatternArtifact must have an Artifactory URL.");
+        }
         if (uri == null) {
-            throw new IllegalArgumentException("PatternArtifact must have a name.");
+            throw new IllegalArgumentException("PatternArtifact must have a URI.");
         }
         if (size == 0) {
             throw new IllegalArgumentException("PatternArtifact must have a size.");
@@ -46,24 +50,30 @@ public class PatternArtifactBuilder {
         if (sha1 == null) {
             throw new IllegalArgumentException("PatternArtifact must have a sha1 checksum.");
         }
-        return new PatternArtifact(uri, size, lastModified, sha1);
+        return new PatternArtifact("", uri, size, lastModified, sha1);
     }
-    public PatternArtifactBuilder uri(String uri){
+
+    public PatternArtifactBuilder artifactoryUrl(String artifactoryUrl) {
+        this.artifactoryUrl = artifactoryUrl;
+        return this;
+    }
+
+    public PatternArtifactBuilder uri(String uri) {
         this.uri = uri;
         return this;
     }
 
-    public PatternArtifactBuilder size(long size){
+    public PatternArtifactBuilder size(long size) {
         this.size = size;
         return this;
     }
 
-    public PatternArtifactBuilder lastModified(String lastModified){
+    public PatternArtifactBuilder lastModified(String lastModified) {
         this.lastModified = lastModified;
         return this;
     }
 
-    public PatternArtifactBuilder lastModifiedDate(Date lastModified){
+    public PatternArtifactBuilder lastModifiedDate(Date lastModified) {
         if (lastModified == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
@@ -71,7 +81,7 @@ public class PatternArtifactBuilder {
         return this;
     }
 
-    public PatternArtifactBuilder sha1(String sha1){
+    public PatternArtifactBuilder sha1(String sha1) {
         this.sha1 = sha1;
         return this;
     }

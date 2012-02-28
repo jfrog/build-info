@@ -17,9 +17,12 @@
 package org.jfrog.build.api.builder.dependency;
 
 import com.google.common.collect.Lists;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.PatternResult;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -29,6 +32,8 @@ import java.util.List;
 public class BuildPatternArtifactsBuilder {
     private String buildName;
     private String buildNumber;
+    private String timestamp;
+    private String uri;
     private List<PatternResult> patternResults;
 
     public BuildPatternArtifactsBuilder() {
@@ -42,7 +47,13 @@ public class BuildPatternArtifactsBuilder {
         if (buildNumber == null) {
             throw new IllegalArgumentException("BuildPatternArtifacts must have a number.");
         }
-        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber);
+        if (timestamp == null) {
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a timestamp.");
+        }
+        if (uri == null) {
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a uri.");
+        }
+        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber, timestamp, uri);
         buildPatternArtifacts.setPatternResults(patternResults);
         return buildPatternArtifacts;
     }
@@ -59,6 +70,25 @@ public class BuildPatternArtifactsBuilder {
 
     public BuildPatternArtifactsBuilder patternResult(PatternResult patternResult) {
         patternResults.add(patternResult);
+        return this;
+    }
+
+    public BuildPatternArtifactsBuilder timestamp(String timestamp) {
+        this.timestamp = timestamp;
+        return this;
+    }
+
+    public BuildPatternArtifactsBuilder timestampDate(Date timestamp) {
+        if (timestamp == null) {
+            throw new IllegalArgumentException("Cannot format a null date.");
+        }
+        this.timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(timestamp);
+        return this;
+    }
+
+
+    public BuildPatternArtifactsBuilder uri(String uri) {
+        this.uri = uri;
         return this;
     }
 }

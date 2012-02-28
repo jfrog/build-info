@@ -22,8 +22,9 @@ import java.util.List;
 
 /**
  * Represents built artifacts, filtered by patterns in request.
- * @see BuildPatternArtifactsRequest
+ *
  * @author jbaruch
+ * @see BuildPatternArtifactsRequest
  * @since 16/02/12
  */
 public class BuildPatternArtifacts {
@@ -39,9 +40,11 @@ public class BuildPatternArtifacts {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildPatternArtifacts(String buildName, String buildNumber) {
+    public BuildPatternArtifacts(String buildName, String buildNumber, String timestamp, String uri) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
+        this.timestamp = timestamp;
+        this.uri = uri;
     }
 
     public String getBuildName() {
@@ -84,8 +87,8 @@ public class BuildPatternArtifacts {
         this.patternResults = patternResults;
     }
 
-    public void addPatternResult(PatternResult patternResult){
-        if(patternResults == null){
+    public void addPatternResult(PatternResult patternResult) {
+        if (patternResults == null) {
             patternResults = Lists.newArrayList();
         }
         patternResults.add(patternResult);
