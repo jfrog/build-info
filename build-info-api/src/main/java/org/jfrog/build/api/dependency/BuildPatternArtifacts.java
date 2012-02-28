@@ -31,7 +31,7 @@ public class BuildPatternArtifacts {
 
     private String buildName;
     private String buildNumber;
-    private String timestamp;
+    private String started;
     private String uri;
 
     private List<PatternResult> patternResults;
@@ -40,10 +40,10 @@ public class BuildPatternArtifacts {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildPatternArtifacts(String buildName, String buildNumber, String timestamp, String uri) {
+    public BuildPatternArtifacts(String buildName, String buildNumber, String started, String uri) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
-        this.timestamp = timestamp;
+        this.started = started;
         this.uri = uri;
     }
 
@@ -63,12 +63,12 @@ public class BuildPatternArtifacts {
         this.buildNumber = buildNumber;
     }
 
-    public String getTimestamp() {
-        return timestamp;
+    public String getStarted() {
+        return started;
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public void setStarted(String started) {
+        this.started = started;
     }
 
     public String getUri() {

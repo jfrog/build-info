@@ -26,7 +26,7 @@ package org.jfrog.build.api.dependency;
 public class BuildDependency {
     private String name;
     private String number;
-    private String timestamp;
+    private String started;
     private String uri;
 
     public BuildDependency() {
@@ -48,12 +48,12 @@ public class BuildDependency {
         this.number = number;
     }
 
-    public String getTimestamp() {
-        return timestamp;
+    public String getStarted() {
+        return started;
     }
 
-    public void setTimestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public void setStarted(String started) {
+        this.started = started;
     }
 
     public String getUri() {

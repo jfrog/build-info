@@ -32,7 +32,7 @@ import java.util.List;
 public class BuildPatternArtifactsBuilder {
     private String buildName;
     private String buildNumber;
-    private String timestamp;
+    private String started;
     private String uri;
     private List<PatternResult> patternResults;
 
@@ -47,13 +47,13 @@ public class BuildPatternArtifactsBuilder {
         if (buildNumber == null) {
             throw new IllegalArgumentException("BuildPatternArtifacts must have a number.");
         }
-        if (timestamp == null) {
-            throw new IllegalArgumentException("BuildPatternArtifacts must have a timestamp.");
+        if (started == null) {
+            throw new IllegalArgumentException("BuildPatternArtifacts must have a started.");
         }
         if (uri == null) {
             throw new IllegalArgumentException("BuildPatternArtifacts must have a uri.");
         }
-        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber, timestamp, uri);
+        BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifacts(buildName, buildNumber, started, uri);
         buildPatternArtifacts.setPatternResults(patternResults);
         return buildPatternArtifacts;
     }
@@ -73,16 +73,16 @@ public class BuildPatternArtifactsBuilder {
         return this;
     }
 
-    public BuildPatternArtifactsBuilder timestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public BuildPatternArtifactsBuilder started(String started) {
+        this.started = started;
         return this;
     }
 
-    public BuildPatternArtifactsBuilder timestampDate(Date timestamp) {
-        if (timestamp == null) {
+    public BuildPatternArtifactsBuilder startedDate(Date started) {
+        if (started == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(timestamp);
+        this.started = new SimpleDateFormat(Build.STARTED_FORMAT).format(started);
         return this;
     }
 

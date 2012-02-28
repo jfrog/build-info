@@ -85,8 +85,8 @@ public class BuildTest {
         List<Module> modules = Lists.newArrayList();
         List<PromotionStatus> statuses = Lists.newArrayList();
         List<BuildDependency> buildDependencies = Arrays.asList(
-                new BuildDependencyBuilder().name("foo").number("123").timestampDate(new Date()).build(),
-                new BuildDependencyBuilder().name("bar").number("456").timestampDate(new Date()).build()
+                new BuildDependencyBuilder().name("foo").number("123").startedDate(new Date()).build(),
+                new BuildDependencyBuilder().name("bar").number("456").startedDate(new Date()).build()
         );
         Properties properties = new Properties();
 
@@ -170,14 +170,14 @@ public class BuildTest {
         Build build = new Build();
         assertNull(build.getBuildDependencies(), "Default buildDependencies list should be null.");
 
-        BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").timestampDate(new Date()).build();
+        BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").startedDate(new Date()).build();
 
         build.addBuildDependency(buildDependency);
 
         assertFalse(build.getBuildDependencies().isEmpty(), "BuildDependency object should have been added.");
         assertEquals(getOnlyElement(build.getBuildDependencies()), buildDependency, "Unexpected build dependency object.");
 
-        BuildDependency otherBuildDependency = new BuildDependencyBuilder().name("bar").number("456").timestampDate(new Date()).build();
+        BuildDependency otherBuildDependency = new BuildDependencyBuilder().name("bar").number("456").startedDate(new Date()).build();
         build.addBuildDependency(otherBuildDependency);
 
         assertEquals(build.getBuildDependencies().size(), 2, "Second BuildDependency object should have been added.");

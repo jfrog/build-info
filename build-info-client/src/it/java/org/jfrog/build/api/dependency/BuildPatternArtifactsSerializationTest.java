@@ -43,7 +43,7 @@ public class BuildPatternArtifactsSerializationTest {
 
 
         BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifactsBuilder().buildName("foo").buildNumber("123")
-                .patternResult(bobZips).patternResult(prod).uri("http://localhost:8080/artifactory/lib-releases-local/mmm.jar").timestampDate(new Date()).build();
+                .patternResult(bobZips).patternResult(prod).uri("http://localhost:8080/artifactory/lib-releases-local/mmm.jar").startedDate(new Date()).build();
 
         String buildOutputsJson = new JsonSerializer<BuildPatternArtifacts>().toJSON(buildPatternArtifacts);
         System.out.println("buildOutputsJson = " + buildOutputsJson);
