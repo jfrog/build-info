@@ -41,8 +41,8 @@ public class BuildDependencyBuilderTest {
      * Validates the module values when using the defaults
      */
     public void testDefaultBuild() {
-        BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").timestamp(timestamp).build();
-        assertNull(buildDependency.getUri(), "URI should have not been initialized.");
+        BuildDependency buildDependency = new BuildDependencyBuilder().name("foo").number("123").started(timestamp).build();
+        assertNull(buildDependency.getUrl(), "URI should have not been initialized.");
     }
 
     /**
@@ -51,23 +51,23 @@ public class BuildDependencyBuilderTest {
     public void testBuilderSetters() {
         String name = "foo";
         String number = "123";
-        String uri = "http://myhostA.com/artifactory/builds/foo/123/";
+        String url = "http://myhostA.com/artifactory/builds/foo/123/";
 
-        BuildDependency buildDependency = new BuildDependencyBuilder().name(name).number(number).timestamp(timestamp).uri(uri).build();
+        BuildDependency buildDependency = new BuildDependencyBuilder().name(name).number(number).started(timestamp).url(url).build();
 
         assertEquals(buildDependency.getName(), name, "Unexpected name.");
         assertEquals(buildDependency.getNumber(), number, "Unexpected number.");
-        assertEquals(buildDependency.getTimestamp(), timestamp, "Unexpected timestamp.");
-        assertEquals(buildDependency.getUri(), uri, "Unexpected uri.");
+        assertEquals(buildDependency.getStarted(), timestamp, "Unexpected started.");
+        assertEquals(buildDependency.getUrl(), url, "Unexpected url.");
     }
 
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testNullDateForTimestamp() {
-        new BuildDependencyBuilder().timestampDate(null);
+        new BuildDependencyBuilder().startedDate(null);
     }
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBuildWithNullForTimestamp() {
-        new BuildDependencyBuilder().timestamp(null).build();
+        new BuildDependencyBuilder().started(null).build();
     }
     @Test(expectedExceptions = IllegalArgumentException.class)
     public void testBuildWithNullForName() {

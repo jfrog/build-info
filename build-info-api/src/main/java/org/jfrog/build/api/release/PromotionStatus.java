@@ -12,6 +12,8 @@ import java.util.Date;
  */
 public class PromotionStatus implements Serializable {
 
+    public static final String RELEASED = "Released";
+
     private String status;
     private String comment;
     private String repository;
@@ -23,7 +25,7 @@ public class PromotionStatus implements Serializable {
     }
 
     public PromotionStatus(String status, String comment, String repository, String timestamp, String user,
-            String ciUser) {
+                           String ciUser) {
         this.status = status;
         this.comment = comment;
         this.repository = repository;

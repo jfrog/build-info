@@ -31,8 +31,8 @@ public class BuildDependencyBuilder {
 
     private String name;
     private String number;
-    private String timestamp;
-    private String uri;
+    private String started;
+    private String url;
 
     /**
      * Assembles the build dependency class
@@ -46,15 +46,15 @@ public class BuildDependencyBuilder {
         if (number == null) {
             throw new IllegalArgumentException("BuildDependency must have a number.");
         }
-        if (timestamp == null) {
-            throw new IllegalArgumentException("BuildDependency must have a timestamp.");
+        if (started == null) {
+            throw new IllegalArgumentException("BuildDependency must have a started time.");
         }
 
         BuildDependency buildDependency = new BuildDependency();
         buildDependency.setName(name);
         buildDependency.setNumber(number);
-        buildDependency.setTimestamp(timestamp);
-        buildDependency.setUri(uri);
+        buildDependency.setStarted(started);
+        buildDependency.setUrl(url);
         return buildDependency;
     }
 
@@ -81,40 +81,40 @@ public class BuildDependencyBuilder {
     }
 
     /**
-     * Sets the timestamp of the build dependency
+     * Sets the started of the build dependency
      *
-     * @param timestamp build dependency timestamp
+     * @param started build dependency started
      * @return Builder instance
      */
-    public BuildDependencyBuilder timestamp(String timestamp) {
-        this.timestamp = timestamp;
+    public BuildDependencyBuilder started(String started) {
+        this.started = started;
         return this;
     }
 
 
     /**
-     * Sets the timestamp of the build dependency from Date
+     * Sets the started of the build dependency from Date
      *
-     * @param timestampDate build dependency timestamp as date
+     * @param startedDate build dependency started as date
      * @return Builder instance
      */
-    public BuildDependencyBuilder timestampDate(Date timestampDate) {
-        if (timestampDate == null) {
+    public BuildDependencyBuilder startedDate(Date startedDate) {
+        if (startedDate == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(timestampDate);
+        this.started = new SimpleDateFormat(Build.STARTED_FORMAT).format(startedDate);
         return this;
     }
 
 
     /**
-     * Sets the uri of the build dependency
+     * Sets the url of the build dependency
      *
-     * @param uri build dependency uri
+     * @param url build dependency url
      * @return Builder instance
      */
-    public BuildDependencyBuilder uri(String uri) {
-        this.uri = uri;
+    public BuildDependencyBuilder url(String url) {
+        this.url = url;
         return this;
     }
 

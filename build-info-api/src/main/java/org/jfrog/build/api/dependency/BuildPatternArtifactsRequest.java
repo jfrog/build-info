@@ -21,24 +21,24 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
- * Represents request for build outputs - build depenencies and built artifacts, filtered by patterns.
+ * Represents request for built artifacts, filtered by patterns.
  *
  * @author jbaruch
- * @see BuildOutputs
+ * @see BuildPatternArtifacts
  * @since 16/02/12
  */
-public class BuildOutputsRequest {
+public class BuildPatternArtifactsRequest {
 
     private String buildName;
     private String buildNumber;
     private boolean transitive;
     private List<Pattern> patterns;
 
-    public BuildOutputsRequest() {
+    public BuildPatternArtifactsRequest() {
         patterns = Lists.newArrayList();
     }
 
-    public BuildOutputsRequest(String buildName, String buildNumber) {
+    public BuildPatternArtifactsRequest(String buildName, String buildNumber) {
         this.buildNumber = buildNumber;
         this.buildName = buildName;
     }

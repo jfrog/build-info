@@ -20,12 +20,13 @@ package org.jfrog.build.api.dependency;
  * Represents artifact matched by requested pattern. Part of {@link PatternResult}.
  *
  * @author jbaruch
- * @see BuildOutputs
+ * @see BuildPatternArtifacts
  * @since 16/02/12
  */
 public class PatternArtifact {
 
     private String uri;
+    private String artifactoryUrl;
     private long size;
     private String lastModified;
     private String sha1;
@@ -33,11 +34,20 @@ public class PatternArtifact {
     public PatternArtifact() {
     }
 
-    public PatternArtifact(String uri, long size, String lastModified, String sha1) {
+    public PatternArtifact(String artifactoryUrl, String uri, long size, String lastModified, String sha1) {
+        this.artifactoryUrl = artifactoryUrl;
         this.uri = uri;
         this.size = size;
         this.lastModified = lastModified;
         this.sha1 = sha1;
+    }
+
+    public String getArtifactoryUrl() {
+        return artifactoryUrl;
+    }
+
+    public void setArtifactoryUrl(String artifactoryUrl) {
+        this.artifactoryUrl = artifactoryUrl;
     }
 
     public String getUri() {

@@ -53,8 +53,8 @@ public class BuildInfoSerializationTest {
         List<Module> modules = Lists.newArrayList();
         List<PromotionStatus> statuses = Lists.newArrayList();
         List<BuildDependency> buildDependencies = Arrays.asList(
-                new BuildDependencyBuilder().name("foo").number("123").timestampDate(new Date()).build(),
-                new BuildDependencyBuilder().name("bar").number("456").timestampDate(new Date()).build()
+                new BuildDependencyBuilder().name("foo").number("123").startedDate(new Date()).build(),
+                new BuildDependencyBuilder().name("bar").number("456").startedDate(new Date()).build()
         );
         Properties properties = new Properties();
 

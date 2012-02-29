@@ -21,26 +21,30 @@ import com.google.common.collect.Lists;
 import java.util.List;
 
 /**
- * Represents build outputs: build dependencies and built artifacts, filtered by patterns in request.
- * @see BuildOutputsRequest
+ * Represents built artifacts, filtered by patterns in request.
+ *
  * @author jbaruch
+ * @see BuildPatternArtifactsRequest
  * @since 16/02/12
  */
-public class BuildOutputs {
+public class BuildPatternArtifacts {
 
     private String buildName;
     private String buildNumber;
-    private List<BuildDependency> buildDependencies;
+    private String started;
+    private String url;
+
     private List<PatternResult> patternResults;
 
-    public BuildOutputs() {
-        buildDependencies = Lists.newArrayList();
+    public BuildPatternArtifacts() {
         patternResults = Lists.newArrayList();
     }
 
-    public BuildOutputs(String buildName, String buildNumber) {
+    public BuildPatternArtifacts(String buildName, String buildNumber, String started, String url) {
         this.buildName = buildName;
         this.buildNumber = buildNumber;
+        this.started = started;
+        this.url = url;
     }
 
     public String getBuildName() {
@@ -59,19 +63,20 @@ public class BuildOutputs {
         this.buildNumber = buildNumber;
     }
 
-    public List<BuildDependency> getBuildDependencies() {
-        return buildDependencies;
+    public String getStarted() {
+        return started;
     }
 
-    public void setBuildDependencies(List<BuildDependency> buildDependencies) {
-        this.buildDependencies = buildDependencies;
+    public void setStarted(String started) {
+        this.started = started;
     }
 
-    public void addBuildDependency(BuildDependency buildDependency){
-        if(buildDependencies == null){
-            buildDependencies = Lists.newArrayList();
-        }
-        buildDependencies.add(buildDependency);
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public List<PatternResult> getPatternResults() {
@@ -82,8 +87,8 @@ public class BuildOutputs {
         this.patternResults = patternResults;
     }
 
-    public void addPatternResult(PatternResult patternResult){
-        if(patternResults == null){
+    public void addPatternResult(PatternResult patternResult) {
+        if (patternResults == null) {
             patternResults = Lists.newArrayList();
         }
         patternResults.add(patternResult);
