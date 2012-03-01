@@ -373,7 +373,7 @@ public class ArtifactoryBuildInfoClient {
 
     public HttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/execute/")
-                .append(executionName);
+                .append(executionName).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
@@ -383,7 +383,7 @@ public class ArtifactoryBuildInfoClient {
             throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/staging/")
                 .append(httpClient.urlEncode(strategyName)).append("?buildName=")
-                .append(httpClient.urlEncode(buildName));
+                .append(httpClient.urlEncode(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpGet getRequest = new HttpGet(urlBuilder.toString());
         HttpResponse response = httpClient.getHttpClient().execute(getRequest);
@@ -411,6 +411,15 @@ public class ArtifactoryBuildInfoClient {
         return Maps.newHashMap();
     }
 
+    public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
+            Map<String, String> requestParams) throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
+                .append(promotionName).append("/").append(buildName).append("/").append(buildNumber).append("?");
+        appendParamsToUrl(requestParams, urlBuilder);
+        HttpPost postRequest = new HttpPost(urlBuilder.toString());
+        return httpClient.getHttpClient().execute(postRequest);
+    }
+
     /**
      * Release all connection and cleanup resources.
      */
@@ -423,7 +432,7 @@ public class ArtifactoryBuildInfoClient {
     private void appendParamsToUrl(Map<String, String> requestParams, StringBuilder urlBuilder)
             throws UnsupportedEncodingException {
         if ((requestParams != null) && !requestParams.isEmpty()) {
-            urlBuilder.append("?params=");
+            urlBuilder.append("params=");
             Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
             String encodedPipe = httpClient.urlEncode("|");
             while (paramEntryIterator.hasNext()) {
