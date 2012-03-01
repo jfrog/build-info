@@ -89,24 +89,12 @@ public class PerforceClient {
         try {
             List<IFileSpec> fileSpecs = FileSpecBuilder.makeFileSpecList(file.getAbsolutePath());
             List<IFileSpec> fileSpecsResult = client.editFiles(fileSpecs, false, false, changeListId, null);
-            String statusMessage = "OK";
             for (IFileSpec fileSpec : fileSpecsResult) {
                 if (!FileSpecOpStatus.VALID.equals(fileSpec.getOpStatus())) {
-                    statusMessage = fileSpec.getStatusMessage();
+                    String statusMessage = fileSpec.getStatusMessage();
                     throw new IOException("Failed opening file for editing: : '" + statusMessage + "'");
-                    //reopenFile(changeListId, fileSpecs);
                 }
             }
-        } catch (P4JavaException e) {
-            throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
-        }
-    }
-
-    public void reopenFile(int changeListId, List<IFileSpec> fileSpecs) throws IOException {
-        try {
-            ReopenFilesOptions reopenFilesOptions = new ReopenFilesOptions();
-            reopenFilesOptions.setChangelistId(changeListId);
-            client.reopenFiles(fileSpecs, reopenFilesOptions);
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
         }
