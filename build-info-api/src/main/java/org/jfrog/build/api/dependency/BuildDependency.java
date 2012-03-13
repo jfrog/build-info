@@ -17,13 +17,15 @@
 
 package org.jfrog.build.api.dependency;
 
+import java.io.Serializable;
+
 /**
  * Contains build dependency.
  *
  * @author jbaruch
  * @since 15/02/12
  */
-public class BuildDependency {
+public class BuildDependency implements Serializable {
     private String name;
     private String number;
     private String started;

@@ -16,6 +16,8 @@
 
 package org.jfrog.build.api.dependency;
 
+import java.io.Serializable;
+
 /**
  * Represents artifact matched by requested pattern. Part of {@link PatternResult}.
  *
@@ -23,7 +25,7 @@ package org.jfrog.build.api.dependency;
  * @see BuildPatternArtifacts
  * @since 16/02/12
  */
-public class PatternArtifact {
+public class PatternArtifact implements Serializable {
 
     private String uri;
     private String artifactoryUrl;

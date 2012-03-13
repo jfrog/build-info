@@ -18,6 +18,7 @@ package org.jfrog.build.api.dependency;
 
 import com.google.common.collect.Lists;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ import java.util.List;
  * @see BuildPatternArtifacts
  * @since 16/02/12
  */
-public class PatternResult {
+public class PatternResult implements Serializable {
 
     private List<PatternArtifact> patternArtifacts;
 

@@ -18,6 +18,7 @@ package org.jfrog.build.api.dependency;
 
 import com.google.common.collect.Lists;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ import java.util.List;
  * @see BuildPatternArtifactsRequest
  * @since 16/02/12
  */
-public class BuildPatternArtifacts {
+public class BuildPatternArtifacts implements Serializable {
 
     private String buildName;
     private String buildNumber;
