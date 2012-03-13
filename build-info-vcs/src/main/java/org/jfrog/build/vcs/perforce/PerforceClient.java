@@ -67,6 +67,7 @@ public class PerforceClient {
 
     /**
      * Creates a new changelist and returns it's id number
+     *
      * @return The id of the newly created changelist
      * @throws IOException In case of errors communicating with perforce server
      */
@@ -84,29 +85,16 @@ public class PerforceClient {
         }
     }
 
-    public String editFile(int changeListId, File file) throws IOException {
+    public void editFile(int changeListId, File file) throws IOException {
         try {
             List<IFileSpec> fileSpecs = FileSpecBuilder.makeFileSpecList(file.getAbsolutePath());
             List<IFileSpec> fileSpecsResult = client.editFiles(fileSpecs, false, false, changeListId, null);
-            String statusMessage = "OK";
             for (IFileSpec fileSpec : fileSpecsResult) {
                 if (!FileSpecOpStatus.VALID.equals(fileSpec.getOpStatus())) {
-                    statusMessage = fileSpec.getStatusMessage();
-                    reopenFile(changeListId, fileSpecs);
-                    break;
+                    String statusMessage = fileSpec.getStatusMessage();
+                    throw new IOException("Failed opening file for editing: : '" + statusMessage + "'");
                 }
             }
-            return statusMessage;
-        } catch (P4JavaException e) {
-            throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
-        }
-    }
-
-    public void reopenFile(int changeListId, List<IFileSpec> fileSpecs) throws IOException {
-        try {
-            ReopenFilesOptions reopenFilesOptions = new ReopenFilesOptions();
-            reopenFilesOptions.setChangelistId(changeListId);
-            client.reopenFiles(fileSpecs, reopenFilesOptions);
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
         }
@@ -125,6 +113,13 @@ public class PerforceClient {
     }
 
     public void createLabel(String labelName, String description, String changeListId) throws IOException {
+        try {
+            if (server.getLabel(labelName) != null) {
+                throw new IOException("Failed to create label '" + labelName + "', label already exists");
+            }
+        } catch (P4JavaException e) {
+            throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
+        }
         ViewMap<ILabelMapping> viewMapping = new ViewMap<ILabelMapping>();
         ClientView clientView = client.getClientView();
         if (clientView != null) {

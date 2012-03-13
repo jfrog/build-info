@@ -132,7 +132,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             def isRoot = project.equals(project.getRootProject())
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
             buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoTask.class)
-            buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactiory, and resolves
+            buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactory, and resolves
 dependencies from Artifactory.''')
         }
         return buildInfo
