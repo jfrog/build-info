@@ -170,7 +170,9 @@ public class PerforceClient {
     public void deleteChangeList(int changeListId) throws IOException {
         try {
             if (changeListId != IChangelist.DEFAULT) {
-                server.deletePendingChangelist(changeListId);
+                if(!ChangelistStatus.SUBMITTED.equals(server.getChangelist(changeListId).getStatus())) {
+                    server.deletePendingChangelist(changeListId);
+                }
             }
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
