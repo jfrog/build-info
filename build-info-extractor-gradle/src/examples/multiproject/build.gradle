@@ -103,11 +103,10 @@ artifactory {
             properties = ['qa.level': 'basic']
             properties {
                 archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
-                all 'org.jfrog:shared:?.?:*', key3: 'val3 only in shared', key4: 'val4 only in shared'
-                all 'org.jfrog:*:*.?:*', key5: 'val5 on everything published', key6: 'val6 on everything published'
-                all 'org.jfrog:*:?.?:*', nokey1: 'noVal1'
-                foo 'org.jfrog:*:?.?:*', nokey1: 'noVal2'
-
+                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
+                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
+                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
+                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
             }
         }
     }
