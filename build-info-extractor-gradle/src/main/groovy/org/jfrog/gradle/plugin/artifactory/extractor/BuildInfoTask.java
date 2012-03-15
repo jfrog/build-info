@@ -511,7 +511,7 @@ public class BuildInfoTask extends DefaultTask {
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
             throw new GradleException(
-                    "Failed to calculated checksums for artifact: " + ivyDescriptor.getAbsolutePath(), e);
+                    "Failed to calculate checksums for artifact: " + ivyDescriptor.getAbsolutePath(), e);
         }
         String gid = getProject().getGroup().toString();
         if (clientConf.publisher.isM2Compatible()) {
@@ -537,7 +537,7 @@ public class BuildInfoTask extends DefaultTask {
             artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
             throw new GradleException(
-                    "Failed to calculated checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
+                    "Failed to calculate checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
         }
         // for pom files always enforce the M2 pattern
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
