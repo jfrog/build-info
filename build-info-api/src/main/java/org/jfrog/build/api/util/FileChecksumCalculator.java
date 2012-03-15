@@ -49,7 +49,7 @@ public abstract class FileChecksumCalculator {
             throws NoSuchAlgorithmException, IOException {
 
         if ((fileToCalculate == null) || (!fileToCalculate.isFile())) {
-            throw new IllegalArgumentException("Cannot read checksums of null or non-existant file.");
+            throw new IllegalArgumentException("Cannot read checksums of null or non-existent file.");
         }
 
         if (algorithms == null) {

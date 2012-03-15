@@ -697,6 +697,10 @@ public class BuildInfoTask extends DefaultTask {
                 if (processedFiles.contains(file.getAbsolutePath())) {
                     continue;
                 }
+                if (!file.exists()) {
+                    log.warn("Skipping non-existent file '{}'.", file.getAbsolutePath());
+                    continue;
+                }
                 processedFiles.add(file.getAbsolutePath());
                 DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
                 try {
