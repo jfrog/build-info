@@ -31,14 +31,15 @@ public class PublishedItemsHelperTest {
     }
 
     public void testDoubleDotWithStartWildcard() throws IOException {
-        Map<String, String> pairs = getPublishedItemsPatternPairs("../../saas/*.xml=>target/xml");
+        Map<String, String> pairs = getPublishedItemsPatternPairs("../../saas/**/*.xml=>target/xml");
         for (final Map.Entry<String, String> entry : pairs.entrySet()) {
             Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
-                String targetPath = PublishedItemsHelper.calculateTargetPath("target/xml", fileEntry.getValue(),
+                String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue(),
                         checkoutDir.getAbsolutePath());
-                assertTrue(targetPath.startsWith("target/xml"), "Expected target path to start with 'target/xml'");
+                assertTrue(targetPath.startsWith("target/xml/hello"),
+                        "Expected target path to start with 'target/xml'");
             }
         }
     }
@@ -50,7 +51,7 @@ public class PublishedItemsHelperTest {
             assertEquals(buildPublishingData.size(), 1, "Expected to find 1 files");
             assertTrue(buildPublishingData.containsValue(absoluteFile), "Expected to find the absolute file");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
-                String targetPath = PublishedItemsHelper.calculateTargetPath("jaja/gululu", fileEntry.getValue(),
+                String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue(),
                         checkoutDir.getAbsolutePath());
                 assertTrue(targetPath.startsWith("jaja/gululu"), "Expected target path to start with 'jaja/gululu'");
             }
@@ -82,14 +83,27 @@ public class PublishedItemsHelperTest {
     }
 
     public void testAllSpecificFilesFromCheckoutDir() throws IOException {
-        Map<String, String> pairs = getPublishedItemsPatternPairs("**/*.blabla=>/blabla");
+        Map<String, String> pairs = getPublishedItemsPatternPairs("**/*.blabla=>blabla");
         for (final Map.Entry<String, String> entry : pairs.entrySet()) {
             Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
-                String targetPath = PublishedItemsHelper.calculateTargetPath("blabla", fileEntry.getValue(),
+                String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue(),
                         checkoutDir.getAbsolutePath());
-                assertTrue(targetPath.startsWith("blabla"), "Expected target path to start with 'blabla'");
+                assertTrue(targetPath.startsWith("blabla/inner"), "Expected target path to start with 'blabla'");
+            }
+        }
+    }
+
+    public void testEmptyTargetPath() throws IOException {
+        Map<String, String> pairs = getPublishedItemsPatternPairs("../../**/**/*.xml");
+        for (final Map.Entry<String, String> entry : pairs.entrySet()) {
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
+            for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
+                String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue(),
+                        checkoutDir.getAbsolutePath());
+                assertTrue(targetPath.startsWith("saas/hello"), "Expected target path to start with 'saas'");
             }
         }
     }

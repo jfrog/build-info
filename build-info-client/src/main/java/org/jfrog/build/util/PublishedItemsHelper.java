@@ -193,11 +193,32 @@ public class PublishedItemsHelper {
             if (filePattern != null) {
                 List<File> files = new ArrayList<File>();
                 collectMatchedFiles(patternDir, patternDir, filePattern, files);
-                filePathsMap.putAll(targetPath, files);
+                for (File file : files) {
+                    String fileTargetPath = calculateFileTargetPath(patternDir, file, targetPath);
+                    filePathsMap.put(fileTargetPath, file);
+                }
             }
         }
 
         return filePathsMap;
+    }
+
+    private static String calculateFileTargetPath(File patternDir, File file, String targetPath) {
+        String relativePath = getRelativePath(patternDir, file);
+        relativePath = stripFileNameFromPath(relativePath);
+        if (targetPath.length() == 0) {
+            return relativePath;
+        }
+        if (relativePath.length() == 0) {
+            return targetPath;
+        } else {
+            return (new StringBuilder()).append(targetPath).append('/').append(relativePath).toString();
+        }
+    }
+
+    private static String stripFileNameFromPath(String relativePath) {
+        File file = new File(relativePath);
+        return file.getPath().substring(0, file.getPath().length() - file.getName().length());
     }
 
     /**
