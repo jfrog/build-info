@@ -23,7 +23,7 @@ buildscript {
             classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '2.0.12')
         }
     }
-   /* configurations.classpath {
+    /* configurations.classpath {
         resolutionStrategy {
             failOnVersionConflict()
             cacheDynamicVersionsFor 0, 'seconds'
@@ -38,8 +38,8 @@ import org.jfrog.build.Version
 import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
-version = '2'
-baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
+project.version = '2'
+project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
 
 allprojects {
     apply plugin: 'idea'
@@ -76,7 +76,7 @@ subprojects {
 
     sourceCompatibility = 1.6
     targetCompatibility = 1.6
-    buildInfoVersion = new Version(rootProject, baseProjectNames)
+    ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {
         published
@@ -221,7 +221,7 @@ configure(extractorProjects()) {
 }
 
 // Declare the root project to build its children first
-dependsOnChildren()
+evaluationDependsOnChildren()
 
 project('build-info-api') {
     description = 'JFrog Build-Info API'
@@ -291,7 +291,7 @@ project('build-info-extractor-gradle') {
 
     dependencies {
         compile gradleApi()
-        //compile group: 'org.gradle', name: 'gradle-core', version: '1.0-milestone-6'
+        //compile group: 'org.gradle', name: 'gradle-core', version: '1.0-milestone-9'
         compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
         provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
                 "com.google.code.findbugs:jsr305:1.3.9"

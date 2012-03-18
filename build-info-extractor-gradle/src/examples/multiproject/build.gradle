@@ -58,7 +58,7 @@ subprojects {
     manifest.mainAttributes(provider: 'gradle')
 }
 
-dependsOnChildren()
+evaluationDependsOnChildren()
 
 project('api') {
     configurations {
