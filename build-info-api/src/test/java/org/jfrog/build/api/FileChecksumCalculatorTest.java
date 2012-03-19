@@ -43,7 +43,7 @@ public class FileChecksumCalculatorTest {
      * Tests the behavior of the checksum calculator when given a null file
      */
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existant file.")
+            expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existent file.")
     public void testNullFile() throws IOException, NoSuchAlgorithmException {
         FileChecksumCalculator.calculateChecksums(null);
     }
@@ -52,7 +52,7 @@ public class FileChecksumCalculatorTest {
      * Tests the behavior of the calculator when given a non-existing file
      */
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existant file.")
+            expectedExceptionsMessageRegExp = "Cannot read checksums of null or non-existent file.")
     public void testNonExistingFile() throws IOException, NoSuchAlgorithmException {
         FileChecksumCalculator.calculateChecksums(new File("/this/file/doesnt/exists.moo"));
     }
