@@ -16,8 +16,8 @@ import com.perforce.p4java.impl.generic.core.Changelist;
 import com.perforce.p4java.impl.generic.core.ChangelistSummary;
 import com.perforce.p4java.impl.generic.core.Label;
 import com.perforce.p4java.option.changelist.SubmitOptions;
-import com.perforce.p4java.option.client.ReopenFilesOptions;
 import com.perforce.p4java.server.IServer;
+import com.perforce.p4java.server.PerforceCharsets;
 import com.perforce.p4java.server.ServerFactory;
 import org.apache.commons.lang.StringUtils;
 
@@ -38,20 +38,28 @@ public class PerforceClient {
     private IServer server;
     private IClient client;
 
-    private PerforceClient(String hostAddress, String clientId, String username, String password) throws IOException {
-        createServer(hostAddress, clientId, username, password);
+    private PerforceClient(String hostAddress, String clientId, String username, String password, String charset)
+            throws IOException {
+        createServer(hostAddress, clientId, username, password, charset);
     }
 
     /**
      * Creates a new connected server instance given the server+port, and optionally user login credentials.
      */
-    private void createServer(String hostAddress, String clientId, String username, String password)
+    private void createServer(String hostAddress, String clientId, String username, String password, String charset)
             throws IOException {
         try {
             Properties props = new Properties();
             props.put("autoConnect", true);
             props.put("autoLogin", true);
             server = ServerFactory.getServer("p4java://" + hostAddress, props);
+            if(!StringUtils.isBlank(charset)) {
+                if(PerforceCharsets.isSupported(charset)) {
+                    server.setCharsetName(charset);
+                } else {
+                    server.setCharsetName("none");
+                }
+            }
             server.connect();
             // login only after the connection
             server.setUserName(username);
@@ -170,7 +178,7 @@ public class PerforceClient {
     public void deleteChangeList(int changeListId) throws IOException {
         try {
             if (changeListId != IChangelist.DEFAULT) {
-                if(!ChangelistStatus.SUBMITTED.equals(server.getChangelist(changeListId).getStatus())) {
+                if (!ChangelistStatus.SUBMITTED.equals(server.getChangelist(changeListId).getStatus())) {
                     server.deletePendingChangelist(changeListId);
                 }
             }
@@ -196,6 +204,7 @@ public class PerforceClient {
         private String username;
         private String password;
         private String clientId;
+        private String charset;
 
         public Builder() {
         }
@@ -207,7 +216,7 @@ public class PerforceClient {
             if (StringUtils.isBlank(hostAddress)) {
                 throw new IllegalStateException("Hostname cannot be empty");
             }
-            return new PerforceClient(hostAddress, clientId, username, password);
+            return new PerforceClient(hostAddress, clientId, username, password, charset);
         }
 
         /**
@@ -230,6 +239,11 @@ public class PerforceClient {
 
         public Builder password(String password) {
             this.password = password;
+            return this;
+        }
+
+        public Builder charset(String charset) {
+            this.charset = charset;
             return this;
         }
     }
