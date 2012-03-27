@@ -30,8 +30,11 @@ import org.jfrog.build.extractor.maven.reader.ModuleName;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
@@ -94,7 +97,8 @@ public class PomTransformer {
         EolDetectingInputStream eolDetectingStream = null;
         try {
             eolDetectingStream = new EolDetectingInputStream(new FileInputStream(pomFile));
-            document = saxBuilder.build(eolDetectingStream);
+            InputStreamReader inputStreamReader = new InputStreamReader(eolDetectingStream, "UTF-8");
+            document = saxBuilder.build(inputStreamReader);
         } catch (JDOMException e) {
             throw new IOException("Failed to parse pom: " + pomFile.getAbsolutePath(), e);
         } finally {
@@ -121,7 +125,8 @@ public class PomTransformer {
         }
 
         if (modified) {
-            FileWriter fileWriter = new FileWriter(pomFile);
+            FileOutputStream fileOutputStream = new FileOutputStream(pomFile);
+            OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8");
             try {
                 XMLOutputter outputter = new XMLOutputter();
                 String eol = eolDetectingStream.getEol();
@@ -131,9 +136,9 @@ public class PomTransformer {
                     format.setTextMode(Format.TextMode.PRESERVE);
                     outputter.setFormat(format);
                 }
-                outputter.output(document, fileWriter);
+                outputter.output(document, outputStreamWriter);
             } finally {
-                Closeables.closeQuietly(fileWriter);
+                Closeables.closeQuietly(outputStreamWriter);
             }
         }
 
