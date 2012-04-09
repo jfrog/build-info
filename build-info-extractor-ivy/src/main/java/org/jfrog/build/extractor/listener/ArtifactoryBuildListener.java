@@ -12,6 +12,7 @@ import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Build;
@@ -76,17 +77,20 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
 
     @Override
     public void taskStarted(BuildEvent event) {
-        ResolveEngine engine = IvyAntSettings.getDefaultInstance(event.getTask()).
-                getConfiguredIvyInstance(event.getTask()).getResolveEngine();
-        EventManager engineEventManager = engine.getEventManager();
-        engineEventManager.removeIvyListener(DEPENDENCY_TRIGGER);
-        engineEventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
-        IvyContext context = IvyContext.getContext();
-        EventManager eventManager = context.getIvy().getEventManager();
-        eventManager.removeIvyListener(PUBLISH_TRIGGER);
-        eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
-        context.getIvy().bind();
-        super.taskStarted(event);
+        Task task = event.getTask();
+        if (task instanceof IvyTask) {
+            ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
+                    getConfiguredIvyInstance(task).getResolveEngine();
+            EventManager engineEventManager = engine.getEventManager();
+            engineEventManager.removeIvyListener(DEPENDENCY_TRIGGER);
+            engineEventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
+            IvyContext context = IvyContext.getContext();
+            EventManager eventManager = context.getIvy().getEventManager();
+            eventManager.removeIvyListener(PUBLISH_TRIGGER);
+            eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
+            context.getIvy().bind();
+            super.taskFinished(event);
+        }
     }
 
     /**
