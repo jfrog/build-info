@@ -78,7 +78,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     @Override
     public void taskStarted(BuildEvent event) {
         Task task = event.getTask();
-        if (task instanceof IvyTask) {
+        if (task.getProject().getReference("ivy.instance") != null) {
             ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
                     getConfiguredIvyInstance(task).getResolveEngine();
             EventManager engineEventManager = engine.getEventManager();
@@ -89,8 +89,9 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             eventManager.removeIvyListener(PUBLISH_TRIGGER);
             eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
             context.getIvy().bind();
-            super.taskFinished(event);
         }
+
+        super.taskStarted(event);
     }
 
     /**
