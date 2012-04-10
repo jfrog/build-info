@@ -522,8 +522,7 @@ public class ArtifactoryBuildInfoClient {
         // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
         long fileLength = details.file.length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
-            log.debug("Skipping checksum deploy of file " + details.getFile().getAbsolutePath() +
-                    " with size of " + fileLength);
+            log.debug("Skipping checksum deploy of file size " + fileLength + " , falling back to regular deployment.");
             return false;
         }
 
