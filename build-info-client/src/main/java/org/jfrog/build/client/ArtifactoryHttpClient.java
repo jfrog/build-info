@@ -184,6 +184,10 @@ public class ArtifactoryHttpClient {
 
     public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
         httpPut.setEntity(fileEntity);
+        return execute(httpPut);
+    }
+
+    public StatusLine execute(HttpPut httpPut) throws IOException {
         HttpResponse response = getHttpClient().execute(httpPut);
         StatusLine statusLine = response.getStatusLine();
         if (response.getEntity() != null) {

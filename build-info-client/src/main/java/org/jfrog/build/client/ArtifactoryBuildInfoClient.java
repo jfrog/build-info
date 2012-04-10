@@ -62,6 +62,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_URL = "/api/build";
+    private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
 
     /**
      * The http client used for deploying artifacts and build info. Created and cached on the first deploy request.
@@ -496,6 +497,9 @@ public class ArtifactoryBuildInfoClient {
     }
 
     private void uploadFile(DeployDetails details, String uploadUrl) throws IOException {
+        if (tryChecksumDeploy(details, uploadUrl)) {
+            return;
+        }
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
         deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
@@ -512,6 +516,47 @@ public class ArtifactoryBuildInfoClient {
         if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
             throwHttpIOException("Failed to deploy file:", statusLine);
         }
+    }
+
+    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) {
+        // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
+        long fileLength = details.file.length();
+        if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
+            log.debug("Skipping checksum deploy of file " + details.getFile().getAbsolutePath() +
+                    " with size of " + fileLength);
+            return false;
+        }
+
+        // Artifactory 2.5.1+ has efficient checksum deployment (checks if the artifact already exists by it's checksum)
+        if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.5.1"))) {
+            log.info("Artifactory version is:" + getArtifactoryVersion());
+            return false;
+        }
+
+        String fileAbsolutePath = details.file.getAbsolutePath();
+        String sha1 = details.sha1;
+        HttpPut httpPut = new HttpPut(uploadUrl);
+        httpPut.addHeader("X-Checksum-Deploy", "true");
+        httpPut.addHeader("X-Checksum-Sha1", sha1);
+        log.info(sha1);
+        // add the 100 continue directive
+        httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+        try {
+            StatusLine statusLine = httpClient.execute(httpPut);
+            int statusCode = statusLine.getStatusCode();
+
+            //Accept both 200, and 201 for backwards-compatibility reasons
+            if ((statusCode == HttpStatus.SC_CREATED) || (statusCode == HttpStatus.SC_OK)) {
+                log.debug("Successfully performed checksum deploy of file " + fileAbsolutePath + " : " + sha1);
+                return true;
+            } else {
+                log.debug("Failed checksum deploy of checksum '" + sha1 + "' with statusCode: " + statusCode);
+            }
+        } catch (IOException e) {
+            log.debug("Failed trying artifact checksum deploy of file " + fileAbsolutePath + " : " + sha1);
+        }
+
+        return false;
     }
 
     public void uploadChecksums(DeployDetails details, String uploadUrl) throws IOException {
