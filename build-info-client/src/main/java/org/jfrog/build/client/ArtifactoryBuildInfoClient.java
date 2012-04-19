@@ -413,7 +413,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
-            Map<String, String> requestParams) throws IOException {
+                                                   Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
                 .append(promotionName).append("/").append(buildName).append("/").append(buildNumber).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
@@ -518,7 +518,7 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) {
+    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) throws IOException {
         // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
         long fileLength = details.file.length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
@@ -534,10 +534,11 @@ public class ArtifactoryBuildInfoClient {
 
         String fileAbsolutePath = details.file.getAbsolutePath();
         String sha1 = details.sha1;
-        HttpPut httpPut = new HttpPut(uploadUrl);
+        StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
+        deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
+        HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Deploy", "true");
         httpPut.addHeader("X-Checksum-Sha1", sha1);
-        log.info(sha1);
         // add the 100 continue directive
         httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
         try {
