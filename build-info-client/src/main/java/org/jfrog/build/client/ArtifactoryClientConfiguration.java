@@ -755,7 +755,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public String getIssueTrackerVersion() {
-            return getStringValue(BUILD_ISSUE_TRACKER_NAME);
+            return getStringValue(BUILD_ISSUE_TRACKER_VERSION);
         }
 
         public void setIssueTrackerVersion(String issueTrackerVersion) {
