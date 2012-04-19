@@ -500,15 +500,13 @@ public class ArtifactoryBuildInfoClient {
         if (tryChecksumDeploy(details, uploadUrl)) {
             return;
         }
-        StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
-        deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
-        HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
-        httpPut.addHeader("X-Checksum-Sha1", details.sha1);
-        httpPut.addHeader("X-Checksum-Md5", details.md5);
+
+        HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
         // add the 100 continue directive
         httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
 
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
+
         StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
         int statusCode = statusLine.getStatusCode();
 
@@ -518,7 +516,7 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) {
+    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
         long fileLength = details.file.length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
@@ -528,34 +526,39 @@ public class ArtifactoryBuildInfoClient {
 
         // Artifactory 2.5.1+ has efficient checksum deployment (checks if the artifact already exists by it's checksum)
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.5.1"))) {
-            log.info("Artifactory version is:" + getArtifactoryVersion());
             return false;
         }
 
-        String fileAbsolutePath = details.file.getAbsolutePath();
-        String sha1 = details.sha1;
-        HttpPut httpPut = new HttpPut(uploadUrl);
+        HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
+        // activate checksum deploy
         httpPut.addHeader("X-Checksum-Deploy", "true");
-        httpPut.addHeader("X-Checksum-Sha1", sha1);
-        log.info(sha1);
-        // add the 100 continue directive
-        httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+
+        String fileAbsolutePath = details.file.getAbsolutePath();
         try {
             StatusLine statusLine = httpClient.execute(httpPut);
             int statusCode = statusLine.getStatusCode();
 
             //Accept both 200, and 201 for backwards-compatibility reasons
             if ((statusCode == HttpStatus.SC_CREATED) || (statusCode == HttpStatus.SC_OK)) {
-                log.debug("Successfully performed checksum deploy of file " + fileAbsolutePath + " : " + sha1);
+                log.debug("Successfully performed checksum deploy of file " + fileAbsolutePath + " : " + details.sha1);
                 return true;
             } else {
-                log.debug("Failed checksum deploy of checksum '" + sha1 + "' with statusCode: " + statusCode);
+                log.debug("Failed checksum deploy of checksum '" + details.sha1 + "' with statusCode: " + statusCode);
             }
         } catch (IOException e) {
-            log.debug("Failed trying artifact checksum deploy of file " + fileAbsolutePath + " : " + sha1);
+            log.debug("Failed artifact checksum deploy of file " + fileAbsolutePath + " : " + details.sha1);
         }
 
         return false;
+    }
+
+    private HttpPut createHttpPutMethod(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
+        StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
+        deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
+        HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
+        httpPut.addHeader("X-Checksum-Sha1", details.sha1);
+        httpPut.addHeader("X-Checksum-Md5", details.md5);
+        return httpPut;
     }
 
     public void uploadChecksums(DeployDetails details, String uploadUrl) throws IOException {
