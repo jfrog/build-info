@@ -11,6 +11,9 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Issue;
+import org.jfrog.build.api.IssueTracker;
+import org.jfrog.build.api.Issues;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
@@ -23,6 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -97,6 +101,18 @@ public class BuildInfoModelPropertyResolver {
         attachStagingIfNeeded(clientConf, builder);
         builder.buildRetention(buildRetention);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
+
+        String issueTrackerName = clientConf.info.getIssueTrackerName();
+        if (StringUtils.isNotBlank(issueTrackerName)) {
+            Issues issues = new Issues();
+            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
+            List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
+            if (!affectedIssuesList.isEmpty()) {
+                issues.setAffectedIssues(affectedIssuesList);
+            }
+            builder.issues(issues);
+        }
+
         return builder;
     }
 

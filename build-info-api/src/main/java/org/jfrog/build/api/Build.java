@@ -65,6 +65,8 @@ public class Build extends BaseBuildBean {
 
     private List<BuildDependency> buildDependencies;
 
+    private Issues issues;
+
     /**
      * Returns the version of the build
      *
@@ -436,6 +438,7 @@ public class Build extends BaseBuildBean {
 
     /**
      * Returns the build dependencies of this build
+     *
      * @return list of #BuildDependency objects
      */
     public List<BuildDependency> getBuildDependencies() {
@@ -444,10 +447,11 @@ public class Build extends BaseBuildBean {
 
     /**
      * Adds one #BuildDependency to build dependencies list
+     *
      * @param buildDependency the #BuildDependency to add
      */
-    public void addBuildDependency(BuildDependency buildDependency){
-        if(buildDependencies == null){
+    public void addBuildDependency(BuildDependency buildDependency) {
+        if (buildDependencies == null) {
             buildDependencies = Lists.newArrayList();
         }
         buildDependencies.add(buildDependency);
@@ -455,9 +459,18 @@ public class Build extends BaseBuildBean {
 
     /**
      * Sets build dependencies for this build
+     *
      * @param buildDependencies List of #BuildDependency objects
      */
     public void setBuildDependencies(List<BuildDependency> buildDependencies) {
         this.buildDependencies = buildDependencies;
+    }
+
+    public Issues getIssues() {
+        return issues;
+    }
+
+    public void setIssues(Issues issues) {
+        this.issues = issues;
     }
 }

@@ -23,20 +23,11 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ResolveException;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.LicenseControl;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -194,6 +185,18 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                     .comment(comment).repository(stagingRepository)
                     .ciUser(principal).user(artifactoryPrincipal).build());
         }
+
+        String issueTrackerName = clientConf.info.getIssueTrackerName();
+        if (StringUtils.isNotBlank(issueTrackerName)) {
+            Issues issues = new Issues();
+            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
+            List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
+            if (!affectedIssuesList.isEmpty()) {
+                issues.setAffectedIssues(affectedIssuesList);
+            }
+            bib.issues(issues);
+        }
+
         clientConf.info.fillCommonSysProps();
         Properties props = new Properties();
         props.putAll(clientConf.info.getBuildVariables());

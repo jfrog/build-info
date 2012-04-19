@@ -41,4 +41,7 @@ public interface BuildInfoFields {
     String RELEASE_ENABLED = "promotion.enabled";
     String RELEASE_COMMENT = "promotion.comment";
     String BUILD_ROOT = "build.root";
+    String BUILD_ISSUE_TRACKER_NAME = "build.issues.tracker.name";
+    String BUILD_ISSUE_TRACKER_VERSION = "build.issues.tracker.version";
+    String BUILD_AFFECTED_ISSUES = "build.issues.affected";
 }

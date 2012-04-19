@@ -23,6 +23,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Issues;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -58,6 +59,7 @@ public class BuildInfoBuilder {
     private Properties properties;
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
+    private Issues issues;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -101,6 +103,7 @@ public class BuildInfoBuilder {
         build.setVcsRevision(vcsRevision);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
+        build.setIssues(issues);
         return build;
     }
 
@@ -354,6 +357,11 @@ public class BuildInfoBuilder {
             properties = new Properties();
         }
         properties.put(key, value);
+        return this;
+    }
+
+    public BuildInfoBuilder issues(Issues issues) {
+        this.issues = issues;
         return this;
     }
 }

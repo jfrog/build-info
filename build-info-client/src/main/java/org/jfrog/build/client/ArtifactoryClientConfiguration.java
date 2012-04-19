@@ -17,15 +17,18 @@ package org.jfrog.build.client;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Issue;
 import org.jfrog.build.api.util.Log;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -741,6 +744,45 @@ public class ArtifactoryClientConfiguration {
 
         public String getBuildRoot() {
             return getStringValue(BUILD_ROOT);
+        }
+
+        public String getIssueTrackerName() {
+            return getStringValue(BUILD_ISSUE_TRACKER_NAME);
+        }
+
+        public void setIssueTrackerName(String issueTrackerName) {
+            setStringValue(BUILD_ISSUE_TRACKER_NAME, issueTrackerName);
+        }
+
+        public String getIssueTrackerVersion() {
+            return getStringValue(BUILD_ISSUE_TRACKER_NAME);
+        }
+
+        public void setIssueTrackerVersion(String issueTrackerVersion) {
+            setStringValue(BUILD_ISSUE_TRACKER_VERSION, issueTrackerVersion);
+        }
+
+        public String getAffectedIssues() {
+            return getStringValue(BUILD_AFFECTED_ISSUES);
+        }
+
+        public void setAffectedIssues(String affectedIssues) {
+            setStringValue(BUILD_AFFECTED_ISSUES, affectedIssues);
+        }
+
+        public List<Issue> getAffectedIssuesList() {
+            List<Issue> affectedIssuesList = Lists.newArrayList();
+            String affectedIssues = getStringValue(BUILD_AFFECTED_ISSUES);
+            if (StringUtils.isNotBlank(affectedIssues)) {
+                String[] issuePairs = affectedIssues.split(",");
+                for (String pair : issuePairs) {
+                    String[] idAndUrl = pair.split(">>");
+                    if (idAndUrl.length == 3) {
+                        affectedIssuesList.add(new Issue(idAndUrl[0], idAndUrl[1], idAndUrl[2]));
+                    }
+                }
+            }
+            return affectedIssuesList;
         }
 
         public void addBuildVariables(Map<String, String> buildVariables) {
