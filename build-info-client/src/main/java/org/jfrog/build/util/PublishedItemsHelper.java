@@ -18,7 +18,6 @@ package org.jfrog.build.util;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -27,7 +26,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -47,8 +45,8 @@ public class PublishedItemsHelper {
      *                                    then the value is treated as a source only (target will be "").
      * @return a Map containing the sources as keys and targets as values
      */
-    public static Map<String, String> getPublishedItemsPatternPairs(String publishedItemsPropertyValue) {
-        Map<String, String> patternPairMap = Maps.newHashMap();
+    public static Multimap<String, String> getPublishedItemsPatternPairs(String publishedItemsPropertyValue) {
+        Multimap<String, String> patternPairMap = HashMultimap.create();
         if (StringUtils.isNotBlank(publishedItemsPropertyValue)) {
 
             List<String> patternPairs = parsePatternsFromProperty(publishedItemsPropertyValue);
@@ -82,7 +80,7 @@ public class PublishedItemsHelper {
      * @param publishedItemsPropertyValue The property value to split
      * @return a List of the splinted parameter by new lines or commas.
      */
-    private static List<String> parsePatternsFromProperty(String publishedItemsPropertyValue) {
+    public static List<String> parsePatternsFromProperty(String publishedItemsPropertyValue) {
         if (publishedItemsPropertyValue == null) {
             throw new IllegalArgumentException("Cannot parse null pattern.");
         }
