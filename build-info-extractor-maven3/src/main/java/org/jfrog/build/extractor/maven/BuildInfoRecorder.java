@@ -431,7 +431,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                             pomFile = model.getPomFile();
                         }
                         artifactBuilder.type("pom");
-                        artifactBuilder.name(artifactName.replace(artifactExtension, "pom"));
+                        String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
+                        artifactBuilder.name(pomFileName);
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         module.addArtifact(pomArtifact);
                         if (isPublishArtifacts(pomFile)) {
