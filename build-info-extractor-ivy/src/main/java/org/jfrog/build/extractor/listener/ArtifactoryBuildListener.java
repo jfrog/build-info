@@ -14,32 +14,16 @@ import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -82,6 +66,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     @Override
     public void taskStarted(BuildEvent event) {
         Task task = event.getTask();
+        // Make sure ivy settings have been set (BI-131)
         if (task.getProject().getReference("ivy.instance") != null) {
             ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
                     getConfiguredIvyInstance(task).getResolveEngine();
@@ -94,7 +79,6 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
             context.getIvy().bind();
         }
-
         super.taskStarted(event);
     }
 
@@ -226,7 +210,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     }
 
     private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
-            IncludeExcludePatterns patterns) throws IOException {
+                                 IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
             String artifactPath = deployDetail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
