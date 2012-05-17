@@ -86,6 +86,12 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
+        if (root != null && root.props != null) {
+            System.out.println("#DEBUG# Persisting root.props: " + root.props);
+        }
+        if (rootConfig != null && rootConfig.props != null) {
+            System.out.println("#DEBUG# Persisting rootConfig.props: " + rootConfig.props);
+        }
         Predicate<String> nonNullPredicate = new Predicate<String>() {
             @Override
             public boolean apply(String input) {
