@@ -86,9 +86,15 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
+        Predicate<String> nonNullPredicate = new Predicate<String>() {
+            @Override
+            public boolean apply(String input) {
+                return StringUtils.isNotBlank(input);
+            }
+        };
         Properties props = new Properties();
-        props.putAll(root.props);
-        props.putAll(rootConfig.props);
+        props.putAll(Maps.filterValues(root.props, nonNullPredicate));
+        props.putAll(Maps.filterValues(rootConfig.props, nonNullPredicate));
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(new File(getPropertiesFile()));
