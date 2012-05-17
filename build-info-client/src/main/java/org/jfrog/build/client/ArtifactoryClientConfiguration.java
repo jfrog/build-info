@@ -480,7 +480,7 @@ public class ArtifactoryClientConfiguration {
 
         public void addMatrixParam(String key, String value) {
             ensureImmutableMatrixParams();
-            if (StringUtils.isBlank(key)) {
+            if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
                 return;
             }
             String matrixParamPrefix = getMatrixParamPrefix();
