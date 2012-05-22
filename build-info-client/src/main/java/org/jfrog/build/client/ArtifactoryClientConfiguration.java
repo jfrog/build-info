@@ -29,6 +29,8 @@ import org.jfrog.build.api.util.Log;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -750,9 +752,9 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(RELEASE_ENABLED, false);
         }
 
-        public void setBuildRoot(String buildRoot) {
+        public void setBuildRoot(String buildRoot) throws UnsupportedEncodingException {
             publisher.setBuildRoot(buildRoot);
-            resolver.setBuildRoot(buildRoot);
+            resolver.setBuildRoot(URLEncoder.encode(buildRoot, "UTF-8"));
             setStringValue(BUILD_ROOT, buildRoot);
         }
 

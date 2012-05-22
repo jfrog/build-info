@@ -413,9 +413,10 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
-            Map<String, String> requestParams) throws IOException {
+                                                   Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
-                .append(promotionName).append("/").append(buildName).append("/").append(buildNumber).append("?");
+                .append(promotionName).append("/").append(httpClient.urlEncode(buildName)).append("/")
+                .append(httpClient.urlEncode(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
