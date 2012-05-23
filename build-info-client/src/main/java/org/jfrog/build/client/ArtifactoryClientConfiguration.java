@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
@@ -89,13 +88,6 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
-        try {
-            File file = File.createTempFile("buildinfo", "debug");
-            IOUtils.writeLines(Lists.newArrayList("#DEBUG# Persisting root.props: " + root.props,
-                    "#DEBUG# Persisting rootConfig.props: " + rootConfig.props), "\n", new FileOutputStream(file));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
         Predicate<String> nonNullPredicate = new Predicate<String>() {
             @Override
             public boolean apply(String input) {
