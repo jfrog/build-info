@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -29,6 +30,8 @@ import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -45,10 +48,23 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     private static final String SHA1 = "SHA1";
 
     public void progress(IvyEvent event) {
-        if (EndResolveEvent.NAME.equals(event.getName())) {
-            collectDependencyInformation(event);
-        } else if (StartArtifactPublishEvent.NAME.equals(event.getName())) {
-            collectModuleInformation(event);
+        try {
+            if (EndResolveEvent.NAME.equals(event.getName())) {
+                collectDependencyInformation(event);
+            } else if (StartArtifactPublishEvent.NAME.equals(event.getName())) {
+                collectModuleInformation(event);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                File file = File.createTempFile("buildinfo-ivy", "listener-exception");
+                PrintWriter printWriter = new PrintWriter(file);
+                printWriter.append("Received an exception executing listerner: ").append(e.getMessage());
+                e.printStackTrace(printWriter);
+                printWriter.close();
+            } catch (IOException ie) {
+                throw new RuntimeException(ie);
+            }
         }
     }
 

@@ -22,7 +22,9 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 
@@ -65,21 +67,34 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
 
     @Override
     public void taskStarted(BuildEvent event) {
-        Task task = event.getTask();
-        // Make sure ivy settings have been set (BI-131)
-        if (task.getProject().getReference("ivy.instance") != null) {
-            ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
-                    getConfiguredIvyInstance(task).getResolveEngine();
-            EventManager engineEventManager = engine.getEventManager();
-            engineEventManager.removeIvyListener(DEPENDENCY_TRIGGER);
-            engineEventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
-            IvyContext context = IvyContext.getContext();
-            EventManager eventManager = context.getIvy().getEventManager();
-            eventManager.removeIvyListener(PUBLISH_TRIGGER);
-            eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
-            context.getIvy().bind();
+        try {
+            Task task = event.getTask();
+            // Make sure ivy settings have been set (BI-131)
+            if (task.getProject().getReference("ivy.instance") != null) {
+                ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
+                        getConfiguredIvyInstance(task).getResolveEngine();
+                EventManager engineEventManager = engine.getEventManager();
+                engineEventManager.removeIvyListener(DEPENDENCY_TRIGGER);
+                engineEventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
+                IvyContext context = IvyContext.getContext();
+                EventManager eventManager = context.getIvy().getEventManager();
+                eventManager.removeIvyListener(PUBLISH_TRIGGER);
+                eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
+                context.getIvy().bind();
+            }
+            super.taskStarted(event);
+        } catch (Exception e) {
+            e.printStackTrace();
+            try {
+                File file = File.createTempFile("buildinfo-ivy", "task-started-exception");
+                PrintWriter printWriter = new PrintWriter(file);
+                printWriter.append("Received an exception executing taskStarted: ").append(e.getMessage());
+                e.printStackTrace(printWriter);
+                printWriter.close();
+            } catch (IOException ie) {
+                throw new RuntimeException(ie);
+            }
         }
-        super.taskStarted(event);
     }
 
     /**
