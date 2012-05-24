@@ -56,15 +56,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            try {
-                File file = File.createTempFile("buildinfo-ivy", "listener-exception");
-                PrintWriter printWriter = new PrintWriter(file);
-                printWriter.append("Received an exception executing listerner: ").append(e.getMessage());
-                e.printStackTrace(printWriter);
-                printWriter.close();
-            } catch (IOException ie) {
-                throw new RuntimeException(ie);
-            }
+            //throw new RuntimeException("Exception during event management "+event.toString(), e);
         }
     }
 
@@ -133,11 +125,30 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String file = map.get("file");
         final String moduleName = map.get("module");
         project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
-        Module module = Iterables.find(modules, new Predicate<Module>() {
-            public boolean apply(Module input) {
-                return input.getId().equals(moduleName) || input.getId().equals(generateModuleIdFromAttributes(map));
+        Module module = null;
+        try {
+            module = Iterables.find(modules, new Predicate<Module>() {
+                public boolean apply(Module input) {
+                    return input.getId().equals(moduleName) || input.getId().equals(generateModuleIdFromAttributes(map));
+                }
+            });
+        } catch (NoSuchElementException e) {
+            StringBuilder b = new StringBuilder("Did not find any module matching attributes map!\nmap = [ ");
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                b.append(entry.getKey()).append(':').append(entry.getValue()).append(", ");
             }
-        });
+            b.append("]\nmodules = [ ");
+            int i = 0;
+            for (Module mod : modules) {
+                b.append("id").append(i++).append('=').append(mod.getId()).append(", ");
+            }
+            b.append("]\n");
+            String msg = b.toString();
+            project.log(msg);
+            NoSuchElementException ex = new NoSuchElementException(msg);
+            ex.initCause(e);
+            throw ex;
+        }
         module.setId(generateModuleIdFromAttributes(map));
         File artifactFile = new File(file);
         List<Artifact> artifacts = module.getArtifacts();
@@ -171,7 +182,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     }
 
     private DeployDetails buildDeployDetails(File artifactFile, Artifact artifact,
-            BuildContext ctx, Map<String, String> map, Map<String, String> extraAttributes) {
+                                             BuildContext ctx, Map<String, String> map, Map<String, String> extraAttributes) {
         ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
         DeployDetails.Builder builder =
                 new DeployDetails.Builder().file(artifactFile).sha1(artifact.getSha1()).md5(artifact.getMd5());
