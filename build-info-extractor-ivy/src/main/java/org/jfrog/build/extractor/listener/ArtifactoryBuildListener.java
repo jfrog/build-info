@@ -22,9 +22,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 
@@ -41,13 +39,19 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger();
 
     public ArtifactoryBuildListener() {
-        DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
-        PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
-        Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
-        ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
-        Properties props = getMergedEnvAndSystemProps();
-        clientConf.fillFromProperties(props);
-        ctx = new BuildContext(clientConf);
+        try {
+            DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
+            PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
+            Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+            ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
+            Properties props = getMergedEnvAndSystemProps();
+            clientConf.fillFromProperties(props);
+            ctx = new BuildContext(clientConf);
+        } catch (Exception e) {
+            RuntimeException re = new RuntimeException("Fail to initialize the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+            re.printStackTrace();
+            throw re;
+        }
     }
 
     private Properties getMergedEnvAndSystemProps() {
@@ -58,10 +62,16 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
 
     @Override
     public void buildStarted(BuildEvent event) {
-        IvyContext context = IvyContext.getContext();
-        context.set(BuildContext.CONTEXT_NAME, ctx);
-        ctx.setBuildStartTime(System.currentTimeMillis());
-        super.buildStarted(event);
+        try {
+            IvyContext context = IvyContext.getContext();
+            context.set(BuildContext.CONTEXT_NAME, ctx);
+            ctx.setBuildStartTime(System.currentTimeMillis());
+            super.buildStarted(event);
+        } catch (Exception e) {
+            RuntimeException re = new RuntimeException("Fail to register start of build, due to: " + e.getMessage(), e);
+            re.printStackTrace();
+            throw re;
+        }
     }
 
 
@@ -84,16 +94,9 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             }
             super.taskStarted(event);
         } catch (Exception e) {
-            e.printStackTrace();
-            try {
-                File file = File.createTempFile("buildinfo-ivy", "task-started-exception");
-                PrintWriter printWriter = new PrintWriter(file);
-                printWriter.append("Received an exception executing taskStarted: ").append(e.getMessage());
-                e.printStackTrace(printWriter);
-                printWriter.close();
-            } catch (IOException ie) {
-                throw new RuntimeException(ie);
-            }
+            RuntimeException re = new RuntimeException("Fail to add the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+            re.printStackTrace();
+            throw re;
         }
     }
 
@@ -110,117 +113,127 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             return;
         }
         if (!isDidDeploy) {
-            Project project = event.getProject();
-            project.log("Build finished triggered", Project.MSG_INFO);
-            BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-            Set<DeployDetails> deployDetails = ctx.getDeployDetails();
-            BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
-                    .number("0").durationMillis(System.currentTimeMillis() - ctx.getBuildStartTime())
-                    .startedDate(new Date(ctx.getBuildStartTime()))
-                    .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
-                    .agent(new Agent("Ivy", Ivy.getIvyVersion()));
-            // This is here for backwards compatibility.
-            builder.type(BuildType.IVY);
-            ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
-            String agentName = clientConf.info.getAgentName();
-            String agentVersion = clientConf.info.getAgentVersion();
-            if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
-                builder.agent(new Agent(agentName, agentVersion));
-            }
-            String buildAgentName = clientConf.info.getBuildAgentName();
-            String buildAgentVersion = clientConf.info.getBuildAgentVersion();
-            if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
-                builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
-            }
-            String buildName = clientConf.info.getBuildName();
-            if (StringUtils.isNotBlank(buildName)) {
-                builder.name(buildName);
-            }
-            String buildNumber = clientConf.info.getBuildNumber();
-            if (StringUtils.isNotBlank(buildNumber)) {
-                builder.number(buildNumber);
-            }
-            String buildUrl = clientConf.info.getBuildUrl();
-            if (StringUtils.isNotBlank(buildUrl)) {
-                builder.url(buildUrl);
-            }
-            String principal = clientConf.info.getPrincipal();
-            if (StringUtils.isNotBlank(principal)) {
-                builder.principal(principal);
-            }
-            String parentBuildName = clientConf.info.getParentBuildName();
-            if (StringUtils.isNotBlank(parentBuildName)) {
-                builder.parentName(parentBuildName);
-            }
-            String parentBuildNumber = clientConf.info.getParentBuildNumber();
-            if (StringUtils.isNotBlank(parentBuildNumber)) {
-                builder.parentNumber(parentBuildNumber);
-            }
-            LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
-            String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
-            if (StringUtils.isNotBlank(notificationRecipients)) {
-                licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
-            }
-            licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
-            String scopes = clientConf.info.licenseControl.getScopes();
-            if (StringUtils.isNotBlank(scopes)) {
-                licenseControl.setScopesList(scopes);
-            }
-            licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-            builder.licenseControl(licenseControl);
-            BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-            if (clientConf.info.getBuildRetentionDays() != null) {
-                buildRetention.setCount(clientConf.info.getBuildRetentionDays());
-            }
-            String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
-            if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
-                int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
-                if (minimumDays > -1) {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
-                    buildRetention.setMinimumBuildDate(calendar.getTime());
-                }
-            }
-            String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
-            for (String notToDel : notToDelete) {
-                buildRetention.addBuildNotToBeDiscarded(notToDel);
-            }
-            builder.buildRetention(buildRetention);
-
-            String issueTrackerName = clientConf.info.getIssueTrackerName();
-            if (StringUtils.isNotBlank(issueTrackerName)) {
-                Issues issues = new Issues();
-                issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
-                List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
-                if (!affectedIssuesList.isEmpty()) {
-                    issues.setAffectedIssues(affectedIssuesList);
-                }
-                builder.issues(issues);
-            }
-
-            Properties props = new Properties();
-            props.putAll(clientConf.info.getBuildVariables());
-            builder.properties(props);
-            Build build = builder.build();
-            String contextUrl = clientConf.publisher.getContextUrl();
-            String username = clientConf.publisher.getUsername();
-            String password = clientConf.publisher.getPassword();
             try {
-                ArtifactoryBuildInfoClient client =
-                        new ArtifactoryBuildInfoClient(contextUrl, username, password, new IvyBuildInfoLog(project));
-                if (clientConf.publisher.isPublishArtifacts()) {
-                    IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                            clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
-
-                    deployArtifacts(project, client, deployDetails, patterns);
-                }
-                if (clientConf.publisher.isPublishBuildInfo()) {
-                    deployBuildInfo(client, build);
-                }
-                isDidDeploy = true;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+                doDeploy(event);
+            } catch (Exception e) {
+                RuntimeException re = new RuntimeException("Fail to activate deployment using the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+                re.printStackTrace();
+                throw re;
             }
+        }
+    }
+
+    private void doDeploy(BuildEvent event) {
+        Project project = event.getProject();
+        project.log("Build finished triggered", Project.MSG_INFO);
+        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
+        Set<DeployDetails> deployDetails = ctx.getDeployDetails();
+        BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
+                .number("0").durationMillis(System.currentTimeMillis() - ctx.getBuildStartTime())
+                .startedDate(new Date(ctx.getBuildStartTime()))
+                .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
+                .agent(new Agent("Ivy", Ivy.getIvyVersion()));
+        // This is here for backwards compatibility.
+        builder.type(BuildType.IVY);
+        ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
+        String agentName = clientConf.info.getAgentName();
+        String agentVersion = clientConf.info.getAgentVersion();
+        if (StringUtils.isNotBlank(agentName) && StringUtils.isNotBlank(agentVersion)) {
+            builder.agent(new Agent(agentName, agentVersion));
+        }
+        String buildAgentName = clientConf.info.getBuildAgentName();
+        String buildAgentVersion = clientConf.info.getBuildAgentVersion();
+        if (StringUtils.isNotBlank(buildAgentName) && StringUtils.isNotBlank(buildAgentVersion)) {
+            builder.buildAgent(new BuildAgent(buildAgentName, buildAgentVersion));
+        }
+        String buildName = clientConf.info.getBuildName();
+        if (StringUtils.isNotBlank(buildName)) {
+            builder.name(buildName);
+        }
+        String buildNumber = clientConf.info.getBuildNumber();
+        if (StringUtils.isNotBlank(buildNumber)) {
+            builder.number(buildNumber);
+        }
+        String buildUrl = clientConf.info.getBuildUrl();
+        if (StringUtils.isNotBlank(buildUrl)) {
+            builder.url(buildUrl);
+        }
+        String principal = clientConf.info.getPrincipal();
+        if (StringUtils.isNotBlank(principal)) {
+            builder.principal(principal);
+        }
+        String parentBuildName = clientConf.info.getParentBuildName();
+        if (StringUtils.isNotBlank(parentBuildName)) {
+            builder.parentName(parentBuildName);
+        }
+        String parentBuildNumber = clientConf.info.getParentBuildNumber();
+        if (StringUtils.isNotBlank(parentBuildNumber)) {
+            builder.parentNumber(parentBuildNumber);
+        }
+        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
+        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
+        if (StringUtils.isNotBlank(notificationRecipients)) {
+            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
+        }
+        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
+        String scopes = clientConf.info.licenseControl.getScopes();
+        if (StringUtils.isNotBlank(scopes)) {
+            licenseControl.setScopesList(scopes);
+        }
+        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
+        builder.licenseControl(licenseControl);
+        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
+        if (clientConf.info.getBuildRetentionDays() != null) {
+            buildRetention.setCount(clientConf.info.getBuildRetentionDays());
+        }
+        String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
+        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
+            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
+            if (minimumDays > -1) {
+                Calendar calendar = Calendar.getInstance();
+                calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                buildRetention.setMinimumBuildDate(calendar.getTime());
+            }
+        }
+        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
+        for (String notToDel : notToDelete) {
+            buildRetention.addBuildNotToBeDiscarded(notToDel);
+        }
+        builder.buildRetention(buildRetention);
+
+        String issueTrackerName = clientConf.info.getIssueTrackerName();
+        if (StringUtils.isNotBlank(issueTrackerName)) {
+            Issues issues = new Issues();
+            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
+            List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
+            if (!affectedIssuesList.isEmpty()) {
+                issues.setAffectedIssues(affectedIssuesList);
+            }
+            builder.issues(issues);
+        }
+
+        Properties props = new Properties();
+        props.putAll(clientConf.info.getBuildVariables());
+        builder.properties(props);
+        Build build = builder.build();
+        String contextUrl = clientConf.publisher.getContextUrl();
+        String username = clientConf.publisher.getUsername();
+        String password = clientConf.publisher.getPassword();
+        try {
+            ArtifactoryBuildInfoClient client =
+                    new ArtifactoryBuildInfoClient(contextUrl, username, password, new IvyBuildInfoLog(project));
+            if (clientConf.publisher.isPublishArtifacts()) {
+                IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                        clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
+
+                deployArtifacts(project, client, deployDetails, patterns);
+            }
+            if (clientConf.publisher.isPublishBuildInfo()) {
+                deployBuildInfo(client, build);
+            }
+            isDidDeploy = true;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -30,11 +29,8 @@ import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 /**
  * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
@@ -55,8 +51,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                 collectModuleInformation(event);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            //throw new RuntimeException("Exception during event management "+event.toString(), e);
+            RuntimeException re = new RuntimeException("Fail to collect dependencies and modules using the progress trigger in the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+            re.printStackTrace();
+            throw re;
         }
     }
 
@@ -71,10 +68,8 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         ResolveReport report = ((EndResolveEvent) event).getReport();
         Map<String, String> attributes = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        List<Module> modules = ctx.getModules();
-        String moduleName = attributes.get("module");
-        if (!isModuleExists(modules, moduleName)) {
-            ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
+        Module module = getOrCreateModule(ctx, attributes);
+        if (module.getDependencies() == null || module.getDependencies().isEmpty()) {
             String[] configurations = report.getConfigurations();
             List<Dependency> moduleDependencies = Lists.newArrayList();
             for (String configuration : configurations) {
@@ -107,8 +102,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     }
                 }
             }
-            moduleBuilder.dependencies(moduleDependencies);
-            modules.add(moduleBuilder.build());
+            module.setDependencies(moduleDependencies);
         }
     }
 
@@ -121,35 +115,10 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         final Map<String, String> map = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        List<Module> modules = ctx.getModules();
         String file = map.get("file");
         final String moduleName = map.get("module");
         project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
-        Module module = null;
-        try {
-            module = Iterables.find(modules, new Predicate<Module>() {
-                public boolean apply(Module input) {
-                    return input.getId().equals(moduleName) || input.getId().equals(generateModuleIdFromAttributes(map));
-                }
-            });
-        } catch (NoSuchElementException e) {
-            StringBuilder b = new StringBuilder("Did not find any module matching attributes map!\nmap = [ ");
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                b.append(entry.getKey()).append(':').append(entry.getValue()).append(", ");
-            }
-            b.append("]\nmodules = [ ");
-            int i = 0;
-            for (Module mod : modules) {
-                b.append("id").append(i++).append('=').append(mod.getId()).append(", ");
-            }
-            b.append("]\n");
-            String msg = b.toString();
-            project.log(msg);
-            NoSuchElementException ex = new NoSuchElementException(msg);
-            ex.initCause(e);
-            throw ex;
-        }
-        module.setId(generateModuleIdFromAttributes(map));
+        Module module = getOrCreateModule(ctx, map);
         File artifactFile = new File(file);
         List<Artifact> artifacts = module.getArtifacts();
         if (artifacts == null) {
@@ -230,43 +199,48 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         return builder.toString();
     }
 
-    private Dependency findDependencyInList(final ModuleRevisionId id, List<Dependency> moduleDependencies) {
-        try {
-            Dependency dependency = Iterables.find(moduleDependencies, new Predicate<Dependency>() {
-                public boolean apply(Dependency input) {
-                    return input.getId().equals(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
-                }
-            });
-            return dependency;
-        } catch (NoSuchElementException e) {
-            return null;
-        }
+    private String generateModuleIdFromMrid(final ModuleRevisionId mrid) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(mrid.getOrganisation()).append(":").append(mrid.getName())
+                .append(":").append(mrid.getRevision());
+        return builder.toString();
     }
 
-    private boolean isModuleExists(List<Module> modules, final String moduleName) {
-        try {
-            Iterables.find(modules, new Predicate<Module>() {
-                public boolean apply(Module input) {
-                    return input.getId().equals(moduleName);
-                }
-            });
-        } catch (NoSuchElementException e) {
-            return false;
+    private Dependency findDependencyInList(final ModuleRevisionId id, List<Dependency> moduleDependencies) {
+        final String idToFind = generateModuleIdFromMrid(id);
+        return Iterables.find(moduleDependencies, new Predicate<Dependency>() {
+            public boolean apply(Dependency input) {
+                return input.getId().equals(idToFind);
+            }
+        }, null);
+    }
+
+    private Module findModule(List<Module> modules, final String moduleId) {
+        return Iterables.find(modules, new Predicate<Module>() {
+            public boolean apply(Module input) {
+                return input.getId().equals(moduleId);
+            }
+        }, null);
+    }
+
+    private Module getOrCreateModule(BuildContext ctx, Map<String, String> attributes) {
+        List<Module> modules = ctx.getModules();
+        String moduleId = generateModuleIdFromAttributes(attributes);
+        Module module = findModule(modules, moduleId);
+        if (module == null) {
+            ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
+            module = moduleBuilder.build();
+            modules.add(module);
         }
-        return true;
+        return module;
     }
 
     private boolean isArtifactExist(List<Artifact> artifacts, final String artifactName) {
-        try {
-            Iterables.find(artifacts, new Predicate<Artifact>() {
-                public boolean apply(Artifact input) {
-                    return input.getName().equals(artifactName);
-                }
-            });
-        } catch (NoSuchElementException e) {
-            return false;
-        }
-        return true;
+        return Iterables.any(artifacts, new Predicate<Artifact>() {
+            public boolean apply(Artifact input) {
+                return input.getName().equals(artifactName);
+            }
+        });
     }
 }
 
