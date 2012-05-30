@@ -60,13 +60,13 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     /**
      * Collect dependency information during the build.
      *
-     * @param event
+     * @param event The end of resolution Ivy event
      */
     private void collectDependencyInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         project.log("Collecting dependencies.", Project.MSG_INFO);
         ResolveReport report = ((EndResolveEvent) event).getReport();
-        Map<String, String> attributes = event.getAttributes();
+        @SuppressWarnings("unchecked") Map<String, String> attributes = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         Module module = getOrCreateModule(ctx, attributes);
         if (module.getDependencies() == null || module.getDependencies().isEmpty()) {
@@ -85,7 +85,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
                         dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
-                        dependencyBuilder.id(id.getOrganisation() + ":" + id.getName() + ":" + id.getRevision());
+                        dependencyBuilder.id(id.getOrganisation() + ':' + id.getName() + ':' + id.getRevision());
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
@@ -109,11 +109,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     /**
      * Collect module information for each module.
      *
-     * @param event
+     * @param event the Ivy publish event
      */
     private void collectModuleInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
-        final Map<String, String> map = event.getAttributes();
+        @SuppressWarnings("unchecked") final Map<String, String> map = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         String file = map.get("file");
         final String moduleName = map.get("module");
@@ -131,7 +131,8 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("Module location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
         String type = map.get("type");
-        Map<String, String> extraAttributes = ((StartArtifactPublishEvent) event).getArtifact().getExtraAttributes();
+        @SuppressWarnings("unchecked") Map<String, String> extraAttributes =
+                ((StartArtifactPublishEvent) event).getArtifact().getExtraAttributes();
         if (extraAttributes.get("classifier") != null) {
             type = type + "-" + extraAttributes.get("classifier");
         }
@@ -192,45 +193,46 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         return checksums;
     }
 
-    private String generateModuleIdFromAttributes(Map<String, String> attributes) {
+    private String generateModuleKeyFromAttributes(Map<String, String> attributes) {
         StringBuilder builder = new StringBuilder();
-        builder.append(attributes.get("organisation")).append(":").append(attributes.get("module"))
-                .append(":").append(attributes.get("revision"));
+        builder.append(attributes.get("organisation")).append(':').append(attributes.get("module")).append(':');
         return builder.toString();
     }
 
-    private String generateModuleIdFromMrid(final ModuleRevisionId mrid) {
+    private String generateModuleKeyFromMrid(final ModuleRevisionId mrid) {
         StringBuilder builder = new StringBuilder();
-        builder.append(mrid.getOrganisation()).append(":").append(mrid.getName())
-                .append(":").append(mrid.getRevision());
+        builder.append(mrid.getOrganisation()).append(':').append(mrid.getName()).append(':');
         return builder.toString();
     }
 
     private Dependency findDependencyInList(final ModuleRevisionId id, List<Dependency> moduleDependencies) {
-        final String idToFind = generateModuleIdFromMrid(id);
+        final String idToFind = generateModuleKeyFromMrid(id);
         return Iterables.find(moduleDependencies, new Predicate<Dependency>() {
             public boolean apply(Dependency input) {
-                return input.getId().equals(idToFind);
+                return input.getId().startsWith(idToFind);
             }
         }, null);
     }
 
-    private Module findModule(List<Module> modules, final String moduleId) {
+    private Module findModule(List<Module> modules, final String moduleKey) {
         return Iterables.find(modules, new Predicate<Module>() {
             public boolean apply(Module input) {
-                return input.getId().equals(moduleId);
+                return input.getId().startsWith(moduleKey);
             }
         }, null);
     }
 
     private Module getOrCreateModule(BuildContext ctx, Map<String, String> attributes) {
         List<Module> modules = ctx.getModules();
-        String moduleId = generateModuleIdFromAttributes(attributes);
-        Module module = findModule(modules, moduleId);
+        String moduleKey = generateModuleKeyFromAttributes(attributes);
+        String moduleId = moduleKey + attributes.get("revision");
+        Module module = findModule(modules, moduleKey);
         if (module == null) {
             ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
             module = moduleBuilder.build();
             modules.add(module);
+        } else {
+            module.setId(moduleId);
         }
         return module;
     }
