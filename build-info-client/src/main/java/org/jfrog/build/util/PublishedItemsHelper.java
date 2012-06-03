@@ -467,8 +467,8 @@ public class PublishedItemsHelper {
      * @param rootDir       the root dir to calculate relativity to
      * @return the calculated target path
      */
-    public static String calculateTargetPath(String targetPattern, File artifactFile, String rootDir) {
-        String relativePath = calculateTargetRelativePath(artifactFile, rootDir);
+    public static String calculateTargetPath(String targetPattern, File artifactFile) {
+        String relativePath = calculateTargetRelativePath(artifactFile);
         if (relativePath == null) {
             throw new IllegalArgumentException("Cannot calculate a target path given a null relative path.");
         }
@@ -534,16 +534,11 @@ public class PublishedItemsHelper {
         return itemPathBuilder.toString();
     }
 
-    private static String calculateTargetRelativePath(File artifactFile, String rootDir) {
+    private static String calculateTargetRelativePath(File artifactFile) {
         String relativePath = artifactFile.getAbsolutePath();
-        if (StringUtils.startsWith(relativePath, rootDir)) {
-            relativePath = StringUtils.removeStart(artifactFile.getAbsolutePath(), rootDir);
-        } else {
-            String parentDir = artifactFile.getParent();
-            if (!StringUtils.isBlank(parentDir)) {
-                relativePath = StringUtils.removeStart(artifactFile.getAbsolutePath(),
-                        parentDir);
-            }
+        String parentDir = artifactFile.getParent();
+        if (!StringUtils.isBlank(parentDir)) {
+            relativePath = StringUtils.removeStart(artifactFile.getAbsolutePath(), parentDir);
         }
         relativePath = FilenameUtils.separatorsToUnix(relativePath);
         relativePath = StringUtils.removeStart(relativePath, "/");
