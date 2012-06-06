@@ -16,6 +16,8 @@
 
 package org.jfrog.build.client;
 
+import org.apache.commons.httpclient.URIException;
+import org.apache.commons.httpclient.util.URIUtil;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -34,7 +36,6 @@ import org.jfrog.build.api.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 /**
  * @author Noam Y. Tenne
@@ -178,8 +179,15 @@ public class ArtifactoryHttpClient {
         return jsonFactory;
     }
 
-    public String urlEncode(String value) throws UnsupportedEncodingException {
-        return URLEncoder.encode(value, "UTF-8");
+    public String urlEncode(String unescaped) throws UnsupportedEncodingException {
+        try {
+            return URIUtil.encodeQuery(unescaped, "UTF-8");
+        } catch (URIException e) {
+            // Nothing to do here, we will return the un-escaped value.
+            log.warn("Could not encode path '" + unescaped + "' with UTF-8 charset, returning the un-escaped value.");
+        }
+
+        return unescaped;
     }
 
     public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
