@@ -330,7 +330,7 @@ public class ArtifactoryBuildInfoClient {
         }
 
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
-                append(httpClient.urlEncode(buildName)).append("/").append(httpClient.urlEncode(buildNumber));
+                append(httpClient.encodeUrl(buildName)).append("/").append(httpClient.encodeUrl(buildNumber));
 
         String promotionJson = toJsonString(promotion);
 
@@ -383,8 +383,8 @@ public class ArtifactoryBuildInfoClient {
     public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams)
             throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/staging/")
-                .append(httpClient.urlEncode(strategyName)).append("?buildName=")
-                .append(httpClient.urlEncode(buildName)).append("&");
+                .append(httpClient.encodeUrl(strategyName)).append("?buildName=")
+                .append(httpClient.encodeUrl(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpGet getRequest = new HttpGet(urlBuilder.toString());
         HttpResponse response = httpClient.getHttpClient().execute(getRequest);
@@ -415,8 +415,8 @@ public class ArtifactoryBuildInfoClient {
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
                                                    Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
-                .append(promotionName).append("/").append(httpClient.urlEncode(buildName)).append("/")
-                .append(httpClient.urlEncode(buildNumber)).append("?");
+                .append(promotionName).append("/").append(httpClient.encodeUrl(buildName)).append("/")
+                .append(httpClient.encodeUrl(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
@@ -436,13 +436,13 @@ public class ArtifactoryBuildInfoClient {
         if ((requestParams != null) && !requestParams.isEmpty()) {
             urlBuilder.append("params=");
             Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
-            String encodedPipe = httpClient.urlEncode("|");
+            String encodedPipe = httpClient.encodeUrl("|");
             while (paramEntryIterator.hasNext()) {
                 Map.Entry<String, String> paramEntry = paramEntryIterator.next();
-                urlBuilder.append(httpClient.urlEncode(paramEntry.getKey()));
+                urlBuilder.append(httpClient.encodeUrl(paramEntry.getKey()));
                 String paramValue = paramEntry.getValue();
                 if (StringUtils.isNotBlank(paramValue)) {
-                    urlBuilder.append("=").append(httpClient.urlEncode(paramValue));
+                    urlBuilder.append("=").append(httpClient.encodeUrl(paramValue));
                 }
 
                 if (paramEntryIterator.hasNext()) {
@@ -599,8 +599,8 @@ public class ArtifactoryBuildInfoClient {
         StringBuilder matrix = new StringBuilder();
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (Map.Entry<String, String> property : matrixParams.entrySet()) {
-                matrix.append(";").append(httpClient.urlEncode(property.getKey()))
-                        .append("=").append(httpClient.urlEncode(property.getValue()));
+                matrix.append(";").append(httpClient.encodeUrl(property.getKey()))
+                        .append("=").append(httpClient.encodeUrl(property.getValue()));
             }
         }
         return matrix.toString();
