@@ -2,11 +2,7 @@ package org.jfrog.build.vcs.perforce;
 
 import com.perforce.p4java.client.IClient;
 import com.perforce.p4java.client.IClientViewMapping;
-import com.perforce.p4java.core.ChangelistStatus;
-import com.perforce.p4java.core.IChangelist;
-import com.perforce.p4java.core.ILabel;
-import com.perforce.p4java.core.ILabelMapping;
-import com.perforce.p4java.core.ViewMap;
+import com.perforce.p4java.core.*;
 import com.perforce.p4java.core.file.FileSpecBuilder;
 import com.perforce.p4java.core.file.FileSpecOpStatus;
 import com.perforce.p4java.core.file.IFileSpec;
@@ -53,8 +49,8 @@ public class PerforceClient {
             props.put("autoConnect", true);
             props.put("autoLogin", true);
             server = ServerFactory.getServer("p4java://" + hostAddress, props);
-            if(!StringUtils.isBlank(charset)) {
-                if(PerforceCharsets.isSupported(charset)) {
+            if (!StringUtils.isBlank(charset)) {
+                if (PerforceCharsets.isSupported(charset)) {
                     server.setCharsetName(charset);
                 } else {
                     server.setCharsetName("none");
@@ -98,7 +94,8 @@ public class PerforceClient {
             List<IFileSpec> fileSpecs = FileSpecBuilder.makeFileSpecList(file.getAbsolutePath());
             List<IFileSpec> fileSpecsResult = client.editFiles(fileSpecs, false, false, changeListId, null);
             for (IFileSpec fileSpec : fileSpecsResult) {
-                if (!FileSpecOpStatus.VALID.equals(fileSpec.getOpStatus())) {
+                FileSpecOpStatus status = fileSpec.getOpStatus();
+                if (!FileSpecOpStatus.VALID.equals(status) && !FileSpecOpStatus.INFO.equals(status)) {
                     String statusMessage = fileSpec.getStatusMessage();
                     throw new IOException("Failed opening file for editing: : '" + statusMessage + "'");
                 }
