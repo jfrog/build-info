@@ -1,9 +1,9 @@
 package org.jfrog.build.api;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -11,7 +11,9 @@ import java.util.List;
 public class Issues implements Serializable {
 
     private IssueTracker tracker;
-    private List<Issue> affectedIssues;
+    private boolean aggregateBuildIssues;
+    private String aggregationBuildStatus;
+    private Set<Issue> affectedIssues;
 
     public IssueTracker getTracker() {
         return tracker;
@@ -21,18 +23,34 @@ public class Issues implements Serializable {
         this.tracker = tracker;
     }
 
-    public List<Issue> getAffectedIssues() {
+    public Set<Issue> getAffectedIssues() {
         return affectedIssues;
     }
 
     public void addIssue(Issue issue) {
         if (affectedIssues == null) {
-            affectedIssues = Lists.newArrayList();
+            affectedIssues = Sets.newHashSet();
         }
         affectedIssues.add(issue);
     }
 
-    public void setAffectedIssues(List<Issue> affectedIssues) {
+    public void setAffectedIssues(Set<Issue> affectedIssues) {
         this.affectedIssues = affectedIssues;
+    }
+
+    public boolean isAggregateBuildIssues() {
+        return aggregateBuildIssues;
+    }
+
+    public void setAggregateBuildIssues(boolean aggregateBuildIssues) {
+        this.aggregateBuildIssues = aggregateBuildIssues;
+    }
+
+    public String getAggregationBuildStatus() {
+        return aggregationBuildStatus;
+    }
+
+    public void setAggregationBuildStatus(String aggregationBuildStatus) {
+        this.aggregationBuildStatus = aggregationBuildStatus;
     }
 }

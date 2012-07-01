@@ -17,8 +17,8 @@ package org.jfrog.build.client;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
@@ -30,15 +30,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
-import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_LICENSE_CONTROL_PREFIX;
-import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PREFIX;
+import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.IssuesTrackerFields.*;
 import static org.jfrog.build.api.LicenseControlFields.*;
 import static org.jfrog.build.client.ClientConfigurationFields.*;
 import static org.jfrog.build.client.ClientProperties.*;
@@ -570,8 +570,71 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    public class IssuesTrackerHandler extends PrefixPropertyHandler {
+        public IssuesTrackerHandler() {
+            super(root, BUILD_INFO_ISSUES_TRACKER_PREFIX);
+        }
+
+        public String getIssueTrackerName() {
+            return getStringValue(ISSUES_TRACKER_NAME);
+        }
+
+        public void setIssueTrackerName(String issueTrackerName) {
+            setStringValue(ISSUES_TRACKER_NAME, issueTrackerName);
+        }
+
+        public String getIssueTrackerVersion() {
+            return getStringValue(ISSUES_TRACKER_VERSION);
+        }
+
+        public void setIssueTrackerVersion(String issueTrackerVersion) {
+            setStringValue(ISSUES_TRACKER_VERSION, issueTrackerVersion);
+        }
+
+        public boolean getAggregateBuildIssues() {
+            return getBooleanValue(AGGREGATE_BUILD_ISSUES);
+        }
+
+        public void setAggregateBuildIssues(boolean aggregateBuildIssues) {
+            setBooleanValue(AGGREGATE_BUILD_ISSUES, aggregateBuildIssues);
+        }
+
+        public String getAggregationBuildStatus() {
+            return getStringValue(AGGREGATION_BUILD_STATUS);
+        }
+
+        public void setAggregationBuildStatus(String aggregationBuildStatus) {
+            setStringValue(AGGREGATION_BUILD_STATUS, aggregationBuildStatus);
+        }
+
+        public String getAffectedIssues() {
+            return getStringValue(AFFECTED_ISSUES);
+        }
+
+        public void setAffectedIssues(String affectedIssues) {
+            setStringValue(AFFECTED_ISSUES, affectedIssues);
+        }
+
+        public Set<Issue> getAffectedIssuesSet() {
+            Set<Issue> affectedIssuesSet = Sets.newHashSet();
+            String affectedIssues = getStringValue(AFFECTED_ISSUES);
+            if (StringUtils.isNotBlank(affectedIssues)) {
+                String[] issuePairs = affectedIssues.split(",");
+                for (String pair : issuePairs) {
+                    String[] idAndUrl = pair.split(">>");
+                    if (idAndUrl.length == 3) {
+                        affectedIssuesSet.add(new Issue(idAndUrl[0], idAndUrl[1], idAndUrl[2]));
+                    }
+                }
+            }
+            return affectedIssuesSet;
+        }
+    }
+
     public class BuildInfoHandler extends PrefixPropertyHandler {
         public final LicenseControlHandler licenseControl = new LicenseControlHandler();
+
+        public final IssuesTrackerHandler issues = new IssuesTrackerHandler();
 
         private final Predicate<String> buildVariablesPredicate;
 
@@ -752,45 +815,6 @@ public class ArtifactoryClientConfiguration {
 
         public String getBuildRoot() {
             return getStringValue(BUILD_ROOT);
-        }
-
-        public String getIssueTrackerName() {
-            return getStringValue(BUILD_ISSUE_TRACKER_NAME);
-        }
-
-        public void setIssueTrackerName(String issueTrackerName) {
-            setStringValue(BUILD_ISSUE_TRACKER_NAME, issueTrackerName);
-        }
-
-        public String getIssueTrackerVersion() {
-            return getStringValue(BUILD_ISSUE_TRACKER_VERSION);
-        }
-
-        public void setIssueTrackerVersion(String issueTrackerVersion) {
-            setStringValue(BUILD_ISSUE_TRACKER_VERSION, issueTrackerVersion);
-        }
-
-        public String getAffectedIssues() {
-            return getStringValue(BUILD_AFFECTED_ISSUES);
-        }
-
-        public void setAffectedIssues(String affectedIssues) {
-            setStringValue(BUILD_AFFECTED_ISSUES, affectedIssues);
-        }
-
-        public List<Issue> getAffectedIssuesList() {
-            List<Issue> affectedIssuesList = Lists.newArrayList();
-            String affectedIssues = getStringValue(BUILD_AFFECTED_ISSUES);
-            if (StringUtils.isNotBlank(affectedIssues)) {
-                String[] issuePairs = affectedIssues.split(",");
-                for (String pair : issuePairs) {
-                    String[] idAndUrl = pair.split(">>");
-                    if (idAndUrl.length == 3) {
-                        affectedIssuesList.add(new Issue(idAndUrl[0], idAndUrl[1], idAndUrl[2]));
-                    }
-                }
-            }
-            return affectedIssuesList;
         }
 
         public void addBuildVariables(Map<String, String> buildVariables) {

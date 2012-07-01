@@ -186,13 +186,15 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                     .ciUser(principal).user(artifactoryPrincipal).build());
         }
 
-        String issueTrackerName = clientConf.info.getIssueTrackerName();
+        String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {
             Issues issues = new Issues();
-            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
-            List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
-            if (!affectedIssuesList.isEmpty()) {
-                issues.setAffectedIssues(affectedIssuesList);
+            issues.setAggregateBuildIssues(clientConf.info.issues.getAggregateBuildIssues());
+            issues.setAggregationBuildStatus(clientConf.info.issues.getAggregationBuildStatus());
+            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.issues.getIssueTrackerVersion()));
+            Set<Issue> affectedIssuesSet = clientConf.info.issues.getAffectedIssuesSet();
+            if (!affectedIssuesSet.isEmpty()) {
+                issues.setAffectedIssues(affectedIssuesSet);
             }
             bib.issues(issues);
         }

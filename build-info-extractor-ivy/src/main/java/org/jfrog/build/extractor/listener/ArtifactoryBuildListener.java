@@ -14,16 +14,31 @@ import org.apache.tools.ant.BuildEvent;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Issue;
+import org.jfrog.build.api.IssueTracker;
+import org.jfrog.build.api.Issues;
+import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -43,12 +58,15 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
             PUBLISH_TRIGGER.setEvent(StartArtifactPublishEvent.NAME);
             Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
-            ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(new IvyBuildInfoLog(project));
+            ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(
+                    new IvyBuildInfoLog(project));
             Properties props = getMergedEnvAndSystemProps();
             clientConf.fillFromProperties(props);
             ctx = new BuildContext(clientConf);
         } catch (Exception e) {
-            RuntimeException re = new RuntimeException("Fail to initialize the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+            RuntimeException re = new RuntimeException(
+                    "Fail to initialize the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(),
+                    e);
             re.printStackTrace();
             throw re;
         }
@@ -94,7 +112,8 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             }
             super.taskStarted(event);
         } catch (Exception e) {
-            RuntimeException re = new RuntimeException("Fail to add the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+            RuntimeException re = new RuntimeException(
+                    "Fail to add the Ivy listeners for the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
             re.printStackTrace();
             throw re;
         }
@@ -116,7 +135,8 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             try {
                 doDeploy(event);
             } catch (Exception e) {
-                RuntimeException re = new RuntimeException("Fail to activate deployment using the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
+                RuntimeException re = new RuntimeException(
+                        "Fail to activate deployment using the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
                 re.printStackTrace();
                 throw re;
             }
@@ -201,13 +221,15 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
         }
         builder.buildRetention(buildRetention);
 
-        String issueTrackerName = clientConf.info.getIssueTrackerName();
+        String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {
             Issues issues = new Issues();
-            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.getIssueTrackerVersion()));
-            List<Issue> affectedIssuesList = clientConf.info.getAffectedIssuesList();
-            if (!affectedIssuesList.isEmpty()) {
-                issues.setAffectedIssues(affectedIssuesList);
+            issues.setAggregateBuildIssues(clientConf.info.issues.getAggregateBuildIssues());
+            issues.setAggregationBuildStatus(clientConf.info.issues.getAggregationBuildStatus());
+            issues.setTracker(new IssueTracker(issueTrackerName, clientConf.info.issues.getIssueTrackerVersion()));
+            Set<Issue> affectedIssuesSet = clientConf.info.issues.getAffectedIssuesSet();
+            if (!affectedIssuesSet.isEmpty()) {
+                issues.setAffectedIssues(affectedIssuesSet);
             }
             builder.issues(issues);
         }
@@ -238,7 +260,7 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
     }
 
     private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
             String artifactPath = deployDetail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
