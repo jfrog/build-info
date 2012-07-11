@@ -288,6 +288,7 @@ public class ArtifactoryBuildInfoClient {
         deploymentPathBuilder.append(details.artifactPath);
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
+        deploymentPath = httpClient.encodeUrl(deploymentPath);
         uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
@@ -413,7 +414,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
-                                                   Map<String, String> requestParams) throws IOException {
+            Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
                 .append(promotionName).append("/").append(httpClient.encodeUrl(buildName)).append("/")
                 .append(httpClient.encodeUrl(buildNumber)).append("?");
