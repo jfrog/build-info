@@ -188,6 +188,7 @@ public class ArtifactoryDependenciesClient {
     private HttpResponse executeGet(String downloadUrl) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
+        downloadUrl = httpClient.encodeUrl(downloadUrl);
         HttpGet get = new HttpGet(downloadUrl);
         //Explicitly force keep alive
         get.setHeader("Connection", "Keep-Alive");

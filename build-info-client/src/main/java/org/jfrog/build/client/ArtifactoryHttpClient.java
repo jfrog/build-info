@@ -16,6 +16,7 @@
 
 package org.jfrog.build.client;
 
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,11 +31,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.util.URI;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 /**
  * @author Noam Y. Tenne
@@ -178,8 +178,10 @@ public class ArtifactoryHttpClient {
         return jsonFactory;
     }
 
-    public String encodeUrl(String value) throws UnsupportedEncodingException {
-        return URLEncoder.encode(value, "UTF-8").replace("+", "%20");
+    public String encodeUrl(String unescaped) {
+        byte[] rawdata = URLCodec.encodeUrl(URI.allowed_query,
+                org.apache.commons.codec.binary.StringUtils.getBytesUtf8(unescaped));
+        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(rawdata);
     }
 
     public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {

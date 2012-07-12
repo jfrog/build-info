@@ -281,13 +281,14 @@ public class ArtifactoryBuildInfoClient {
      */
     public void deployArtifact(DeployDetails details) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
-        deploymentPathBuilder.append("/").append(httpClient.encodeUrl(details.getTargetRepository()));
+        deploymentPathBuilder.append("/").append(details.getTargetRepository());
         if (!details.artifactPath.startsWith("/")) {
             deploymentPathBuilder.append("/");
         }
-        deploymentPathBuilder.append(httpClient.encodeUrl(details.artifactPath));
+        deploymentPathBuilder.append(details.artifactPath);
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
+        deploymentPath = httpClient.encodeUrl(deploymentPath);
         uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
