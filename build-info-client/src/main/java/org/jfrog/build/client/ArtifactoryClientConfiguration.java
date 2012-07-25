@@ -18,12 +18,12 @@ package org.jfrog.build.client;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.util.IssuesTrackerUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -616,18 +616,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Set<Issue> getAffectedIssuesSet() {
-            Set<Issue> affectedIssuesSet = Sets.newHashSet();
-            String affectedIssues = getStringValue(AFFECTED_ISSUES);
-            if (StringUtils.isNotBlank(affectedIssues)) {
-                String[] issuePairs = affectedIssues.split(",");
-                for (String pair : issuePairs) {
-                    String[] idAndUrl = pair.split(">>");
-                    if (idAndUrl.length == 3) {
-                        affectedIssuesSet.add(new Issue(idAndUrl[0], idAndUrl[1], idAndUrl[2]));
-                    }
-                }
-            }
-            return affectedIssuesSet;
+            return IssuesTrackerUtils.getAffectedIssuesSet(getAffectedIssues());
         }
     }
 
