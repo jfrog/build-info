@@ -18,17 +18,23 @@ package org.jfrog.build.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
+import org.jfrog.build.api.dependency.DownloadableArtifact;
+import org.jfrog.build.api.dependency.PatternArtifact;
 import org.jfrog.build.api.dependency.PatternResult;
 import org.jfrog.build.api.dependency.UserBuildDependency;
+import org.jfrog.build.api.util.Log;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -38,7 +44,78 @@ import java.util.Map;
  */
 public class BuildDependenciesHelper {
 
-    public static List<UserBuildDependency> getBuildDependencies(String buildItemsPropertyValue) {
+    private DependenciesDownloader downloader;
+    private Log log;
+
+    public BuildDependenciesHelper(DependenciesDownloader downloader, Log log) {
+        this.downloader = downloader;
+        this.log = log;
+    }
+
+    public List<UserBuildDependency> retrieveBuildDependencies(String resolvePattern)
+            throws IOException, InterruptedException {
+        List<UserBuildDependency> buildDependencies = getBuildDependencies(resolvePattern);
+
+        // Don't run if dependencies mapping came out to be empty.
+        if (buildDependencies.isEmpty()) {
+            return buildDependencies;
+        }
+
+        log.info("Beginning to resolve Build Info build dependencies.");
+        List<BuildPatternArtifactsRequest> artifactsRequests = toArtifactsRequests(buildDependencies);
+        List<BuildPatternArtifacts> artifacts = downloader.getClient().retrievePatternArtifacts(artifactsRequests);
+        applyBuildArtifacts(buildDependencies, artifacts);
+
+        downloader.download(collectArtifactsToDownload(buildDependencies));
+        log.info("Finished resolving Build Info build dependencies.");
+
+        return buildDependencies;
+    }
+
+    private Set<DownloadableArtifact> collectArtifactsToDownload(List<UserBuildDependency> userBuildDependencies)
+            throws IOException, InterruptedException {
+        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        for (UserBuildDependency dependencyUser : userBuildDependencies) {
+
+            final String message = String.format("Dependency on build [%s], number [%s]",
+                    dependencyUser.getBuildName(), dependencyUser.getBuildNumberRequest());
+            /**
+             * dependency.getBuildNumberResponse() is null for unresolved dependencies (wrong build name or build number).
+             */
+            if (dependencyUser.getBuildNumberResponse() == null) {
+                log.info(message + " - no results found, check correctness of dependency build name and build number.");
+            } else {
+
+                for (UserBuildDependency.Pattern pattern : dependencyUser.getPatterns()) {
+
+                    List<PatternArtifact> artifacts = pattern.getPatternResult().getPatternArtifacts();
+
+                    log.info(message +
+                            String.format(", pattern [%s] - [%s] result%s found.",
+                                    pattern.getArtifactoryPattern(), artifacts.size(),
+                                    (artifacts.size() == 1 ? "" : "s")));
+
+                    for (PatternArtifact artifact : artifacts) {
+
+                        final String uri = artifact.getUri(); // "libs-release-local/com/goldin/plugins/gradle/0.1.1/gradle-0.1.1.jar"
+                        final int j = uri.indexOf('/');
+
+                        assert (j > 0) : String.format("Filed to locate '/' in [%s]", uri);
+
+                        final String repoUrl = artifact.getArtifactoryUrl() + '/' + uri.substring(0, j);
+                        final String filePath = uri.substring(j + 1);
+                        final String matrixParameters = pattern.getMatrixParameters();
+                        downloadableArtifacts.add(new DownloadableArtifact(repoUrl, pattern.getTargetDirectory(),
+                                filePath, matrixParameters));
+                    }
+                }
+            }
+        }
+
+        return downloadableArtifacts;
+    }
+
+    private List<UserBuildDependency> getBuildDependencies(String buildItemsPropertyValue) {
 
         if (StringUtils.isBlank(buildItemsPropertyValue)) {
             return Collections.emptyList();
@@ -58,7 +135,7 @@ public class BuildDependenciesHelper {
     }
 
 
-    private static Map<String, Map<String, UserBuildDependency>> buildsMap(String buildItemsPropertyValue) {
+    private Map<String, Map<String, UserBuildDependency>> buildsMap(String buildItemsPropertyValue) {
         Map<String, Map<String, UserBuildDependency>> buildsMap = Maps.newHashMap();
         List<String> patternLines = PublishedItemsHelper.parsePatternsFromProperty(buildItemsPropertyValue);
 
@@ -120,7 +197,7 @@ public class BuildDependenciesHelper {
     }
 
 
-    public static List<BuildPatternArtifactsRequest> toArtifactsRequests(
+    private List<BuildPatternArtifactsRequest> toArtifactsRequests(
             List<UserBuildDependency> userBuildDependencies) {
         List<BuildPatternArtifactsRequest> artifactsRequests = Lists.newLinkedList();
 
@@ -140,7 +217,7 @@ public class BuildDependenciesHelper {
     }
 
 
-    public static void applyBuildArtifacts(List<UserBuildDependency> userBuildDependencies,
+    private void applyBuildArtifacts(List<UserBuildDependency> userBuildDependencies,
             List<BuildPatternArtifacts> buildArtifacts) {
 
         verifySameSize(userBuildDependencies, buildArtifacts);
@@ -184,7 +261,7 @@ public class BuildDependenciesHelper {
      * @param l2 second list to check
      * @throws IllegalArgumentException if lists are of different sizes.
      */
-    private static void verifySameSize(List l1, List l2) {
+    private void verifySameSize(List l1, List l2) {
 
         if (l1.size() != l2.size()) {
             throw new IllegalArgumentException(

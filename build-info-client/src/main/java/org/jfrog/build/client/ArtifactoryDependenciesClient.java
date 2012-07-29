@@ -33,9 +33,7 @@ import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.JsonSerializer;
 
-import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -151,8 +149,12 @@ public class ArtifactoryDependenciesClient {
         }
     }
 
+    public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
+        return executeGet(downloadUrl);
+        //return response.getEntity().getContent();
+    }
 
-    public void downloadArtifact(String downloadUrl, File dest) throws IOException {
+    /*    public void downloadArtifact(String downloadUrl, File dest) throws IOException {
         HttpResponse response = executeGet(downloadUrl);
 
         if (dest.exists()) {
@@ -171,7 +173,7 @@ public class ArtifactoryDependenciesClient {
             IOUtils.closeQuietly(fileOutputStream);
             response.getEntity().consumeContent();
         }
-    }
+    }*/
 
     public String downloadChecksum(String downloadUrl, String checksumAlgorithm) throws IOException {
         HttpResponse response = executeGet(downloadUrl + "." + checksumAlgorithm);
