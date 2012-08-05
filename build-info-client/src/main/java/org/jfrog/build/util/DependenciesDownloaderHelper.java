@@ -86,7 +86,7 @@ public class DependenciesDownloaderHelper {
                         + "Original: '" + md5 + "' Calculated: '" + calculatedMd5 + "'";
                 throw new IOException(errorMessage);
             } else {
-                log.info("Found valid MD5 checksum: '" + calculatedMd5 + "'");
+                log.debug("Found valid MD5 checksum: '" + calculatedMd5 + "'");
             }
         }
         return md5;
@@ -102,7 +102,7 @@ public class DependenciesDownloaderHelper {
                         + "Original: '" + sha1 + "' Calculated: '" + calculatedSha1 + "'";
                 throw new IOException(errorMessage);
             } else {
-                log.info("Found valid SHA-1 checksum: '" + calculatedSha1 + "'");
+                log.debug("Found valid SHA-1 checksum: '" + calculatedSha1 + "'");
             }
         }
         return sha1;
