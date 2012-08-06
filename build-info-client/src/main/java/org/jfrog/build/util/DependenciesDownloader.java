@@ -27,7 +27,7 @@ public interface DependenciesDownloader {
      * Usually that can be a full relative path under the file system of the full relative
      * path to the user workspace.
      */
-    String getTargetDir(String relativeDir);
+    String getTargetDir(String targetDir, String relativeDir);
 
     /**
      * Parse the given input stream, save it to an actual file to the given path and return

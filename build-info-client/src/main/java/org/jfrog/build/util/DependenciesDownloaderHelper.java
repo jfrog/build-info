@@ -34,7 +34,8 @@ public class DependenciesDownloaderHelper {
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
         List<Dependency> dependencies = Lists.newArrayList();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
-            Dependency dependency = downloadArtifact(downloadableArtifact.getRepoUrl(),
+            Dependency dependency = downloadArtifact(downloadableArtifact.getRelativeDirPath(),
+                    downloadableArtifact.getRepoUrl(),
                     downloadableArtifact.getFilePath(),
                     downloadableArtifact.getMatrixParameters());
             if (dependency != null) {
@@ -46,17 +47,19 @@ public class DependenciesDownloaderHelper {
     }
 
 
-    private Dependency downloadArtifact(String repoUri, String filePath, String matrixParams) throws IOException {
+    private Dependency downloadArtifact(String targetDir, String repoUri, String filePath, String matrixParams)
+            throws IOException {
         Dependency dependencyResult = null;
         final String uri = repoUri + '/' + filePath;
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
+        String fileDestination = downloader.getTargetDir(targetDir, filePath);
 
         log.info("Downloading '" + uriWithParams + "' ...");
         HttpResponse httpResponse = null;
         try {
             httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
             InputStream inputStream = httpResponse.getEntity().getContent();
-            Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, filePath);
+            Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
 
             // If the checksums map is null then something went wrong and we should fail the build
             if (checksumsMap == null) {
@@ -66,7 +69,7 @@ public class DependenciesDownloaderHelper {
             String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
             String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
 
-            log.info("Successfully downloaded '" + uriWithParams + "' to '" + downloader.getTargetDir(filePath) + "'");
+            log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
             dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
         } catch (FileNotFoundException e) {
             String warningMessage = "Error occurred while resolving published dependency: " + e.getMessage();
