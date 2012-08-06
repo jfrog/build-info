@@ -85,8 +85,6 @@ public class DependenciesDownloaderHelper {
                 String errorMessage = "Calculated MD5 checksum is different from original, "
                         + "Original: '" + md5 + "' Calculated: '" + calculatedMd5 + "'";
                 throw new IOException(errorMessage);
-            } else {
-                log.debug("Found valid MD5 checksum: '" + calculatedMd5 + "'");
             }
         }
         return md5;
@@ -101,8 +99,6 @@ public class DependenciesDownloaderHelper {
                 String errorMessage = "Calculated SHA-1 checksum is different from original, "
                         + "Original: '" + sha1 + "' Calculated: '" + calculatedSha1 + "'";
                 throw new IOException(errorMessage);
-            } else {
-                log.debug("Found valid SHA-1 checksum: '" + calculatedSha1 + "'");
             }
         }
         return sha1;
