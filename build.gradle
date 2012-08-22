@@ -344,6 +344,8 @@ idea {
         jdkName = '1.6'
         languageLevel = '1.6'
         wildcards += '?*.gradle'
+        downloadJavadoc = false
+        downloadSources = true
         ipr {
             withXml { provider ->
                 def node = provider.asNode()
