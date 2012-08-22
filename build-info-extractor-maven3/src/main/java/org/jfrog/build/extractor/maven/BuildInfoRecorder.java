@@ -412,8 +412,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactName).type(type);
             File artifactFile = moduleArtifact.getFile();
-            if ((artifactFile == null) && moduleArtifact.equals(project.getArtifact())) {
-                artifactFile = project.getFile();
+            // for pom projects take the file from the project if the artifact file is null
+            if (artifactFile == null && isPomProject(moduleArtifact) && moduleArtifact.equals(project.getArtifact())) {
+                artifactFile = project.getFile();   // project.getFile() returns the project pom file
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             module.addArtifact(artifact);
