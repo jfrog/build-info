@@ -35,7 +35,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -55,11 +55,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Noam Y. Tenne
@@ -77,7 +73,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private BuildDeploymentHelper buildDeploymentHelper;
 
     private ExecutionListener wrappedListener;
-    private BuildInfoBuilder buildInfoBuilder;
+    private BuildInfoMavenBuilder buildInfoBuilder;
     private ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<ModuleBuilder>();
     private ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<Set<Artifact>>();
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
@@ -467,7 +463,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-            String groupId, String artifactId, String version, String classifier, String fileExtension) {
+                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
@@ -475,7 +471,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
 
-        deployableArtifactBuilderMap.put(artifact, deployable);
+        if (!deployableArtifactBuilderMap.containsValue(deployable)) {
+            deployableArtifactBuilderMap.put(artifact, deployable);
+        }
     }
 
     /**
@@ -492,7 +490,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-            String fileExtension) {
+                                     String fileExtension) {
         return new StringBuilder(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
                 append("/").append(getArtifactName(artifactId, version, classifier, fileExtension)).toString();
     }

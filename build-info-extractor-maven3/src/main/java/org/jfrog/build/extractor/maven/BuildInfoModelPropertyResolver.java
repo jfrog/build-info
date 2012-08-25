@@ -6,16 +6,8 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.*;
+import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
@@ -24,11 +16,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.api.BuildInfoFields.*;
 
@@ -42,11 +30,11 @@ public class BuildInfoModelPropertyResolver {
     private Logger logger;
 
 
-    public BuildInfoBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
+    public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         Map<String, String> buildInfoProps = clientConf.info.getBuildVariables();
         Properties props = new Properties();
         props.putAll(buildInfoProps);
-        BuildInfoBuilder builder = resolveCoreProperties(event, clientConf).
+        BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
                 artifactoryPrincipal(clientConf.publisher.getName()).
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
@@ -118,7 +106,7 @@ public class BuildInfoModelPropertyResolver {
         return builder;
     }
 
-    private void attachStagingIfNeeded(ArtifactoryClientConfiguration clientConf, BuildInfoBuilder builder) {
+    private void attachStagingIfNeeded(ArtifactoryClientConfiguration clientConf, BuildInfoMavenBuilder builder) {
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
             String comment = clientConf.info.getReleaseComment();
@@ -138,7 +126,7 @@ public class BuildInfoModelPropertyResolver {
         }
     }
 
-    private BuildInfoBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
+    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
@@ -161,7 +149,7 @@ public class BuildInfoModelPropertyResolver {
         logResolvedProperty(BUILD_NUMBER, buildNumber);
         logResolvedProperty(BUILD_STARTED, buildStarted);
         logResolvedProperty(BUILD_TIMESTAMP, buildTimestamp);
-        return new BuildInfoBuilder(buildName).number(buildNumber).started(buildStarted);
+        return new BuildInfoMavenBuilder(buildName).number(buildNumber).started(buildStarted);
     }
 
     private String getMavenVersion() {
