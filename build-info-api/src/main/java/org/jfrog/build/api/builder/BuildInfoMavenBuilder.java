@@ -362,6 +362,10 @@ public class BuildInfoMavenBuilder {
             return;
         }
 
+        if (artifactsToMerge == null || artifactsToMerge.isEmpty()) {
+            return;
+        }
+
         for (Artifact artifactToMerge : artifactsToMerge) {
             Artifact foundArtifact = findArtifact(existingArtifacts, artifactToMerge.getName());
             if (foundArtifact == null) {
@@ -390,6 +394,10 @@ public class BuildInfoMavenBuilder {
         List<Dependency> dependenciesToMerge = moduleToMerge.getDependencies();
         if (existingDependencies == null || existingDependencies.isEmpty()) {
             existingModule.setDependencies(dependenciesToMerge);
+            return;
+        }
+
+        if (dependenciesToMerge == null || dependenciesToMerge.isEmpty()) {
             return;
         }
 
