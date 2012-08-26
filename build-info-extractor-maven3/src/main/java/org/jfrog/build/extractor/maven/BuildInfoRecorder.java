@@ -55,7 +55,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -463,7 +467,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
+            String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
@@ -471,9 +475,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
 
-        if (!deployableArtifactBuilderMap.containsValue(deployable)) {
-            deployableArtifactBuilderMap.put(artifact, deployable);
-        }
+        deployableArtifactBuilderMap.put(artifact, deployable);
     }
 
     /**
@@ -490,7 +492,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-                                     String fileExtension) {
+            String fileExtension) {
         return new StringBuilder(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
                 append("/").append(getArtifactName(artifactId, version, classifier, fileExtension)).toString();
     }
