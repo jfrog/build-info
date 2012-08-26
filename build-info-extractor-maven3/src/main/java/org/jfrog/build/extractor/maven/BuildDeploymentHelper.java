@@ -52,7 +52,7 @@ public class BuildDeploymentHelper {
     private BuildInfoClientBuilder buildInfoClientBuilder;
 
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
-            Map<Artifact, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
+            Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
         String outputFile = clientConf.getExportFile();
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
@@ -94,13 +94,13 @@ public class BuildDeploymentHelper {
     }
 
     private Set<DeployDetails> prepareDeployableArtifacts(Build build,
-            Map<Artifact, DeployDetails> deployableArtifactBuilders) {
+            Map<String, DeployDetails> deployableArtifactBuilders) {
         Set<DeployDetails> deployableArtifacts = Sets.newLinkedHashSet();
         List<Module> modules = build.getModules();
         for (Module module : modules) {
             List<Artifact> artifacts = module.getArtifacts();
             for (Artifact artifact : artifacts) {
-                DeployDetails deployable = deployableArtifactBuilders.get(artifact);
+                DeployDetails deployable = deployableArtifactBuilders.get(artifact.getName());
                 if (deployable != null) {
                     File file = deployable.getFile();
                     setArtifactChecksums(file, artifact);

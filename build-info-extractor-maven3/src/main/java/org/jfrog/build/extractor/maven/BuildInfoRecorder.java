@@ -83,7 +83,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
     private volatile boolean projectHasTestFailures;
 
-    private Map<org.jfrog.build.api.Artifact, DeployDetails> deployableArtifactBuilderMap;
+    private Map<String, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
 
@@ -475,7 +475,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
 
-        deployableArtifactBuilderMap.put(artifact, deployable);
+        deployableArtifactBuilderMap.put(artifact.getName(), deployable);
     }
 
     /**
