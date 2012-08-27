@@ -37,6 +37,7 @@ import org.jfrog.build.util.IvyBuildInfoLog;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
@@ -234,9 +235,14 @@ public class ArtifactoryBuildListener extends BuildListenerAdapter {
             builder.issues(issues);
         }
 
-        Properties props = new Properties();
-        props.putAll(clientConf.info.getBuildVariables());
-        builder.properties(props);
+        if (clientConf.isIncludeEnvVars()) {
+            Properties envProperties = new Properties();
+            envProperties.putAll(clientConf.getAllProperties());
+            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+            for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
+                builder.addProperty(envProp.getKey(), envProp.getValue());
+            }
+        }
         Build build = builder.build();
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
