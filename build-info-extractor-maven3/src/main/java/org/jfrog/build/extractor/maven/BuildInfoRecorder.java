@@ -43,7 +43,6 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.xml.sax.InputSource;
 
@@ -122,7 +121,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionEnded(ExecutionEvent event) {
-        Build build = extract(event, BuildInfoExtractorSpec.fromProperties());
+        Build build = extract(event);
         if (build != null) {
             File basedir = event.getSession().getTopLevelProject().getBasedir();
             buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
@@ -536,7 +535,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    public Build extract(ExecutionEvent event, BuildInfoExtractorSpec spec) {
+    @Override
+    public Build extract(ExecutionEvent event) {
         MavenSession session = event.getSession();
         if (!session.getResult().hasExceptions()) {
             if (conf.isIncludeEnvVars()) {

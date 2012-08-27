@@ -67,9 +67,13 @@ public class ArtifactoryClientConfiguration {
         this.proxy = new ProxyHandler();
     }
 
-    public void fillFromProperties(Map<String, String> props) {
+    public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
         for (Map.Entry<String, String> entry : props.entrySet()) {
-            root.setStringValue(entry.getKey(), entry.getValue());
+            String varKey = entry.getKey();
+            if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                continue;
+            }
+            root.setStringValue(varKey, entry.getValue());
         }
     }
 
@@ -158,6 +162,22 @@ public class ArtifactoryClientConfiguration {
 
     public Boolean isIncludeEnvVars() {
         return rootConfig.getBooleanValue(INCLUDE_ENV_VARS, false);
+    }
+
+    public void setEnvVarsIncludePatterns(String patterns) {
+        rootConfig.setStringValue(ENV_VARS_INCLUDE_PATTERNS, patterns);
+    }
+
+    public String getEnvVarsIncludePatterns() {
+        return rootConfig.getStringValue(ENV_VARS_INCLUDE_PATTERNS);
+    }
+
+    public void setEnvVarsExcludePatterns(String patterns) {
+        rootConfig.setStringValue(ENV_VARS_EXCLUDE_PATTERNS, patterns);
+    }
+
+    public String getEnvVarsExcludePatterns() {
+        return rootConfig.getStringValue(ENV_VARS_EXCLUDE_PATTERNS);
     }
 
     public void setBuildListernerAdded(Boolean enabled) {
@@ -806,26 +826,18 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(BUILD_ROOT);
         }
 
-        public void addBuildVariables(Map<String, String> buildVariables) {
+        public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {
             for (Map.Entry<String, String> entry : buildVariables.entrySet()) {
-                addBuildVariable(entry.getKey(), entry.getValue());
+                String varKey = entry.getKey();
+                if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                    continue;
+                }
+                addBuildVariable(varKey, entry.getValue());
             }
         }
 
-        public void addBuildVariable(String key, String value) {
+        private void addBuildVariable(String key, String value) {
             setStringValue(ENVIRONMENT_PREFIX + key, value);
-        }
-
-        public void fillCommonSysProps() {
-            String[] commonSysProps = {"os.arch", "os.name", "os.version", "java.version", "java.vm.info",
-                    "java.vm.name", "java.vm.specification.name", "java.vm.vendor"};
-            for (String prop : commonSysProps) {
-                addBuildVariable(prop, System.getProperty(prop));
-            }
-        }
-
-        public Map<String, String> getBuildVariables() {
-            return Maps.filterKeys(props, buildVariablesPredicate);
         }
     }
 }

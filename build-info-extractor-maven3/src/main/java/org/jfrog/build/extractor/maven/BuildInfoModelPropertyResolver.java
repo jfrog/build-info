@@ -6,7 +6,15 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Issue;
+import org.jfrog.build.api.IssueTracker;
+import org.jfrog.build.api.Issues;
+import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
@@ -16,7 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Properties;
+import java.util.Set;
 
 import static org.jfrog.build.api.BuildInfoFields.*;
 
@@ -31,14 +42,11 @@ public class BuildInfoModelPropertyResolver {
 
 
     public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
-        Map<String, String> buildInfoProps = clientConf.info.getBuildVariables();
-        Properties props = new Properties();
-        props.putAll(buildInfoProps);
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
                 artifactoryPrincipal(clientConf.publisher.getName()).
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
-                parentNumber(clientConf.info.getParentBuildNumber()).properties(props);
+                parentNumber(clientConf.info.getParentBuildNumber());
 
         String buildUrl = clientConf.info.getBuildUrl();
         if (StringUtils.isNotBlank(buildUrl)) {
@@ -126,7 +134,8 @@ public class BuildInfoModelPropertyResolver {
         }
     }
 
-    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
+    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event,
+            ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();

@@ -38,7 +38,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorSpec;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -77,7 +77,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         this.gradleDeployDetails = gradleDeployDetails;
     }
 
-    public Build extract(Project rootProject, BuildInfoExtractorSpec spec) {
+    @Override
+    public Build extract(Project rootProject) {
         String buildName = clientConf.info.getBuildName();
         BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
 
@@ -199,10 +200,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             bib.issues(issues);
         }
 
-        clientConf.info.fillCommonSysProps();
-        Properties props = new Properties();
-        props.putAll(clientConf.info.getBuildVariables());
-        bib.properties(props);
+        if (clientConf.isIncludeEnvVars()) {
+            Properties envProperties = new Properties();
+            envProperties.putAll(clientConf.getAllProperties());
+            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+            for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
+                bib.addProperty(envProp.getKey(), envProp.getValue());
+            }
+        }
         log.debug("buildInfoBuilder = " + bib);
         // for backward compatibility for Artifactory 2.2.3
         Build build = bib.build();

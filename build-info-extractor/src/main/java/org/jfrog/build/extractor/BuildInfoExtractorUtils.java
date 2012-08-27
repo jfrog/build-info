@@ -33,6 +33,8 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.client.ClientProperties;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -40,6 +42,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -104,23 +107,28 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static Properties getEnvProperties(Properties startProps) {
+        IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
+                startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
+
         Properties props = new Properties();
-        boolean includeEnvVars = false;
-        String includeVars = System.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
-        if (StringUtils.isBlank(includeVars)) {
-            includeVars = System.getenv(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
-        }
-        if (StringUtils.isBlank(includeVars)) {
-            includeVars = startProps.getProperty(BuildInfoConfigProperties.PROP_INCLUDE_ENV_VARS);
-        }
-        if (StringUtils.isNotBlank(includeVars)) {
-            includeEnvVars = Boolean.parseBoolean(includeVars);
-        }
-        if (includeEnvVars) {
-            Map<String, String> envMap = System.getenv();
-            for (Map.Entry<String, String> entry : envMap.entrySet()) {
-                props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + entry.getKey(), entry.getValue());
+        Map<String, String> envMap = System.getenv();
+        for (Map.Entry<String, String> entry : envMap.entrySet()) {
+            String varKey = entry.getKey();
+            if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                continue;
             }
+            props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + varKey, entry.getValue());
+        }
+
+        Map<String, String> sysProps = new HashMap(System.getProperties());
+        Map<String, String> filteredSysProps = Maps.difference(sysProps, System.getenv()).entriesOnlyOnLeft();
+        for (Map.Entry<String, String> entry : filteredSysProps.entrySet()) {
+            String varKey = entry.getKey();
+            if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                continue;
+            }
+            props.put(varKey, entry.getValue());
         }
         String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
@@ -129,8 +137,9 @@ public abstract class BuildInfoExtractorUtils {
             try {
                 if (propertiesFile.exists()) {
                     inputStream = new FileInputStream(propertiesFile);
-                    props.load(inputStream);
-                    props = filterDynamicProperties(props, ENV_PREDICATE);
+                    Properties propertiesFromFile = new Properties();
+                    propertiesFromFile.load(inputStream);
+                    props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
                 }
             } catch (IOException e) {
                 throw new RuntimeException(
@@ -139,13 +148,6 @@ public abstract class BuildInfoExtractorUtils {
                 Closeables.closeQuietly(inputStream);
             }
         }
-        Properties filteredSystemProperties = filterDynamicProperties(System.getProperties(), ENV_PREDICATE);
-        filteredSystemProperties.putAll(System.getenv());
-        filteredSystemProperties = filterDynamicProperties(filteredSystemProperties, ENV_PREDICATE);
-        for (Map.Entry<Object, Object> entry : filteredSystemProperties.entrySet()) {
-            props.put(entry.getKey(), entry.getValue());
-        }
-        props = stripPrefixFromProperties(props, BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX);
         return props;
     }
 

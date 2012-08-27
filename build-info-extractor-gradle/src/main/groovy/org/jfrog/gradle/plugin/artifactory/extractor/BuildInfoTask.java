@@ -54,7 +54,6 @@ import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.LayoutPatterns;
 import org.jfrog.build.client.PatternMatcher;
-import org.jfrog.build.extractor.BuildInfoExtractorSpec;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
@@ -597,7 +596,7 @@ public class BuildInfoTask extends DefaultTask {
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
             GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployableDetails);
-            Build build = gbie.extract(getProject().getRootProject(), new BuildInfoExtractorSpec());
+            Build build = gbie.extract(getProject().getRootProject());
             /**
              * The build-info will be always written to a file in its JSON form.
              */

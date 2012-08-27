@@ -35,5 +35,10 @@ public interface BuildInfoConfigProperties {
      * Property for whether to include all environment variables in the generic set of build info properties
      */
     String INCLUDE_ENV_VARS = "includeEnvVars";
-    String PROP_INCLUDE_ENV_VARS = BUILD_INFO_CONFIG_PREFIX + INCLUDE_ENV_VARS;
+
+    String ENV_VARS_INCLUDE_PATTERNS = "envVarsIncludePatterns";
+    String PROP_ENV_VARS_INCLUDE_PATTERNS = BUILD_INFO_CONFIG_PREFIX + ENV_VARS_INCLUDE_PATTERNS;
+
+    String ENV_VARS_EXCLUDE_PATTERNS = "envVarsExcludePatterns";
+    String PROP_ENV_VARS_EXCLUDE_PATTERNS = BUILD_INFO_CONFIG_PREFIX + ENV_VARS_EXCLUDE_PATTERNS;
 }
