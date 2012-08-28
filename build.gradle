@@ -137,6 +137,11 @@ subprojects {
     install {
         configuration = configurations.published
     }
+
+    idea.module {
+        downloadJavadoc = false
+        downloadSources = true
+    }
 }
 
 configure(baseProjects()) {
@@ -271,8 +276,8 @@ project('build-info-extractor-ivy') {
     dependencies {
         uberJar "org.slf4j:slf4j-api:1.5.8"
         provided "com.google.code.findbugs:jsr305:1.3.9",
-                "org.apache.ivy:ivy:2.1.0",
-                "org.apache.ant:ant:1.8.1"
+                "org.apache.ivy:ivy:2.2.0",
+                "org.apache.ant:ant:1.8.4"
     }
 
     //Configure the Maven installer pom generation
@@ -344,8 +349,6 @@ idea {
         jdkName = '1.6'
         languageLevel = '1.6'
         wildcards += '?*.gradle'
-        downloadJavadoc = false
-        downloadSources = true
         ipr {
             withXml { provider ->
                 def node = provider.asNode()
