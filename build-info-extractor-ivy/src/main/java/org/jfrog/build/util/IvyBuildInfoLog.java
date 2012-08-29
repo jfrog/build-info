@@ -29,6 +29,14 @@ public class IvyBuildInfoLog implements Log {
         this.project = project;
     }
 
+    public Project getProject() {
+        return project;
+    }
+
+    public void setProject(Project project) {
+        this.project = project;
+    }
+
     public void debug(String message) {
         project.log(message, Project.MSG_DEBUG);
     }

@@ -23,6 +23,7 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.ModuleVersionIdentifier;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
@@ -42,8 +43,6 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import javax.annotation.Nullable;
 import java.io.File;
-import java.io.IOException;
-import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -55,6 +54,8 @@ import java.util.Set;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
 /**
  * An upload task uploads files to the repositories assigned to it.  The files that get uploaded are the artifacts of
@@ -237,7 +238,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             artifactName = project.getName();
         }
         ModuleBuilder builder = new ModuleBuilder()
-                .id(project.getGroup() + ":" + artifactName + ":" + project.getVersion().toString());
+                .id(getModuleIdString(project.getGroup().toString(),
+                        artifactName, project.getVersion().toString()));
         try {
             builder.artifacts(calculateArtifacts(project))
                     .dependencies(calculateDependencies(project));
@@ -255,10 +257,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 DeployDetails deployDetails = from.getDeployDetails();
                 String artifactPath = deployDetails.getArtifactPath();
                 int index = artifactPath.lastIndexOf('/');
-                String type = StringUtils.isBlank(publishArtifact.getClassifier()) ? publishArtifact.getType() :
-                        publishArtifact.getType() + "-" + publishArtifact.getClassifier();
                 return new ArtifactBuilder(artifactPath.substring(index + 1))
-                        .type(type).md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
+                        .type(getTypeString(publishArtifact.getType(),
+                                publishArtifact.getClassifier(), publishArtifact.getExtension()))
+                        .md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
             }
         }));
         return artifacts;
@@ -283,17 +285,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
-                /**
-                 * If including sources jar the jars will have the same ID despite one of them having a sources
-                 * classifier, this fix will remain until GAP-13 is fixed, on both our side and the Gradle side.
-                 */
                 File file = artifact.getFile();
-                if (file != null && file.exists() && !file.getName().endsWith("-sources.jar")) {
-                    String depId = artifact.getModuleVersion().getId().getName();
-                    final String finalDepId = depId;
+                if (file != null && file.exists()) {
+                    ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
+                    final String depId = getModuleIdString(id.getGroup(),
+                            id.getName(), id.getVersion());
                     Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
                         public boolean apply(@Nullable Dependency input) {
-                            return input.getId().equals(finalDepId);
+                            return input.getId().equals(depId);
                         }
                     };
                     // if it's already in the dependencies list just add the current scope
@@ -305,9 +304,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                             existingScopes.add(configScope);
                         }
                     } else {
-                        Map<String, String> checksums = calculateChecksumsForFile(file);
+                        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
                         DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                                .type(artifact.getType()).id(depId)
+                                .type(getTypeString(artifact.getType(),
+                                        artifact.getClassifier(), artifact.getExtension()))
+                                .id(depId)
                                 .scopes(newArrayList(configuration.getName())).
                                         md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
                         dependencies.add(dependencyBuilder.build());
@@ -316,11 +317,5 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             }
         }
         return dependencies;
-    }
-
-    private Map<String, String> calculateChecksumsForFile(File file)
-            throws NoSuchAlgorithmException, IOException {
-        Map<String, String> checkSums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
-        return checkSums;
     }
 }

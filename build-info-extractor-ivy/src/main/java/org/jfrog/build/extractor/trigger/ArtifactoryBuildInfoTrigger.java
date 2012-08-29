@@ -7,7 +7,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
-import org.apache.ivy.core.event.publish.StartArtifactPublishEvent;
+import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
+import org.apache.ivy.core.event.publish.PublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
 import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
@@ -26,11 +27,15 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
 import java.util.List;
 import java.util.Map;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
 /**
  * This trigger is fired after a successful {@code post-resolve} event. After which the event gives a list of
@@ -45,9 +50,13 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
     public void progress(IvyEvent event) {
         try {
+            Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+            if (project != null) {
+                project.log("[buildinfo:collect] Received Event: " + event.getName(), Project.MSG_DEBUG);
+            }
             if (EndResolveEvent.NAME.equals(event.getName())) {
                 collectDependencyInformation(event);
-            } else if (StartArtifactPublishEvent.NAME.equals(event.getName())) {
+            } else if (EndArtifactPublishEvent.NAME.equals(event.getName())) {
                 collectModuleInformation(event);
             }
         } catch (Exception e) {
@@ -64,28 +73,31 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
      */
     private void collectDependencyInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
-        project.log("Collecting dependencies.", Project.MSG_INFO);
         ResolveReport report = ((EndResolveEvent) event).getReport();
         @SuppressWarnings("unchecked") Map<String, String> attributes = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         Module module = getOrCreateModule(ctx, attributes);
+        project.log("[buildinfo:collect] Collecting dependencies for " + module.getId(), Project.MSG_INFO);
         if (module.getDependencies() == null || module.getDependencies().isEmpty()) {
             String[] configurations = report.getConfigurations();
             List<Dependency> moduleDependencies = Lists.newArrayList();
             for (String configuration : configurations) {
-                project.log("Configuration: " + configuration + " Dependencies", Project.MSG_INFO);
+                project.log("[buildinfo:collect] Configuration: " + configuration + " Dependencies", Project.MSG_DEBUG);
                 ConfigurationResolveReport configurationReport = report.getConfigurationReport(configuration);
                 ArtifactDownloadReport[] allArtifactsReports = configurationReport.getAllArtifactsReports();
                 for (final ArtifactDownloadReport artifactsReport : allArtifactsReports) {
                     project.log(
-                            "Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
-                            Project.MSG_INFO);
+                            "[buildinfo:collect] Artifact Download Report for configuration: " + configuration + " : " + artifactsReport,
+                            Project.MSG_DEBUG);
                     ModuleRevisionId id = artifactsReport.getArtifact().getModuleRevisionId();
-                    Dependency dependency = findDependencyInList(id, moduleDependencies);
+                    String type = getType(artifactsReport.getArtifact());
+                    Dependency dependency = findDependencyInList(id, type, moduleDependencies);
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                        dependencyBuilder.type(artifactsReport.getType()).scopes(Lists.newArrayList(configuration));
-                        dependencyBuilder.id(id.getOrganisation() + ':' + id.getName() + ':' + id.getRevision());
+                        dependencyBuilder.type(type).scopes(Lists.newArrayList(configuration));
+                        String idString = getModuleIdString(id.getOrganisation(),
+                                id.getName(), id.getRevision());
+                        dependencyBuilder.id(idString);
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
@@ -96,9 +108,21 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
                         String md5 = checksums.get(MD5);
                         String sha1 = checksums.get(SHA1);
                         dependencyBuilder.md5(md5).sha1(sha1);
-                        moduleDependencies.add(dependencyBuilder.build());
+                        dependency = dependencyBuilder.build();
+                        moduleDependencies.add(dependency);
+                        project.log(
+                                "[buildinfo:collect] Added dependency '" + dependency.getId() + "'", Project.MSG_DEBUG);
                     } else {
-                        dependency.getScopes().add(configuration);
+                        if (!dependency.getScopes().contains(configuration)) {
+                            dependency.getScopes().add(configuration);
+                            project.log(
+                                    "[buildinfo:collect] Added scope " + configuration +
+                                            " to dependency '" + dependency.getId() + "'", Project.MSG_DEBUG);
+                        } else {
+                            project.log(
+                                    "[buildinfo:collect] Find same dependency twice in configuration '" + configuration +
+                                            "' for dependency '" + artifactsReport + "'", Project.MSG_WARN);
+                        }
                     }
                 }
             }
@@ -117,7 +141,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         String file = map.get("file");
         final String moduleName = map.get("module");
-        project.log("Collecting Module information for module: " + moduleName, Project.MSG_INFO);
+        project.log("[buildinfo:collect] Collecting artifact information for module: " + moduleName, Project.MSG_INFO);
         Module module = getOrCreateModule(ctx, map);
         File artifactFile = new File(file);
         List<Artifact> artifacts = module.getArtifacts();
@@ -128,27 +152,36 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
             return;
         }
         String path = artifactFile.getAbsolutePath();
-        project.log("Module location: " + path, Project.MSG_INFO);
+        project.log("[buildinfo:collect] Artifact location: " + path, Project.MSG_INFO);
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
-        String type = map.get("type");
-        @SuppressWarnings("unchecked") Map<String, String> extraAttributes =
-                ((StartArtifactPublishEvent) event).getArtifact().getExtraAttributes();
-        if (extraAttributes.get("classifier") != null) {
-            type = type + "-" + extraAttributes.get("classifier");
+        final org.apache.ivy.core.module.descriptor.Artifact ivyPublishedArtifact = ((PublishEvent) event).getArtifact();
+
+        // Check of good publish artifact creation
+        if (!map.get("type").equals(ivyPublishedArtifact.getType())) {
+            throw new IllegalStateException("The type attribute in map "+map.get("type")+" is not equal to the artifact type "+ivyPublishedArtifact.getType());
         }
-        artifactBuilder.type(type);
+
+        artifactBuilder.type(getType(ivyPublishedArtifact));
+
         Map<String, String> checksums = calculateFileChecksum(artifactFile);
         String md5 = checksums.get(MD5);
         String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
         Artifact artifact = artifactBuilder.build();
         module.getArtifacts().add(artifact);
-        DeployDetails deployDetails = buildDeployDetails(artifactFile, artifact, ctx, map, extraAttributes);
+        @SuppressWarnings("unchecked") DeployDetails deployDetails =
+                buildDeployDetails(artifactFile, artifact, ctx, map, ivyPublishedArtifact.getExtraAttributes());
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();
         if (contextModules.indexOf(module) == -1) {
             ctx.addModule(module);
         }
+    }
+
+    private String getType(org.apache.ivy.core.module.descriptor.Artifact ivyArtifact) {
+        return getTypeString(ivyArtifact.getType(),
+                ivyArtifact.getExtraAttribute("classifier"),
+                ivyArtifact.getExt());
     }
 
     private DeployDetails buildDeployDetails(File artifactFile, Artifact artifact,
@@ -193,23 +226,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         return checksums;
     }
 
-    private String generateModuleKeyFromAttributes(Map<String, String> attributes) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(attributes.get("organisation")).append(':').append(attributes.get("module")).append(':');
-        return builder.toString();
-    }
-
-    private String generateModuleKeyFromMrid(final ModuleRevisionId mrid) {
-        StringBuilder builder = new StringBuilder();
-        builder.append(mrid.getOrganisation()).append(':').append(mrid.getName()).append(':');
-        return builder.toString();
-    }
-
-    private Dependency findDependencyInList(final ModuleRevisionId id, List<Dependency> moduleDependencies) {
-        final String idToFind = generateModuleKeyFromMrid(id);
+    private Dependency findDependencyInList(final ModuleRevisionId id, final String type, List<Dependency> moduleDependencies) {
+        final String idToFind = getModuleIdString(id.getOrganisation(), id.getName(), "");
         return Iterables.find(moduleDependencies, new Predicate<Dependency>() {
             public boolean apply(Dependency input) {
-                return input.getId().startsWith(idToFind);
+                return input.getId().startsWith(idToFind) && input.getType().equals(type);
             }
         }, null);
     }
@@ -224,8 +245,10 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
     private Module getOrCreateModule(BuildContext ctx, Map<String, String> attributes) {
         List<Module> modules = ctx.getModules();
-        String moduleKey = generateModuleKeyFromAttributes(attributes);
-        String moduleId = moduleKey + attributes.get("revision");
+        final String org = attributes.get("organisation");
+        final String moduleName = attributes.get("module");
+        String moduleKey = getModuleIdString(org, moduleName, "");
+        String moduleId = getModuleIdString(org, moduleName, attributes.get("revision"));
         Module module = findModule(modules, moduleKey);
         if (module == null) {
             ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);

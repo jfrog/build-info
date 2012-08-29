@@ -60,6 +60,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
+
 /**
  * @author Noam Y. Tenne
  */
@@ -309,7 +312,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
         ModuleBuilder module = new ModuleBuilder();
-        module.id(getArtifactIdWithoutType(project.getGroupId(), project.getArtifactId(), project.getVersion()));
+        module.id(getModuleIdString(project.getGroupId(), project.getArtifactId(), project.getVersion()));
         module.properties(project.getProperties());
 
         currentModule.set(module);
@@ -404,8 +407,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String artifactId = moduleArtifact.getArtifactId();
             String artifactVersion = moduleArtifact.getVersion();
             String artifactClassifier = moduleArtifact.getClassifier();
-            String type = moduleArtifact.getType();
             String artifactExtension = moduleArtifact.getArtifactHandler().getExtension();
+            String type = getTypeString(moduleArtifact.getType(), artifactClassifier, artifactExtension);
 
             String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactExtension);
 
@@ -504,17 +507,31 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
         for (Artifact dependency : moduleDependencies) {
+            File depFile = dependency.getFile();
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                    .id(getArtifactIdWithoutType(dependency.getGroupId(), dependency.getArtifactId(),
+                    .id(getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(),
                             dependency.getVersion()))
-                    .type(dependency.getType());
+                    .type(getTypeString(dependency.getType(),
+                            dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
             if (StringUtils.isNotBlank(scopes)) {
                 dependencyBuilder.scopes(Lists.newArrayList(scopes));
             }
-            setDependencyChecksums(dependency.getFile(), dependencyBuilder);
+            setDependencyChecksums(depFile, dependencyBuilder);
             module.addDependency(dependencyBuilder.build());
         }
+    }
+
+    private String getExtension(File depFile) {
+        String extension = "";
+        String fileName = depFile.getName();
+        if (depFile != null && fileName != null) {
+            int lastDot = fileName.lastIndexOf('.');
+            if (lastDot > 0 && lastDot+1 < fileName.length()) {
+                extension = fileName.substring(lastDot + 1);
+            }
+        }
+        return extension;
     }
 
     private boolean isPomProject(Artifact moduleArtifact) {
@@ -554,9 +571,5 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
 
         return null;
-    }
-
-    private String getArtifactIdWithoutType(String groupId, String artifactId, String version) {
-        return new StringBuilder(groupId).append(":").append(artifactId).append(":").append(version).toString();
     }
 }

@@ -206,6 +206,28 @@ public abstract class BuildInfoExtractorUtils {
         return propertiesFilePath;
     }
 
+    public static String getTypeString(String type, String classifier, String extension) {
+        String result = type;
+        // Only use classifier if jar type
+        if ("jar".equals(type)) {
+            // add classifier if it exists
+            if (StringUtils.isNotBlank(classifier)) {
+                result = classifier;
+            }
+        }
+        // Add extension if not jar, ivy or pom type
+        if (!"jar".equals(result) && !"pom".equals(type) && !"ivy".equals(type)) {
+            if (StringUtils.isNotBlank(extension)) {
+                result =  result + "-" + extension;
+            }
+        }
+        return result;
+    }
+
+    public static String getModuleIdString(String organisation, String name, String version) {
+        return organisation + ':' + name + ':' + version;
+    }
+
     private static class PrefixPredicate implements Predicate<Object> {
 
         private String prefix;

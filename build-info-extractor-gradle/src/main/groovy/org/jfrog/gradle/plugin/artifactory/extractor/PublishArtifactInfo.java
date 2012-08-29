@@ -28,24 +28,24 @@ import java.io.File;
 public class PublishArtifactInfo {
 
     private final String name;
-    private final String extenstion;
+    private final String extension;
     private final String type;
-    private final String classfier;
+    private final String classifier;
     private final File file;
 
     public PublishArtifactInfo(PublishArtifact artifact) {
         this.name = artifact.getName();
-        this.extenstion = artifact.getExtension();
+        this.extension = artifact.getExtension();
         this.type = artifact.getType();
-        this.classfier = artifact.getClassifier();
+        this.classifier = artifact.getClassifier();
         this.file = artifact.getFile();
     }
 
-    public PublishArtifactInfo(String name, String extenstion, String type, String classfier, File file) {
+    public PublishArtifactInfo(String name, String extension, String type, String classifier, File file) {
         this.name = name;
-        this.extenstion = extenstion;
+        this.extension = extension;
         this.type = type;
-        this.classfier = classfier;
+        this.classifier = classifier;
         this.file = file;
     }
 
@@ -54,7 +54,7 @@ public class PublishArtifactInfo {
     }
 
     public String getExtension() {
-        return extenstion;
+        return extension;
     }
 
     public String getType() {
@@ -62,7 +62,7 @@ public class PublishArtifactInfo {
     }
 
     public String getClassifier() {
-        return classfier;
+        return classifier;
     }
 
     public File getFile() {
