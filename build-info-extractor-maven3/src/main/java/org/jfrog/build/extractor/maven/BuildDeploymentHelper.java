@@ -100,7 +100,8 @@ public class BuildDeploymentHelper {
         for (Module module : modules) {
             List<Artifact> artifacts = module.getArtifacts();
             for (Artifact artifact : artifacts) {
-                DeployDetails deployable = deployableArtifactBuilders.get(artifact.getName());
+                String artifactId = BuildInfoExtractorUtils.getArtifactId(module.getId(), artifact.getName());
+                DeployDetails deployable = deployableArtifactBuilders.get(artifactId);
                 if (deployable != null) {
                     File file = deployable.getFile();
                     setArtifactChecksums(file, artifact);

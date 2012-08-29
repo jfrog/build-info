@@ -53,18 +53,4 @@ public class IvyResolverHelper {
         }
         return "ivy".equals(type);
     }
-
-    @Deprecated
-    public static String getClassifier(String artifactName) {
-        int index = artifactName.indexOf('-');
-        if (index == -1) {
-            return "";
-        }
-        String substring = artifactName.substring(artifactName.indexOf('-') + 1);
-        int dot = substring.indexOf('.');
-        if (dot == -1) {
-            return "";
-        }
-        return substring.substring(0, dot);
-    }
 }

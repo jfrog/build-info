@@ -476,8 +476,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
-
-        deployableArtifactBuilderMap.put(artifact.getName(), deployable);
+        String myArtifactId = BuildInfoExtractorUtils.getArtifactId(groupId, artifact.getName());
+        deployableArtifactBuilderMap.put(myArtifactId, deployable);
     }
 
     /**
@@ -527,7 +527,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         String fileName = depFile.getName();
         if (depFile != null && fileName != null) {
             int lastDot = fileName.lastIndexOf('.');
-            if (lastDot > 0 && lastDot+1 < fileName.length()) {
+            if (lastDot > 0 && lastDot + 1 < fileName.length()) {
                 extension = fileName.substring(lastDot + 1);
             }
         }

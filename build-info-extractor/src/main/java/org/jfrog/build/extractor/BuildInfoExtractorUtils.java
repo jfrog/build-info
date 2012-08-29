@@ -206,6 +206,10 @@ public abstract class BuildInfoExtractorUtils {
         return propertiesFilePath;
     }
 
+    public static String getArtifactId(String group, String artifactName) {
+        return group + ":" + artifactName;
+    }
+
     public static String getTypeString(String type, String classifier, String extension) {
         String result = type;
         // Only use classifier if jar type

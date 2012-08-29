@@ -27,7 +27,6 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
@@ -137,32 +136,44 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
      */
     private void collectModuleInformation(IvyEvent event) {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
+
+        // Finding module object from context
         @SuppressWarnings("unchecked") final Map<String, String> map = event.getAttributes();
         BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        String file = map.get("file");
-        final String moduleName = map.get("module");
-        project.log("[buildinfo:collect] Collecting artifact information for module: " + moduleName, Project.MSG_INFO);
         Module module = getOrCreateModule(ctx, map);
-        File artifactFile = new File(file);
         List<Artifact> artifacts = module.getArtifacts();
         if (artifacts == null) {
             module.setArtifacts(Lists.<Artifact>newArrayList());
         }
-        if (isArtifactExist(module.getArtifacts(), artifactFile.getName())) {
+
+        final org.apache.ivy.core.module.descriptor.Artifact pubArtifact = ((PublishEvent) event).getArtifact();
+        @SuppressWarnings("unchecked") Map<String, String> extraAttributes = pubArtifact.getExtraAttributes();
+        // Using the original file, not the published one that can be far away (network wise)
+        String file = map.get("file");
+        // But all other attributes are taken from the actual published artifact
+        final ModuleRevisionId mrid = pubArtifact.getModuleRevisionId();
+        String moduleName = mrid.getName();
+        String type = getType(pubArtifact);
+
+        // By default simple name
+        String name = pubArtifact.getName() + "-" + mrid.getRevision() + "." + pubArtifact.getExt();
+
+        // Set name from name of published file
+        String fullPath = IvyResolverHelper.calculateArtifactPath(ctx.getClientConf().publisher, map, extraAttributes);
+        int lastSlash = fullPath.lastIndexOf('/');
+        if (lastSlash > 0 && lastSlash + 1 < name.length()) {
+            name = fullPath.substring(lastSlash + 1);
+        }
+        project.log("[buildinfo:collect] Collecting artifact " + name + " for module " + moduleName +
+                " using file " + file, Project.MSG_INFO);
+
+        if (isArtifactExist(module.getArtifacts(), name)) {
             return;
         }
-        String path = artifactFile.getAbsolutePath();
-        project.log("[buildinfo:collect] Artifact location: " + path, Project.MSG_INFO);
-        ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactFile.getName());
-        final org.apache.ivy.core.module.descriptor.Artifact ivyPublishedArtifact = ((PublishEvent) event).getArtifact();
+        ArtifactBuilder artifactBuilder = new ArtifactBuilder(name);
+        artifactBuilder.type(type);
 
-        // Check of good publish artifact creation
-        if (!map.get("type").equals(ivyPublishedArtifact.getType())) {
-            throw new IllegalStateException("The type attribute in map "+map.get("type")+" is not equal to the artifact type "+ivyPublishedArtifact.getType());
-        }
-
-        artifactBuilder.type(getType(ivyPublishedArtifact));
-
+        File artifactFile = new File(file);
         Map<String, String> checksums = calculateFileChecksum(artifactFile);
         String md5 = checksums.get(MD5);
         String sha1 = checksums.get(SHA1);
@@ -170,7 +181,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         Artifact artifact = artifactBuilder.build();
         module.getArtifacts().add(artifact);
         @SuppressWarnings("unchecked") DeployDetails deployDetails =
-                buildDeployDetails(artifactFile, artifact, ctx, map, ivyPublishedArtifact.getExtraAttributes());
+                buildDeployDetails(artifactFile, artifact, ctx, map, extraAttributes);
         ctx.addDeployDetailsForModule(deployDetails);
         List<Module> contextModules = ctx.getModules();
         if (contextModules.indexOf(module) == -1) {
@@ -179,6 +190,12 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     }
 
     private String getType(org.apache.ivy.core.module.descriptor.Artifact ivyArtifact) {
+        return getTypeString(ivyArtifact.getType(),
+                ivyArtifact.getExtraAttribute("classifier"),
+                ivyArtifact.getExt());
+    }
+
+    private String getName(org.apache.ivy.core.module.descriptor.Artifact ivyArtifact) {
         return getTypeString(ivyArtifact.getType(),
                 ivyArtifact.getExtraAttribute("classifier"),
                 ivyArtifact.getExt());
