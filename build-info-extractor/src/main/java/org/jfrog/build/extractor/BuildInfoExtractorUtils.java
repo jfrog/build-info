@@ -208,8 +208,8 @@ public abstract class BuildInfoExtractorUtils {
         return propertiesFilePath;
     }
 
-    public static String getArtifactId(String group, String artifactName) {
-        return group + ":" + artifactName;
+    public static String getArtifactId(String moduleId, String artifactName) {
+        return moduleId + ":" + artifactName;
     }
 
     public static String getTypeString(String type, String classifier, String extension) {
