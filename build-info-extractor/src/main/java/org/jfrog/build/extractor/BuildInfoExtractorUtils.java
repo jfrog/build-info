@@ -93,7 +93,9 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Properties filterDynamicProperties(Properties source, Predicate<Object> filter) {
         Properties properties = new Properties();
-        properties.putAll(Maps.filterKeys(source, filter));
+        if (source != null) {
+            properties.putAll(Maps.filterKeys(source, filter));
+        }
         return properties;
     }
 
@@ -222,7 +224,7 @@ public abstract class BuildInfoExtractorUtils {
         // Add extension if not jar, ivy or pom type
         if (!"jar".equals(result) && !"pom".equals(type) && !"ivy".equals(type)) {
             if (StringUtils.isNotBlank(extension)) {
-                result =  result + "-" + extension;
+                result = result + "-" + extension;
             }
         }
         return result;
