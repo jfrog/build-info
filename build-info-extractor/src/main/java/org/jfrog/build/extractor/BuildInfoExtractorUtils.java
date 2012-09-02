@@ -222,8 +222,9 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
         // Add extension if not jar, ivy or pom type
+        // and current type does not end with the extension (avoid war-war, zip-zip, source-jar-jar, ...)
         if (!"jar".equals(result) && !"pom".equals(type) && !"ivy".equals(type)) {
-            if (StringUtils.isNotBlank(extension)) {
+            if (StringUtils.isNotBlank(extension) && !result.endsWith(extension)) {
                 result = result + "-" + extension;
             }
         }
