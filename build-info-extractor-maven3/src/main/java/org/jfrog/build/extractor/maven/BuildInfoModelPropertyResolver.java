@@ -86,7 +86,7 @@ public class BuildInfoModelPropertyResolver {
             int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
             if (minimumDays > -1) {
                 Calendar calendar = Calendar.getInstance();
-                calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                calendar.add(Calendar.DAY_OF_YEAR, -minimumDays);
                 buildRetention.setMinimumBuildDate(calendar.getTime());
             }
         }

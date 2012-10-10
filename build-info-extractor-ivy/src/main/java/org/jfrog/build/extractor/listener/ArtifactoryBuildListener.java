@@ -14,16 +14,32 @@ import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Issue;
+import org.jfrog.build.api.IssueTracker;
+import org.jfrog.build.api.Issues;
+import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -101,7 +117,8 @@ public class ArtifactoryBuildListener implements BuildListener {
     @Override
     public void buildFinished(BuildEvent event) {
         if (event.getException() != null) {
-            getBuildInfoLog(event).info("[buildinfo:ant] Received Build Finished Event with exception => No deployment");
+            getBuildInfoLog(event).info(
+                    "[buildinfo:ant] Received Build Finished Event with exception => No deployment");
             return;
         }
         getBuildInfoLog(event).debug("[buildinfo:ant] Received Build Finished Event");
@@ -124,7 +141,7 @@ public class ArtifactoryBuildListener implements BuildListener {
             // Interested only in Ivy tasks
             String taskType = task.getTaskType();
             if (taskType.contains("org.apache.ivy")) {
-                getBuildInfoLog(event).debug("[buildinfo:ant] Received Task of type '"+ taskType +"' Started Event");
+                getBuildInfoLog(event).debug("[buildinfo:ant] Received Task of type '" + taskType + "' Started Event");
                 // Need only retrieve, resolve, and publish tasks, since needs to give ivy settings a chance (BI-131)
                 if (taskType.endsWith("retrieve") || taskType.endsWith("resolve")) {
                     getBuildInfoLog(event).debug("[buildinfo:ant] Adding Ivy Resolution Listeners if needed.");
@@ -245,7 +262,7 @@ public class ArtifactoryBuildListener implements BuildListener {
             int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
             if (minimumDays > -1) {
                 Calendar calendar = Calendar.getInstance();
-                calendar.roll(Calendar.DAY_OF_YEAR, -minimumDays);
+                calendar.add(Calendar.DAY_OF_YEAR, -minimumDays);
                 buildRetention.setMinimumBuildDate(calendar.getTime());
             }
         }
@@ -299,7 +316,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     }
 
     private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
             String artifactPath = deployDetail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
