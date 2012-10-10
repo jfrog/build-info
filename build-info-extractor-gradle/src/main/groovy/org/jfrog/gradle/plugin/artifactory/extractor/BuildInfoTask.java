@@ -672,8 +672,8 @@ public class BuildInfoTask extends DefaultTask {
     private Set<GradleDeployDetails> getArtifactDeployDetailsFromClientConf() {
         ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
 
+        Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (!hasConfigurations()) {
-            Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
             log.info("No configurations to publish for project '{}'.", getProject().getPath());
             return deployDetails;
         }
