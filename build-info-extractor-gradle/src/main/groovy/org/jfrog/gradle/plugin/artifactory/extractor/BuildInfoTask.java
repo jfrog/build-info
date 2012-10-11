@@ -573,13 +573,13 @@ public class BuildInfoTask extends DefaultTask {
 
         // Update the artifacts for all project build info task
         List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
-        for (BuildInfoTask birt : orderedTasks) {
-            if (birt.getDidWork()) {
-                birt.collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
+        for (BuildInfoTask bit : orderedTasks) {
+            if (bit.getDidWork()) {
+                bit.collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
             }
         }
         try {
-            if (acc.publisher.isPublishArtifacts()) {
+            if (isPublishArtifacts(acc)) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
                  * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
