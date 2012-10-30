@@ -140,7 +140,7 @@ public class ArtifactoryBuildListener implements BuildListener {
             Task task = event.getTask();
             // Interested only in Ivy tasks
             String taskType = task.getTaskType();
-            if (taskType.contains("org.apache.ivy")) {
+            if (taskType != null && taskType.contains("org.apache.ivy")) {
                 getBuildInfoLog(event).debug("[buildinfo:ant] Received Task of type '" + taskType + "' Started Event");
                 // Need only retrieve, resolve, and publish tasks, since needs to give ivy settings a chance (BI-131)
                 if (taskType.endsWith("retrieve") || taskType.endsWith("resolve")) {
