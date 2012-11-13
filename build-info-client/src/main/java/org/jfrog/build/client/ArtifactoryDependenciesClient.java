@@ -23,8 +23,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.type.TypeReference;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
@@ -163,69 +166,32 @@ public class ArtifactoryDependenciesClient {
     }
 
     public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
-        return executeGet(downloadUrl);
-        //return response.getEntity().getContent();
+        return execute(downloadUrl, false);
     }
 
-    /*    public void downloadArtifact(String downloadUrl, File dest) throws IOException {
-        HttpResponse response = executeGet(downloadUrl);
-
-        if (dest.exists()) {
-            dest.delete();
-            dest.createNewFile();
-        } else {
-            dest.getParentFile().mkdirs();
-            dest.createNewFile();
-        }
-        InputStream inputStream = response.getEntity().getContent();
-        FileOutputStream fileOutputStream = new FileOutputStream(dest);
-        try {
-            IOUtils.copyLarge(inputStream, fileOutputStream);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-            IOUtils.closeQuietly(fileOutputStream);
-            response.getEntity().consumeContent();
-        }
-    }*/
-
-    public String downloadChecksum(String downloadUrl, String checksumAlgorithm) throws IOException {
-        HttpResponse response = executeGet(downloadUrl + "." + checksumAlgorithm);
-
-        InputStream inputStream = response.getEntity().getContent();
-        try {
-            return IOUtils.toString(inputStream);
-        } finally {
-            IOUtils.closeQuietly(inputStream);
-            response.getEntity().consumeContent();
-        }
+    public HttpResponse getArtifactChecksums(String artifactUrl) throws IOException {
+        return execute(artifactUrl, true);
     }
 
-    private HttpResponse executeGet(String downloadUrl) throws IOException {
+    private HttpResponse execute(String artifactUrl, boolean isHead) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
-        downloadUrl = httpClient.encodeUrl(downloadUrl);
-        HttpGet get = new HttpGet(downloadUrl);
+        artifactUrl = httpClient.encodeUrl(artifactUrl);
+        HttpRequestBase httpRequest = isHead ? new HttpHead(artifactUrl) : new HttpGet(artifactUrl);
+
         //Explicitly force keep alive
-        get.setHeader("Connection", "Keep-Alive");
-
-        HttpResponse response = client.execute(get);
-
+        httpRequest.setHeader("Connection", "Keep-Alive");
+        HttpResponse response = client.execute(httpRequest);
         StatusLine statusLine = response.getStatusLine();
         int statusCode = statusLine.getStatusCode();
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                httpEntity.consumeContent();
-            }
-            throw new FileNotFoundException("Unable to find " + downloadUrl);
+            EntityUtils.consume(response.getEntity());
+            throw new FileNotFoundException("Unable to find " + artifactUrl);
         }
 
         if (statusCode != HttpStatus.SC_OK) {
-            HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                httpEntity.consumeContent();
-            }
-            throw new IOException("Error downloading " + downloadUrl + ". Code: " + statusCode + " Message: " +
+            EntityUtils.consume(response.getEntity());
+            throw new IOException("Error downloading " + artifactUrl + ". Code: " + statusCode + " Message: " +
                     statusLine.getReasonPhrase());
         }
         return response;
