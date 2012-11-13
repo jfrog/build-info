@@ -35,4 +35,13 @@ public interface DependenciesDownloader {
      * Implementers must close the given input stream when finished.
      */
     Map<String, String> saveDownloadedFile(InputStream is, String filePath) throws IOException;
+
+    /**
+     * Checks if the file path exists locally with the same MD5 and SHA-1 checksums.
+     *
+     * @param filePath The local file path to check
+     * @param md5      The MD5 checksum to compare with
+     * @param sha1     The SHA-1 checksum to compare with
+     */
+    boolean isFileExistsLocally(String filePath, String md5, String sha1) throws IOException;
 }

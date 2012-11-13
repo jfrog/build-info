@@ -54,23 +54,25 @@ public class DependenciesDownloaderHelper {
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
         String fileDestination = downloader.getTargetDir(targetDir, filePath);
 
-        log.info("Downloading '" + uriWithParams + "' ...");
-        HttpResponse httpResponse = null;
         try {
-            httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
-            InputStream inputStream = httpResponse.getEntity().getContent();
-            Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
+            dependencyResult = getDependencyLocally(uriWithParams, fileDestination);
+            if (dependencyResult == null) {
+                log.info("Downloading '" + uriWithParams + "' ...");
+                HttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
+                InputStream inputStream = httpResponse.getEntity().getContent();
+                Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
 
-            // If the checksums map is null then something went wrong and we should fail the build
-            if (checksumsMap == null) {
-                throw new IOException("Received null checksums map");
+                // If the checksums map is null then something went wrong and we should fail the build
+                if (checksumsMap == null) {
+                    throw new IOException("Received null checksums map");
+                }
+
+                String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
+                String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
+
+                log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
+                dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
             }
-
-            String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
-            String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
-
-            log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
-            dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
         } catch (FileNotFoundException e) {
             if (StringUtils.isNotBlank(matrixParams)) {
                 String skippedMessage = "Skipping download of '" + uriWithParams + "' due to matrix params mismatch.";
@@ -84,31 +86,61 @@ public class DependenciesDownloaderHelper {
         return dependencyResult;
     }
 
-    private String validateMd5Checksum(HttpResponse httpResponse, String calculatedMd5) throws IOException {
-        Header md5Header = httpResponse.getFirstHeader("X-Checksum-Md5");
-        String md5 = "";
-        if (md5Header != null) {
-            md5 = md5Header.getValue();
-            if (!StringUtils.equals(md5, calculatedMd5)) {
-                String errorMessage = "Calculated MD5 checksum is different from original, "
-                        + "Original: '" + md5 + "' Calculated: '" + calculatedMd5 + "'";
-                throw new IOException(errorMessage);
-            }
+    /**
+     * Perform HEAD request to get the artifact checksums and check if the local file is the same.
+     *
+     * @param uriWithParams The uri for the artifact to perform HEAD request to
+     * @param filePath      The locally file path
+     */
+    private Dependency getDependencyLocally(String uriWithParams, String filePath) throws IOException {
+        Dependency dependencyResult = null;
+        HttpResponse artifactChecksums = downloader.getClient().getArtifactChecksums(uriWithParams);
+        String md5 = getMD5ChecksumFromResponse(artifactChecksums);
+        String sha1 = getSHA1ChecksumFromResponse(artifactChecksums);
+
+        if (downloader.isFileExistsLocally(filePath, md5, sha1)) {
+            log.debug("File '" + filePath + "' already exists locally, skipping remote download.");
+            dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
         }
-        return md5;
+
+        return dependencyResult;
+    }
+
+    private String validateMd5Checksum(HttpResponse httpResponse, String calculatedMd5) throws IOException {
+        String md5ChecksumFromResponse = getMD5ChecksumFromResponse(httpResponse);
+        if (!StringUtils.equals(getMD5ChecksumFromResponse(httpResponse), calculatedMd5)) {
+            String errorMessage = "Calculated MD5 checksum is different from original, "
+                    + "Original: '" + md5ChecksumFromResponse + "' Calculated: '" + calculatedMd5 + "'";
+            throw new IOException(errorMessage);
+        }
+        return md5ChecksumFromResponse == null ? "" : md5ChecksumFromResponse;
     }
 
     private String validateSha1Checksum(HttpResponse httpResponse, String calculatedSha1) throws IOException {
-        Header sha1Header = httpResponse.getFirstHeader("X-Checksum-Sha1");
-        String sha1 = "";
+        String sha1ChecksumFromResponse = getSHA1ChecksumFromResponse(httpResponse);
+        if (!StringUtils.equals(sha1ChecksumFromResponse, calculatedSha1)) {
+            String errorMessage = "Calculated SHA-1 checksum is different from original, "
+                    + "Original: '" + sha1ChecksumFromResponse + "' Calculated: '" + calculatedSha1 + "'";
+            throw new IOException(errorMessage);
+        }
+        return sha1ChecksumFromResponse == null ? "" : sha1ChecksumFromResponse;
+    }
+
+    private String getSHA1ChecksumFromResponse(HttpResponse artifactChecksums) {
+        String sha1 = null;
+        Header sha1Header = artifactChecksums.getFirstHeader("X-Checksum-Sha1");
         if (sha1Header != null) {
             sha1 = sha1Header.getValue();
-            if (!StringUtils.equals(sha1, calculatedSha1)) {
-                String errorMessage = "Calculated SHA-1 checksum is different from original, "
-                        + "Original: '" + sha1 + "' Calculated: '" + calculatedSha1 + "'";
-                throw new IOException(errorMessage);
-            }
         }
         return sha1;
+    }
+
+    private String getMD5ChecksumFromResponse(HttpResponse artifactChecksums) {
+        String md5 = null;
+        Header md5Header = artifactChecksums.getFirstHeader("X-Checksum-Md5");
+        if (md5Header != null) {
+            md5 = md5Header.getValue();
+        }
+        return md5;
     }
 }
