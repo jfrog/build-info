@@ -1,12 +1,17 @@
 package org.jfrog.build.util;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
+import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.client.PatternMatcher;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -62,20 +67,60 @@ public class DependenciesHelper {
 
     private Set<DownloadableArtifact> handleDependencyPatternPair(Map.Entry<String, String> patternPair)
             throws IOException {
-
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
         String sourcePattern = patternPair.getKey();
         String pattern = extractPatternFromSource(sourcePattern);
         String matrixParams = extractMatrixParamsFromSource(sourcePattern);
 
         log.info("Resolving published dependencies with pattern " + sourcePattern);
+        String relativeDirPath = patternPair.getValue();
+        if (StringUtils.contains(pattern, "**")) {
+            if (StringUtils.isNotBlank(matrixParams)) {
+                return performPropertySearch(pattern, relativeDirPath, matrixParams);
+            } else {
+                throw new IllegalArgumentException(
+                        "Wildcard '**' is not allowed without matrix params for pattern '" + pattern + "'");
+            }
+        } else {
+            return performPatternSearch(pattern, relativeDirPath, matrixParams);
+        }
+    }
+
+    private Set<DownloadableArtifact> performPropertySearch(String pattern, String relativeDirPath, String matrixParams)
+            throws IOException {
+        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        PropertySearchResult propertySearchResult = downloader.getClient().searchArtifactsByProperties(matrixParams);
+        List<PropertySearchResult.SearchEntry> filteredEntries = filterResultEntries(
+                propertySearchResult.getResults(), pattern);
+        log.info("Found " + filteredEntries.size() + " dependencies.");
+        for (PropertySearchResult.SearchEntry searchEntry : filteredEntries) {
+            downloadableArtifacts.add(
+                    new DownloadableArtifact(searchEntry.getArtifactoryUrl(), relativeDirPath,
+                            searchEntry.getFilePath(), matrixParams));
+        }
+
+        return downloadableArtifacts;
+    }
+
+    private List<PropertySearchResult.SearchEntry> filterResultEntries(List<PropertySearchResult.SearchEntry> results,
+            String pattern) {
+        final String patternStr = pattern.replaceFirst(":", "/");
+        return Lists.newArrayList(Iterables.filter(results, new Predicate<PropertySearchResult.SearchEntry>() {
+            @Override
+            public boolean apply(PropertySearchResult.SearchEntry input) {
+                return PatternMatcher.match(patternStr, input.getRepoUri(), false);
+            }
+        }));
+    }
+
+    private Set<DownloadableArtifact> performPatternSearch(String pattern, String relativeDirPath, String matrixParams)
+            throws IOException {
+        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
         PatternResultFileSet fileSet = downloader.getClient().searchArtifactsByPattern(pattern);
         Set<String> filesToDownload = fileSet.getFiles();
-
         log.info("Found " + filesToDownload.size() + " dependencies.");
         for (String fileToDownload : filesToDownload) {
-            downloadableArtifacts.add(new DownloadableArtifact(fileSet.getRepoUri(), patternPair.getValue(),
-                    fileToDownload, matrixParams));
+            downloadableArtifacts.add(
+                    new DownloadableArtifact(fileSet.getRepoUri(), relativeDirPath, fileToDownload, matrixParams));
         }
 
         return downloadableArtifacts;
@@ -111,6 +156,9 @@ public class DependenciesHelper {
                 if (key.endsWith("+")) {
                     mandatory = true;
                     key = key.substring(0, key.length() - 1);
+                }
+                if (i > 1) {
+                    matrixParamBuilder.append(";");
                 }
                 matrixParamBuilder.append(URLEncoder.encode(key, "utf-8"));
                 if (mandatory) {

@@ -30,6 +30,7 @@ import org.codehaus.jackson.type.TypeReference;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
+import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.JsonSerializer;
 
@@ -105,6 +106,18 @@ public class ArtifactoryDependenciesClient {
                 new TypeReference<PatternResultFileSet>() {
                 },
                 "Failed to search artifact by the pattern '" + pattern + "'");
+        return result;
+    }
+
+    public PropertySearchResult searchArtifactsByProperties(String properties) throws IOException {
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+
+        String replacedProperties = StringUtils.replace(properties, ";", "&");
+        String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
+        PropertySearchResult result = readResponse(client.execute(new HttpGet(url)),
+                new TypeReference<PropertySearchResult>() {
+                },
+                "Failed to search artifact by the properties '" + properties + "'");
         return result;
     }
 

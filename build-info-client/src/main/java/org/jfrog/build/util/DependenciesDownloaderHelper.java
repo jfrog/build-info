@@ -72,8 +72,13 @@ public class DependenciesDownloaderHelper {
             log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
             dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
         } catch (FileNotFoundException e) {
-            String warningMessage = "Error occurred while resolving published dependency: " + e.getMessage();
-            log.warn(warningMessage);
+            if (StringUtils.isNotBlank(matrixParams)) {
+                String skippedMessage = "Skipping download of '" + uriWithParams + "' due to matrix params mismatch.";
+                log.debug(skippedMessage);
+            } else {
+                String warningMessage = "Error occurred while resolving published dependency: " + e.getMessage();
+                log.warn(warningMessage);
+            }
         }
 
         return dependencyResult;
