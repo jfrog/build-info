@@ -107,7 +107,7 @@ public class DependenciesHelper {
         return Lists.newArrayList(Iterables.filter(results, new Predicate<PropertySearchResult.SearchEntry>() {
             @Override
             public boolean apply(PropertySearchResult.SearchEntry input) {
-                return PatternMatcher.match(patternStr, input.getRepoUri(), false);
+                return PatternMatcher.match(patternStr, input.getRepoPath(), false);
             }
         }));
     }

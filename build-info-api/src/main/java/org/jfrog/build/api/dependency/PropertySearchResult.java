@@ -42,6 +42,10 @@ public class PropertySearchResult {
             return artifactoryUrl + "/" + repoKey;
         }
 
+        public String getRepoPath() {
+            return repoKey + "/" + filePath;
+        }
+
         public String getFilePath() {
             return filePath;
         }

@@ -114,8 +114,7 @@ public class ArtifactoryDependenciesClient {
 
     public PropertySearchResult searchArtifactsByProperties(String properties) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
-
-        String replacedProperties = StringUtils.replace(properties, ";", "&");
+        String replacedProperties = StringUtils.replaceEach(properties, new String[]{";", "+"}, new String[]{"&", ""});
         String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
         PropertySearchResult result = readResponse(client.execute(new HttpGet(url)),
                 new TypeReference<PropertySearchResult>() {
