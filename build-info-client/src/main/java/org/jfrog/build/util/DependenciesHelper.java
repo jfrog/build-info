@@ -94,7 +94,7 @@ public class DependenciesHelper {
         log.info("Found " + filteredEntries.size() + " dependencies.");
         for (PropertySearchResult.SearchEntry searchEntry : filteredEntries) {
             downloadableArtifacts.add(
-                    new DownloadableArtifact(searchEntry.getArtifactoryUrl(), relativeDirPath,
+                    new DownloadableArtifact(searchEntry.getRepoUri(), relativeDirPath,
                             searchEntry.getFilePath(), matrixParams));
         }
 

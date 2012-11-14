@@ -22,7 +22,8 @@ public class PropertySearchResult {
     public static class SearchEntry {
         private String uri;
         private String artifactoryUrl;
-        private String repoUri;
+        private String repoKey;
+        private String filePath;
 
         public String getUri() {
             return uri;
@@ -31,19 +32,18 @@ public class PropertySearchResult {
         public void setUri(String uri) {
             this.uri = uri;
             this.artifactoryUrl = StringUtils.substringBefore(uri, "/api/storage/");
-            this.repoUri = StringUtils.substringAfter(uri, "/api/storage/");
-        }
 
-        public String getArtifactoryUrl() {
-            return artifactoryUrl;
+            String repoPath = StringUtils.substringAfter(uri, "/api/storage/");
+            this.repoKey = StringUtils.substringBefore(repoPath, "/");
+            this.filePath = StringUtils.substringAfter(repoPath, "/");
         }
 
         public String getRepoUri() {
-            return repoUri;
+            return artifactoryUrl + "/" + repoKey;
         }
 
         public String getFilePath() {
-            return StringUtils.substringAfter(repoUri, "/");
+            return filePath;
         }
     }
 }
