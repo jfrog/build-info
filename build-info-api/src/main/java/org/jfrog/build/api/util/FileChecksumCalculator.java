@@ -48,8 +48,16 @@ public abstract class FileChecksumCalculator {
     public static Map<String, String> calculateChecksums(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
 
-        if ((fileToCalculate == null) || (!fileToCalculate.isFile())) {
-            throw new IllegalArgumentException("Cannot read checksums of null or non-existent file.");
+        if (fileToCalculate == null) {
+            throw new IllegalArgumentException("Cannot read checksums of null file.");
+        }
+
+        if (!fileToCalculate.exists()) {
+            throw new IllegalArgumentException("Cannot read checksums of non-existent file.");
+        }
+
+        if (!fileToCalculate.isFile()) {
+            throw new IllegalArgumentException("Cannot read checksums of a folder.");
         }
 
         if (algorithms == null) {
