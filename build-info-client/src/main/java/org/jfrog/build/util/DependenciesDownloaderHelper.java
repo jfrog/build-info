@@ -34,10 +34,7 @@ public class DependenciesDownloaderHelper {
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
         List<Dependency> dependencies = Lists.newArrayList();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
-            Dependency dependency = downloadArtifact(downloadableArtifact.getRelativeDirPath(),
-                    downloadableArtifact.getRepoUrl(),
-                    downloadableArtifact.getFilePath(),
-                    downloadableArtifact.getMatrixParameters());
+            Dependency dependency = downloadArtifact(downloadableArtifact);
             if (dependency != null) {
                 dependencies.add(dependency);
             }
@@ -47,12 +44,14 @@ public class DependenciesDownloaderHelper {
     }
 
 
-    private Dependency downloadArtifact(String targetDir, String repoUri, String filePath, String matrixParams)
-            throws IOException {
+    private Dependency downloadArtifact(DownloadableArtifact downloadableArtifact) throws IOException {
         Dependency dependencyResult = null;
-        final String uri = repoUri + '/' + filePath;
+        String filePath = downloadableArtifact.getFilePath();
+        String matrixParams = downloadableArtifact.getMatrixParameters();
+        final String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
-        String fileDestination = downloader.getTargetDir(targetDir, filePath);
+        String fileDestination = downloader.getTargetDir(downloadableArtifact.getRelativeDirPath(),
+                calculateTargetDirFromPattern(downloadableArtifact));
 
         try {
             dependencyResult = getDependencyLocally(uriWithParams, fileDestination);
@@ -84,6 +83,23 @@ public class DependenciesDownloaderHelper {
         }
 
         return dependencyResult;
+    }
+
+    private String calculateTargetDirFromPattern(DownloadableArtifact downloadableArtifact) {
+        String filePath = downloadableArtifact.getFilePath();
+        String sourcePattern = downloadableArtifact.getSourcePattern();
+        int firstStar = sourcePattern.indexOf('*');
+        if (firstStar > 1) {
+            String rootDirToRemove = sourcePattern.substring(0, firstStar);
+            int lastSlash = rootDirToRemove.lastIndexOf('/');
+            if (lastSlash > 1) {
+                rootDirToRemove = rootDirToRemove.substring(0, lastSlash);
+                if (filePath.startsWith(rootDirToRemove)) {
+                    return filePath.substring(rootDirToRemove.length());
+                }
+            }
+        }
+        return filePath;
     }
 
     /**

@@ -1,5 +1,7 @@
 package org.jfrog.build.api.dependency;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -12,46 +14,46 @@ public class DownloadableArtifact implements Serializable {
     String relativeDirPath;
     String filePath;
     String matrixParameters;
+    private String sourcePattern;
 
     public DownloadableArtifact() {
     }
 
-    public DownloadableArtifact(String repoUrl, String relativeDirPath, String filePath, String matrixParameters) {
+    public DownloadableArtifact(String repoUrl, String relativeDirPath, String filePath, String matrixParameters,
+            String sourcePattern) {
         this.repoUrl = repoUrl;
         this.relativeDirPath = relativeDirPath;
         this.filePath = filePath;
         this.matrixParameters = matrixParameters;
+        this.sourcePattern = extractRepoFromPattern(sourcePattern);
+    }
+
+    private String extractRepoFromPattern(String sourcePattern) {
+        int indexOfColon = StringUtils.indexOf(sourcePattern, ":");
+        if (indexOfColon == -1) {
+            return sourcePattern;
+        }
+
+        return StringUtils.substring(sourcePattern, indexOfColon + 1, StringUtils.length(sourcePattern));
     }
 
     public String getRepoUrl() {
         return repoUrl;
     }
 
-    public void setRepoUrl(String repoUrl) {
-        this.repoUrl = repoUrl;
-    }
-
     public String getRelativeDirPath() {
         return relativeDirPath;
-    }
-
-    public void setRelativeDirPath(String relativeDirPath) {
-        this.relativeDirPath = relativeDirPath;
     }
 
     public String getFilePath() {
         return filePath;
     }
 
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
     public String getMatrixParameters() {
         return matrixParameters;
     }
 
-    public void setMatrixParameters(String matrixParameters) {
-        this.matrixParameters = matrixParameters;
+    public String getSourcePattern() {
+        return sourcePattern;
     }
 }

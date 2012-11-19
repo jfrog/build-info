@@ -106,7 +106,7 @@ public class BuildDependenciesHelper {
                         final String filePath = uri.substring(j + 1);
                         final String matrixParameters = pattern.getMatrixParameters();
                         downloadableArtifacts.add(new DownloadableArtifact(repoUrl, pattern.getTargetDirectory(),
-                                filePath, matrixParameters));
+                                filePath, matrixParameters, pattern.getArtifactoryPattern()));
                     }
                 }
             }

@@ -95,7 +95,7 @@ public class DependenciesHelper {
         for (PropertySearchResult.SearchEntry searchEntry : filteredEntries) {
             downloadableArtifacts.add(
                     new DownloadableArtifact(searchEntry.getRepoUri(), relativeDirPath,
-                            searchEntry.getFilePath(), matrixParams));
+                            searchEntry.getFilePath(), matrixParams, pattern));
         }
 
         return downloadableArtifacts;
@@ -120,7 +120,8 @@ public class DependenciesHelper {
         log.info("Found " + filesToDownload.size() + " dependencies.");
         for (String fileToDownload : filesToDownload) {
             downloadableArtifacts.add(
-                    new DownloadableArtifact(fileSet.getRepoUri(), relativeDirPath, fileToDownload, matrixParams));
+                    new DownloadableArtifact(fileSet.getRepoUri(), relativeDirPath, fileToDownload, matrixParams,
+                            pattern));
         }
 
         return downloadableArtifacts;
