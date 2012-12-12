@@ -1,12 +1,14 @@
 package org.jfrog.build.util;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
+import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
 
 import java.io.FileNotFoundException;
@@ -33,14 +35,30 @@ public class DependenciesDownloaderHelper {
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
         List<Dependency> dependencies = Lists.newArrayList();
+        Set<DownloadableArtifact> downloadedArtifacts = Sets.newHashSet();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             Dependency dependency = downloadArtifact(downloadableArtifact);
             if (dependency != null) {
                 dependencies.add(dependency);
+                downloadedArtifacts.add(downloadableArtifact);
             }
         }
 
+        removeUnusedArtifactsFromLocal(downloadedArtifacts);
         return dependencies;
+    }
+
+    private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) {
+        Set<String> resolvedFiles = Sets.newHashSet();
+        for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
+            if (PatternType.DELETE.equals(downloadableArtifact.getPatternType())) {
+                String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
+                        downloadableArtifact.getRelativeDirPath());
+                resolvedFiles.add(fileDestination);
+            }
+        }
+
+        downloader.removeUnusedArtifactsFromLocal(resolvedFiles);
     }
 
 
@@ -50,8 +68,8 @@ public class DependenciesDownloaderHelper {
         String matrixParams = downloadableArtifact.getMatrixParameters();
         final String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
-        String fileDestination = downloader.getTargetDir(downloadableArtifact.getRelativeDirPath(),
-                calculateTargetDirFromPattern(downloadableArtifact));
+        String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
+                downloadableArtifact.getRelativeDirPath());
 
         try {
             dependencyResult = getDependencyLocally(uriWithParams, fileDestination);
@@ -83,23 +101,6 @@ public class DependenciesDownloaderHelper {
         }
 
         return dependencyResult;
-    }
-
-    private String calculateTargetDirFromPattern(DownloadableArtifact downloadableArtifact) {
-        String filePath = downloadableArtifact.getFilePath();
-        String sourcePattern = downloadableArtifact.getSourcePattern();
-        int firstStar = sourcePattern.indexOf('*');
-        if (firstStar > 1) {
-            String rootDirToRemove = sourcePattern.substring(0, firstStar);
-            int lastSlash = rootDirToRemove.lastIndexOf('/');
-            if (lastSlash > 1) {
-                rootDirToRemove = rootDirToRemove.substring(0, lastSlash);
-                if (filePath.startsWith(rootDirToRemove)) {
-                    return filePath.substring(rootDirToRemove.length());
-                }
-            }
-        }
-        return filePath;
     }
 
     /**

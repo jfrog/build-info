@@ -19,15 +19,16 @@ package org.jfrog.build.util;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
+import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.PatternArtifact;
 import org.jfrog.build.api.dependency.PatternResult;
-import org.jfrog.build.api.dependency.UserBuildDependency;
+import org.jfrog.build.api.dependency.pattern.BuildDependencyPattern;
+import org.jfrog.build.api.dependency.pattern.DependencyPattern;
 import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
@@ -52,207 +53,143 @@ public class BuildDependenciesHelper {
         this.log = log;
     }
 
-    public List<UserBuildDependency> retrieveBuildDependencies(String resolvePattern)
+    public List<BuildDependency> retrieveBuildDependencies(String resolvePattern)
             throws IOException, InterruptedException {
-        List<UserBuildDependency> buildDependencies = getBuildDependencies(resolvePattern);
+        List<String> patternLines = PublishedItemsHelper.parsePatternsFromProperty(resolvePattern);
 
         // Don't run if dependencies mapping came out to be empty.
-        if (buildDependencies.isEmpty()) {
-            return buildDependencies;
+        if (patternLines.isEmpty()) {
+            return Collections.emptyList();
         }
 
         log.info("Beginning to resolve Build Info build dependencies.");
+        Map<String, Map<String, List<BuildDependencyPattern>>> buildDependencies = getBuildDependencies(patternLines);
         List<BuildPatternArtifactsRequest> artifactsRequests = toArtifactsRequests(buildDependencies);
-        List<BuildPatternArtifacts> artifacts = downloader.getClient().retrievePatternArtifacts(artifactsRequests);
-        applyBuildArtifacts(buildDependencies, artifacts);
-
-        downloader.download(collectArtifactsToDownload(buildDependencies));
+        List<BuildPatternArtifacts> artifactsResponses = downloader.getClient().retrievePatternArtifacts(
+                artifactsRequests);
+        Set<BuildDependency> result = Sets.newHashSet();
+        downloader.download(
+                collectArtifactsToDownload(buildDependencies, artifactsRequests, artifactsResponses, result));
         log.info("Finished resolving Build Info build dependencies.");
 
-        return buildDependencies;
+        return Lists.newArrayList(result);
     }
 
-    private Set<DownloadableArtifact> collectArtifactsToDownload(List<UserBuildDependency> userBuildDependencies)
-            throws IOException, InterruptedException {
+    private Map<String, Map<String, List<BuildDependencyPattern>>> getBuildDependencies(List<String> patternLines) {
+        Map<String, Map<String, List<BuildDependencyPattern>>> buildsMap = Maps.newHashMap();
+        for (String patternLine : patternLines) {
+            DependencyPattern dependencyPattern = PatternFactory.create(patternLine);
+            if (dependencyPattern instanceof BuildDependencyPattern) {
+                BuildDependencyPattern buildDependencyPattern = (BuildDependencyPattern) dependencyPattern;
+                String buildName = buildDependencyPattern.getBuildName();
+                Map<String, List<BuildDependencyPattern>> numbersMap = buildsMap.get(buildName);
+                if (numbersMap == null) {
+                    buildsMap.put(buildName, Maps.<String, List<BuildDependencyPattern>>newHashMap());
+                    numbersMap = buildsMap.get(buildName);
+                }
+
+                String buildNumber = buildDependencyPattern.getBuildNumber();
+                List<BuildDependencyPattern> dependencyPatternList = numbersMap.get(buildNumber);
+                if (dependencyPatternList == null) {
+                    numbersMap.put(buildNumber, Lists.<BuildDependencyPattern>newLinkedList());
+                    dependencyPatternList = numbersMap.get(buildNumber);
+                }
+                dependencyPatternList.add(buildDependencyPattern);
+            }
+        }
+
+
+        return buildsMap;
+    }
+
+    private List<BuildPatternArtifactsRequest> toArtifactsRequests(
+            Map<String, Map<String, List<BuildDependencyPattern>>> dependencyPatterns) {
+        List<BuildPatternArtifactsRequest> artifactsRequests = Lists.newLinkedList();
+        for (String buildName : dependencyPatterns.keySet()) {
+            Map<String, List<BuildDependencyPattern>> buildNumbers = dependencyPatterns.get(buildName);
+            for (String buildNumber : buildNumbers.keySet()) {
+                List<BuildDependencyPattern> buildDependencyPatterns = buildNumbers.get(buildNumber);
+                BuildPatternArtifactsRequestBuilder builder = new BuildPatternArtifactsRequestBuilder()
+                        .buildName(buildName).buildNumber(buildNumber);
+                for (BuildDependencyPattern buildDependencyPattern : buildDependencyPatterns) {
+                    builder.pattern(buildDependencyPattern.getPattern());
+                }
+                artifactsRequests.add(builder.build());
+            }
+        }
+
+        return artifactsRequests;
+    }
+
+    private Set<DownloadableArtifact> collectArtifactsToDownload(
+            Map<String, Map<String, List<BuildDependencyPattern>>> dependencyPatterns,
+            List<BuildPatternArtifactsRequest> artifactsRequests, List<BuildPatternArtifacts> artifactsResponses,
+            Set<BuildDependency> buildDependencies) {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
-        for (UserBuildDependency dependencyUser : userBuildDependencies) {
+        verifySameSize(artifactsRequests, artifactsResponses);
+
+        for (int j = 0; j < artifactsRequests.size(); j++) {
+            BuildPatternArtifacts artifacts = artifactsResponses.get(j);
+            if (artifacts == null) {
+                // Pattern didn't match any results: wrong build name or build number.
+                continue;
+            }
+
+            BuildDependencyPattern buildDependencyPattern = dependencyPatterns.get(artifacts.getBuildName())
+                    .get(artifacts.getBuildNumber()).get(j);
+
+            if (!buildDependencyPattern.getBuildName().equals(artifacts.getBuildName())) {
+                throw new IllegalArgumentException(String.format("Build names don't match: [%s] != [%s]",
+                        buildDependencyPattern.getBuildName(), artifacts.getBuildName()));
+            }
+            if (!buildDependencyPattern.getBuildNumber().equals(artifacts.getBuildNumber())) {
+                throw new IllegalArgumentException(String.format("Build numbers don't match: [%s] != [%s]",
+                        buildDependencyPattern.getBuildNumber(), artifacts.getBuildNumber()));
+            }
 
             final String message = String.format("Dependency on build [%s], number [%s]",
-                    dependencyUser.getBuildName(), dependencyUser.getBuildNumberRequest());
+                    buildDependencyPattern.getBuildName(), buildDependencyPattern.getBuildNumber());
+
             /**
-             * dependency.getBuildNumberResponse() is null for unresolved dependencies (wrong build name or build number).
+             * Build number response is null for unresolved dependencies (wrong build name or build number).
              */
-            if (dependencyUser.getBuildNumberResponse() == null) {
+            if (artifacts.getBuildNumber() == null) {
                 log.info(message + " - no results found, check correctness of dependency build name and build number.");
             } else {
+                PatternResult patternResult = artifacts.getPatternResults().get(j);
+                List<PatternArtifact> patternArtifacts = patternResult.getPatternArtifacts();
+                log.info(message + String.format(", pattern [%s] - [%s] result%s found.",
+                        buildDependencyPattern.getPattern(), patternArtifacts.size(),
+                        (patternArtifacts.size() == 1 ? "" : "s")));
 
-                for (UserBuildDependency.Pattern pattern : dependencyUser.getPatterns()) {
+                for (PatternArtifact patternArtifact : patternArtifacts) {
+                    final String uri = patternArtifact.getUri(); // "libs-release-local/com/goldin/plugins/gradle/0.1.1/gradle-0.1.1.jar"
+                    final int indexOfFirstSlash = uri.indexOf('/');
 
-                    List<PatternArtifact> artifacts = pattern.getPatternResult().getPatternArtifacts();
+                    assert (indexOfFirstSlash > 0) : String.format("Failed to locate '/' in [%s]", uri);
 
-                    log.info(message +
-                            String.format(", pattern [%s] - [%s] result%s found.",
-                                    pattern.getArtifactoryPattern(), artifacts.size(),
-                                    (artifacts.size() == 1 ? "" : "s")));
+                    final String repoUrl = patternArtifact.getArtifactoryUrl() + '/' + uri.substring(0, j);
+                    final String filePath = uri.substring(j + 1);
+                    downloadableArtifacts.add(
+                            new DownloadableArtifact(repoUrl, buildDependencyPattern.getTargetDirectory(), filePath,
+                                    buildDependencyPattern.getMatrixParams(), buildDependencyPattern.getPattern(),
+                                    buildDependencyPattern.getPatternType()));
+                }
 
-                    for (PatternArtifact artifact : artifacts) {
-
-                        final String uri = artifact.getUri(); // "libs-release-local/com/goldin/plugins/gradle/0.1.1/gradle-0.1.1.jar"
-                        final int j = uri.indexOf('/');
-
-                        assert (j > 0) : String.format("Filed to locate '/' in [%s]", uri);
-
-                        final String repoUrl = artifact.getArtifactoryUrl() + '/' + uri.substring(0, j);
-                        final String filePath = uri.substring(j + 1);
-                        final String matrixParameters = pattern.getMatrixParameters();
-                        downloadableArtifacts.add(new DownloadableArtifact(repoUrl, pattern.getTargetDirectory(),
-                                filePath, matrixParameters, pattern.getArtifactoryPattern()));
-                    }
+                if (!patternArtifacts.isEmpty()) {
+                    BuildDependency buildDependency = new BuildDependencyBuilder()
+                            .name(artifacts.getBuildName())
+                            .number(artifacts.getBuildNumber())
+                            .url(artifacts.getUrl())
+                            .started(artifacts.getStarted())
+                            .build();
+                    buildDependencies.add(buildDependency);
                 }
             }
         }
 
         return downloadableArtifacts;
     }
-
-    private List<UserBuildDependency> getBuildDependencies(String buildItemsPropertyValue) {
-
-        if (StringUtils.isBlank(buildItemsPropertyValue)) {
-            return Collections.emptyList();
-        }
-
-        // Build name => build number => build dependency
-        Map<String, Map<String, UserBuildDependency>> buildsMap = buildsMap(buildItemsPropertyValue);
-        List<UserBuildDependency> userBuildDependencies = Lists.newLinkedList();
-
-        for (Map<String, UserBuildDependency> m : buildsMap.values()) {
-            for (UserBuildDependency bd : m.values()) {
-                userBuildDependencies.add(bd);
-            }
-        }
-
-        return userBuildDependencies;
-    }
-
-
-    private Map<String, Map<String, UserBuildDependency>> buildsMap(String buildItemsPropertyValue) {
-        Map<String, Map<String, UserBuildDependency>> buildsMap = Maps.newHashMap();
-        List<String> patternLines = PublishedItemsHelper.parsePatternsFromProperty(buildItemsPropertyValue);
-
-        for (String patternLine : patternLines) {
-            //since the patterns might now include patterns which aren't part of a build, we need to filter those
-            if (patternLine.contains("@")) {
-                /**
-                 * Every pattern line is:
-                 * "<Artifactory repo>:<pattern>@<build name>#<build number> => <targetDirectory>"
-                 * "libs-release-local:com/goldin/plugins/gradle/0.1.1/*.jar@gradle-plugins :: Build :: Gradle#LATEST => many-jars-build"
-                 */
-                String[] splitPattern = patternLine.split("=>");
-
-                if (splitPattern.length < 1) {
-                    continue;
-                }
-
-                String dependency = FilenameUtils.separatorsToUnix(splitPattern[0].trim());
-                int index1 = dependency.lastIndexOf('@');
-                int index2 = dependency.lastIndexOf('#');
-                boolean lineIsOk = (index1 > 0) && (index2 > index1) && (index2 < (dependency.length() - 1));
-
-                if (!lineIsOk) {
-                    continue;
-                }
-
-                String pattern = PublishedItemsHelper.removeDoubleDotsFromPattern(dependency.substring(0, index1));
-                String buildName = dependency.substring(index1 + 1, index2);
-                String buildNumber = dependency.substring(index2 + 1);
-                String targetDirectory = (splitPattern.length > 1) ?
-                        PublishedItemsHelper.removeDoubleDotsFromPattern(
-                                FilenameUtils.separatorsToUnix(splitPattern[1].trim())) :
-                        "";
-
-                if (StringUtils.isBlank(buildName) || StringUtils.isBlank(buildNumber) || StringUtils.isBlank(
-                        pattern)) {
-                    continue;
-                }
-
-                Map<String, UserBuildDependency> numbersMap = buildsMap.get(buildName);
-
-                if (numbersMap == null) {
-                    buildsMap.put(buildName, Maps.<String, UserBuildDependency>newHashMap());
-                    numbersMap = buildsMap.get(buildName);
-                }
-
-                UserBuildDependency userBuildDependency = numbersMap.get(buildNumber);
-
-                if (userBuildDependency == null) {
-                    numbersMap.put(buildNumber,
-                            new UserBuildDependency(buildName, buildNumber, pattern, targetDirectory));
-                } else {
-                    userBuildDependency.addPattern(pattern, targetDirectory);
-                }
-            }
-        }
-
-        return buildsMap;
-    }
-
-
-    private List<BuildPatternArtifactsRequest> toArtifactsRequests(
-            List<UserBuildDependency> userBuildDependencies) {
-        List<BuildPatternArtifactsRequest> artifactsRequests = Lists.newLinkedList();
-
-        for (UserBuildDependency dependencyUser : userBuildDependencies) {
-            BuildPatternArtifactsRequestBuilder builder = new BuildPatternArtifactsRequestBuilder().
-                    buildName(dependencyUser.getBuildName()).
-                    buildNumber(dependencyUser.getBuildNumberRequest());
-
-            for (UserBuildDependency.Pattern p : dependencyUser.getPatterns()) {
-                builder.pattern(p.getArtifactoryPattern());
-            }
-
-            artifactsRequests.add(builder.build());
-        }
-
-        return artifactsRequests;
-    }
-
-
-    private void applyBuildArtifacts(List<UserBuildDependency> userBuildDependencies,
-            List<BuildPatternArtifacts> buildArtifacts) {
-
-        verifySameSize(userBuildDependencies, buildArtifacts);
-
-        for (int j = 0; j < userBuildDependencies.size(); j++) {
-
-            UserBuildDependency dependencyUser = userBuildDependencies.get(j);
-            BuildPatternArtifacts artifacts = buildArtifacts.get(j);
-
-            if (artifacts == null) {
-                // Pattern didn't match any results: wrong build name or build number.
-                continue;
-            }
-
-            assert dependencyUser.getBuildName().equals(artifacts.getBuildName()) :
-                    String.format("Build names don't match: [%s] != [%s]", dependencyUser.getBuildName(),
-                            artifacts.getBuildName());
-
-            dependencyUser.setBuildNumberResponse(artifacts.getBuildNumber());
-            dependencyUser.setBuildStarted(artifacts.getStarted());
-            dependencyUser.setBuildUrl(artifacts.getUrl());
-
-            List<UserBuildDependency.Pattern> dependencyPatterns = dependencyUser.getPatterns();
-            List<PatternResult> patternResults = artifacts.getPatternResults();
-
-            verifySameSize(dependencyPatterns, patternResults);
-
-            for (int k = 0; k < dependencyPatterns.size(); k++) {
-                UserBuildDependency.Pattern p = dependencyPatterns.get(k);
-                PatternResult result = patternResults.get(k);
-                p.setPatternResult(result);
-            }
-        }
-    }
-
 
     /**
      * Verifies both lists are of the same size.
@@ -262,11 +199,9 @@ public class BuildDependenciesHelper {
      * @throws IllegalArgumentException if lists are of different sizes.
      */
     private void verifySameSize(List l1, List l2) {
-
         if (l1.size() != l2.size()) {
             throw new IllegalArgumentException(
                     String.format("List sizes don't match: [%s] != [%s]", l1.size(), l2.size()));
         }
     }
-
 }

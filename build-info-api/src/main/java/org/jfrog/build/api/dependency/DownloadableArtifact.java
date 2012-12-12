@@ -1,6 +1,7 @@
 package org.jfrog.build.api.dependency;
 
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.dependency.pattern.PatternType;
 
 import java.io.Serializable;
 
@@ -11,21 +12,25 @@ import java.io.Serializable;
  */
 public class DownloadableArtifact implements Serializable {
     String repoUrl;
+    String targetDirPath;
     String relativeDirPath;
     String filePath;
     String matrixParameters;
+    private PatternType patternType;
     private String sourcePattern;
 
     public DownloadableArtifact() {
     }
 
-    public DownloadableArtifact(String repoUrl, String relativeDirPath, String filePath, String matrixParameters,
-            String sourcePattern) {
+    public DownloadableArtifact(String repoUrl, String targetDirPath, String filePath, String matrixParameters,
+            String sourcePattern, PatternType patternType) {
         this.repoUrl = repoUrl;
-        this.relativeDirPath = relativeDirPath;
+        this.targetDirPath = targetDirPath;
         this.filePath = filePath;
         this.matrixParameters = matrixParameters;
+        this.patternType = patternType;
         this.sourcePattern = extractRepoFromPattern(sourcePattern);
+        this.relativeDirPath = calculateRelativeDirFromPattern();
     }
 
     private String extractRepoFromPattern(String sourcePattern) {
@@ -37,8 +42,27 @@ public class DownloadableArtifact implements Serializable {
         return StringUtils.substring(sourcePattern, indexOfColon + 1, StringUtils.length(sourcePattern));
     }
 
+    private String calculateRelativeDirFromPattern() {
+        int firstStar = sourcePattern.indexOf('*');
+        if (firstStar > 1) {
+            String rootDirToRemove = sourcePattern.substring(0, firstStar);
+            int lastSlash = rootDirToRemove.lastIndexOf('/');
+            if (lastSlash > 1) {
+                rootDirToRemove = rootDirToRemove.substring(0, lastSlash);
+                if (filePath.startsWith(rootDirToRemove)) {
+                    return filePath.substring(rootDirToRemove.length());
+                }
+            }
+        }
+        return filePath;
+    }
+
     public String getRepoUrl() {
         return repoUrl;
+    }
+
+    public String getTargetDirPath() {
+        return targetDirPath;
     }
 
     public String getRelativeDirPath() {
@@ -51,6 +75,10 @@ public class DownloadableArtifact implements Serializable {
 
     public String getMatrixParameters() {
         return matrixParameters;
+    }
+
+    public PatternType getPatternType() {
+        return patternType;
     }
 
     public String getSourcePattern() {
