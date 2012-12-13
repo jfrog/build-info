@@ -48,7 +48,7 @@ public class DependenciesDownloaderHelper {
         return dependencies;
     }
 
-    private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) {
+    private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
         Set<String> resolvedFiles = Sets.newHashSet();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             if (PatternType.DELETE.equals(downloadableArtifact.getPatternType())) {

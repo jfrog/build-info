@@ -27,7 +27,7 @@ public interface DependenciesDownloader {
      * Usually that can be a full absolute path under the file system or the full relative
      * path to the user workspace.
      */
-    String getTargetDir(String targetDir, String relativeDir);
+    String getTargetDir(String targetDir, String relativeDir) throws IOException;
 
     /**
      * Parse the given input stream, save it to an actual file to the given path and return
@@ -52,5 +52,5 @@ public interface DependenciesDownloader {
      *
      * @param downloadedFiles A set of full absolute file destinations that were resolved during the build
      */
-    void removeUnusedArtifactsFromLocal(Set<String> resolvedFiles);
+    void removeUnusedArtifactsFromLocal(Set<String> resolvedFiles) throws IOException;
 }

@@ -168,8 +168,9 @@ public class BuildDependenciesHelper {
 
                     assert (indexOfFirstSlash > 0) : String.format("Failed to locate '/' in [%s]", uri);
 
-                    final String repoUrl = patternArtifact.getArtifactoryUrl() + '/' + uri.substring(0, j);
-                    final String filePath = uri.substring(j + 1);
+                    final String repoUrl = patternArtifact.getArtifactoryUrl() + '/' + uri.substring(0,
+                            indexOfFirstSlash);
+                    final String filePath = uri.substring(indexOfFirstSlash + 1);
                     downloadableArtifacts.add(
                             new DownloadableArtifact(repoUrl, buildDependencyPattern.getTargetDirectory(), filePath,
                                     buildDependencyPattern.getMatrixParams(), buildDependencyPattern.getPattern(),
