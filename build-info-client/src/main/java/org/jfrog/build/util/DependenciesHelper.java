@@ -36,6 +36,10 @@ public class DependenciesHelper {
 
     public List<Dependency> retrievePublishedDependencies(String resolvePattern)
             throws IOException, InterruptedException {
+        if (StringUtils.isBlank(resolvePattern)) {
+            return Collections.emptyList();
+        }
+
         List<String> patternLines = PublishedItemsHelper.parsePatternsFromProperty(resolvePattern);
         List<Dependency> dependencies = Collections.emptyList();
 

@@ -19,6 +19,7 @@ package org.jfrog.build.util;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
 import org.jfrog.build.api.dependency.BuildDependency;
@@ -55,6 +56,10 @@ public class BuildDependenciesHelper {
 
     public List<BuildDependency> retrieveBuildDependencies(String resolvePattern)
             throws IOException, InterruptedException {
+        if (StringUtils.isBlank(resolvePattern)) {
+            return Collections.emptyList();
+        }
+
         List<String> patternLines = PublishedItemsHelper.parsePatternsFromProperty(resolvePattern);
 
         // Don't run if dependencies mapping came out to be empty.

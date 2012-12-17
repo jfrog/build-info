@@ -49,16 +49,18 @@ public class DependenciesDownloaderHelper {
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
-        Set<String> resolvedFiles = Sets.newHashSet();
+        Set<String> forDeletionFiles = Sets.newHashSet();
+        Set<String> allResolvesFiles = Sets.newHashSet();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
+            String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
+                    downloadableArtifact.getRelativeDirPath());
+            allResolvesFiles.add(fileDestination);
             if (PatternType.DELETE.equals(downloadableArtifact.getPatternType())) {
-                String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
-                        downloadableArtifact.getRelativeDirPath());
-                resolvedFiles.add(fileDestination);
+                forDeletionFiles.add(fileDestination);
             }
         }
 
-        downloader.removeUnusedArtifactsFromLocal(resolvedFiles);
+        downloader.removeUnusedArtifactsFromLocal(allResolvesFiles, forDeletionFiles);
     }
 
 

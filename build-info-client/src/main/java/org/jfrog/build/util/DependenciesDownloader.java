@@ -46,11 +46,13 @@ public interface DependenciesDownloader {
     boolean isFileExistsLocally(String filePath, String md5, String sha1) throws IOException;
 
     /**
-     * Receives a list of the resolved files (Those who got downloaded from Artifactory and those who were already existed
-     * locally with the same checksums). For each file, lists the files in the same directory and removes the old ones
-     * (meaning those who did not participate in the build resolution).
+     * Receives a set of the resolved files (Those who got downloaded from Artifactory and those who were already existed
+     * locally with the same checksums) And a set of resolved files from patterns with mark for deletion (=!>)
+     * For each file, lists the files in the same directory and removes the old ones
+     * (meaning those who did not participate in the build resolution and doesn't exist in all resolved files set).
      *
-     * @param downloadedFiles A set of full absolute file destinations that were resolved during the build
+     * @param allResolvesFiles A set of all resolved files (to search in)
+     * @param forDeletionFiles A set of resolved files from patterns with mark for deletion (=!>)
      */
-    void removeUnusedArtifactsFromLocal(Set<String> resolvedFiles) throws IOException;
+    void removeUnusedArtifactsFromLocal(Set<String> allResolvesFiles, Set<String> forDeletionFiles) throws IOException;
 }
