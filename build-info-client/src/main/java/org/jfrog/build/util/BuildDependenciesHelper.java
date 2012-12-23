@@ -133,63 +133,63 @@ public class BuildDependenciesHelper {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
         verifySameSize(artifactsRequests, artifactsResponses);
 
-        for (int j = 0; j < artifactsRequests.size(); j++) {
-            BuildPatternArtifacts artifacts = artifactsResponses.get(j);
+        for (int i = 0; i < artifactsRequests.size(); i++) {
+            BuildPatternArtifacts artifacts = artifactsResponses.get(i);
             if (artifacts == null) {
                 // Pattern didn't match any results: wrong build name or build number.
                 continue;
             }
 
-            BuildDependencyPattern buildDependencyPattern = dependencyPatterns.get(artifacts.getBuildName())
-                    .get(artifacts.getBuildNumber()).get(j);
 
-            if (!buildDependencyPattern.getBuildName().equals(artifacts.getBuildName())) {
-                throw new IllegalArgumentException(String.format("Build names don't match: [%s] != [%s]",
-                        buildDependencyPattern.getBuildName(), artifacts.getBuildName()));
-            }
-            if (!buildDependencyPattern.getBuildNumber().equals(artifacts.getBuildNumber())) {
-                throw new IllegalArgumentException(String.format("Build numbers don't match: [%s] != [%s]",
-                        buildDependencyPattern.getBuildNumber(), artifacts.getBuildNumber()));
-            }
-
-            final String message = String.format("Dependency on build [%s], number [%s]",
-                    buildDependencyPattern.getBuildName(), buildDependencyPattern.getBuildNumber());
-
-            /**
-             * Build number response is null for unresolved dependencies (wrong build name or build number).
-             */
-            if (artifacts.getBuildNumber() == null) {
-                log.info(message + " - no results found, check correctness of dependency build name and build number.");
-            } else {
-                PatternResult patternResult = artifacts.getPatternResults().get(j);
-                List<PatternArtifact> patternArtifacts = patternResult.getPatternArtifacts();
-                log.info(message + String.format(", pattern [%s] - [%s] result%s found.",
-                        buildDependencyPattern.getPattern(), patternArtifacts.size(),
-                        (patternArtifacts.size() == 1 ? "" : "s")));
-
-                for (PatternArtifact patternArtifact : patternArtifacts) {
-                    final String uri = patternArtifact.getUri(); // "libs-release-local/com/goldin/plugins/gradle/0.1.1/gradle-0.1.1.jar"
-                    final int indexOfFirstSlash = uri.indexOf('/');
-
-                    assert (indexOfFirstSlash > 0) : String.format("Failed to locate '/' in [%s]", uri);
-
-                    final String repoUrl = patternArtifact.getArtifactoryUrl() + '/' + uri.substring(0,
-                            indexOfFirstSlash);
-                    final String filePath = uri.substring(indexOfFirstSlash + 1);
-                    downloadableArtifacts.add(
-                            new DownloadableArtifact(repoUrl, buildDependencyPattern.getTargetDirectory(), filePath,
-                                    buildDependencyPattern.getMatrixParams(), buildDependencyPattern.getPattern(),
-                                    buildDependencyPattern.getPatternType()));
+            List<BuildDependencyPattern> buildDependencyPatterns = dependencyPatterns.get(artifacts.getBuildName()).get(
+                    artifactsRequests.get(i).getBuildNumber());
+            for (int j = 0; j < buildDependencyPatterns.size(); j++) {
+                BuildDependencyPattern buildDependencyPattern = buildDependencyPatterns.get(j);
+                if (!buildDependencyPattern.getBuildName().equals(artifacts.getBuildName())) {
+                    throw new IllegalArgumentException(String.format("Build names don't match: [%s] != [%s]",
+                            buildDependencyPattern.getBuildName(), artifacts.getBuildName()));
                 }
 
-                if (!patternArtifacts.isEmpty()) {
-                    BuildDependency buildDependency = new BuildDependencyBuilder()
-                            .name(artifacts.getBuildName())
-                            .number(artifacts.getBuildNumber())
-                            .url(artifacts.getUrl())
-                            .started(artifacts.getStarted())
-                            .build();
-                    buildDependencies.add(buildDependency);
+                final String message = String.format("Dependency on build [%s], number [%s]",
+                        buildDependencyPattern.getBuildName(), buildDependencyPattern.getBuildNumber());
+
+                /**
+                 * Build number response is null for unresolved dependencies (wrong build name or build number).
+                 */
+                if (artifacts.getBuildNumber() == null) {
+                    log.info(
+                            message + " - no results found, check correctness of dependency build name and build number.");
+                } else {
+                    PatternResult patternResult = artifacts.getPatternResults().get(j);
+                    List<PatternArtifact> patternArtifacts = patternResult.getPatternArtifacts();
+                    log.info(message + String.format(", pattern [%s] - [%s] result%s found.",
+                            buildDependencyPattern.getPattern(), patternArtifacts.size(),
+                            (patternArtifacts.size() == 1 ? "" : "s")));
+
+                    for (PatternArtifact patternArtifact : patternArtifacts) {
+                        final String uri = patternArtifact.getUri(); // "libs-release-local/com/goldin/plugins/gradle/0.1.1/gradle-0.1.1.jar"
+                        final int indexOfFirstSlash = uri.indexOf('/');
+
+                        assert (indexOfFirstSlash > 0) : String.format("Failed to locate '/' in [%s]", uri);
+
+                        final String repoUrl = patternArtifact.getArtifactoryUrl() + '/' + uri.substring(0,
+                                indexOfFirstSlash);
+                        final String filePath = uri.substring(indexOfFirstSlash + 1);
+                        downloadableArtifacts.add(
+                                new DownloadableArtifact(repoUrl, buildDependencyPattern.getTargetDirectory(), filePath,
+                                        buildDependencyPattern.getMatrixParams(), buildDependencyPattern.getPattern(),
+                                        buildDependencyPattern.getPatternType()));
+                    }
+
+                    if (!patternArtifacts.isEmpty()) {
+                        BuildDependency buildDependency = new BuildDependencyBuilder()
+                                .name(artifacts.getBuildName())
+                                .number(artifacts.getBuildNumber())
+                                .url(artifacts.getUrl())
+                                .started(artifacts.getStarted())
+                                .build();
+                        buildDependencies.add(buildDependency);
+                    }
                 }
             }
         }
