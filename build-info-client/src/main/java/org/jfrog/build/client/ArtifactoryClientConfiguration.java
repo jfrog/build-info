@@ -20,6 +20,8 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BlackDuckProperties;
+import org.jfrog.build.api.BlackDuckPropertiesFields;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
 import org.jfrog.build.api.util.Log;
@@ -35,6 +37,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static org.jfrog.build.api.BlackDuckPropertiesFields.*;
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
 import static org.jfrog.build.api.BuildInfoProperties.*;
@@ -640,10 +643,41 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    public class BlackDuckPropertiesHandler extends PrefixPropertyHandler {
+        public BlackDuckPropertiesHandler() {
+            super(root, BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX);
+        }
+
+        public boolean isBlackDuckRunChecks() {
+            return getBooleanValue(BLACK_DUCK_RUN_CHECKS, false);
+        }
+
+        public void setBlackDuckRunChecks(boolean blackDuckRunChecks) {
+            setBooleanValue(BLACK_DUCK_RUN_CHECKS, blackDuckRunChecks);
+        }
+
+        public String getBlackDuckAppName() {
+            return getStringValue(BLACK_DUCK_APP_NAME);
+        }
+
+        public void setBlackDuckAppName(String blackDuckAppName) {
+            setStringValue(BLACK_DUCK_APP_NAME, blackDuckAppName);
+        }
+
+        public String getBlackDuckAppVersion() {
+            return getStringValue(BLACK_DUCK_APP_VERSION);
+        }
+
+        public void setBlackDuckAppVersion(String blackDuckAppVersion) {
+            setStringValue(BLACK_DUCK_APP_VERSION, blackDuckAppVersion);
+        }
+
+    }
+
     public class BuildInfoHandler extends PrefixPropertyHandler {
         public final LicenseControlHandler licenseControl = new LicenseControlHandler();
-
         public final IssuesTrackerHandler issues = new IssuesTrackerHandler();
+        public final BlackDuckPropertiesHandler blackDuckProperties = new BlackDuckPropertiesHandler();
 
         private final Predicate<String> buildVariablesPredicate;
 

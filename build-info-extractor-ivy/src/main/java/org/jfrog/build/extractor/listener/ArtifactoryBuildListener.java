@@ -15,6 +15,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
@@ -253,6 +254,13 @@ public class ArtifactoryBuildListener implements BuildListener {
         }
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
+
+        BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
+        blackDuckProperties.setBlackDuckRunChecks(clientConf.info.blackDuckProperties.isBlackDuckRunChecks());
+        blackDuckProperties.setBlackDuckAppName(clientConf.info.blackDuckProperties.getBlackDuckAppName());
+        blackDuckProperties.setBlackDuckAppVersion(clientConf.info.blackDuckProperties.getBlackDuckAppVersion());
+        builder.blackDuckProperties(blackDuckProperties);
+
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         if (clientConf.info.getBuildRetentionDays() != null) {
             buildRetention.setCount(clientConf.info.getBuildRetentionDays());

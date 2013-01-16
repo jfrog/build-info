@@ -19,6 +19,7 @@ package org.jfrog.build.api.builder;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
@@ -60,6 +61,7 @@ public class BuildInfoBuilder {
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
     private Issues issues;
+    private BlackDuckProperties blackDuckProperties;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -104,6 +106,7 @@ public class BuildInfoBuilder {
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
+        build.setBlackDuckProperties(blackDuckProperties);
         return build;
     }
 
@@ -362,6 +365,11 @@ public class BuildInfoBuilder {
 
     public BuildInfoBuilder issues(Issues issues) {
         this.issues = issues;
+        return this;
+    }
+
+    public BuildInfoBuilder blackDuckProperties(BlackDuckProperties blackDuckProperties) {
+        this.blackDuckProperties = blackDuckProperties;
         return this;
     }
 }

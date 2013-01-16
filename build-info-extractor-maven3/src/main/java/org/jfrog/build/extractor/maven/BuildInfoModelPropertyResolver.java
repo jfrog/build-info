@@ -7,6 +7,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
@@ -77,6 +78,13 @@ public class BuildInfoModelPropertyResolver {
         licenseControl.setScopesList(clientConf.info.licenseControl.getScopes());
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
+
+        BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
+        blackDuckProperties.setBlackDuckRunChecks(clientConf.info.blackDuckProperties.isBlackDuckRunChecks());
+        blackDuckProperties.setBlackDuckAppName(clientConf.info.blackDuckProperties.getBlackDuckAppName());
+        blackDuckProperties.setBlackDuckAppVersion(clientConf.info.blackDuckProperties.getBlackDuckAppVersion());
+        builder.blackDuckProperties(blackDuckProperties);
+
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         if (clientConf.info.getBuildRetentionDays() != null) {
             buildRetention.setCount(clientConf.info.getBuildRetentionDays());
