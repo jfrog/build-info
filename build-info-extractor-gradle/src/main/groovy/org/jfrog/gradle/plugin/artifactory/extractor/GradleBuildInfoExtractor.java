@@ -158,6 +158,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         bib.licenseControl(licenseControl);
+
+        BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
+        blackDuckProperties.setBlackDuckRunChecks(clientConf.info.blackDuckProperties.isBlackDuckRunChecks());
+        blackDuckProperties.setBlackDuckAppName(clientConf.info.blackDuckProperties.getBlackDuckAppName());
+        blackDuckProperties.setBlackDuckAppVersion(clientConf.info.blackDuckProperties.getBlackDuckAppVersion());
+        bib.blackDuckProperties(blackDuckProperties);
+
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         Integer count = clientConf.info.getBuildRetentionDays();
         if (count != null) {

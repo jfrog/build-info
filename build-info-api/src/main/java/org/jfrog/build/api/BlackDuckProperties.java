@@ -2,11 +2,13 @@ package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
+import java.io.Serializable;
+
 /**
  * @author mamo
  */
 @XStreamAlias("blackduck")
-public class BlackDuckProperties {
+public class BlackDuckProperties implements Serializable {
 
     private boolean blackDuckRunChecks;
     private String blackDuckAppName;
