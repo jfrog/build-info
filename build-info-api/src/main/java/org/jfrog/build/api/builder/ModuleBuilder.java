@@ -42,8 +42,11 @@ public class ModuleBuilder {
      * @return Assembled module
      */
     public Module build() {
+        if (id == null || id.trim().length() == 0) {
+            throw new IllegalArgumentException("Cannot build module entity without Module ID value");
+        }
         Module module = new Module();
-        module.setId(id);
+        module.setId(id.trim());
         module.setArtifacts(artifacts);
         module.setDependencies(dependencies);
         module.setProperties(properties);

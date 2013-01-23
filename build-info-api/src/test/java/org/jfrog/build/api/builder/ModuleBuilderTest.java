@@ -39,12 +39,22 @@ public class ModuleBuilderTest {
      * Validates the module values when using the defaults
      */
     public void testDefaultBuild() {
-        Module module = new ModuleBuilder().build();
+        Module module = new ModuleBuilder().id("test").build();
 
-        assertNull(module.getId(), "Default module ID should be null.");
+        assertEquals(module.getId(), "test", "Default module ID cannot be null.");
         assertNull(module.getArtifacts(), "Default module artifacts list should be null.");
         assertNull(module.getDependencies(), "Default module dependencies list should be null.");
         assertNull(module.getProperties(), "Default module properties should be null.");
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testNullModuleIdBuild() {
+        new ModuleBuilder().build();
+    }
+
+    @Test(expectedExceptions = IllegalArgumentException.class)
+    public void testEmptyModuleIdBuild() {
+        new ModuleBuilder().id(" ").build();
     }
 
     /**
@@ -76,8 +86,9 @@ public class ModuleBuilderTest {
         String propertyKey = "key";
         String propertyValue = "value";
 
-        Module module = new ModuleBuilder().addArtifact(artifact).addDependency(dependency).
+        Module module = new ModuleBuilder().id("test").addArtifact(artifact).addDependency(dependency).
                 addProperty(propertyKey, propertyValue).build();
+        assertEquals(module.getId(), "test", "Unexpected module id");
         assertFalse(module.getArtifacts().isEmpty(), "A module artifact should have been added.");
         assertEquals(module.getArtifacts().get(0), artifact, "Unexpected module artifact.");
         assertFalse(module.getDependencies().isEmpty(), "A module dependency should have been added.");
