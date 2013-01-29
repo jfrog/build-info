@@ -256,9 +256,12 @@ public class ArtifactoryBuildListener implements BuildListener {
         builder.licenseControl(licenseControl);
 
         BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
-        blackDuckProperties.setBlackDuckRunChecks(clientConf.info.blackDuckProperties.isBlackDuckRunChecks());
-        blackDuckProperties.setBlackDuckAppName(clientConf.info.blackDuckProperties.getBlackDuckAppName());
-        blackDuckProperties.setBlackDuckAppVersion(clientConf.info.blackDuckProperties.getBlackDuckAppVersion());
+        blackDuckProperties.setRunChecks(clientConf.info.blackDuckProperties.isRunChecks());
+        blackDuckProperties.setAppName(clientConf.info.blackDuckProperties.getAppName());
+        blackDuckProperties.setAppVersion(clientConf.info.blackDuckProperties.getAppVersion());
+        blackDuckProperties.setReportRecipients(clientConf.info.blackDuckProperties.getReportRecipients());
+        blackDuckProperties.setScopes(clientConf.info.blackDuckProperties.getScopes());
+        blackDuckProperties.setIncludePublishedArtifacts(clientConf.info.blackDuckProperties.isIncludePublishedArtifacts());
         builder.blackDuckProperties(blackDuckProperties);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());

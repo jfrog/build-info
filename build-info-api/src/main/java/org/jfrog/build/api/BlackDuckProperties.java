@@ -10,34 +10,61 @@ import java.io.Serializable;
 @XStreamAlias("blackduck")
 public class BlackDuckProperties implements Serializable {
 
-    private boolean blackDuckRunChecks;
-    private String blackDuckAppName;
-    private String blackDuckAppVersion;
+    private boolean runChecks;
+    private String appName;
+    private String appVersion;
+    private String reportRecipients; //csv
+    private String scopes; //csv
+    private boolean includePublishedArtifacts;
 
     public BlackDuckProperties() {
     }
 
-    public boolean isBlackDuckRunChecks() {
-        return blackDuckRunChecks;
+    public boolean isRunChecks() {
+        return runChecks;
     }
 
-    public void setBlackDuckRunChecks(boolean blackDuckRunChecks) {
-        this.blackDuckRunChecks = blackDuckRunChecks;
+    public void setRunChecks(boolean runChecks) {
+        this.runChecks = runChecks;
     }
 
-    public String getBlackDuckAppName() {
-        return blackDuckAppName;
+    public String getAppName() {
+        return appName;
     }
 
-    public void setBlackDuckAppName(String blackDuckAppName) {
-        this.blackDuckAppName = blackDuckAppName;
+    public void setAppName(String appName) {
+        this.appName = appName;
     }
 
-    public String getBlackDuckAppVersion() {
-        return blackDuckAppVersion;
+    public String getAppVersion() {
+        return appVersion;
     }
 
-    public void setBlackDuckAppVersion(String blackDuckAppVersion) {
-        this.blackDuckAppVersion = blackDuckAppVersion;
+    public void setAppVersion(String appVersion) {
+        this.appVersion = appVersion;
+    }
+
+    public String getReportRecipients() {
+        return reportRecipients;
+    }
+
+    public void setReportRecipients(String reportRecipients) {
+        this.reportRecipients = reportRecipients;
+    }
+
+    public String getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(String scopes) {
+        this.scopes = scopes;
+    }
+
+    public boolean isIncludePublishedArtifacts() {
+        return includePublishedArtifacts;
+    }
+
+    public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
+        this.includePublishedArtifacts = includePublishedArtifacts;
     }
 }

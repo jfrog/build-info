@@ -20,10 +20,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.BlackDuckPropertiesFields;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
+import org.jfrog.build.api.LicenseControlFields;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.IssuesTrackerUtils;
 
@@ -37,7 +37,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static org.jfrog.build.api.BlackDuckPropertiesFields.*;
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
 import static org.jfrog.build.api.BuildInfoProperties.*;
@@ -553,11 +552,11 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void setRunChecks(Boolean enabled) {
-            setBooleanValue(RUN_CHECKS, enabled);
+            setBooleanValue(LicenseControlFields.RUN_CHECKS, enabled);
         }
 
         public Boolean isRunChecks() {
-            return getBooleanValue(RUN_CHECKS, false);
+            return getBooleanValue(LicenseControlFields.RUN_CHECKS, false);
         }
 
         public void setViolationRecipients(String recipients) {
@@ -569,19 +568,19 @@ public class ArtifactoryClientConfiguration {
         }
 
         public void setIncludePublishedArtifacts(Boolean enabled) {
-            setBooleanValue(INCLUDE_PUBLISHED_ARTIFACTS, enabled);
+            setBooleanValue(LicenseControlFields.INCLUDE_PUBLISHED_ARTIFACTS, enabled);
         }
 
         public Boolean isIncludePublishedArtifacts() {
-            return getBooleanValue(INCLUDE_PUBLISHED_ARTIFACTS, false);
+            return getBooleanValue(LicenseControlFields.INCLUDE_PUBLISHED_ARTIFACTS, false);
         }
 
         public void setScopes(String scopes) {
-            setStringValue(SCOPES, scopes);
+            setStringValue(LicenseControlFields.SCOPES, scopes);
         }
 
         public String getScopes() {
-            return getStringValue(SCOPES);
+            return getStringValue(LicenseControlFields.SCOPES);
         }
 
         public void setAutoDiscover(Boolean enabled) {
@@ -648,30 +647,53 @@ public class ArtifactoryClientConfiguration {
             super(root, BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX);
         }
 
-        public boolean isBlackDuckRunChecks() {
-            return getBooleanValue(BLACK_DUCK_RUN_CHECKS, false);
+        public boolean isRunChecks() {
+            return getBooleanValue(BlackDuckPropertiesFields.RUN_CHECKS, false);
         }
 
-        public void setBlackDuckRunChecks(boolean blackDuckRunChecks) {
-            setBooleanValue(BLACK_DUCK_RUN_CHECKS, blackDuckRunChecks);
+        public void setRunChecks(boolean blackDuckRunChecks) {
+            setBooleanValue(BlackDuckPropertiesFields.RUN_CHECKS, blackDuckRunChecks);
         }
 
-        public String getBlackDuckAppName() {
-            return getStringValue(BLACK_DUCK_APP_NAME);
+        public String getAppName() {
+            return getStringValue(BlackDuckPropertiesFields.APP_NAME);
         }
 
-        public void setBlackDuckAppName(String blackDuckAppName) {
-            setStringValue(BLACK_DUCK_APP_NAME, blackDuckAppName);
+        public void setAppName(String blackDuckAppName) {
+            setStringValue(BlackDuckPropertiesFields.APP_NAME, blackDuckAppName);
         }
 
-        public String getBlackDuckAppVersion() {
-            return getStringValue(BLACK_DUCK_APP_VERSION);
+        public String getAppVersion() {
+            return getStringValue(BlackDuckPropertiesFields.APP_VERSION);
         }
 
-        public void setBlackDuckAppVersion(String blackDuckAppVersion) {
-            setStringValue(BLACK_DUCK_APP_VERSION, blackDuckAppVersion);
+        public void setAppVersion(String blackDuckAppVersion) {
+            setStringValue(BlackDuckPropertiesFields.APP_VERSION, blackDuckAppVersion);
         }
 
+        public String getReportRecipients() {
+            return getStringValue(BlackDuckPropertiesFields.REPORT_RECIPIENTS);
+        }
+
+        public void setReportRecipients(String reportRecipients) {
+            setStringValue(BlackDuckPropertiesFields.REPORT_RECIPIENTS, reportRecipients);
+        }
+
+        public String getScopes() {
+            return getStringValue(BlackDuckPropertiesFields.SCOPES);
+        }
+
+        public void setScopes(String scopes) {
+            setStringValue(BlackDuckPropertiesFields.SCOPES, scopes);
+        }
+
+        public boolean isIncludePublishedArtifacts() {
+            return getBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS);
+        }
+
+        public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
+            setBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS, includePublishedArtifacts);
+        }
     }
 
     public class BuildInfoHandler extends PrefixPropertyHandler {
