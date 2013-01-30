@@ -45,6 +45,7 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactSpec;
 import org.jfrog.build.client.ArtifactSpecs;
@@ -445,18 +446,28 @@ public class BuildInfoTask extends DefaultTask {
 
     @TaskAction
     public void collectProjectBuildInfo() throws IOException {
-        log.debug("Task '{}' activated", getPath());
-        // Only the last buildInfo execution activate the deployment
-        List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
-        int myIndex = orderedTasks.indexOf(this);
-        if (myIndex == -1) {
-            log.error("Could not find my own task {} in the task graph!", getPath());
-            return;
-        }
-        if (myIndex == orderedTasks.size() - 1) {
-            log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
-                    new Object[]{getProject().getPath(), getPath()});
-            prepareAndDeploy();
+        try {
+            log.debug("Task '{}' activated", getPath());
+            // Only the last buildInfo execution activate the deployment
+            List<BuildInfoTask> orderedTasks = getAllBuildInfoTasks();
+            int myIndex = orderedTasks.indexOf(this);
+            if (myIndex == -1) {
+                log.error("Could not find my own task {} in the task graph!", getPath());
+                return;
+            }
+            if (myIndex == orderedTasks.size() - 1) {
+                log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
+                        new Object[]{getProject().getPath(), getPath()});
+                prepareAndDeploy();
+            }
+        } finally {
+            String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            if (StringUtils.isNotBlank(propertyFilePath)) {
+                File file = new File(propertyFilePath);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
         }
     }
 
