@@ -694,6 +694,14 @@ public class ArtifactoryClientConfiguration {
         public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
             setBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS, includePublishedArtifacts);
         }
+
+        public boolean isDisableComplianceAutoCheck() {
+            return getBooleanValue(BlackDuckPropertiesFields.DISABLE_COMPLIANCE_AUTO_CHECK);
+        }
+
+        public void setDisableComplianceAutoCheck(boolean disableComplianceAutoCheck) {
+            setBooleanValue(BlackDuckPropertiesFields.DISABLE_COMPLIANCE_AUTO_CHECK, disableComplianceAutoCheck);
+        }
     }
 
     public class BuildInfoHandler extends PrefixPropertyHandler {

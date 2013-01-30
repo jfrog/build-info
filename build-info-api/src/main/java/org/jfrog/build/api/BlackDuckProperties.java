@@ -16,6 +16,7 @@ public class BlackDuckProperties implements Serializable {
     private String reportRecipients; //csv
     private String scopes; //csv
     private boolean includePublishedArtifacts;
+    private boolean disableComplianceAutoCheck;
 
     public BlackDuckProperties() {
     }
@@ -66,5 +67,13 @@ public class BlackDuckProperties implements Serializable {
 
     public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
         this.includePublishedArtifacts = includePublishedArtifacts;
+    }
+
+    public boolean isDisableComplianceAutoCheck() {
+        return disableComplianceAutoCheck;
+    }
+
+    public void setDisableComplianceAutoCheck(boolean disableComplianceAutoCheck) {
+        this.disableComplianceAutoCheck = disableComplianceAutoCheck;
     }
 }
