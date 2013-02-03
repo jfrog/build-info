@@ -48,7 +48,7 @@ public class DownloadableArtifact implements Serializable {
             String rootDirToRemove = sourcePattern.substring(0, firstStar);
             int lastSlash = rootDirToRemove.lastIndexOf('/');
             if (lastSlash > 1) {
-                rootDirToRemove = rootDirToRemove.substring(0, lastSlash);
+                rootDirToRemove = rootDirToRemove.substring(0, lastSlash + 1);
                 if (filePath.startsWith(rootDirToRemove)) {
                     return filePath.substring(rootDirToRemove.length());
                 }
