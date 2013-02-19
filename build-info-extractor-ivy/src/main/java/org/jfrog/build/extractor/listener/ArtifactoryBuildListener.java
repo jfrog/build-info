@@ -14,16 +14,7 @@ import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
@@ -35,6 +26,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -117,20 +109,31 @@ public class ArtifactoryBuildListener implements BuildListener {
      */
     @Override
     public void buildFinished(BuildEvent event) {
-        if (event.getException() != null) {
-            getBuildInfoLog(event).info(
-                    "[buildinfo:ant] Received Build Finished Event with exception => No deployment");
-            return;
-        }
-        getBuildInfoLog(event).debug("[buildinfo:ant] Received Build Finished Event");
-        if (!isDidDeploy) {
-            try {
-                doDeploy(event);
-            } catch (Exception e) {
-                RuntimeException re = new RuntimeException(
-                        "Fail to activate deployment using the Artifactory Ivy plugin, due to: " + e.getMessage(), e);
-                getBuildInfoLog(event).error(re.getMessage(), e);
-                throw re;
+        try {
+            if (event.getException() != null) {
+                getBuildInfoLog(event).info(
+                        "[buildinfo:ant] Received Build Finished Event with exception => No deployment");
+                return;
+            }
+            getBuildInfoLog(event).debug("[buildinfo:ant] Received Build Finished Event");
+            if (!isDidDeploy) {
+                try {
+                    doDeploy(event);
+                } catch (Exception e) {
+                    RuntimeException re = new RuntimeException(
+                            "Fail to activate deployment using the Artifactory Ivy plugin, due to: " + e.getMessage(),
+                            e);
+                    getBuildInfoLog(event).error(re.getMessage(), e);
+                    throw re;
+                }
+            }
+        } finally {
+            String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            if (StringUtils.isNotBlank(propertyFilePath)) {
+                File file = new File(propertyFilePath);
+                if (file.exists()) {
+                    file.delete();
+                }
             }
         }
     }

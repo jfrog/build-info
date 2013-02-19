@@ -34,6 +34,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -124,14 +125,25 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionEnded(ExecutionEvent event) {
-        Build build = extract(event);
-        if (build != null) {
-            File basedir = event.getSession().getTopLevelProject().getBasedir();
-            buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
-        }
-        deployableArtifactBuilderMap.clear();
-        if (wrappedListener != null) {
-            wrappedListener.sessionEnded(event);
+        try {
+            Build build = extract(event);
+            if (build != null) {
+                File basedir = event.getSession().getTopLevelProject().getBasedir();
+                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,
+                        basedir);
+            }
+            deployableArtifactBuilderMap.clear();
+            if (wrappedListener != null) {
+                wrappedListener.sessionEnded(event);
+            }
+        } finally {
+            String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            if (StringUtils.isNotBlank(propertyFilePath)) {
+                File file = new File(propertyFilePath);
+                if (file.exists()) {
+                    file.delete();
+                }
+            }
         }
     }
 
@@ -476,7 +488,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
-        String myArtifactId = BuildInfoExtractorUtils.getArtifactId(currentModule.get().build().getId(), artifact.getName());
+        String myArtifactId = BuildInfoExtractorUtils.getArtifactId(currentModule.get().build().getId(),
+                artifact.getName());
         deployableArtifactBuilderMap.put(myArtifactId, deployable);
     }
 
