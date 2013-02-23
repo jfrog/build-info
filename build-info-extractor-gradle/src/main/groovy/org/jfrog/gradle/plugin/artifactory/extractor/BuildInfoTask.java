@@ -36,25 +36,13 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.MavenPluginConvention;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.Upload;
+import org.gradle.api.publish.ivy.tasks.GenerateIvyDescriptor;
+import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactSpec;
-import org.jfrog.build.client.ArtifactSpecs;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.LayoutPatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
@@ -349,6 +337,27 @@ public class BuildInfoTask extends DefaultTask {
     private void setDefaultIvyDescriptor() {
         Project project = getProject();
         TaskContainer tasks = project.getTasks();
+        TaskCollection<GenerateIvyDescriptor> generateIvyDescriptors = tasks.withType(GenerateIvyDescriptor.class);
+        if (!generateIvyDescriptors.isEmpty()) {
+            findIvyDescriptorFromGenertorTask(project, generateIvyDescriptors);
+        } else {
+            findIvyDescriptorFromUploadTask(project, tasks);
+        }
+    }
+
+    private void findIvyDescriptorFromGenertorTask(Project project, TaskCollection<GenerateIvyDescriptor> generateIvyDescriptors) {
+        if (generateIvyDescriptors.size() > 1) {
+            log.warn("Project {} has multiple tasks of type '{}' cannot select one automatically!\n" +
+                    "Please add artifactoryPublish.ivyDescriptor = generate«NAME OF PUBLICATION»IvyModuleDescriptor.destination\n" +
+                    "in the project configuration code.", project.getPath(), GenerateIvyDescriptor.class);
+        } else {
+            GenerateIvyDescriptor generateIvyDescriptor = generateIvyDescriptors.iterator().next();
+            ivyDescriptor = generateIvyDescriptor.getDestination();
+            dependsOn(generateIvyDescriptor);
+        }
+    }
+
+    private void findIvyDescriptorFromUploadTask(Project project, TaskContainer tasks) {
         Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
         if (archiveConfig == null) {
             log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
@@ -662,7 +671,7 @@ public class BuildInfoTask extends DefaultTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<GradleDeployDetails> details,
-            IncludeExcludePatterns patterns) throws IOException {
+                                 IncludeExcludePatterns patterns) throws IOException {
         for (GradleDeployDetails detail : details) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();
