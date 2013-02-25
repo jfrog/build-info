@@ -74,7 +74,7 @@ public class BuildDeploymentHelper {
             ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
             try {
                 if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
-                        !deployableArtifacts.isEmpty()) {
+                        !deployableArtifacts.isEmpty() && !wereThereTestFailures) {
                     deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
