@@ -16,7 +16,8 @@ public class BlackDuckProperties implements Serializable {
     private String reportRecipients; //csv
     private String scopes; //csv
     private boolean includePublishedArtifacts;
-    private boolean disableComplianceAutoCheck;
+    private boolean autoCreateMissingComponentRequests;
+    private boolean autoDiscardStaleComponentRequests;
 
     public BlackDuckProperties() {
     }
@@ -69,11 +70,19 @@ public class BlackDuckProperties implements Serializable {
         this.includePublishedArtifacts = includePublishedArtifacts;
     }
 
-    public boolean isDisableComplianceAutoCheck() {
-        return disableComplianceAutoCheck;
+    public boolean isAutoCreateMissingComponentRequests() {
+        return autoCreateMissingComponentRequests;
     }
 
-    public void setDisableComplianceAutoCheck(boolean disableComplianceAutoCheck) {
-        this.disableComplianceAutoCheck = disableComplianceAutoCheck;
+    public void setAutoCreateMissingComponentRequests(boolean autoCreateMissingComponentRequests) {
+        this.autoCreateMissingComponentRequests = autoCreateMissingComponentRequests;
+    }
+
+    public boolean isAutoDiscardStaleComponentRequests() {
+        return autoDiscardStaleComponentRequests;
+    }
+
+    public void setAutoDiscardStaleComponentRequests(boolean autoDiscardStaleComponentRequests) {
+        this.autoDiscardStaleComponentRequests = autoDiscardStaleComponentRequests;
     }
 }

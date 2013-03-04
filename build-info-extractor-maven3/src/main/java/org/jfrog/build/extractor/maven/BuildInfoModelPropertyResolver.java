@@ -86,7 +86,8 @@ public class BuildInfoModelPropertyResolver {
         blackDuckProperties.setReportRecipients(clientConf.info.blackDuckProperties.getReportRecipients());
         blackDuckProperties.setScopes(clientConf.info.blackDuckProperties.getScopes());
         blackDuckProperties.setIncludePublishedArtifacts(clientConf.info.blackDuckProperties.isIncludePublishedArtifacts());
-        blackDuckProperties.setDisableComplianceAutoCheck(clientConf.info.blackDuckProperties.isDisableComplianceAutoCheck());
+        blackDuckProperties.setAutoCreateMissingComponentRequests(clientConf.info.blackDuckProperties.isAutoCreateMissingComponentRequests());
+        blackDuckProperties.setAutoDiscardStaleComponentRequests(clientConf.info.blackDuckProperties.isAutoDiscardStaleComponentRequests());
         builder.blackDuckProperties(blackDuckProperties);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());

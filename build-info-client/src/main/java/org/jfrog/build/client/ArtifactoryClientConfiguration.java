@@ -695,12 +695,22 @@ public class ArtifactoryClientConfiguration {
             setBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS, includePublishedArtifacts);
         }
 
-        public boolean isDisableComplianceAutoCheck() {
-            return getBooleanValue(BlackDuckPropertiesFields.DISABLE_COMPLIANCE_AUTO_CHECK);
+        public boolean isAutoCreateMissingComponentRequests() {
+            return getBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests);
         }
 
-        public void setDisableComplianceAutoCheck(boolean disableComplianceAutoCheck) {
-            setBooleanValue(BlackDuckPropertiesFields.DISABLE_COMPLIANCE_AUTO_CHECK, disableComplianceAutoCheck);
+        public void setAutoCreateMissingComponentRequests(boolean autoCreateMissingComponentRequests) {
+            setBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests,
+                    autoCreateMissingComponentRequests);
+        }
+
+        public boolean isAutoDiscardStaleComponentRequests() {
+            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests);
+        }
+
+        public void setAutoDiscardStaleComponentRequests(boolean autoDiscardStaleComponentRequests) {
+            setBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests,
+                    autoDiscardStaleComponentRequests);
         }
     }
 

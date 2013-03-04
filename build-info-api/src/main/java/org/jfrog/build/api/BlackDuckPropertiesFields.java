@@ -10,6 +10,6 @@ public interface BlackDuckPropertiesFields {
     String REPORT_RECIPIENTS = "reportRecipients";
     String SCOPES = "scopes";
     String INCLUDE_PUBLISHED_ARTIFACTS = "includePublishedArtifacts";
-    String DISABLE_COMPLIANCE_AUTO_CHECK = "disableComplianceAutoCheck";
-
+    String AutoCreateMissingComponentRequests = "autoCreateMissingComponentRequests";
+    String AutoDiscardStaleComponentRequests = "autoDiscardStaleComponentRequests";
 }
