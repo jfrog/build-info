@@ -314,6 +314,10 @@ public class BuildInfoTask extends DefaultTask {
                 }
             }
         }
+        // The task depends on the produced artifacts of all configurations "to publish"
+        for (Configuration publishConfiguration : publishConfigurations) {
+            dependsOn(publishConfiguration.getArtifacts());
+        }
 
         // Set ivy descriptor parameters
         if (isPublishIvy(acc)) {

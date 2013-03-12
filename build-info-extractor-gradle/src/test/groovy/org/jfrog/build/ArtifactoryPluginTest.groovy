@@ -110,7 +110,8 @@ public class ArtifactoryPluginTest extends Specification {
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
-        buildInfoTask.dependsOn.size() == 1
+        // depends on the archives configuration, and the archives.artifacts file collection
+        buildInfoTask.dependsOn.size() == 2
     }
 
     def populateConfigurationFromDsl() {

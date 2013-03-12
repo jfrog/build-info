@@ -134,6 +134,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
             buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoTask.class)
             buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactory, and resolves
 dependencies from Artifactory.''')
+            buildInfo.setGroup("publishing")
         }
         return buildInfo
     }
