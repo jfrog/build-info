@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+//export JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
+//gradle build artifactoryPublish -xtest --stacktrace
+
 /**
  * There are 2 ways to activate the Artifactory Build-Info plugin.
  * 1. use apply from directly from the build.gradle as shown below.
@@ -28,37 +31,55 @@
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
 
 buildscript {
-    /*
-    repositories {
-        maven {
-            url 'http://repo.jfrog.org/artifactory/repo'
-        }
-    }
-    */
     dependencies {
         classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.0.x-SNAPSHOT-uber.jar"))
     }
 }
 
-allprojects {
-    apply plugin: 'artifactory'
-    group = 'org.jfrog'
-    version = '1.0'
+import java.text.SimpleDateFormat
+
+def globalVersion = new Version('1.2.x-SNAPSHOT')
+
+def javaProjects() {
+    subprojects.findAll { new File(it.projectDir, 'src').directory }
 }
 
-subprojects {
-    apply {
-        apply plugin: 'maven'
-        apply plugin: 'java'
-    }
+allprojects {
+    apply plugin: 'artifactory'
+    group = 'org.jfrog.test.gradle'
+    version = globalVersion
+    status = version.status
+}
+
+artifactoryPublish.skip = true
+
+project('services') {
+    artifactoryPublish.skip = true
+}
+
+configure(javaProjects()) {
+    apply plugin: 'java'
+    apply plugin: 'maven'
+    apply plugin: 'ivy-publish'
 
     dependencies {
         testCompile 'junit:junit:4.7'
     }
     manifest.mainAttributes(provider: 'gradle')
-}
 
-evaluationDependsOnChildren()
+    publishing {
+        publications {
+            ivy {
+                descriptor {
+                    withXml {
+                        asNode().info.@license = "Test License"
+                    }
+                }
+            }
+        }
+    }
+
+}
 
 project('api') {
     configurations {
@@ -72,8 +93,8 @@ project('api') {
 
     artifactoryPublish {
         publishConfigs configurations.simpleFile
-        publishIvy = false
-        publishPom = false
+        publishIvy = true
+        publishPom = true
         properties {
             simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
         }
@@ -87,7 +108,7 @@ artifactory {
     contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
-            repoKey = 'libs-release-local'
+            repoKey = 'libs-snapshot-local'
             username = 'admin'
             password = 'password'
             ivy {
@@ -115,5 +136,33 @@ artifactory {
     }
 }
 
-//export JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
-//gradle build artifactoryPublish -xtest --stacktrace
+class Version {
+    String originalVersion
+    String thisVersion
+    String status
+    Date buildTime
+
+    Version(String versionValue) {
+        buildTime = new Date()
+        originalVersion = versionValue
+        if (originalVersion.endsWith('-SNAPSHOT')) {
+            status = 'integration'
+            thisVersion = originalVersion.substring(0, originalVersion.length() - 'SNAPSHOT'.length()) + getTimestamp()
+        } else {
+            status = 'release'
+            thisVersion = versionValue
+        }
+    }
+
+    String getTimestamp() {
+        // Convert local file timestamp to UTC
+        def format = new SimpleDateFormat('yyyyMMddHHmmss')
+        format.setCalendar(Calendar.getInstance(TimeZone.getTimeZone('UTC')));
+        return format.format(buildTime)
+    }
+
+    String toString() {
+        thisVersion
+    }
+}
+
