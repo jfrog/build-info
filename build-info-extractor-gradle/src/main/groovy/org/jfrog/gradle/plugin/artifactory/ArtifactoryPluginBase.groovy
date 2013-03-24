@@ -24,13 +24,16 @@ import org.gradle.api.invocation.Gradle
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
-import org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
+import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
+import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
+import org.jfrog.gradle.plugin.artifactory.task.BuildInfoPublicationsTask
 import org.slf4j.Logger
-import static org.jfrog.gradle.plugin.artifactory.extractor.BuildInfoTask.BUILD_INFO_TASK_NAME
 
-class ArtifactoryPlugin implements Plugin<Project> {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPlugin.class);
+import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
+
+abstract class ArtifactoryPluginBase implements Plugin<Project> {
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPluginBase.class);
     public static final String ENCODING = "UTF-8"
 
     def void apply(Project project) {
@@ -41,7 +44,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
         // Add a singleton artifactory plugin convention to the root project if needed
         // Then add the build info task
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
-        createBuildInfoTask(project)
+        addArtifactoryPublishTask(project)
         if (!conv.clientConfig.info.buildStarted) {
             conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
@@ -65,7 +68,7 @@ class ArtifactoryPlugin implements Plugin<Project> {
                 defineResolvers(it, configuration.resolver)
             }
             //Configure the artifactoryPublish tasks. Deployment happens on task execution
-            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each { BuildInfoTask bit ->
+            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each { BuildInfoBaseTask bit ->
                 bit.projectsEvaluated()
             }
         }
@@ -121,22 +124,24 @@ class ArtifactoryPlugin implements Plugin<Project> {
 
     ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
         if (project.rootProject.convention.plugins.artifactory == null) {
-            project.rootProject.convention.plugins.artifactory = new ArtifactoryPluginConvention(project)
+            project.rootProject.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
         }
         return project.rootProject.convention.plugins.artifactory
     }
 
-    BuildInfoTask createBuildInfoTask(Project project) {
-        BuildInfoTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+    protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project);
+
+    BuildInfoBaseTask addArtifactoryPublishTask(Project project) {
+        BuildInfoBaseTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         if (buildInfo == null) {
             def isRoot = project.equals(project.getRootProject())
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
-            buildInfo = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoTask.class)
-            buildInfo.setDescription('''Deploys artifacts + generated build-info metadata to Artifactory, and resolves
-dependencies from Artifactory.''')
+            buildInfo = createArtifactoryPublishTask(project)
             buildInfo.setGroup("publishing")
         }
-        return buildInfo
+        buildInfo
     }
+
+    protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project);
 }
 

@@ -29,28 +29,20 @@ import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -73,7 +65,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
 
     public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-            Set<GradleDeployDetails> gradleDeployDetails) {
+                                    Set<GradleDeployDetails> gradleDeployDetails) {
         this.clientConf = clientConf;
         this.gradleDeployDetails = gradleDeployDetails;
     }
@@ -116,8 +108,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
-            BuildInfoTask buildInfoTask = getBuildInfoTask(project);
-            if (buildInfoTask != null && buildInfoTask.hasConfigurations()) {
+            BuildInfoBaseTask buildInfoTask = getBuildInfoTask(project);
+            if (buildInfoTask != null && buildInfoTask.hasModules()) {
                 bib.addModule(extractModule(project));
             }
         }
@@ -230,12 +222,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         return build;
     }
 
-    private BuildInfoTask getBuildInfoTask(Project project) {
-        Set<Task> tasks = project.getTasksByName(BuildInfoTask.BUILD_INFO_TASK_NAME, false);
+    private BuildInfoBaseTask getBuildInfoTask(Project project) {
+        Set<Task> tasks = project.getTasksByName(BuildInfoBaseTask.BUILD_INFO_TASK_NAME, false);
         if (tasks.isEmpty()) {
             return null;
         }
-        BuildInfoTask buildInfoTask = (BuildInfoTask) tasks.iterator().next();
+        BuildInfoBaseTask buildInfoTask = (BuildInfoBaseTask) tasks.iterator().next();
         if (buildInfoTask.getState().getDidWork()) {
             return buildInfoTask;
         }
@@ -245,7 +237,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     public Module extractModule(Project project) {
         String artifactName = project.getName();
-        BuildInfoTask task = getBuildInfoTask(project);
+        BuildInfoBaseTask task = getBuildInfoTask(project);
         if (task != null) {
             artifactName = project.getName();
         }

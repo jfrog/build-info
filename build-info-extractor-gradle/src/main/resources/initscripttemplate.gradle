@@ -1,4 +1,4 @@
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryConfigurationsPlugin
 
 initscript {
     dependencies {
@@ -16,7 +16,7 @@ class BuildInfoPluginListener extends BuildAdapter {
         if (!"buildSrc".equals(root.name)) {
             root.allprojects {
                 apply {
-                    apply plugin: ArtifactoryPlugin
+                    apply plugin: ArtifactoryConfigurationsPlugin
                 }
             }
         }
