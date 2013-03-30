@@ -76,7 +76,7 @@ public class GradleArtifactoryClientConfigUpdater {
         setMissingBuildAttributes(config, project);
     }
 
-    private static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
+    public static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
         //Build name
         String buildName = config.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {

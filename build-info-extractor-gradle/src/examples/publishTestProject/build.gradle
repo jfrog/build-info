@@ -15,7 +15,7 @@
  */
 
 //export JAVA_OPTS="-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5005"
-//gradle build artifactoryPublish -xtest --stacktrace
+//gradle art --stacktrace
 
 /**
  * There are 2 ways to activate the Artifactory Build-Info plugin.
@@ -27,8 +27,6 @@
  * Check the URL that apply uses to get the remote script
  *
  */
-
-import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
 
 buildscript {
     dependencies {
@@ -102,6 +100,11 @@ project('api') {
 artifactoryPublish.skip = true
 
 artifactory {
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.info.addEnvironmentProperty('test.adding.dynVar',new java.util.Date().toString())
+    clientConfig.info.setBuildName('new-strange-name')
+    clientConfig.info.setBuildNumber(new java.util.Random(System.currentTimeMillis()).nextInt(20000))
+
     //contextUrl = 'http://repo.jfrog.org/artifactory'
     contextUrl = 'http://localhost:8080/artifactory'
     publish {

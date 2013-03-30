@@ -906,11 +906,11 @@ public class ArtifactoryClientConfiguration {
                 if (PatternMatcher.pathConflicts(varKey, patterns)) {
                     continue;
                 }
-                addBuildVariable(varKey, entry.getValue());
+                addEnvironmentProperty(varKey, entry.getValue());
             }
         }
 
-        private void addBuildVariable(String key, String value) {
+        public void addEnvironmentProperty(String key, String value) {
             setStringValue(ENVIRONMENT_PREFIX + key, value);
         }
     }

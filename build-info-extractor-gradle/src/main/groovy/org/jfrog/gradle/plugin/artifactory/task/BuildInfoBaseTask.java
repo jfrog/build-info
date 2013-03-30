@@ -24,10 +24,7 @@ import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
 import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
-import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
+import org.jfrog.gradle.plugin.artifactory.extractor.*;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -233,6 +230,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
      */
     protected void prepareAndDeploy() throws IOException {
         ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        // Reset the default properties, they may have changed
+        GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(acc, getProject().getRootProject());
+
         String contextUrl = acc.publisher.getContextUrl();
         log.debug("Context URL for deployment '{}", contextUrl);
         String username = acc.publisher.getUsername();

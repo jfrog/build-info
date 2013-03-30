@@ -114,6 +114,16 @@ public abstract class BuildInfoExtractorUtils {
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
 
         Properties props = new Properties();
+
+        // Add all the startProps that starts with BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX
+        for (Map.Entry<Object, Object> startEntry : startProps.entrySet()) {
+            if (StringUtils.startsWith((String)startEntry.getKey(),
+                    BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX)) {
+                props.put(startEntry.getKey(), startEntry.getValue());
+            }
+        }
+
+        // Add all system environment that match the patterns
         Map<String, String> envMap = System.getenv();
         for (Map.Entry<String, String> entry : envMap.entrySet()) {
             String varKey = entry.getKey();
@@ -132,6 +142,8 @@ public abstract class BuildInfoExtractorUtils {
             }
             props.put(varKey, entry.getValue());
         }
+
+        // TODO: [by FSI] Test if this is needed! Since start props are used now
         String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
