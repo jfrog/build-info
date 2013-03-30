@@ -52,10 +52,6 @@ public class PrefixPropertyHandler {
         }
     }
 
-    public Boolean getBooleanValue(String key) {
-        return getBooleanValue(key, null);
-    }
-
     public Boolean getBooleanValue(String key, Boolean def) {
         String s = props.get(prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else

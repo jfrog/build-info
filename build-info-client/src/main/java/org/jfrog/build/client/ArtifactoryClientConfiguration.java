@@ -614,7 +614,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean getAggregateBuildIssues() {
-            return getBooleanValue(AGGREGATE_BUILD_ISSUES);
+            return getBooleanValue(AGGREGATE_BUILD_ISSUES, Boolean.FALSE);
         }
 
         public void setAggregateBuildIssues(boolean aggregateBuildIssues) {
@@ -688,7 +688,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isIncludePublishedArtifacts() {
-            return getBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS);
+            return getBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS, Boolean.TRUE);
         }
 
         public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
@@ -696,7 +696,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isAutoCreateMissingComponentRequests() {
-            return getBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests);
+            return getBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests, Boolean.TRUE);
         }
 
         public void setAutoCreateMissingComponentRequests(boolean autoCreateMissingComponentRequests) {
@@ -705,7 +705,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isAutoDiscardStaleComponentRequests() {
-            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests);
+            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests, Boolean.FALSE);
         }
 
         public void setAutoDiscardStaleComponentRequests(boolean autoDiscardStaleComponentRequests) {
