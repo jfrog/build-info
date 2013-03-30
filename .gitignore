@@ -7,6 +7,9 @@
 /build-info-extractor-gradle/src/examples/multiproject/build
 /build-info-extractor-gradle/src/examples/multiproject/*/build
 /build-info-extractor-gradle/src/examples/multiproject/*/*/build
+/build-info-extractor-gradle/src/examples/publishTestProject/build
+/build-info-extractor-gradle/src/examples/publishTestProject/*/build
+/build-info-extractor-gradle/src/examples/publishTestProject/*/*/build
 build-info.ipr
 build-info.iws
 atlassian-*.xml
