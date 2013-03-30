@@ -14,6 +14,12 @@ import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
 
 import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
+import static org.jfrog.build.client.ClientConfigurationFields.ARTIFACT_SPECS
+import static org.jfrog.build.client.ClientConfigurationFields.IVY
+import static org.jfrog.build.client.ClientConfigurationFields.MAVEN
+import static org.jfrog.build.client.ClientConfigurationFields.PUBLISH_ARTIFACTS
+import static org.jfrog.build.client.ClientConfigurationFields.REPO_KEY
+import static org.jfrog.build.client.ClientProperties.PROP_PUBLISH_PREFIX
 
 /**
  * @author freds
@@ -32,9 +38,9 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
 
         // Disable resolving
-        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'true')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
+        project.setProperty(REPO_KEY, '')
+        project.setProperty(PROP_PUBLISH_PREFIX + IVY, 'true')
+        project.setProperty(PROP_PUBLISH_PREFIX + MAVEN, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -50,10 +56,10 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
 
         // Disable resolving
-        project.setProperty(ClientConfigurationFields.REPO_KEY, '')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.IVY, 'false')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'false')
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.PUBLISH_ARTIFACTS, 'false')
+        project.setProperty(REPO_KEY, '')
+        project.setProperty(PROP_PUBLISH_PREFIX + IVY, 'false')
+        project.setProperty(PROP_PUBLISH_PREFIX + MAVEN, 'false')
+        project.setProperty(PROP_PUBLISH_PREFIX + PUBLISH_ARTIFACTS, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -75,7 +81,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         if (System.getProperty(PROP_PROPS_FILE)) {
             System.clearProperty(PROP_PROPS_FILE)
         }
-        URL resource = getClass().getResource('/org/jfrog/build/build.gradle')
+        URL resource = getClass().getResource('/org/jfrog/build/confPluginDslTest/build.gradle')
         def projDir = new File(resource.toURI()).getParentFile()
 
         Project project = ProjectBuilder.builder().withProjectDir(projDir).build()
@@ -84,7 +90,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         project.setProperty('ppom', false)
 
         //Set artifact specs
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
+        project.setProperty(PROP_PUBLISH_PREFIX + ARTIFACT_SPECS,
                 'archives com.jfrog:*:*:doc@* key1: val1, key2: val2\n' +
                         'archives com.jfrog:*:*:src@* key3: val 3')
 

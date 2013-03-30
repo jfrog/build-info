@@ -26,6 +26,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublicationContainer;
+import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
@@ -76,7 +77,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
         for (Object publication : publications) {
             if (publication instanceof CharSequence) {
                 Publication publicationObj = getProject().getExtensions()
-                        .getByType(PublicationContainer.class).findByName(publication.toString());
+                        .getByType(PublishingExtension.class).getPublications().findByName(publication.toString());
                 if (publicationObj != null) {
                     addPublication(publicationObj);
                 } else {
@@ -102,6 +103,14 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
             log.warn("Publication named '{}' in project '{}' is of unknown type '{}'",
                     publicationObj.getName(), getProject().getPath(), publicationObj.getClass());
         }
+    }
+
+    public Set<IvyPublication> getIvyPublications() {
+        return ivyPublications;
+    }
+
+    public Set<MavenPublication> getMavenPublications() {
+        return mavenPublications;
     }
 
     public boolean hasPublications() {
