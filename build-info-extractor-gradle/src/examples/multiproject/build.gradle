@@ -32,7 +32,7 @@ import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
 
 buildscript {
     dependencies {
-        classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.0.x-SNAPSHOT-uber.jar"))
+        classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.1.x-SNAPSHOT-uber.jar"))
     }
 }
 
@@ -60,25 +60,11 @@ project('services') {
 configure(javaProjects()) {
     apply plugin: 'java'
     apply plugin: 'maven'
-    apply plugin: 'ivy-publish'
 
     dependencies {
         testCompile 'junit:junit:4.7'
     }
     manifest.mainAttributes(provider: 'gradle')
-
-    publishing {
-        publications {
-            ivyJava(IvyPublication) {
-                descriptor {
-                    withXml {
-                        asNode().info.@license = "Test License"
-                    }
-                }
-            }
-        }
-    }
-
 }
 
 project('api') {
@@ -108,7 +94,7 @@ artifactory {
     contextUrl = 'http://localhost:8080/artifactory'
     publish {
         repository {
-            repoKey = 'libs-snapshot-local'
+            repoKey = 'gradle-snapshot-local'
             username = 'admin'
             password = 'password'
             ivy {
