@@ -186,7 +186,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
             DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
             if (builder != null) {
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        file.getName(), "xml", "ivy", null, file);
+                        projectIdentity.getModule(), "xml", "ivy", null, file);
                 addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
             }
 
@@ -196,7 +196,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 builder = createBuilder(processedFiles, file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        file.getName(), artifact.getExtension(), artifact.getType(), artifact.getClassifier(),
+                        artifact.getName(), artifact.getExtension(), artifact.getType(), artifact.getClassifier(),
                         file);
                 addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
             }
@@ -219,7 +219,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
             DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
             if (builder != null) {
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        file.getName(), "pom", "pom", null, file);
+                        projectIdentity.getArtifactId(), "pom", "pom", null, file);
                 addMavenArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
             }
             MavenArtifactSet artifacts = mavenPublication.getArtifacts();
@@ -228,7 +228,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 builder = createBuilder(processedFiles, file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        file.getName(), artifact.getExtension(),
+                        projectIdentity.getArtifactId(), artifact.getExtension(),
                         artifact.getExtension(), artifact.getClassifier(),
                         file);
                 addMavenArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
