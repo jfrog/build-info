@@ -131,12 +131,22 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
             return;
         }
         for (IvyPublication ivyPublication : ivyPublications) {
-            dependsOn(ivyPublication.getArtifacts());
-            dependsOn(ivyPublication.getDescriptor());
+            if (!(ivyPublication instanceof IvyPublicationInternal)) {
+                // TODO: Check how the output files can be extracted without using getPublishableFiles
+                log.warn("Ivy publication name '{}' is of unsupported type '{}'!",
+                        ivyPublication.getName(), ivyPublication.getClass());
+                continue;
+            }
+            dependsOn(((IvyPublicationInternal)ivyPublication).getPublishableFiles());
         }
         for (MavenPublication mavenPublication : mavenPublications) {
-            dependsOn(mavenPublication.getArtifacts());
-            dependsOn(mavenPublication.getPom());
+            if (!(mavenPublication instanceof MavenPublicationInternal)) {
+                // TODO: Check how the output files can be extracted without using getPublishableFiles
+                log.warn("Maven publication name '{}' is of unsupported type '{}'!",
+                        mavenPublication.getName(), mavenPublication.getClass());
+                continue;
+            }
+            dependsOn(((MavenPublicationInternal)mavenPublication).getPublishableFiles());
         }
     }
 
