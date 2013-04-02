@@ -56,7 +56,7 @@ public class BuildInfoMavenBuilder {
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
     private Issues issues;
-    private BlackDuckProperties blackDuckProperties;
+    private Governance governance;
 
     public BuildInfoMavenBuilder(String name) {
         this.name = name;
@@ -101,7 +101,7 @@ public class BuildInfoMavenBuilder {
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
-        build.setBlackDuckProperties(blackDuckProperties);
+        build.setGovernance(governance);
         return build;
     }
 
@@ -458,8 +458,8 @@ public class BuildInfoMavenBuilder {
         return this;
     }
 
-    public BuildInfoMavenBuilder blackDuckProperties(BlackDuckProperties blackDuckProperties) {
-        this.blackDuckProperties = blackDuckProperties;
+    public BuildInfoMavenBuilder governance(Governance governance) {
+        this.governance = governance;
         return this;
     }
 }

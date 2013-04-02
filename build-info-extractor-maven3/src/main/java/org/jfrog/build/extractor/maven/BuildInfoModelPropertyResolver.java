@@ -12,6 +12,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Governance;
 import org.jfrog.build.api.Issue;
 import org.jfrog.build.api.IssueTracker;
 import org.jfrog.build.api.Issues;
@@ -79,16 +80,16 @@ public class BuildInfoModelPropertyResolver {
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
 
-        BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
-        blackDuckProperties.setRunChecks(clientConf.info.blackDuckProperties.isRunChecks());
-        blackDuckProperties.setAppName(clientConf.info.blackDuckProperties.getAppName());
-        blackDuckProperties.setAppVersion(clientConf.info.blackDuckProperties.getAppVersion());
-        blackDuckProperties.setReportRecipients(clientConf.info.blackDuckProperties.getReportRecipients());
-        blackDuckProperties.setScopes(clientConf.info.blackDuckProperties.getScopes());
-        blackDuckProperties.setIncludePublishedArtifacts(clientConf.info.blackDuckProperties.isIncludePublishedArtifacts());
-        blackDuckProperties.setAutoCreateMissingComponentRequests(clientConf.info.blackDuckProperties.isAutoCreateMissingComponentRequests());
-        blackDuckProperties.setAutoDiscardStaleComponentRequests(clientConf.info.blackDuckProperties.isAutoDiscardStaleComponentRequests());
-        builder.blackDuckProperties(blackDuckProperties);
+        final BlackDuckProperties blackDuckProperties;
+        if (clientConf.info.blackDuckProperties.isRunChecks()) {
+            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
+        } else {
+            blackDuckProperties = new BlackDuckProperties();
+        }
+
+        Governance governance = new Governance();
+        governance.setBlackDuckProperties(blackDuckProperties);
+        builder.governance(governance);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         if (clientConf.info.getBuildRetentionDays() != null) {

@@ -67,7 +67,7 @@ public class Build extends BaseBuildBean {
 
     private Issues issues;
 
-    private BlackDuckProperties blackDuckProperties;
+    private Governance governance;
 
     /**
      * Returns the version of the build
@@ -476,11 +476,11 @@ public class Build extends BaseBuildBean {
         this.issues = issues;
     }
 
-    public BlackDuckProperties getBlackDuckProperties() {
-        return blackDuckProperties;
+    public Governance getGovernance() {
+        return governance;
     }
 
-    public void setBlackDuckProperties(BlackDuckProperties blackDuckProperties) {
-        this.blackDuckProperties = blackDuckProperties;
+    public void setGovernance(Governance governance) {
+        this.governance = governance;
     }
 }

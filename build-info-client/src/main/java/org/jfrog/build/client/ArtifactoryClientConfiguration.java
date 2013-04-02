@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.BlackDuckPropertiesFields;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
@@ -644,7 +645,7 @@ public class ArtifactoryClientConfiguration {
 
     public class BlackDuckPropertiesHandler extends PrefixPropertyHandler {
         public BlackDuckPropertiesHandler() {
-            super(root, BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX);
+            super(root, BUILD_INFO_BLACK_DUCK_PREFIX);
         }
 
         public boolean isRunChecks() {
@@ -688,7 +689,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isIncludePublishedArtifacts() {
-            return getBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS);
+            return getBooleanValue(BlackDuckPropertiesFields.INCLUDE_PUBLISHED_ARTIFACTS, true);
         }
 
         public void setIncludePublishedArtifacts(boolean includePublishedArtifacts) {
@@ -696,7 +697,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isAutoCreateMissingComponentRequests() {
-            return getBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests);
+            return getBooleanValue(BlackDuckPropertiesFields.AutoCreateMissingComponentRequests, true);
         }
 
         public void setAutoCreateMissingComponentRequests(boolean autoCreateMissingComponentRequests) {
@@ -705,12 +706,25 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isAutoDiscardStaleComponentRequests() {
-            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests);
+            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests, true);
         }
 
         public void setAutoDiscardStaleComponentRequests(boolean autoDiscardStaleComponentRequests) {
             setBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests,
                     autoDiscardStaleComponentRequests);
+        }
+
+        public BlackDuckProperties copyBlackDuckProperties() {
+            BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
+            blackDuckProperties.setRunChecks(isRunChecks());
+            blackDuckProperties.setAppName(getAppName());
+            blackDuckProperties.setAppVersion(getAppVersion());
+            blackDuckProperties.setReportRecipients(getReportRecipients());
+            blackDuckProperties.setScopes(getScopes());
+            blackDuckProperties.setIncludePublishedArtifacts(isIncludePublishedArtifacts());
+            blackDuckProperties.setAutoCreateMissingComponentRequests(isAutoCreateMissingComponentRequests());
+            blackDuckProperties.setAutoDiscardStaleComponentRequests(isAutoDiscardStaleComponentRequests());
+            return blackDuckProperties;
         }
     }
 
