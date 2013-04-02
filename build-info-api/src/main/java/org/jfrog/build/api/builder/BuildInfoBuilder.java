@@ -24,6 +24,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.BuildType;
+import org.jfrog.build.api.Governance;
 import org.jfrog.build.api.Issues;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.Module;
@@ -61,7 +62,7 @@ public class BuildInfoBuilder {
     private LicenseControl licenseControl;
     private BuildRetention buildRetention;
     private Issues issues;
-    private BlackDuckProperties blackDuckProperties;
+    private Governance governance;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -106,7 +107,7 @@ public class BuildInfoBuilder {
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
-        build.setBlackDuckProperties(blackDuckProperties);
+        build.setGovernance(governance);
         return build;
     }
 
@@ -368,8 +369,8 @@ public class BuildInfoBuilder {
         return this;
     }
 
-    public BuildInfoBuilder blackDuckProperties(BlackDuckProperties blackDuckProperties) {
-        this.blackDuckProperties = blackDuckProperties;
+    public BuildInfoBuilder governance(Governance governance) {
+        this.governance = governance;
         return this;
     }
 }

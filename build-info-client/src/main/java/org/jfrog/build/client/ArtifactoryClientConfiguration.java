@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.BlackDuckPropertiesFields;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Issue;
@@ -644,7 +645,7 @@ public class ArtifactoryClientConfiguration {
 
     public class BlackDuckPropertiesHandler extends PrefixPropertyHandler {
         public BlackDuckPropertiesHandler() {
-            super(root, BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX);
+            super(root, BUILD_INFO_BLACK_DUCK_PREFIX);
         }
 
         public boolean isRunChecks() {
@@ -705,12 +706,25 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isAutoDiscardStaleComponentRequests() {
-            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests, Boolean.FALSE);
+            return getBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests, Boolean.TRUE);
         }
 
         public void setAutoDiscardStaleComponentRequests(boolean autoDiscardStaleComponentRequests) {
             setBooleanValue(BlackDuckPropertiesFields.AutoDiscardStaleComponentRequests,
                     autoDiscardStaleComponentRequests);
+        }
+
+        public BlackDuckProperties copyBlackDuckProperties() {
+            BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
+            blackDuckProperties.setRunChecks(isRunChecks());
+            blackDuckProperties.setAppName(getAppName());
+            blackDuckProperties.setAppVersion(getAppVersion());
+            blackDuckProperties.setReportRecipients(getReportRecipients());
+            blackDuckProperties.setScopes(getScopes());
+            blackDuckProperties.setIncludePublishedArtifacts(isIncludePublishedArtifacts());
+            blackDuckProperties.setAutoCreateMissingComponentRequests(isAutoCreateMissingComponentRequests());
+            blackDuckProperties.setAutoDiscardStaleComponentRequests(isAutoDiscardStaleComponentRequests());
+            return blackDuckProperties;
         }
     }
 
@@ -906,11 +920,11 @@ public class ArtifactoryClientConfiguration {
                 if (PatternMatcher.pathConflicts(varKey, patterns)) {
                     continue;
                 }
-                addEnvironmentProperty(varKey, entry.getValue());
+                addBuildVariable(varKey, entry.getValue());
             }
         }
 
-        public void addEnvironmentProperty(String key, String value) {
+        private void addBuildVariable(String key, String value) {
             setStringValue(ENVIRONMENT_PREFIX + key, value);
         }
     }

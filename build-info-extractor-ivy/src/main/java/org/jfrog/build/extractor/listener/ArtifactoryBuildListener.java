@@ -258,16 +258,16 @@ public class ArtifactoryBuildListener implements BuildListener {
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
 
-        BlackDuckProperties blackDuckProperties = new BlackDuckProperties();
-        blackDuckProperties.setRunChecks(clientConf.info.blackDuckProperties.isRunChecks());
-        blackDuckProperties.setAppName(clientConf.info.blackDuckProperties.getAppName());
-        blackDuckProperties.setAppVersion(clientConf.info.blackDuckProperties.getAppVersion());
-        blackDuckProperties.setReportRecipients(clientConf.info.blackDuckProperties.getReportRecipients());
-        blackDuckProperties.setScopes(clientConf.info.blackDuckProperties.getScopes());
-        blackDuckProperties.setIncludePublishedArtifacts(clientConf.info.blackDuckProperties.isIncludePublishedArtifacts());
-        blackDuckProperties.setAutoCreateMissingComponentRequests(clientConf.info.blackDuckProperties.isAutoCreateMissingComponentRequests());
-        blackDuckProperties.setAutoDiscardStaleComponentRequests(clientConf.info.blackDuckProperties.isAutoDiscardStaleComponentRequests());
-        builder.blackDuckProperties(blackDuckProperties);
+        final BlackDuckProperties blackDuckProperties;
+        if (clientConf.info.blackDuckProperties.isRunChecks()) {
+            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
+        } else {
+            blackDuckProperties = new BlackDuckProperties();
+        }
+
+        Governance governance = new Governance();
+        governance.setBlackDuckProperties(blackDuckProperties);
+        builder.governance(governance);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
         if (clientConf.info.getBuildRetentionDays() != null) {
