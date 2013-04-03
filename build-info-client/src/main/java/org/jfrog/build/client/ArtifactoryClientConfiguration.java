@@ -645,7 +645,7 @@ public class ArtifactoryClientConfiguration {
 
     public class BlackDuckPropertiesHandler extends PrefixPropertyHandler {
         public BlackDuckPropertiesHandler() {
-            super(root, BUILD_INFO_BLACK_DUCK_PREFIX);
+            super(root, BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX);
         }
 
         public boolean isRunChecks() {
@@ -920,11 +920,11 @@ public class ArtifactoryClientConfiguration {
                 if (PatternMatcher.pathConflicts(varKey, patterns)) {
                     continue;
                 }
-                addBuildVariable(varKey, entry.getValue());
+                addEnvironmentProperty(varKey, entry.getValue());
             }
         }
 
-        private void addBuildVariable(String key, String value) {
+        public void addEnvironmentProperty(String key, String value) {
             setStringValue(ENVIRONMENT_PREFIX + key, value);
         }
     }
