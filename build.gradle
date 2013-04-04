@@ -52,7 +52,7 @@ artifactory {
     publish {
         defaults {
             publishConfigs('archives', 'published')
-            properties = ['build.status': "$it.project.status".toString()]
+            properties = ['build.status': "$it.project.status".toString(), 'bintray.repo': 'jfrog/jfrog-jars']
         }
     }
     resolve {
@@ -153,6 +153,11 @@ configure(baseProjects()) {
     }
     test.useTestNG()
 
+    artifactoryPublish {
+        properties {
+            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package':'build-info', 'bintray.version': version.toString()
+        }
+    }
 }
 
 // Create configurations for the extractor projects
@@ -222,6 +227,12 @@ configure(extractorProjects()) {
     configure(install.repositories.mavenInstaller) {
         pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 1, configurations.uberJar, "compile")
         pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
+    }
+
+    artifactoryPublish {
+        properties {
+            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+        }
     }
 }
 
