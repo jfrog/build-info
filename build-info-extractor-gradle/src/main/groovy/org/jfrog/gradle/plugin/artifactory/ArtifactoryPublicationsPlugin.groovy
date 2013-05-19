@@ -33,7 +33,7 @@ class ArtifactoryPublicationsPlugin extends ArtifactoryPluginBase {
 
     @Override
     protected BuildInfoBaseTask createArtifactoryPublishTask(Project project) {
-        def result = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoPublicationsTask.class)
+        def result = project.getTasks().create(BUILD_INFO_TASK_NAME, BuildInfoPublicationsTask.class)
         result.setDescription('''Deploys artifacts + generated build-info metadata to Artifactory, using project publications.''')
         return result
     }

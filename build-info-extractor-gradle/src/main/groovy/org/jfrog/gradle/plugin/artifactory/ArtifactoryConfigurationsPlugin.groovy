@@ -41,7 +41,7 @@ class ArtifactoryConfigurationsPlugin extends ArtifactoryPluginBase {
 
     @Override
     protected BuildInfoBaseTask createArtifactoryPublishTask(Project project) {
-        def result = project.getTasks().add(BUILD_INFO_TASK_NAME, BuildInfoConfigurationsTask.class)
+        def result = project.getTasks().create(BUILD_INFO_TASK_NAME, BuildInfoConfigurationsTask.class)
         result.setDescription('''Deploys artifacts + generated build-info metadata to Artifactory, using project configurations.''')
         return result
     }
