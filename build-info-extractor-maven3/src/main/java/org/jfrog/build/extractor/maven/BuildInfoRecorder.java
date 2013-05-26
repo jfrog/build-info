@@ -440,11 +440,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (!isPomProject(moduleArtifact)) {
                 for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
                     if (metadata instanceof ProjectArtifactMetadata) {
-                        Model model = project.getModel();
-                        File pomFile = null;
-                        if (model != null) {
-                            pomFile = model.getPomFile();
-                        }
+                        File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
                         artifactBuilder.type("pom");
                         String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
                         artifactBuilder.name(pomFileName);
@@ -455,6 +451,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                                     artifactId, artifactVersion,
                                     artifactClassifier, "pom");
                         }
+                        break;
                     }
                 }
             }
