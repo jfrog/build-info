@@ -105,8 +105,8 @@ class ExtractorMojo extends ExtractorMojoProperties
     @Requires({ project })
     private void updateConfiguration ()
     {
-        buildInfoBuildTimestamp         = System.currentTimeMillis().toString()
-        buildInfoBuildStarted           = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( new Date( buildInfoBuildTimestamp as long )) // 2013-06-23T10\:37\:01.658+0200
+        buildInfoBuildTimestamp         = session.startTime.time.toString()
+        buildInfoBuildStarted           = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
         artifactoryDeployBuildTimestamp = buildInfoBuildTimestamp
         buildInfoBuildName              = buildInfoBuildName         ?: project.artifactId
         artifactoryDeployBuildName      = artifactoryDeployBuildName ?: buildInfoBuildName
