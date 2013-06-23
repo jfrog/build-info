@@ -21,5 +21,6 @@ include 'build-info-vcs'
 include 'build-info-extractor-gradle'
 include 'build-info-extractor-ivy'
 include 'build-info-extractor-maven3'
+include 'build-info-extractor-maven3-plugin'
 
 rootProject.name = 'build-info'
