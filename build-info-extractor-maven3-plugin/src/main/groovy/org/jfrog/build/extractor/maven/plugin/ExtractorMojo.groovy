@@ -77,11 +77,16 @@ class ExtractorMojo extends ExtractorMojoProperties
     boolean pomPropertiesPriority = false
 
 
-    @Requires({ session })
+    @SuppressWarnings([ 'GroovyAccessibility' ])
+    @Requires({ descriptorReader && repoSystem && session })
     @Override
     void execute () throws MojoExecutionException , MojoFailureException
     {
-        if ( session.request.executionListener instanceof BuildInfoRecorder ) { return }
+        boolean invokedAlready = (( descriptorReader.artifactResolver instanceof RepositoryResolver ) ||
+                                  ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
+                                  ( session.request.executionListener instanceof BuildInfoRecorder  ))
+
+        if ( invokedAlready ) { return }
 
         skipDefaultDeploy()
         updateConfiguration()
