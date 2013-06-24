@@ -1,22 +1,14 @@
 package org.jfrog.build.extractor.maven;
 
+import static org.jfrog.build.api.BuildInfoFields.*;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.Maven;
 import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Governance;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
@@ -31,7 +23,6 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.jfrog.build.api.BuildInfoFields.*;
 
 /**
  * @author Noam Y. Tenne
@@ -177,11 +168,15 @@ public class BuildInfoModelPropertyResolver {
 
     private String getMavenVersion() {
         Properties mavenVersionProperties = new Properties();
-        InputStream inputStream = BuildInfoRecorder.class.getClassLoader()
-                .getResourceAsStream("org/apache/maven/messages/build.properties");
+        InputStream inputStream = BuildInfoRecorder.class.getClassLoader().
+                                  getResourceAsStream( "org/apache/maven/messages/build.properties" );
         if (inputStream == null) {
-            throw new RuntimeException("Could not extract Maven version: unable to find the resource " +
-                    "'org/apache/maven/messages/build.properties'");
+            inputStream = Maven.class.getClassLoader().
+                          getResourceAsStream( "META-INF/maven/org.apache.maven/maven-core/pom.properties" );
+        }
+        if (inputStream == null) {
+            throw new RuntimeException("Could not extract Maven version: unable to find resources " +
+                                       "'org/apache/maven/messages/build.properties' or 'META-INF/maven/org.apache.maven/maven-core/pom.properties'");
         }
         try {
             mavenVersionProperties.load(inputStream);
