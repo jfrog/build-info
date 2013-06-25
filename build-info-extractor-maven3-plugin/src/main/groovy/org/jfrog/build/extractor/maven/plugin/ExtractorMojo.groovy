@@ -157,7 +157,7 @@ class ExtractorMojo extends ExtractorMojoProperties
     private Properties mergePropertiesWithFields ( Properties systemProperties, Properties pomProperties )
     {
         final  mergedProperties = ( Properties ) ( pomPropertiesPriority ? systemProperties + pomProperties : pomProperties + systemProperties )
-        final  propertyFields   = this.class.superclass.declaredFields.findAll{ it.getAnnotation( Property )}
+        final  propertyFields   = this.class.superclass.declaredFields.findAll{ ( it.name != 'deployProperties' ) && it.getAnnotation( Property ) }
         assert propertyFields
 
         for ( field in propertyFields )
@@ -184,7 +184,26 @@ class ExtractorMojo extends ExtractorMojoProperties
             }
         }
 
+        if ( deployProperties )
+        {
+            addDeployProperties( mergedProperties, systemProperties )
+        }
+
         ( Properties ) mergedProperties.collectEntries { String key, String value -> [ key, updateValue( value ) ]}
+    }
+
+
+    @Requires({ ( properties != null ) && ( systemProperties != null ) && deployProperties })
+    private void addDeployProperties( Properties properties, Properties systemProperties )
+    {
+        final deployPropertiesBase = propertyName( 'deployProperties' )
+        readProperties( deployProperties ).each {
+            String key, String deployPropertyValue ->
+            final deployPropertyKey         = "$deployPropertiesBase.$key"
+            properties[ deployPropertyKey ] =  ( systemProperties[ deployPropertyKey ] && ( ! pomPropertiesPriority )) ?
+                systemProperties[ deployPropertyKey ] :
+                deployPropertyValue
+        }
     }
 
 
@@ -195,9 +214,8 @@ class ExtractorMojo extends ExtractorMojoProperties
     @Requires({ ( properties != null ) && descriptorReader.artifactResolver && repoSystem.artifactResolver })
     private void overrideResolutionRepository ( Properties properties )
     {
-        final fieldPropertyValue    = { String fieldName -> properties[ this.class.superclass.getDeclaredField( fieldName ).getAnnotation( Property ).name() ]}
-        final String artifactoryUrl = fieldPropertyValue( 'artifactoryPublishContextUrl' )
-        final String resolutionRepo = fieldPropertyValue( 'artifactoryResolutionRepoKey' )
+        final String artifactoryUrl = properties[ propertyName( 'artifactoryPublishContextUrl' ) ]
+        final String resolutionRepo = properties[ propertyName( 'artifactoryResolutionRepoKey' ) ]
 
         if ( artifactoryUrl && resolutionRepo )
         {

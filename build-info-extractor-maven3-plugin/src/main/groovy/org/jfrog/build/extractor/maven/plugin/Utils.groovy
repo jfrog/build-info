@@ -41,4 +41,14 @@ final class Utils
         }
     }
 
+
+    /**
+     * Retrieves mojo field's property name reading its {@link Property} annotation.
+     */
+    @Requires({ fieldName })
+    @Ensures ({ result })
+    static String propertyName ( String fieldName )
+    {
+        ExtractorMojoProperties.getDeclaredField( fieldName ).getAnnotation( Property ).name()
+    }
 }
