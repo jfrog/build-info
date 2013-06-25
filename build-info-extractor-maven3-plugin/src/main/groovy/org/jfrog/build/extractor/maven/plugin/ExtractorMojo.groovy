@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.maven.plugin
 
 import static org.jfrog.build.extractor.maven.plugin.Utils.*
-import java.text.SimpleDateFormat
 import org.apache.maven.AbstractMavenLifecycleParticipant
 import org.apache.maven.execution.ExecutionEvent
 import org.apache.maven.execution.MavenSession
@@ -15,14 +14,13 @@ import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
-import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
-import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import org.sonatype.aether.RepositorySystem
 import org.sonatype.aether.impl.ArtifactDescriptorReader
 import org.sonatype.aether.impl.internal.DefaultRepositorySystem
+import java.text.SimpleDateFormat
 
 
 /**
@@ -76,6 +74,15 @@ class ExtractorMojo extends ExtractorMojoProperties
     @Parameter
     boolean pomPropertiesPriority = false
 
+    @Parameter
+    Config.Resolver resolver = new Config.Resolver()
+
+    @Parameter
+    Config.Publisher publisher = new Config.Publisher()
+
+    @Parameter
+    Config.BuildInfo buildInfo = new Config.BuildInfo()
+
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
     @Requires({ descriptorReader && repoSystem && session })
@@ -90,7 +97,7 @@ class ExtractorMojo extends ExtractorMojoProperties
 
         skipDefaultDeploy()
         updateConfiguration()
-        overrideResolutionRepository( mergeProperties())
+        overrideResolutionRepository( new PropertiesHelper( this ).mergeProperties())
         recordBuildInfo()
     }
 
@@ -117,94 +124,6 @@ class ExtractorMojo extends ExtractorMojoProperties
         artifactoryDeployBuildName      = artifactoryDeployBuildName ?: buildInfoBuildName
     }
 
-
-    /**
-     * Merges *.properties files with <configuration> values and writes a new *.properties file to be picked up later
-     * by the original Maven listener.
-     */
-    @Ensures ({ result })
-    private Properties mergeProperties ()
-    {
-        final systemProperty     = System.getProperty( BuildInfoConfigProperties.PROP_PROPS_FILE )
-        final systemProperties   = readProperties( systemProperty ? new File( systemProperty ) : '' )
-
-        Properties pomProperties = readProperties( this.propertiesFile )
-        pomProperties           += readProperties( this.properties )
-
-        final propertiesFile     = writeProperties ? new File( project.basedir, 'buildInfo.properties' ) :
-                                                     File.createTempFile( 'buildInfo', '.properties' )
-
-        buildInfoConfigPropertiesFile = propertiesFile.canonicalPath
-        final  mergedProperties       = mergePropertiesWithFields( systemProperties, pomProperties )
-        assert mergedProperties
-
-        assert propertiesFile.parentFile.with { File f -> f.directory || f.mkdirs() }
-        propertiesFile.withWriter { Writer w -> mergedProperties.store( w, 'Build Info Properties' )}
-        if ( ! writeProperties ){ propertiesFile.deleteOnExit() }
-
-        log.info( "Merged properties file:$propertiesFile.canonicalPath created" )
-        System.setProperty( BuildInfoConfigProperties.PROP_PROPS_FILE, propertiesFile.canonicalPath )
-
-        mergedProperties
-    }
-
-
-    /**
-     * Merges system-provided properties with POM properties and class fields.
-     */
-    @Requires({ ( systemProperties != null ) && ( pomProperties != null ) })
-    @Ensures ({ result != null })
-    private Properties mergePropertiesWithFields ( Properties systemProperties, Properties pomProperties )
-    {
-        final  mergedProperties = ( Properties ) ( pomPropertiesPriority ? systemProperties + pomProperties : pomProperties + systemProperties )
-        final  propertyFields   = this.class.superclass.declaredFields.findAll{ ( it.name != 'deployProperties' ) && it.getAnnotation( Property ) }
-        assert propertyFields
-
-        for ( field in propertyFields )
-        {
-            assert field.name && ( field.type == String )
-
-            final  property     = field.getAnnotation( Property )
-            final  propertyName = property.name()
-            assert propertyName
-
-            if (( ! systemProperties[ propertyName ] ) || pomPropertiesPriority )
-            {
-                final  propertyValue = this."${ field.name }" ?: mergedProperties[ propertyName ] ?: property.defaultValue()
-                assert ( propertyValue == null ) || ( propertyValue instanceof String )
-                if ( propertyValue )
-                {
-                    mergedProperties[ propertyName ] = propertyValue
-                }
-            }
-            else
-            {
-                assert systemProperties[ propertyName ] && ( ! pomPropertiesPriority ) &&
-                       ( systemProperties[ propertyName ] == mergedProperties[ propertyName ])
-            }
-        }
-
-        if ( deployProperties )
-        {
-            addDeployProperties( mergedProperties, systemProperties )
-        }
-
-        ( Properties ) mergedProperties.collectEntries { String key, String value -> [ key, updateValue( value ) ]}
-    }
-
-
-    @Requires({ ( properties != null ) && ( systemProperties != null ) && deployProperties })
-    private void addDeployProperties( Properties properties, Properties systemProperties )
-    {
-        final deployPropertiesBase = propertyName( 'deployProperties' )
-        readProperties( deployProperties ).each {
-            String key, String deployPropertyValue ->
-            final deployPropertyKey         = "$deployPropertiesBase.$key"
-            properties[ deployPropertyKey ] =  ( systemProperties[ deployPropertyKey ] && ( ! pomPropertiesPriority )) ?
-                systemProperties[ deployPropertyKey ] :
-                deployPropertyValue
-        }
-    }
 
 
     /**
