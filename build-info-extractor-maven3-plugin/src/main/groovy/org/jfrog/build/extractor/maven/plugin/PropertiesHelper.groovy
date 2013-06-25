@@ -114,10 +114,13 @@ class PropertiesHelper
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
     @Requires({ ( properties != null ) && ( systemProperties != null ) &&
-                ( resolver.delegate && publisher.delegate && buildInfo.delegate ) })
+                ( resolver.delegate && publisher.delegate && buildInfo.delegate && this.licenses.delegate && issues.delegate && blackDuck.delegate ) })
     private void addHandlersProperties ( Properties properties, Properties systemProperties )
     {
-        assert ( resolver.delegate.props.is( publisher.delegate.props )) && ( publisher.delegate.props.is( buildInfo.delegate.props ))
+        [ resolver.delegate, publisher.delegate, buildInfo.delegate, this.licenses.delegate, issues.delegate, blackDuck.delegate ].each {
+            assert it.props.is( resolver.delegate.props )
+        }
+
         resolver.delegate.props.each { String key, String value -> addProperty( key, value, properties, systemProperties )}
     }
 

@@ -25,4 +25,22 @@ class Config
         @Delegate
         ArtifactoryClientConfiguration.BuildInfoHandler delegate = CLIENT_CONFIGURATION.info
     }
+
+    static class LicenseControl
+    {
+        @Delegate
+        ArtifactoryClientConfiguration.LicenseControlHandler delegate = CLIENT_CONFIGURATION.info.licenseControl
+    }
+
+    static class IssuesTracker
+    {
+        @Delegate
+        ArtifactoryClientConfiguration.IssuesTrackerHandler delegate = CLIENT_CONFIGURATION.info.issues
+    }
+
+    static class BlackDuck
+    {
+        @Delegate
+        ArtifactoryClientConfiguration.BlackDuckPropertiesHandler delegate = CLIENT_CONFIGURATION.info.blackDuckProperties
+    }
 }

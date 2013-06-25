@@ -74,6 +74,12 @@ class ExtractorMojo extends ExtractorMojoProperties
     @Parameter
     boolean pomPropertiesPriority = false
 
+    /**
+     * ----------------
+     * Mojo parameters - property handlers
+     * ----------------
+     */
+
     @Parameter
     Config.Resolver resolver = new Config.Resolver()
 
@@ -82,6 +88,15 @@ class ExtractorMojo extends ExtractorMojoProperties
 
     @Parameter
     Config.BuildInfo buildInfo = new Config.BuildInfo()
+
+    @Parameter
+    Config.LicenseControl licenses = new Config.LicenseControl()
+
+    @Parameter
+    Config.IssuesTracker issues = new Config.IssuesTracker()
+
+    @Parameter
+    Config.BlackDuck blackDuck = new Config.BlackDuck()
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
