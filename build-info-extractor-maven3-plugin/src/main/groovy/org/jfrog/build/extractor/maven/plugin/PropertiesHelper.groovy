@@ -113,15 +113,13 @@ class PropertiesHelper
      * Adds handler properties to properties merged.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ ( properties != null ) && ( systemProperties != null ) &&
-                ( resolver.delegate && publisher.delegate && buildInfo.delegate && this.licenses.delegate && issues.delegate && blackDuck.delegate ) })
+    @Requires({ ( properties != null ) && ( systemProperties != null ) && prefixPropertyHandlers.values() })
     private void addHandlersProperties ( Properties properties, Properties systemProperties )
     {
-        [ resolver.delegate, publisher.delegate, buildInfo.delegate, this.licenses.delegate, issues.delegate, blackDuck.delegate ].each {
-            assert it.props.is( resolver.delegate.props )
+        prefixPropertyHandlers.values().each { assert it.delegate.props.is( artifactory.delegate.root.props ) }
+        artifactory.delegate.root.props.each {
+            String key, String value -> addProperty( key, value, properties, systemProperties )
         }
-
-        resolver.delegate.props.each { String key, String value -> addProperty( key, value, properties, systemProperties )}
     }
 
 
