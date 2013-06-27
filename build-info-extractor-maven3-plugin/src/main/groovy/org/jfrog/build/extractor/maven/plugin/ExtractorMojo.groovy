@@ -14,12 +14,15 @@ import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
+import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import org.sonatype.aether.RepositorySystem
 import org.sonatype.aether.impl.ArtifactDescriptorReader
 import org.sonatype.aether.impl.internal.DefaultRepositorySystem
+import java.lang.reflect.Field
+import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 
 
@@ -81,7 +84,10 @@ class ExtractorMojo extends ExtractorMojoProperties
      */
 
     @Parameter
-    Config.Resolver resolver = new Config.Resolver()
+    Config.Artifactory artifactory = new Config.Artifactory()
+
+    @Parameter
+    Config.Resolver resolver  = new Config.Resolver()
 
     @Parameter
     Config.Publisher publisher = new Config.Publisher()
@@ -90,13 +96,24 @@ class ExtractorMojo extends ExtractorMojoProperties
     Config.BuildInfo buildInfo = new Config.BuildInfo()
 
     @Parameter
-    Config.LicenseControl licenses = new Config.LicenseControl()
+    Config.LicenseControl licenses  = new Config.LicenseControl()
 
     @Parameter
     Config.IssuesTracker issues = new Config.IssuesTracker()
 
     @Parameter
     Config.BlackDuck blackDuck = new Config.BlackDuck()
+
+
+    /**
+     * Mapping of mojo parameters of type {@link Config.DelegatesToPrefixPropertyHandler}:
+     * Key   - parameter (field) name
+     * Value - parameter (field) value
+     */
+    final Map<String, Config.DelegatesToPrefixPropertyHandler> prefixPropertyHandlers =
+        this.class.declaredFields.
+        findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
+        inject( [:] ) { Map m, Field f -> m[ f.name ] = this."${ f.name }"; m }
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
@@ -108,12 +125,50 @@ class ExtractorMojo extends ExtractorMojoProperties
                                   ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
                                   ( session.request.executionListener instanceof BuildInfoRecorder  ))
 
-        if ( invokedAlready ) { return }
+        if ( invokedAlready   ){ return }
+        if ( log.debugEnabled ){ printHandlerSettings() }
 
         skipDefaultDeploy()
         updateConfiguration()
         overrideResolutionRepository( new PropertiesHelper( this ).mergeProperties())
         recordBuildInfo()
+    }
+
+
+    /**
+     * Prints out all possible settings for each handler container.
+     */
+    @Requires({ log.debugEnabled && prefixPropertyHandlers.values() })
+    private void printHandlerSettings ()
+    {
+        log.debug( "<configuration> handlers:\n" + ( [ artifactory : artifactory ] + prefixPropertyHandlers ).collect {
+            String handlerName, Object handler ->
+            """
+            |<$handlerName>
+            |  ${ handlerSettings( handler ).join( '\n  ' )}
+            |</$handlerName>""".stripMargin().trim()
+        }.join( '\n' ))
+    }
+
+
+    /**
+     * Retrieves a list of all handler's settings.
+     */
+    @Requires({ handler })
+    @Ensures ({ result })
+    private List<String> handlerSettings ( Object handler )
+    {
+        handler.class.methods.findAll { Method m -> ( m.parameterTypes.length == 1 ) &&
+                                                    [ String, Boolean, boolean, Number ].any { it.isAssignableFrom( m.parameterTypes.first()) }}.
+                              findAll { Method m -> m.name.startsWith( 'set' ) && ( m.name.length() > 3 ) }.
+                              collect { Method m ->
+                                  final tagName    = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
+                                  final tagContent = [ Boolean, boolean ].any{ it.isAssignableFrom( m.parameterTypes.first()) } ? 'true/false' :
+                                                     Number.isAssignableFrom ( m.parameterTypes.first()) ? 'N' :
+                                                                                                           ' .. '
+                                  "<$tagName>${ tagContent }</$tagName>"
+                              }.
+                              sort()
     }
 
 
