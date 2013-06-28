@@ -106,9 +106,16 @@ class ExtractorMojo extends ExtractorMojoProperties
 
 
     /**
-     * Mapping of mojo parameters of type {@link Config.DelegatesToPrefixPropertyHandler}:
-     * Key   - parameter (field) name
-     * Value - parameter (field) value
+     * Mapping of types printed by {@link #printConfigurations()}: class => description.
+     */
+    private final static Map<Class<?>, String> TYPES_DESCRIPTION = [ ( Boolean ) : 'true/false',
+                                                                     ( boolean ) : 'true/false',
+                                                                     ( Number  ) : 'N',
+                                                                     ( File    ) : 'path/to/file',
+                                                                     ( String  ) : ' .. ' ].asImmutable()
+
+    /**
+     * Mapping of mojo parameters of type {@link Config.DelegatesToPrefixPropertyHandler}: name => value.
      */
     final Map<String, Config.DelegatesToPrefixPropertyHandler> prefixPropertyHandlers =
         this.class.declaredFields.
@@ -117,7 +124,7 @@ class ExtractorMojo extends ExtractorMojoProperties
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ descriptorReader && repoSystem && session })
+    @Requires({ descriptorReader && repoSystem && session && prefixPropertyHandlers })
     @Override
     void execute () throws MojoExecutionException , MojoFailureException
     {
@@ -126,7 +133,7 @@ class ExtractorMojo extends ExtractorMojoProperties
                                   ( session.request.executionListener instanceof BuildInfoRecorder  ))
 
         if ( invokedAlready   ){ return }
-        if ( log.debugEnabled ){ printHandlerSettings() }
+        if ( log.debugEnabled ){ printConfigurations() }
 
         skipDefaultDeploy()
         updateConfiguration()
@@ -138,35 +145,34 @@ class ExtractorMojo extends ExtractorMojoProperties
     /**
      * Prints out all possible settings for each handler container.
      */
-    @Requires({ log.debugEnabled && prefixPropertyHandlers.values() })
-    private void printHandlerSettings ()
+    @Requires({ log.debugEnabled && artifactory && prefixPropertyHandlers })
+    private void printConfigurations ()
     {
-        log.debug( "<configuration> handlers:\n" + ( [ artifactory : artifactory ] + prefixPropertyHandlers ).collect {
-            String handlerName, Object handler ->
-            """
-            |<$handlerName>
-            |  ${ handlerSettings( handler ).join( '\n  ' )}
-            |</$handlerName>""".stripMargin().trim()
-        }.join( '\n' ))
+        final Map<String, Object> objectsMap = [ '' : this, artifactory : artifactory ] + prefixPropertyHandlers
+        final List<String>        lines      = [ 'Possible <configuration> values:' ]   + objectsMap.collect {
+            String objectName, Object object ->
+            objectName ? [ "<$objectName>", objectConfigurations( object ).collect { "  $it" }, "</$objectName>" ] :
+                          objectConfigurations( object )
+        }.flatten()
+
+        log.debug( lines.join( '\n' ))
     }
 
 
     /**
      * Retrieves a list of all handler's settings.
      */
-    @Requires({ handler })
+    @Requires({ handler != null })
     @Ensures ({ result })
-    private List<String> handlerSettings ( Object handler )
+    private List<String> objectConfigurations ( Object handler )
     {
-        handler.class.methods.findAll { Method m -> ( m.parameterTypes.length == 1 ) &&
-                                                    [ String, Boolean, boolean, Number ].any { it.isAssignableFrom( m.parameterTypes.first()) }}.
-                              findAll { Method m -> m.name.startsWith( 'set' ) && ( m.name.length() > 3 ) }.
+        handler.class.methods.findAll { Method m -> ( m.name.length() > 3 )          &&
+                                                    ( m.name.startsWith( 'set' ))    &&
+                                                    ( m.parameterTypes.length == 1 ) &&
+                                                    TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
                               collect { Method m ->
-                                  final tagName    = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
-                                  final tagContent = [ Boolean, boolean ].any{ it.isAssignableFrom( m.parameterTypes.first()) } ? 'true/false' :
-                                                     Number.isAssignableFrom ( m.parameterTypes.first()) ? 'N' :
-                                                                                                           ' .. '
-                                  "<$tagName>${ tagContent }</$tagName>"
+                                  final tag = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
+                                  "<$tag>${ TYPES_DESCRIPTION[ m.parameterTypes.first()] }</$tag>"
                               }.
                               sort()
     }
