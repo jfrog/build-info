@@ -27,11 +27,11 @@ class ExtractorMojoHelper
     /**
      * Mapping of types printed by {@link #printConfigurations()}: class => description.
      */
-    private final static Map<Class<?>, String> TYPES_DESCRIPTION = [ ( Boolean ) : 'true/false',
-                                                                     ( boolean ) : 'true/false',
-                                                                     ( Number  ) : 'N',
-                                                                     ( File    ) : 'path/to/file',
-                                                                     ( String  ) : ' .. ' ].asImmutable()
+    private final static Map<Class<?>, String> TYPE_DESCRIPTORS = [ ( Boolean ) : 'true/false',
+                                                                    ( boolean ) : 'true/false',
+                                                                    ( Number  ) : 'N',
+                                                                    ( File    ) : 'path/to/file',
+                                                                    ( String  ) : ' .. ' ].asImmutable()
 
 
     @SuppressWarnings([ 'GrFinalVariableAccess' ])
@@ -76,10 +76,10 @@ class ExtractorMojoHelper
         object.class.methods.findAll { Method m -> ( m.name.length() > 3 )          &&
                                                    ( m.name.startsWith( 'set' ))    &&
                                                    ( m.parameterTypes.length == 1 ) &&
-                                                   TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
+                                                   TYPE_DESCRIPTORS.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
                               collect { Method m ->
                                   final tag = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
-                                  "<$tag>${ TYPES_DESCRIPTION[ m.parameterTypes.first()] }</$tag>"
+                                  "<$tag>${ TYPE_DESCRIPTORS[ m.parameterTypes.first()] }</$tag>"
                               }.
                               sort()
     }
