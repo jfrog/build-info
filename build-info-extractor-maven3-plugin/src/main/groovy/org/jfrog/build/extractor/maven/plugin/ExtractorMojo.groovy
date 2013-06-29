@@ -157,7 +157,7 @@ class ExtractorMojo extends GroovyMojo
     private void overrideResolutionRepository ()
     {
         final String artifactoryUrl = publisher.contextUrl
-        final String resolutionRepo = publisher.resolutionRepoKey
+        final String resolutionRepo = resolver.repoKey
 
         if ( artifactoryUrl && resolutionRepo )
         {

@@ -32,7 +32,6 @@ public interface ClientConfigurationFields {
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
     String URL = "url";
     String REPO_KEY = "repoKey";
-    String RESOLUTION_REPO_KEY = "resolution.repoKey";
     // Publish fields
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";

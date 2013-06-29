@@ -444,14 +444,6 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(REPO_KEY);
         }
 
-        public void setResolutionRepoKey(String repoKey) {
-            setStringValue(RESOLUTION_REPO_KEY, repoKey);
-        }
-
-        public String getResolutionRepoKey() {
-            return getStringValue(RESOLUTION_REPO_KEY);
-        }
-
         /**
          * In the context of a publisher it is used to publish a pom. In the context of a resolver it is used to add a
          * maven resolver (e.g. in Gradle).
