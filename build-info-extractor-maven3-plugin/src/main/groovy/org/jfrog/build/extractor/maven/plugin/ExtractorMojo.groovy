@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.plugin
 
-import static org.jfrog.build.extractor.maven.plugin.Utils.*
 import org.apache.maven.AbstractMavenLifecycleParticipant
 import org.apache.maven.execution.ExecutionEvent
 import org.apache.maven.execution.MavenSession
@@ -14,15 +13,13 @@ import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
-import org.gcontracts.annotations.Ensures
+import org.codehaus.gmaven.mojo.GroovyMojo
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import org.sonatype.aether.RepositorySystem
 import org.sonatype.aether.impl.ArtifactDescriptorReader
 import org.sonatype.aether.impl.internal.DefaultRepositorySystem
-import java.lang.reflect.Field
-import java.lang.reflect.Method
 import java.text.SimpleDateFormat
 
 
@@ -30,7 +27,7 @@ import java.text.SimpleDateFormat
  * Artifactory plugin creating and deploying JSON build data together with build artifacts.
  */
 @Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
-class ExtractorMojo extends ExtractorMojoProperties
+class ExtractorMojo extends GroovyMojo
 {
     /**
      * ---------------------------
@@ -77,6 +74,9 @@ class ExtractorMojo extends ExtractorMojoProperties
     @Parameter
     boolean pomPropertiesPriority = false
 
+    @Parameter
+    String deployProperties
+
     /**
      * ----------------
      * Mojo parameters - property handlers
@@ -105,76 +105,26 @@ class ExtractorMojo extends ExtractorMojoProperties
     Config.BlackDuck blackDuck = new Config.BlackDuck()
 
 
-    /**
-     * Mapping of types printed by {@link #printConfigurations()}: class => description.
-     */
-    private final static Map<Class<?>, String> TYPES_DESCRIPTION = [ ( Boolean ) : 'true/false',
-                                                                     ( boolean ) : 'true/false',
-                                                                     ( Number  ) : 'N',
-                                                                     ( File    ) : 'path/to/file',
-                                                                     ( String  ) : ' .. ' ].asImmutable()
-
-    /**
-     * Mapping of mojo parameters of type {@link Config.DelegatesToPrefixPropertyHandler}: name => value.
-     */
-    final Map<String, Config.DelegatesToPrefixPropertyHandler> prefixPropertyHandlers =
-        this.class.declaredFields.
-        findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
-        inject( [:] ) { Map m, Field f -> m[ f.name ] = this."${ f.name }"; m }
-
-
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ descriptorReader && repoSystem && session && prefixPropertyHandlers })
+    @Requires({ descriptorReader && repoSystem && session && log })
     @Override
-    void execute () throws MojoExecutionException , MojoFailureException
+    void execute ()
+         throws MojoExecutionException , MojoFailureException
     {
         boolean invokedAlready = (( descriptorReader.artifactResolver instanceof RepositoryResolver ) ||
                                   ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
                                   ( session.request.executionListener instanceof BuildInfoRecorder  ))
 
+        final helper = new ExtractorMojoHelper( this )
+
         if ( invokedAlready   ){ return }
-        if ( log.debugEnabled ){ printConfigurations() }
+        if ( log.debugEnabled ){ helper.printConfigurations() }
 
         skipDefaultDeploy()
-        updateConfiguration()
-        overrideResolutionRepository( new PropertiesHelper( this ).mergeProperties())
+        updateBuildInfo()
+        helper.createPropertiesFile()
+        overrideResolutionRepository()
         recordBuildInfo()
-    }
-
-
-    /**
-     * Prints out all possible settings for each handler container.
-     */
-    @Requires({ log.debugEnabled && artifactory && prefixPropertyHandlers })
-    private void printConfigurations ()
-    {
-        final Map<String, Object> objectsMap = [ '' : this, artifactory : artifactory ] + prefixPropertyHandlers
-        final List<String>        lines      = [ 'Possible <configuration> values:' ]   + objectsMap.collect {
-            String objectName, Object object ->
-            objectName ? [ "<$objectName>", objectConfigurations( object ).collect { "  $it" }, "</$objectName>" ] :
-                          objectConfigurations( object )
-        }.flatten()
-
-        log.debug( lines.join( '\n' ))
-    }
-
-
-    /**
-     * Retrieves a list of all handler's settings.
-     */
-    @Requires({ handler != null })
-    @Ensures ({ result })
-    private List<String> objectConfigurations ( Object handler )
-    {
-        handler.class.methods.findAll { Method m -> ( m.name.length() > 3 )          &&
-                                                    ( m.name.startsWith( 'set' ))    &&
-                                                    ( m.parameterTypes.length == 1 ) &&
-                                                    TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
-                              collect { Method m ->
-                                  final tag = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
-                                  "<$tag>${ TYPES_DESCRIPTION[ m.parameterTypes.first()] }</$tag>"
-                              }.
-                              sort()
     }
 
 
@@ -188,29 +138,26 @@ class ExtractorMojo extends ExtractorMojoProperties
 
 
     /**
-     * Updates various <configuration> values.
+     * Updates {@link #buildInfo} fields.
      */
-    @Requires({ project })
-    private void updateConfiguration ()
+    @Requires({ buildInfo && session && project })
+    private void updateBuildInfo ()
     {
-        buildInfoBuildTimestamp         = session.startTime.time.toString()
-        buildInfoBuildStarted           = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        artifactoryDeployBuildTimestamp = buildInfoBuildTimestamp
-        buildInfoBuildName              = buildInfoBuildName         ?: project.artifactId
-        artifactoryDeployBuildName      = artifactoryDeployBuildName ?: buildInfoBuildName
+        buildInfo.buildTimestamp = session.startTime.time.toString()
+        buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
+        buildInfo.buildName      = buildInfo.buildName ?: project.artifactId
     }
-
 
 
     /**
      * Overrides resolution repository if a corresponding property is set.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ ( properties != null ) && descriptorReader.artifactResolver && repoSystem.artifactResolver })
-    private void overrideResolutionRepository ( Properties properties )
+    @Requires({ publisher && descriptorReader.artifactResolver && repoSystem.artifactResolver })
+    private void overrideResolutionRepository ()
     {
-        final String artifactoryUrl = properties[ propertyName( 'artifactoryPublishContextUrl' ) ]
-        final String resolutionRepo = properties[ propertyName( 'artifactoryResolutionRepoKey' ) ]
+        final String artifactoryUrl = publisher.contextUrl
+        final String resolutionRepo = publisher.resolutionRepoKey
 
         if ( artifactoryUrl && resolutionRepo )
         {

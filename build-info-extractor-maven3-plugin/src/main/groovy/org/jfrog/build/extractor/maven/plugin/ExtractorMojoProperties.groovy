@@ -194,10 +194,4 @@ abstract class ExtractorMojoProperties extends GroovyMojo
     @Property( name = 'artifactory.deploy.vcs.revision' )
     String artifactoryDeployVcsRevision
 
-    /**
-     * Inline properties to attach to all published artifacts
-     */
-    @Parameter
-    @Property( name = 'artifactory.deploy' )
-    String deployProperties
 }
