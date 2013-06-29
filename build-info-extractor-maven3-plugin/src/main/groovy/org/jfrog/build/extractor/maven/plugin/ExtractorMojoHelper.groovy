@@ -186,9 +186,9 @@ class ExtractorMojoHelper
     @Ensures ({ result })
     private String updateValue( String value )
     {
-        value?.replaceAll( /\$\{([^}]+)\}/ ){
-            final String var = it[ 1 ]
-            System.getenv( var ) ?: System.getProperty( var ) ?: '${' + var + '}'
+        value?.replaceAll( /(\$?\{)([^}]+)(\})/ ){
+            final expressionValue = (( String ) it[ 2 ] ).tokenize( '|' ).collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ]
+            expressionValue ?: "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
         }
     }
 }
