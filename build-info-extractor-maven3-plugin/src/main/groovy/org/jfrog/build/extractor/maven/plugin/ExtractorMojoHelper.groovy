@@ -73,10 +73,10 @@ class ExtractorMojoHelper
     @Ensures ({ result })
     private List<String> objectConfigurations ( Object object )
     {
-        object.class.methods.findAll { Method m -> ( m.name.length() > 3 )           &&
-                                                    ( m.name.startsWith( 'set' ))    &&
-                                                    ( m.parameterTypes.length == 1 ) &&
-                                                    TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
+        object.class.methods.findAll { Method m -> ( m.name.length() > 3 )          &&
+                                                   ( m.name.startsWith( 'set' ))    &&
+                                                   ( m.parameterTypes.length == 1 ) &&
+                                                   TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
                               collect { Method m ->
                                   final tag = "${ m.name.charAt( 3 ).toLowerCase()}${ m.name.substring( 4 )}"
                                   "<$tag>${ TYPES_DESCRIPTION[ m.parameterTypes.first()] }</$tag>"
