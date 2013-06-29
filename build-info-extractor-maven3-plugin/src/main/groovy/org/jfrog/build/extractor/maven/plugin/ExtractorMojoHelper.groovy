@@ -73,7 +73,7 @@ class ExtractorMojoHelper
     @Ensures ({ result })
     private List<String> objectConfigurations ( Object object )
     {
-        object.class.methods.findAll { Method m -> ( m.name.length() > 3 )          &&
+        object.class.methods.findAll { Method m -> ( m.name.length() > 3 )           &&
                                                     ( m.name.startsWith( 'set' ))    &&
                                                     ( m.parameterTypes.length == 1 ) &&
                                                     TYPES_DESCRIPTION.keySet().any { it.isAssignableFrom( m.parameterTypes.first()) }}.
