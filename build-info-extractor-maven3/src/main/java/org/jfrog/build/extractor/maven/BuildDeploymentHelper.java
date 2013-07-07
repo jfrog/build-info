@@ -27,11 +27,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
@@ -105,7 +101,13 @@ public class BuildDeploymentHelper {
 
     private void accumulateArtifacts (File basedir, File accumulateDirectory, File buildInfoFile, Iterable<DeployDetails> deployableArtifacts){
         try {
-            FileUtils.copyFile(buildInfoFile, new File( accumulateDirectory, buildInfoFile.getName()));
+            File buildInfoTarget = new File( accumulateDirectory, "build-info.json" );
+            if ( buildInfoTarget.isFile()) {
+                new BuildInfoMergeHelper().mergeBuildInfoFiles( buildInfoFile, buildInfoTarget );
+            }
+            else {
+                FileUtils.copyFile( buildInfoFile, buildInfoTarget );
+            }
 
             String basedirPath = basedir.getCanonicalPath();
             for (DeployDetails details : deployableArtifacts) {
@@ -122,6 +124,7 @@ public class BuildDeploymentHelper {
                                         e );
         }
     }
+
 
     private Set<DeployDetails> prepareDeployableArtifacts(Build build,
             Map<String, DeployDetails> deployableArtifactBuilders) {
