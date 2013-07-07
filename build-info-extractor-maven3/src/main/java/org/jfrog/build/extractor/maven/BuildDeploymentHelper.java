@@ -17,6 +17,7 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
@@ -111,12 +112,17 @@ public class BuildDeploymentHelper {
 
             String basedirPath = basedir.getCanonicalPath();
             for (DeployDetails details : deployableArtifacts) {
-                String artifactPath         = details.getFile().getCanonicalPath();
+                File  sourceFile            = details.getFile();
+                String artifactPath         = sourceFile.getCanonicalPath();
                 String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
                                               artifactPath.substring( basedirPath.length() + 1 ) :
                                               artifactPath;
+                File destinationFile        = new File( accumulateDirectory, artifactRelativePath );
+                boolean checksumMatch       = destinationFile.isFile() &&
+                                              DigestUtils.md5Hex( FileUtils.readFileToByteArray( sourceFile )).equals(
+                                              DigestUtils.md5Hex( FileUtils.readFileToByteArray( destinationFile )));
 
-                FileUtils.copyFile( details.getFile(), new File( accumulateDirectory, artifactRelativePath ));
+                if ( ! checksumMatch ) { FileUtils.copyFile( sourceFile, destinationFile ); }
             }
         }
         catch ( IOException e ){
