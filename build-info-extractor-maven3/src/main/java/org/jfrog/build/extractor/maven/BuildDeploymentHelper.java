@@ -17,6 +17,7 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
@@ -54,23 +55,31 @@ public class BuildDeploymentHelper {
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
             Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
-        String outputFile = clientConf.getExportFile();
+        String             outputFile          = clientConf.getExportFile();
+        File               buildInfoFile       = StringUtils.isBlank( outputFile ) ?
+                                                    new File( basedir, "target/build-info.json" ) :
+                                                    new File( outputFile );
+
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
+        logger.info( "Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
+
         try {
-            if (StringUtils.isNotBlank(outputFile)) {
-                logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile));
-            } else {
-                File buildInfo = new File(basedir, "target/build-info.json");
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfo);
-            }
+            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile);
         } catch (IOException e) {
-            throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
+            throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
         }
-        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " +
-                clientConf.publisher.isPublishBuildInfo());
+
+        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " + clientConf.publisher.isPublishBuildInfo());
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
-        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
+
+        if ( clientConf.publisher.getAccumulateArtifacts() != null ){
+            // Artifacts and build info should be accumulated, but not deployed
+            accumulateArtifacts( basedir,
+                                 new File( clientConf.publisher.getAccumulateArtifacts()),
+                                 buildInfoFile,
+                                 deployableArtifacts );
+        }
+        else if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
             ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
             try {
                 if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
@@ -90,6 +99,27 @@ public class BuildDeploymentHelper {
             } finally {
                 client.shutdown();
             }
+        }
+    }
+
+
+    private void accumulateArtifacts (File basedir, File accumulateDirectory, File buildInfoFile, Iterable<DeployDetails> deployableArtifacts){
+        try {
+            FileUtils.copyFile(buildInfoFile, new File( accumulateDirectory, buildInfoFile.getName()));
+
+            String basedirPath = basedir.getCanonicalPath();
+            for (DeployDetails details : deployableArtifacts) {
+                String artifactPath         = details.getFile().getCanonicalPath();
+                String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
+                                              artifactPath.substring( basedirPath.length() + 1 ) :
+                                              artifactPath;
+
+                FileUtils.copyFile( details.getFile(), new File( accumulateDirectory, artifactRelativePath ));
+            }
+        }
+        catch ( IOException e ){
+            throw new RuntimeException( "Failed to accumulate artifacts and Build Info in [" + accumulateDirectory + "]",
+                                        e );
         }
     }
 
