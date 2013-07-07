@@ -33,6 +33,7 @@ public interface ClientConfigurationFields {
     String URL = "url";
     String REPO_KEY = "repoKey";
     // Publish fields
+    String ACCUMULATE_ARTIFACTS = "accumulate";
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";

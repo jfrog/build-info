@@ -273,6 +273,14 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(SNAPSHOT_REPO_KEY);
         }
 
+        public void setAccumulateArtifacts(String path) {
+            setStringValue(ACCUMULATE_ARTIFACTS, path);
+        }
+
+        public String getAccumulateArtifacts() {
+            return getStringValue(ACCUMULATE_ARTIFACTS);
+        }
+
         public void setPublishArtifacts(Boolean enabled) {
             setBooleanValue(PUBLISH_ARTIFACTS, enabled);
         }
