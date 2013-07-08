@@ -4,7 +4,6 @@ import org.apache.commons.io.FileUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -13,21 +12,35 @@ import java.util.*;
  */
 class BuildInfoMergeHelper
 {
-    void mergeBuildInfoFiles ( File buildInfoFile, File buildInfoTarget )
-    {
-        try
-        {
-            Map<String,?> sourceMap      = ( Map<String,Object> ) new ObjectMapper().readValue( buildInfoFile,   Map.class );
-            Map<String,?> destinationMap = ( Map<String,Object> ) new ObjectMapper().readValue( buildInfoTarget, Map.class );
-            Map<String,?> mergedMap      = mergeBuildInfoMaps( sourceMap, destinationMap );
-            String        mergedJson     = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString( mergedMap );
 
-            FileUtils.write( buildInfoTarget, mergedJson );
+    Map<String,Object> fileToJsonMap ( File jsonFile ) {
+        try {
+            return ( Map<String,Object> ) new ObjectMapper().readValue( jsonFile, Map.class );
         }
-        catch ( IOException e )
-        {
-            throw new RuntimeException( String.format( "Failed to merge '%s' with '%s'", buildInfoFile, buildInfoTarget ),
-                                        e );
+        catch ( Exception e ) {
+            throw new RuntimeException( String.format( "Failed to read JSON file '%s'", jsonFile ), e );
+        }
+    }
+
+
+    String jsonMapToString ( Map<String, ?> jsonMap ) {
+        try {
+            return new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString( jsonMap );
+        }
+        catch ( Exception e ) {
+            throw new RuntimeException( String.format( "Failed to convert map %s to JSON", jsonMap ), e );
+        }
+    }
+
+
+    void mergeAndWriteBuildInfoMaps ( Map<String, ?> buildInfoSourceMap, Map<String, ?> buildInfoDestinationMap, File buildInfoDestination )
+    {
+        try {
+            Map<String,?> buildInfoMergedMap = mergeBuildInfoMaps( buildInfoSourceMap, buildInfoDestinationMap );
+            FileUtils.write( buildInfoDestination, jsonMapToString( buildInfoMergedMap ), "UTF-8" );
+        }
+        catch ( Exception e ) {
+            throw new RuntimeException( String.format( "Failed to write merged Build Info to '%s'", buildInfoDestination ), e );
         }
     }
 

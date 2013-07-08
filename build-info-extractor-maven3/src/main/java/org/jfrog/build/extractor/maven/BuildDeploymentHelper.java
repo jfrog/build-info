@@ -48,6 +48,10 @@ public class BuildDeploymentHelper {
     @Requirement
     private BuildInfoClientBuilder buildInfoClientBuilder;
 
+
+    private final BuildInfoMergeHelper mergeHelper = new BuildInfoMergeHelper();
+
+
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
             Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
@@ -99,18 +103,25 @@ public class BuildDeploymentHelper {
     }
 
 
-    private void accumulateArtifacts (File basedir, File accumulateDirectory, File buildInfoFile, Iterable<DeployDetails> deployableArtifacts){
+    private void accumulateArtifacts (File basedir, File accumulateDirectory, File buildInfoSource, Iterable<DeployDetails> artifacts){
         try {
-            File buildInfoTarget = new File( accumulateDirectory, "build-info.json" );
-            if ( buildInfoTarget.isFile()) {
-                new BuildInfoMergeHelper().mergeBuildInfoFiles( buildInfoFile, buildInfoTarget );
+
+            File               buildInfoDestination = new File( accumulateDirectory, "build-info.json" );
+            Map<String,Object> buildInfoSourceMap   = mergeHelper.fileToJsonMap( buildInfoSource );
+
+            if ( buildInfoDestination.isFile()) {
+                Map<String,Object> buildInfoDestinationMap = mergeHelper.fileToJsonMap( buildInfoDestination );
+                buildInfoSourceMap.put( "started",        buildInfoDestinationMap.get( "started" ));
+                buildInfoSourceMap.put( "durationMillis", ( Integer ) buildInfoDestinationMap.get( "durationMillis" ) +
+                                                          ( Integer ) buildInfoSourceMap.get( "durationMillis" ));
+                mergeHelper.mergeAndWriteBuildInfoMaps( buildInfoSourceMap, buildInfoDestinationMap, buildInfoDestination );
             }
             else {
-                FileUtils.copyFile( buildInfoFile, buildInfoTarget );
+                FileUtils.copyFile( buildInfoSource, buildInfoDestination );
             }
 
             String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
-            for ( DeployDetails details : deployableArtifacts ) {
+            for ( DeployDetails details : artifacts ) {
                 File   sourceFile           = details.getFile();
                 String artifactPath         = sourceFile.getCanonicalPath().replace( '\\', '/' );
                 String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
