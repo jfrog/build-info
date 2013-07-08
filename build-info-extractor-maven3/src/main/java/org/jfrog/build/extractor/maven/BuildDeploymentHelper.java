@@ -68,14 +68,14 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " + clientConf.publisher.isPublishBuildInfo());
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
 
-        if ( clientConf.publisher.getAccumulateArtifacts() != null ){
-            // Artifacts and build info should be accumulated, but not deployed
+        if (clientConf.publisher.getAccumulateArtifacts() != null){
             accumulateArtifacts( basedir,
                                  new File( clientConf.publisher.getAccumulateArtifacts()),
                                  buildInfoFile,
                                  deployableArtifacts );
         }
-        else if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
+
+        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
             ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
             try {
                 if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
