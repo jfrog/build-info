@@ -17,7 +17,6 @@
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
@@ -110,19 +109,27 @@ public class BuildDeploymentHelper {
                 FileUtils.copyFile( buildInfoFile, buildInfoTarget );
             }
 
-            String basedirPath = basedir.getCanonicalPath();
-            for (DeployDetails details : deployableArtifacts) {
-                File  sourceFile            = details.getFile();
-                String artifactPath         = sourceFile.getCanonicalPath();
+            String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
+            for ( DeployDetails details : deployableArtifacts ) {
+                File   sourceFile           = details.getFile();
+                String artifactPath         = sourceFile.getCanonicalPath().replace( '\\', '/' );
                 String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
-                                              artifactPath.substring( basedirPath.length() + 1 ) :
-                                              artifactPath;
-                File destinationFile        = new File( accumulateDirectory, artifactRelativePath );
-                boolean checksumMatch       = destinationFile.isFile() &&
-                                              DigestUtils.md5Hex( FileUtils.readFileToByteArray( sourceFile )).equals(
-                                              DigestUtils.md5Hex( FileUtils.readFileToByteArray( destinationFile )));
+                   /**
+                    * "/Users/evgenyg/.hudson/jobs/teamcity-artifactory-plugin/workspace/agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar" =>
+                    * "agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar"
+                    */
+                    artifactPath.substring( basedirPath.length() + 1 ) :
+                   /**
+                    * Artifact is outside workspace, wonder if it works on Windows
+                    */
+                    artifactPath;
 
-                if ( ! checksumMatch ) { FileUtils.copyFile( sourceFile, destinationFile ); }
+                /**
+                 * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
+                 * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
+                 */
+                File destinationFile = new File( accumulateDirectory, artifactRelativePath );
+                FileUtils.copyFile( sourceFile, destinationFile );
             }
         }
         catch ( IOException e ){
