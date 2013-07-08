@@ -8,7 +8,7 @@ import java.util.*;
 
 
 /**
- * Helper class for merging tow Build Info files.
+ * Helper class for merging tow Build Info JSON data.
  */
 class BuildInfoMergeHelper
 {
