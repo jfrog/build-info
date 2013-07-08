@@ -72,11 +72,15 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " + clientConf.publisher.isPublishBuildInfo());
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
 
-        if (clientConf.publisher.getAccumulateArtifacts() != null){
-            accumulateArtifacts( basedir,
-                                 new File( clientConf.publisher.getAccumulateArtifacts()),
-                                 buildInfoFile,
-                                 deployableArtifacts );
+        if (clientConf.publisher.getAggregateArtifacts() != null){
+            aggregateArtifacts( basedir,
+                                new File( clientConf.publisher.getAggregateArtifacts()),
+                                buildInfoFile,
+                                deployableArtifacts );
+
+            if ( ! clientConf.publisher.isPublishAggregatedArtifacts()) {
+                return;
+            }
         }
 
         if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
@@ -103,10 +107,10 @@ public class BuildDeploymentHelper {
     }
 
 
-    private void accumulateArtifacts (File basedir, File accumulateDirectory, File buildInfoSource, Iterable<DeployDetails> artifacts){
+    private void aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, Iterable<DeployDetails> artifacts ){
         try {
 
-            File               buildInfoDestination = new File( accumulateDirectory, "build-info.json" );
+            File               buildInfoDestination = new File( aggregateDirectory, "build-info.json" );
             Map<String,Object> buildInfoSourceMap   = mergeHelper.fileToJsonMap( buildInfoSource );
 
             if ( buildInfoDestination.isFile()) {
@@ -139,12 +143,12 @@ public class BuildDeploymentHelper {
                  * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
                  * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
                  */
-                File destinationFile = new File( accumulateDirectory, artifactRelativePath );
+                File destinationFile = new File( aggregateDirectory, artifactRelativePath );
                 FileUtils.copyFile( sourceFile, destinationFile );
             }
         }
         catch ( IOException e ){
-            throw new RuntimeException( "Failed to accumulate artifacts and Build Info in [" + accumulateDirectory + "]",
+            throw new RuntimeException( "Failed to aggregate artifacts and Build Info in [" + aggregateDirectory + "]",
                                         e );
         }
     }

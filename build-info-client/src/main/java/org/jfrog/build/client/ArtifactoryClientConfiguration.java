@@ -15,16 +15,20 @@
  */
 package org.jfrog.build.client;
 
+import static org.jfrog.build.api.BuildInfoConfigProperties.*;
+import static org.jfrog.build.api.BuildInfoFields.*;
+import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.IssuesTrackerFields.*;
+import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
+import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.client.ClientConfigurationFields.*;
+import static org.jfrog.build.client.ClientProperties.*;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.BlackDuckPropertiesFields;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.LicenseControlFields;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.IssuesTrackerUtils;
 
@@ -38,13 +42,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static org.jfrog.build.api.BuildInfoConfigProperties.*;
-import static org.jfrog.build.api.BuildInfoFields.*;
-import static org.jfrog.build.api.BuildInfoProperties.*;
-import static org.jfrog.build.api.IssuesTrackerFields.*;
-import static org.jfrog.build.api.LicenseControlFields.*;
-import static org.jfrog.build.client.ClientConfigurationFields.*;
-import static org.jfrog.build.client.ClientProperties.*;
 
 /**
  * @author freds
@@ -273,12 +270,20 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(SNAPSHOT_REPO_KEY);
         }
 
-        public void setAccumulateArtifacts(String path) {
-            setStringValue(ACCUMULATE_ARTIFACTS, path);
+        public void setAggregateArtifacts ( String path ) {
+            setStringValue( AGGREGATE_ARTIFACTS, path);
         }
 
-        public String getAccumulateArtifacts() {
-            return getStringValue(ACCUMULATE_ARTIFACTS);
+        public String getAggregateArtifacts () {
+            return getStringValue( AGGREGATE_ARTIFACTS );
+        }
+
+        public void setPublishAggregatedArtifacts ( Boolean enabled ) {
+            setBooleanValue( AGGREGATED_ARTIFACTS, enabled );
+        }
+
+        public Boolean isPublishAggregatedArtifacts () {
+            return getBooleanValue( AGGREGATED_ARTIFACTS, false );
         }
 
         public void setPublishArtifacts(Boolean enabled) {
