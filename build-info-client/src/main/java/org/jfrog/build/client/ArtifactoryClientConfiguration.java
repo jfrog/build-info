@@ -193,7 +193,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public Boolean isActivateRecorder() {
-        return root.getBooleanValue(ACTIVATE_RECORDER, false);
+        return root.getBooleanValue(ACTIVATE_RECORDER, true);
     }
 
     public class ResolverHandler extends RepositoryConfiguration {
