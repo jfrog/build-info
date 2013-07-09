@@ -153,10 +153,10 @@ class ExtractorMojo extends GroovyMojo
      * Overrides resolution repository if a corresponding property is set.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ publisher && descriptorReader.artifactResolver && repoSystem.artifactResolver })
+    @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
     private void overrideResolutionRepository ()
     {
-        final String artifactoryUrl = publisher.contextUrl
+        final String artifactoryUrl = resolver.contextUrl
         final String resolutionRepo = resolver.repoKey
 
         if ( artifactoryUrl && resolutionRepo )
