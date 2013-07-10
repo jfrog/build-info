@@ -32,6 +32,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -49,7 +50,8 @@ public class BuildDeploymentHelper {
     private BuildInfoClientBuilder buildInfoClientBuilder;
 
 
-    private final BuildInfoMergeHelper mergeHelper = new BuildInfoMergeHelper();
+    private final JsonMergeHelper buildInfoMergeHelper   = new JsonMergeHelper( "id", "name" );
+    private final JsonMergeHelper deployablesMergeHelper = new JsonMergeHelper( "file" );
 
 
     public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
@@ -72,11 +74,12 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " + clientConf.publisher.isPublishBuildInfo());
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
 
-        if (clientConf.publisher.getAggregateArtifacts() != null){
+        if ( clientConf.publisher.getAggregateArtifacts() != null ){
+
             aggregateArtifacts( basedir,
                                 new File( clientConf.publisher.getAggregateArtifacts()),
                                 buildInfoFile,
-                                deployableArtifacts );
+                                new ArrayList<DeployDetails>( deployableArtifacts ));
 
             if ( ! clientConf.publisher.isPublishAggregatedArtifacts()) {
                 return;
@@ -107,25 +110,33 @@ public class BuildDeploymentHelper {
     }
 
 
-    private void aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, Iterable<DeployDetails> artifacts ){
+    private void aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, List<DeployDetails> deployables ){
         try {
 
-            File               buildInfoDestination = new File( aggregateDirectory, "build-info.json" );
-            Map<String,Object> buildInfoSourceMap   = mergeHelper.fileToJsonMap( buildInfoSource );
+            File               buildInfoDestination   = new File( aggregateDirectory, "build-info.json"  );
+            File               deployablesDestination = new File( aggregateDirectory, "deployables.json" );
+            Map<String,Object> buildInfoSourceMap     = buildInfoMergeHelper.jsonToObject( buildInfoSource, Map.class );
 
             if ( buildInfoDestination.isFile()) {
-                Map<String,Object> buildInfoDestinationMap = mergeHelper.fileToJsonMap( buildInfoDestination );
-                buildInfoSourceMap.put( "started",        buildInfoDestinationMap.get( "started" ));
+                Map<String,Object> buildInfoDestinationMap = buildInfoMergeHelper.jsonToObject( buildInfoDestination, Map.class );
+                buildInfoSourceMap.put( "started", buildInfoDestinationMap.get( "started" ) );
                 buildInfoSourceMap.put( "durationMillis", ( Integer ) buildInfoDestinationMap.get( "durationMillis" ) +
                                                           ( Integer ) buildInfoSourceMap.get( "durationMillis" ));
-                mergeHelper.mergeAndWriteBuildInfoMaps( buildInfoSourceMap, buildInfoDestinationMap, buildInfoDestination );
+                buildInfoMergeHelper.mergeAndWrite( buildInfoSourceMap, buildInfoDestinationMap, buildInfoDestination );
             }
             else {
                 FileUtils.copyFile( buildInfoSource, buildInfoDestination );
             }
 
+            if ( deployablesDestination.isFile()) {
+                deployablesMergeHelper.mergeAndWrite( deployables, deployablesMergeHelper.jsonToObject( deployablesDestination, List.class ), deployablesDestination );
+            }
+            else {
+                deployablesMergeHelper.jsonWrite( deployables, deployablesDestination );
+            }
+
             String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
-            for ( DeployDetails details : artifacts ) {
+            for ( DeployDetails details : deployables ) {
                 File   sourceFile           = details.getFile();
                 String artifactPath         = sourceFile.getCanonicalPath().replace( '\\', '/' );
                 String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
