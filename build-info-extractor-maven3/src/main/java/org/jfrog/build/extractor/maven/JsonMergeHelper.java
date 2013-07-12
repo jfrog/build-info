@@ -25,7 +25,7 @@ class JsonMergeHelper
             return new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString( o );
         }
         catch ( Exception e ) {
-            throw new RuntimeException( String.format( "Failed to convert object [%s] to JSON", o ), e );
+            throw new RuntimeException( String.format( "Failed to convert object '%s' to JSON", o ), e );
         }
     }
 
@@ -35,7 +35,7 @@ class JsonMergeHelper
             return new ObjectMapper().reader( type ).readValue( jsonContent );
         }
         catch ( Exception e ) {
-            throw new RuntimeException( String.format( "Failed to read JSON content '%s'", jsonContent ), e );
+            throw new RuntimeException( String.format( "Failed to convert JSON '%s' to object", jsonContent ), e );
         }
     }
 
@@ -45,7 +45,7 @@ class JsonMergeHelper
             return new ObjectMapper().reader( type ).readValue( jsonFile );
         }
         catch ( Exception e ) {
-            throw new RuntimeException( String.format( "Failed to read JSON file '%s'", jsonFile ), e );
+            throw new RuntimeException( String.format( "Failed to convert JSON file '%s' to object", jsonFile ), e );
         }
     }
 
@@ -62,15 +62,18 @@ class JsonMergeHelper
     }
 
 
-    <T> T jsonWrite ( T object, File destinationFile )
-    {
-        try {
-            FileUtils.write( destinationFile, objectToJson( object ), "UTF-8" );
-            return object;
+    String mergeJsons( String source, String destination ) {
+        Object sourceObject      = jsonToObject( source, Object.class );
+        Object destinationObject = jsonToObject( destination, Object.class );
+        Object mergedObject      =
+            (( sourceObject instanceof Map  ) && ( destinationObject instanceof Map  )) ? mergeMaps(( Map ) sourceObject, ( Map ) destinationObject ) :
+            (( sourceObject instanceof List ) && ( destinationObject instanceof List )) ? mergeLists( ( List ) sourceObject, ( List ) destinationObject ) :
+                                                                                          null;
+        if ( mergedObject == null ) {
+            throw new RuntimeException( String.format( "Unable to merge JSON content of '%s' and '%s'", source, destination ));
         }
-        catch ( Exception e ) {
-            throw new RuntimeException( String.format( "Failed to write [%s] to [%s]", object, destinationFile ), e );
-        }
+
+        return objectToJson( mergedObject );
     }
 
 
@@ -115,6 +118,18 @@ class JsonMergeHelper
         List<T> result = new ArrayList<T>( destination );
         result.addAll( source );
         return new ArrayList<T>( new HashSet<T>( result ));
+    }
+
+
+    private <T> T jsonWrite ( T object, File destinationFile )
+    {
+        try {
+            FileUtils.write( destinationFile, objectToJson( object ), "UTF-8" );
+            return object;
+        }
+        catch ( Exception e ) {
+            throw new RuntimeException( String.format( "Failed to write [%s] to [%s]", object, destinationFile ), e );
+        }
     }
 
 

@@ -51,7 +51,7 @@ public class BuildDeploymentHelper {
 
 
     private final JsonMergeHelper buildInfoMergeHelper   = new JsonMergeHelper( "id", "name" );
-    private final JsonMergeHelper deployablesMergeHelper = new JsonMergeHelper( "file" );
+    private final JsonMergeHelper deployablesMergeHelper = new JsonMergeHelper( "artifactPath" );
 
 
     public void deploy( Build                          build,
@@ -74,7 +74,7 @@ public class BuildDeploymentHelper {
 
         try {
             BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile);
-        } catch (IOException e) {
+        } catch ( IOException e ) {
             throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
         }
 
@@ -82,11 +82,12 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
 
         if ( clientConf.publisher.getAggregateArtifacts() != null ){
-            aggregateDirectory  = new File( clientConf.publisher.getAggregateArtifacts());
-            buildInfoAggregated = new File( aggregateDirectory, "build-info.json" );
-            deployableArtifacts = aggregateArtifacts( basedir, aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts );
+            aggregateDirectory                   = new File( clientConf.publisher.getAggregateArtifacts());
+            buildInfoAggregated                  = new File( aggregateDirectory, "build-info.json" );
+            boolean isPublishAggregatedArtifacts = clientConf.publisher.isPublishAggregatedArtifacts();
+            deployableArtifacts                  = aggregateArtifacts( basedir, aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts, isPublishAggregatedArtifacts );
 
-            if ( ! clientConf.publisher.isPublishAggregatedArtifacts()) {
+            if ( ! isPublishAggregatedArtifacts ) {
                 return;
             }
         }
@@ -106,16 +107,18 @@ public class BuildDeploymentHelper {
                 }
 
                 if ( isSendBuildInfo ) {
+                    logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                     try {
-
                         if ( buildInfoAggregated != null ) {
-                            String buildInfoJson = client.buildInfoToJsonString( build );
-//                            buildInfoMergeHelper.mergeMaps(  )
+                            String buildInfoJson           = client.buildInfoToJsonString( build );
+                            String buildInfoAggregatedJson = FileUtils.readFileToString( buildInfoAggregated, "UTF-8" );
+                            String buildInfoMerged         = buildInfoMergeHelper.mergeJsons( buildInfoAggregatedJson, buildInfoJson );
+                            client.sendBuildInfo( buildInfoMerged );
                         }
-
-                        logger.info("Artifactory Build Info Recorder: Deploying build info ...");
-                        client.sendBuildInfo(build);
-                    } catch (Exception e) {
+                        else {
+                            client.sendBuildInfo( build );
+                        }
+                    } catch ( Exception e ) {
                         throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
                     }
                 }
@@ -126,10 +129,16 @@ public class BuildDeploymentHelper {
     }
 
 
-    private Set<DeployDetails> aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, File buildInfoDestination, Iterable<DeployDetails> deployables ){
+    @SuppressWarnings({ "TypeMayBeWeakened" , "SuppressionAnnotation" })
+    private Set<DeployDetails> aggregateArtifacts ( File               basedir,
+                                                    File               aggregateDirectory,
+                                                    File               buildInfoSource,
+                                                    File               buildInfoDestination,
+                                                    Set<DeployDetails> deployables,
+                                                    boolean            returnMergedDeployables ){
         try {
-            File deployablesDestination = new File( aggregateDirectory, "deployables.json" );
-            List<Map<String,?>> mergedDeployables;
+            File                deployablesDestination = new File( aggregateDirectory, "deployables.json" );
+            List<Map<String,?>> mergedDeployables      = null;
 
             if ( buildInfoDestination.isFile()) {
                 Map<String,Object> buildInfoSourceMap      = buildInfoMergeHelper.jsonToObject( buildInfoSource,      Map.class );
@@ -146,11 +155,10 @@ public class BuildDeploymentHelper {
             if ( deployablesDestination.isFile()) {
                 List<Map<String,?>> currentDeployables  = deployablesMergeHelper.jsonToObject ( deployablesMergeHelper.objectToJson( deployables ), List.class );
                 List<Map<String,?>> previousDeployables = deployablesMergeHelper.jsonToObject ( deployablesDestination, List.class );
-                mergedDeployables = deployablesMergeHelper.mergeAndWrite( currentDeployables, previousDeployables, deployablesDestination );
+                mergedDeployables                       = deployablesMergeHelper.mergeAndWrite( currentDeployables, previousDeployables, deployablesDestination );
             }
             else {
-                deployablesMergeHelper.jsonWrite( deployables, deployablesDestination );
-                mergedDeployables = deployablesMergeHelper.jsonToObject( deployablesDestination, List.class );
+                FileUtils.write( deployablesDestination, deployablesMergeHelper.objectToJson( deployables ), "UTF-8" );
             }
 
             String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
@@ -164,7 +172,9 @@ public class BuildDeploymentHelper {
                 FileUtils.copyFile( details.getFile(), aggregatedFile );
             }
 
-            return convertDeployables( basedirPath, aggregateDirectory, mergedDeployables );
+            return ( returnMergedDeployables && ( mergedDeployables != null )) ?
+                       convertDeployables( basedirPath, aggregateDirectory, mergedDeployables ) :
+                       deployables;
         }
         catch ( IOException e ){
             throw new RuntimeException( "Failed to aggregate artifacts and Build Info in [" + aggregateDirectory + "]",
