@@ -30,6 +30,16 @@ class JsonMergeHelper
     }
 
 
+    <T> T jsonToObject ( String jsonContent, Class<T> type ) {
+        try {
+            return new ObjectMapper().reader( type ).readValue( jsonContent );
+        }
+        catch ( Exception e ) {
+            throw new RuntimeException( String.format( "Failed to read JSON content '%s'", jsonContent ), e );
+        }
+    }
+
+
     <T> T jsonToObject ( File jsonFile, Class<T> type ) {
         try {
             return new ObjectMapper().reader( type ).readValue( jsonFile );
@@ -40,30 +50,31 @@ class JsonMergeHelper
     }
 
 
-    void mergeAndWrite ( Map<String, ?> source, Map<String, ?> destination, File destinationFile )
+    Map<String, ?> mergeAndWrite ( Map<String, ?> source, Map<String, ?> destination, File destinationFile )
     {
-        jsonWrite( mergeMaps( source, destination ), destinationFile );
+        return jsonWrite( mergeMaps( source, destination ), destinationFile );
     }
 
 
-    void mergeAndWrite ( List<?> source, List<?> destination, File destinationFile )
+    <T> List<T> mergeAndWrite ( List<T> source, List<T> destination, File destinationFile )
     {
-        jsonWrite( mergeLists( source, destination ), destinationFile );
+        return jsonWrite( mergeLists( source, destination ), destinationFile );
     }
 
 
-    void jsonWrite ( Object o, File destinationFile )
+    <T> T jsonWrite ( T object, File destinationFile )
     {
         try {
-            FileUtils.write( destinationFile, objectToJson( o ), "UTF-8" );
+            FileUtils.write( destinationFile, objectToJson( object ), "UTF-8" );
+            return object;
         }
         catch ( Exception e ) {
-            throw new RuntimeException( String.format( "Failed to write [%s] to [%s]", o, destinationFile ), e );
+            throw new RuntimeException( String.format( "Failed to write [%s] to [%s]", object, destinationFile ), e );
         }
     }
 
 
-    private Map<String,?> mergeMaps ( Map<String, ?> source, Map<String, ?> destination ){
+    Map<String,?> mergeMaps ( Map<String, ?> source, Map<String, ?> destination ){
 
         if (( source      == null ) || source.isEmpty()){ return destination; }
         if (( destination == null ) || destination.isEmpty()){ return source; }
@@ -84,7 +95,7 @@ class JsonMergeHelper
     }
 
 
-    private List<?> mergeLists ( List<?> source, List<?> destination )
+    <T> List<T> mergeLists ( List<T> source, List<T> destination )
     {
         if (( source      == null ) || source.isEmpty()){ return destination; }
         if (( destination == null ) || destination.isEmpty()){ return source; }
@@ -96,14 +107,14 @@ class JsonMergeHelper
             for ( String mapIdentifier : mapIdentifiers )
             {
                 if ( map.get( mapIdentifier ) != null ) {
-                    return mergeListsOfMaps(( List<Map<String, ?>> ) source, ( List<Map<String, ?>> ) destination, mapIdentifier );
+                    return ( List<T> ) mergeListsOfMaps(( List<Map<String, ?>> ) source, ( List<Map<String, ?>> ) destination, mapIdentifier );
                 }
             }
         }
 
-        List result = new ArrayList<Object>( destination );
+        List<T> result = new ArrayList<T>( destination );
         result.addAll( source );
-        return new ArrayList<Object>( new HashSet<Object>( result ));
+        return new ArrayList<T>( new HashSet<T>( result ));
     }
 
 

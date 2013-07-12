@@ -32,7 +32,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -54,13 +54,20 @@ public class BuildDeploymentHelper {
     private final JsonMergeHelper deployablesMergeHelper = new JsonMergeHelper( "file" );
 
 
-    public void deploy(Build build, ArtifactoryClientConfiguration clientConf,
-            Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
+    public void deploy( Build                          build,
+                        ArtifactoryClientConfiguration clientConf,
+                        Map<String, DeployDetails>     deployableArtifactBuilders,
+                        boolean                        wereThereTestFailures,
+                        File                           basedir )
+    {
+
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
         String             outputFile          = clientConf.getExportFile();
         File               buildInfoFile       = StringUtils.isBlank( outputFile ) ?
                                                     new File( basedir, "target/build-info.json" ) :
                                                     new File( outputFile );
+        File aggregateDirectory  = null;
+        File buildInfoAggregated = null;
 
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
         logger.info( "Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
@@ -75,11 +82,9 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
 
         if ( clientConf.publisher.getAggregateArtifacts() != null ){
-
-            aggregateArtifacts( basedir,
-                                new File( clientConf.publisher.getAggregateArtifacts()),
-                                buildInfoFile,
-                                new ArrayList<DeployDetails>( deployableArtifacts ));
+            aggregateDirectory  = new File( clientConf.publisher.getAggregateArtifacts());
+            buildInfoAggregated = new File( aggregateDirectory, "build-info.json" );
+            deployableArtifacts = aggregateArtifacts( basedir, aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts );
 
             if ( ! clientConf.publisher.isPublishAggregatedArtifacts()) {
                 return;
@@ -88,18 +93,29 @@ public class BuildDeploymentHelper {
 
         if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
             ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
+            boolean isDeployArtifacts = clientConf.publisher.isPublishArtifacts() &&
+                                        ( deployableArtifacts != null )           &&
+                                        ( ! deployableArtifacts.isEmpty())        &&
+                                        ( clientConf.publisher.isEvenUnstable() || ( ! wereThereTestFailures ));
+            boolean isSendBuildInfo   = clientConf.publisher.isPublishBuildInfo() &&
+                                        ( clientConf.publisher.isEvenUnstable() || ( ! wereThereTestFailures ));
+
             try {
-                if (clientConf.publisher.isPublishArtifacts() && (deployableArtifacts != null) &&
-                        !deployableArtifacts.isEmpty() && (clientConf.publisher.isEvenUnstable() || !wereThereTestFailures)) {
+                if ( isDeployArtifacts ) {
                     deployArtifacts(clientConf.publisher, deployableArtifacts, client);
                 }
 
-                if (clientConf.publisher.isPublishBuildInfo() &&
-                        (clientConf.publisher.isEvenUnstable() || !wereThereTestFailures)) {
+                if ( isSendBuildInfo ) {
                     try {
+
+                        if ( buildInfoAggregated != null ) {
+                            String buildInfoJson = client.buildInfoToJsonString( build );
+//                            buildInfoMergeHelper.mergeMaps(  )
+                        }
+
                         logger.info("Artifactory Build Info Recorder: Deploying build info ...");
                         client.sendBuildInfo(build);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
                     }
                 }
@@ -110,16 +126,15 @@ public class BuildDeploymentHelper {
     }
 
 
-    private void aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, List<DeployDetails> deployables ){
+    private Set<DeployDetails> aggregateArtifacts ( File basedir, File aggregateDirectory, File buildInfoSource, File buildInfoDestination, Iterable<DeployDetails> deployables ){
         try {
-
-            File               buildInfoDestination   = new File( aggregateDirectory, "build-info.json"  );
-            File               deployablesDestination = new File( aggregateDirectory, "deployables.json" );
-            Map<String,Object> buildInfoSourceMap     = buildInfoMergeHelper.jsonToObject( buildInfoSource, Map.class );
+            File deployablesDestination = new File( aggregateDirectory, "deployables.json" );
+            List<Map<String,?>> mergedDeployables;
 
             if ( buildInfoDestination.isFile()) {
+                Map<String,Object> buildInfoSourceMap      = buildInfoMergeHelper.jsonToObject( buildInfoSource,      Map.class );
                 Map<String,Object> buildInfoDestinationMap = buildInfoMergeHelper.jsonToObject( buildInfoDestination, Map.class );
-                buildInfoSourceMap.put( "started", buildInfoDestinationMap.get( "started" ) );
+                buildInfoSourceMap.put( "started", buildInfoDestinationMap.get( "started" ));
                 buildInfoSourceMap.put( "durationMillis", ( Integer ) buildInfoDestinationMap.get( "durationMillis" ) +
                                                           ( Integer ) buildInfoSourceMap.get( "durationMillis" ));
                 buildInfoMergeHelper.mergeAndWrite( buildInfoSourceMap, buildInfoDestinationMap, buildInfoDestination );
@@ -129,39 +144,71 @@ public class BuildDeploymentHelper {
             }
 
             if ( deployablesDestination.isFile()) {
-                deployablesMergeHelper.mergeAndWrite( deployables, deployablesMergeHelper.jsonToObject( deployablesDestination, List.class ), deployablesDestination );
+                List<Map<String,?>> currentDeployables  = deployablesMergeHelper.jsonToObject ( deployablesMergeHelper.objectToJson( deployables ), List.class );
+                List<Map<String,?>> previousDeployables = deployablesMergeHelper.jsonToObject ( deployablesDestination, List.class );
+                mergedDeployables = deployablesMergeHelper.mergeAndWrite( currentDeployables, previousDeployables, deployablesDestination );
             }
             else {
                 deployablesMergeHelper.jsonWrite( deployables, deployablesDestination );
+                mergedDeployables = deployablesMergeHelper.jsonToObject( deployablesDestination, List.class );
             }
 
             String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
-            for ( DeployDetails details : deployables ) {
-                File   sourceFile           = details.getFile();
-                String artifactPath         = sourceFile.getCanonicalPath().replace( '\\', '/' );
-                String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
-                   /**
-                    * "/Users/evgenyg/.hudson/jobs/teamcity-artifactory-plugin/workspace/agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar" =>
-                    * "agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar"
-                    */
-                    artifactPath.substring( basedirPath.length() + 1 ) :
-                   /**
-                    * Artifact is outside workspace, wonder if it works on Windows
-                    */
-                    artifactPath;
 
+            for ( DeployDetails details : deployables ) {
                 /**
                  * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
                  * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
                  */
-                File destinationFile = new File( aggregateDirectory, artifactRelativePath );
-                FileUtils.copyFile( sourceFile, destinationFile );
+                File aggregatedFile = aggregatedFile( basedirPath, aggregateDirectory, details.getFile());
+                FileUtils.copyFile( details.getFile(), aggregatedFile );
             }
+
+            return convertDeployables( basedirPath, aggregateDirectory, mergedDeployables );
         }
         catch ( IOException e ){
             throw new RuntimeException( "Failed to aggregate artifacts and Build Info in [" + aggregateDirectory + "]",
                                         e );
         }
+    }
+
+
+    @SuppressWarnings({ "FeatureEnvy" , "SuppressionAnnotation" })
+    private Set<DeployDetails> convertDeployables ( String basedirPath, File aggregateDirectory, Iterable<Map<String, ?>> deployables ) throws IOException
+    {
+        Set<DeployDetails> result = new HashSet<DeployDetails>();
+
+        for ( Map<String,?> map : deployables ) {
+
+            DeployDetails.Builder builder = new DeployDetails.Builder().
+                                            targetRepository(( String ) map.get( "targetRepository" )).
+                                            artifactPath(( String ) map.get( "artifactPath" )).
+                                            file( aggregatedFile( basedirPath, aggregateDirectory, new File(( String ) map.get( "file" )))).
+                                            sha1(( String ) map.get( "sha1" )).
+                                            md5(( String ) map.get( "md5" )).
+                                            addProperties(( Map<String, String> ) map.get( "properties" ));
+            result.add( builder.build());
+        }
+
+        return result;
+    }
+
+
+    private File aggregatedFile( String basedirPath, File aggregateDirectory, File file ) throws IOException
+    {
+        String artifactPath         = file.getCanonicalPath().replace( '\\', '/' );
+        String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
+           /**
+            * "/Users/evgenyg/.hudson/jobs/teamcity-artifactory-plugin/workspace/agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar" =>
+            * "agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar"
+            */
+            artifactPath.substring( basedirPath.length() + 1 ) :
+           /**
+            * Artifact is outside workspace, wonder if it works on Windows
+            */
+            artifactPath;
+
+        return new File( aggregateDirectory, artifactRelativePath );
     }
 
 
