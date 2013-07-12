@@ -143,9 +143,10 @@ public class BuildDeploymentHelper {
             if ( buildInfoDestination.isFile()) {
                 Map<String,Object> buildInfoSourceMap      = buildInfoMergeHelper.jsonToObject( buildInfoSource,      Map.class );
                 Map<String,Object> buildInfoDestinationMap = buildInfoMergeHelper.jsonToObject( buildInfoDestination, Map.class );
+                int durationMillis                         = ( Integer ) buildInfoSourceMap.get( "durationMillis" ) +
+                                                             ( Integer ) buildInfoDestinationMap.get( "durationMillis" );
                 buildInfoSourceMap.put( "started", buildInfoDestinationMap.get( "started" ));
-                buildInfoSourceMap.put( "durationMillis", ( Integer ) buildInfoDestinationMap.get( "durationMillis" ) +
-                                                          ( Integer ) buildInfoSourceMap.get( "durationMillis" ));
+                buildInfoSourceMap.put( "durationMillis", durationMillis );
                 buildInfoMergeHelper.mergeAndWrite( buildInfoSourceMap, buildInfoDestinationMap, buildInfoDestination );
             }
             else {
@@ -161,19 +162,17 @@ public class BuildDeploymentHelper {
                 FileUtils.write( deployablesDestination, deployablesMergeHelper.objectToJson( deployables ), "UTF-8" );
             }
 
-            String basedirPath = basedir.getCanonicalPath().replace( '\\', '/' );
-
             for ( DeployDetails details : deployables ) {
                 /**
                  * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
                  * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
                  */
-                File aggregatedFile = aggregatedFile( basedirPath, aggregateDirectory, details.getFile());
+                File aggregatedFile = aggregatedFile( aggregateDirectory, details.getFile());
                 FileUtils.copyFile( details.getFile(), aggregatedFile );
             }
 
             return ( returnMergedDeployables && ( mergedDeployables != null )) ?
-                       convertDeployables( basedirPath, aggregateDirectory, mergedDeployables ) :
+                       convertDeployables( aggregateDirectory, mergedDeployables ) :
                        deployables;
         }
         catch ( IOException e ){
@@ -184,7 +183,7 @@ public class BuildDeploymentHelper {
 
 
     @SuppressWarnings({ "FeatureEnvy" , "SuppressionAnnotation" })
-    private Set<DeployDetails> convertDeployables ( String basedirPath, File aggregateDirectory, Iterable<Map<String, ?>> deployables ) throws IOException
+    private Set<DeployDetails> convertDeployables ( File aggregateDirectory, Iterable<Map<String, ?>> deployables ) throws IOException
     {
         Set<DeployDetails> result = new HashSet<DeployDetails>();
 
@@ -193,7 +192,7 @@ public class BuildDeploymentHelper {
             DeployDetails.Builder builder = new DeployDetails.Builder().
                                             targetRepository(( String ) map.get( "targetRepository" )).
                                             artifactPath(( String ) map.get( "artifactPath" )).
-                                            file( aggregatedFile( basedirPath, aggregateDirectory, new File(( String ) map.get( "file" )))).
+                                            file( aggregatedFile( aggregateDirectory, new File(( String ) map.get( "file" )))).
                                             sha1(( String ) map.get( "sha1" )).
                                             md5(( String ) map.get( "md5" )).
                                             addProperties(( Map<String, String> ) map.get( "properties" ));
@@ -204,15 +203,16 @@ public class BuildDeploymentHelper {
     }
 
 
-    private File aggregatedFile( String basedirPath, File aggregateDirectory, File file ) throws IOException
+    private File aggregatedFile( File aggregateDirectory, File file ) throws IOException
     {
+        String workspacePath        = aggregateDirectory.getParentFile().getCanonicalPath().replace( '\\', '/' );
         String artifactPath         = file.getCanonicalPath().replace( '\\', '/' );
-        String artifactRelativePath = artifactPath.startsWith( basedirPath ) ?
+        String artifactRelativePath = artifactPath.startsWith( workspacePath ) ?
            /**
             * "/Users/evgenyg/.hudson/jobs/teamcity-artifactory-plugin/workspace/agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar" =>
             * "agent/target/teamcity-artifactory-plugin-agent-2.1.x-SNAPSHOT.jar"
             */
-            artifactPath.substring( basedirPath.length() + 1 ) :
+            artifactPath.substring( workspacePath.length() + 1 ) :
            /**
             * Artifact is outside workspace, wonder if it works on Windows
             */
