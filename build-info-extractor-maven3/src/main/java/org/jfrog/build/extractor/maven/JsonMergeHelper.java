@@ -67,7 +67,7 @@ class JsonMergeHelper
         Object destinationObject = jsonToObject( destination, Object.class );
         Object mergedObject      =
             (( sourceObject instanceof Map  ) && ( destinationObject instanceof Map  )) ? mergeMaps(( Map ) sourceObject, ( Map ) destinationObject ) :
-            (( sourceObject instanceof List ) && ( destinationObject instanceof List )) ? mergeLists( ( List ) sourceObject, ( List ) destinationObject ) :
+            (( sourceObject instanceof List ) && ( destinationObject instanceof List )) ? mergeLists(( List ) sourceObject, ( List ) destinationObject ) :
                                                                                           null;
         if ( mergedObject == null ) {
             throw new RuntimeException( String.format( "Unable to merge JSON content of '%s' and '%s'", source, destination ));
