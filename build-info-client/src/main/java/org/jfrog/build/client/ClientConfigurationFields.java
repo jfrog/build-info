@@ -34,7 +34,8 @@ public interface ClientConfigurationFields {
     String REPO_KEY = "repoKey";
     // Publish fields
     String AGGREGATE_ARTIFACTS = "aggregate";   // String  - directory where artifacts should be aggregated
-    String AGGREGATED_ARTIFACTS = "aggregated"; // Boolean - whether or not aggregated artifacts should be published
+    String PUBLISH_AGGREGATED_ARTIFACTS = "aggregated"; // Boolean - whether or not aggregated artifacts should be published
+    String COPY_AGGREGATED_ARTIFACTS = "copy.aggregated"; // Boolean - whether or not aggregated artifacts should be published
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";

@@ -278,12 +278,20 @@ public class ArtifactoryClientConfiguration {
             return getStringValue( AGGREGATE_ARTIFACTS );
         }
 
+        public void setCopyAggregatedArtifacts ( Boolean enabled ) {
+            setBooleanValue( COPY_AGGREGATED_ARTIFACTS, enabled );
+        }
+
         public void setPublishAggregatedArtifacts ( Boolean enabled ) {
-            setBooleanValue( AGGREGATED_ARTIFACTS, enabled );
+            setBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, enabled );
+        }
+
+        public Boolean isCopyAggregatedArtifacts () {
+            return getBooleanValue( COPY_AGGREGATED_ARTIFACTS, false );
         }
 
         public Boolean isPublishAggregatedArtifacts () {
-            return getBooleanValue( AGGREGATED_ARTIFACTS, false );
+            return getBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, false );
         }
 
         public void setPublishArtifacts(Boolean enabled) {

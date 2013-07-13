@@ -84,8 +84,10 @@ public class BuildDeploymentHelper {
         if ( clientConf.publisher.getAggregateArtifacts() != null ){
             aggregateDirectory                   = new File( clientConf.publisher.getAggregateArtifacts());
             buildInfoAggregated                  = new File( aggregateDirectory, "build-info.json" );
+            boolean isCopyAggregatedArtifacts    = clientConf.publisher.isCopyAggregatedArtifacts();
             boolean isPublishAggregatedArtifacts = clientConf.publisher.isPublishAggregatedArtifacts();
-            deployableArtifacts                  = aggregateArtifacts( basedir, aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts, isPublishAggregatedArtifacts );
+            deployableArtifacts                  = aggregateArtifacts( aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts,
+                                                                       isCopyAggregatedArtifacts, isPublishAggregatedArtifacts );
 
             if ( ! isPublishAggregatedArtifacts ) {
                 return;
@@ -130,12 +132,12 @@ public class BuildDeploymentHelper {
 
 
     @SuppressWarnings({ "TypeMayBeWeakened" , "SuppressionAnnotation" })
-    private Set<DeployDetails> aggregateArtifacts ( File               basedir,
-                                                    File               aggregateDirectory,
+    private Set<DeployDetails> aggregateArtifacts ( File               aggregateDirectory,
                                                     File               buildInfoSource,
                                                     File               buildInfoDestination,
                                                     Set<DeployDetails> deployables,
-                                                    boolean            returnMergedDeployables ){
+                                                    boolean            isCopyAggregatedArtifacts,
+                                                    boolean            isPublishAggregatedArtifacts ){
         try {
             File                deployablesDestination = new File( aggregateDirectory, "deployables.json" );
             List<Map<String,?>> mergedDeployables      = null;
@@ -162,17 +164,19 @@ public class BuildDeploymentHelper {
                 FileUtils.write( deployablesDestination, deployablesMergeHelper.objectToJson( deployables ), "UTF-8" );
             }
 
-            for ( DeployDetails details : deployables ) {
-                /**
-                 * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
-                 * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
-                 */
-                File aggregatedFile = aggregatedFile( aggregateDirectory, details.getFile());
-                FileUtils.copyFile( details.getFile(), aggregatedFile );
+            if ( isCopyAggregatedArtifacts ) {
+                for ( DeployDetails details : deployables ) {
+                    /**
+                     * We could check MD5 checksum of destination file (if it exists) and save on copy operation but since most *.jar
+                     * files contain a timestamp in pom.properties (thanks, Maven) - checksum would only match for POM files.
+                     */
+                    File aggregatedFile = aggregatedFile( aggregateDirectory, details.getFile());
+                    FileUtils.copyFile( details.getFile(), aggregatedFile );
+                }
             }
 
-            return ( returnMergedDeployables && ( mergedDeployables != null )) ?
-                       convertDeployables( aggregateDirectory, mergedDeployables ) :
+            return ( isPublishAggregatedArtifacts && ( mergedDeployables != null )) ?
+                       convertDeployables( aggregateDirectory, mergedDeployables, isCopyAggregatedArtifacts ) :
                        deployables;
         }
         catch ( IOException e ){
@@ -183,16 +187,20 @@ public class BuildDeploymentHelper {
 
 
     @SuppressWarnings({ "FeatureEnvy" , "SuppressionAnnotation" })
-    private Set<DeployDetails> convertDeployables ( File aggregateDirectory, Iterable<Map<String, ?>> deployables ) throws IOException
+    private Set<DeployDetails> convertDeployables ( File aggregateDirectory, Iterable<Map<String, ?>> deployables, boolean isCopyAggregatedArtifacts )
+        throws IOException
     {
         Set<DeployDetails> result = new HashSet<DeployDetails>();
 
         for ( Map<String,?> map : deployables ) {
 
+            File file = new File(( String ) map.get( "file" ));
+            if ( isCopyAggregatedArtifacts ){ file = aggregatedFile( aggregateDirectory, file ); }
+
             DeployDetails.Builder builder = new DeployDetails.Builder().
                                             targetRepository(( String ) map.get( "targetRepository" )).
                                             artifactPath(( String ) map.get( "artifactPath" )).
-                                            file( aggregatedFile( aggregateDirectory, new File(( String ) map.get( "file" )))).
+                                            file( file ).
                                             sha1(( String ) map.get( "sha1" )).
                                             md5(( String ) map.get( "md5" )).
                                             addProperties(( Map<String, String> ) map.get( "properties" ));
