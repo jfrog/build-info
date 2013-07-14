@@ -143,9 +143,10 @@ class ExtractorMojo extends GroovyMojo
     @Requires({ buildInfo && session && project })
     private void updateBuildInfo ()
     {
-        buildInfo.buildTimestamp = session.startTime.time.toString()
+        buildInfo.buildTimestamp = session.startTime.time as String
         buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        buildInfo.buildName      = buildInfo.buildName ?: project.artifactId
+        buildInfo.buildName      = buildInfo.buildName   ?: project.artifactId
+        buildInfo.buildNumber    = buildInfo.buildNumber ?: buildInfo.buildTimestamp
     }
 
 
