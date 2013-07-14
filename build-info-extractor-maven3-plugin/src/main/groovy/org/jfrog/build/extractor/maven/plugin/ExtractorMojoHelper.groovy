@@ -119,12 +119,13 @@ class ExtractorMojoHelper
     {
         assert prefixPropertyHandlers.values().each { assert it.delegate.props.is( artifactory.delegate.root.props ) }
 
-        final mergedProperties       = new Properties()
-        final deployPropertiesPrefix = ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX
-        final deployProperties       = (( Properties ) readProperties( deployProperties ).collectEntries {
-            String key, String value -> [ "${ deployPropertiesPrefix }${ key }", value ]
-        }) + [ ( "${ deployPropertiesPrefix }${ BuildInfoFields.BUILD_TIMESTAMP }".toString()) : buildInfo.buildTimestamp,
-               ( "${ deployPropertiesPrefix }${ BuildInfoFields.BUILD_NAME }".toString())      : buildInfo.buildName ]
+        final mergedProperties = new Properties()
+        final deployProperties = ( [ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
+                                     ( BuildInfoFields.BUILD_NAME      ) : buildInfo.buildName,
+                                     ( BuildInfoFields.BUILD_NUMBER    ) : buildInfo.buildNumber ] +
+                                   readProperties( deployProperties )).collectEntries {
+            String key, String value -> [ "${ ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX }${ key }".toString(), value ]
+        }
 
         addProperties(( Map<String, String> ) readProperties( mojo.propertiesFile ) + readProperties( mojo.properties ),
                       mergedProperties )
