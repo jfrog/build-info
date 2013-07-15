@@ -186,7 +186,7 @@ class ExtractorMojoHelper
      */
     String updateValue( String value )
     {
-        if ( ! value?.contains( '{' )){ return value?.trim() }
+        if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
 
         value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
 
