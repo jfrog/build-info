@@ -191,14 +191,15 @@ class ExtractorMojoHelper
         value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
 
             final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
-            final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim()
+            final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
 
-            if ( expressions.size() < 2 ){ return originalExpression }
-            assert ( expressions[ -1 ] ), \
-                   "Expression '$originalExpression' - last variable is the default value and should be defined."
+            assert expressions, "No expressions found in '$originalExpression'"
 
-            final expressionValue = expressions[ 0 .. -2 ].collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: expressions[ -1 ]
-            expressionValue
+            final variables    = (( expressions.size() == 1 ) ? expressions : expressions[ 0 .. -2 ] )
+            final defaultValue = (( expressions.size() == 1 ) ? null        : expressions[ -1 ] )
+            final result       = variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
+
+            result ?: originalExpression
         }
     }
 }
