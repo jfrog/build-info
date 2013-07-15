@@ -191,10 +191,13 @@ class ExtractorMojoHelper
         if ( ! value.contains( '{' )){ return value.trim() }
 
         value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
+
             final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
             final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim()
-            assert (( expressions.size() >= 2 ) && ( expressions[ -1 ] )), \
-                "Expression '$originalExpression' - should contain at least two variables, the last one is the default value and should be defined."
+
+            if ( expressions.size() < 2 ){ return originalExpression }
+            assert ( expressions[ -1 ] ), \
+                   "Expression '$originalExpression' - last variable is the default value and should be defined."
 
             final expressionValue = expressions[ 0 .. -2 ].collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: expressions[ -1 ]
             expressionValue
