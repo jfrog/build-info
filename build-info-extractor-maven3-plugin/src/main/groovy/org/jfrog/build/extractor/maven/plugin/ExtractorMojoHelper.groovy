@@ -193,7 +193,7 @@ class ExtractorMojoHelper
             final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
             final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
 
-            assert expressions, "No expressions found in '$originalExpression'"
+            assert expressions, "No variables found in '$originalExpression'"
 
             final variables    = (( expressions.size() == 1 ) ? expressions : expressions[ 0 .. -2 ] )
             final defaultValue = (( expressions.size() == 1 ) ? null        : expressions[ -1 ] )
