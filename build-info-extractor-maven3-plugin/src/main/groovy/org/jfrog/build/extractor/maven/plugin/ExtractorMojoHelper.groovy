@@ -184,11 +184,9 @@ class ExtractorMojoHelper
      * Updates all "{var1|var2|var3}" entries in the value specified to their corresponding environment variables or system properties.
      * Last variable is the fallback (default) value.
      */
-    @Requires({ value })
-    @Ensures ({ result })
-    private String updateValue( String value )
+    String updateValue( String value )
     {
-        if ( ! value.contains( '{' )){ return value.trim() }
+        if ( ! value?.contains( '{' )){ return value?.trim() }
 
         value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
 
