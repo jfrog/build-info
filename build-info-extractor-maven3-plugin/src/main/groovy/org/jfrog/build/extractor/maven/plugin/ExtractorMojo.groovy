@@ -104,6 +104,11 @@ class ExtractorMojo extends GroovyMojo
     @Parameter
     Config.BlackDuck blackDuck = new Config.BlackDuck()
 
+    /**
+     * Helper object, should be initialized last (reads values of other instance fields).
+     */
+    private final ExtractorMojoHelper helper = new ExtractorMojoHelper( this )
+
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
     @Requires({ descriptorReader && repoSystem && session && log })
@@ -114,8 +119,6 @@ class ExtractorMojo extends GroovyMojo
         boolean invokedAlready = (( descriptorReader.artifactResolver instanceof RepositoryResolver ) ||
                                   ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
                                   ( session.request.executionListener instanceof BuildInfoRecorder  ))
-
-        final helper = new ExtractorMojoHelper( this )
 
         if ( invokedAlready   ){ return }
         if ( log.debugEnabled ){ helper.printConfigurations() }
@@ -145,8 +148,8 @@ class ExtractorMojo extends GroovyMojo
     {
         buildInfo.buildTimestamp = session.startTime.time as String
         buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        buildInfo.buildName      = buildInfo.buildName   ?: project.artifactId
-        buildInfo.buildNumber    = buildInfo.buildNumber ?: buildInfo.buildTimestamp
+        buildInfo.buildName      = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
+        buildInfo.buildNumber    = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
     }
 
 
@@ -157,8 +160,8 @@ class ExtractorMojo extends GroovyMojo
     @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
     private void overrideResolutionRepository ()
     {
-        final String artifactoryUrl = resolver.contextUrl
-        final String resolutionRepo = resolver.repoKey
+        final String artifactoryUrl = helper.updateValue( resolver.contextUrl )
+        final String resolutionRepo = helper.updateValue( resolver.repoKey )
 
         if ( artifactoryUrl && resolutionRepo )
         {
