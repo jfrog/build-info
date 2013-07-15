@@ -181,7 +181,7 @@ class ExtractorMojoHelper
 
 
     /**
-     * Updates all "${var}" entries in the value specified to their corresponding environment variables or system properties.
+     * Updates all "${var1|var2|var3}" entries in the value specified to their corresponding environment variables or system properties.
      */
     @Requires({ value })
     @Ensures ({ result })
