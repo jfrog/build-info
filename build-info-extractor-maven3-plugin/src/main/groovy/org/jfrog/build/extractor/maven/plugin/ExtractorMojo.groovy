@@ -29,8 +29,6 @@ import java.text.SimpleDateFormat
 @Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
 class ExtractorMojo extends GroovyMojo
 {
-    private final helper = new ExtractorMojoHelper( this )
-
     /**
      * ---------------------------
      * Container-injected objects
@@ -105,6 +103,11 @@ class ExtractorMojo extends GroovyMojo
 
     @Parameter
     Config.BlackDuck blackDuck = new Config.BlackDuck()
+
+    /**
+     * Helper object, should be initialized last (reads values of other instance fields).
+     */
+    private final ExtractorMojoHelper helper = new ExtractorMojoHelper( this )
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
