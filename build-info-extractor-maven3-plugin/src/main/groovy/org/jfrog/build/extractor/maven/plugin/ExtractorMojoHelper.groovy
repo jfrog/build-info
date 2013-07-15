@@ -117,7 +117,7 @@ class ExtractorMojoHelper
     @Ensures ({ result != null })
     private Properties mergeProperties ()
     {
-        assert prefixPropertyHandlers.values().each { assert it.delegate.props.is( artifactory.delegate.root.props ) }
+        assert prefixPropertyHandlers.values().each { assert it.delegate?.props && it.delegate.props.is( artifactory.delegate.root.props ) }
 
         final mergedProperties = new Properties()
         final deployProperties = ( [ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
