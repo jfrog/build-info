@@ -184,16 +184,13 @@ class ExtractorMojoHelper
      * Updates all "{var1|var2|var3}" entries in the value specified to their corresponding environment variables or system properties.
      * Last variable is the fallback (default) value.
      */
-    @SuppressWarnings([ 'GroovyAssignmentToMethodParameter' ])
     @Requires({ value })
     @Ensures ({ result })
     private String updateValue( String value )
     {
-        value = value.trim()
+        if ( ! value.contains( '{' )){ return value.trim() }
 
-        if ( ! value.with { startsWith( '{' ) && endsWith( '}' ) }) { return value }
-
-        value?.replaceAll( /(\$?\{)([^}]+)(\})/ ){
+        value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
             final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
             final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim()
             assert (( expressions.size() >= 2 ) && ( expressions[ -1 ] )), \
