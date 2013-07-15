@@ -29,6 +29,8 @@ import java.text.SimpleDateFormat
 @Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
 class ExtractorMojo extends GroovyMojo
 {
+    private final helper = new ExtractorMojoHelper( this )
+
     /**
      * ---------------------------
      * Container-injected objects
@@ -115,8 +117,6 @@ class ExtractorMojo extends GroovyMojo
                                   ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
                                   ( session.request.executionListener instanceof BuildInfoRecorder  ))
 
-        final helper = new ExtractorMojoHelper( this )
-
         if ( invokedAlready   ){ return }
         if ( log.debugEnabled ){ helper.printConfigurations() }
 
@@ -145,8 +145,8 @@ class ExtractorMojo extends GroovyMojo
     {
         buildInfo.buildTimestamp = session.startTime.time as String
         buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        buildInfo.buildName      = buildInfo.buildName   ?: project.artifactId
-        buildInfo.buildNumber    = buildInfo.buildNumber ?: buildInfo.buildTimestamp
+        buildInfo.buildName      = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
+        buildInfo.buildNumber    = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
     }
 
 
@@ -157,8 +157,8 @@ class ExtractorMojo extends GroovyMojo
     @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
     private void overrideResolutionRepository ()
     {
-        final String artifactoryUrl = resolver.contextUrl
-        final String resolutionRepo = resolver.repoKey
+        final String artifactoryUrl = helper.updateValue( resolver.contextUrl )
+        final String resolutionRepo = helper.updateValue( resolver.repoKey )
 
         if ( artifactoryUrl && resolutionRepo )
         {
