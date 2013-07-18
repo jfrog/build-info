@@ -29,7 +29,8 @@ class ExtractorMojoHelper
      */
     private final static Map<Class<?>, String> TYPE_DESCRIPTORS = [ ( Boolean ) : 'true/false',
                                                                     ( boolean ) : 'true/false',
-                                                                    ( Number  ) : 'N',
+                                                                    ( Integer ) : 'N',
+                                                                    ( Long    ) : 'N',
                                                                     ( File    ) : 'path/to/file',
                                                                     ( String  ) : ' .. ' ].asImmutable()
 
