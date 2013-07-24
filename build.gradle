@@ -48,7 +48,10 @@ allprojects {
 
     group = 'org.jfrog.buildinfo'
 
-    repositories { jcenter() }
+    repositories {
+        maven { url "http://repo.jfrog.org/artifactory/jfrog-dependencies" }
+        jcenter()
+    }
 }
 
 artifactory {
