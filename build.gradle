@@ -156,7 +156,7 @@ configure(baseProjects()) {
 
     artifactoryPublish {
         properties {
-            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package':'build-info', 'bintray.version': version.toString()
+            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': 'build-info', 'bintray.version': version.toString()
         }
     }
 }
@@ -203,7 +203,7 @@ configure(extractorProjects()) {
                 if (debugJarJar) println "Creating Uber jar $archivePath with:"
                 jarjar(jarfile: archivePath) {
                     zipfileset(src: jar.archivePath)
-                    configurations.uberJar.files.each {jarjarFile ->
+                    configurations.uberJar.files.each { jarjarFile ->
                         if (!jarjarFile.name.endsWith("-sources.jar")) {
                             zipfileset(src: jarjarFile)
                             if (debugJarJar) println "\t$jarjarFile"
@@ -279,7 +279,7 @@ project('build-info-extractor') {
 project('build-info-vcs') {
     description = 'JFrog Build-Info VCS'
     dependencies {
-        compile "com.perforce:p4java:2011.1.297684"
+        compile "com.perforce:p4java:2011.1.297684:unsigned"
     }
 }
 
