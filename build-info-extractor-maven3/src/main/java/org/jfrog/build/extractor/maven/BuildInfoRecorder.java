@@ -107,19 +107,27 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionStarted(ExecutionEvent event) {
-        logger.info("Initializing Artifactory Build-Info Recording");
-        buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
-        deployableArtifactBuilderMap = Maps.newHashMap();
-        matrixParams = Maps.newHashMap();
-        Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
-        for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
-            String key = matrixParamProp.getKey();
-            key = StringUtils.removeStartIgnoreCase(key, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-            matrixParams.put(key, matrixParamProp.getValue());
-        }
+        try
+        {
+            logger.info("Initializing Artifactory Build-Info Recording");
+            buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
+            deployableArtifactBuilderMap = Maps.newHashMap();
+            matrixParams = Maps.newHashMap();
+            Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
+            for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
+                String key = matrixParamProp.getKey();
+                key = StringUtils.removeStartIgnoreCase(key, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
+                matrixParams.put(key, matrixParamProp.getValue());
+            }
 
-        if (wrappedListener != null) {
-            wrappedListener.sessionStarted(event);
+            if (wrappedListener != null) {
+                wrappedListener.sessionStarted(event);
+            }
+        }
+        catch ( Throwable t )
+        {
+            logger.error( "'sessionStarted' listener has failed: ", t );
+            throw new RuntimeException( "'sessionStarted' listener has failed: ", t );
         }
     }
 
@@ -136,7 +144,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (wrappedListener != null) {
                 wrappedListener.sessionEnded(event);
             }
-        } finally {
+        }
+        catch ( Throwable t )
+        {
+            logger.error( "'sessionEnded' listener has failed: ", t );
+            throw new RuntimeException( "'sessionEnded' listener has failed: ", t );
+        }
+        finally {
             String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
             if (StringUtils.isNotBlank(propertyFilePath)) {
                 File file = new File(propertyFilePath);
