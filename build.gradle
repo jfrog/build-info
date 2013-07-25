@@ -382,7 +382,15 @@ project('build-info-extractor-maven3-plugin') {
     clean { delete( 'pom.xml' ) }
 
     task pluginDescriptor( type: Exec ) {
-        commandLine 'mvn', '-e', '-B', 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'
+        // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
+
+        final mvn     = project.hasProperty( 'mvn'     ) ? project.mvn     : 'mvn'
+        final mvnArgs = project.hasProperty( 'mvnArgs' ) ? project.mvnArgs : ''
+        final allArgs = [ '-e', '-B', '-q', mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor' ].grep()
+
+        executable mvn
+        args       allArgs
+
         doFirst {
             assert project.compileGroovy.destinationDir.directory
             final File pom = project.file( 'pom.xml' )
@@ -391,7 +399,7 @@ project('build-info-extractor-maven3-plugin') {
             println "POM file:$pom.canonicalPath is created"
 
             final buildDirName   = project.buildDir.name
-            final classesDirName = project.compileGroovy.destinationDir.canonicalPath.replace( '\\', '/' ) - 
+            final classesDirName = project.compileGroovy.destinationDir.canonicalPath.replace( '\\', '/' ) -
                                    "${ project.buildDir.canonicalPath.replace( '\\', '/' ) }/"
 
             println "classesDirName = [$classesDirName]"
@@ -406,6 +414,8 @@ project('build-info-extractor-maven3-plugin') {
                                                                    |    <directory>\${project.basedir}/$buildDirName</directory>
                                                                    |    <outputDirectory>\${project.build.directory}/$classesDirName</outputDirectory>
                                                                    |  </build>""".stripMargin().trim())
+
+            println "Running '$mvn' with arguments $allArgs"
         }
         doLast {
             final  pluginDescriptor = new File(( File ) project.compileGroovy.destinationDir, 'META-INF/maven/plugin.xml' )
