@@ -386,7 +386,7 @@ project('build-info-extractor-maven3-plugin') {
     clean { delete( 'pom.xml' ) }
 
     task pluginDescriptor( type: Exec ) {
-        commandLine 'mvn', '-e', '-B', 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'
+        commandLine 'mvn', '-e', '-B', '-Prjo','org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'
         doFirst {
             assert project.compileGroovy.destinationDir.directory
             final File pom = project.file( 'pom.xml' )
