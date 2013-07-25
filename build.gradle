@@ -391,7 +391,10 @@ project('build-info-extractor-maven3-plugin') {
             println "POM file:$pom.canonicalPath is created"
 
             final buildDirName   = project.buildDir.name
-            final classesDirName = project.compileGroovy.destinationDir.canonicalPath - "${ project.buildDir.canonicalPath }/"
+            final classesDirName = project.compileGroovy.destinationDir.canonicalPath.replace( '\\', '/' ) - 
+                                   "${ project.buildDir.canonicalPath.replace( '\\', '/' ) }/"
+
+            println "classesDirName = [$classesDirName]"
 
             pom.text = pom.text.
                 replace( '<groupId>unknown</groupId>',             "<groupId>${project.group}</groupId>" ).
