@@ -42,6 +42,8 @@ import org.apache.tools.ant.filters.ReplaceTokens
 project.version = '2'
 project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
 
+defaultTasks 'clean', 'build', 'install'
+
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'artifactory'
@@ -346,10 +348,81 @@ project('build-info-extractor-maven3') {
     dependencies {
         compile group: 'org.jdom', name: 'jdom', version: '1.1.1'
         provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
-                "org.apache.maven:maven-core:3.0.2"
+                "org.apache.maven:maven-core:3.0.5"
         testCompile "org.easymock:easymockclassextension:2.5.2"
     }
     configure(install.repositories.mavenInstaller) {
+        pom.project {
+            issueManagement {
+                system 'jira'
+                url 'http://issues.jfrog.org/jira/browse/MAP'
+            }
+        }
+    }
+}
+
+project('build-info-extractor-maven3-plugin') {
+
+    apply plugin: 'groovy'
+    description = 'JFrog Build-Info Maven 3 Plugin'
+
+    dependencies {
+        compile  project( ':build-info-api' ),
+                 'org.codehaus.groovy:groovy-all:2.1.5',
+                 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.2',
+                 'org.gcontracts:gcontracts-core:1.2.12',
+                 'org.sonatype.aether:aether-impl:1.13.1',
+                 'org.sonatype.aether:aether-util:1.13.1',
+                 'org.codehaus.plexus:plexus-utils:3.0.10',
+                 'org.apache.ant:ant:1.9.1'
+
+        compile ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
+        compile ( 'org.codehaus.gmaven:gmaven-mojo:1.5'    ) { exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal' }
+
+        provided 'org.apache.maven:maven-core:3.0.5',
+                 'org.apache.maven:maven-project:2.0.11'
+    }
+
+    clean { delete( 'pom.xml' ) }
+
+    task pluginDescriptor( type: Exec ) {
+        commandLine 'mvn', '-e', '-B', 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'
+        doFirst {
+            assert project.compileGroovy.destinationDir.directory
+            final File pom = project.file( 'pom.xml' )
+            install.repositories.mavenInstaller.pom.writeTo( pom )
+            assert pom.file, "[$pom.canonicalPath] was not created"
+            println "POM file:$pom.canonicalPath is created"
+
+            final buildDirName   = project.buildDir.name
+            final classesDirName = project.compileGroovy.destinationDir.canonicalPath - "${ project.buildDir.canonicalPath }/"
+
+            pom.text = pom.text.
+                replace( '<groupId>unknown</groupId>',             "<groupId>${project.group}</groupId>" ).
+                replace( '<artifactId>empty-project</artifactId>', "<artifactId>${project.name}</artifactId>" ).
+                replace( '<version>0</version>',                   """
+                                                                   |<version>${version}</version>
+                                                                   |  <packaging>maven-plugin</packaging>
+                                                                   |  <build>
+                                                                   |    <directory>\${project.basedir}/$buildDirName</directory>
+                                                                   |    <outputDirectory>\${project.build.directory}/$classesDirName</outputDirectory>
+                                                                   |  </build>""".stripMargin().trim())
+        }
+        doLast {
+            final  pluginDescriptor = new File(( File ) project.compileGroovy.destinationDir, 'META-INF/maven/plugin.xml' )
+            assert pluginDescriptor.file, "[$pluginDescriptor.canonicalPath] was not created"
+            println "Plugin descriptor file:$pluginDescriptor.canonicalPath is created"
+        }
+    }
+
+    /**
+     * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
+     */
+    final otherSubProjects = project.rootProject.subprojects.findAll{ ( it.hasProperty( 'install' )) && ( it.name != project.name ) }
+    otherSubProjects.each { project.jar.dependsOn( it.install )}
+    project.jar.dependsOn( pluginDescriptor )
+
+    configure( install.repositories.mavenInstaller ) {
         pom.project {
             issueManagement {
                 system 'jira'
@@ -373,7 +446,16 @@ idea {
             }
         }
     }
+
+    module {
+        excludeDirs += file( 'out' )
+        iml.withXml {
+            provider ->
+            provider.node.component.first().appendNode( 'orderEntry', [ type : 'library', name : 'Groovy', level: 'application' ])
+        }
+    }
 }
+
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
