@@ -59,10 +59,10 @@ public class BuildDeploymentHelper {
         try {
             if (StringUtils.isNotBlank(outputFile)) {
                 logger.info("Artifactory Build Info Recorder: Saving build info to " + outputFile);
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile));
+                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(outputFile).getCanonicalFile());
             } else {
                 File buildInfo = new File(basedir, "target/build-info.json");
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfo);
+                BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfo.getCanonicalFile());
             }
         } catch (IOException e) {
             throw new RuntimeException("Error occurred while persisting Build Info to file.", e);
