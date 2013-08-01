@@ -137,8 +137,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             Build build = extract(event);
             if (build != null) {
                 File basedir = event.getSession().getTopLevelProject().getBasedir();
-                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,
-                        basedir);
+                conf.persistToPropertiesFile();
+                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,basedir);
             }
             deployableArtifactBuilderMap.clear();
             if (wrappedListener != null) {

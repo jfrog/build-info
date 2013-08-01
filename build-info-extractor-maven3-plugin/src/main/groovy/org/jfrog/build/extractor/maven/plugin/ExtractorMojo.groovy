@@ -70,9 +70,6 @@ class ExtractorMojo extends GroovyMojo
     String deployGoals = 'deploy,maven-deploy-plugin'
 
     @Parameter
-    boolean writeProperties = false
-
-    @Parameter
     boolean pomPropertiesPriority = false
 
     @Parameter

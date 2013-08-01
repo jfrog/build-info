@@ -96,12 +96,12 @@ class ExtractorMojoHelper
         final  mergedProperties = mergeProperties()
         assert mergedProperties
 
-        final propertiesFile = writeProperties ? new File( mojo.project.basedir, 'buildInfo.properties' ) :
-                                                 File.createTempFile( 'buildInfo', '.properties' )
+        final propertiesFile = artifactory.propertiesFile ? new File( mojo.project.basedir, artifactory.propertiesFile ) :
+                                                            File.createTempFile( 'buildInfo', '.properties' )
 
         mergedProperties[ BuildInfoConfigProperties.PROP_PROPS_FILE ] = propertiesFile.canonicalPath
         propertiesFile.withWriter { Writer w -> mergedProperties.store( w, 'Build Info Properties' )}
-        if ( ! writeProperties ){ propertiesFile.deleteOnExit() }
+        if ( ! artifactory.propertiesFile ){ propertiesFile.deleteOnExit() }
 
         log.info( "Merged properties file:${ propertiesFile.canonicalPath } created" )
         System.setProperty( BuildInfoConfigProperties.PROP_PROPS_FILE, propertiesFile.canonicalPath )
