@@ -92,6 +92,9 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
+        if ( StringUtils.isEmpty( getPropertiesFile())) {
+            return;
+        }
         Predicate<String> nonNullPredicate = new Predicate<String>() {
             @Override
             public boolean apply(String input) {
@@ -103,7 +106,7 @@ public class ArtifactoryClientConfiguration {
         props.putAll(Maps.filterValues(rootConfig.props, nonNullPredicate));
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(new File(getPropertiesFile()));
+            fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile());
             props.store(fos, "BuildInfo configuration property file");
         } catch (IOException e) {
             throw new RuntimeException(e);
