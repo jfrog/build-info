@@ -73,7 +73,7 @@ public class BuildDeploymentHelper {
         logger.info( "Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
 
         try {
-            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile);
+            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile.getCanonicalFile());
         } catch ( IOException e ) {
             throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
         }
