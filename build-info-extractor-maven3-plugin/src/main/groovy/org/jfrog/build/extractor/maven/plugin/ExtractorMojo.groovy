@@ -15,6 +15,7 @@ import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
 import org.codehaus.gmaven.mojo.GroovyMojo
 import org.gcontracts.annotations.Requires
+import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import org.sonatype.aether.RepositorySystem
@@ -160,7 +161,7 @@ class ExtractorMojo extends GroovyMojo
     @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
     private void overrideResolutionRepository ()
     {
-        final String artifactoryUrl = helper.updateValue( resolver.contextUrl )
+        final String artifactoryUrl = helper.updateValue( resolver.getStringValue( ClientConfigurationFields.CONTEXT_URL )) // Bypassing empty value validator
         final String resolutionRepo = helper.updateValue( resolver.repoKey )
 
         if ( artifactoryUrl && resolutionRepo )
