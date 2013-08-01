@@ -384,9 +384,9 @@ project('build-info-extractor-maven3-plugin') {
     task pluginDescriptor( type: Exec ) {
         // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
 
-        final mvn     = project.hasProperty( 'mvn'     ) ? project.mvn     : 'mvn'
+        final mvn     = project.hasProperty( 'mvn'     ) ? project.mvn     : System.getProperty( 'os.name' )?.toLowerCase()?.contains( 'win' ) ? 'mvn.bat' : 'mvn'
         final mvnArgs = project.hasProperty( 'mvnArgs' ) ? project.mvnArgs : ''
-        final allArgs = [ '-e', '-B', '-q', mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor' ].grep()
+        final allArgs = [ '-e', '-B', mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor' ].grep()
 
         executable mvn
         args       allArgs
