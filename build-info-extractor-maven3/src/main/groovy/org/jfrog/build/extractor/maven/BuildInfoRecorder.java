@@ -126,7 +126,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         catch ( Throwable t )
         {
-            String message = "'" + getClass().getName() + ".sessionStarted()' listener has failed: ";
+            String message = getClass().getName() + ".sessionStarted() listener has failed: ";
             logger.error( message, t );
             throw new RuntimeException( message, t );
         }
@@ -148,7 +148,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         catch ( Throwable t )
         {
-            String message = "'" + getClass().getName() + ".sessionEnded()' listener has failed: ";
+            String message = getClass().getName() + ".sessionEnded() listener has failed: ";
             logger.error( message, t );
             throw new RuntimeException( message, t );
         }
