@@ -1,13 +1,14 @@
 package org.jfrog.build.extractor.maven.plugin
 
+import org.eclipse.aether.repository.RepositoryPolicy
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
-import org.sonatype.aether.RepositorySystemSession
-import org.sonatype.aether.impl.ArtifactResolver
-import org.sonatype.aether.repository.RemoteRepository
-import org.sonatype.aether.resolution.ArtifactRequest
-import org.sonatype.aether.resolution.ArtifactResolutionException
-import org.sonatype.aether.resolution.ArtifactResult
+import org.eclipse.aether.RepositorySystemSession
+import org.eclipse.aether.impl.ArtifactResolver
+import org.eclipse.aether.repository.RemoteRepository
+import org.eclipse.aether.resolution.ArtifactRequest
+import org.eclipse.aether.resolution.ArtifactResolutionException
+import org.eclipse.aether.resolution.ArtifactResult
 
 
 /**
@@ -20,13 +21,15 @@ class RepositoryResolver implements ArtifactResolver
     private final List<RemoteRepository> remoteRepositories
 
 
+    @SuppressWarnings([ 'JavaStylePropertiesInvocation', 'GroovySetterCallCanBePropertyAccess' ])
     @Requires({ delegateResolver && remoteRepository })
     @Ensures ({ this.delegateResolver && this.remoteRepositories })
     RepositoryResolver ( ArtifactResolver delegateResolver, String remoteRepository )
     {
-        final repository = new RemoteRepository( remoteRepository, 'default', remoteRepository )
-        repository.setPolicy( true,  null )
-        repository.setPolicy( false, null )
+        final repository = new RemoteRepository.Builder( remoteRepository, 'default', remoteRepository ).
+                           setReleasePolicy ( new RepositoryPolicy( true, null, null )).
+                           setSnapshotPolicy( new RepositoryPolicy( true, null, null )).
+                           build()
 
         this.delegateResolver   = delegateResolver
         this.remoteRepositories = [ repository ].asImmutable()

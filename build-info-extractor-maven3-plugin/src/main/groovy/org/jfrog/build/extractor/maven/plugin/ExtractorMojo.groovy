@@ -18,9 +18,9 @@ import org.gcontracts.annotations.Requires
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
-import org.sonatype.aether.RepositorySystem
-import org.sonatype.aether.impl.ArtifactDescriptorReader
-import org.sonatype.aether.impl.internal.DefaultRepositorySystem
+import org.eclipse.aether.RepositorySystem
+import org.eclipse.aether.impl.ArtifactDescriptorReader
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem
 import java.text.SimpleDateFormat
 
 
