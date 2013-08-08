@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.maven.plugin
 
+import org.apache.maven.Maven
 import org.jfrog.build.api.BuildInfoFields
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
@@ -47,6 +48,24 @@ class ExtractorMojoHelper
                                  findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
                                  inject( [:] ) { Map m, Field f -> m[ f.name ] = mojo."${ f.name }"; m }).
                                  asImmutable()
+    }
+
+
+    /**
+     * Retrieves current Maven version.
+     */
+    @Ensures ({ result })
+    String mavenVersion()
+    {
+        final  resourceLocation = 'META-INF/maven/org.apache.maven/maven-core/pom.properties'
+        final  resourceStream   = Maven.classLoader.getResourceAsStream( resourceLocation )
+        assert resourceStream, "Failed to load '$resourceLocation'"
+
+        final properties = new Properties()
+        properties.load( resourceStream )
+        resourceStream.close()
+
+        properties[ 'version' ] ?: 'Unknown'
     }
 
 
