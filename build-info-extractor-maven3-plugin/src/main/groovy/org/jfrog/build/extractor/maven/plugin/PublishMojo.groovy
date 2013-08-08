@@ -27,8 +27,8 @@ import java.text.SimpleDateFormat
 /**
  * Artifactory plugin creating and deploying JSON build data together with build artifacts.
  */
-@Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
-class ExtractorMojo extends GroovyMojo
+@Mojo ( name = 'publish', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
+class PublishMojo extends GroovyMojo
 {
     /**
      * ---------------------------
@@ -105,7 +105,7 @@ class ExtractorMojo extends GroovyMojo
     /**
      * Helper object, should be initialized last (reads values of other instance fields).
      */
-    private final ExtractorMojoHelper helper = new ExtractorMojoHelper( this )
+    private final PublishMojoHelper helper = new PublishMojoHelper( this )
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])

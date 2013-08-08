@@ -361,7 +361,9 @@ project('build-info-extractor-maven3') {
     }
 }
 
-project('maven-artifactory-plugin') {
+project('artifactory-maven-plugin') {
+
+    Project p ->
 
     apply plugin: 'groovy'
     description = 'JFrog Build-Info Maven 3 Plugin'
@@ -431,9 +433,9 @@ project('maven-artifactory-plugin') {
     /**
      * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
      */
-    final otherSubProjects = project.rootProject.subprojects.findAll{ ( it.hasProperty( 'install' )) && ( it.name != project.name ) }
-    otherSubProjects.each { project.jar.dependsOn( it.install )}
-    project.jar.dependsOn( pluginDescriptor )
+    p.rootProject.subprojects.findAll{ it.hasProperty( 'install' ) && ( it.name != p.name ) }.
+                              each   { pluginDescriptor.dependsOn( it.install )}
+    p.jar.dependsOn( pluginDescriptor )
 
     configure( install.repositories.mavenInstaller ) {
         pom.project {

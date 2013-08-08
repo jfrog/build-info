@@ -13,10 +13,10 @@ import java.lang.reflect.Method
 /**
  * Helper merging all mojo properties.
  */
-class ExtractorMojoHelper
+class PublishMojoHelper
 {
     @Delegate
-    private final ExtractorMojo mojo
+    private final PublishMojo mojo
 
     private final Properties systemProperties
 
@@ -35,11 +35,9 @@ class ExtractorMojoHelper
                                                                     ( File    ) : 'path/to/file',
                                                                     ( String  ) : ' .. ' ].asImmutable()
 
-
-    @SuppressWarnings([ 'GrFinalVariableAccess' ])
     @Requires({ mojo })
     @Ensures ({ this.mojo && ( this.systemProperties != null ) && prefixPropertyHandlers })
-    ExtractorMojoHelper ( ExtractorMojo mojo )
+    PublishMojoHelper ( PublishMojo mojo )
     {
         this.mojo              = mojo
         final systemProperty   = System.getProperty( BuildInfoConfigProperties.PROP_PROPS_FILE )

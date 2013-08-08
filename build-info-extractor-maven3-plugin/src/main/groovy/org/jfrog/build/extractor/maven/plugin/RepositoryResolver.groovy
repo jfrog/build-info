@@ -14,7 +14,6 @@ import org.eclipse.aether.resolution.ArtifactResult
 /**
  * {@link ArtifactResolver} implementation using remote repository specified for all resolution requests.
  */
-@SuppressWarnings([ 'GrFinalVariableAccess' ])
 class RepositoryResolver implements ArtifactResolver
 {
     private final ArtifactResolver       delegateResolver

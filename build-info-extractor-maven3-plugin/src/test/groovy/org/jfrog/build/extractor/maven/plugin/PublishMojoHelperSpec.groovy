@@ -5,11 +5,11 @@ import spock.lang.Unroll
 
 
 /**
- * {@link ExtractorMojoHelper} specs.
+ * {@link PublishMojoHelper} specs.
  */
-class ExtractorMojoHelperSpec extends Specification
+class PublishMojoHelperSpec extends Specification
 {
-    final helper = new ExtractorMojoHelper( new ExtractorMojo())
+    final helper = new PublishMojoHelper( new PublishMojo())
 
 
     @Unroll( "'#expression' => '#expected'" )
