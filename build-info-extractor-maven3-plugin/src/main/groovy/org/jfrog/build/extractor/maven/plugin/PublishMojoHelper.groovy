@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.maven.plugin
 
+import org.apache.maven.Maven
 import org.jfrog.build.api.BuildInfoFields
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
@@ -12,10 +13,10 @@ import java.lang.reflect.Method
 /**
  * Helper merging all mojo properties.
  */
-class ExtractorMojoHelper
+class PublishMojoHelper
 {
     @Delegate
-    private final ExtractorMojo mojo
+    private final PublishMojo mojo
 
     private final Properties systemProperties
 
@@ -34,11 +35,9 @@ class ExtractorMojoHelper
                                                                     ( File    ) : 'path/to/file',
                                                                     ( String  ) : ' .. ' ].asImmutable()
 
-
-    @SuppressWarnings([ 'GrFinalVariableAccess' ])
     @Requires({ mojo })
     @Ensures ({ this.mojo && ( this.systemProperties != null ) && prefixPropertyHandlers })
-    ExtractorMojoHelper ( ExtractorMojo mojo )
+    PublishMojoHelper ( PublishMojo mojo )
     {
         this.mojo              = mojo
         final systemProperty   = System.getProperty( BuildInfoConfigProperties.PROP_PROPS_FILE )
@@ -47,6 +46,24 @@ class ExtractorMojoHelper
                                  findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
                                  inject( [:] ) { Map m, Field f -> m[ f.name ] = mojo."${ f.name }"; m }).
                                  asImmutable()
+    }
+
+
+    /**
+     * Retrieves current Maven version.
+     */
+    @Ensures ({ result })
+    String mavenVersion()
+    {
+        final  resourceLocation = 'META-INF/maven/org.apache.maven/maven-core/pom.properties'
+        final  resourceStream   = Maven.classLoader.getResourceAsStream( resourceLocation )
+        assert resourceStream, "Failed to load '$resourceLocation'"
+
+        final properties = new Properties()
+        properties.load( resourceStream )
+        resourceStream.close()
+
+        properties[ 'version' ] ?: 'Unknown'
     }
 
 
@@ -121,10 +138,10 @@ class ExtractorMojoHelper
         assert prefixPropertyHandlers.values().each { assert it.delegate?.props && it.delegate.props.is( artifactory.delegate.root.props ) }
 
         final mergedProperties = new Properties()
-        final deployProperties = ( [ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
-                                     ( BuildInfoFields.BUILD_NAME      ) : buildInfo.buildName,
-                                     ( BuildInfoFields.BUILD_NUMBER    ) : buildInfo.buildNumber ] +
-                                   readProperties( deployProperties )).collectEntries {
+        final deployProperties = ([ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
+                                    ( BuildInfoFields.BUILD_NAME      ) : buildInfo.buildName,
+                                    ( BuildInfoFields.BUILD_NUMBER    ) : buildInfo.buildNumber ] +
+                                  deployProperties ).collectEntries {
             String key, String value -> [ "${ ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX }${ key }".toString(), value ]
         }
 
@@ -189,19 +206,20 @@ class ExtractorMojoHelper
     {
         if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
 
-        value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
+        value.trim().replaceAll( /(\{([^}]*)\})/ ){
 
-            final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
-            final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
+            final original    = it[ 1 ]
+            final expressions = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
 
-            assert originalExpression, "Unexpected original expression of '$value' - '$originalExpression'"
-            assert expressions,        "Value '$value' - no variables found in expression '$originalExpression'"
+            if ( ! expressions ){ return original }
 
-            final variables    = (( expressions.size() == 1 ) ? expressions : expressions[ 0 .. -2 ] )
-            final defaultValue = (( expressions.size() == 1 ) ? null        : expressions[ -1 ] )
-            final result       = variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
+            final lastValue    = expressions[ -1 ]
+            final defaultValue = lastValue.with { startsWith( '"' ) && endsWith( '"' ) } ? lastValue.substring( 1, lastValue.size() - 1 ) : null
+            final variables    = ( defaultValue != null ) ? (( expressions.size() > 1 ) ? expressions[ 0 .. -2 ] : [] ) :
+                                                            expressions
 
-            result ?: originalExpression
+            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?:
+            ( defaultValue != null ) ? defaultValue : original
         }
     }
 }

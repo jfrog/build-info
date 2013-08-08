@@ -139,6 +139,10 @@ public class ArtifactoryClientConfiguration {
         root.setIntegerValue(PROP_TIMEOUT, timeout);
     }
 
+    public void setTimeoutSec(Integer timeout) {
+        setTimeout(timeout);
+    }
+
     public Integer getTimeout() {
         return root.getIntegerValue(PROP_TIMEOUT);
     }
@@ -882,6 +886,10 @@ public class ArtifactoryClientConfiguration {
 
         public Boolean isDeleteBuildArtifacts() {
             return getBooleanValue(DELETE_BUILD_ARTIFACTS, true);
+        }
+
+        public void setBuildRetentionMaxDays(Integer daysToKeep) {
+            setBuildRetentionDays(daysToKeep);
         }
 
         public void setBuildRetentionDays(Integer daysToKeep) {
