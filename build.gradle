@@ -368,7 +368,6 @@ project('build-info-extractor-maven3-plugin') {
 
     dependencies {
         compile  project( ':build-info-api' ),
-                 'org.codehaus.groovy:groovy-all:2.1.6',
                  'org.apache.maven.plugin-tools:maven-plugin-annotations:3.2',
                  'org.gcontracts:gcontracts-core:1.2.12',
                  'org.eclipse.aether:aether-impl:0.9.0.M3',
@@ -379,8 +378,9 @@ project('build-info-extractor-maven3-plugin') {
         compile ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
         compile ( 'org.codehaus.gmaven:gmaven-mojo:1.5'    ) { exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal' }
 
-        provided 'org.apache.maven:maven-core:3.1.0',
-                 'org.apache.maven:maven-project:2.0.11'
+        testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+        provided    'org.apache.maven:maven-core:3.1.0',
+                    'org.apache.maven:maven-project:2.0.11'
     }
 
     clean { delete( 'pom.xml' ) }

@@ -189,19 +189,19 @@ class ExtractorMojoHelper
     {
         if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
 
-        value.trim().replaceAll( /(\$?\{)([^}]+)(\})/ ){
+        value.trim().replaceAll( /\{([^}]*)\}/ ){
 
-            final originalExpression = "${ it[ 1 ] }${ it[ 2 ] }${ it[ 3 ] }"
-            final expressions        = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
+            final expressions  = (( String ) it[ 1 ] ).tokenize( '|' )*.trim().grep()
 
-            assert originalExpression, "Unexpected original expression of '$value' - '$originalExpression'"
-            assert expressions,        "Value '$value' - no variables found in expression '$originalExpression'"
+            if ( ! expressions ){ return null }
 
-            final variables    = (( expressions.size() == 1 ) ? expressions : expressions[ 0 .. -2 ] )
-            final defaultValue = (( expressions.size() == 1 ) ? null        : expressions[ -1 ] )
-            final result       = variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
 
-            result ?: originalExpression
+            final lastValue    = expressions[ -1 ]
+            final defaultValue = lastValue.with { startsWith( '"' ) && endsWith( '"' ) } ? lastValue.substring( 1, lastValue.size() - 1 ) : null
+            final variables    = ( defaultValue != null ) ? (( expressions.size() > 1 ) ? expressions[ 0 .. -2 ] : [] ) :
+                                                            expressions
+
+            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
         }
     }
 }
