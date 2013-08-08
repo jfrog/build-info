@@ -361,7 +361,7 @@ project('build-info-extractor-maven3') {
     }
 }
 
-project('build-info-extractor-maven3-plugin') {
+project('maven-artifactory-plugin') {
 
     apply plugin: 'groovy'
     description = 'JFrog Build-Info Maven 3 Plugin'
