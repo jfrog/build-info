@@ -14,13 +14,14 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
 import org.codehaus.gmaven.mojo.GroovyMojo
-import org.gcontracts.annotations.Requires
-import org.jfrog.build.client.ClientConfigurationFields
-import org.jfrog.build.extractor.maven.BuildInfoRecorder
-import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import org.eclipse.aether.RepositorySystem
 import org.eclipse.aether.impl.ArtifactDescriptorReader
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem
+import org.gcontracts.annotations.Requires
+import org.jfrog.build.api.BuildInfoProperties
+import org.jfrog.build.client.ClientConfigurationFields
+import org.jfrog.build.extractor.maven.BuildInfoRecorder
+import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import java.text.SimpleDateFormat
 
 
@@ -122,7 +123,7 @@ class PublishMojo extends GroovyMojo
         if ( log.debugEnabled ){ helper.printConfigurations() }
 
         skipDefaultDeploy()
-        updateBuildInfo()
+        completeConfig()
         helper.createPropertiesFile()
         overrideResolutionRepository()
         recordBuildInfo()
@@ -139,10 +140,11 @@ class PublishMojo extends GroovyMojo
 
 
     /**
-     * Updates {@link #buildInfo} fields.
+     * Completes various configuration settings.
      */
+    @SuppressWarnings([ 'GroovyAccessibility' ])
     @Requires({ buildInfo && session && project })
-    private void updateBuildInfo ()
+    private void completeConfig ()
     {
         buildInfo.buildTimestamp    = session.startTime.time as String
         buildInfo.buildStarted      = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
@@ -150,6 +152,7 @@ class PublishMojo extends GroovyMojo
         buildInfo.buildNumber       = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
         buildInfo.buildAgentName    = 'Maven'
         buildInfo.buildAgentVersion = helper.mavenVersion()
+        blackDuck.runChecks         = blackDuck.delegate.props.keySet().any { it.startsWith( BuildInfoProperties.BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX )}
     }
 
 
