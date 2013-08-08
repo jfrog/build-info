@@ -867,6 +867,10 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(DELETE_BUILD_ARTIFACTS, true);
         }
 
+        public void setBuildRetentionMaxDays(Integer daysToKeep) {
+            setBuildRetentionDays(daysToKeep);
+        }
+
         public void setBuildRetentionDays(Integer daysToKeep) {
             setIntegerValue(BUILD_RETENTION_DAYS, daysToKeep);
         }
