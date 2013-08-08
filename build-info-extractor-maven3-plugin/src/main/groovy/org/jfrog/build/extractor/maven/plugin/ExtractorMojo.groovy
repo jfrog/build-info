@@ -73,7 +73,7 @@ class ExtractorMojo extends GroovyMojo
     boolean pomPropertiesPriority = false
 
     @Parameter
-    String deployProperties
+    Map<String, String> deployProperties = [:]
 
     /**
      * ----------------

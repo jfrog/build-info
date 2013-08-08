@@ -121,10 +121,10 @@ class ExtractorMojoHelper
         assert prefixPropertyHandlers.values().each { assert it.delegate?.props && it.delegate.props.is( artifactory.delegate.root.props ) }
 
         final mergedProperties = new Properties()
-        final deployProperties = ( [ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
-                                     ( BuildInfoFields.BUILD_NAME      ) : buildInfo.buildName,
-                                     ( BuildInfoFields.BUILD_NUMBER    ) : buildInfo.buildNumber ] +
-                                   readProperties( deployProperties )).collectEntries {
+        final deployProperties = ([ ( BuildInfoFields.BUILD_TIMESTAMP ) : buildInfo.buildTimestamp,
+                                    ( BuildInfoFields.BUILD_NAME      ) : buildInfo.buildName,
+                                    ( BuildInfoFields.BUILD_NUMBER    ) : buildInfo.buildNumber ] +
+                                  deployProperties ).collectEntries {
             String key, String value -> [ "${ ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX }${ key }".toString(), value ]
         }
 
@@ -189,19 +189,20 @@ class ExtractorMojoHelper
     {
         if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
 
-        value.trim().replaceAll( /\{([^}]*)\}/ ){
+        value.trim().replaceAll( /(\{([^}]*)\})/ ){
 
-            final expressions  = (( String ) it[ 1 ] ).tokenize( '|' )*.trim().grep()
+            final original    = it[ 1 ]
+            final expressions = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
 
-            if ( ! expressions ){ return null }
-
+            if ( ! expressions ){ return original }
 
             final lastValue    = expressions[ -1 ]
             final defaultValue = lastValue.with { startsWith( '"' ) && endsWith( '"' ) } ? lastValue.substring( 1, lastValue.size() - 1 ) : null
             final variables    = ( defaultValue != null ) ? (( expressions.size() > 1 ) ? expressions[ 0 .. -2 ] : [] ) :
                                                             expressions
 
-            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
+            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?:
+            ( defaultValue != null ) ? defaultValue : original
         }
     }
 }
