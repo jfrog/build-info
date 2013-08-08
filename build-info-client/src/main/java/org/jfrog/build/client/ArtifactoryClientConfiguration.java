@@ -142,6 +142,10 @@ public class ArtifactoryClientConfiguration {
         root.setIntegerValue(PROP_TIMEOUT, timeout);
     }
 
+    public void setTimeoutSec(Integer timeout) {
+        setTimeout(timeout);
+    }
+
     public Integer getTimeout() {
         return root.getIntegerValue(PROP_TIMEOUT);
     }
