@@ -205,21 +205,26 @@ class PublishMojoHelper
     String updateValue( String value )
     {
         if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
+        final isQuoted = { String s -> s.with { startsWith( '"' ) && endsWith( '"' ) }}
+        final unquote  = { String s -> s.substring( 1, s.size() - 1 )}
+        final result   = value.trim().replaceAll( /\{([^}]*)\}/ ){
 
-        value.trim().replaceAll( /(\{([^}]*)\})/ ){
+            final String expression = it[ 1 ]
 
-            final original    = it[ 1 ]
-            final expressions = (( String ) it[ 2 ] ).tokenize( '|' )*.trim().grep()
+            if ( isQuoted( expression )) { return "{${ unquote( expression )}}" }
 
-            if ( ! expressions ){ return original }
+            final expressions  = expression.tokenize( '|' )*.trim().grep()
+
+            if ( ! expressions ){ return null }
 
             final lastValue    = expressions[ -1 ]
-            final defaultValue = lastValue.with { startsWith( '"' ) && endsWith( '"' ) } ? lastValue.substring( 1, lastValue.size() - 1 ) : null
+            final defaultValue = isQuoted( lastValue )    ? unquote( lastValue ) : null
             final variables    = ( defaultValue != null ) ? (( expressions.size() > 1 ) ? expressions[ 0 .. -2 ] : [] ) :
                                                             expressions
 
-            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?:
-            ( defaultValue != null ) ? defaultValue : original
+            variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
         }
+
+        ( result == 'null' ) ? null : result
     }
 }
