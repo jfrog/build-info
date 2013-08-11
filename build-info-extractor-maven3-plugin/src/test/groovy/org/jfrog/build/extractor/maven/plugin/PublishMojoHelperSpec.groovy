@@ -20,16 +20,24 @@ class PublishMojoHelperSpec extends Specification
 
         where:
         expression                 | expected
-        '{}'                       | '{}'
-        '{""}'                     | ''
-        '{"abc"}'                  | 'abc'
-        '{}{""}'                   | '{}'
-        '{""}{}'                   | '{}'
-        '{"abc"}def{""}'           | 'abcdef'
-        '{"abc"}def{"zzz"}'        | 'abcdefzzz'
+        '{}'                       | null
+        '{""}'                     | '{}'
+        '{"abc"}'                  | '{abc}'
+        '{abc}'                    | null
+        '{"abc|def"}'              | '{abc|def}'
+        '{}{""}'                   | 'null{}'
+        '{""}{}'                   | '{}null'
+        '{"abc"}def{""}'           | '{abc}def{}'
+        '{"abc"}def{"zzz"}'        | '{abc}def{zzz}'
+        '{"abc"}def{"zzz|uuu"}'    | '{abc}def{zzz|uuu}'
+        '{"abc|xxx"}def{"zzz|uuu"}'| '{abc|xxx}def{zzz|uuu}'
         '{A|B|C|"def"}'            | 'def'
-        '{A|B|C|def}'              | '{A|B|C|def}'
-        '{JAVA_HOME2|EDITOR2}'     | '{JAVA_HOME2|EDITOR2}'
+        '{A|B|C|def}'              | null
+        '{A|B}_{D|E}'              | 'null_null'
+        '{A|B}_{D|E|"f"}'          | 'null_f'
+        '{A|B|"c"}_{D|E}'          | 'c_null'
+        '{A|B|"c"}_{D|E|"ee"}'     | 'c_ee'
+        '{JAVA_HOME2|EDITOR2}'     | null
         '{JAVA_HOME2|EDITOR2|""}'  | ''
         '{JAVA_HOME2|EDITOR2|"a"}' | 'a'
         '{A|EDITOR2|B|"aa"}'       | 'aa'
