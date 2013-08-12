@@ -14,21 +14,22 @@ import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
 import org.codehaus.gmaven.mojo.GroovyMojo
+import org.eclipse.aether.RepositorySystem
+import org.eclipse.aether.impl.ArtifactDescriptorReader
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem
 import org.gcontracts.annotations.Requires
+import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
-import org.sonatype.aether.RepositorySystem
-import org.sonatype.aether.impl.ArtifactDescriptorReader
-import org.sonatype.aether.impl.internal.DefaultRepositorySystem
 import java.text.SimpleDateFormat
 
 
 /**
  * Artifactory plugin creating and deploying JSON build data together with build artifacts.
  */
-@Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
-class ExtractorMojo extends GroovyMojo
+@Mojo ( name = 'publish', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
+class PublishMojo extends GroovyMojo
 {
     /**
      * ---------------------------
@@ -73,7 +74,7 @@ class ExtractorMojo extends GroovyMojo
     boolean pomPropertiesPriority = false
 
     @Parameter
-    String deployProperties
+    Map<String, String> deployProperties = [:]
 
     /**
      * ----------------
@@ -105,7 +106,7 @@ class ExtractorMojo extends GroovyMojo
     /**
      * Helper object, should be initialized last (reads values of other instance fields).
      */
-    private final ExtractorMojoHelper helper = new ExtractorMojoHelper( this )
+    private final PublishMojoHelper helper = new PublishMojoHelper( this )
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
@@ -122,7 +123,7 @@ class ExtractorMojo extends GroovyMojo
         if ( log.debugEnabled ){ helper.printConfigurations() }
 
         skipDefaultDeploy()
-        updateBuildInfo()
+        completeConfig()
         helper.createPropertiesFile()
         overrideResolutionRepository()
         recordBuildInfo()
@@ -139,15 +140,19 @@ class ExtractorMojo extends GroovyMojo
 
 
     /**
-     * Updates {@link #buildInfo} fields.
+     * Completes various configuration settings.
      */
+    @SuppressWarnings([ 'GroovyAccessibility' ])
     @Requires({ buildInfo && session && project })
-    private void updateBuildInfo ()
+    private void completeConfig ()
     {
-        buildInfo.buildTimestamp = session.startTime.time as String
-        buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        buildInfo.buildName      = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
-        buildInfo.buildNumber    = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
+        buildInfo.buildTimestamp    = session.startTime.time as String
+        buildInfo.buildStarted      = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
+        buildInfo.buildName         = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
+        buildInfo.buildNumber       = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
+        buildInfo.buildAgentName    = 'Maven'
+        buildInfo.buildAgentVersion = helper.mavenVersion()
+        blackDuck.runChecks         = blackDuck.delegate.props.keySet().any { it.startsWith( BuildInfoProperties.BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX )}
     }
 
 

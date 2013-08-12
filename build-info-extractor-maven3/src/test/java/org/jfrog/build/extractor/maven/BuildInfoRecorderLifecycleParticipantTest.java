@@ -25,7 +25,7 @@ import org.codehaus.plexus.logging.AbstractLogger;
 import org.codehaus.plexus.logging.Logger;
 import org.easymock.EasyMock;
 import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.sonatype.aether.RepositorySystemSession;
+import org.eclipse.aether.RepositorySystemSession;
 import org.testng.Assert;
 
 import java.lang.reflect.Field;
