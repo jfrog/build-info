@@ -339,14 +339,18 @@ project('build-info-extractor-gradle') {
 }
 
 project('build-info-extractor-maven3') {
+
+    apply plugin: 'groovy'
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
-        compile group: 'org.jdom', name: 'jdom', version: '1.1.1'
-        provided "org.codehaus.plexus:plexus-component-annotations:1.5.4",
-                "org.apache.maven:maven-core:3.0.5"
-        testCompile "org.easymock:easymockclassextension:2.5.2"
+        compile     'org.jdom:jdom:1.1.1',
+                    'org.codehaus.groovy:groovy-all:2.1.6'
+        provided    'org.codehaus.plexus:plexus-component-annotations:1.5.4',
+                    'org.apache.maven:maven-core:3.1.0'
+        testCompile 'org.easymock:easymockclassextension:2.5.2'
     }
+
     configure(install.repositories.mavenInstaller) {
         pom.project {
             issueManagement {
@@ -357,26 +361,28 @@ project('build-info-extractor-maven3') {
     }
 }
 
-project('build-info-extractor-maven3-plugin') {
+project('artifactory-maven-plugin') {
+
+    Project p ->
 
     apply plugin: 'groovy'
     description = 'JFrog Build-Info Maven 3 Plugin'
 
     dependencies {
         compile  project( ':build-info-api' ),
-                 'org.codehaus.groovy:groovy-all:2.1.5',
                  'org.apache.maven.plugin-tools:maven-plugin-annotations:3.2',
                  'org.gcontracts:gcontracts-core:1.2.12',
-                 'org.sonatype.aether:aether-impl:1.13.1',
-                 'org.sonatype.aether:aether-util:1.13.1',
-                 'org.codehaus.plexus:plexus-utils:3.0.10',
-                 'org.apache.ant:ant:1.9.1'
+                 'org.eclipse.aether:aether-impl:0.9.0.M3',
+                 'org.eclipse.aether:aether-util:0.9.0.M3',
+                 'org.codehaus.plexus:plexus-utils:3.0.13',
+                 'org.apache.ant:ant:1.9.2'
 
         compile ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
         compile ( 'org.codehaus.gmaven:gmaven-mojo:1.5'    ) { exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal' }
 
-        provided 'org.apache.maven:maven-core:3.0.5',
-                 'org.apache.maven:maven-project:2.0.11'
+        testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+        provided    'org.apache.maven:maven-core:3.1.0',
+                    'org.apache.maven:maven-project:2.0.11'
     }
 
     clean { delete( 'pom.xml' ) }
@@ -427,9 +433,9 @@ project('build-info-extractor-maven3-plugin') {
     /**
      * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
      */
-    final otherSubProjects = project.rootProject.subprojects.findAll{ ( it.hasProperty( 'install' )) && ( it.name != project.name ) }
-    otherSubProjects.each { project.jar.dependsOn( it.install )}
-    project.jar.dependsOn( pluginDescriptor )
+    p.rootProject.subprojects.findAll{ it.hasProperty( 'install' ) && ( it.name != p.name ) }.
+                              each   { pluginDescriptor.dependsOn( it.install )}
+    p.jar.dependsOn( pluginDescriptor )
 
     configure( install.repositories.mavenInstaller ) {
         pom.project {
@@ -468,5 +474,5 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '1.6'
+    gradleVersion = '1.7'
 }
