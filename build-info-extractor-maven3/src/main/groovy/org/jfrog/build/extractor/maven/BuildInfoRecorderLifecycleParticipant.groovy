@@ -21,12 +21,10 @@ import org.apache.maven.execution.MavenSession
 import org.codehaus.plexus.component.annotations.Component
 import org.codehaus.plexus.component.annotations.Requirement
 import org.codehaus.plexus.logging.Logger
-import org.eclipse.aether.DefaultRepositorySystemSession
-import org.eclipse.aether.util.listener.ChainedRepositoryListener
+import org.jfrog.aether.AetherUtils
 import org.jfrog.build.api.BuildInfoConfigProperties
 import org.jfrog.build.client.ArtifactoryClientConfiguration
 import org.jfrog.build.extractor.BuildInfoExtractorUtils
-import org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener
 
 
 /**
@@ -44,7 +42,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
     private ArtifactoryClientConfiguration internalConfiguration = null
 
     /**
-     * When the session starts, register {@link org.jfrog.build.extractor.maven.primary.ArtifactoryRepositoryListener} as part of the listener chain that is
+     * When the session starts, register ArtifactoryRepositoryListener as part of the listener chain that is
      * used for repository manipulation.
      *
      * @param session The maven session.
@@ -54,14 +52,18 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
     @Override
     public void afterSessionStart(MavenSession session) throws MavenExecutionException {
         super.afterSessionStart(session)
-        if ( session.repositorySession instanceof DefaultRepositorySystemSession )
-        {
-            final repositorySession    = ( DefaultRepositorySystemSession ) session.repositorySession
-            repositorySession.readOnly = false
-            repositorySession.repositoryListener =
-                new ChainedRepositoryListener( repositorySession.repositoryListener ,
-                                               new ArtifactoryRepositoryListener( getConfiguration( session ), logger ))
-        }
+
+        final config = getConfiguration( session )
+        AetherUtils.addRepositoryListener( session,
+                                           'DefaultRepositorySystemSession',
+                                           config.resolver.urlWithMatrixParams,
+                                           config.resolver.username,
+                                           config.resolver.password,
+                                           config.proxy.host,
+                                           config.proxy.port,
+                                           config.proxy.username,
+                                           config.proxy.password,
+                                           logger )
     }
 
     @Override
