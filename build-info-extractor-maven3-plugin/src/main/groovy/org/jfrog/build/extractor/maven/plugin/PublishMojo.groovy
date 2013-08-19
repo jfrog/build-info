@@ -12,14 +12,9 @@ import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
-import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
 import org.codehaus.gmaven.mojo.GroovyMojo
-import org.eclipse.aether.RepositorySystem
-import org.eclipse.aether.impl.ArtifactDescriptorReader
-import org.eclipse.aether.internal.impl.DefaultRepositorySystem
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.api.BuildInfoProperties
-import org.jfrog.build.client.ClientConfigurationFields
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
 import java.text.SimpleDateFormat
@@ -48,12 +43,6 @@ class PublishMojo extends GroovyMojo
 
     @Component( role = ExecutionEventCatapult )
     private DefaultExecutionEventCatapult eventCatapult
-
-    @Component( role = RepositorySystem )
-    DefaultRepositorySystem repoSystem
-
-    @Component( role = ArtifactDescriptorReader )
-    DefaultArtifactDescriptorReader descriptorReader
 
     /**
      * ----------------
@@ -110,14 +99,12 @@ class PublishMojo extends GroovyMojo
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ descriptorReader && repoSystem && session && log })
+    @Requires({ session && log && helper })
     @Override
     void execute ()
          throws MojoExecutionException , MojoFailureException
     {
-        boolean invokedAlready = (( descriptorReader.artifactResolver instanceof RepositoryResolver ) ||
-                                  ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
-                                  ( session.request.executionListener instanceof BuildInfoRecorder  ))
+        boolean invokedAlready = ( session.request.executionListener instanceof BuildInfoRecorder )
 
         if ( invokedAlready   ){ return }
         if ( log.debugEnabled ){ helper.printConfigurations() }
@@ -125,7 +112,6 @@ class PublishMojo extends GroovyMojo
         skipDefaultDeploy()
         completeConfig()
         helper.createPropertiesFile()
-        overrideResolutionRepository()
         recordBuildInfo()
     }
 
@@ -153,26 +139,6 @@ class PublishMojo extends GroovyMojo
         buildInfo.buildAgentName    = 'Maven'
         buildInfo.buildAgentVersion = helper.mavenVersion()
         blackDuck.runChecks         = blackDuck.delegate.props.keySet().any { it.startsWith( BuildInfoProperties.BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX )}
-    }
-
-
-    /**
-     * Overrides resolution repository if a corresponding property is set.
-     */
-    @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
-    private void overrideResolutionRepository ()
-    {
-        final String artifactoryUrl = helper.updateValue( resolver.getStringValue( ClientConfigurationFields.CONTEXT_URL )) // Bypassing empty value validator
-        final String resolutionRepo = helper.updateValue( resolver.repoKey )
-
-        if ( artifactoryUrl && resolutionRepo )
-        {
-            final remoteRepository            = "$artifactoryUrl${ artifactoryUrl.endsWith( '/' ) || resolutionRepo.startsWith( '/' ) ? '' : '/' }$resolutionRepo"
-            descriptorReader.artifactResolver = new RepositoryResolver( descriptorReader.artifactResolver, remoteRepository )
-            repoSystem.artifactResolver       = new RepositoryResolver( repoSystem.artifactResolver,       remoteRepository )
-            log.info( "Remote resolution repository set to [$remoteRepository]" )
-        }
     }
 
 
