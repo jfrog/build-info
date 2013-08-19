@@ -154,7 +154,12 @@ class PublishMojoHelper
         addProperties(( Map<String, String> ) deployProperties,
                       mergedProperties )
 
-        ( Properties ) mergedProperties.collectEntries { String key, String value -> [ key, updateValue( value ) ]}
+        ( Properties ) mergedProperties.collectEntries {
+            String key, String value ->
+
+            final valueUpdated = ( value != null ) ? updateValue( value ) : null
+            ( valueUpdated != null ) ? [ ( key ) : valueUpdated ] : [ : ]
+        }
     }
 
 
