@@ -172,10 +172,11 @@ class PublishMojoHelper
     {
         propertiesFrom.each {
             String propertyName, String propertyValue ->
-            propertyName = propertyName.toString() // Possible GString => String
-            propertiesTo[ propertyName ] = ( systemProperties[ propertyName ] && ( ! pomPropertiesPriority )) ?
-                systemProperties[ propertyName ] :
-                propertyValue
+            propertyName   = propertyName.toString() // Possible GString => String
+            final newValue = (( propertyValue == null ) || ( systemProperties[ propertyName ] && ( ! pomPropertiesPriority ))) ?
+                                systemProperties[ propertyName ] :
+                                propertyValue
+            if ( newValue != null ){ propertiesTo[ propertyName ] = newValue }
         }
     }
 
