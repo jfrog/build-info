@@ -205,33 +205,34 @@ class PublishMojoHelper
 
 
     /**
-     * Updates all "{var1|var2|var3}" entries in the value specified to their corresponding environment variables or system properties.
-     * Last variable is the fallback (default) value.
+     * Updates all "{{var1|var2|var3}}" entries in the value specified to their corresponding environment variables
+     * or system properties. Last variable is the fallback (default) value if wrapped in double quotes.
+     * See PublishMojoHelperSpec.
      */
     String updateValue( String value )
     {
         if ( ! value?.with{ contains( '{{' ) && contains( '}}' ) }){ return value?.trim() }
 
-        final isQuoted = { String s -> s?.with { startsWith( '"' ) && endsWith( '"' ) }}
-        final unquote  = { String s -> s.substring( 1, s.size() - 1 )}
-        final result   = value.trim().replaceAll( /\{\{([^}]*)\}\}/ ){
+        final   isQuoted    = { String s -> s?.with { startsWith( '"' ) && endsWith( '"' ) }}
+        final   unquote     = { String s -> s.substring( 1, s.size() - 1 )}
+        boolean defaultUsed = false
+        final   result      = value.trim().replaceAll( /\{\{([^}]*)\}\}/ ){
 
-            final String expression = it[ 1 ]
-
-            if ( isQuoted( expression )) { return unquote( expression ) }
-
-            final expressions  = expression.tokenize( '|' )*.trim().grep()
+            final expressions  = (( String ) it[ 1 ] ).tokenize( '|' )*.trim().grep()
 
             if ( ! expressions ){ return null }
 
             final lastValue    = expressions[ -1 ]
             final defaultValue = isQuoted( lastValue )    ? unquote( lastValue ) : null
+            defaultUsed        = ( defaultValue != null ) || defaultUsed
             final variables    = ( defaultValue != null ) ? (( expressions.size() > 1 ) ? expressions[ 0 .. -2 ] : [] ) :
                                                             expressions
 
             variables.collect { System.getenv( it ) ?: System.getProperty( it )}.grep()[ 0 ] ?: defaultValue
         }
 
-        ( result == 'null' ) ? null : result
+        ( result != 'null' ) ? result.replace( 'null', '' ) :
+        ( defaultUsed      ) ? '' :
+                               null
     }
 }

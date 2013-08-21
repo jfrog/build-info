@@ -93,20 +93,22 @@ class PublishMojo extends GroovyMojo
     Config.BlackDuck blackDuck = new Config.BlackDuck()
 
     /**
-     * Helper object, should be initialized last (reads values of other instance fields).
+     * Helper object
      */
-    private final PublishMojoHelper helper = new PublishMojoHelper( this )
+    private PublishMojoHelper helper
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ session && log && helper })
+    @Requires({ session && log })
     @Override
     void execute ()
          throws MojoExecutionException , MojoFailureException
     {
         boolean invokedAlready = ( session.request.executionListener instanceof BuildInfoRecorder )
 
-        if ( invokedAlready   ){ return }
+        if ( invokedAlready ){ return }
+
+        helper = new PublishMojoHelper( this )
         if ( log.debugEnabled ){ helper.printConfigurations() }
 
         skipDefaultDeploy()
@@ -132,8 +134,9 @@ class PublishMojo extends GroovyMojo
     @Requires({ buildInfo && session && project })
     private void completeConfig ()
     {
+        final format                = { Date d  -> new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( d ) } // 2013-06-23T18\:38\:37.597+0200
         buildInfo.buildTimestamp    = session.startTime.time as String
-        buildInfo.buildStarted      = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
+        buildInfo.buildStarted      = format( session.startTime )
         buildInfo.buildName         = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
         buildInfo.buildNumber       = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
         buildInfo.buildAgentName    = 'Maven'
