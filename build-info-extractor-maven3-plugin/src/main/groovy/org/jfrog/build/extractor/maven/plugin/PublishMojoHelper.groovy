@@ -210,14 +210,15 @@ class PublishMojoHelper
      */
     String updateValue( String value )
     {
-        if ( ! value?.with{ contains( '{' ) && contains( '}' ) }){ return value?.trim() }
-        final isQuoted = { String s -> s.with { startsWith( '"' ) && endsWith( '"' ) }}
+        if ( ! value?.with{ contains( '{{' ) && contains( '}}' ) }){ return value?.trim() }
+
+        final isQuoted = { String s -> s?.with { startsWith( '"' ) && endsWith( '"' ) }}
         final unquote  = { String s -> s.substring( 1, s.size() - 1 )}
-        final result   = value.trim().replaceAll( /\{([^}]*)\}/ ){
+        final result   = value.trim().replaceAll( /\{\{([^}]*)\}\}/ ){
 
             final String expression = it[ 1 ]
 
-            if ( isQuoted( expression )) { return "{${ unquote( expression )}}" }
+            if ( isQuoted( expression )) { return unquote( expression ) }
 
             final expressions  = expression.tokenize( '|' )*.trim().grep()
 
