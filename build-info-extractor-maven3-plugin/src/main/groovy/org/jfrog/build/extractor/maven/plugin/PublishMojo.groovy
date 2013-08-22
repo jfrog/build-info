@@ -142,6 +142,10 @@ class PublishMojo extends GroovyMojo
         buildInfo.buildAgentName    = 'Maven'
         buildInfo.buildAgentVersion = helper.mavenVersion()
         blackDuck.runChecks         = blackDuck.delegate.props.keySet().any { it.startsWith( BuildInfoProperties.BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX )}
+
+        if ( buildInfo.buildRetentionDays != null ){
+            buildInfo.buildRetentionMinimumDate = buildInfo.buildRetentionDays as String
+        }
     }
 
 
