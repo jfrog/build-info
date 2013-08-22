@@ -347,7 +347,7 @@ project('build-info-extractor-maven3') {
     dependencies {
         compile     'org.jdom:jdom:1.1.1',
                     'org.codehaus.groovy:groovy-all:2.1.6',
-                    'org.jfrog.aether:aether-utils:1.0.0-SNAPSHOT'
+                    'org.jfrog.aether:aether-utils:0.0.1-SNAPSHOT'
         provided    'org.codehaus.plexus:plexus-component-annotations:1.5.5',
                     'org.apache.maven:maven-core:3.1.0',
                     'plexus:plexus-container-default:1.0-alpha-6'
