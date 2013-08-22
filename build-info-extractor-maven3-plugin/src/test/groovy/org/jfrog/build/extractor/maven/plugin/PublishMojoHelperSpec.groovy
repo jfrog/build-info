@@ -21,47 +21,53 @@ class PublishMojoHelperSpec extends Specification
         where:
         expression                       | expected
         '{{}}'                           | null
+        '{{abc}}'                        | null
+        '{{"abc|def"}}'                  | null
+        '{{A|B|C|def}}'                  | null
         '{{""}}'                         | ''
         '{{"abc"}}'                      | 'abc'
-        '{{abc}}'                        | null
-        '{{"abc|def"}}'                  | 'abc|def'
-        '{{}}{{""}}'                     | null
-        '{{""}}{{}}'                     | null
+        '{{"abc|"def"}}'                 | 'def'
+        '{{abc|"def"}}'                  | 'def'
+        '{{}}{{""}}'                     | ''
+        '{{""}}{{}}'                     | ''
         '{{"abc"}}def{{""}}'             | 'abcdef'
         '{{"abc"}}def{{"zzz"}}'          | 'abcdefzzz'
-        '{{"abc"}}def{{"zzz|uuu"}}'      | 'abcdefzzz|uuu'
-        '{{"abc|xxx"}}def{{"zzz|uuu"}}'  | 'abc|xxxdefzzz|uuu'
+        '{{"abc"}}def{{"zzz|uuu"}}'      | 'abcdef'
+        '{{"abc|xxx"}}def{{"zzz|uuu"}}'  | 'def'
         '{{A|B|C|"def"}}'                | 'def'
-        '{{A|B|C|def}}'                  | null
-        '{{A|B}}_{{D|E}}'                | 'null_null'
-        '{{A|B}}_{{D|E|"f"}}'            | 'null_f'
-        '{{A|B|"c"}}_{{D|E}}'            | 'c_null'
+        '{{A|B}}_{{D|E}}'                | '_'
+        '{{A|B}}_{{D|E|"f"}}'            | '_f'
+        '{{A|B|"c"}}_{{D|E}}'            | 'c_'
         '{{A|B|"c"}}_{{D|E|"ee"}}'       | 'c_ee'
         '{{JAVA_HOME2|EDITOR2}}'         | null
         '{{JAVA_HOME2|EDITOR2|""}}'      | ''
         '{{JAVA_HOME2|EDITOR2|"a"}}'     | 'a'
         '{{A|EDITOR2|B|"aa"}}'           | 'aa'
-        'aa{{}}bb'                       | 'aanullbb'
+        'aa{{}}bb'                       | 'aabb'
         'aa{{""}}'                       | 'aa'
         'aa{{"abc"}}'                    | 'aaabc'
-        'aa{{abc}}'                      | 'aanull'
-        'aa{{"abc|def"}}'                | 'aaabc|def'
-        'aa{{}}{{""}}'                   | 'aanull'
-        'aa{{""}}{{}}'                   | 'aanull'
+        'aa{{abc}}'                      | 'aa'
+        'aa{{"abc|def"}}'                | 'aa'
+        'aa{{"abc|"def"}}'               | 'aadef'
+        'aa{{abc|"def"}}'                | 'aadef'
+        'aa{{}}{{""}}'                   | 'aa'
+        'aa{{""}}{{}}'                   | 'aa'
         'aa{{"abc"}}def{{""}}'           | 'aaabcdef'
+        'aa{{"abc"}}def{{""}}{{qqq}}'    | 'aaabcdef'
         'aa{{"abc"}}def{{"zzz"}}'        | 'aaabcdefzzz'
-        'aa{{"abc"}}def{{"zzz|uuu"}}'    | 'aaabcdefzzz|uuu'
-        'aa{{"abc|xxx"}}def{{"zzz|uuu"}}'| 'aaabc|xxxdefzzz|uuu'
+        'aa{{"abc"}}def{{"zzz|uuu"}}'    | 'aaabcdef'
+        'aa{{"abc|xxx"}}def{{"zzz|uuu"}}'| 'aadef'
         'aa{{A|B|C|"def"}}'              | 'aadef'
-        'aa{{A|B|C|def}}'                | 'aanull'
-        'aa{{A|B}}_{{D|E}}'              | 'aanull_null'
-        'aa{{A|B}}_{{D|E|"f"}}'          | 'aanull_f'
-        'aa{{A|B|"c"}}_{{D|E}}'          | 'aac_null'
+        'aa{{A|B|C|def}}'                | 'aa'
+        'aa{{A|B}}_{{D|E}}'              | 'aa_'
+        'aa{{A|B}}_{{D|E|"f"}}'          | 'aa_f'
+        'aa{{A|B|"c"}}_{{D|E}}'          | 'aac_'
         'aa{{A|B|"c"}}_{{D|E|"ee"}}'     | 'aac_ee'
-        'aa{{JAVA_HOME2|EDITOR2}}'       | 'aanull'
+        'aa{{JAVA_HOME2|EDITOR2}}'       | 'aa'
         'aa{{JAVA_HOME2|EDITOR2|""}}'    | 'aa'
-        'aa{{JAVA_HOME2|EDITOR2|"a"}}'   | 'aaa'
-        'aa{{A|EDITOR2|B|"aa"}}'         | 'aaaa'
+        'aa{{JAVA_HOME2|EDITOR2|"x"}}'   | 'aax'
+        'aa{{A|EDITOR2|B|"rr"}}'         | 'aarr'
+        'aa{{A|C|B|"rr"}}z{ff}{{d}}'     | 'aarrz{ff}'
     }
 
 
