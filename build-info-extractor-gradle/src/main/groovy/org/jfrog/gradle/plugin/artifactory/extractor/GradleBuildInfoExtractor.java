@@ -163,7 +163,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         bib.governance(governance);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-        Integer count = clientConf.info.getBuildRetentionDays();
+        Integer count = clientConf.info.getBuildRetentionCount();
         if (count != null) {
             buildRetention.setCount(count);
         }
