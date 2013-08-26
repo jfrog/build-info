@@ -879,6 +879,14 @@ public class ArtifactoryClientConfiguration {
             return getIntegerValue(BUILD_RETENTION_DAYS);
         }
 
+        public void setBuildRetentionCount(Integer buildsToKeep) {
+            setIntegerValue(BUILD_RETENTION_COUNT, buildsToKeep);
+        }
+
+        public Integer getBuildRetentionCount() {
+            return getIntegerValue(BUILD_RETENTION_COUNT);
+        }
+
         public void setBuildRetentionMinimumDate(String date) {
             setStringValue(BUILD_RETENTION_MINIMUM_DATE, date);
         }
