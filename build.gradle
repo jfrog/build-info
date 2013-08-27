@@ -448,7 +448,7 @@ project('artifactory-maven-plugin') {
                 url 'http://issues.jfrog.org/jira/browse/MAP'
             }
             repositories {
-                for ( String repoUrl in project.repositories*.url ) {
+                for ( String repoUrl in project.repositories*.url.toSet()) {
                     repository {
                         id  repoUrl.toString().replaceAll( ~/[^\w]/, '_' )
                         url repoUrl
