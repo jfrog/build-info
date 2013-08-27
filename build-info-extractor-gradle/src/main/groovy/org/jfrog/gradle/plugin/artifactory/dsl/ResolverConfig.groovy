@@ -16,6 +16,8 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Project
+
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
@@ -25,13 +27,14 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
  */
 class ResolverConfig {
 
-    private ResolverHandler resolver;
-    private Repository repository;
+    private final Project project;
+    private final ResolverHandler resolver;
+    private final Repository repository;
 
     ResolverConfig(ArtifactoryPluginConvention conv) {
         resolver = conv.clientConfig.resolver
         repository = new Repository()
-        repository.metaClass.propertyMissing = conv.propsResolver
+        project = conv.project
     }
 
     def methodMissing(String name, args) {
@@ -41,12 +44,16 @@ class ResolverConfig {
         method.invoke(resolver, args[0])
     }
 
+    def propertyMissing(String name) {
+        project.property(name)
+    }
+
     def propertyMissing(String name, value) {
         resolver[name] = value
     }
 
-    def setContextUrl(String contextUrl) {
-        resolver.setContextUrl(contextUrl)
+    def setContextUrl(def contextUrl) {
+        resolver.setContextUrl(contextUrl?.toString())
     }
 
     def config(Closure closure) {
@@ -56,35 +63,39 @@ class ResolverConfig {
     def repository(Closure closure) {
         //Initialize the defaults and configure the repo
         repository.setMaven(true)
-        ConfigureUtil.configure(closure, repository)
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, repository))
     }
 
     public class Repository {
 
-        def setUsername(String username) {
-            ResolverConfig.this.resolver.setUsername(username)
+        def setUsername(def username) {
+            ResolverConfig.this.resolver.setUsername(username?.toString())
         }
 
-        def setPassword(String password) {
-            ResolverConfig.this.resolver.setPassword(password)
+        def setPassword(def password) {
+            ResolverConfig.this.resolver.setPassword(password?.toString())
         }
 
-        def setIvyLayout(String ivyLayout) {
-            ResolverConfig.this.resolver.setIvyPattern(ivyLayout)
-            ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
+        def setIvyLayout(def ivyLayout) {
+            ResolverConfig.this.resolver.setIvyPattern(ivyLayout?.toString())
+            if (ivyLayout) {
+                ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
+            }
         }
 
-        def setArtifactLayout(String artifactLayout) {
-            ResolverConfig.this.resolver.setIvyArtifactPattern(artifactLayout)
-            ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
+        def setArtifactLayout(def artifactLayout) {
+            ResolverConfig.this.resolver.setIvyArtifactPattern(artifactLayout?.toString())
+            if (artifactLayout) {
+                ResolverConfig.this.resolver.setIvyRepositoryDefined(true)
+            }
         }
 
         def setMavenCompatible(boolean mavenCompatible) {
             ResolverConfig.this.resolver.setM2Compatible(mavenCompatible)
         }
 
-        def setRepoKey(String repoKey) {
-            ResolverConfig.this.resolver.setRepoKey(repoKey)
+        def setRepoKey(def repoKey) {
+            ResolverConfig.this.resolver.setRepoKey(repoKey?.toString())
         }
 
         def setMaven(Boolean maven) {
@@ -93,7 +104,7 @@ class ResolverConfig {
 
         def ivy(Closure closure) {
             ResolverConfig.this.resolver.setIvy(true)
-            ConfigureUtil.configure(closure, this)
+            ConfigureUtil.configure(closure, new DoubleDelegateWrapper(ResolverConfig.this.project, this))
         }
     }
 }

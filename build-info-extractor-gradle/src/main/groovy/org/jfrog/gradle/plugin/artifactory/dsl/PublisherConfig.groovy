@@ -16,6 +16,8 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Project
+
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
@@ -24,15 +26,15 @@ import org.jfrog.build.client.ArtifactoryClientConfiguration.PublisherHandler
  * @author Tomer Cohen
  */
 class PublisherConfig {
-
+    private final Project project
     private final PublisherHandler publisher;
     private final Repository repository;
     Closure defaultsClosure
 
     PublisherConfig(ArtifactoryPluginConvention conv) {
         publisher = conv.clientConfig.publisher
+        project = conv.project
         repository = new Repository()
-        repository.metaClass.propertyMissing = conv.propsResolver
     }
 
     def methodMissing(String name, args) {
@@ -40,6 +42,10 @@ class PublisherConfig {
         Method[] methods = publisher.getClass().getMethods()
         def method = methods.find {it.name.matches(name)}
         method.invoke(publisher, args[0])
+    }
+
+    def propertyMissing(String name) {
+        project.property(name)
     }
 
     def propertyMissing(String name, value) {
@@ -55,8 +61,8 @@ class PublisherConfig {
         ConfigureUtil.configure(closure, this)
     }
 
-    def setContextUrl(String contextUrl) {
-        publisher.setContextUrl(contextUrl)
+    def setContextUrl(def contextUrl) {
+        publisher.setContextUrl(contextUrl?.toString())
     }
 
     def setPublishPom(boolean publishPom) {
@@ -68,29 +74,29 @@ class PublisherConfig {
     }
 
     def repository(Closure closure) {
-        ConfigureUtil.configure(closure, repository)
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, repository))
     }
 
     public class Repository {
 
-        def setUsername(String username) {
-            PublisherConfig.this.publisher.setUsername(username)
+        def setUsername(def username) {
+            PublisherConfig.this.publisher.setUsername(username?.toString())
         }
 
-        def setPassword(String password) {
-            PublisherConfig.this.publisher.setPassword(password)
+        def setPassword(def password) {
+            PublisherConfig.this.publisher.setPassword(password?.toString())
         }
 
-        def setIvyLayout(String ivyLayout) {
-            PublisherConfig.this.publisher.setIvyPattern(ivyLayout)
+        def setIvyLayout(def ivyLayout) {
+            PublisherConfig.this.publisher.setIvyPattern(ivyLayout?.toString())
         }
 
-        def setArtifactLayout(String artifactLayout) {
-            PublisherConfig.this.publisher.setIvyArtifactPattern(artifactLayout)
+        def setArtifactLayout(def artifactLayout) {
+            PublisherConfig.this.publisher.setIvyArtifactPattern(artifactLayout?.toString())
         }
 
-        def setRepoKey(String repoKey) {
-            PublisherConfig.this.publisher.setRepoKey(repoKey)
+        def setRepoKey(def repoKey) {
+            PublisherConfig.this.publisher.setRepoKey(repoKey?.toString())
         }
 
         def setMavenCompatible(boolean mavenCompatible) {

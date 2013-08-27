@@ -27,51 +27,43 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
 class ArtifactoryPluginConvention {
     final Project project
     final ArtifactoryClientConfiguration clientConfig
-    final Closure propsResolver
     def PublisherConfig publisherConfig
 
     ArtifactoryPluginConvention(Project project) {
         this.project = project
         clientConfig = new ArtifactoryClientConfiguration(new GradleClientLogger(project.getLogger()))
-        propsResolver = {String name ->
-            project.logger.debug "Artifactory plugin: resolving property '${name}''"
-            def val = project.property(name)
-            project.logger.debug "Artifactory plugin: property '${name}' resolved to '${val}'"
-            val
-        }
-        ArtifactoryPluginConvention.metaClass.propertyMissing = propsResolver
     }
 
     def artifactory(Closure closure) {
         closure.delegate = this
-        closure()
+        closure.call()
         project.logger.debug("Artifactory plugin: configured")
     }
 
-    def setContextUrl(String contextUrl) {
-        clientConfig.publisher.setContextUrl(contextUrl)
-        clientConfig.resolver.setContextUrl(contextUrl)
+    def propertyMissing(String name) {
+        project.property(name)
+    }
+
+    def setContextUrl(def contextUrl) {
+        clientConfig.publisher.setContextUrl(contextUrl?.toString())
+        clientConfig.resolver.setContextUrl(contextUrl?.toString())
     }
 
     def publish(Closure closure) {
-        PublisherConfig.metaClass.propertyMissing = propsResolver
         publisherConfig = new PublisherConfig(this)
         publisherConfig.config(closure)
     }
 
     def resolve(Closure closure) {
-        ResolverConfig.metaClass.propertyMissing = propsResolver
         new ResolverConfig(this).config(closure)
     }
 
     def buildInfo(Closure closure) {
-        ArtifactoryClientConfiguration.BuildInfoHandler.metaClass.propertyMissing = propsResolver
-        ConfigureUtil.configure(closure, clientConfig.info)
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(clientConfig.info))
     }
 
     def proxy(Closure closure) {
-        ArtifactoryClientConfiguration.ProxyHandler.metaClass.propertyMissing = propsResolver
-        ConfigureUtil.configure(closure, clientConfig.proxy)
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(clientConfig.proxy))
     }
 }
 

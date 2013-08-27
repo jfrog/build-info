@@ -19,13 +19,13 @@ buildscript {
         jcenter()
         dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:2.1.0' }
     }
-    /* configurations.classpath {
+    configurations.classpath {
         resolutionStrategy {
             failOnVersionConflict()
             cacheDynamicVersionsFor 0, 'seconds'
             cacheChangingModulesFor 0, 'seconds'
         }
-    }**/
+    }
 }
 
 
@@ -42,7 +42,13 @@ defaultTasks 'clean', 'build', 'install'
 allprojects {
     apply plugin: 'idea'
     apply plugin: 'artifactory'
+
     group = 'org.jfrog.buildinfo'
+
+    repositories {
+        maven { url "http://repo.jfrog.org/artifactory/jfrog-dependencies" }
+        jcenter()
+    }
 }
 
 artifactory {
@@ -52,9 +58,6 @@ artifactory {
             publishConfigs('archives', 'published')
             properties = ['build.status': "$it.project.status".toString(), 'bintray.repo': 'jfrog/jfrog-jars']
         }
-    }
-    resolve {
-        repoKey = 'gradle'
     }
 }
 
@@ -158,7 +161,7 @@ configure(baseProjects()) {
 
     artifactoryPublish {
         properties {
-            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package':'build-info', 'bintray.version': version.toString()
+            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': 'build-info', 'bintray.version': version.toString()
         }
     }
 }
@@ -205,7 +208,7 @@ configure(extractorProjects()) {
                 if (debugJarJar) println "Creating Uber jar $archivePath with:"
                 jarjar(jarfile: archivePath) {
                     zipfileset(src: jar.archivePath)
-                    configurations.uberJar.files.each {jarjarFile ->
+                    configurations.uberJar.files.each { jarjarFile ->
                         if (!jarjarFile.name.endsWith("-sources.jar")) {
                             zipfileset(src: jarjarFile)
                             if (debugJarJar) println "\t$jarjarFile"
@@ -281,7 +284,7 @@ project('build-info-extractor') {
 project('build-info-vcs') {
     description = 'JFrog Build-Info VCS'
     dependencies {
-        compile "com.perforce:p4java:2011.1.297684"
+        compile(group: 'com.perforce', name: 'p4java-jfrog', version: '2011.1.297684')
     }
 }
 
