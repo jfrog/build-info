@@ -12,22 +12,19 @@ import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
-import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader
 import org.codehaus.gmaven.mojo.GroovyMojo
 import org.gcontracts.annotations.Requires
+import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
-import org.sonatype.aether.RepositorySystem
-import org.sonatype.aether.impl.ArtifactDescriptorReader
-import org.sonatype.aether.impl.internal.DefaultRepositorySystem
 import java.text.SimpleDateFormat
 
 
 /**
  * Artifactory plugin creating and deploying JSON build data together with build artifacts.
  */
-@Mojo ( name = 'extract-build-info', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
-class ExtractorMojo extends GroovyMojo
+@Mojo ( name = 'publish', defaultPhase = LifecyclePhase.VALIDATE, threadSafe = true )
+class PublishMojo extends GroovyMojo
 {
     /**
      * ---------------------------
@@ -47,12 +44,6 @@ class ExtractorMojo extends GroovyMojo
     @Component( role = ExecutionEventCatapult )
     private DefaultExecutionEventCatapult eventCatapult
 
-    @Component( role = RepositorySystem )
-    DefaultRepositorySystem repoSystem
-
-    @Component( role = ArtifactDescriptorReader )
-    DefaultArtifactDescriptorReader descriptorReader
-
     /**
      * ----------------
      * Mojo parameters
@@ -69,13 +60,10 @@ class ExtractorMojo extends GroovyMojo
     String deployGoals = 'deploy,maven-deploy-plugin'
 
     @Parameter
-    boolean writeProperties = false
-
-    @Parameter
     boolean pomPropertiesPriority = false
 
     @Parameter
-    String deployProperties
+    Map<String, String> deployProperties = [:]
 
     /**
      * ----------------
@@ -105,28 +93,27 @@ class ExtractorMojo extends GroovyMojo
     Config.BlackDuck blackDuck = new Config.BlackDuck()
 
     /**
-     * Helper object, should be initialized last (reads values of other instance fields).
+     * Helper object
      */
-    private final ExtractorMojoHelper helper = new ExtractorMojoHelper( this )
+    private PublishMojoHelper helper
 
 
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ descriptorReader && repoSystem && session && log })
+    @Requires({ session && log })
     @Override
     void execute ()
          throws MojoExecutionException , MojoFailureException
     {
-        boolean invokedAlready = (( descriptorReader.artifactResolver instanceof RepositoryResolver ) ||
-                                  ( repoSystem.artifactResolver       instanceof RepositoryResolver ) ||
-                                  ( session.request.executionListener instanceof BuildInfoRecorder  ))
+        boolean invokedAlready = ( session.request.executionListener instanceof BuildInfoRecorder )
 
-        if ( invokedAlready   ){ return }
+        if ( invokedAlready ){ return }
+
+        helper = new PublishMojoHelper( this )
         if ( log.debugEnabled ){ helper.printConfigurations() }
 
         skipDefaultDeploy()
-        updateBuildInfo()
+        completeConfig()
         helper.createPropertiesFile()
-        overrideResolutionRepository()
         recordBuildInfo()
     }
 
@@ -141,34 +128,23 @@ class ExtractorMojo extends GroovyMojo
 
 
     /**
-     * Updates {@link #buildInfo} fields.
-     */
-    @Requires({ buildInfo && session && project })
-    private void updateBuildInfo ()
-    {
-        buildInfo.buildTimestamp = session.startTime.time as String
-        buildInfo.buildStarted   = new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( session.startTime ) // 2013-06-23T18\:38\:37.597+0200
-        buildInfo.buildName      = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
-        buildInfo.buildNumber    = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
-    }
-
-
-    /**
-     * Overrides resolution repository if a corresponding property is set.
+     * Completes various configuration settings.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ resolver && descriptorReader.artifactResolver && repoSystem.artifactResolver })
-    private void overrideResolutionRepository ()
+    @Requires({ buildInfo && session && project })
+    private void completeConfig ()
     {
-        final String artifactoryUrl = helper.updateValue( resolver.contextUrl )
-        final String resolutionRepo = helper.updateValue( resolver.repoKey )
+        final format                = { Date d  -> new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( d ) } // 2013-06-23T18\:38\:37.597+0200
+        buildInfo.buildTimestamp    = session.startTime.time as String
+        buildInfo.buildStarted      = format( session.startTime )
+        buildInfo.buildName         = helper.updateValue( buildInfo.buildName   ) ?: project.artifactId
+        buildInfo.buildNumber       = helper.updateValue( buildInfo.buildNumber ) ?: buildInfo.buildTimestamp
+        buildInfo.buildAgentName    = 'Maven'
+        buildInfo.buildAgentVersion = helper.mavenVersion()
+        blackDuck.runChecks         = blackDuck.delegate.props.keySet().any { it.startsWith( BuildInfoProperties.BUILD_INFO_BLACK_DUCK_PROPERTIES_PREFIX )}
 
-        if ( artifactoryUrl && resolutionRepo )
-        {
-            final remoteRepository            = "$artifactoryUrl${ artifactoryUrl.endsWith( '/' ) || resolutionRepo.startsWith( '/' ) ? '' : '/' }$resolutionRepo"
-            descriptorReader.artifactResolver = new RepositoryResolver( descriptorReader.artifactResolver, remoteRepository )
-            repoSystem.artifactResolver       = new RepositoryResolver( repoSystem.artifactResolver,       remoteRepository )
-            log.info( "Remote resolution repository set to [$remoteRepository]" )
+        if ( buildInfo.buildRetentionDays != null ){
+            buildInfo.buildRetentionMinimumDate = buildInfo.buildRetentionDays as String
         }
     }
 

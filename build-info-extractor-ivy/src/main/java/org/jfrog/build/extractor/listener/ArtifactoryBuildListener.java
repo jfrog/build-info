@@ -270,8 +270,8 @@ public class ArtifactoryBuildListener implements BuildListener {
         builder.governance(governance);
 
         BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-        if (clientConf.info.getBuildRetentionDays() != null) {
-            buildRetention.setCount(clientConf.info.getBuildRetentionDays());
+        if (clientConf.info.getBuildRetentionCount() != null) {
+            buildRetention.setCount(clientConf.info.getBuildRetentionCount());
         }
         String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
         if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {

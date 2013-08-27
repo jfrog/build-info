@@ -126,8 +126,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         catch ( Throwable t )
         {
-            logger.error( "'sessionStarted' listener has failed: ", t );
-            throw new RuntimeException( "'sessionStarted' listener has failed: ", t );
+            String message = getClass().getName() + ".sessionStarted() listener has failed: ";
+            logger.error( message, t );
+            throw new RuntimeException( message, t );
         }
     }
 
@@ -137,8 +138,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             Build build = extract(event);
             if (build != null) {
                 File basedir = event.getSession().getTopLevelProject().getBasedir();
-                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,
-                        basedir);
+                conf.persistToPropertiesFile();
+                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,basedir);
             }
             deployableArtifactBuilderMap.clear();
             if (wrappedListener != null) {
@@ -147,8 +148,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         catch ( Throwable t )
         {
-            logger.error( "'sessionEnded' listener has failed: ", t );
-            throw new RuntimeException( "'sessionEnded' listener has failed: ", t );
+            String message = getClass().getName() + ".sessionEnded() listener has failed: ";
+            logger.error( message, t );
+            throw new RuntimeException( message, t );
         }
         finally {
             String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
