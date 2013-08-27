@@ -15,16 +15,20 @@
  */
 package org.jfrog.build.client;
 
+import static org.jfrog.build.api.BuildInfoConfigProperties.*;
+import static org.jfrog.build.api.BuildInfoFields.*;
+import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.IssuesTrackerFields.*;
+import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
+import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.client.ClientConfigurationFields.*;
+import static org.jfrog.build.client.ClientProperties.*;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.BlackDuckPropertiesFields;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.LicenseControlFields;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.IssuesTrackerUtils;
 
@@ -38,13 +42,6 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
-import static org.jfrog.build.api.BuildInfoConfigProperties.*;
-import static org.jfrog.build.api.BuildInfoFields.*;
-import static org.jfrog.build.api.BuildInfoProperties.*;
-import static org.jfrog.build.api.IssuesTrackerFields.*;
-import static org.jfrog.build.api.LicenseControlFields.*;
-import static org.jfrog.build.client.ClientConfigurationFields.*;
-import static org.jfrog.build.client.ClientProperties.*;
 
 /**
  * @author freds
@@ -95,6 +92,9 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
+        if ( StringUtils.isEmpty( getPropertiesFile())) {
+            return;
+        }
         Predicate<String> nonNullPredicate = new Predicate<String>() {
             @Override
             public boolean apply(String input) {
@@ -106,7 +106,7 @@ public class ArtifactoryClientConfiguration {
         props.putAll(Maps.filterValues(rootConfig.props, nonNullPredicate));
         FileOutputStream fos = null;
         try {
-            fos = new FileOutputStream(new File(getPropertiesFile()));
+            fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile());
             props.store(fos, "BuildInfo configuration property file");
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -137,6 +137,10 @@ public class ArtifactoryClientConfiguration {
 
     public void setTimeout(Integer timeout) {
         root.setIntegerValue(PROP_TIMEOUT, timeout);
+    }
+
+    public void setTimeoutSec(Integer timeout) {
+        setTimeout(timeout);
     }
 
     public Integer getTimeout() {
@@ -271,6 +275,30 @@ public class ArtifactoryClientConfiguration {
 
         public String getSnapshotRepoKey() {
             return getStringValue(SNAPSHOT_REPO_KEY);
+        }
+
+        public void setAggregateArtifacts ( String path ) {
+            setStringValue( AGGREGATE_ARTIFACTS, path);
+        }
+
+        public String getAggregateArtifacts () {
+            return getStringValue( AGGREGATE_ARTIFACTS );
+        }
+
+        public void setCopyAggregatedArtifacts ( Boolean enabled ) {
+            setBooleanValue( COPY_AGGREGATED_ARTIFACTS, enabled );
+        }
+
+        public void setPublishAggregatedArtifacts ( Boolean enabled ) {
+            setBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, enabled );
+        }
+
+        public Boolean isCopyAggregatedArtifacts () {
+            return getBooleanValue( COPY_AGGREGATED_ARTIFACTS, false );
+        }
+
+        public Boolean isPublishAggregatedArtifacts () {
+            return getBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, false );
         }
 
         public void setPublishArtifacts(Boolean enabled) {
@@ -860,12 +888,24 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(DELETE_BUILD_ARTIFACTS, true);
         }
 
+        public void setBuildRetentionMaxDays(Integer daysToKeep) {
+            setBuildRetentionDays(daysToKeep);
+        }
+
         public void setBuildRetentionDays(Integer daysToKeep) {
             setIntegerValue(BUILD_RETENTION_DAYS, daysToKeep);
         }
 
         public Integer getBuildRetentionDays() {
             return getIntegerValue(BUILD_RETENTION_DAYS);
+        }
+
+        public void setBuildRetentionCount(Integer buildsToKeep) {
+            setIntegerValue(BUILD_RETENTION_COUNT, buildsToKeep);
+        }
+
+        public Integer getBuildRetentionCount() {
+            return getIntegerValue(BUILD_RETENTION_COUNT);
         }
 
         public void setBuildRetentionMinimumDate(String date) {

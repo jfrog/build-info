@@ -1,0 +1,20 @@
+<component-set>
+    <components>
+        <component>
+            <role>
+                org.apache.maven.lifecycle.mapping.LifecycleMapping
+            </role>
+            <role-hint>jar</role-hint>
+            <implementation>
+                org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping
+            </implementation>
+            <configuration>
+                <phases>
+                    <deploy>
+                        org.jfrog.buildinfo:artifactory-maven-plugin:publish
+                    </deploy>
+                </phases>
+            </configuration>
+        </component>
+    </components>
+</component-set>

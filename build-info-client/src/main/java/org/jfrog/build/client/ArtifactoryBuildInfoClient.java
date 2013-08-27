@@ -16,6 +16,7 @@
 
 package org.jfrog.build.client;
 
+import static org.jfrog.build.client.ArtifactoryHttpClient.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
@@ -38,18 +39,13 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import static org.jfrog.build.client.ArtifactoryHttpClient.*;
 
 /**
  * Artifactory client to perform build info related tasks.
@@ -211,22 +207,9 @@ public class ArtifactoryBuildInfoClient {
         return repositories;
     }
 
-    /**
-     * Sends build info to Artifactory.
-     *
-     * @param buildInfo The build info to send
-     * @throws IOException On any connection error
-     */
-    public void sendBuildInfo(Build buildInfo) throws IOException {
+    public void sendBuildInfo(String buildInfoJson) throws IOException {
         String url = artifactoryUrl + BUILD_REST_URL;
         HttpPut httpPut = new HttpPut(url);
-        String buildInfoJson;
-        try {
-            buildInfoJson = buildInfoToJsonString(buildInfo);
-        } catch (Exception e) {
-            log.error("Could not build the build-info object.", e);
-            throw new IOException("Could not publish build-info: " + e.getMessage());
-        }
         StringEntity stringEntity = new StringEntity(buildInfoJson, "UTF-8");
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         httpPut.setEntity(stringEntity);
@@ -238,6 +221,21 @@ public class ArtifactoryBuildInfoClient {
         StatusLine statusLine = response.getStatusLine();
         if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
             throwHttpIOException("Failed to send build info:", statusLine);
+        }
+    }
+
+    /**
+     * Sends build info to Artifactory.
+     *
+     * @param buildInfo The build info to send
+     * @throws IOException On any connection error
+     */
+    public void sendBuildInfo(Build buildInfo) throws IOException {
+        try {
+            sendBuildInfo( buildInfoToJsonString( buildInfo ));
+        } catch (Exception e) {
+            log.error("Could not build the build-info object.", e);
+            throw new IOException("Could not publish build-info: " + e.getMessage());
         }
     }
 
@@ -454,7 +452,7 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private String buildInfoToJsonString(Build buildInfo) throws Exception {
+    public String buildInfoToJsonString(Build buildInfo) throws Exception {
         ArtifactoryVersion version = verifyCompatibleArtifactoryVersion();
         //From Artifactory 2.2.3 we do not need to discard new properties in order to avoid a server side exception on
         //JSON parsing. Our JSON writer is configured to discard null values.
