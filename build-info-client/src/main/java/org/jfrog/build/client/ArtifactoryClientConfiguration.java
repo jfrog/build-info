@@ -431,6 +431,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public String urlWithMatrixParams(String rootUrl) {
+            if ( rootUrl == null ) { return null; }
             rootUrl = StringUtils.stripEnd(rootUrl, "/;");
             Map<String, String> matrixParams = getMatrixParams();
             if (matrixParams.isEmpty()) {
