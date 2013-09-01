@@ -244,6 +244,7 @@ configure(extractorProjects()) {
     artifactoryPublish {
         properties {
             all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+            all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
         }
     }
 }
