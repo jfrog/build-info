@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.listener;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.ant.IvyAntSettings;
-import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
@@ -16,11 +15,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.client.*;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
@@ -28,11 +23,7 @@ import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 
 /**
@@ -62,6 +53,8 @@ public class ArtifactoryBuildListener implements BuildListener {
             Properties props = getMergedEnvAndSystemProps();
             clientConf.fillFromProperties(props);
             ctx = new BuildContext(clientConf);
+            DEPENDENCY_TRIGGER.setIvyBuildContext(ctx);
+            PUBLISH_TRIGGER.setIvyBuildContext(ctx);
             buildInfoLog.info("[buildinfo:ant] Artifactory Build Info Listener Initialized");
         } catch (Exception e) {
             RuntimeException re = new RuntimeException(
@@ -89,8 +82,6 @@ public class ArtifactoryBuildListener implements BuildListener {
     public void buildStarted(BuildEvent event) {
         try {
             getBuildInfoLog(event).debug("[buildinfo:ant] Received Build Started Event");
-            IvyContext context = IvyContext.getContext();
-            context.set(BuildContext.CONTEXT_NAME, ctx);
             ctx.setBuildStartTime(System.currentTimeMillis());
             getBuildInfoLog(event).info("[buildinfo:ant] Build Started timestamp=" + ctx.getBuildStartTime());
         } catch (Exception e) {
@@ -138,13 +129,22 @@ public class ArtifactoryBuildListener implements BuildListener {
         }
     }
 
+    private Task extractIvyTask(BuildEvent event) {
+        Task task = event.getTask();
+        // Interested only in Ivy tasks
+        String taskType = task.getTaskType();
+        if (taskType != null && taskType.contains("org.apache.ivy")) {
+            return task;
+        }
+        return null;
+    }
+
     @Override
     public void taskStarted(BuildEvent event) {
         try {
-            Task task = event.getTask();
-            // Interested only in Ivy tasks
-            String taskType = task.getTaskType();
-            if (taskType != null && taskType.contains("org.apache.ivy")) {
+            Task task = extractIvyTask(event);
+            if (task != null) {
+                String taskType = task.getTaskType();
                 getBuildInfoLog(event).debug("[buildinfo:ant] Received Task of type '" + taskType + "' Started Event");
                 // Need only retrieve, resolve, and publish tasks, since needs to give ivy settings a chance (BI-131)
                 if (taskType.endsWith("retrieve") || taskType.endsWith("resolve")) {
@@ -180,17 +180,18 @@ public class ArtifactoryBuildListener implements BuildListener {
 
     @Override
     public void taskFinished(BuildEvent event) {
-        getBuildInfoLog(event).debug("[buildinfo:ant] Received Task Finished Event");
+        Task task = extractIvyTask(event);
+        if (task != null) {
+            getBuildInfoLog(event).debug("[buildinfo:ant] Received Task " + task.getTaskType() + " Finished Event");
+        }
     }
 
     @Override
     public void targetStarted(BuildEvent event) {
-        getBuildInfoLog(event).debug("[buildinfo:ant] Received Target Started Event");
     }
 
     @Override
     public void targetFinished(BuildEvent event) {
-        getBuildInfoLog(event).debug("[buildinfo:ant] Received Target Finished Event");
     }
 
     @Override
@@ -201,7 +202,6 @@ public class ArtifactoryBuildListener implements BuildListener {
         IvyBuildInfoLog log = getBuildInfoLog(event);
         log.info("[buildinfo:ant] Starting deployment");
         Project project = event.getProject();
-        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
         Set<DeployDetails> deployDetails = ctx.getDeployDetails();
         BuildInfoBuilder builder = new BuildInfoBuilder(project.getName()).modules(ctx.getModules())
                 .number("0").durationMillis(System.currentTimeMillis() - ctx.getBuildStartTime())
@@ -332,7 +332,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     }
 
     private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
-            IncludeExcludePatterns patterns) throws IOException {
+                                 IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
             String artifactPath = deployDetail.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {

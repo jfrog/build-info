@@ -1,6 +1,5 @@
 package org.jfrog.build.context;
 
-import org.apache.ivy.core.IvyContext;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
@@ -19,10 +18,6 @@ import java.util.Set;
  * @author Tomer Cohen
  */
 public class BuildContext {
-    /**
-     * Name of the context that is being in the contextMap of {@link IvyContext}.
-     */
-    public static final String CONTEXT_NAME = "artifactory.ant.context";
 
     private final Set<DeployDetails> deployDetails;
     private final List<Module> modules;

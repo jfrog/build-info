@@ -46,6 +46,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
     private static final String MD5 = "MD5";
     private static final String SHA1 = "SHA1";
+    private BuildContext ctx;
+
+    public void setIvyBuildContext(BuildContext ctx) {
+        this.ctx = ctx;
+    }
 
     public void progress(IvyEvent event) {
         try {
@@ -74,8 +79,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
         ResolveReport report = ((EndResolveEvent) event).getReport();
         @SuppressWarnings("unchecked") Map<String, String> attributes = event.getAttributes();
-        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        Module module = getOrCreateModule(ctx, attributes);
+        Module module = getOrCreateModule(attributes);
         project.log("[buildinfo:collect] Collecting dependencies for " + module.getId(), Project.MSG_INFO);
         if (module.getDependencies() == null || module.getDependencies().isEmpty()) {
             String[] configurations = report.getConfigurations();
@@ -139,8 +143,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
 
         // Finding module object from context
         @SuppressWarnings("unchecked") final Map<String, String> map = event.getAttributes();
-        BuildContext ctx = (BuildContext) IvyContext.getContext().get(BuildContext.CONTEXT_NAME);
-        Module module = getOrCreateModule(ctx, map);
+        Module module = getOrCreateModule(map);
         List<Artifact> artifacts = module.getArtifacts();
         if (artifacts == null) {
             module.setArtifacts(Lists.<Artifact>newArrayList());
@@ -260,7 +263,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         }, null);
     }
 
-    private Module getOrCreateModule(BuildContext ctx, Map<String, String> attributes) {
+    private Module getOrCreateModule(Map<String, String> attributes) {
         List<Module> modules = ctx.getModules();
         final String org = attributes.get("organisation");
         final String moduleName = attributes.get("module");
