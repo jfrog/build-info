@@ -22,6 +22,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.codehaus.jackson.JsonFactory;
@@ -121,6 +122,11 @@ public class ArtifactoryHttpClient {
         }
 
         return deployClient;
+    }
+
+    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
+        PreemptiveHttpClient httpClient = getHttpClient();
+        httpClient.setHttpRequestRetryHandler(retryHandler);
     }
 
     public ArtifactoryVersion getVersion() throws IOException {

@@ -27,11 +27,13 @@ import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
@@ -77,6 +79,10 @@ public class PreemptiveHttpClient {
 
     public PreemptiveHttpClient(String userName, String password, int timeout) {
         httpClient = createHttpClient(userName, password, timeout);
+    }
+
+    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
+        httpClient.setHttpRequestRetryHandler(retryHandler);
     }
 
     public void setProxyConfiguration(String host, int port, String username, String password) {
