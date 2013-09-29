@@ -22,6 +22,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
@@ -60,6 +61,10 @@ public class ArtifactoryDependenciesClient {
 
     public void setConnectionTimeout(int connectionTimeout) {
         httpClient.setConnectionTimeout(connectionTimeout);
+    }
+
+    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
+        httpClient.setHttpRequestRetryHandler(retryHandler);
     }
 
     public void setProxyConfiguration(String host, int port) {
