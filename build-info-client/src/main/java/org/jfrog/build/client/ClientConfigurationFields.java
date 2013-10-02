@@ -43,6 +43,7 @@ public interface ClientConfigurationFields {
     String ARTIFACT_SPECS = "artifactSpecs";
     String INCLUDE_PATTERNS = "includePatterns";
     String EXCLUDE_PATTERNS = "excludePatterns";
+    String FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD = "filterExcludedArtifactsFromBuild";
     String EVEN_UNSTABLE = "unstable";
     String CONTEXT_URL = "contextUrl";
 }

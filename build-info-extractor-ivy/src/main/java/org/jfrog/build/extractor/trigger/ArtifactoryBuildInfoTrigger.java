@@ -26,6 +26,8 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.util.IvyResolverHelper;
 
@@ -139,6 +141,10 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
      * @param event the Ivy publish event
      */
     private void collectModuleInformation(IvyEvent event) {
+        ArtifactoryClientConfiguration.PublisherHandler publisher = ctx.getClientConf().publisher;
+        IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                publisher.getIncludePatterns(),publisher.getExcludePatterns());
+        boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
 
         // Finding module object from context
@@ -162,7 +168,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String name = pubArtifact.getName() + "-" + mrid.getRevision() + "." + pubArtifact.getExt();
 
         // Set name from name of published file
-        String fullPath = IvyResolverHelper.calculateArtifactPath(ctx.getClientConf().publisher, map, extraAttributes);
+        String fullPath = IvyResolverHelper.calculateArtifactPath(publisher, map, extraAttributes);
         int lastSlash = fullPath.lastIndexOf('/');
         if (lastSlash > 0 && lastSlash + 1 < name.length()) {
             name = fullPath.substring(lastSlash + 1);
@@ -170,7 +176,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("[buildinfo:collect] Collecting artifact " + name + " for module " + moduleName +
                 " using file " + file, Project.MSG_INFO);
 
-        if (isArtifactExist(module.getArtifacts(), name)) {
+        if (isArtifactExist(module.getArtifacts(), name)||isArtifactExist(module.getExcludedArtifacts(), name)) {
             return;
         }
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(name);
@@ -182,7 +188,11 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
         Artifact artifact = artifactBuilder.build();
-        module.getArtifacts().add(artifact);
+        if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(artifactFile.getPath(),patterns)){
+            module.getExcludedArtifacts().add(artifact);
+        }else{
+            module.getArtifacts().add(artifact);
+        }
         @SuppressWarnings("unchecked") DeployDetails deployDetails =
                 buildDeployDetails(artifactFile, artifact, ctx, map, extraAttributes);
         ctx.addDeployDetailsForModule(deployDetails);

@@ -35,6 +35,9 @@ public class Module extends BaseBuildBean {
     @XStreamAlias(ARTIFACTS)
     private List<Artifact> artifacts;
 
+    @XStreamAlias(EXCLUDED_ARTIFACTS)
+    private List<Artifact> excludedArtifacts;
+
     @XStreamAlias(DEPENDENCIES)
     private List<Dependency> dependencies;
 
@@ -66,6 +69,15 @@ public class Module extends BaseBuildBean {
     }
 
     /**
+     * Returns the list of excluded_artifacts that haven't been deployed by the module
+     *
+     * @return Module deployed artifacts
+     */
+    public List<Artifact> getExcludedArtifacts() {
+        return excludedArtifacts;
+    }
+
+    /**
      * Sets the list of artifacts that have been deployed by the module
      *
      * @param artifacts Module deployed artifacts
@@ -90,5 +102,14 @@ public class Module extends BaseBuildBean {
      */
     public void setDependencies(List<Dependency> dependencies) {
         this.dependencies = dependencies;
+    }
+
+    /**
+     * Sets the list of artifacts that haven't been deployed by the module
+     *
+     * @param excludedArtifacts Module excluded artifacts
+     */
+    public void setExcludedArtifacts(List<Artifact> excludedArtifacts) {
+        this.excludedArtifacts = excludedArtifacts;
     }
 }

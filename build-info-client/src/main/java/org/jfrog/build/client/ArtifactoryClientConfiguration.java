@@ -321,8 +321,16 @@ public class ArtifactoryClientConfiguration {
             setStringValue(INCLUDE_PATTERNS, patterns);
         }
 
+        public void setFilterExcludedArtifactsFromBuild(boolean excludeArtifactsFromBuild) {
+            setBooleanValue(FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD, excludeArtifactsFromBuild);
+        }
+
         public String getIncludePatterns() {
             return getStringValue(INCLUDE_PATTERNS);
+        }
+
+        public boolean isFilterExcludedArtifactsFromBuild() {
+            return getBooleanValue(FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD,false);
         }
 
         public void setExcludePatterns(String patterns) {

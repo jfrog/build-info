@@ -33,6 +33,7 @@ public class ModuleBuilder {
 
     private String id;
     private List<Artifact> artifacts;
+    private List<Artifact> excludedArtifacts;
     private List<Dependency> dependencies;
     private Properties properties;
 
@@ -50,6 +51,7 @@ public class ModuleBuilder {
         module.setArtifacts(artifacts);
         module.setDependencies(dependencies);
         module.setProperties(properties);
+        module.setExcludedArtifacts(excludedArtifacts);
         return module;
     }
 
@@ -76,6 +78,17 @@ public class ModuleBuilder {
     }
 
     /**
+     * Sets the list of artifacts that have been excluded by the module
+     *
+     * @param excludedArtifacts Module excluded artifacts
+     * @return Builder instance
+     */
+    public ModuleBuilder excludedArtifacts(List<Artifact> excludedArtifacts) {
+        this.excludedArtifacts = excludedArtifacts;
+        return this;
+    }
+
+    /**
      * Adds the given artifact to the artifacts list
      *
      * @param artifact Artifact to add
@@ -86,6 +99,20 @@ public class ModuleBuilder {
             artifacts = Lists.newArrayList();
         }
         artifacts.add(artifact);
+        return this;
+    }
+
+    /**
+     * Adds the given artifact to the exclude artifacts list
+     *
+     * @param artifact Artifact to add
+     * @return Builder instance
+     */
+    public ModuleBuilder addExcludedArtifact(Artifact artifact) {
+        if (this.excludedArtifacts == null) {
+            excludedArtifacts = Lists.newArrayList();
+        }
+        excludedArtifacts.add(artifact);
         return this;
     }
 

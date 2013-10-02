@@ -16,6 +16,7 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
+import com.beust.jcommander.internal.Sets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -34,8 +35,11 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask;
 
 import javax.annotation.Nullable;
@@ -245,7 +249,22 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 .id(getModuleIdString(project.getGroup().toString(),
                         artifactName, project.getVersion().toString()));
         try {
-            builder.artifacts(calculateArtifacts(project))
+            ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getArtifactoryConvention(project).getClientConfig().publisher;
+            boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
+            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                    publisher.getIncludePatterns(),
+                    publisher.getExcludePatterns());
+            Iterable<GradleDeployDetails> deployExcludeDetails = null;
+            Iterable<GradleDeployDetails> deployIncludeDetails = null;
+            if (excludeArtifactsFromBuild) {
+                deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
+                deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
+            } else {
+                deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
+                deployExcludeDetails = Sets.newHashSet();
+            }
+            builder.artifacts(calculateArtifacts(deployIncludeDetails))
+                    .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
                     .dependencies(calculateDependencies(project));
         } catch (Exception e) {
             log.error("Error during extraction: ", e);
@@ -253,8 +272,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         return builder.build();
     }
 
-    private List<Artifact> calculateArtifacts(final Project project) throws Exception {
-        Iterable<GradleDeployDetails> deployDetails = getProjectDeployDetails(project);
+    private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) throws Exception {
         List<Artifact> artifacts = newArrayList(transform(deployDetails, new Function<GradleDeployDetails, Artifact>() {
             public Artifact apply(GradleDeployDetails from) {
                 PublishArtifactInfo publishArtifact = from.getPublishArtifact();
@@ -269,15 +287,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }));
         return artifacts;
     }
-
-    private Iterable<GradleDeployDetails> getProjectDeployDetails(final Project project) {
-        return Iterables.filter(gradleDeployDetails, new Predicate<GradleDeployDetails>() {
-            public boolean apply(@Nullable GradleDeployDetails input) {
-                return input.getProject().equals(project);
-            }
-        });
-    }
-
     private List<Dependency> calculateDependencies(Project project) throws Exception {
         Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
@@ -322,4 +331,38 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }
         return dependencies;
     }
+
+    private class ProjectPredicate implements Predicate<GradleDeployDetails> {
+        private final Project project;
+
+        private ProjectPredicate(Project project) {
+            this.project = project;
+        }
+
+        public boolean apply(@Nullable GradleDeployDetails input) {
+            return input.getProject().equals(project);
+        }
+    }
+
+    private class IncludeExcludePredicate implements Predicate<GradleDeployDetails> {
+        private Project project;
+        private IncludeExcludePatterns patterns;
+        private boolean include;
+
+        public IncludeExcludePredicate(Project project, IncludeExcludePatterns patterns, boolean isInclude) {
+            this.project = project;
+            this.patterns = patterns;
+            include = isInclude;
+        }
+
+        public boolean apply(@Nullable GradleDeployDetails input) {
+            if(include){
+                return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
+            }else{
+                return input.getProject().equals(project) &&  PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
+            }
+        }
+    }
+
+    ;
 }

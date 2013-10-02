@@ -27,7 +27,6 @@ import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
-import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
@@ -40,9 +39,7 @@ import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.xml.sax.InputSource;
@@ -431,6 +428,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
 
+        ArtifactoryClientConfiguration.PublisherHandler publisher = conf.publisher;
+        IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+        publisher.getIncludePatterns(),publisher.getExcludePatterns());
+        boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
         for (Artifact moduleArtifact : moduleArtifacts) {
             String artifactId = moduleArtifact.getArtifactId();
             String artifactVersion = moduleArtifact.getVersion();
@@ -447,7 +448,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 artifactFile = project.getFile();   // project.getFile() returns the project pom file
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
-            module.addArtifact(artifact);
+            String groupId = moduleArtifact.getGroupId();
+            String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
+            // If excludeArtifactsFromBuild and the PatternMatcher found conflict, add the excluded artifact to the excluded artifact set.
+            if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath,patterns)){
+                module.addExcludedArtifact(artifact);
+            }else{
+                module.addArtifact(artifact);
+            }
             if (isPublishArtifacts(artifactFile)) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
                         artifactId, artifactVersion, artifactClassifier, artifactExtension);

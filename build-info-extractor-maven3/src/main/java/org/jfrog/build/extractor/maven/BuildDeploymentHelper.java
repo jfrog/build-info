@@ -236,16 +236,18 @@ public class BuildDeploymentHelper {
         List<Module> modules = build.getModules();
         for (Module module : modules) {
             List<Artifact> artifacts = module.getArtifacts();
-            for (Artifact artifact : artifacts) {
-                String artifactId = BuildInfoExtractorUtils.getArtifactId(module.getId(), artifact.getName());
-                DeployDetails deployable = deployableArtifactBuilders.get(artifactId);
-                if (deployable != null) {
-                    File file = deployable.getFile();
-                    setArtifactChecksums(file, artifact);
-                    deployableArtifacts.add(new DeployDetails.Builder().artifactPath(deployable.getArtifactPath()).
-                            file(file).md5(artifact.getMd5()).sha1(artifact.getSha1()).
-                            addProperties(deployable.getProperties()).
-                            targetRepository(deployable.getTargetRepository()).build());
+            if(artifacts!=null){
+                for (Artifact artifact : artifacts) {
+                    String artifactId = BuildInfoExtractorUtils.getArtifactId(module.getId(), artifact.getName());
+                    DeployDetails deployable = deployableArtifactBuilders.get(artifactId);
+                    if (deployable != null) {
+                        File file = deployable.getFile();
+                        setArtifactChecksums(file, artifact);
+                        deployableArtifacts.add(new DeployDetails.Builder().artifactPath(deployable.getArtifactPath()).
+                                file(file).md5(artifact.getMd5()).sha1(artifact.getSha1()).
+                                addProperties(deployable.getProperties()).
+                                targetRepository(deployable.getTargetRepository()).build());
+                    }
                 }
             }
         }

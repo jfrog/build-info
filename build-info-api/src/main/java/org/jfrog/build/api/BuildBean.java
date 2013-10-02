@@ -29,6 +29,7 @@ public interface BuildBean extends Serializable {
     String MODULES = "modules";
     String MODULE = "module";
     String ARTIFACTS = "artifacts";
+    String EXCLUDED_ARTIFACTS = "excludedArtifacts";
     String ARTIFACT = "artifact";
     String DEPENDENCIES = "dependencies";
     String DEPENDENCY = "dependency";
