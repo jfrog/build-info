@@ -468,8 +468,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactBuilder.type("pom");
                         String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
                         artifactBuilder.name(pomFileName);
-                        org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
-                        module.addArtifact(pomArtifact);
+                        org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build(); if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath,patterns)){
+                            module.addExcludedArtifact(pomArtifact);
+                        }else{
+                            module.addArtifact(pomArtifact);
+                        }
                         if (isPublishArtifacts(pomFile)) {
                             addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
                                     artifactId, artifactVersion,
