@@ -103,15 +103,6 @@ public class ArtifactoryBuildInfoClient {
     }
 
     /**
-     * Sets retry handler in httpClient
-     *
-     * @param retryHandler retry handler.
-     */
-    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
-        httpClient.setHttpRequestRetryHandler(retryHandler);
-    }
-
-    /**
      * Sets the proxy host and port.
      *
      * @param host Proxy host

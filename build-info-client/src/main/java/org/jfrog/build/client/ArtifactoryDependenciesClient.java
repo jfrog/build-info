@@ -63,10 +63,6 @@ public class ArtifactoryDependenciesClient {
         httpClient.setConnectionTimeout(connectionTimeout);
     }
 
-    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
-        httpClient.setHttpRequestRetryHandler(retryHandler);
-    }
-
     public void setProxyConfiguration(String host, int port) {
         httpClient.setProxyConfiguration(host, port, null, null);
     }

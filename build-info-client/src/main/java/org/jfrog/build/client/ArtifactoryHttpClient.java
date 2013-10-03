@@ -124,11 +124,6 @@ public class ArtifactoryHttpClient {
         return deployClient;
     }
 
-    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
-        PreemptiveHttpClient httpClient = getHttpClient();
-        httpClient.setHttpRequestRetryHandler(retryHandler);
-    }
-
     public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
         PreemptiveHttpClient client = getHttpClient();

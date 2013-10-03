@@ -81,10 +81,6 @@ public class PreemptiveHttpClient {
         httpClient = createHttpClient(userName, password, timeout);
     }
 
-    public void setHttpRequestRetryHandler(HttpRequestRetryHandler retryHandler){
-        httpClient.setHttpRequestRetryHandler(retryHandler);
-    }
-
     public void setProxyConfiguration(String host, int port, String username, String password) {
         HttpHost proxy = new HttpHost(host, port);
         httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
@@ -125,7 +121,10 @@ public class PreemptiveHttpClient {
             // Add as the first request interceptor
             client.addRequestInterceptor(new PreemptiveAuth(), 0);
         }
-
+        boolean requestSentRetryEnabled = Boolean.parseBoolean(System.getProperty("requestSentRetryEnabled"));
+        if(requestSentRetryEnabled){
+            client.setHttpRequestRetryHandler(new DefaultHttpRequestRetryHandler(3,requestSentRetryEnabled));
+        }
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
         HttpProtocolParams.setUserAgent(client.getParams(), userAgent);
