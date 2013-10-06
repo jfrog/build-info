@@ -115,8 +115,6 @@ public class PreemptiveHttpClient {
         boolean requestSentRetryEnabled = Boolean.parseBoolean(System.getProperty("requestSentRetryEnabled"));
         if(requestSentRetryEnabled){
             client.setHttpRequestRetryHandler(new DefaultHttpRequestRetryHandler(3,requestSentRetryEnabled));
-            // TODO [By Gidi] remove this code after Eli's test
-            System.out.println("############### REPLACING http sent retry handler ###############");
         }
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
