@@ -125,7 +125,7 @@ subprojects {
         from sourceSets.main.allSource
         classifier = 'sources'
     }
-	
+
 	task javadocJar(type: Jar, dependsOn: javadoc) {
       classifier = 'javadoc'
       from javadoc.destinationDir
@@ -401,25 +401,19 @@ project('artifactory-maven-plugin') {
     task pluginDescriptor( type: Exec ) {
         // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
 
-        final mvn     = project.hasProperty( 'mvn'     ) ? project.mvn     : System.getProperty( 'os.name' )?.toLowerCase()?.contains( 'win' ) ? 'mvn.bat' : 'mvn'
-        final mvnArgs = project.hasProperty( 'mvnArgs' ) ? project.mvnArgs : ''
-        final allArgs = [ '-e', '-B', mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor' ].grep()
+        final mvn      = project.hasProperty( 'mvn'     ) ? project.mvn     : System.getProperty( 'os.name' )?.toLowerCase()?.contains( 'win' ) ? 'mvn.bat' : 'mvn'
+        final mvnArgs  = project.hasProperty( 'mvnArgs' ) ? project.mvnArgs : ''
+        final File pom = project.file( "$buildDir/pom.xml" )
+        final allArgs  = [ '-e', '-B', '-f', pom.canonicalPath, mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor' ].grep()
 
         executable mvn
         args       allArgs
 
         doFirst {
             assert project.compileGroovy.destinationDir.directory
-            final File pom = project.file( 'pom.xml' )
             install.repositories.mavenInstaller.pom.writeTo( pom )
-            assert pom.file, "[$pom.canonicalPath] was not created"
-            println "POM file:$pom.canonicalPath is created"
-
-            final buildDirName   = project.buildDir.name
-            final classesDirName = project.compileGroovy.destinationDir.canonicalPath.replace( '\\', '/' ) -
-                                   "${ project.buildDir.canonicalPath.replace( '\\', '/' ) }/"
-
-            println "classesDirName = [$classesDirName]"
+            assert pom.file, "[$pom.canonicalPath] was not generated"
+            println "POM is generated at file:$pom.canonicalPath"
 
             pom.text = pom.text.
                 replace( '<groupId>unknown</groupId>',             "<groupId>${project.group}</groupId>" ).
@@ -428,8 +422,8 @@ project('artifactory-maven-plugin') {
                                                                    |<version>${version}</version>
                                                                    |  <packaging>maven-plugin</packaging>
                                                                    |  <build>
-                                                                   |    <directory>\${project.basedir}/$buildDirName</directory>
-                                                                   |    <outputDirectory>\${project.build.directory}/$classesDirName</outputDirectory>
+                                                                   |    <directory>${project.buildDir.canonicalPath}</directory>
+                                                                   |    <outputDirectory>${project.compileGroovy.destinationDir.canonicalPath}</outputDirectory>
                                                                    |  </build>""".stripMargin().trim())
 
             println "Running '$mvn' with arguments $allArgs"
