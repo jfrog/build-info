@@ -16,32 +16,6 @@
 
 <component-set>
     <components>
-        <!-- Registering both listeners and on runtime plexus will choose the right one
-         according to the Maven version (org.sonatype=Maven 3.0.x, org.eclipse=Maven 3.1.x) -->
-        <component>
-            <role>org.eclipse.aether.RepositoryListener</role>
-            <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseRepositoryListener</implementation>
-            <requirements>
-                <requirement>
-                    <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
-                    <field-name>logger</field-name>
-                </requirement>
-            </requirements>
-        </component>
-        <component>
-            <role>org.sonatype.aether.RepositoryListener</role>
-            <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeRepositoryListener</implementation>
-            <requirements>
-                <requirement>
-                    <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
-                    <field-name>logger</field-name>
-                </requirement>
-            </requirements>
-        </component>
         <component>
             <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
             <implementation>org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant</implementation>

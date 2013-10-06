@@ -23,6 +23,7 @@ import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.aether.AetherUtils;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -43,6 +44,30 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
 
     private ArtifactoryClientConfiguration internalConfiguration = null;
 
+    /**
+     * When the session starts, register Artifactory RepositoryListener as part of the listener chain that is
+     * used for repository manipulation.
+     *
+     * @param session The maven session.
+     * @throws MavenExecutionException A maven execution exception that can happen during the maven build.
+     */
+    @Override
+    public void afterSessionStart(MavenSession session) throws MavenExecutionException {
+        super.afterSessionStart(session);
+
+        ArtifactoryClientConfiguration config = getConfiguration( session );
+        AetherUtils.addRepositoryListener( session,
+                                           "DefaultRepositorySystemSession",
+                                           config.resolver.getUrlWithMatrixParams(),
+                                           config.resolver.getUsername(),
+                                           config.resolver.getPassword(),
+                                           config.proxy.getHost(),
+                                           config.proxy.getPort(),
+                                           config.proxy.getUsername(),
+                                           config.proxy.getPassword(),
+                                           logger );
+    }
+
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
         ArtifactoryClientConfiguration configuration = getConfiguration(session);
@@ -59,7 +84,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         }
         logger.debug("Activating Artifactory Maven3 Build-Info Recorder: activation property (" +
                 BuildInfoConfigProperties.ACTIVATE_RECORDER + ") value is true.");
-        configuration.info.setBuildStarted(System.currentTimeMillis());
+        configuration.info.setBuildStarted( System.currentTimeMillis() );
         ExecutionListener existingExecutionListener = session.getRequest().getExecutionListener();
         recorder.setListenerToWrap(existingExecutionListener);
         recorder.setConfiguration(configuration);
