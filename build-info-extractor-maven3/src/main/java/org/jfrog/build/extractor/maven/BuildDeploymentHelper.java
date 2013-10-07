@@ -257,8 +257,6 @@ public class BuildDeploymentHelper {
     private void deployArtifacts(ArtifactoryClientConfiguration.PublisherHandler publishConf,
             Set<DeployDetails> deployableArtifacts,
             ArtifactoryBuildInfoClient client) {
-        logger.info("Artifactory Build Info Recorder: Deploying artifacts to " + publishConf.getUrl());
-
         IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(publishConf);
         for (DeployDetails artifact : deployableArtifacts) {
             String artifactPath = artifact.getArtifactPath();
