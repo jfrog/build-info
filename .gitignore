@@ -10,7 +10,6 @@
 /build-info-extractor-gradle/src/examples/publishTestProject/build
 /build-info-extractor-gradle/src/examples/publishTestProject/*/build
 /build-info-extractor-gradle/src/examples/publishTestProject/*/*/build
-build-info-extractor-maven3-plugin/pom.xml
 build-info.ipr
 build-info.iws
 atlassian-*.xml
