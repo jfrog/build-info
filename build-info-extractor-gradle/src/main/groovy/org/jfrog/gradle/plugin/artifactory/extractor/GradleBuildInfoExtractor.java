@@ -16,7 +16,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import com.beust.jcommander.internal.Sets;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
@@ -261,7 +260,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
             } else {
                 deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
-                deployExcludeDetails = Sets.newHashSet();
+                deployExcludeDetails = new ArrayList<GradleDeployDetails>();
             }
             builder.artifacts(calculateArtifacts(deployIncludeDetails))
                     .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
