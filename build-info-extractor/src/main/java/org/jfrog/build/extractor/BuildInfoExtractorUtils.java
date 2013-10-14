@@ -36,12 +36,7 @@ import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -117,7 +112,7 @@ public abstract class BuildInfoExtractorUtils {
 
         // Add all the startProps that starts with BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX
         for (Map.Entry<Object, Object> startEntry : startProps.entrySet()) {
-            if (StringUtils.startsWith((String)startEntry.getKey(),
+            if (StringUtils.startsWith((String) startEntry.getKey(),
                     BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX)) {
                 props.put(startEntry.getKey(), startEntry.getValue());
             }
@@ -214,7 +209,11 @@ public abstract class BuildInfoExtractorUtils {
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(key);
             if (StringUtils.isBlank(propertiesFilePath)) {
-                propertiesFilePath = System.getenv(key);
+                // Jenkins prefixes these variables with "env." so let's try that
+                propertiesFilePath = additionalProps.getProperty("env." + key);
+                if (StringUtils.isBlank(propertiesFilePath)) {
+                    propertiesFilePath = System.getenv(key);
+                }
             }
         }
         return propertiesFilePath;
