@@ -192,7 +192,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
         Artifact artifact = artifactBuilder.build();
-        if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(artifactFile.getPath(),patterns)){
+        if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(fullPath,patterns)){
             module.getExcludedArtifacts().add(artifact);
         }else{
             module.getArtifacts().add(artifact);
