@@ -154,6 +154,10 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         if (artifacts == null) {
             module.setArtifacts(Lists.<Artifact>newArrayList());
         }
+        List<Artifact> excludedArtifacts = module.getExcludedArtifacts();
+        if (excludedArtifacts == null) {
+            module.setExcludedArtifacts(Lists.<Artifact>newArrayList());
+        }
 
         final org.apache.ivy.core.module.descriptor.Artifact pubArtifact = ((PublishEvent) event).getArtifact();
         @SuppressWarnings("unchecked") Map<String, String> extraAttributes = pubArtifact.getExtraAttributes();
