@@ -8,10 +8,7 @@ import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.repository.ArtifactRepository;
-import org.eclipse.aether.repository.Authentication;
-import org.eclipse.aether.repository.Proxy;
-import org.eclipse.aether.repository.RemoteRepository;
+import org.eclipse.aether.repository.*;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -82,6 +79,16 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
                     authenticationField.setAccessible(true);
                     authenticationField.set(remoteRepository, authentication);
                 }
+
+                logger.debug("Enforcing snapshot and release policy for event: " + event);
+                RepositoryPolicy defaultPolicy = new RepositoryPolicy();
+                Field releasePolicyField = RemoteRepository.class.getDeclaredField("releasePolicy");
+                releasePolicyField.setAccessible(true);
+                releasePolicyField.set(remoteRepository, defaultPolicy);
+                Field snapshotPolicyField = RemoteRepository.class.getDeclaredField("snapshotPolicy");
+                snapshotPolicyField.setAccessible(true);
+                snapshotPolicyField.set(remoteRepository, defaultPolicy);
+
                 if (StringUtils.isNotBlank(proxyHost)) {
                     Authentication authentication = new AuthenticationBuilder()
                             .addString("username", proxyUsername).addSecret("password", proxyPassword).build();

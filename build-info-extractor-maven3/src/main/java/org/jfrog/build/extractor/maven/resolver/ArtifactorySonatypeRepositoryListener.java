@@ -11,10 +11,7 @@ import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystemSession;
-import org.sonatype.aether.repository.ArtifactRepository;
-import org.sonatype.aether.repository.Authentication;
-import org.sonatype.aether.repository.Proxy;
-import org.sonatype.aether.repository.RemoteRepository;
+import org.sonatype.aether.repository.*;
 
 import java.util.Properties;
 
@@ -73,6 +70,11 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
                 logger.debug("Enforcing repository authentication: " + authentication + " for event: " + event);
                 remoteRepository.setAuthentication(authentication);
             }
+
+            logger.debug("Enforcing snapshot and release policy for event: " + event);
+            remoteRepository.setPolicy(true, new RepositoryPolicy());
+            remoteRepository.setPolicy(false, new RepositoryPolicy());
+
             if (StringUtils.isNotBlank(proxyHost)) {
                 Proxy proxy = new Proxy(null, proxyHost, proxyPort, new Authentication(proxyUsername, proxyPassword));
                 logger.debug("Enforcing repository proxy: " + proxy + " for event: " + event);
