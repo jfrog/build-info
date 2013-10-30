@@ -41,8 +41,8 @@ public class PatternArtifactBuilder {
         if (uri == null) {
             throw new IllegalArgumentException("PatternArtifact must have a URI.");
         }
-        if (size == 0) {
-            throw new IllegalArgumentException("PatternArtifact must have a size.");
+        if (size < 0) {
+            throw new IllegalArgumentException("PatternArtifact must have a zero or positive size.");
         }
         if (lastModified == null) {
             throw new IllegalArgumentException("PatternArtifact must have a last Modified date.");
