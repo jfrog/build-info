@@ -17,8 +17,8 @@ import org.gcontracts.annotations.Requires
 import org.jfrog.build.api.BuildInfoProperties
 import org.jfrog.build.extractor.maven.BuildInfoRecorder
 import org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
-import java.text.SimpleDateFormat
 
+import java.text.SimpleDateFormat
 
 /**
  * Artifactory plugin creating and deploying JSON build data together with build artifacts.
@@ -131,7 +131,7 @@ class PublishMojo extends GroovyMojo
      * Completes various configuration settings.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ buildInfo && session && project })
+    @Requires({ buildInfo && artifactory && session && project })
     private void completeConfig ()
     {
         final format                = { Date d  -> new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( d ) } // 2013-06-23T18\:38\:37.597+0200
@@ -146,6 +146,8 @@ class PublishMojo extends GroovyMojo
         if ( buildInfo.buildRetentionDays != null ){
             buildInfo.buildRetentionMinimumDate = buildInfo.buildRetentionDays as String
         }
+
+        artifactory.activateRecorder = true
     }
 
 

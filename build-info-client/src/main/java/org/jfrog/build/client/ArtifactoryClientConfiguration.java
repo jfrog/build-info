@@ -15,14 +15,6 @@
  */
 package org.jfrog.build.client;
 
-import static org.jfrog.build.api.BuildInfoConfigProperties.*;
-import static org.jfrog.build.api.BuildInfoFields.*;
-import static org.jfrog.build.api.BuildInfoProperties.*;
-import static org.jfrog.build.api.IssuesTrackerFields.*;
-import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
-import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
-import static org.jfrog.build.client.ClientConfigurationFields.*;
-import static org.jfrog.build.client.ClientProperties.*;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
@@ -41,6 +33,15 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
+
+import static org.jfrog.build.api.BuildInfoConfigProperties.*;
+import static org.jfrog.build.api.BuildInfoFields.*;
+import static org.jfrog.build.api.BuildInfoProperties.*;
+import static org.jfrog.build.api.IssuesTrackerFields.*;
+import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
+import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.client.ClientConfigurationFields.*;
+import static org.jfrog.build.client.ClientProperties.*;
 
 
 /**
@@ -200,7 +201,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public Boolean isActivateRecorder() {
-        return root.getBooleanValue(ACTIVATE_RECORDER, true);
+        return root.getBooleanValue(ACTIVATE_RECORDER, false);
     }
 
     public class ResolverHandler extends RepositoryConfiguration {
