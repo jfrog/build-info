@@ -16,14 +16,14 @@
 
 package org.jfrog.build.api.util;
 
-import com.google.common.collect.Maps;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
+
+import com.google.common.collect.Maps;
 
 /**
  * File checksum calculator class
@@ -53,16 +53,18 @@ public abstract class FileChecksumCalculator {
         }
 
         if (!fileToCalculate.exists()) {
-            throw new IllegalArgumentException("Cannot read checksums of non-existent file.");
+            throw new IllegalArgumentException("Cannot read checksums of non-existent file: "
+                    + fileToCalculate.getAbsolutePath());
         }
 
         if (!fileToCalculate.isFile()) {
-            throw new IllegalArgumentException("Cannot read checksums of a folder.");
+            throw new IllegalArgumentException("Cannot read checksums of a folder: " + fileToCalculate.getAbsolutePath());
         }
 
         if (algorithms == null) {
             throw new IllegalArgumentException("Checksum algorithms cannot be null.");
         }
+
         if (algorithms.length == 0) {
             return Maps.newHashMap();
         }
