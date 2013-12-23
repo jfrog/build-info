@@ -16,6 +16,8 @@
 
 package org.jfrog.build.client;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
@@ -60,6 +62,7 @@ public class ArtifactoryBuildInfoClient {
     private final Log log;
 
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
+    private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_URL = "/api/build";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
@@ -132,54 +135,49 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public List<String> getLocalRepositoriesKeys() throws IOException {
-        List<String> repositories = new ArrayList<String>();
-        PreemptiveHttpClient client = httpClient.getHttpClient();
-
-        String localReposUrl = artifactoryUrl + LOCAL_REPOS_REST_URL;
-        log.debug("Requesting local repositories list from: " + localReposUrl);
-        HttpGet httpget = new HttpGet(localReposUrl);
-        HttpResponse response = client.execute(httpget);
-        StatusLine statusLine = response.getStatusLine();
-        HttpEntity entity = response.getEntity();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            if (entity != null) {
-                entity.consumeContent();
-            }
-            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
-        } else {
-            if (entity != null) {
-                repositories = new ArrayList<String>();
-                InputStream content = entity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    JsonNode result = parser.readValueAsTree();
-                    log.debug("Repositories result = " + result);
-                    for (JsonNode jsonNode : result) {
-                        String repositoryKey = jsonNode.get("key").getTextValue();
-                        repositories.add(repositoryKey);
-                    }
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
-                }
-            }
-        }
-        return repositories;
+        return getRepositoriesList(LOCAL_REPOS_REST_URL);
     }
 
     /**
-     * @return A list of local repositories available for deployment.
+     * @return A list of local and cache repositories.
+     * @throws IOException On any connection error
+     */
+    public List<String> getLocalAndCacheRepositoriesKeys() throws IOException {
+        List<String> localRepositoriesKeys = getLocalRepositoriesKeys();
+        List<String> remoteRepositories = getRemoteRepositoriesKeys();
+        List<String> cacheRepositories = Lists.transform(remoteRepositories, new Function<String, String>() {
+            @Override
+            public String apply(String repoKey) {
+                return repoKey + "-cache";
+            }
+        });
+
+        return Lists.newArrayList(Iterables.concat(localRepositoriesKeys, cacheRepositories));
+    }
+
+    /**
+     * @return A list of remote repositories.
+     * @throws IOException On any connection error
+     */
+    public List<String> getRemoteRepositoriesKeys() throws IOException {
+        return getRepositoriesList(REMOTE_REPOS_REST_URL);
+    }
+
+    /**
+     * @return A list of virtual repositories available for resolution.
      * @throws IOException On any connection error
      */
     public List<String> getVirtualRepositoryKeys() throws IOException {
+        return getRepositoriesList(VIRTUAL_REPOS_REST_URL);
+    }
+
+    private List<String> getRepositoriesList(String restUrl) throws IOException {
         List<String> repositories = new ArrayList<String>();
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
-        String localReposUrl = artifactoryUrl + VIRTUAL_REPOS_REST_URL;
-        log.debug("Requesting local repositories list from: " + localReposUrl);
-        HttpGet httpget = new HttpGet(localReposUrl);
+        String reposUrl = artifactoryUrl + restUrl;
+        log.debug("Requesting repositories list from: " + reposUrl);
+        HttpGet httpget = new HttpGet(reposUrl);
         HttpResponse response = client.execute(httpget);
         StatusLine statusLine = response.getStatusLine();
         HttpEntity entity = response.getEntity();
