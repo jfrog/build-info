@@ -21,11 +21,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
@@ -53,7 +49,7 @@ public class FileChecksumCalculatorTest {
      * Tests the behavior of the calculator when given a non-existing file
      */
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Cannot read checksums of non-existent file.")
+            expectedExceptionsMessageRegExp = "Cannot read checksums of non-existent file: (.+)")
     public void testNonExistingFile() throws IOException, NoSuchAlgorithmException {
         FileChecksumCalculator.calculateChecksums(new File("/this/file/doesnt/exists.moo"));
     }
@@ -62,7 +58,7 @@ public class FileChecksumCalculatorTest {
      * Tests the behavior of the calculator when given a folder
      */
     @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "Cannot read checksums of a folder.")
+            expectedExceptionsMessageRegExp = "Cannot read checksums of a folder: (.+)")
     public void testFolder() throws IOException, NoSuchAlgorithmException {
         FileChecksumCalculator.calculateChecksums(FileUtils.getTempDirectory());
     }
