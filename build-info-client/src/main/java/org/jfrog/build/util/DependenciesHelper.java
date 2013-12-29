@@ -90,7 +90,7 @@ public class DependenciesHelper {
         PropertySearchResult propertySearchResult = downloader.getClient().searchArtifactsByProperties(matrixParams);
         List<PropertySearchResult.SearchEntry> filteredEntries = filterResultEntries(
                 propertySearchResult.getResults(), pattern);
-        log.info("Found " + filteredEntries.size() + " dependencies.");
+        log.info("Found " + filteredEntries.size() + " dependencies by doing a property search.");
         for (PropertySearchResult.SearchEntry searchEntry : filteredEntries) {
             downloadableArtifacts.add(
                     new DownloadableArtifact(searchEntry.getRepoUri(), dependencyPattern.getTargetDirectory(),
@@ -116,7 +116,7 @@ public class DependenciesHelper {
         String pattern = dependencyPattern.getPattern();
         PatternResultFileSet fileSet = downloader.getClient().searchArtifactsByPattern(pattern);
         Set<String> filesToDownload = fileSet.getFiles();
-        log.info("Found " + filesToDownload.size() + " dependencies.");
+        log.info("Found " + filesToDownload.size() + " dependencies by doing a pattern search.");
         for (String fileToDownload : filesToDownload) {
             downloadableArtifacts.add(
                     new DownloadableArtifact(fileSet.getRepoUri(), dependencyPattern.getTargetDirectory(),
