@@ -21,7 +21,6 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.sun.istack.internal.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -93,7 +92,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Map<String, ?> filterStringEntries(Map<String, ?> map) {
         return Maps.filterValues(map, new Predicate<Object>() {
-            public boolean apply(@Nullable Object input) {
+            public boolean apply(Object input) {
                 return input != null && input instanceof String;
             }
         });
