@@ -30,7 +30,7 @@
 
 buildscript {
     dependencies {
-        classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.1.x-SNAPSHOT-uber.jar"))
+        classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.2.x-SNAPSHOT-uber.jar"))
     }
 }
 
