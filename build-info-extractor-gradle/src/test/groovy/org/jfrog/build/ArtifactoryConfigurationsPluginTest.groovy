@@ -5,8 +5,6 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.jfrog.build.client.ArtifactSpec
-import org.jfrog.build.client.ClientConfigurationFields
-import org.jfrog.build.client.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryConfigurationsPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
@@ -39,6 +37,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
 
         // Disable resolving
         project.setProperty(REPO_KEY, '')
+        project.getGradle().getStartParameter().projectProperties['BOOLEAN_START_PARAM'] = true
         project.setProperty(PROP_PUBLISH_PREFIX + IVY, 'true')
         project.setProperty(PROP_PUBLISH_PREFIX + MAVEN, 'false')
         javaPlugin.apply(project)

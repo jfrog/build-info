@@ -21,6 +21,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import com.sun.istack.internal.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -36,7 +37,12 @@ import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -85,6 +91,13 @@ public abstract class BuildInfoExtractorUtils {
         return props;
     }
 
+    public static Map<String, ?> filterStringEntries(Map<String, ?> map) {
+        return Maps.filterValues(map, new Predicate<Object>() {
+            public boolean apply(@Nullable Object input) {
+                return input != null && input instanceof String;
+            }
+        });
+    }
 
     public static Properties filterDynamicProperties(Properties source, Predicate<Object> filter) {
         Properties properties = new Properties();

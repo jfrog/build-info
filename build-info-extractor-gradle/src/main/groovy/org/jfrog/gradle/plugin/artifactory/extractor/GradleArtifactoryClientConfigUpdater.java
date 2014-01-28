@@ -60,7 +60,9 @@ public class GradleArtifactoryClientConfigUpdater {
         fillProperties(project, props);
         // Then start parameters
         StartParameter startParameter = project.getGradle().getStartParameter();
-        props.putAll(startParameter.getProjectProperties());
+        Map<String, String> startProps = startParameter.getProjectProperties();
+        props.putAll(BuildInfoExtractorUtils.filterStringEntries(startProps));
+
         // Then System properties
         Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
         // Then special buildInfo properties
@@ -119,11 +121,6 @@ public class GradleArtifactoryClientConfigUpdater {
             fillProperties(parent, props);
         }
         Map<String, ?> projectProperties = project.getProperties();
-        projectProperties = Maps.filterValues(projectProperties, new Predicate<Object>() {
-            public boolean apply(@Nullable Object input) {
-                return input != null && input instanceof String;
-            }
-        });
-        props.putAll(projectProperties);
+        props.putAll(BuildInfoExtractorUtils.filterStringEntries(projectProperties));
     }
 }
