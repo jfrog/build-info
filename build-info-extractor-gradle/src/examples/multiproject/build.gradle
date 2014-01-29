@@ -86,7 +86,7 @@ project('api') {
         }
     }
 
-    artifactoryPublish.doLast {
+    artifactoryPublish.doFirst {
         def gdd = gradleDeployDetails(new DefaultPublishArtifact("build.gradle", "gradle", "text", null,
                         new Date(), file("$rootDir/build.gradle")), 'artifacts', 'a/b/build.gradle')
         deployDetails.add(gdd)
@@ -100,7 +100,7 @@ artifactory {
     contextUrl = 'http://repo-demo:9090/artifactory'
     publish {
         repository {
-            repoKey = 'gradle-snapshot-local'
+            repoKey = 'libs-snapshot-local'
             username = 'admin'
             password = 'password'
             ivy {

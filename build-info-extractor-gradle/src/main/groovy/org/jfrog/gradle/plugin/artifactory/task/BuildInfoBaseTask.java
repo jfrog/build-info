@@ -265,7 +265,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
-                bit.collectDescriptorsAndArtifactsForUpload(deployDetails);
+                bit.collectDescriptorsAndArtifactsForUpload(bit.deployDetails);
             }
         }
         try {
@@ -281,7 +281,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         acc.publisher.getIncludePatterns(),
                         acc.publisher.getExcludePatterns());
                 configureProxy(acc, client);
-                deployArtifacts(client, deployDetails, patterns);
+                deployArtifacts(client, patterns);
             }
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
@@ -394,9 +394,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         artifactSpecs.addAll(propertiesConfig.getArtifactSpecs());
     }
 
-    private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<GradleDeployDetails> details,
-            IncludeExcludePatterns patterns) throws IOException {
-        for (GradleDeployDetails detail : details) {
+    private void deployArtifacts(ArtifactoryBuildInfoClient client, IncludeExcludePatterns patterns)
+            throws IOException {
+        for (GradleDeployDetails detail : deployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
