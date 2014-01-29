@@ -30,13 +30,13 @@
 
 import org.gradle.api.internal.artifacts.publish.DefaultPublishArtifact
 
+import java.text.SimpleDateFormat
+
 buildscript {
     dependencies {
         classpath files(new File(projectDir, "../../../build/libs/build-info-extractor-gradle-2.2.x-SNAPSHOT-uber.jar"))
     }
 }
-
-import java.text.SimpleDateFormat
 
 def globalVersion = new Version('1.2.x-SNAPSHOT')
 
@@ -85,13 +85,19 @@ project('api') {
             simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
         }
     }
+
+    artifactoryPublish.doLast {
+        def gdd = gradleDeployDetails(new DefaultPublishArtifact("build.gradle", "gradle", "text", null,
+                        new Date(), file("$rootDir/build.gradle")), 'artifacts', 'a/b/build.gradle')
+        deployDetails.add(gdd)
+    }
 }
 
 artifactoryPublish.skip = true
 
 artifactory {
     //contextUrl = 'http://repo.jfrog.org/artifactory'
-    contextUrl = 'http://localhost:8080/artifactory'
+    contextUrl = 'http://repo-demo:9090/artifactory'
     publish {
         repository {
             repoKey = 'gradle-snapshot-local'

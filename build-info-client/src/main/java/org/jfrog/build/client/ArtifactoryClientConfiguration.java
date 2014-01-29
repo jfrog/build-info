@@ -579,7 +579,7 @@ public class ArtifactoryClientConfiguration {
 
         private void ensureImmutableMatrixParams() {
             if (calculatedMatrixParams != null) {
-                throw new IllegalStateException("Matrix params already set and cannot be modified");
+                log.debug("Matrix params already set and cannot be modified");
             }
         }
 

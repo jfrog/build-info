@@ -18,13 +18,23 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.ArtifactSpec;
+import org.jfrog.build.client.ArtifactSpecs;
+import org.jfrog.build.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.client.IncludeExcludePatterns;
+import org.jfrog.build.client.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
 import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig;
-import org.jfrog.gradle.plugin.artifactory.extractor.*;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
+import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -36,8 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Date: 3/20/13
- * Time: 10:32 AM
+ * Date: 3/20/13 Time: 10:32 AM
  *
  * @author freds
  */
@@ -61,6 +70,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
     protected Map<String, String> defaultProps;
+
+    private final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
 
     @Input
     @Optional
@@ -103,6 +114,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public void setSkip(boolean skip) {
         this.skip = skip;
+    }
+
+    public Set<GradleDeployDetails> getDeployDetails() {
+        return deployDetails;
     }
 
     public void setProperties(Map<String, CharSequence> props) {
@@ -245,13 +260,12 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         }
         ArtifactoryBuildInfoClient client =
                 new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
-        Set<GradleDeployDetails> allDeployableDetails = Sets.newHashSet();
 
         // Update the artifacts for all project build info task
         List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
-                bit.collectDescriptorsAndArtifactsForUpload(allDeployableDetails);
+                bit.collectDescriptorsAndArtifactsForUpload(deployDetails);
             }
         }
         try {
@@ -267,11 +281,11 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         acc.publisher.getIncludePatterns(),
                         acc.publisher.getExcludePatterns());
                 configureProxy(acc, client);
-                deployArtifacts(client, allDeployableDetails, patterns);
+                deployArtifacts(client, deployDetails, patterns);
             }
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
-            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployableDetails);
+            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, deployDetails);
             Build build = gbie.extract(getProject().getRootProject());
             /**
              * The build-info will be always written to a file in its JSON form.
@@ -381,7 +395,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     private void deployArtifacts(ArtifactoryBuildInfoClient client, Set<GradleDeployDetails> details,
-                                 IncludeExcludePatterns patterns) throws IOException {
+            IncludeExcludePatterns patterns) throws IOException {
         for (GradleDeployDetails detail : details) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();

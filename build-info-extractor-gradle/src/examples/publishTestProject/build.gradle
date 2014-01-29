@@ -106,7 +106,7 @@ artifactory {
     clientConfig.info.setBuildNumber(new java.util.Random(System.currentTimeMillis()).nextInt(20000))
 
     //contextUrl = 'http://repo.jfrog.org/artifactory'
-    contextUrl = 'http://localhost:8080/artifactory'
+    contextUrl = 'http://repo-demo:9090 /artifactory'
     publish {
         repository {
             repoKey = 'gradle-snapshot-local'

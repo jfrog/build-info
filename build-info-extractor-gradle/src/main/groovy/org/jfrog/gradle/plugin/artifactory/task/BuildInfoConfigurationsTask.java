@@ -31,7 +31,12 @@ import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.MavenPluginConvention;
-import org.gradle.api.tasks.*;
+import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
@@ -372,13 +377,55 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
     }
 
     protected Set<GradleDeployDetails> getArtifactDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
 
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (!hasConfigurations()) {
             log.info("No configurations to publish for project '{}'.", getProject().getPath());
             return deployDetails;
         }
+
+        Set<String> processedFiles = Sets.newHashSet();
+        for (Configuration configuration : publishConfigurations) {
+            PublishArtifactSet artifacts = configuration.getAllArtifacts();
+            for (PublishArtifact artifact : artifacts) {
+                GradleDeployDetails gdd = gradleDeployDetails(artifact, configuration.getName(), processedFiles);
+                deployDetails.add(gdd);
+            }
+        }
+        return deployDetails;
+    }
+
+    public GradleDeployDetails gradleDeployDetails(
+            PublishArtifact artifact, String configuration, @Nullable String artifactPath) {
+        return gradleDeployDetails(artifact, configuration, artifactPath, null);
+    }
+
+    private GradleDeployDetails gradleDeployDetails(PublishArtifact artifact, String configuration, Set<String> files) {
+        return gradleDeployDetails(artifact, configuration, null, files);
+    }
+
+    private GradleDeployDetails gradleDeployDetails(PublishArtifact artifact, String configuration,
+            @Nullable String artifactPath, @Nullable Set<String> processedFiles) {
+
+        File file = artifact.getFile();
+        if (processedFiles != null && processedFiles.contains(file.getAbsolutePath())) {
+            return null;
+        }
+        if (!file.exists()) {
+            throw new GradleException("File '" + file.getAbsolutePath() + "'" +
+                    " does not exists, and need to be published!");
+        }
+        if (processedFiles != null) {
+            processedFiles.add(file.getAbsolutePath());
+        }
+
+        String revision = getProject().getVersion().toString();
+        Map<String, String> extraTokens = Maps.newHashMap();
+        if (StringUtils.isNotBlank(artifact.getClassifier())) {
+            extraTokens.put("classifier", artifact.getClassifier());
+        }
+
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
         ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
         String pattern = publisherConf.getIvyArtifactPattern();
         String gid = getProject().getGroup().toString();
@@ -386,46 +433,31 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
             gid = gid.replace(".", "/");
         }
 
-        Set<String> processedFiles = Sets.newHashSet();
-        for (Configuration configuration : publishConfigurations) {
-            PublishArtifactSet artifacts = configuration.getAllArtifacts();
-            for (PublishArtifact artifact : artifacts) {
-                File file = artifact.getFile();
-                if (processedFiles.contains(file.getAbsolutePath())) {
-                    continue;
-                }
-                if (!file.exists()) {
-                    throw new GradleException("File '" + file.getAbsolutePath() + "'" +
-                            " does not exists, and need to be published!");
-                }
-                processedFiles.add(file.getAbsolutePath());
-                DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
-                try {
-                    Map<String, String> checksums =
-                            FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
-                    artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
-                } catch (Exception e) {
-                    throw new GradleException(
-                            "Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
-                }
-                String revision = getProject().getVersion().toString();
-                Map<String, String> extraTokens = Maps.newHashMap();
-                if (StringUtils.isNotBlank(artifact.getClassifier())) {
-                    extraTokens.put("classifier", artifact.getClassifier());
-                }
-                artifactBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getModuleName(),
-                        revision, artifact.getName(), artifact.getType(),
-                        artifact.getExtension(), configuration.getName(),
-                        extraTokens, null));
-                artifactBuilder.targetRepository(publisherConf.getRepoKey());
-                PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
-                Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration.getName());
-                artifactBuilder.addProperties(propsToAdd);
-                DeployDetails details = artifactBuilder.build();
-                deployDetails.add(new GradleDeployDetails(artifactInfo, details, getProject()));
-            }
+        DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder().file(file);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+            deployDetailsBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new GradleException(
+                    "Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
         }
-        return deployDetails;
+
+        if (artifactPath != null) {
+            deployDetailsBuilder.artifactPath(artifactPath);
+        } else {
+            deployDetailsBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getModuleName(),
+                    revision, artifact.getName(), artifact.getType(),
+                    artifact.getExtension(), configuration,
+                    extraTokens, null));
+        }
+        deployDetailsBuilder.targetRepository(publisherConf.getRepoKey());
+        PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
+        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration);
+        deployDetailsBuilder.addProperties(propsToAdd);
+        DeployDetails details = deployDetailsBuilder.build();
+        GradleDeployDetails gdd = new GradleDeployDetails(artifactInfo, details, getProject());
+        return gdd;
     }
 
 }
