@@ -397,6 +397,11 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
     }
 
     public GradleDeployDetails gradleDeployDetails(
+            PublishArtifact artifact, String configuration) {
+        return gradleDeployDetails(artifact, configuration, null, null);
+    }
+
+    public GradleDeployDetails gradleDeployDetails(
             PublishArtifact artifact, String configuration, @Nullable String artifactPath) {
         return gradleDeployDetails(artifact, configuration, artifactPath, null);
     }
