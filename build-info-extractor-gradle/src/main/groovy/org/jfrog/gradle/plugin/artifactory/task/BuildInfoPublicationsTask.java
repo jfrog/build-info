@@ -151,9 +151,9 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
     }
 
     @Override
-    protected void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails) throws IOException {
+    protected void collectDescriptorsAndArtifactsForUpload() throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
-        allDeployableDetails.addAll(deployDetailsFromProject);
+        deployDetails.addAll(deployDetailsFromProject);
     }
 
     @Override

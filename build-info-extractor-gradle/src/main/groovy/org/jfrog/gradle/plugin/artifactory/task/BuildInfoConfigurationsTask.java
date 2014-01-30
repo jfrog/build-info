@@ -193,21 +193,20 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         return publishIvy;
     }
 
-    protected void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
-            throws IOException {
+    protected void collectDescriptorsAndArtifactsForUpload() throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
-        allDeployableDetails.addAll(deployDetailsFromProject);
+        deployDetails.addAll(deployDetailsFromProject);
 
         //Add the ivy and maven descriptors if they exist
         ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
         if (isPublishIvy(acc)) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
-                allDeployableDetails.add(getIvyDescriptorDeployDetails());
+                deployDetails.add(getIvyDescriptorDeployDetails());
             }
         }
         if (isPublishMaven(acc)) {
             if (mavenDescriptor != null && mavenDescriptor.exists()) {
-                allDeployableDetails.add(getMavenDeployDetails());
+                deployDetails.add(getMavenDeployDetails());
             }
         }
     }
@@ -389,7 +388,9 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
             PublishArtifactSet artifacts = configuration.getAllArtifacts();
             for (PublishArtifact artifact : artifacts) {
                 GradleDeployDetails gdd = gradleDeployDetails(artifact, configuration.getName(), processedFiles);
-                deployDetails.add(gdd);
+                if (gdd != null) {
+                    deployDetails.add(gdd);
+                }
             }
         }
         return deployDetails;

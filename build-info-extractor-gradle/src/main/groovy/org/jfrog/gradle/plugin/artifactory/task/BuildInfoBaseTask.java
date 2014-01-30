@@ -71,7 +71,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     protected Map<String, String> defaultProps;
 
-    private final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
+    protected final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
 
     @Input
     @Optional
@@ -235,8 +235,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         }
     }
 
-    protected abstract void collectDescriptorsAndArtifactsForUpload(Set<GradleDeployDetails> allDeployableDetails)
-            throws IOException;
+    protected abstract void collectDescriptorsAndArtifactsForUpload() throws IOException;
 
     /**
      * This method will be activated only at the end of the build, when we reached the root project.
@@ -258,16 +257,20 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         if (StringUtils.isBlank(password)) {
             password = "";
         }
-        ArtifactoryBuildInfoClient client =
-                new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
+
+        Set<GradleDeployDetails> allDeployDetails = Sets.newHashSet();
 
         // Update the artifacts for all project build info task
         List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
-                bit.collectDescriptorsAndArtifactsForUpload(bit.deployDetails);
+                bit.collectDescriptorsAndArtifactsForUpload();
+                allDeployDetails.addAll(bit.deployDetails);
             }
         }
+
+        ArtifactoryBuildInfoClient client =
+                new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
         try {
             if (isPublishArtifacts(acc)) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
@@ -281,11 +284,11 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         acc.publisher.getIncludePatterns(),
                         acc.publisher.getExcludePatterns());
                 configureProxy(acc, client);
-                deployArtifacts(client, patterns);
+                deployArtifacts(allDeployDetails, client, patterns);
             }
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
-            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, deployDetails);
+            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployDetails);
             Build build = gbie.extract(getProject().getRootProject());
             /**
              * The build-info will be always written to a file in its JSON form.
@@ -394,9 +397,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         artifactSpecs.addAll(propertiesConfig.getArtifactSpecs());
     }
 
-    private void deployArtifacts(ArtifactoryBuildInfoClient client, IncludeExcludePatterns patterns)
+    private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryBuildInfoClient client,
+            IncludeExcludePatterns patterns)
             throws IOException {
-        for (GradleDeployDetails detail : deployDetails) {
+        for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
             String artifactPath = deployDetails.getArtifactPath();
             if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
