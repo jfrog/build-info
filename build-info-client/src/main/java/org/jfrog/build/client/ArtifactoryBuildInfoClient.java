@@ -234,11 +234,13 @@ public class ArtifactoryBuildInfoClient {
      */
     public void sendBuildInfo(Build buildInfo) throws IOException {
         try {
-            sendBuildInfo( buildInfoToJsonString( buildInfo ));
+            sendBuildInfo(buildInfoToJsonString(buildInfo));
+            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_REST_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted());
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
+
     }
 
     public String getItemLastModified(String path) throws IOException, ParseException {
@@ -414,7 +416,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
-            Map<String, String> requestParams) throws IOException {
+                                                   Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
                 .append(promotionName).append("/").append(httpClient.encodeUrl(buildName)).append("/")
                 .append(httpClient.encodeUrl(buildNumber)).append("?");
