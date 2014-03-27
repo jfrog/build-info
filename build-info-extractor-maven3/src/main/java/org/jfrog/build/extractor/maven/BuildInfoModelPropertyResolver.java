@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven;
 
-import static org.jfrog.build.api.BuildInfoFields.*;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.Maven;
@@ -22,6 +21,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 import java.util.Set;
+
+import static org.jfrog.build.api.BuildInfoFields.*;
 
 
 /**
@@ -48,6 +49,10 @@ public class BuildInfoModelPropertyResolver {
         String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
             builder.vcsRevision(vcsRevision);
+        }
+        String vcsUrl = clientConf.info.getVcsUrl();
+        if (StringUtils.isNotBlank(vcsUrl)) {
+            builder.vcsUrl(vcsUrl);
         }
         BuildAgent buildAgent = new BuildAgent("Maven", getMavenVersion());
         builder.buildAgent(buildAgent);
@@ -140,7 +145,7 @@ public class BuildInfoModelPropertyResolver {
     }
 
     private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event,
-            ArtifactoryClientConfiguration clientConf) {
+                                                        ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
@@ -169,14 +174,14 @@ public class BuildInfoModelPropertyResolver {
     private String getMavenVersion() {
         Properties mavenVersionProperties = new Properties();
         InputStream inputStream = BuildInfoRecorder.class.getClassLoader().
-                                  getResourceAsStream( "org/apache/maven/messages/build.properties" );
+                getResourceAsStream("org/apache/maven/messages/build.properties");
         if (inputStream == null) {
             inputStream = Maven.class.getClassLoader().
-                          getResourceAsStream( "META-INF/maven/org.apache.maven/maven-core/pom.properties" );
+                    getResourceAsStream("META-INF/maven/org.apache.maven/maven-core/pom.properties");
         }
         if (inputStream == null) {
             throw new RuntimeException("Could not extract Maven version: unable to find resources " +
-                                       "'org/apache/maven/messages/build.properties' or 'META-INF/maven/org.apache.maven/maven-core/pom.properties'");
+                    "'org/apache/maven/messages/build.properties' or 'META-INF/maven/org.apache.maven/maven-core/pom.properties'");
         }
         try {
             mavenVersionProperties.load(inputStream);

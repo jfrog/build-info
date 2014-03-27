@@ -26,6 +26,7 @@ public interface BuildInfoFields {
     String BUILD_PARENT_NAME = "build.parentName";
     String BUILD_PARENT_NUMBER = "build.parentNumber";
     String VCS_REVISION = "vcs.revision";
+    String VCS_URL = "vcs.url";
     String PRINCIPAL = "principal";
     String BUILD_URL = "buildUrl";
     String BUILD_AGENT_NAME = "buildAgent.name";

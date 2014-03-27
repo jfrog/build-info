@@ -50,6 +50,7 @@ public class BuildInfoMavenBuilder {
     private String parentName;
     private String parentNumber;
     private String vcsRevision;
+    private String vcsUrl;
     private List<Module> modules;
     private List<PromotionStatus> statuses;
     private Properties properties;
@@ -98,6 +99,7 @@ public class BuildInfoMavenBuilder {
         build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
+        build.setVcsUrl(vcsUrl);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
@@ -269,6 +271,17 @@ public class BuildInfoMavenBuilder {
      */
     public BuildInfoMavenBuilder vcsRevision(String vcsRevision) {
         this.vcsRevision = vcsRevision;
+        return this;
+    }
+
+    /**
+     * Sets the vcs URL (format is vcs specific)
+     *
+     * @param vcsUrl The vcs revision
+     * @return Builder instance
+     */
+    public BuildInfoMavenBuilder vcsUrl(String vcsUrl) {
+        this.vcsUrl = vcsUrl;
         return this;
     }
 

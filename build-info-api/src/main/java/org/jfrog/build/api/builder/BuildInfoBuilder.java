@@ -18,16 +18,7 @@ package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Governance;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
@@ -56,6 +47,7 @@ public class BuildInfoBuilder {
     private String parentName;
     private String parentNumber;
     private String vcsRevision;
+    private String vcsUrl;
     private List<Module> modules;
     private List<PromotionStatus> statuses;
     private Properties properties;
@@ -104,6 +96,7 @@ public class BuildInfoBuilder {
         build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
+        build.setVcsUrl(vcsUrl);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
@@ -275,6 +268,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder vcsRevision(String vcsRevision) {
         this.vcsRevision = vcsRevision;
+        return this;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcsUrl The vcs revision
+     * @return Builder instance
+     */
+    public BuildInfoBuilder vcsUrl(String vcsUrl) {
+        this.vcsUrl = vcsUrl;
         return this;
     }
 

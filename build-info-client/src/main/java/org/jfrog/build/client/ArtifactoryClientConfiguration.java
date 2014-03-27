@@ -93,7 +93,7 @@ public class ArtifactoryClientConfiguration {
     }
 
     public void persistToPropertiesFile() {
-        if ( StringUtils.isEmpty( getPropertiesFile())) {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
             return;
         }
         Predicate<String> nonNullPredicate = new Predicate<String>() {
@@ -278,28 +278,28 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(SNAPSHOT_REPO_KEY);
         }
 
-        public void setAggregateArtifacts ( String path ) {
-            setStringValue( AGGREGATE_ARTIFACTS, path);
+        public void setAggregateArtifacts(String path) {
+            setStringValue(AGGREGATE_ARTIFACTS, path);
         }
 
-        public String getAggregateArtifacts () {
-            return getStringValue( AGGREGATE_ARTIFACTS );
+        public String getAggregateArtifacts() {
+            return getStringValue(AGGREGATE_ARTIFACTS);
         }
 
-        public void setCopyAggregatedArtifacts ( Boolean enabled ) {
-            setBooleanValue( COPY_AGGREGATED_ARTIFACTS, enabled );
+        public void setCopyAggregatedArtifacts(Boolean enabled) {
+            setBooleanValue(COPY_AGGREGATED_ARTIFACTS, enabled);
         }
 
-        public void setPublishAggregatedArtifacts ( Boolean enabled ) {
-            setBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, enabled );
+        public void setPublishAggregatedArtifacts(Boolean enabled) {
+            setBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, enabled);
         }
 
-        public Boolean isCopyAggregatedArtifacts () {
-            return getBooleanValue( COPY_AGGREGATED_ARTIFACTS, false );
+        public Boolean isCopyAggregatedArtifacts() {
+            return getBooleanValue(COPY_AGGREGATED_ARTIFACTS, false);
         }
 
-        public Boolean isPublishAggregatedArtifacts () {
-            return getBooleanValue( PUBLISH_AGGREGATED_ARTIFACTS, false );
+        public Boolean isPublishAggregatedArtifacts() {
+            return getBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, false);
         }
 
         public void setPublishArtifacts(Boolean enabled) {
@@ -331,7 +331,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isFilterExcludedArtifactsFromBuild() {
-            return getBooleanValue(FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD,false);
+            return getBooleanValue(FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD, false);
         }
 
         public void setExcludePatterns(String patterns) {
@@ -440,7 +440,9 @@ public class ArtifactoryClientConfiguration {
         }
 
         public String urlWithMatrixParams(String rootUrl) {
-            if ( rootUrl == null ) { return null; }
+            if (rootUrl == null) {
+                return null;
+            }
             rootUrl = StringUtils.stripEnd(rootUrl, "/;");
             Map<String, String> matrixParams = getMatrixParams();
             if (matrixParams.isEmpty()) {
@@ -840,6 +842,14 @@ public class ArtifactoryClientConfiguration {
 
         public String getVcsRevision() {
             return getStringValue(VCS_REVISION);
+        }
+
+        public void setVcsUrl(String vcsUrl) {
+            setStringValue(VCS_URL, vcsUrl);
+        }
+
+        public String getVcsUrl() {
+            return getStringValue(VCS_URL);
         }
 
         public void setAgentName(String agentName) {

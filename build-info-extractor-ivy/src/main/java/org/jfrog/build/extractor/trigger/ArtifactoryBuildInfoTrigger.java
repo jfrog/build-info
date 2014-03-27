@@ -143,7 +143,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
     private void collectModuleInformation(IvyEvent event) {
         ArtifactoryClientConfiguration.PublisherHandler publisher = ctx.getClientConf().publisher;
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                publisher.getIncludePatterns(),publisher.getExcludePatterns());
+                publisher.getIncludePatterns(), publisher.getExcludePatterns());
         boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
         Project project = (Project) IvyContext.peekInContextStack(IvyTask.ANT_PROJECT_CONTEXT_KEY);
 
@@ -180,7 +180,7 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         project.log("[buildinfo:collect] Collecting artifact " + name + " for module " + moduleName +
                 " using file " + file, Project.MSG_INFO);
 
-        if (isArtifactExist(module.getArtifacts(), name)||isArtifactExist(module.getExcludedArtifacts(), name)) {
+        if (isArtifactExist(module.getArtifacts(), name) || isArtifactExist(module.getExcludedArtifacts(), name)) {
             return;
         }
         ArtifactBuilder artifactBuilder = new ArtifactBuilder(name);
@@ -192,9 +192,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         String sha1 = checksums.get(SHA1);
         artifactBuilder.md5(md5).sha1(sha1);
         Artifact artifact = artifactBuilder.build();
-        if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(fullPath,patterns)){
+        if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(fullPath, patterns)) {
             module.getExcludedArtifacts().add(artifact);
-        }else{
+        } else {
             module.getArtifacts().add(artifact);
         }
         @SuppressWarnings("unchecked") DeployDetails deployDetails =
@@ -228,6 +228,9 @@ public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
         builder.targetRepository(clientConf.publisher.getRepoKey());
         if (StringUtils.isNotBlank(clientConf.info.getVcsRevision())) {
             builder.addProperty(BuildInfoFields.VCS_REVISION, clientConf.info.getVcsRevision());
+        }
+        if (StringUtils.isNotBlank(clientConf.info.getVcsUrl())) {
+            builder.addProperty(BuildInfoFields.VCS_URL, clientConf.info.getVcsUrl());
         }
         if (StringUtils.isNotBlank(clientConf.info.getBuildName())) {
             builder.addProperty(BuildInfoFields.BUILD_NAME, clientConf.info.getBuildName());

@@ -51,6 +51,8 @@ public class Build extends BaseBuildBean {
     private String parentName;
     private String parentNumber;
     private String vcsRevision;
+    private String vcsUrl;
+
     @Deprecated
     private String parentBuildId;
 
@@ -175,6 +177,24 @@ public class Build extends BaseBuildBean {
      */
     public void setVcsRevision(String vcsRevision) {
         this.vcsRevision = vcsRevision;
+    }
+
+    /**
+     * Returns the vcs URL (format is vcs specific)
+     *
+     * @return The vcs URL
+     */
+    public String getVcsUrl() {
+        return vcsUrl;
+    }
+
+    /**
+     * Sets the vcs URL (format is vcs specific)
+     *
+     * @param vcsUrl The vcs URL
+     */
+    public void setVcsUrl(String vcsUrl) {
+        this.vcsUrl = vcsUrl;
     }
 
     /**
@@ -351,7 +371,7 @@ public class Build extends BaseBuildBean {
      *
      * @param parentBuildId Build parent build ID
      * @deprecated Use {@link org.jfrog.build.api.Build#setParentName(String)} and {@link Build#setParentNumber(String)}
-     *             instead.
+     * instead.
      */
     @Deprecated
     public void setParentBuildId(String parentBuildId) {

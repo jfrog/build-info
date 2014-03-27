@@ -233,6 +233,14 @@ public class ArtifactoryBuildListener implements BuildListener {
         if (StringUtils.isNotBlank(buildUrl)) {
             builder.url(buildUrl);
         }
+        String vcsRevision = clientConf.info.getVcsRevision();
+        if (StringUtils.isNotBlank(vcsRevision)) {
+            builder.vcsRevision(vcsRevision);
+        }
+        String vcsUrl = clientConf.info.getVcsUrl();
+        if (StringUtils.isNotBlank(vcsUrl)) {
+            builder.vcsUrl(vcsUrl);
+        }
         String principal = clientConf.info.getPrincipal();
         if (StringUtils.isNotBlank(principal)) {
             builder.principal(principal);
