@@ -65,6 +65,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_URL = "/api/build";
+    private static final String BUILD_BROWSE_URL = "/webapp/builds";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
 
     /**
@@ -235,7 +236,7 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(Build buildInfo) throws IOException {
         try {
             sendBuildInfo(buildInfoToJsonString(buildInfo));
-            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_REST_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted());
+            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted());
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
