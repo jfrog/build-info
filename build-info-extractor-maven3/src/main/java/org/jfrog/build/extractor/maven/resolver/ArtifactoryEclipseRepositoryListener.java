@@ -7,12 +7,8 @@ import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
-import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.*;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.maven.Maven3BuildInfoLogger;
 
 import java.lang.reflect.Field;
 import java.util.Properties;
@@ -28,7 +24,8 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     @Requirement
     private Logger logger;
 
-    private ArtifactoryClientConfiguration internalConfiguration = null;
+    //@Requirement
+    private ResolutionHelper resolutionHelper;
 
     @Override
     public void artifactDownloading(RepositoryEvent event) {
@@ -45,35 +42,34 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     }
 
     private void enforceRepository(RepositoryEvent event) {
+        resolutionHelper = getResolver();
         ArtifactRepository repository = event.getRepository();
         if (repository == null) {
             logger.warn("Received null repository, perhaps your maven installation is missing a settings.xml file?");
         }
         if (repository instanceof RemoteRepository) {
-            ArtifactoryClientConfiguration config = getConfiguration(event.getSession());
-            String repoUrl = config.resolver.getUrlWithMatrixParams();
-            String repoUsername = config.resolver.getUsername();
-            String repoPassword = config.resolver.getPassword();
-            String proxyHost = config.proxy.getHost();
-            Integer proxyPort = config.proxy.getPort();
-            String proxyUsername = config.proxy.getUsername();
-            String proxyPassword = config.proxy.getPassword();
+            Properties allMavenProps = new Properties();
+            allMavenProps.putAll(event.getSession().getSystemProperties());
+            allMavenProps.putAll(event.getSession().getUserProperties());
 
-            logger.debug("Enforcing repository URL: " + repoUrl + " for event: " + event);
-            if (StringUtils.isBlank(repoUrl)) {
+            resolutionHelper.resolve(allMavenProps, logger);
+
+            String enforcingRepository = resolutionHelper.getEnforceRepository(event);
+            if (StringUtils.isBlank(enforcingRepository)) {
                 return;
             }
 
+            logger.debug("Enforcing repository URL: " + enforcingRepository + " for event: " + event);
             RemoteRepository remoteRepository = (RemoteRepository) repository;
 
             try {
                 Field url = RemoteRepository.class.getDeclaredField("url");
                 url.setAccessible(true);
-                url.set(remoteRepository, repoUrl);
+                url.set(remoteRepository, enforcingRepository);
 
-                if (StringUtils.isNotBlank(repoUsername)) {
+                if (StringUtils.isNotBlank(resolutionHelper.getRepoUsername())) {
                     Authentication authentication = new AuthenticationBuilder()
-                            .addString("username", repoUsername).addSecret("password", repoPassword).build();
+                            .addString("username", resolutionHelper.getRepoUsername()).addSecret("password", resolutionHelper.getRepoPassword()).build();
                     logger.debug("Enforcing repository authentication: " + authentication + " for event: " + event);
                     Field authenticationField = RemoteRepository.class.getDeclaredField("authentication");
                     authenticationField.setAccessible(true);
@@ -89,10 +85,10 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
                 snapshotPolicyField.setAccessible(true);
                 snapshotPolicyField.set(remoteRepository, defaultPolicy);
 
-                if (StringUtils.isNotBlank(proxyHost)) {
+                if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
                     Authentication authentication = new AuthenticationBuilder()
-                            .addString("username", proxyUsername).addSecret("password", proxyPassword).build();
-                    Proxy proxy = new Proxy(null, proxyHost, proxyPort, authentication);
+                            .addString("username", resolutionHelper.getProxyUsername()).addSecret("password", resolutionHelper.getProxyPassword()).build();
+                    Proxy proxy = new Proxy(null, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(), authentication);
                     logger.debug("Enforcing repository proxy: " + proxy + " for event: " + event);
                     Field proxyField = RemoteRepository.class.getDeclaredField("proxy");
                     proxyField.setAccessible(true);
@@ -104,17 +100,10 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         }
     }
 
-    private ArtifactoryClientConfiguration getConfiguration(RepositorySystemSession session) {
-        if (internalConfiguration != null) {
-            return internalConfiguration;
-        }
-        Properties allMavenProps = new Properties();
-        allMavenProps.putAll(session.getSystemProperties());
-        allMavenProps.putAll(session.getUserProperties());
+    public ResolutionHelper getResolver() {
+        if (resolutionHelper != null)
+            return resolutionHelper;
 
-        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
-        internalConfiguration = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
-        internalConfiguration.fillFromProperties(allProps);
-        return internalConfiguration;
+        return new ResolutionHelper();
     }
 }

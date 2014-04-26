@@ -249,6 +249,14 @@ public class ArtifactoryClientConfiguration {
         public String getMatrixParamPrefix() {
             return getPrefix() + MATRIX;
         }
+
+        public void setRepoReleaseKey(String repoKey) {
+            setStringValue(REPO_RELEASE_KEY, repoKey);
+        }
+
+        public String getRepoReleaseKey() {
+            return getStringValue(REPO_RELEASE_KEY);
+        }
     }
 
     public class PublisherHandler extends RepositoryConfiguration {
@@ -470,6 +478,20 @@ public class ArtifactoryClientConfiguration {
                     if (StringUtils.isNotBlank(contextUrl)) {
                         contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
                         return contextUrl + "/" + getRepoKey();
+                    }
+                }
+            }
+            return StringUtils.removeEnd(value, "/");
+        }
+
+        public String getUrl(String repo) {
+            String value = getStringValue(URL);
+            if (StringUtils.isBlank(value)) {
+                if (StringUtils.isNotBlank(repo)) {
+                    String contextUrl = getContextUrl();
+                    if (StringUtils.isNotBlank(contextUrl)) {
+                        contextUrl = StringUtils.stripEnd(contextUrl, "/ ");
+                        return contextUrl + "/" + repo;
                     }
                 }
             }
