@@ -250,12 +250,12 @@ public class ArtifactoryClientConfiguration {
             return getPrefix() + MATRIX;
         }
 
-        public void setRepoReleaseKey(String repoKey) {
-            setStringValue(REPO_RELEASE_KEY, repoKey);
+        public void setDownloadSnapshotRepoKey(String repoKey) {
+            setStringValue(DOWN_SNAPSHOT_REPO_KEY, repoKey);
         }
 
-        public String getRepoReleaseKey() {
-            return getStringValue(REPO_RELEASE_KEY);
+        public String getDownloadSnapshotRepoKey() {
+            return getStringValue(DOWN_SNAPSHOT_REPO_KEY);
         }
     }
 

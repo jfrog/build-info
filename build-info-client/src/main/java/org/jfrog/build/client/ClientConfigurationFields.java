@@ -32,7 +32,7 @@ public interface ClientConfigurationFields {
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
     String URL = "url";
     String REPO_KEY = "repoKey";
-    String REPO_RELEASE_KEY = "repoReleaseKey";
+    String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
     // Publish fields
     String AGGREGATE_ARTIFACTS = "aggregate";   // String  - directory where artifacts should be aggregated
     String PUBLISH_AGGREGATED_ARTIFACTS = "aggregated"; // Boolean - whether or not aggregated artifacts should be published

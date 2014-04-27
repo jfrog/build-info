@@ -7,6 +7,8 @@ import org.codehaus.plexus.logging.Logger;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositoryListener;
+import org.sonatype.aether.artifact.Artifact;
+import org.sonatype.aether.metadata.Metadata;
 import org.sonatype.aether.repository.*;
 
 import java.util.Properties;
@@ -22,7 +24,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
     @Requirement
     private Logger logger;
 
-    //@Requirement(role = ResolutionHelper.class, hint = "default", optional = false)
+    @Requirement
     private ResolutionHelper resolutionHelper;
 
     @Override
@@ -40,7 +42,6 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
     }
 
     private void enforceRepository(RepositoryEvent event) {
-        resolutionHelper = getResolver();
         ArtifactRepository repository = event.getRepository();
         if (repository == null) {
             logger.warn("Received null repository, perhaps your maven installation is missing a settings.xml file?");
@@ -53,7 +54,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
 
             resolutionHelper.resolve(allMavenProps, logger);
 
-            String enforcingRepository = resolutionHelper.getEnforceRepository(event);
+            String enforcingRepository = resolutionHelper.getEnforceRepository(resolutionType(event));
             if (StringUtils.isBlank(enforcingRepository)) {
                 return;
             }
@@ -82,10 +83,27 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         }
     }
 
-    public ResolutionHelper getResolver() {
-        if (resolutionHelper != null)
-            return resolutionHelper;
+    public ResolutionHelper.Nature resolutionType(RepositoryEvent event) {
+        /*Check if we are downloading metadata or artifact*/
+        if (event.getArtifact() == null) {
+            boolean isSnapshot = event.getMetadata().getNature().compareTo(Metadata.Nature.SNAPSHOT) == 0;
+            if (isSnapshot) {
+                return ResolutionHelper.Nature.SNAPSHOT;
+            }
 
-        return new ResolutionHelper();
+            return ResolutionHelper.Nature.RELEASE;
+        }
+
+        /*Check if we are downloading metadata or artifact*/
+        if (event.getMetadata() == null) {
+            Artifact currentArtifact = event.getArtifact();
+            if (currentArtifact.isSnapshot()) {
+                return ResolutionHelper.Nature.SNAPSHOT;
+            }
+
+            return ResolutionHelper.Nature.RELEASE;
+        }
+
+        return null;
     }
 }
