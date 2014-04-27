@@ -236,7 +236,7 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(Build buildInfo) throws IOException {
         try {
             sendBuildInfo(buildInfoToJsonString(buildInfo));
-            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted());
+            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted() + "/");
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
