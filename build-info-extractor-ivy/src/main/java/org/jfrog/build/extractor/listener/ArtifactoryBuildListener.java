@@ -133,7 +133,8 @@ public class ArtifactoryBuildListener implements BuildListener {
         Task task = event.getTask();
         // Interested only in Ivy tasks
         String taskType = task.getTaskType();
-        if (taskType != null && taskType.contains("org.apache.ivy")) {
+        if (taskType != null
+                && (taskType.contains("org.apache.ivy") || taskType.contains("fr.jayasoft.ivy"))) {
             return task;
         }
         return null;
