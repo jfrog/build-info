@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
 import org.apache.ivy.core.event.IvyEvent;
+import org.apache.ivy.core.event.IvyEventFilter;
 import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.publish.PublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
@@ -14,7 +15,9 @@ import org.apache.ivy.core.module.id.ModuleRevisionId;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
 import org.apache.ivy.core.report.ConfigurationResolveReport;
 import org.apache.ivy.core.report.ResolveReport;
-import org.apache.ivy.plugins.trigger.AbstractTrigger;
+import org.apache.ivy.plugins.matcher.ExactPatternMatcher;
+import org.apache.ivy.plugins.trigger.Trigger;
+import org.apache.ivy.util.filter.Filter;
 import org.apache.tools.ant.Project;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.BuildInfoFields;
@@ -44,14 +47,26 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
  *
  * @author Tomer Cohen
  */
-public class ArtifactoryBuildInfoTrigger extends AbstractTrigger {
+public class ArtifactoryBuildInfoTrigger implements Trigger {
 
     private static final String MD5 = "MD5";
     private static final String SHA1 = "SHA1";
     private BuildContext ctx;
+    private final Filter filter;
+    private String eventName;
+
+    public ArtifactoryBuildInfoTrigger(String eventName) {
+        this.eventName = eventName;
+        this.filter = new IvyEventFilter(eventName, null, ExactPatternMatcher.INSTANCE);
+    }
 
     public void setIvyBuildContext(BuildContext ctx) {
         this.ctx = ctx;
+    }
+
+    @Override
+    public Filter getEventFilter() {
+        return filter;
     }
 
     public void progress(IvyEvent event) {

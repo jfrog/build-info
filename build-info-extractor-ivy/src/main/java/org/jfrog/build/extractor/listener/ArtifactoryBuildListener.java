@@ -6,12 +6,8 @@ import org.apache.ivy.ant.IvyAntSettings;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
-import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.plugins.trigger.Trigger;
-import org.apache.tools.ant.BuildEvent;
-import org.apache.tools.ant.BuildListener;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.Task;
+import org.apache.tools.ant.*;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
@@ -33,8 +29,8 @@ import java.util.*;
  * @author Tomer Cohen
  */
 public class ArtifactoryBuildListener implements BuildListener {
-    private static final ArtifactoryBuildInfoTrigger DEPENDENCY_TRIGGER = new ArtifactoryBuildInfoTrigger();
-    private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger();
+    private static final ArtifactoryBuildInfoTrigger DEPENDENCY_TRIGGER = new ArtifactoryBuildInfoTrigger(EndResolveEvent.NAME);
+    private static final ArtifactoryBuildInfoTrigger PUBLISH_TRIGGER = new ArtifactoryBuildInfoTrigger(EndArtifactPublishEvent.NAME);
 
     private boolean isDidDeploy;
     private BuildContext ctx;
@@ -46,8 +42,6 @@ public class ArtifactoryBuildListener implements BuildListener {
             return;
         }
         try {
-            DEPENDENCY_TRIGGER.setEvent(EndResolveEvent.NAME);
-            PUBLISH_TRIGGER.setEvent(EndArtifactPublishEvent.NAME);
             buildInfoLog = new IvyBuildInfoLog(event.getProject());
             ArtifactoryClientConfiguration clientConf = new ArtifactoryClientConfiguration(buildInfoLog);
             Properties props = getMergedEnvAndSystemProps();
@@ -150,18 +144,22 @@ public class ArtifactoryBuildListener implements BuildListener {
                 // Need only retrieve, resolve, and publish tasks, since needs to give ivy settings a chance (BI-131)
                 if (taskType.endsWith("retrieve") || taskType.endsWith("resolve")) {
                     getBuildInfoLog(event).debug("[buildinfo:ant] Adding Ivy Resolution Listeners if needed.");
-                    EventManager eventManager = getEventManager(task);
-                    if (!eventManager.hasIvyListener(DEPENDENCY_TRIGGER)) {
-                        eventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
-                        getBuildInfoLog(event).info("[buildinfo:ant] Added resolution report Ivy Listener.");
+                    List<EventManager> eventManagers = getEventManager(task);
+                    for (EventManager eventManager : eventManagers) {
+                        if (!eventManager.hasIvyListener(DEPENDENCY_TRIGGER)) {
+                            eventManager.addIvyListener(DEPENDENCY_TRIGGER, DEPENDENCY_TRIGGER.getEventFilter());
+                            getBuildInfoLog(event).info("[buildinfo:ant] Added resolution report Ivy Listener.");
+                        }
                     }
                 }
                 if (taskType.endsWith("publish")) {
                     getBuildInfoLog(event).debug("[buildinfo:ant] Adding Ivy Publish Listeners if needed.");
-                    EventManager eventManager = getEventManager(task);
-                    if (!eventManager.hasIvyListener(PUBLISH_TRIGGER)) {
-                        eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
-                        getBuildInfoLog(event).info("[buildinfo:ant] Added publish end Ivy Listener to Ivy Engine.");
+                    List<EventManager> eventManagers = getEventManager(task);
+                    for (EventManager eventManager : eventManagers) {
+                        if (!eventManager.hasIvyListener(PUBLISH_TRIGGER)) {
+                            eventManager.addIvyListener(PUBLISH_TRIGGER, PUBLISH_TRIGGER.getEventFilter());
+                            getBuildInfoLog(event).info("[buildinfo:ant] Added publish end Ivy Listener to Ivy Engine.");
+                        }
                     }
                 }
             }
@@ -173,10 +171,26 @@ public class ArtifactoryBuildListener implements BuildListener {
         }
     }
 
-    private EventManager getEventManager(Task task) {
-        ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).
-                getConfiguredIvyInstance(task).getResolveEngine();
-        return engine.getEventManager();
+    /**
+     * Retrieves all the event managers of all the ivy settings of the project.
+     *
+     * @param task the task we need to attach listeners to
+     * @return the list of event manager for this task
+     */
+    private List<EventManager> getEventManager(Task task) {
+        List<EventManager> results = new ArrayList<EventManager>();
+        Project project = task.getProject();
+        Enumeration<Object> elements = project.getReferences().elements();
+        while (elements.hasMoreElements()) {
+            Object element = elements.nextElement();
+            if (element instanceof IvyAntSettings) {
+                results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
+            }
+        }
+        if (results.isEmpty()) {
+            throw new BuildException("Did not find ivy settings reference for project " + project.getName());
+        }
+        return results;
     }
 
     @Override
