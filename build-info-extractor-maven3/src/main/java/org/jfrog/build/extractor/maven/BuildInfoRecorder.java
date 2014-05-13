@@ -52,14 +52,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
+
+/*
+* Will be called for every project/module in the Maven project.
+*/
 
 /**
  * @author Noam Y. Tenne
@@ -367,6 +367,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         finalizeAndAddModule(project);
     }
 
+    //In case of Pom project, the Artifact will be the Pom file.
     private void extractModuleArtifact(MavenProject project, Set<Artifact> artifacts) {
         Artifact artifact = project.getArtifact();
         if (artifact == null) {
@@ -376,6 +377,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         artifacts.add(artifact);
     }
 
+
+    /*
+    * Attached Artifacts- are the artifacts/assemblies like tests, sources and so on....
+    *   Not include the Pom file
+    */
     private void extractModuleAttachedArtifacts(MavenProject project, Set<Artifact> artifacts) {
         List<Artifact> attachedArtifacts = project.getAttachedArtifacts();
         if (attachedArtifacts != null) {
@@ -444,7 +450,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactName).type(type);
             File artifactFile = moduleArtifact.getFile();
             // for pom projects take the file from the project if the artifact file is null
-            if (artifactFile == null && isPomProject(moduleArtifact) && moduleArtifact.equals(project.getArtifact())) {
+            if (isPomProject(moduleArtifact) && moduleArtifact.equals(project.getArtifact())) {
                 artifactFile = project.getFile();   // project.getFile() returns the project pom file
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
@@ -461,9 +467,12 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
 
+            /*
+            * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
+            */
             if (!isPomProject(moduleArtifact)) {
                 for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
-                    if (metadata instanceof ProjectArtifactMetadata) {
+                    if (metadata instanceof ProjectArtifactMetadata) {  // the pom metadata
                         File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
                         artifactBuilder.type("pom");
                         String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
