@@ -25,7 +25,6 @@ import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
-import org.gradle.api.publish.PublicationContainer;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
@@ -137,7 +136,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                         ivyPublication.getName(), ivyPublication.getClass());
                 continue;
             }
-            dependsOn(((IvyPublicationInternal)ivyPublication).getPublishableFiles());
+            dependsOn(((IvyPublicationInternal) ivyPublication).getPublishableFiles());
         }
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
@@ -146,7 +145,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                         mavenPublication.getName(), mavenPublication.getClass());
                 continue;
             }
-            dependsOn(((MavenPublicationInternal)mavenPublication).getPublishableFiles());
+            dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
         }
     }
 

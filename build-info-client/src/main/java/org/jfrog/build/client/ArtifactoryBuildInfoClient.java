@@ -59,15 +59,13 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.*;
  * @author Yossi Shaul
  */
 public class ArtifactoryBuildInfoClient {
-    private final Log log;
-
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_BROWSE_URL = "/webapp/builds";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
-
+    private final Log log;
     /**
      * The http client used for deploying artifacts and build info. Created and cached on the first deploy request.
      */
@@ -129,6 +127,15 @@ public class ArtifactoryBuildInfoClient {
      */
     public void setProxyConfiguration(String host, int port, String username, String password) {
         httpClient.setProxyConfiguration(host, port, username, password);
+    }
+
+    /**
+     * Sets full proxy details.
+     *
+     * @param proxy Proxy instance {@link org.jfrog.build.client.ProxyConfiguration}
+     */
+    public void setProxyConfiguration(ProxyConfiguration proxy) {
+        httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
     }
 
     /**
