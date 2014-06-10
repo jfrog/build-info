@@ -340,6 +340,7 @@ public class ArtifactoryBuildListener implements BuildListener {
             ArtifactoryBuildInfoClient client =
                     new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
 
+
             configureProxy(clientConf, client);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
