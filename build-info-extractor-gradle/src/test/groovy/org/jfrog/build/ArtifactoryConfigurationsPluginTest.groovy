@@ -36,10 +36,10 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
 
         // Disable resolving
-        project.setProperty(REPO_KEY, '')
+        project.ext.set(REPO_KEY, '')
         project.getGradle().getStartParameter().projectProperties['BOOLEAN_START_PARAM'] = true
-        project.setProperty(PROP_PUBLISH_PREFIX + IVY, 'true')
-        project.setProperty(PROP_PUBLISH_PREFIX + MAVEN, 'false')
+        project.ext.set(PROP_PUBLISH_PREFIX + IVY, 'true')
+        project.ext.set(PROP_PUBLISH_PREFIX + MAVEN, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -55,10 +55,10 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
 
         // Disable resolving
-        project.setProperty(REPO_KEY, '')
-        project.setProperty(PROP_PUBLISH_PREFIX + IVY, 'false')
-        project.setProperty(PROP_PUBLISH_PREFIX + MAVEN, 'false')
-        project.setProperty(PROP_PUBLISH_PREFIX + PUBLISH_ARTIFACTS, 'false')
+        project.ext.set(REPO_KEY, '')
+        project.ext.set(PROP_PUBLISH_PREFIX + IVY, 'false')
+        project.ext.set(PROP_PUBLISH_PREFIX + MAVEN, 'false')
+        project.ext.set(PROP_PUBLISH_PREFIX + PUBLISH_ARTIFACTS, 'false')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
@@ -84,12 +84,12 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         def projDir = new File(resource.toURI()).getParentFile()
 
         Project project = ProjectBuilder.builder().withProjectDir(projDir).build()
-        project.setProperty('testUserName', 'user1')
-        project.setProperty('testPassword', 'p33p')
-        project.setProperty('ppom', false)
+        project.ext.set('testUserName', 'user1')
+        project.ext.set('testPassword', 'p33p')
+        project.ext.set('ppom', false)
 
         //Set artifact specs
-        project.setProperty(PROP_PUBLISH_PREFIX + ARTIFACT_SPECS,
+        project.ext.set(PROP_PUBLISH_PREFIX + ARTIFACT_SPECS,
                 'archives com.jfrog:*:*:doc@* key1: val1, key2: val2\n' +
                         'archives com.jfrog:*:*:src@* key3: val 3')
 

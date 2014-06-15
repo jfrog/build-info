@@ -43,12 +43,12 @@ public class ArtifactoryPublicationsPluginTest extends PluginTestBase {
         def projDir = new File(resource.toURI()).getParentFile()
 
         Project project = ProjectBuilder.builder().withProjectDir(projDir).build()
-        project.setProperty('testUserName', 'user1')
-        project.setProperty('testPassword', 'p33p')
-        project.setProperty('ppom', false)
+        project.ext.set('testUserName', 'user1')
+        project.ext.set('testPassword', 'p33p')
+        project.ext.set('ppom', false)
 
         //Set artifact specs
-        project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
+        project.ext.set(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.ARTIFACT_SPECS,
                 'archives com.jfrog:*:*:doc@* key1: val1, key2: val2\n' +
                         'archives com.jfrog:*:*:src@* key3: val 3')
 
