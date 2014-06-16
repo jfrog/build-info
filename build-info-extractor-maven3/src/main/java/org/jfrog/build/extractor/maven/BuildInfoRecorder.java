@@ -44,10 +44,7 @@ import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.xml.sax.InputSource;
 
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
+import javax.xml.xpath.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -86,6 +83,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
+    private XPath xPath;
+    private XPathExpression xPathExpression;
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -255,7 +254,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        if ("maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
+        if (!projectHasTestFailures && "maven-surefire-plugin".equals((event).getMojoExecution().getPlugin().getArtifactId())) {
             List<File> resultsFile = getSurefireResultsFile(project);
             if (isTestsFailed(resultsFile)) {
                 projectHasTestFailures = true;
@@ -293,23 +292,21 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private boolean isTestsFailed(List<File> surefireReports) {
-        XPathFactory factory = XPathFactory.newInstance();
-        XPath path = factory.newXPath();
+
         for (File report : surefireReports) {
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(report);
-                Object evaluate = path.evaluate("/testsuite/@failures", new InputSource(stream),
+                setXpathPattern();
+                Object evaluate = xPathExpression.evaluate(new InputSource(stream),
                         XPathConstants.STRING);
-                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString())
-                        && StringUtils.isNumeric(evaluate.toString())) {
-                    int testsFailed = Integer.parseInt(evaluate.toString());
-                    return testsFailed != 0;
+                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString())) {
+                    return evaluate.toString().equals("true");
                 }
             } catch (FileNotFoundException e) {
                 logger.error("File '" + report.getAbsolutePath() + "' does not exist.");
             } catch (XPathExpressionException e) {
-                logger.error("Expression /testsuite/@failures is invalid.");
+                logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.");
             } finally {
                 Closeables.closeQuietly(stream);
             }
@@ -436,7 +433,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         ArtifactoryClientConfiguration.PublisherHandler publisher = conf.publisher;
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-        publisher.getIncludePatterns(),publisher.getExcludePatterns());
+                publisher.getIncludePatterns(), publisher.getExcludePatterns());
         boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
         for (Artifact moduleArtifact : moduleArtifacts) {
             String artifactId = moduleArtifact.getArtifactId();
@@ -516,7 +513,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-            String groupId, String artifactId, String version, String classifier, String fileExtension) {
+                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
@@ -542,7 +539,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-            String fileExtension) {
+                                     String fileExtension) {
         return new StringBuilder(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
                 append("/").append(getArtifactName(artifactId, version, classifier, fileExtension)).toString();
     }
@@ -620,4 +617,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         return null;
     }
+
+    /**
+     * Set pattern for the "Surefire" plugin report, this pattern check if we
+     * have failures or error is a specific test
+     */
+    private void setXpathPattern() throws XPathExpressionException {
+        if (xPath == null) {
+            xPath = XPathFactory.newInstance().newXPath();
+            xPathExpression = xPath.compile("/testsuite/@failures>0 or /testsuite/@errors>0");
+        }
+    }
 }
+
+
+
