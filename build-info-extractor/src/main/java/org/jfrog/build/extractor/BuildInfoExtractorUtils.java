@@ -32,6 +32,7 @@ import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
@@ -65,9 +66,9 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties props = new Properties();
-        String propertiesFilePath = getAdditionalPropertiesFile(existingProps);
+        String propertiesFilePath = getAdditionalPropertiesFile(existingProps, log);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -115,7 +116,7 @@ public abstract class BuildInfoExtractorUtils {
         return props;
     }
 
-    public static Properties getEnvProperties(Properties startProps) {
+    public static Properties getEnvProperties(Properties startProps, Log log) {
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
@@ -151,7 +152,7 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         // TODO: [by FSI] Test if this is needed! Since start props are used now
-        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
+        String propertiesFilePath = getAdditionalPropertiesFile(startProps, log);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -215,17 +216,32 @@ public abstract class BuildInfoExtractorUtils {
         Files.write(buildInfoJson, toFile, Charsets.UTF_8);
     }
 
-    private static String getAdditionalPropertiesFile(Properties additionalProps) {
+    private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String propertiesFilePath = System.getProperty(key);
+        String propFoundPath = "";
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(key);
+        }else{
+            propFoundPath = "system properties";
+        }
+        if (StringUtils.isBlank(propertiesFilePath)) {
+            // Jenkins prefixes these variables with "env." so let's try that
+            propertiesFilePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(propertiesFilePath)) {
-                // Jenkins prefixes these variables with "env." so let's try that
-                propertiesFilePath = additionalProps.getProperty("env." + key);
-                if (StringUtils.isBlank(propertiesFilePath)) {
-                    propertiesFilePath = System.getenv(key);
-                }
+                propertiesFilePath = System.getenv(key);
+                propFoundPath="system environment variable";
+            }else{
+                propFoundPath="environment variable";
+            }
+        }else {
+            propFoundPath = "additional properties";
+        }
+        if (log != null) {
+            if(StringUtils.isBlank(propFoundPath)){
+                log.warn("Properties file was not found");
+            }else {
+                log.debug("Properties file " + propertiesFilePath + " retrieved from "+propFoundPath);
             }
         }
         return propertiesFilePath;

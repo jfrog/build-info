@@ -604,7 +604,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (conf.isIncludeEnvVars()) {
                 Properties envProperties = new Properties();
                 envProperties.putAll(conf.getAllProperties());
-                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, conf.getLog());
                 for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                     buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
                 }

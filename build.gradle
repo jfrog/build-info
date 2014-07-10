@@ -46,7 +46,13 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 
     repositories {
-        maven { url "https://oss.jfrog.org/jfrog-dependencies" }
+        maven {
+            url 'http://artifactory.win.jfrog.local:8081/artifactory/plugins-release'
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+	}	    
         jcenter()
     }
 }
@@ -76,8 +82,14 @@ subprojects {
     apply plugin: 'java'
 
     repositories {
+        maven {
+            url 'http://artifactory.win.jfrog.local:8081/artifactory/plugins-release'
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+	}	    
         jcenter()
-        maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local/' }
     }
 
     sourceCompatibility = 1.6
@@ -92,7 +104,7 @@ subprojects {
         compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
         compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
         compile group: 'commons-io', name: 'commons-io', version: '2.0.1'
-        testCompile group: 'org.testng', name: 'testng', version: '5.12.1'
+        testCompile group: 'org.testng', name: 'testng', version: '6.8.5'
     }
 
     // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
@@ -490,7 +502,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '1.8'
+    gradleVersion = '1.9'
 }
 
 

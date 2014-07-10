@@ -216,7 +216,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (clientConf.isIncludeEnvVars()) {
             Properties envProperties = new Properties();
             envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
             for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                 bib.addProperty(envProp.getKey(), envProp.getValue());
             }
