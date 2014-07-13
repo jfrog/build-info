@@ -339,6 +339,9 @@ public class ArtifactoryBuildListener implements BuildListener {
         try {
             ArtifactoryBuildInfoClient client =
                     new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
+
+
+            configureProxy(clientConf, client);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
@@ -364,6 +367,22 @@ public class ArtifactoryBuildListener implements BuildListener {
                 continue;
             }
             client.deployArtifact(deployDetail);
+        }
+    }
+
+    protected void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
+        String proxyHost = proxy.getHost();
+        if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
+            buildInfoLog.debug("Found proxy host '" + proxyHost + "'");
+            String proxyUserName = proxy.getUsername();
+            if (StringUtils.isNotBlank(proxyUserName)) {
+                buildInfoLog.debug("Found proxy user name '" + proxyUserName + "'");
+                client.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+            } else {
+                buildInfoLog.debug("No proxy user name and password found, using anonymous proxy");
+                client.setProxyConfiguration(proxyHost, proxy.getPort());
+            }
         }
     }
 }
