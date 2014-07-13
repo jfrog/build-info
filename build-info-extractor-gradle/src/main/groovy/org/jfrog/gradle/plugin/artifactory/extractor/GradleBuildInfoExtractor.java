@@ -109,8 +109,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         long durationMillis = buildStartDate != null ? System.currentTimeMillis() - buildStartDate.getTime() : 0;
         bib.durationMillis(durationMillis);
 
-        bib.addModule(extractBuildScriptModule(rootProject));
-
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
             BuildInfoBaseTask buildInfoTask = getBuildInfoTask(project);
@@ -245,18 +243,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     }
 
 
-    public Module extractBuildScriptModule(Project rootProject){
-        ModuleBuilder builder = new ModuleBuilder();
-        builder.id("gradle:buildscript:dependencies");
-        try {
-            builder.dependencies(calculateDependencies(rootProject.getBuildscript().getConfigurations()));
-        } catch (Exception e) {
-            log.error("Error during extraction: ", e);
-        }
-
-        return builder.build();
-    }
-
     public Module extractModule(Project project) {
         String artifactName = project.getName();
         BuildInfoBaseTask task = getBuildInfoTask(project);
@@ -281,11 +267,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
                 deployExcludeDetails = new ArrayList<GradleDeployDetails>();
             }
-
             builder.artifacts(calculateArtifacts(deployIncludeDetails))
                     .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
-                    .dependencies(calculateDependencies(project.getConfigurations()));
-
+                    .dependencies(calculateDependencies(project));
         } catch (Exception e) {
             log.error("Error during extraction: ", e);
         }
@@ -307,8 +291,8 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }));
         return artifacts;
     }
-    private List<Dependency> calculateDependencies(Set<Configuration> configurationSet) throws Exception {
-        // = project.getConfigurations();
+    private List<Dependency> calculateDependencies(Project project) throws Exception {
+        Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             if (configuration.getState() != Configuration.State.RESOLVED) {

@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
+
 buildscript {
     repositories {
         jcenter()
+        //mavenLocal()
         dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:2.2.5' }
-//        mavenLocal()
     }
     configurations.classpath {
         resolutionStrategy {
             failOnVersionConflict()
             cacheDynamicVersionsFor 0, 'seconds'
             cacheChangingModulesFor 0, 'seconds'
-            force "commons-codec:commons-codec:1.8"
+			force "commons-codec:commons-codec:1.8"
         }
     }
 }
 
 
 import org.jfrog.build.Version
-
 import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
@@ -54,7 +54,8 @@ allprojects {
 }
 
 artifactory {
-    contextUrl = 'https://oss.jfrog.org'
+    contextUrl = 'https://localhost:8080/artifactory'
+    //contextUrl = 'https://oss.jfrog.org'
     publish {
         defaults {
             publishConfigs('archives', 'published')
@@ -80,6 +81,7 @@ subprojects {
     repositories {
         jcenter()
         maven { url 'http://oss.jfrog.org/artifactory/oss-snapshot-local/' }
+        mavenLocal()
     }
 
     sourceCompatibility = 1.6
@@ -162,7 +164,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile "com.google.guava:guava:r08"
+        compile "com.google.guava:guava:10.0.1"
         compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
     test.useTestNG()
@@ -192,7 +194,7 @@ configure(extractorProjects()) {
         }
     }
 
-    boolean extractorRelease = project.hasProperty('extractorRelease')
+    boolean extractorRelease = project.hasProperty('extractorRelease') //??????
     dependencies {
         //Binary depend on the latest extractor release artifact, if forced using the extractorRelease prop or if
         //release version and current extractor is snapshot. Otherwise, use project build dependency
@@ -275,7 +277,7 @@ project('build-info-client') {
             }
         }
     }
-    processResources {
+    processResources {//???
         from(sourceSets.main.resources.srcDirs) {
             include '**/*bi.client.properties'
             filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
@@ -323,6 +325,7 @@ project('build-info-extractor-gradle') {
     apply plugin: 'groovy'
     description = 'JFrog Build-Info Gradle Extractor'
 
+    println description
     dependencies {
         compile gradleApi()
         //compile group: 'org.gradle', name: 'gradle-core', version: '1.0-milestone-9'
@@ -332,7 +335,7 @@ project('build-info-extractor-gradle') {
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
         compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-2.0') {
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
             transitive = false
         }
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
@@ -359,7 +362,7 @@ project('build-info-extractor-maven3') {
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
-        compile     'org.jdom:jdom:1.1.1',
+        compile 'org.jdom:jdom:1.1.1',
                 'org.codehaus.groovy:groovy-all:2.1.6',
                 'plexus:plexus-container-default:1.0-alpha-6',
                 'org.apache.maven:maven-core:3.1.0',
@@ -400,7 +403,7 @@ project('artifactory-maven-plugin') {
 
             testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
             provided    'org.apache.maven:maven-core:3.1.0',
-                    'org.apache.maven:maven-project:2.0.11'
+                        'org.apache.maven:maven-project:2.0.11'
         }
 
         clean { delete( 'pom.xml' ) }
@@ -472,12 +475,9 @@ idea {
         jdkName = '1.6'
         languageLevel = '1.6'
         wildcards += '?*.gradle'
-        ipr {
+        idea.project.ipr {
             withXml { provider ->
-                def node = provider.asNode()
-                // Use git
-                def vcsConfig = node.component.find { it.'@name' == 'VcsDirectoryMappings' }
-                vcsConfig.mapping[0].'@vcs' = 'Git'
+                provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
             }
         }
     }
@@ -494,7 +494,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '2.0-rc-1'
+    gradleVersion = '1.8'
 }
 
 
