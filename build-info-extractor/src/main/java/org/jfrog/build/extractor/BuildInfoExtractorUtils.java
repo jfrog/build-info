@@ -222,24 +222,21 @@ public abstract class BuildInfoExtractorUtils {
         String propFoundPath = "";
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(key);
-        }else{
-            propFoundPath = "system properties";
+            propFoundPath = "additionalProps.getProperty";
         }
         if (StringUtils.isBlank(propertiesFilePath)) {
             // Jenkins prefixes these variables with "env." so let's try that
             propertiesFilePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(propertiesFilePath)) {
                 propertiesFilePath = System.getenv(key);
-                propFoundPath="system environment variable";
+                propFoundPath=StringUtils.isBlank(propertiesFilePath)?"":"System.getenv";
             }else{
-                propFoundPath="environment variable";
+                propFoundPath="additionalProps.getProperty(\"env.\" + key)";
             }
-        }else {
-            propFoundPath = "additional properties";
         }
         if (log != null) {
             if(StringUtils.isBlank(propFoundPath)){
-                log.warn("Properties file was not found");
+                log.warn("Properties file path was not found");
             }else {
                 log.debug("Properties file " + propertiesFilePath + " retrieved from "+propFoundPath);
             }
