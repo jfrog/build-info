@@ -55,7 +55,8 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
 
             resolutionHelper.resolve(allMavenProps, logger);
 
-            String enforcingRepository = resolutionHelper.getEnforceRepository(resolutionType(event));
+            ResolutionHelper.Nature resolutionType = resolutionType(event);
+            String enforcingRepository = resolutionHelper.getEnforceRepository(resolutionType);
             if (StringUtils.isBlank(enforcingRepository)) {
                 return;
             }
@@ -78,13 +79,17 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
                 }
 
                 logger.debug("Enforcing snapshot and release policy for event: " + event);
-                RepositoryPolicy defaultPolicy = new RepositoryPolicy();
+
+                boolean isSnapshot = resolutionType.equals(ResolutionHelper.Nature.SNAPSHOT);
+                RepositoryPolicy releasePolicy = new RepositoryPolicy(!isSnapshot, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                RepositoryPolicy snapshotolicy = new RepositoryPolicy(isSnapshot, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+
                 Field releasePolicyField = RemoteRepository.class.getDeclaredField("releasePolicy");
                 releasePolicyField.setAccessible(true);
-                releasePolicyField.set(remoteRepository, defaultPolicy);
+                releasePolicyField.set(remoteRepository, releasePolicy);
                 Field snapshotPolicyField = RemoteRepository.class.getDeclaredField("snapshotPolicy");
                 snapshotPolicyField.setAccessible(true);
-                snapshotPolicyField.set(remoteRepository, defaultPolicy);
+                snapshotPolicyField.set(remoteRepository, snapshotolicy);
 
                 if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
                     Authentication authentication = new AuthenticationBuilder()
