@@ -236,9 +236,9 @@ public abstract class BuildInfoExtractorUtils {
         }
         if (log != null) {
             if(StringUtils.isBlank(propFoundPath)){
-                log.warn("Properties file path was not found");
+                log.warn("[buildinfo:ant] Properties file path was not found");
             }else {
-                log.debug("Properties file " + propertiesFilePath + " retrieved from "+propFoundPath);
+                log.debug("[buildinfo:ant] Properties file " + propertiesFilePath + " retrieved from "+propFoundPath);
             }
         }
         return propertiesFilePath;
