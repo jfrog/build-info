@@ -28,10 +28,6 @@ public class PrefixPropertyHandler {
         this.prefix = prefix;
     }
 
-    public Log getLog() {
-        return log;
-    }
-
     public String getPrefix() {
         return prefix;
     }

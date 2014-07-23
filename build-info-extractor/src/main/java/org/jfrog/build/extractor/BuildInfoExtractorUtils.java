@@ -32,12 +32,16 @@ import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ClientProperties;
 import org.jfrog.build.client.IncludeExcludePatterns;
 import org.jfrog.build.client.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -61,9 +65,9 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
         Properties props = new Properties();
-        String propertiesFilePath = getAdditionalPropertiesFile(existingProps, log);
+        String propertiesFilePath = getAdditionalPropertiesFile(existingProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -111,7 +115,7 @@ public abstract class BuildInfoExtractorUtils {
         return props;
     }
 
-    public static Properties getEnvProperties(Properties startProps, Log log) {
+    public static Properties getEnvProperties(Properties startProps) {
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
@@ -147,7 +151,7 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         // TODO: [by FSI] Test if this is needed! Since start props are used now
-        String propertiesFilePath = getAdditionalPropertiesFile(startProps, log);
+        String propertiesFilePath = getAdditionalPropertiesFile(startProps);
         if (StringUtils.isNotBlank(propertiesFilePath)) {
             File propertiesFile = new File(propertiesFilePath);
             InputStream inputStream = null;
@@ -211,40 +215,17 @@ public abstract class BuildInfoExtractorUtils {
         Files.write(buildInfoJson, toFile, Charsets.UTF_8);
     }
 
-    private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
+    private static String getAdditionalPropertiesFile(Properties additionalProps) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String propertiesFilePath = System.getProperty(key);
-        String propFoundPath = "";
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(key);
-            propFoundPath = "additionalProps.getProperty";
-        }
-        if (StringUtils.isBlank(propertiesFilePath)) {
-            // Jenkins prefixes these variables with "env." so let's try that
-            propertiesFilePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(propertiesFilePath)) {
-                propertiesFilePath = System.getenv(key);
-                propFoundPath = StringUtils.isBlank(propertiesFilePath) ? "" : "System.getenv";
-            } else {
-                propFoundPath = "additionalProps.getProperty(\"env.\" + key)";
-            }
-        }
-        if (StringUtils.isBlank(propertiesFilePath)) {
-            // Jenkins prefixes these variables with "env." so let's try that
-            key = BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE;
-            propertiesFilePath = additionalProps.getProperty("env." + key);
-            if (StringUtils.isBlank(propertiesFilePath)) {
-                propertiesFilePath = System.getenv(key);
-                propFoundPath = StringUtils.isBlank(propertiesFilePath) ? "" : " second System.getenv";
-            } else {
-                propFoundPath = "additionalProps.getProperty(\"env.\" + key)";
-            }
-        }
-        if (log != null) {
-            if (StringUtils.isBlank(propFoundPath)) {
-                log.warn("[buildinfo] Properties file path was not found, this build will probably fail");
-            } else {
-                log.debug("[buildinfo] Properties file " + propertiesFilePath + " retrieved from " + propFoundPath);
+                // Jenkins prefixes these variables with "env." so let's try that
+                propertiesFilePath = additionalProps.getProperty("env." + key);
+                if (StringUtils.isBlank(propertiesFilePath)) {
+                    propertiesFilePath = System.getenv(key);
+                }
             }
         }
         return propertiesFilePath;

@@ -103,7 +103,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Override
     public void sessionStarted(ExecutionEvent event) {
-        try {
+        try
+        {
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = Maps.newHashMap();
@@ -118,10 +119,12 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (wrappedListener != null) {
                 wrappedListener.sessionStarted(event);
             }
-        } catch (Throwable t) {
+        }
+        catch ( Throwable t )
+        {
             String message = getClass().getName() + ".sessionStarted() listener has failed: ";
-            logger.error(message, t);
-            throw new RuntimeException(message, t);
+            logger.error( message, t );
+            throw new RuntimeException( message, t );
         }
     }
 
@@ -132,17 +135,20 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (build != null) {
                 File basedir = event.getSession().getTopLevelProject().getBasedir();
                 conf.persistToPropertiesFile();
-                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
+                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures,basedir);
             }
             deployableArtifactBuilderMap.clear();
             if (wrappedListener != null) {
                 wrappedListener.sessionEnded(event);
             }
-        } catch (Throwable t) {
+        }
+        catch ( Throwable t )
+        {
             String message = getClass().getName() + ".sessionEnded() listener has failed: ";
-            logger.error(message, t);
-            throw new RuntimeException(message, t);
-        } finally {
+            logger.error( message, t );
+            throw new RuntimeException( message, t );
+        }
+        finally {
             String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
             if (StringUtils.isNotBlank(propertyFilePath)) {
                 File file = new File(propertyFilePath);
@@ -448,9 +454,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String groupId = moduleArtifact.getGroupId();
             String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
             // If excludeArtifactsFromBuild and the PatternMatcher found conflict, add the excluded artifact to the excluded artifact set.
-            if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
+            if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath,patterns)){
                 module.addExcludedArtifact(artifact);
-            } else {
+            }else{
                 module.addArtifact(artifact);
             }
             if (isPublishArtifacts(artifactFile)) {
@@ -470,9 +476,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         artifactBuilder.name(pomFileName);
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, "pom");
-                        if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
+                        if(excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath,patterns)){
                             module.addExcludedArtifact(pomArtifact);
-                        } else {
+                        }else{
                             module.addArtifact(pomArtifact);
                         }
                         if (isPublishArtifacts(pomFile)) {
@@ -522,7 +528,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     /**
      * @param deployPath the full path string to extract the repo from
      * @return Return the target deployment repository. Either the releases repository (default) or snapshots if defined
-     * and the deployed file is a snapshot.
+     *         and the deployed file is a snapshot.
      */
     public String getTargetRepository(String deployPath) {
         String snapshotsRepository = conf.publisher.getSnapshotRepoKey();
@@ -598,7 +604,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (conf.isIncludeEnvVars()) {
                 Properties envProperties = new Properties();
                 envProperties.putAll(conf.getAllProperties());
-                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, conf.getLog());
+                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
                 for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                     buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
                 }

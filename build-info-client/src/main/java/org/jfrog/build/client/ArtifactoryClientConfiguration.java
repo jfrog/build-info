@@ -92,10 +92,6 @@ public class ArtifactoryClientConfiguration {
         return rootConfig.props;
     }
 
-    public Log getLog() {
-        return root.getLog();
-    }
-
     public void persistToPropertiesFile() {
         if (StringUtils.isEmpty(getPropertiesFile())) {
             return;

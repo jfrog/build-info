@@ -74,9 +74,8 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
         allMavenProps.putAll(session.getSystemProperties());
         allMavenProps.putAll(session.getUserProperties());
 
-        Maven3BuildInfoLogger log = new Maven3BuildInfoLogger(logger);
-        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps, log);
-        internalConfiguration = new ArtifactoryClientConfiguration(log);
+        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
+        internalConfiguration = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
         internalConfiguration.fillFromProperties(allProps);
         return internalConfiguration;
     }
