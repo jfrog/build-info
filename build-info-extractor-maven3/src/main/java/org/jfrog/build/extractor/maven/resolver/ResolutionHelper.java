@@ -28,8 +28,9 @@ public class ResolutionHelper {
             return;
         }
 
-        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps);
-        internalConfiguration = new ArtifactoryClientConfiguration(new Maven3BuildInfoLogger(logger));
+        Maven3BuildInfoLogger log = new Maven3BuildInfoLogger(logger);
+        Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps, log);
+        internalConfiguration = new ArtifactoryClientConfiguration(log);
         internalConfiguration.fillFromProperties(allProps);
     }
 

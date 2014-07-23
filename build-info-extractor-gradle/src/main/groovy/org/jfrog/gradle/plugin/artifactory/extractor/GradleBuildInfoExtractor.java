@@ -216,7 +216,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         if (clientConf.isIncludeEnvVars()) {
             Properties envProperties = new Properties();
             envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
             for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                 bib.addProperty(envProp.getKey(), envProp.getValue());
             }
@@ -291,6 +291,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }));
         return artifacts;
     }
+
     private List<Dependency> calculateDependencies(Project project) throws Exception {
         Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
@@ -360,10 +361,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         }
 
         public boolean apply(@Nullable GradleDeployDetails input) {
-            if(include){
+            if (include) {
                 return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
-            }else{
-                return input.getProject().equals(project) &&  PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
+            } else {
+                return input.getProject().equals(project) && PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
             }
         }
     }
