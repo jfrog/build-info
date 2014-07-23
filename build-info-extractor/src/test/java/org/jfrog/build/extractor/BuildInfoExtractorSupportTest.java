@@ -45,7 +45,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(MOMO_KEY, "1");
 
         Properties props = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
@@ -66,7 +66,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
 
         Properties fileProps = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
@@ -96,7 +96,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(gogoKey, "2");
 
         Properties buildInfoProperties = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
@@ -121,7 +121,7 @@ public class BuildInfoExtractorSupportTest {
 
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
 
-        Properties fileProps = BuildInfoExtractorUtils.getEnvProperties(new Properties());
+        Properties fileProps = BuildInfoExtractorUtils.getEnvProperties(new Properties(), null);
         assertEquals(fileProps.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(ENV_MOMO_KEY), "1", "momo property does not match");
 
@@ -146,7 +146,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(kokoKey, "parent");
         System.setProperty(gogoKey, "2");
 
-        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(new Properties());
+        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(new Properties(), null);
         assertEquals(buildInfoProperties.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
         assertEquals(buildInfoProperties.getProperty(ENV_MOMO_KEY), "1", "momo number property does not match");
         assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
@@ -169,7 +169,7 @@ public class BuildInfoExtractorSupportTest {
 
         Properties startProps = new Properties();
         startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS, "*koko");
-        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(startProps);
+        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(startProps, null);
         assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to exclude patterns");
         assertNull(buildInfoProperties.getProperty("akoko"), "Should not find akoko property due to exclude patterns");
         assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
@@ -189,7 +189,7 @@ public class BuildInfoExtractorSupportTest {
 
         Properties startProps = new Properties();
         startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS, "gogo?*");
-        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(startProps);
+        Properties buildInfoProperties = BuildInfoExtractorUtils.getEnvProperties(startProps, null);
         assertEquals(buildInfoProperties.getProperty("gogo1"), "1", "gogo1 parent number property does not match");
         assertEquals(buildInfoProperties.getProperty("gogo2a"), "2", "gogo2a parent number property does not match");
         assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to include patterns");

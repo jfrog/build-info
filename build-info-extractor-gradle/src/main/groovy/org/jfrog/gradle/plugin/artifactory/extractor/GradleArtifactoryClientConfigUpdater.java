@@ -16,8 +16,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
@@ -26,7 +24,6 @@ import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.client.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
-import javax.annotation.Nullable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -64,7 +61,7 @@ public class GradleArtifactoryClientConfigUpdater {
         props.putAll(BuildInfoExtractorUtils.filterStringEntries(startProps));
 
         // Then System properties
-        Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
+        Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props, config.info.getLog());
         // Then special buildInfo properties
         Properties buildInfoProperties =
                 BuildInfoExtractorUtils.filterDynamicProperties(mergedProps, BUILD_INFO_PROP_PREDICATE);

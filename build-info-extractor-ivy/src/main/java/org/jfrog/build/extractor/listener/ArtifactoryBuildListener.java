@@ -64,7 +64,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     private Properties getMergedEnvAndSystemProps() {
         Properties props = new Properties();
         props.putAll(System.getenv());
-        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props);
+        return BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props, buildInfoLog);
     }
 
     public IvyBuildInfoLog getBuildInfoLog(BuildEvent event) {
@@ -327,7 +327,7 @@ public class ArtifactoryBuildListener implements BuildListener {
         if (clientConf.isIncludeEnvVars()) {
             Properties envProperties = new Properties();
             envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties);
+            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
             for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
                 builder.addProperty(envProp.getKey(), envProp.getValue());
             }
