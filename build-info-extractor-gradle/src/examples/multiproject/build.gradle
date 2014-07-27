@@ -45,7 +45,7 @@ def javaProjects() {
 }
 
 allprojects {
-    apply plugin: 'artifactory'
+    apply plugin: 'com.jfrog.artifactory-upload'
     group = 'org.jfrog.test.gradle'
     version = globalVersion
     status = version.status

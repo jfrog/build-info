@@ -18,7 +18,7 @@
 version = '2'
 
 //apply plugin: 'java'
-//apply plugin: 'artifactory-publish'
+//apply plugin: 'com.jfrog.artifactory'
 //apply plugin: 'ivy-publish'
 //apply plugin: 'maven-publish'
 publishing {
