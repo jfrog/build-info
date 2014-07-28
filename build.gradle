@@ -328,12 +328,11 @@ project('build-info-extractor-gradle') {
     println description
     dependencies {
         compile gradleApi()
-        //compile group: 'org.gradle', name: 'gradle-core', version: '1.0-milestone-9'
         compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
         provided "org.codehaus.plexus:plexus-component-annotations:1.5.5",
                 "com.google.code.findbugs:jsr305:1.3.9"
         compile group: 'javax.annotation', name: 'jsr250-api', version: '1.0'
-        compile group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
+        uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
         testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
             transitive = false
