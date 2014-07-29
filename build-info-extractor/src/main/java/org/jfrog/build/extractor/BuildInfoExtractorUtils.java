@@ -214,19 +214,19 @@ public abstract class BuildInfoExtractorUtils {
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String propertiesFilePath = System.getProperty(key);
-        String propFoundPath = "";
+        String propFoundPath = "System.getProperty(" + key + ")";
         if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
             propertiesFilePath = additionalProps.getProperty(key);
-            propFoundPath = "additionalProps.getProperty";
+            propFoundPath = "additionalProps.getProperty(" + key + ")";
         }
         if (StringUtils.isBlank(propertiesFilePath)) {
             // Jenkins prefixes these variables with "env." so let's try that
             propertiesFilePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(propertiesFilePath)) {
                 propertiesFilePath = System.getenv(key);
-                propFoundPath = StringUtils.isBlank(propertiesFilePath) ? "" : "System.getenv";
+                propFoundPath = "System.getenv(" + key + ")";
             } else {
-                propFoundPath = "additionalProps.getProperty(\"env.\" + key)";
+                propFoundPath = "additionalProps.getProperty(env." + key + ")";
             }
         }
         if (StringUtils.isBlank(propertiesFilePath)) {
@@ -235,16 +235,17 @@ public abstract class BuildInfoExtractorUtils {
             propertiesFilePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(propertiesFilePath)) {
                 propertiesFilePath = System.getenv(key);
-                propFoundPath = StringUtils.isBlank(propertiesFilePath) ? "" : " second System.getenv";
+                propFoundPath = "System.getenv(" + key + ")";
             } else {
-                propFoundPath = "additionalProps.getProperty(\"env.\" + key)";
+                propFoundPath = "additionalProps.getProperty(env." + key + ")";
             }
         }
         if (log != null) {
-            if (StringUtils.isBlank(propFoundPath)) {
-                log.warn("[buildinfo] Properties file path was not found, this build will probably fail");
+            if (StringUtils.isBlank(propertiesFilePath)) {
+                log.warn("[buildinfo] Properties file path was not found! (Relecant only for a build running from a CI Server)");
             } else {
-                log.debug("[buildinfo] Properties file " + propertiesFilePath + " retrieved from " + propFoundPath);
+                log.info("[buildinfo] Properties file found at '" + propertiesFilePath + "'");
+                log.debug("[buildinfo] Properties file '" + propertiesFilePath + "' retrieved from '" + propFoundPath + "'");
             }
         }
         return propertiesFilePath;
