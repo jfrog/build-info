@@ -34,12 +34,12 @@ public class BuildPatternArtifactsSerializationTest {
     public void testBuildOutputsSerialisation() throws Exception {
 
         PatternResult bobZips = new PatternResult();
-        bobZips.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").url("lib-releases-local:bob/aaa.zip").size(4354354).lastModifiedDate(new Date()).sha1("sha1").build());
-        bobZips.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").url("lib-releases-local:bob/yyy/bbb.zip").size(78654).lastModifiedDate(new Date()).sha1("sha1").build());
+        bobZips.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").uri("lib-releases-local:bob/aaa.zip").size(4354354).lastModifiedDate(new Date()).sha1("sha1").build());
+        bobZips.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").uri("lib-releases-local:bob/yyy/bbb.zip").size(78654).lastModifiedDate(new Date()).sha1("sha1").build());
 
         PatternResult prod = new PatternResult();
-        prod.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").url("lib-releases-local:mmm.jar").size(345654).lastModifiedDate(new Date()).sha1("sha1").build());
-        prod.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").url("lib-releases-local:kkk/lll.war").size(456546743).lastModifiedDate(new Date()).sha1("sha1").build());
+        prod.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").uri("lib-releases-local:mmm.jar").size(345654).lastModifiedDate(new Date()).sha1("sha1").build());
+        prod.addArtifact(new PatternArtifactBuilder().artifactoryUrl("http://localhost:8080/artifactory").uri("lib-releases-local:kkk/lll.war").size(456546743).lastModifiedDate(new Date()).sha1("sha1").build());
 
 
         BuildPatternArtifacts buildPatternArtifacts = new BuildPatternArtifactsBuilder().buildName("foo").buildNumber("123")
