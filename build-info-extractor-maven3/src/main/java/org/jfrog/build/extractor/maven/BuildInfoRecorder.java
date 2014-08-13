@@ -294,8 +294,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 setXpathPattern();
                 Object evaluate = xPathExpression.evaluate(new InputSource(stream),
                         XPathConstants.STRING);
-                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString())) {
-                    return evaluate.toString().equals("true");
+                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString()) && evaluate.toString().equals("true")) {
+                    return true;
                 }
             } catch (FileNotFoundException e) {
                 logger.error("File '" + report.getAbsolutePath() + "' does not exist.");
