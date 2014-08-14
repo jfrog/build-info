@@ -82,14 +82,14 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
 
                 boolean isSnapshot = resolutionType.equals(ResolutionHelper.Nature.SNAPSHOT);
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(!isSnapshot, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RepositoryPolicy snapshotolicy = new RepositoryPolicy(isSnapshot, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                RepositoryPolicy snapshotPolicy = new RepositoryPolicy(isSnapshot, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
 
                 Field releasePolicyField = RemoteRepository.class.getDeclaredField("releasePolicy");
                 releasePolicyField.setAccessible(true);
                 releasePolicyField.set(remoteRepository, releasePolicy);
                 Field snapshotPolicyField = RemoteRepository.class.getDeclaredField("snapshotPolicy");
                 snapshotPolicyField.setAccessible(true);
-                snapshotPolicyField.set(remoteRepository, snapshotolicy);
+                snapshotPolicyField.set(remoteRepository, snapshotPolicy);
 
                 if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
                     Authentication authentication = new AuthenticationBuilder()
