@@ -69,6 +69,7 @@ public class ArtifactoryPublicationsPluginTest extends PluginTestBase {
         !clientConfig.resolver.maven
         buildInfoTask.ivyPublications.size() == 1
         buildInfoTask.mavenPublications.size() == 1
+        buildInfoTask.filesToPublish.size() == 1
         buildInfoTask.ivyPublications.iterator().next().name == 'ivyJava'
         buildInfoTask.mavenPublications.iterator().next().name == 'mavenJava'
         buildInfoTask.artifactSpecs[0].group == 'com.jfrog'
