@@ -14,6 +14,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
@@ -67,11 +68,20 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     @Input
     private boolean skip = false;
 
+
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
     protected Map<String, String> defaultProps;
 
     protected final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
+
+    @OutputFile
+    @Optional
+    private File buildInfoFile = new File(getProject().getBuildDir(), "artifactory/build-info.json");
+
+    public File getBuildInfoFile() {
+      return buildInfoFile;
+    }
 
     @Input
     @Optional
@@ -293,15 +303,15 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             /**
              * The build-info will be always written to a file in its JSON form.
              */
-            exportBuildInfo(build, getExportFile(acc));
+            File exportFile = getExportFile(acc);
+            exportBuildInfo(build, exportFile);
+            exportFile.renameTo(buildInfoFile);
             if (isPublishBuildInfo(acc)) {
                 log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                 /**
                  * After all the artifacts were uploaded successfully the next task is to send the build-info
                  * object.
                  */
-                // If export property set always save the file before sending it to artifactory
-                exportBuildInfo(build, getExportFile(acc));
                 client.sendBuildInfo(build);
             }
         } finally {
