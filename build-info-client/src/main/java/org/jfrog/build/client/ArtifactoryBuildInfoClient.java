@@ -287,9 +287,10 @@ public class ArtifactoryBuildInfoClient {
      * Deploys the artifact to the destination repository.
      *
      * @param details Details about the deployed artifact
+     * @return ArtifactoryResponse The response content received from Artifactory
      * @throws IOException On any connection error
      */
-    public void deployArtifact(DeployDetails details) throws IOException {
+    public ArtifactoryResponse deployArtifact(DeployDetails details) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
         deploymentPathBuilder.append("/").append(details.getTargetRepository());
         if (!details.artifactPath.startsWith("/")) {
@@ -299,11 +300,13 @@ public class ArtifactoryBuildInfoClient {
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
         deploymentPath = httpClient.encodeUrl(deploymentPath);
-        uploadFile(details, deploymentPath);
+        ArtifactoryResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
             uploadChecksums(details, deploymentPath);
         }
+
+        return response;
     }
 
     /**
@@ -508,9 +511,10 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private void uploadFile(DeployDetails details, String uploadUrl) throws IOException {
-        if (tryChecksumDeploy(details, uploadUrl)) {
-            return;
+    private ArtifactoryResponse uploadFile(DeployDetails details, String uploadUrl) throws IOException {
+        ArtifactoryResponse response = new ArtifactoryResponse();
+        if (tryChecksumDeploy(details, uploadUrl, response)) {
+            return response;
         }
 
         HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
@@ -519,16 +523,18 @@ public class ArtifactoryBuildInfoClient {
 
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
 
-        StatusLine statusLine = httpClient.upload(httpPut, fileEntity);
+        StatusLine statusLine = httpClient.upload(httpPut, fileEntity, response);
         int statusCode = statusLine.getStatusCode();
 
         //Accept both 200, and 201 for backwards-compatibility reasons
         if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
             throwHttpIOException("Failed to deploy file:", statusLine);
         }
+
+        return response;
     }
 
-    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
+    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl, ArtifactoryResponse response) throws UnsupportedEncodingException {
         // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
         long fileLength = details.file.length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
@@ -547,7 +553,7 @@ public class ArtifactoryBuildInfoClient {
 
         String fileAbsolutePath = details.file.getAbsolutePath();
         try {
-            StatusLine statusLine = httpClient.execute(httpPut);
+            StatusLine statusLine = httpClient.execute(httpPut, response);
             int statusCode = statusLine.getStatusCode();
 
             //Accept both 200, and 201 for backwards-compatibility reasons

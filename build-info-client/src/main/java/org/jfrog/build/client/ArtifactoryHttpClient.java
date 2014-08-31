@@ -35,6 +35,7 @@ import org.jfrog.build.util.URI;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 /**
  * @author Noam Y. Tenne
@@ -185,15 +186,35 @@ public class ArtifactoryHttpClient {
     }
 
     public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
+        return upload(httpPut, fileEntity, null);
+    }
+
+    public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity, ArtifactoryResponse response) throws IOException {
         httpPut.setEntity(fileEntity);
-        return execute(httpPut);
+        return execute(httpPut, response);
     }
 
     public StatusLine execute(HttpPut httpPut) throws IOException {
+        return execute(httpPut, null);
+    }
+
+    public StatusLine execute(HttpPut httpPut, ArtifactoryResponse artifactoryResponse) throws IOException {
         HttpResponse response = getHttpClient().execute(httpPut);
         StatusLine statusLine = response.getStatusLine();
-        if (response.getEntity() != null) {
-            response.getEntity().consumeContent();
+        HttpEntity entity = response.getEntity();
+        if (entity != null) {
+            if (artifactoryResponse != null) {
+                InputStream content = entity.getContent();
+                if (content != null) {
+                    try {
+                        JsonParser parser = createJsonParser(content);
+                        artifactoryResponse.setContent(parser.readValueAs(Map.class));
+                    } finally {
+                        content.close();
+                    }
+                }
+
+            }
         }
         return statusLine;
     }
