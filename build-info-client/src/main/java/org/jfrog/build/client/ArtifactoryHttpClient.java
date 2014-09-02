@@ -185,37 +185,31 @@ public class ArtifactoryHttpClient {
         return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(rawdata);
     }
 
-    public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
-        return upload(httpPut, fileEntity, null);
-    }
-
-    public StatusLine upload(HttpPut httpPut, HttpEntity fileEntity, ArtifactoryResponse response) throws IOException {
+    public ArtifactoryUploadResponse upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {
         httpPut.setEntity(fileEntity);
-        return execute(httpPut, response);
+        return execute(httpPut);
     }
 
-    public StatusLine execute(HttpPut httpPut) throws IOException {
-        return execute(httpPut, null);
-    }
-
-    public StatusLine execute(HttpPut httpPut, ArtifactoryResponse artifactoryResponse) throws IOException {
+    public ArtifactoryUploadResponse execute(HttpPut httpPut) throws IOException {
         HttpResponse response = getHttpClient().execute(httpPut);
+        ArtifactoryUploadResponse artifactoryResponse = null;
         StatusLine statusLine = response.getStatusLine();
         HttpEntity entity = response.getEntity();
         if (entity != null) {
-            if (artifactoryResponse != null) {
-                InputStream content = entity.getContent();
-                if (content != null) {
-                    try {
-                        JsonParser parser = createJsonParser(content);
-                        artifactoryResponse.setContent(parser.readValueAs(Map.class));
-                    } finally {
-                        content.close();
-                    }
+            InputStream content = entity.getContent();
+            if (content != null) {
+                try {
+                    JsonParser parser = createJsonParser(content);
+                    artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
+                } finally {
+                    content.close();
                 }
-
             }
         }
-        return statusLine;
+        if (artifactoryResponse == null) {
+            artifactoryResponse = new ArtifactoryUploadResponse();
+        }
+        artifactoryResponse.setStatusLine(statusLine);
+        return artifactoryResponse;
     }
 }

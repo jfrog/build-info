@@ -290,7 +290,7 @@ public class ArtifactoryBuildInfoClient {
      * @return ArtifactoryResponse The response content received from Artifactory
      * @throws IOException On any connection error
      */
-    public ArtifactoryResponse deployArtifact(DeployDetails details) throws IOException {
+    public ArtifactoryUploadResponse deployArtifact(DeployDetails details) throws IOException {
         StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
         deploymentPathBuilder.append("/").append(details.getTargetRepository());
         if (!details.artifactPath.startsWith("/")) {
@@ -300,7 +300,7 @@ public class ArtifactoryBuildInfoClient {
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
         deploymentPath = httpClient.encodeUrl(deploymentPath);
-        ArtifactoryResponse response = uploadFile(details, deploymentPath);
+        ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
             uploadChecksums(details, deploymentPath);
@@ -511,9 +511,10 @@ public class ArtifactoryBuildInfoClient {
         }
     }
 
-    private ArtifactoryResponse uploadFile(DeployDetails details, String uploadUrl) throws IOException {
-        ArtifactoryResponse response = new ArtifactoryResponse();
-        if (tryChecksumDeploy(details, uploadUrl, response)) {
+    private ArtifactoryUploadResponse uploadFile(DeployDetails details, String uploadUrl) throws IOException {
+        ArtifactoryUploadResponse response = tryChecksumDeploy(details, uploadUrl);
+        if (response != null) {
+            // Checksum deploy was performed:
             return response;
         }
 
@@ -523,28 +524,28 @@ public class ArtifactoryBuildInfoClient {
 
         FileEntity fileEntity = new FileEntity(details.file, "binary/octet-stream");
 
-        StatusLine statusLine = httpClient.upload(httpPut, fileEntity, response);
-        int statusCode = statusLine.getStatusCode();
+        response = httpClient.upload(httpPut, fileEntity);
+        int statusCode = response.getStatusLine().getStatusCode();
 
         //Accept both 200, and 201 for backwards-compatibility reasons
         if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
-            throwHttpIOException("Failed to deploy file:", statusLine);
+            throwHttpIOException("Failed to deploy file:", response.getStatusLine());
         }
 
         return response;
     }
 
-    private boolean tryChecksumDeploy(DeployDetails details, String uploadUrl, ArtifactoryResponse response) throws UnsupportedEncodingException {
+    private ArtifactoryUploadResponse tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
         long fileLength = details.file.length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
             log.debug("Skipping checksum deploy of file size " + fileLength + " , falling back to regular deployment.");
-            return false;
+            return null;
         }
 
         // Artifactory 2.5.1+ has efficient checksum deployment (checks if the artifact already exists by it's checksum)
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.5.1"))) {
-            return false;
+            return null;
         }
 
         HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
@@ -553,13 +554,13 @@ public class ArtifactoryBuildInfoClient {
 
         String fileAbsolutePath = details.file.getAbsolutePath();
         try {
-            StatusLine statusLine = httpClient.execute(httpPut, response);
-            int statusCode = statusLine.getStatusCode();
+            ArtifactoryUploadResponse response = httpClient.execute(httpPut);
+            int statusCode = response.getStatusLine().getStatusCode();
 
             //Accept both 200, and 201 for backwards-compatibility reasons
             if ((statusCode == HttpStatus.SC_CREATED) || (statusCode == HttpStatus.SC_OK)) {
                 log.debug("Successfully performed checksum deploy of file " + fileAbsolutePath + " : " + details.sha1);
-                return true;
+                return response;
             } else {
                 log.debug("Failed checksum deploy of checksum '" + details.sha1 + "' with statusCode: " + statusCode);
             }
@@ -567,7 +568,7 @@ public class ArtifactoryBuildInfoClient {
             log.debug("Failed artifact checksum deploy of file " + fileAbsolutePath + " : " + details.sha1);
         }
 
-        return false;
+        return null;
     }
 
     private HttpPut createHttpPutMethod(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
@@ -588,7 +589,8 @@ public class ArtifactoryBuildInfoClient {
             String sha1Url = uploadUrl + ".sha1" + buildMatrixParamsString(details.properties);
             HttpPut putSha1 = new HttpPut(sha1Url);
             StringEntity sha1StringEntity = new StringEntity(sha1);
-            StatusLine sha1StatusLine = httpClient.upload(putSha1, sha1StringEntity);
+            ArtifactoryUploadResponse response = httpClient.upload(putSha1, sha1StringEntity);
+            StatusLine sha1StatusLine = response.getStatusLine();
             int sha1StatusCode = sha1StatusLine.getStatusCode();
 
             //Accept both 200, and 201 for backwards-compatibility reasons
@@ -602,7 +604,8 @@ public class ArtifactoryBuildInfoClient {
             String md5Url = uploadUrl + ".md5" + buildMatrixParamsString(details.properties);
             HttpPut putMd5 = new HttpPut(md5Url);
             StringEntity md5StringEntity = new StringEntity(md5);
-            StatusLine md5StatusLine = httpClient.upload(putMd5, md5StringEntity);
+            ArtifactoryUploadResponse response = httpClient.upload(putMd5, md5StringEntity);
+            StatusLine md5StatusLine = response.getStatusLine();
             int md5StatusCode = md5StatusLine.getStatusCode();
 
             //Accept both 200, and 201 for backwards-compatibility reasons
