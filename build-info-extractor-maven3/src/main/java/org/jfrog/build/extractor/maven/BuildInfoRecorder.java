@@ -22,29 +22,16 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
-import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.filter.ArtifactFilter;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
-import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
-import org.eclipse.aether.RepositoryListener;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -55,10 +42,8 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseRepositoryListener;
-import org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeRepositoryListener;
+import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 import org.xml.sax.InputSource;
-
 import javax.xml.xpath.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -88,20 +73,21 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     @Requirement
     private BuildDeploymentHelper buildDeploymentHelper;
 
+    @Requirement
+    private ResolutionHelper resolutionHelper;
+
     private ExecutionListener wrappedListener;
     private BuildInfoMavenBuilder buildInfoBuilder;
     private ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<ModuleBuilder>();
     private ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<Set<Artifact>>();
     private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
     private volatile boolean projectHasTestFailures;
-
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
     private XPath xPath;
     private XPathExpression xPathExpression;
-
-    private final List<Artifact> resolvedArtifacts = Collections.synchronizedList(new ArrayList<Artifact>());
+    private final Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -109,6 +95,17 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     public void setConfiguration(ArtifactoryClientConfiguration conf) {
         this.conf = conf;
+    }
+
+    /**
+     * The repository listeners (either ArtifactoryEclipseRepositoryListener or ArtifactorySonatypeRepositoryListener) invoke this method
+     * with each artifact being resolved by Maven.
+     * @param artifact  The artifact being resolved by Maven.
+     */
+    public void artifactResolved(Artifact artifact) {
+        if (artifact != null) {
+            resolvedArtifacts.add(artifact);
+        }
     }
 
     @Override
@@ -122,6 +119,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionStarted(ExecutionEvent event) {
         try {
             logger.info("Initializing Artifactory Build-Info Recording");
+            resolutionHelper.enforceArtifactoryResolver();
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = Maps.newHashMap();
             matrixParams = Maps.newHashMap();
@@ -271,22 +269,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 projectHasTestFailures = true;
             }
         }
-
-        extractModuleDependencies();
-
+        extractModuleDependencies(project);
         if (wrappedListener != null) {
             wrappedListener.mojoSucceeded(event);
-        }
-    }
-
-    /**
-     * The repository listeners (either ArtifactoryEclipseRepositoryListener or ArtifactorySonatypeRepositoryListener) invoke this method
-     * with each artifact being resolved by Maven.
-     * @param artifact  The artifact being resolved by Maven.
-     */
-    public void artifactResolved(Artifact artifact) {
-        if (artifact != null) {
-            resolvedArtifacts.add(artifact);
         }
     }
 
@@ -343,8 +328,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info dependency extraction: Null project.");
             return;
         }
-        extractModuleDependencies();
-
+        extractModuleDependencies(project);
         if (wrappedListener != null) {
             wrappedListener.mojoFailed(event);
         }
@@ -378,7 +362,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             extractModuleAttachedArtifacts(project, artifacts);
         }
 
-        extractModuleDependencies();
+        extractModuleDependencies(project);
     }
 
     private void finalizeModule(MavenProject project) {
@@ -410,27 +394,26 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
     }
 
-    private void extractModuleDependencies() {
+    private void extractModuleDependencies(MavenProject project) {
         Set<Artifact> moduleDependencies = currentModuleDependencies.get();
         if (moduleDependencies == null) {
-            logger.warn(
-                    "Skipping Artifactory Build-Info project dependency extraction: Null current module dependencies.");
+            logger.warn("Skipping Artifactory Build-Info project dependency extraction: Null current module dependencies.");
             return;
         }
 
-        if (resolvedArtifacts != null) {
-            synchronized (resolvedArtifacts) {
-                moduleDependencies.addAll(resolvedArtifacts);
-                resolvedArtifacts.clear();
-            }
+        if (conf.publisher.isRecordAllDependencies()) {
+            resolvedArtifacts.addAll(project.getArtifacts());
+            moduleDependencies.addAll(resolvedArtifacts);
+        } else {
+            moduleDependencies.addAll(project.getArtifacts());
         }
+
+        resolvedArtifacts.clear();
     }
 
     private void finalizeAndAddModule(MavenProject project) {
         addFilesToCurrentModule(project);
-
         currentModule.remove();
-
         currentModuleArtifacts.remove();
         currentModuleDependencies.remove();
     }

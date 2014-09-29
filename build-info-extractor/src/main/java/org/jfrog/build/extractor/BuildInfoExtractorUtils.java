@@ -242,7 +242,7 @@ public abstract class BuildInfoExtractorUtils {
         }
         if (log != null) {
             if (StringUtils.isBlank(propertiesFilePath)) {
-                log.warn("[buildinfo] Properties file path was not found! (Relevant only for builds running on a CI Server)");
+                log.info("[buildinfo] Properties file path was not found! (Relevant only for builds running on a CI Server)");
             } else {
                 log.info("[buildinfo] Properties file found at '" + propertiesFilePath + "'");
                 log.debug("[buildinfo] Properties file '" + propertiesFilePath + "' retrieved from '" + propFoundPath + "'");

@@ -326,8 +326,16 @@ public class ArtifactoryClientConfiguration {
             setBooleanValue(PUBLISH_BUILD_INFO, enabled);
         }
 
+        public void setRecordAllDependencies(Boolean enabled) {
+            setBooleanValue(RECORD_ALL_DEPENDENCIES, enabled);
+        }
+
         public Boolean isPublishBuildInfo() {
             return getBooleanValue(PUBLISH_BUILD_INFO, true);
+        }
+
+        public boolean isRecordAllDependencies() {
+            return getBooleanValue(RECORD_ALL_DEPENDENCIES, false);
         }
 
         public void setIncludePatterns(String patterns) {

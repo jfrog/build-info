@@ -201,7 +201,10 @@ public class ArtifactoryHttpClient {
                 try {
                     JsonParser parser = createJsonParser(content);
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
-                } finally {
+                } catch (Exception e) {
+                    log.error("Failed while reading the response from: " + httpPut, e);
+                }
+                finally {
                     content.close();
                 }
             }

@@ -39,6 +39,7 @@ public interface ClientConfigurationFields {
     String COPY_AGGREGATED_ARTIFACTS = "copy.aggregated"; // Boolean - whether or not aggregated artifacts should be published
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
+    String RECORD_ALL_DEPENDENCIES = "record.all.dependencies";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";
     String MATRIX = "matrix";
     String ARTIFACT_SPECS = "artifactSpecs";
