@@ -45,7 +45,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(MOMO_KEY, "1");
 
         Properties props = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
@@ -66,7 +66,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
 
         Properties fileProps = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
@@ -96,7 +96,7 @@ public class BuildInfoExtractorSupportTest {
         System.setProperty(gogoKey, "2");
 
         Properties buildInfoProperties = BuildInfoExtractorUtils.filterDynamicProperties(
-                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties(), null),
+                BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(new Properties()),
                 BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");

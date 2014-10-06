@@ -61,6 +61,10 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
+        return mergePropertiesWithSystemAndPropertyFile(existingProps, null);
+    }
+
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties props = new Properties();
         String propertiesFilePath = getAdditionalPropertiesFile(existingProps, log);
