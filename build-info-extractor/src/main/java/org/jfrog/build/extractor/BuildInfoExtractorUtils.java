@@ -204,6 +204,24 @@ public abstract class BuildInfoExtractorUtils {
         return jsonFactory.getCodec().readValue(parser, Build.class);
     }
 
+    public static <T extends Serializable> String buildInfoToJsonString(T buildComponent) throws IOException {
+        JsonFactory jsonFactory = createJsonFactory();
+
+        StringWriter writer = new StringWriter();
+        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
+        jsonGenerator.useDefaultPrettyPrinter();
+
+        jsonGenerator.writeObject(buildComponent);
+        String result = writer.getBuffer().toString();
+        return result;
+    }
+
+    public static <T extends Serializable> T jsonStringToGeneric(String json, Class<T> clazz) throws IOException {
+        JsonFactory jsonFactory = createJsonFactory();
+        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        return jsonFactory.getCodec().readValue(parser, clazz);
+    }
+
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
         if (!toFile.getParentFile().exists()) {
