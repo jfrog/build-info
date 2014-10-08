@@ -20,7 +20,7 @@ and the gradle wrapper in Windows
 ```groovy
 {
   "properties" : {
-   /* Environment variables and properties collected from the CI server	
+   /* Environment variables and properties collected from the CI server.
       The "buildInfo.env." prefix is added to environment variables and build related properties.
       For system variables there's no prefix. */
    "buildInfo.env.JAVA_HOME" : "",
