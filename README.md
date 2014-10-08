@@ -20,14 +20,16 @@ and the gradle wrapper in Windows
 ```groovy
 {
   "properties" : {
-   /* Environment variables and properties collected from the CI server	*/
+   /* Environment variables and properties collected from the CI server	
+      The "buildInfo.env." prefix is added to environment variables and build related properties.
+      For system variables there's no prefix. */
    "buildInfo.env.JAVA_HOME" : "",
    ...
   },
   "version" : "1.0.1", // Build Info schema version
   "name" : "My-build-name", // Build name
   "number" : "28", // Build number
-  "type" : "MAVEN", // Build type
+  "type" : "MAVEN", // Build type (values currently supported: MAVEN, GRADLE, ANT, IVY and GENERIC)
   "buildAgent" : { // Build tool information
     "name" : "Maven", // Build tool type
     "version" : "3.0.5" // Build tool version
@@ -38,7 +40,7 @@ and the gradle wrapper in Windows
   },
   "started" : "2014-09-30T12:00:19.893+0300", // Build start time in the format of yyyy-MM-dd'T'HH:mm:ss.SSSZ
   "durationMillis" : 9762, // Build duration in milliseconds
-  "artifactoryPrincipal" : "james", // Artifactory principal
+  "artifactoryPrincipal" : "james", // Artifactory principal (the Artifactory user used for deployment)
   "url" : "http://my-ci-server/jenkins/job/My-project-name/28/", // CI server URL
   "vcsRevision" : "e4ab2e493afd369ae7bdc90d69c912e8346a3463", // VCS revision
   "vcsUrl" : "https://github.com/github-user/my-project.git", // VCS URL
