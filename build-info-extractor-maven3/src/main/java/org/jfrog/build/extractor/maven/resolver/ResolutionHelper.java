@@ -44,13 +44,20 @@ public class ResolutionHelper implements Contextualizable {
 
     private void setArtifactoryEclipseArtifactResolver() throws ComponentLookupException {
         DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.eclipse.aether.impl.ArtifactDescriptorReader");
+        org.eclipse.aether.internal.impl.DefaultRepositorySystem repositorySystem = (org.eclipse.aether.internal.impl.DefaultRepositorySystem)plexusContainer.lookup("org.eclipse.aether.RepositorySystem");
+
         org.eclipse.aether.impl.ArtifactResolver artifactoryResolver = (org.eclipse.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver");
+
         descriptorReader.setArtifactResolver(artifactoryResolver);
+        repositorySystem.setArtifactResolver(artifactoryResolver);//
     }
 
     private void setArtifactorySonatypeArtifactResolver() throws ComponentLookupException, InvocationTargetException, IllegalAccessException {
         DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.sonatype.aether.impl.ArtifactDescriptorReader");
+        org.sonatype.aether.impl.internal.DefaultRepositorySystem repositorySystem = (org.sonatype.aether.impl.internal.DefaultRepositorySystem)plexusContainer.lookup("org.sonatype.aether.RepositorySystem");
+
         org.sonatype.aether.impl.ArtifactResolver artifactoryResolver = (org.sonatype.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver");
+        repositorySystem.setArtifactResolver(artifactoryResolver);
 
         // Setting the resolver. This is done using reflection, since the signature of the
         // DefaultArtifactDescriptorReader.setArtifactResolver method changed in Maven 3.1.x:

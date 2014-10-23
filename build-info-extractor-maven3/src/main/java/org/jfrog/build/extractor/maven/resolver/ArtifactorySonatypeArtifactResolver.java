@@ -15,6 +15,7 @@ import org.sonatype.aether.resolution.ArtifactResult;
 import org.sonatype.aether.repository.*;
 
 import javax.inject.Named;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -56,29 +57,11 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
                     new Authentication(resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword()));
             }
 
-            if (StringUtils.isNotBlank(releaseRepoUrl)) {
-                logger.debug("Enforcing release repository for resolution: " + releaseRepoUrl);
-                RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RepositoryPolicy snapshotPolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                releaseRepository = new RemoteRepository("Release", "default", releaseRepoUrl);
-                if (authentication != null) {
-                    logger.debug("Enforcing repository authentication: " + authentication + " for release resolution repository");
-                    releaseRepository.setAuthentication(authentication);
-                }
-                if (proxy != null) {
-                    logger.debug("Enforcing proxy: " + proxy + " for release resolution repository");
-                    releaseRepository.setProxy(proxy);
-                }
-                releaseRepository.setPolicy(false, releasePolicy);
-                releaseRepository.setPolicy(true, snapshotPolicy);
-            } else {
-                logger.warn("There's no configured repository for release artifacts resolution");
-            }
             if (StringUtils.isNotBlank(snapshotRepoUrl)) {
                 logger.debug("Enforcing snapshot repository for resolution: " + snapshotRepoUrl);
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
                 RepositoryPolicy snapshotPolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                releaseRepository = new RemoteRepository("Release", "default", releaseRepoUrl);
+                releaseRepository = new RemoteRepository("Artifactory_snapshot", "default", releaseRepoUrl);
                 if (authentication != null) {
                     logger.debug("Enforcing repository authentication: " + authentication + " for snapshot resolution repository");
                     releaseRepository.setAuthentication(authentication);
@@ -89,8 +72,26 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
                 }
                 releaseRepository.setPolicy(false, releasePolicy);
                 releaseRepository.setPolicy(true, snapshotPolicy);
-            } else {
-                logger.warn("There's no configured repository for snapshot artifacts resolution");
+            }
+
+            if (StringUtils.isNotBlank(releaseRepoUrl)) {
+                logger.debug("Enforcing release repository for resolution: " + releaseRepoUrl);
+                boolean snapshotPolicyEnabled = snapshotRepository == null;
+                String repositoryId = snapshotPolicyEnabled ? "Artifactory_release+snapshot" : "Artifactory_release";
+
+                RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                RepositoryPolicy snapshotPolicy = new RepositoryPolicy(snapshotPolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                releaseRepository = new RemoteRepository(repositoryId, "default", releaseRepoUrl);
+                if (authentication != null) {
+                    logger.debug("Enforcing repository authentication: " + authentication + " for release resolution repository");
+                    releaseRepository.setAuthentication(authentication);
+                }
+                if (proxy != null) {
+                    logger.debug("Enforcing proxy: " + proxy + " for release resolution repository");
+                    releaseRepository.setProxy(proxy);
+                }
+                releaseRepository.setPolicy(false, releasePolicy);
+                releaseRepository.setPolicy(true, snapshotPolicy);
             }
 
             resolutionRepositories = Lists.newArrayList();
@@ -107,11 +108,7 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
         return resolutionRepositories;
     }
 
-    /**
-     * Before letting Maven resolve the artifact, this method enforces the configured Artifactory resolution repositories.
-     */
-    @Override
-    public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
+    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
         List<RemoteRepository> repositories;
         try {
             // Get the Artifactory repositories configured in the Artifactory plugin:
@@ -125,7 +122,15 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
         if (repositories != null && !repositories.isEmpty()) {
             request.setRepositories(repositories);
         }
-        // Now we let Maven resolve the artifact:
-        return super.resolveArtifact(session, request);
+    }
+
+    public List<ArtifactResult> resolveArtifacts( RepositorySystemSession session, Collection<? extends ArtifactRequest> requests )
+        throws ArtifactResolutionException {
+
+        for(ArtifactRequest request : requests) {
+            enforceResolutionRepositories(session, request);
+        }
+        // Now we let Maven resolve the artifacts:
+        return super.resolveArtifacts(session, requests);
     }
 }

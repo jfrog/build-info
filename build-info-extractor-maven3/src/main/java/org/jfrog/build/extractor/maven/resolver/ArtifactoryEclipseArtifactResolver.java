@@ -17,6 +17,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import javax.inject.Named;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -65,29 +66,11 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
                 proxy = new Proxy(null, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(), auth);
             }
 
-            if (StringUtils.isNotBlank(releaseRepoUrl)) {
-                logger.debug("[buildinfo] Enforcing release repository for resolution: " + releaseRepoUrl);
-                RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RepositoryPolicy snapshotPolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RemoteRepository.Builder builder = new RemoteRepository.Builder("Release", "default", releaseRepoUrl);
-                builder.setReleasePolicy(releasePolicy);
-                builder.setSnapshotPolicy(snapshotPolicy);
-                if (authentication != null) {
-                    logger.debug("[buildinfo] Enforcing repository authentication: " + authentication + " for release resolution repository");
-                    builder.setAuthentication(authentication);
-                }
-                if (proxy != null) {
-                    logger.debug("[buildinfo] Enforcing proxy: " + proxy + " for release resolution repository");
-                    builder.setProxy(proxy);
-                }
-                releaseRepository = builder.build();
-            }
-
             if (StringUtils.isNotBlank(snapshotRepoUrl)) {
                 logger.debug("[buildinfo] Enforcing snapshot repository for resolution: " + snapshotRepoUrl);
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
                 RepositoryPolicy snapshotPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RemoteRepository.Builder builder = new RemoteRepository.Builder("Snapshot", "default", snapshotRepoUrl);
+                RemoteRepository.Builder builder = new RemoteRepository.Builder("Artifactory_snapshot", "default", snapshotRepoUrl);
                 builder.setReleasePolicy(releasePolicy);
                 builder.setSnapshotPolicy(snapshotPolicy);
                 if (authentication != null) {
@@ -99,6 +82,27 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
                     builder.setProxy(proxy);
                 }
                 snapshotRepository = builder.build();
+            }
+
+            if (StringUtils.isNotBlank(releaseRepoUrl)) {
+                logger.debug("[buildinfo] Enforcing release repository for resolution: " + releaseRepoUrl);
+                boolean snapshotPolicyEnabled = snapshotRepository == null;
+                String repositoryId = snapshotPolicyEnabled ? "Artifactory_release+snapshot" : "Artifactory_release";
+
+                RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                RepositoryPolicy snapshotPolicy = new RepositoryPolicy(snapshotPolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+                RemoteRepository.Builder builder = new RemoteRepository.Builder(repositoryId, "default", releaseRepoUrl);
+                builder.setReleasePolicy(releasePolicy);
+                builder.setSnapshotPolicy(snapshotPolicy);
+                if (authentication != null) {
+                    logger.debug("[buildinfo] Enforcing repository authentication: " + authentication + " for release resolution repository");
+                    builder.setAuthentication(authentication);
+                }
+                if (proxy != null) {
+                    logger.debug("[buildinfo] Enforcing proxy: " + proxy + " for release resolution repository");
+                    builder.setProxy(proxy);
+                }
+                releaseRepository = builder.build();
             }
 
             List<RemoteRepository> tempRepositories = Lists.newArrayList();
@@ -113,11 +117,7 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
         return resolutionRepositories;
     }
 
-    /**
-     * Before letting Maven resolve the artifact, this method enforces the configured Artifactory resolution repositories.
-     */
-    @Override
-    public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
+    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
         List<RemoteRepository> repositories;
         try {
             // Get the Artifactory repositories configured in the Artifactory plugin:
@@ -131,7 +131,19 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
         if (repositories != null && !repositories.isEmpty()) {
             request.setRepositories(repositories);
         }
-        // Now we let Maven resolve the artifact:
-        return super.resolveArtifact(session, request);
+    }
+
+    /**
+     * Before letting Maven resolve the artifact, this method enforces the configured Artifactory resolution repositories.
+     */
+    @Override
+    public List<ArtifactResult> resolveArtifacts( RepositorySystemSession session, Collection<? extends ArtifactRequest> requests )
+        throws ArtifactResolutionException {
+
+        for(ArtifactRequest request : requests) {
+            enforceResolutionRepositories(session, request);
+        }
+        // Now we let Maven resolve the artifacts:
+        return super.resolveArtifacts(session, requests);
     }
 }

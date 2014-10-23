@@ -59,7 +59,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         String scope = resolutionHelper.getScopeByRequestContext(requestContext);
         org.apache.maven.artifact.Artifact artifact = toMavenArtifact(event.getArtifact(), scope);
         if (logger.isDebugEnabled()) {
-            logger.debug("[buildinfo] Resolved artifact: " + artifact + ". Context is: " + requestContext);
+            logger.debug("[buildinfo] Resolved artifact: " + artifact + " from: " + event.getRepository() + " Context is: " + requestContext);
         }
 
         if (getBuildInfoRecorder() != null) {
@@ -75,7 +75,17 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         if (art == null) {
             return null;
         }
-        DefaultArtifact artifact = new DefaultArtifact(art.getGroupId(), art.getArtifactId(), art.getVersion(), scope, art.getExtension(), art.getClassifier(), null);
+        DefaultArtifact artifact = new DefaultArtifact(art.getGroupId(), art.getArtifactId(), art.getVersion(), scope, art.getExtension(), "", null) {
+            public boolean equals( Object o ) {
+                if (o == this) {
+                    return true;
+                }
+                if (!(o instanceof org.apache.maven.artifact.Artifact)) {
+                    return false;
+                }
+                return hashCode() == o.hashCode();
+            }
+        };
         artifact.setFile(art.getFile());
         return artifact;
     }

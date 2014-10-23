@@ -22,6 +22,7 @@ import com.google.common.collect.Sets;
 import com.google.common.io.Closeables;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
@@ -87,7 +88,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private Map<String, String> matrixParams;
     private XPath xPath;
     private XPathExpression xPathExpression;
-    private final Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
+    private Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -401,14 +402,46 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
 
-        if (conf.publisher.isRecordAllDependencies()) {
-            resolvedArtifacts.addAll(project.getArtifacts());
-            moduleDependencies.addAll(resolvedArtifacts);
-        } else {
-            moduleDependencies.addAll(project.getArtifacts());
+        mergeProjectDependencies(project.getArtifacts());
+    }
+
+    /**
+     * Merge the dependencies taken from the MavenProject object with those collected inside the resolvedArtifacts collection.
+     * @param projectDependencies   The artifacts taken from the MavenProject object.
+     */
+    private void mergeProjectDependencies(Set<Artifact> projectDependencies) {
+        // Go over all the artifacts taken from the MavenProject object, and replace their equals method, so that we are
+        // able to merge them together with the artifacts inside the resolvedArtifacts set:
+        Set<Artifact> dependecies = Sets.newHashSet();
+        for(Artifact artifact : projectDependencies) {
+            DefaultArtifact art = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
+                    artifact.getScope(), artifact.getType(), "", artifact.getArtifactHandler()) {
+
+                public boolean equals(Object o) {
+                    if (o == this) {
+                        return true;
+                    }
+                    if (!(o instanceof org.apache.maven.artifact.Artifact)) {
+                        return false;
+                    }
+                    return hashCode() == o.hashCode();
+                }
+            };
+            art.setFile(artifact.getFile());
+            dependecies.add(art);
         }
 
-        resolvedArtifacts.clear();
+        // Now we merge the artifacts from the two collections. In case an artifact is included in both collections, we'd like to keep
+        // the one that was taken from the MavenProject, because of the scope it has.
+        // The merge is done only if the client is configured to do so.
+        Set<Artifact> moduleDependencies = currentModuleDependencies.get();
+        Set<Artifact> tempSet = Sets.newHashSet(moduleDependencies);
+        moduleDependencies.clear();
+        moduleDependencies.addAll(dependecies);
+        moduleDependencies.addAll(tempSet);
+        if (conf.publisher.isRecordAllDependencies()) {
+            moduleDependencies.addAll(resolvedArtifacts);
+        }
     }
 
     private void finalizeAndAddModule(MavenProject project) {
@@ -416,6 +449,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         currentModule.remove();
         currentModuleArtifacts.remove();
         currentModuleDependencies.remove();
+        resolvedArtifacts.clear();
     }
 
     private void addFilesToCurrentModule(MavenProject project) {
