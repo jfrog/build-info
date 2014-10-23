@@ -70,7 +70,7 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
                 logger.debug("[buildinfo] Enforcing snapshot repository for resolution: " + snapshotRepoUrl);
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
                 RepositoryPolicy snapshotPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                RemoteRepository.Builder builder = new RemoteRepository.Builder("Artifactory_snapshot", "default", snapshotRepoUrl);
+                RemoteRepository.Builder builder = new RemoteRepository.Builder("artifactory-snapshot", "default", snapshotRepoUrl);
                 builder.setReleasePolicy(releasePolicy);
                 builder.setSnapshotPolicy(snapshotPolicy);
                 if (authentication != null) {
@@ -87,7 +87,7 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
             if (StringUtils.isNotBlank(releaseRepoUrl)) {
                 logger.debug("[buildinfo] Enforcing release repository for resolution: " + releaseRepoUrl);
                 boolean snapshotPolicyEnabled = snapshotRepository == null;
-                String repositoryId = snapshotPolicyEnabled ? "Artifactory_release+snapshot" : "Artifactory_release";
+                String repositoryId = snapshotPolicyEnabled ? "artifactory-release-snapshot" : "artifactory-release";
 
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
                 RepositoryPolicy snapshotPolicy = new RepositoryPolicy(snapshotPolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
