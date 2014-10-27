@@ -479,9 +479,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String artifactId = moduleArtifact.getArtifactId();
             String artifactVersion = moduleArtifact.getVersion();
             String artifactClassifier = moduleArtifact.getClassifier();
-            String artifactType = moduleArtifact.getType();
-            String type = getTypeString(artifactType, artifactClassifier, artifactType);
-            String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactType);
+            String artifactExtension = moduleArtifact.getArtifactHandler().getExtension();
+            String type = getTypeString(moduleArtifact.getType(), artifactClassifier, artifactExtension);
+
+            String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactExtension);
 
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactName).type(type);
             File artifactFile = moduleArtifact.getFile();
@@ -491,7 +492,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             String groupId = moduleArtifact.getGroupId();
-            String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactType);
+            String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
             // If excludeArtifactsFromBuild and the PatternMatcher found conflict, add the excluded artifact to the excluded artifact set.
             if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
                 module.addExcludedArtifact(artifact);
@@ -500,7 +501,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             if (isPublishArtifacts(artifactFile)) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
-                        artifactId, artifactVersion, artifactClassifier, artifactType);
+                        artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
 
             /*
@@ -511,7 +512,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                     if (metadata instanceof ProjectArtifactMetadata) {  // the pom metadata
                         File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
                         artifactBuilder.type("pom");
-                        String pomFileName = StringUtils.removeEnd(artifactName, artifactType) + "pom";
+                        String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
                         artifactBuilder.name(pomFileName);
                         org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
                         deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, "pom");
