@@ -120,7 +120,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public void sessionStarted(ExecutionEvent event) {
         try {
             logger.info("Initializing Artifactory Build-Info Recording");
-            resolutionHelper.enforceArtifactoryResolver();
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = Maps.newHashMap();
             matrixParams = Maps.newHashMap();

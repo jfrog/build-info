@@ -18,7 +18,6 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import javax.inject.Named;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -33,6 +32,12 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
     private ResolutionHelper resolutionHelper;
 
     private List<RemoteRepository> resolutionRepositories = null;
+    private RemoteRepository releaseRepository = null;
+    private RemoteRepository snapshotRepository = null;
+
+    public void initResolutionRepositories(RepositorySystemSession session) {
+        getResolutionRepositories(session);
+    }
 
     /**
      * Create a list containing one release and one snapshot resolution repositories, according to the configuration in the Artifactory plugin.
@@ -40,29 +45,26 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
      * The list is saved and reused for further invokations to this method.
      * @param session
      * @return
-     * @throws Exception
      */
-    private List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) throws Exception {
+    private List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories == null) {
             Properties allMavenProps = new Properties();
             allMavenProps.putAll(session.getSystemProperties());
             allMavenProps.putAll(session.getUserProperties());
             resolutionHelper.init(allMavenProps);
 
-            RemoteRepository releaseRepository = null;
-            RemoteRepository snapshotRepository = null;
             String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
             String snapshotRepoUrl = resolutionHelper.getRepoSnapshotUrl();
 
             Authentication authentication = null;
             if (StringUtils.isNotBlank(resolutionHelper.getRepoUsername())) {
                 authentication = new AuthenticationBuilder().addString("username", resolutionHelper.getRepoUsername())
-                    .addSecret("password", resolutionHelper.getRepoPassword()).build();
+                        .addSecret("password", resolutionHelper.getRepoPassword()).build();
             }
             Proxy proxy = null;
             if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
                 Authentication auth = new AuthenticationBuilder()
-                    .addString("username", resolutionHelper.getProxyUsername()).addSecret("password", resolutionHelper.getProxyPassword()).build();
+                        .addString("username", resolutionHelper.getProxyUsername()).addSecret("password", resolutionHelper.getProxyPassword()).build();
                 proxy = new Proxy(null, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(), auth);
             }
 
@@ -117,15 +119,10 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
         return resolutionRepositories;
     }
 
-    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
-        List<RemoteRepository> repositories;
-        try {
-            // Get the Artifactory repositories configured in the Artifactory plugin:
-            repositories = getResolutionRepositories(session);
-        } catch (Exception e) {
-            List<ArtifactResult> emptyList = Collections.emptyList();
-            throw new ArtifactResolutionException(emptyList, "Failed while creating Artifactory resolution repositories: " + e.getMessage(), e);
-        }
+    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) {
+        // Get the Artifactory repositories configured in the Artifactory plugin:
+        List<RemoteRepository> repositories = getResolutionRepositories(session);
+
         // The repositories list can be empty, in case this build is not running from a CI server.
         // In that case, we do not want to override Maven's configured repositories:
         if (repositories != null && !repositories.isEmpty()) {
@@ -137,13 +134,30 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
      * Before letting Maven resolve the artifact, this method enforces the configured Artifactory resolution repositories.
      */
     @Override
-    public List<ArtifactResult> resolveArtifacts( RepositorySystemSession session, Collection<? extends ArtifactRequest> requests )
-        throws ArtifactResolutionException {
+    public List<ArtifactResult> resolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests)
+            throws ArtifactResolutionException {
 
         for(ArtifactRequest request : requests) {
             enforceResolutionRepositories(session, request);
         }
         // Now we let Maven resolve the artifacts:
         return super.resolveArtifacts(session, requests);
+    }
+
+    public RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
+        // Init repositories configured in the Artifactory plugin:
+        initResolutionRepositories(session);
+
+        if (snapshotRepository != null) {
+            return snapshotRepository;
+        }
+        return releaseRepository;
+    }
+
+    public RemoteRepository getReleaseRepository(RepositorySystemSession session) {
+        // Init repositories configured in the Artifactory plugin:
+        initResolutionRepositories(session);
+
+        return releaseRepository;
     }
 }

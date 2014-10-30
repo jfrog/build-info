@@ -16,7 +16,6 @@ import org.sonatype.aether.repository.*;
 
 import javax.inject.Named;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
@@ -34,16 +33,20 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
     private ResolutionHelper resolutionHelper;
 
     private List<RemoteRepository> resolutionRepositories = null;
+    private RemoteRepository releaseRepository = null;
+    private RemoteRepository snapshotRepository = null;
 
-    public List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) throws Exception {
+    public void initResolutionRepositories(RepositorySystemSession session) {
+        getResolutionRepositories(session);
+    }
+
+    public List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories == null) {
             Properties allMavenProps = new Properties();
             allMavenProps.putAll(session.getSystemProperties());
             allMavenProps.putAll(session.getUserProperties());
             resolutionHelper.init(allMavenProps);
 
-            RemoteRepository releaseRepository = null;
-            RemoteRepository snapshotRepository = null;
             String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
             String snapshotRepoUrl = resolutionHelper.getRepoSnapshotUrl();
 
@@ -54,7 +57,7 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
             Proxy proxy = null;
             if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
                 proxy = new Proxy(null, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(),
-                    new Authentication(resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword()));
+                        new Authentication(resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword()));
             }
 
             if (StringUtils.isNotBlank(snapshotRepoUrl)) {
@@ -94,29 +97,22 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
                 releaseRepository.setPolicy(true, snapshotPolicy);
             }
 
-            resolutionRepositories = Lists.newArrayList();
+            List<RemoteRepository> tempRepositories = Lists.newArrayList();
             if (releaseRepository != null) {
                 resolutionRepositories.add(releaseRepository);
             }
             if (snapshotRepository != null) {
                 resolutionRepositories.add(snapshotRepository);
             }
-            if (resolutionRepositories.isEmpty()) {
-                logger.error("There are no snapshot or release repositories configured for artifacts resolution");
-            }
+            resolutionRepositories = tempRepositories;
         }
         return resolutionRepositories;
     }
 
-    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
-        List<RemoteRepository> repositories;
-        try {
-            // Get the Artifactory repositories configured in the Artifactory plugin:
-            repositories = getResolutionRepositories(session);
-        } catch (Exception e) {
-            List<ArtifactResult> emptyList = Collections.emptyList();
-            throw new ArtifactResolutionException(emptyList);
-        }
+    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) {
+        // Get the Artifactory repositories configured in the Artifactory plugin:
+        List<RemoteRepository> repositories = getResolutionRepositories(session);
+
         // The repositories list can be empty, in case this build is not running from a CI server.
         // In that case, we do not want to override Maven's configured repositories:
         if (repositories != null && !repositories.isEmpty()) {
@@ -125,12 +121,29 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
     }
 
     public List<ArtifactResult> resolveArtifacts( RepositorySystemSession session, Collection<? extends ArtifactRequest> requests )
-        throws ArtifactResolutionException {
+            throws ArtifactResolutionException {
 
         for(ArtifactRequest request : requests) {
             enforceResolutionRepositories(session, request);
         }
         // Now we let Maven resolve the artifacts:
         return super.resolveArtifacts(session, requests);
+    }
+
+    public RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
+        // Init repositories configured in the Artifactory plugin:
+        initResolutionRepositories(session);
+
+        if (snapshotRepository != null) {
+            return snapshotRepository;
+        }
+        return releaseRepository;
+    }
+
+    public RemoteRepository getReleaseRepository(RepositorySystemSession session) {
+        // Init repositories configured in the Artifactory plugin:
+        initResolutionRepositories(session);
+
+        return releaseRepository;
     }
 }
