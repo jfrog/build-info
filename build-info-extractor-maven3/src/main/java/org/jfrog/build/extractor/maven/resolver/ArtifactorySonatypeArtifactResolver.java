@@ -99,10 +99,10 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
 
             List<RemoteRepository> tempRepositories = Lists.newArrayList();
             if (releaseRepository != null) {
-                resolutionRepositories.add(releaseRepository);
+                tempRepositories.add(releaseRepository);
             }
             if (snapshotRepository != null) {
-                resolutionRepositories.add(snapshotRepository);
+                tempRepositories.add(snapshotRepository);
             }
             resolutionRepositories = tempRepositories;
         }

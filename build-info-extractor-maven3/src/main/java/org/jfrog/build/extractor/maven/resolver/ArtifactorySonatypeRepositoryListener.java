@@ -61,6 +61,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         org.sonatype.aether.impl.internal.DefaultRepositorySystem repositorySystem = (org.sonatype.aether.impl.internal.DefaultRepositorySystem)plexusContainer.lookup("org.sonatype.aether.RepositorySystem");
 
         org.sonatype.aether.impl.ArtifactResolver artifactoryResolver = (org.sonatype.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver");
+        this.artifactoryResolver = (ArtifactorySonatypeArtifactResolver)artifactoryResolver;
         repositorySystem.setArtifactResolver(artifactoryResolver);
 
         // Setting the resolver. This is done using reflection, since the signature of the
@@ -77,6 +78,11 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
             throw new RuntimeException("Failed to enforce Artifactory resolver. Method DefaultArtifactDescriptorReader.setArtifactResolver does not exist");
         }
         setArtifactResolverMethod.invoke(descriptorReader, artifactoryResolver);
+
+        artifactoryRepositoriesEnforced = true;
+        synchronized (artifactoryRepositoriesEnforced) {
+            artifactoryRepositoriesEnforced.notifyAll();
+        }
     }
 
     private BuildInfoRecorder getBuildInfoRecorder() {
