@@ -116,7 +116,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
      * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
-        if (!(event.getRepository() instanceof RemoteRepository)) {
+        if (event.getArtifact() == null || !(event.getRepository() instanceof RemoteRepository)) {
             return;
         }
         RemoteRepository repo = (RemoteRepository)event.getRepository();
