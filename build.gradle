@@ -269,12 +269,23 @@ project('build-info-client') {
         }
         compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"
         compile "commons-codec:commons-codec:1.8"
+        testCompile "com.thoughtworks:web-stub:1.1.0"
     }
     sourceSets {
         main {
             resources {
                 srcDir 'src/main/filtered-resources'
             }
+        }
+
+        test {
+           java {
+              srcDir 'src/it/java'
+           }
+
+           resources {
+              srcDir 'src/it/resources'
+           }
         }
     }
     processResources {//???
@@ -284,6 +295,9 @@ project('build-info-client') {
         }
     }
 
+    repositories {
+        mavenCentral()
+    }
 }
 
 project('build-info-extractor') {

@@ -16,10 +16,16 @@
 
 package org.jfrog.build.client;
 
+import com.thoughtworks.webstub.StubServerFacade;
+import com.thoughtworks.webstub.dsl.HttpDsl;
+import com.thoughtworks.webstub.dsl.builders.ResponseBuilder;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.NullLog;
+import org.testng.annotations.AfterSuite;
+import org.testng.annotations.BeforeSuite;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -29,6 +35,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import static com.thoughtworks.webstub.StubServerFacade.newServer;
+import static com.thoughtworks.webstub.dsl.builders.ResponseBuilder.response;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
@@ -43,11 +52,36 @@ public class ArtifactoryBuildInfoClientTest {
     //    private String artifactoryUrl = "http://localhost:8080/artifactory";
     private String artifactoryUrl = "http://localhost:8081/artifactory";
 
+    private StubServerFacade server;
+    private HttpDsl stubServer;
+
+    @BeforeSuite
+    public void beforeAll() {
+        server = newServer(8081);
+        stubServer = server.withContext("artifactory");
+        server.start();
+    }
+
+    @BeforeTest
+    public void beforeEach() {
+        stubServer.reset();
+        stubServer.get("/api/system/version").returns(response(200).withContent("{ \"version\": \"3.3.0\"}"));
+    }
+
+    @Test
     public void getLocalRepositoriesKeys() throws IOException {
+        stubServer.get("/api/repositories?type=local").returns(response(200).withContent("[{" +
+                "\"key\" : \"libs-releases-local\"," +
+                "\"description\" : \"Local repository for in-house libraries\"," +
+                "\"type\" : \"LOCAL\"," +
+                "\"url\" : \"http://localhost:8081/artifactory/libs-releases-local\"" +
+                "}]"));
+
         ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, new NullLog());
+
         List<String> repositoryKeys = client.getLocalRepositoriesKeys();
-        assertNotNull(repositoryKeys, "Repositories keys should not be null");
-        assertTrue(repositoryKeys.size() > 0, "Expected to get some repositories");
+        assertTrue(repositoryKeys.contains("libs-releases-local"));
+        assertEquals(repositoryKeys.size(), 1);
     }
 
     @Test(enabled = false, expectedExceptions = IOException.class, expectedExceptionsMessageRegExp = ".* Unauthorized")
@@ -59,7 +93,10 @@ public class ArtifactoryBuildInfoClientTest {
         client.sendBuildInfo(build);
     }
 
+    @Test
     public void postBuildInfo() throws IOException {
+        stubServer.put("/api/build").withHeader("Content-Type", "application/vnd.org.jfrog.artifactory+json").returns(response(204));
+
         Build build = new BuildInfoBuilder("build").startedDate(new Date()).number("123").build();
         ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password",
                 new NullLog());
@@ -101,9 +138,9 @@ public class ArtifactoryBuildInfoClientTest {
             client.deployArtifact(details);
         }
     }
-    /*public void uploadChecksums() throws IOException {
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, "admin", "password");
-        File file = new File("build-info-client/pom.xml");
-        client.uploadChecksums(file, artifactoryUrl);
-    }*/
+
+    @AfterSuite
+    public void afterAll() {
+        server.stop();
+    }
 }
