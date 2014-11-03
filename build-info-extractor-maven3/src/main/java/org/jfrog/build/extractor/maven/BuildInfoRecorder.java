@@ -413,19 +413,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         // able to merge them together with the artifacts inside the resolvedArtifacts set:
         Set<Artifact> dependecies = Sets.newHashSet();
         for(Artifact artifact : projectDependencies) {
+            String classifier = artifact.getClassifier();
+            classifier = classifier == null ? "" : classifier;
             DefaultArtifact art = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
-                    artifact.getScope(), artifact.getType(), "", artifact.getArtifactHandler()) {
+                    artifact.getScope(), artifact.getType(), classifier, artifact.getArtifactHandler());
 
-                public boolean equals(Object o) {
-                    if (o == this) {
-                        return true;
-                    }
-                    if (!(o instanceof org.apache.maven.artifact.Artifact)) {
-                        return false;
-                    }
-                    return hashCode() == o.hashCode();
-                }
-            };
             art.setFile(artifact.getFile());
             dependecies.add(art);
         }

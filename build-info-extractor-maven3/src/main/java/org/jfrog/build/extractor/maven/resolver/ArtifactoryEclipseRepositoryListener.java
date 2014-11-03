@@ -187,17 +187,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         if (art == null) {
             return null;
         }
-        DefaultArtifact artifact = new DefaultArtifact(art.getGroupId(), art.getArtifactId(), art.getVersion(), scope, art.getExtension(), "", null) {
-            public boolean equals( Object o ) {
-                if (o == this) {
-                    return true;
-                }
-                if (!(o instanceof org.apache.maven.artifact.Artifact)) {
-                    return false;
-                }
-                return hashCode() == o.hashCode();
-            }
-        };
+        String classifier = art.getClassifier();
+        classifier = classifier == null ? "" : classifier;
+        DefaultArtifact artifact = new DefaultArtifact(art.getGroupId(), art.getArtifactId(), art.getVersion(), scope, art.getExtension(), classifier, null);
         artifact.setFile(art.getFile());
         return artifact;
     }
