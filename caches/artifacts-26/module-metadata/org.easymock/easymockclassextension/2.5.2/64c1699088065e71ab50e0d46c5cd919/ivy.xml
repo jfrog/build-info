@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+	<info organisation="org.easymock"
+		module="easymockclassextension"
+		revision="2.5.2"
+		status="release"
+		publication="19691231235959"
+	>
+		<license name="Apache 2" url="http://www.apache.org/licenses/LICENSE-2.0.txt" />
+		<description homepage="http://www.easymock.org">
+		The EasyMock Class Extension allows to generate Mock Objects for classes
+		</description>
+		<m:maven.plugins>org.apache.maven.plugins__maven-remote-resources-plugin__1.0|com.keyboardsamurais.maven__maven-timestamp-plugin__1.0|com.google.code.maven-license-plugin__maven-license-plugin__1.4.0|null__maven-antrun-plugin__null|null__maven-compiler-plugin__null|null__maven-jar-plugin__null|null__maven-eclipse-plugin__2.7|org.apache.felix__maven-bundle-plugin__2.0.1|org.apache.maven.plugins__maven-source-plugin__2.1|org.apache.maven.plugins__maven-javadoc-plugin__null|com.atlassian.maven.plugins__maven-clover2-plugin__2.6.3|null__maven-surefire-plugin__null|null__maven-assembly-plugin__2.2-beta-4</m:maven.plugins>
+	</info>
+	<configurations>
+		<conf name="default" visibility="public" description="runtime dependencies and master artifact can be used with this conf" extends="runtime,master"/>
+		<conf name="master" visibility="public" description="contains only the artifact published by this module itself, with no transitive dependencies"/>
+		<conf name="compile" visibility="public" description="this is the default scope, used if none is specified. Compile dependencies are available in all classpaths."/>
+		<conf name="provided" visibility="public" description="this is much like compile, but indicates you expect the JDK or a container to provide it. It is only available on the compilation classpath, and is not transitive."/>
+		<conf name="runtime" visibility="public" description="this scope indicates that the dependency is not required for compilation, but is for execution. It is in the runtime and test classpaths, but not the compile classpath." extends="compile"/>
+		<conf name="test" visibility="private" description="this scope indicates that the dependency is not required for normal use of the application, and is only available for the test compilation and execution phases." extends="runtime"/>
+		<conf name="system" visibility="public" description="this scope is similar to provided except that you have to provide the JAR which contains it explicitly. The artifact is always available and is not looked up in a repository."/>
+		<conf name="sources" visibility="public" description="this configuration contains the source artifact of this module, if any."/>
+		<conf name="javadoc" visibility="public" description="this configuration contains the javadoc artifact of this module, if any."/>
+		<conf name="optional" visibility="public" description="contains all optional dependencies"/>
+	</configurations>
+	<publications>
+		<artifact name="easymockclassextension" type="jar" ext="jar" conf="master"/>
+	</publications>
+	<dependencies>
+		<dependency org="org.easymock" name="easymock" rev="2.5.2" force="true" conf="compile->compile(*),master(*);runtime->runtime(*)"/>
+		<dependency org="cglib" name="cglib-nodep" rev="2.2" force="true" conf="compile->compile(*),master(*);runtime->runtime(*)"/>
+		<dependency org="org.objenesis" name="objenesis" rev="1.2" force="true" conf="compile->compile(*),master(*);runtime->runtime(*)"/>
+		<dependency org="junit" name="junit" rev="4.7" force="true" conf="test->runtime(*),master(*)"/>
+	</dependencies>
+</ivy-module>

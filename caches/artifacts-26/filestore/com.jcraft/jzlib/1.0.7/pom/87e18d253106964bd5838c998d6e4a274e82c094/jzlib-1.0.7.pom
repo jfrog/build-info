@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.jcraft</groupId>
+  <artifactId>jzlib</artifactId>
+  <version>1.0.7</version>
+  <name>JZlib</name>
+  <description>JZlib is a re-implementation of zlib in pure Java</description>
+  <url>http://www.jcraft.com/jzlib/</url>
+
+  <organization>
+    <name>jcraft</name>
+    <url>http://www.jcraft.com/jsch</url>
+  </organization>
+
+  <licenses>
+    <license>
+      <name>BSD</name>
+      <url>http://www.jcraft.com/jzlib/LICENSE.txt</url>
+    </license>
+  </licenses>
+
+  <distributionManagement>
+    <status>deployed</status>
+  </distributionManagement>
+
+</project>

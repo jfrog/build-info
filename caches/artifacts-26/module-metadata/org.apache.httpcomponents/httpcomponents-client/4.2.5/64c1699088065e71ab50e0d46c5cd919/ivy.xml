@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
+	<info organisation="org.apache.httpcomponents"
+		module="httpcomponents-client"
+		revision="4.2.5"
+		status="release"
+		publication="19691231235959"
+	>
+		<license name="Apache License" url="LICENSE.txt" />
+		<description homepage="http://hc.apache.org/httpcomponents-client">
+		Apache HttpComponents Client is a library of components for building client side HTTP services
+		</description>
+		<m:dependency.management__org.easymock__easymock__scope>test</m:dependency.management__org.easymock__easymock__scope>
+		<m:properties__commons-logging.version>1.1.1</m:properties__commons-logging.version>
+		<m:properties__project.reporting.outputEncoding>UTF-8</m:properties__project.reporting.outputEncoding>
+		<m:dependency.management__org.slf4j__slf4j-jcl__version>1.5.11</m:dependency.management__org.slf4j__slf4j-jcl__version>
+		<m:properties__hc.project-info.version>2.4</m:properties__hc.project-info.version>
+		<m:dependency.management__org.mockito__mockito-core__scope>test</m:dependency.management__org.mockito__mockito-core__scope>
+		<m:properties__commons-codec.version>1.6</m:properties__commons-codec.version>
+		<m:dependency.management__net.sf.ehcache__ehcache-core__version>2.2.0</m:dependency.management__net.sf.ehcache__ehcache-core__version>
+		<m:dependency.management__junit__junit__version>4.9</m:dependency.management__junit__junit__version>
+		<m:properties__clover.version>2.6.3</m:properties__clover.version>
+		<m:properties__hc.clirr.version>2.3</m:properties__hc.clirr.version>
+		<m:dependency.management__org.easymock__easymock__version>2.5.2</m:dependency.management__org.easymock__easymock__version>
+		<m:dependency.management__commons-codec__commons-codec__version>1.6</m:dependency.management__commons-codec__commons-codec__version>
+		<m:properties__maven.build.timestamp.format>yyyy-MM-dd HH:mm:ssZ</m:properties__maven.build.timestamp.format>
+		<m:maven.plugins>null__maven-compiler-plugin__null|null__maven-jar-plugin__null|org.apache.maven.plugins__maven-site-plugin__null|null__maven-compiler-plugin__null|null__maven-jar-plugin__null|org.apache.maven.plugins__maven-site-plugin__null|org.apache.httpcomponents__maven-notice-plugin__null|null__maven-jar-plugin__null|null__maven-source-plugin__null|null__maven-javadoc-plugin__null|null__maven-site-plugin__null|null__maven-assembly-plugin__null|null__maven-antrun-plugin__null|com.agilejava.docbkx__docbkx-maven-plugin__null|null__maven-resources-plugin__null|org.codehaus.mojo__clirr-maven-plugin__null|org.apache.maven.plugins__maven-release-plugin__null</m:maven.plugins>
+		<m:properties__minSeverity>info</m:properties__minSeverity>
+		<m:dependency.management__junit__junit__scope>test</m:dependency.management__junit__junit__scope>
+		<m:properties__mockito.version>1.8.5</m:properties__mockito.version>
+		<m:dependency.management__org.apache.httpcomponents__httpcore__version>4.2.4</m:dependency.management__org.apache.httpcomponents__httpcore__version>
+		<m:dependency.management__commons-logging__commons-logging__version>1.1.1</m:dependency.management__commons-logging__commons-logging__version>
+		<m:properties__easymock.version>2.5.2</m:properties__easymock.version>
+		<m:properties__slf4j.version>1.5.11</m:properties__slf4j.version>
+		<m:properties__hc.surefire-report.version>2.9</m:properties__hc.surefire-report.version>
+		<m:properties__ehcache.version>2.2.0</m:properties__ehcache.version>
+		<m:properties__memcached.version>2.6</m:properties__memcached.version>
+		<m:properties__project.build.sourceEncoding>UTF-8</m:properties__project.build.sourceEncoding>
+		<m:properties__hc.javadoc.version>2.8</m:properties__hc.javadoc.version>
+		<m:dependency.management__org.easymock__easymockclassextension__scope>test</m:dependency.management__org.easymock__easymockclassextension__scope>
+		<m:properties__hc.jxr.version>2.3</m:properties__hc.jxr.version>
+		<m:properties__implementation.build>${scmBranch}@r${buildNumber}; ${maven.build.timestamp}</m:properties__implementation.build>
+		<m:properties__junit.version>4.9</m:properties__junit.version>
+		<m:dependency.management__org.easymock__easymockclassextension__version>2.5.2</m:dependency.management__org.easymock__easymockclassextension__version>
+		<m:properties__httpcore.version>4.2.4</m:properties__httpcore.version>
+		<m:dependency.management__org.mockito__mockito-core__version>1.8.5</m:dependency.management__org.mockito__mockito-core__version>
+		<m:dependency.management__spy__spymemcached__version>2.6</m:dependency.management__spy__spymemcached__version>
+		<m:properties__api.comparison.version>4.2</m:properties__api.comparison.version>
+	</info>
+	<configurations>
+		<conf name="default" visibility="public" description="runtime dependencies and master artifact can be used with this conf" extends="runtime,master"/>
+		<conf name="master" visibility="public" description="contains only the artifact published by this module itself, with no transitive dependencies"/>
+		<conf name="compile" visibility="public" description="this is the default scope, used if none is specified. Compile dependencies are available in all classpaths."/>
+		<conf name="provided" visibility="public" description="this is much like compile, but indicates you expect the JDK or a container to provide it. It is only available on the compilation classpath, and is not transitive."/>
+		<conf name="runtime" visibility="public" description="this scope indicates that the dependency is not required for compilation, but is for execution. It is in the runtime and test classpaths, but not the compile classpath." extends="compile"/>
+		<conf name="test" visibility="private" description="this scope indicates that the dependency is not required for normal use of the application, and is only available for the test compilation and execution phases." extends="runtime"/>
+		<conf name="system" visibility="public" description="this scope is similar to provided except that you have to provide the JAR which contains it explicitly. The artifact is always available and is not looked up in a repository."/>
+		<conf name="sources" visibility="public" description="this configuration contains the source artifact of this module, if any."/>
+		<conf name="javadoc" visibility="public" description="this configuration contains the javadoc artifact of this module, if any."/>
+		<conf name="optional" visibility="public" description="contains all optional dependencies"/>
+	</configurations>
+	<publications>
+	</publications>
+</ivy-module>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.perforce</groupId>
+  <artifactId>p4java-jfrog</artifactId>
+  <version>2011.1.297684</version>
+  <packaging>pom</packaging>
+  <name>Perforce Java API</name>
+  <description>P4Java, the Perforce Java API is a Java-native API for accessing Perforce SCM services from within Java applications, servlets, plug-ins, and other Java contexts.</description>
+  <url>http://www.perforce.com</url>
+  <organization>
+    <name>Perforce Software</name>
+    <url>http://www.perforce.com</url>
+  </organization>
+  <licenses>
+    <license>
+      <name>Perforce Software</name>
+      <url>p4java-2011.1.297684-license.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>jaxzin</id>
+      <name>Brian R. Jackson</name>
+      <email>brian@jaxzin.com</email>
+      <roles>
+        <role>OSS Repo Staging</role>
+      </roles>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:perforce:public.perforce.com:1666://</connection>
+    <developerConnection>scm:perforce:public.perforce.com:1666://</developerConnection>
+    <url>http://public.perforce.com:80://</url>
+  </scm>
+  <dependencies>
+    <dependency>
+      <groupId>com.jcraft</groupId>
+      <artifactId>jzlib</artifactId>
+      <version>1.0.7</version>
+    </dependency>
+  </dependencies>
+</project>
