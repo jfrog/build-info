@@ -15,6 +15,7 @@ import org.jfrog.build.extractor.maven.BuildInfoRecorder;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositoryListener;
+import org.sonatype.aether.metadata.Metadata;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
 import org.sonatype.aether.resolution.ArtifactRequest;
@@ -44,7 +45,8 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
     private PlexusContainer plexusContainer;
 
     Boolean artifactoryRepositoriesEnforced = false;
-    private ArtifactorySonatypeArtifactResolver artifactoryResolver = null;
+    private ArtifactorySonatypeArtifactResolver artifactResolver = null;
+    private ArtifactorySonatypeMetadataResolver metadataResolver = null;
 
     /**
      * The method replaces the DefaultArtifactResolver instance with an instance of ArtifactorySonatypeArtifactResolver.
@@ -60,9 +62,14 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.sonatype.aether.impl.ArtifactDescriptorReader");
         org.sonatype.aether.impl.internal.DefaultRepositorySystem repositorySystem = (org.sonatype.aether.impl.internal.DefaultRepositorySystem)plexusContainer.lookup("org.sonatype.aether.RepositorySystem");
 
-        org.sonatype.aether.impl.ArtifactResolver artifactoryResolver = (org.sonatype.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver");
-        this.artifactoryResolver = (ArtifactorySonatypeArtifactResolver)artifactoryResolver;
-        repositorySystem.setArtifactResolver(artifactoryResolver);
+        org.sonatype.aether.impl.ArtifactResolver artifactoryArtifactResolver = (org.sonatype.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver");
+        org.sonatype.aether.impl.MetadataResolver artifactoryMetadataResolver = (org.sonatype.aether.impl.MetadataResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver");
+
+        this.artifactResolver = (ArtifactorySonatypeArtifactResolver)artifactoryArtifactResolver;
+        this.metadataResolver = (ArtifactorySonatypeMetadataResolver)artifactoryMetadataResolver;
+
+        repositorySystem.setArtifactResolver(artifactResolver);
+        repositorySystem.setMetadataResolver(artifactoryMetadataResolver);
 
         // Setting the resolver. This is done using reflection, since the signature of the
         // DefaultArtifactDescriptorReader.setArtifactResolver method changed in Maven 3.1.x:
@@ -77,7 +84,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         if (setArtifactResolverMethod == null) {
             throw new RuntimeException("Failed to enforce Artifactory resolver. Method DefaultArtifactDescriptorReader.setArtifactResolver does not exist");
         }
-        setArtifactResolverMethod.invoke(descriptorReader, artifactoryResolver);
+        setArtifactResolverMethod.invoke(descriptorReader, artifactResolver);
 
         artifactoryRepositoriesEnforced = true;
         synchronized (artifactoryRepositoriesEnforced) {
@@ -116,9 +123,13 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
      * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
-        if (event.getArtifact() == null || !(event.getRepository() instanceof RemoteRepository)) {
+        if (event.getArtifact() == null && event.getMetadata() == null) {
             return;
         }
+        if (!(event.getRepository() instanceof RemoteRepository)) {
+            return;
+        }
+
         RemoteRepository repo = (RemoteRepository)event.getRepository();
 
         // In case the Artifactory resolver is not yet set, we wait for it first:
@@ -135,23 +146,33 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         }
 
         // Now that the resolver enforcement is done, we make sure that the Artifactory resolution repositories in the resolver are initialized:
-        artifactoryResolver.initResolutionRepositories(event.getSession());
+        artifactResolver.initResolutionRepositories(event.getSession());
 
         // Take the Artifactory resolution repositories from the Artifactory resolver:
-        RemoteRepository artifactorySnapshotRepo = artifactoryResolver.getSnapshotRepository(event.getSession());
-        RemoteRepository artifactoryReleaseRepo = artifactoryResolver.getReleaseRepository(event.getSession());
+        RemoteRepository artifactorySnapshotRepo;
+        RemoteRepository artifactoryReleaseRepo;
+        boolean snapshot;
+        if (event.getArtifact() != null) {
+            artifactorySnapshotRepo = artifactResolver.getSnapshotRepository(event.getSession());
+            artifactoryReleaseRepo = artifactResolver.getReleaseRepository(event.getSession());
+            snapshot = event.getArtifact().isSnapshot();
+        } else {
+            artifactorySnapshotRepo = metadataResolver.getSnapshotRepository(event.getSession());
+            artifactoryReleaseRepo = metadataResolver.getReleaseRepository(event.getSession());
+            snapshot = event.getMetadata().getNature() == Metadata.Nature.SNAPSHOT;
+        }
 
         // If the artifact about to be downloaded was not handled by the Artifactory resolution resolver, but by the default resolver (before
         // it had been replaced), modify the repository URL:
         try {
-            if (event.getArtifact().isSnapshot() && repo != artifactorySnapshotRepo) {
+            if (snapshot && !repo.getUrl().equals(artifactorySnapshotRepo.getUrl())) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactorySnapshotRepo.getUrl());
                 Field url = RemoteRepository.class.getDeclaredField("url");
                 url.setAccessible(true);
                 url.set(repo, artifactorySnapshotRepo.getUrl());
                 setRepositoryPolicy(repo);
             } else
-            if (!event.getArtifact().isSnapshot() && repo != artifactoryReleaseRepo) {
+            if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl())) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactoryReleaseRepo.getUrl());
                 Field url = RemoteRepository.class.getDeclaredField("url");
                 url.setAccessible(true);

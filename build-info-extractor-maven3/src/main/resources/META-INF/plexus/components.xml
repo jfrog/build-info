@@ -16,11 +16,53 @@
 
 <component-set>
     <components>
+        <!-- A helper class for the ArtifactoryEclipseArtifactResolver abd ArtifactoryEclipseMetadataResolver classes -->
         <component>
-            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
+            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</role>
             <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</implementation>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</implementation>
             <requirements>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>resolutionHelper</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <!-- A helper class for the ArtifactorySonatypeArtifactResolver abd ArtifactorySonatypeMetadataResolver classes -->
+        <component>
+            <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>resolutionHelper</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <!-- A class responssible for enforcing metadata resolution from Artifactory, for Maven 3.2.1 and above -->
+        <component>
+            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>helper</field-name>
+                </requirement>
                 <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
                     <role-hint>default</role-hint>
@@ -78,11 +120,133 @@
                 </requirement>
             </requirements>
         </component>
+        <!-- A class responssible for enforcing metadata resolution from Artifactory, for Maven 3 versions prior to 3.2.1 -->
+        <component>
+            <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>helper</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.spi.log.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>resolutionHelper</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.impl.RepositoryEventDispatcher</role>
+                    <role-hint>default</role-hint>
+                    <field-name>repositoryEventDispatcher</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.impl.VersionResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>versionResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.impl.UpdateCheckManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>updateCheckManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.impl.RemoteRepositoryManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>remoteRepositoryManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.sonatype.aether.impl.SyncContextFactory</role>
+                    <role-hint>default</role-hint>
+                    <field-name>syncContextFactory</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <!-- A class responssible for enforcing artifact resolution from Artifactory, for Maven 3.2.1 and above -->
+        <component>
+            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>helper</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>resolutionHelper</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.spi.io.FileProcessor</role>
+                    <role-hint>default</role-hint>
+                    <field-name>fileProcessor</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RepositoryEventDispatcher</role>
+                    <role-hint>default</role-hint>
+                    <field-name>repositoryEventDispatcher</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.VersionResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>versionResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.UpdateCheckManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>updateCheckManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RepositoryConnectorProvider</role>
+                    <role-hint>default</role-hint>
+                    <field-name>repositoryConnectorProvider</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RemoteRepositoryManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>remoteRepositoryManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.SyncContextFactory</role>
+                    <role-hint>default</role-hint>
+                    <field-name>syncContextFactory</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.OfflineController</role>
+                    <role-hint>default</role-hint>
+                    <field-name>offlineController</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.spi.log.LoggerFactory</role>
+                    <role-hint>default</role-hint>
+                    <field-name>loggerFactory</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <!-- A class responssible for enforcing artifact resolution from Artifactory, for Maven 3 versions prior to 3.2.1 -->
         <component>
             <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver</role>
             <role-hint>default</role-hint>
             <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver</implementation>
             <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>helper</field-name>
+                </requirement>
                 <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
                     <role-hint>default</role-hint>
@@ -125,8 +289,8 @@
                 </requirement>
             </requirements>
         </component>
-        <!-- Registering both listeners and on runtime plexus will choose the right one
-         according to the Maven version (org.sonatype=Maven 3.0.x, org.eclipse=Maven 3.1.x) -->
+        <!--Registering both repository listeners (ArtifactoryEclipseRepositoryListener and ArtifactorySonatypeRepositoryListener)
+        and at runtime plexus will choose the right one according to the Maven version (org.sonatype=Maven 3.0.x, org.eclipse=Maven 3.1.x) -->
         <component>
             <role>org.eclipse.aether.RepositoryListener</role>
             <role-hint>default</role-hint>
