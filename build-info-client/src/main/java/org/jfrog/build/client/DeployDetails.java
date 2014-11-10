@@ -16,12 +16,11 @@
 
 package org.jfrog.build.client;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
 
 import java.io.File;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -31,10 +30,6 @@ import java.util.Properties;
  * @author Yossi Shaul
  */
 public class DeployDetails {
-    /**
-     * Target deploy repository.
-     */
-    private String targetRepository;
     /**
      * Artifact deployment path.
      */
@@ -54,7 +49,11 @@ public class DeployDetails {
     /**
      * Properties to attach to the deployed file as matrix params.
      */
-    Map<String, String> properties;
+    ArrayListMultimap<String, String> properties;
+    /**
+     * Target deploy repository.
+     */
+    private String targetRepository;
 
     /**
      * @return Return the target deployment repository.
@@ -71,7 +70,7 @@ public class DeployDetails {
         return file;
     }
 
-    public Map<String, String> getProperties() {
+    public ArrayListMultimap<String, String> getProperties() {
         return properties;
     }
 
@@ -123,7 +122,11 @@ public class DeployDetails {
         public Builder bean(BuildFileBean bean) {
             Properties beanProperties = bean.getProperties();
             if (beanProperties != null) {
-                deployDetails.properties = Maps.fromProperties(beanProperties);
+                ArrayListMultimap<String, String> multimap = ArrayListMultimap.create();
+                for (Map.Entry<String, String> entry : Maps.fromProperties(beanProperties).entrySet()) {
+                    multimap.put(entry.getKey(), entry.getValue());
+                }
+                deployDetails.properties = multimap;
             }
             deployDetails.sha1 = bean.getSha1();
             deployDetails.md5 = bean.getMd5();
@@ -157,7 +160,7 @@ public class DeployDetails {
 
         public Builder addProperty(String key, String value) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = new HashMap<String, String>();
+                deployDetails.properties = ArrayListMultimap.create();
             }
             deployDetails.properties.put(key, value);
             return this;
@@ -165,11 +168,20 @@ public class DeployDetails {
 
         public Builder addProperties(Map<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = new HashMap<String, String>();
+                deployDetails.properties = ArrayListMultimap.create();
             }
+
+            deployDetails.properties.putAll(Multimaps.forMap(propertiesToAdd));
+            return this;
+        }
+
+        public Builder addProperties(ArrayListMultimap<String, String> propertiesToAdd) {
+            if (deployDetails.properties == null) {
+                deployDetails.properties = ArrayListMultimap.create();
+            }
+
             deployDetails.properties.putAll(propertiesToAdd);
             return this;
         }
     }
-
 }

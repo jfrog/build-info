@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.client;
+package org.jfrog.build.util;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.client.ArtifactoryHttpClient;
+import org.jfrog.build.client.ClientProperties;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -33,7 +36,7 @@ public abstract class DeploymentUrlUtils {
 
     /**
      * Calculate the full Artifactory deployment URL which includes the matrix params appended to it. see {@link
-     * ClientProperties#PROP_DEPLOY_PARAM_PROP_PREFIX} for the property prefix that this method takes into account.
+     * org.jfrog.build.client.ClientProperties#PROP_DEPLOY_PARAM_PROP_PREFIX} for the property prefix that this method takes into account.
      *
      * @param artifactoryUrl The Artifactory upload URL.
      * @param properties     The properties to append to the Artifactory URL.
@@ -57,5 +60,19 @@ public abstract class DeploymentUrlUtils {
                     append(URLEncoder.encode(((String) propertyEntry.getValue()), "UTF-8"));
         }
         return deploymentUrl.toString();
+    }
+
+    public static String buildMatrixParamsString(ArrayListMultimap<String, String> matrixParams)
+            throws UnsupportedEncodingException {
+        StringBuilder matrix = new StringBuilder();
+        if (matrixParams != null && !matrixParams.isEmpty()) {
+            for (String propertyKey : matrixParams.keySet()) {
+                for (String propertyValue : matrixParams.get(propertyKey)) {
+                    matrix.append(";").append(ArtifactoryHttpClient.encodeUrl(propertyKey))
+                            .append("=").append(ArtifactoryHttpClient.encodeUrl(propertyValue));
+                }
+            }
+        }
+        return matrix.toString();
     }
 }

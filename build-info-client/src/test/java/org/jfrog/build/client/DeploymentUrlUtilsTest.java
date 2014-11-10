@@ -16,6 +16,8 @@
 
 package org.jfrog.build.client;
 
+import com.google.common.collect.ArrayListMultimap;
+import org.jfrog.build.util.DeploymentUrlUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -44,5 +46,18 @@ public class DeploymentUrlUtilsTest {
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "build Number", "1");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
         Assert.assertEquals(deploymentUrl, artifactoryUrl + ";build+Number=1;build+Name=moo");
+    }
+
+
+    public void testKeyWithMultiValuesParam() throws UnsupportedEncodingException {
+        ArrayListMultimap<String, String> params = ArrayListMultimap.create();
+        params.put("key", "valueA");
+        params.put("key", "valueB");
+        params.put("keyA", "valueA");
+
+        String matrixParamString = DeploymentUrlUtils.buildMatrixParamsString(params);
+
+        Assert.assertEquals(matrixParamString, ";keyA=valueA;key=valueA;key=valueB",
+                "Unexpected matrix param with multi values: " + matrixParamString);
     }
 }

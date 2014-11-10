@@ -42,8 +42,6 @@ import java.util.Map;
  */
 public class ArtifactoryHttpClient {
 
-    private final Log log;
-
     public static final ArtifactoryVersion UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION =
             new ArtifactoryVersion("2.2.3");
     public static final ArtifactoryVersion NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION =
@@ -51,11 +49,11 @@ public class ArtifactoryHttpClient {
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
-
+    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
+    private final Log log;
     private final String artifactoryUrl;
     private final String username;
     private final String password;
-    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private ProxyConfiguration proxyConfiguration;
 
     private PreemptiveHttpClient deployClient;
@@ -65,6 +63,12 @@ public class ArtifactoryHttpClient {
         this.username = username;
         this.password = password;
         this.log = log;
+    }
+
+    public static String encodeUrl(String unescaped) {
+        byte[] rawdata = URLCodec.encodeUrl(URI.allowed_query,
+                org.apache.commons.codec.binary.StringUtils.getBytesUtf8(unescaped));
+        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(rawdata);
     }
 
     /**
@@ -177,12 +181,6 @@ public class ArtifactoryHttpClient {
         mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
-    }
-
-    public String encodeUrl(String unescaped) {
-        byte[] rawdata = URLCodec.encodeUrl(URI.allowed_query,
-                org.apache.commons.codec.binary.StringUtils.getBytesUtf8(unescaped));
-        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(rawdata);
     }
 
     public ArtifactoryUploadResponse upload(HttpPut httpPut, HttpEntity fileEntity) throws IOException {

@@ -17,9 +17,7 @@
 package org.jfrog.build.client;
 
 import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.*;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -39,6 +37,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.util.DeploymentUrlUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,10 +45,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.*;
 
@@ -299,7 +295,7 @@ public class ArtifactoryBuildInfoClient {
         deploymentPathBuilder.append(details.artifactPath);
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
-        deploymentPath = httpClient.encodeUrl(deploymentPath);
+        deploymentPath = ArtifactoryHttpClient.encodeUrl(deploymentPath);
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
@@ -344,7 +340,8 @@ public class ArtifactoryBuildInfoClient {
         }
 
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
-                append(httpClient.encodeUrl(buildName)).append("/").append(httpClient.encodeUrl(buildNumber));
+                append(ArtifactoryHttpClient.encodeUrl(buildName)).append("/").append(ArtifactoryHttpClient.
+                encodeUrl(buildNumber));
 
         String promotionJson = toJsonString(promotion);
 
@@ -397,8 +394,8 @@ public class ArtifactoryBuildInfoClient {
     public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams)
             throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/staging/")
-                .append(httpClient.encodeUrl(strategyName)).append("?buildName=")
-                .append(httpClient.encodeUrl(buildName)).append("&");
+                .append(ArtifactoryHttpClient.encodeUrl(strategyName)).append("?buildName=")
+                .append(ArtifactoryHttpClient.encodeUrl(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpGet getRequest = new HttpGet(urlBuilder.toString());
         HttpResponse response = httpClient.getHttpClient().execute(getRequest);
@@ -429,8 +426,8 @@ public class ArtifactoryBuildInfoClient {
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
                                                    Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
-                .append(promotionName).append("/").append(httpClient.encodeUrl(buildName)).append("/")
-                .append(httpClient.encodeUrl(buildNumber)).append("?");
+                .append(promotionName).append("/").append(ArtifactoryHttpClient.encodeUrl(buildName)).append("/")
+                .append(ArtifactoryHttpClient.encodeUrl(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
@@ -450,13 +447,13 @@ public class ArtifactoryBuildInfoClient {
         if ((requestParams != null) && !requestParams.isEmpty()) {
             urlBuilder.append("params=");
             Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
-            String encodedPipe = httpClient.encodeUrl("|");
+            String encodedPipe = ArtifactoryHttpClient.encodeUrl("|");
             while (paramEntryIterator.hasNext()) {
                 Map.Entry<String, String> paramEntry = paramEntryIterator.next();
-                urlBuilder.append(httpClient.encodeUrl(paramEntry.getKey()));
+                urlBuilder.append(ArtifactoryHttpClient.encodeUrl(paramEntry.getKey()));
                 String paramValue = paramEntry.getValue();
                 if (StringUtils.isNotBlank(paramValue)) {
-                    urlBuilder.append("=").append(httpClient.encodeUrl(paramValue));
+                    urlBuilder.append("=").append(ArtifactoryHttpClient.encodeUrl(paramValue));
                 }
 
                 if (paramEntryIterator.hasNext()) {
@@ -573,7 +570,7 @@ public class ArtifactoryBuildInfoClient {
 
     private HttpPut createHttpPutMethod(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
-        deploymentPathBuilder.append(buildMatrixParamsString(details.properties));
+        deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.properties));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.sha1);
         httpPut.addHeader("X-Checksum-Md5", details.md5);
@@ -586,7 +583,7 @@ public class ArtifactoryBuildInfoClient {
         String sha1 = checksums.get("SHA1");
         if (StringUtils.isNotBlank(sha1)) {
             log.debug("Uploading SHA1 for file " + fileAbsolutePath + " : " + sha1);
-            String sha1Url = uploadUrl + ".sha1" + buildMatrixParamsString(details.properties);
+            String sha1Url = uploadUrl + ".sha1" + DeploymentUrlUtils.buildMatrixParamsString(details.properties);
             HttpPut putSha1 = new HttpPut(sha1Url);
             StringEntity sha1StringEntity = new StringEntity(sha1);
             ArtifactoryUploadResponse response = httpClient.upload(putSha1, sha1StringEntity);
@@ -601,7 +598,7 @@ public class ArtifactoryBuildInfoClient {
         String md5 = checksums.get("MD5");
         if (StringUtils.isNotBlank(md5)) {
             log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
-            String md5Url = uploadUrl + ".md5" + buildMatrixParamsString(details.properties);
+            String md5Url = uploadUrl + ".md5" + DeploymentUrlUtils.buildMatrixParamsString(details.properties);
             HttpPut putMd5 = new HttpPut(md5Url);
             StringEntity md5StringEntity = new StringEntity(md5);
             ArtifactoryUploadResponse response = httpClient.upload(putMd5, md5StringEntity);
@@ -613,17 +610,6 @@ public class ArtifactoryBuildInfoClient {
                 throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
             }
         }
-    }
-
-    private String buildMatrixParamsString(Map<String, String> matrixParams) throws UnsupportedEncodingException {
-        StringBuilder matrix = new StringBuilder();
-        if (matrixParams != null && !matrixParams.isEmpty()) {
-            for (Map.Entry<String, String> property : matrixParams.entrySet()) {
-                matrix.append(";").append(httpClient.encodeUrl(property.getKey()))
-                        .append("=").append(httpClient.encodeUrl(property.getValue()));
-            }
-        }
-        return matrix.toString();
     }
 
     private Map<String, String> getChecksumMap(DeployDetails details) throws IOException {
