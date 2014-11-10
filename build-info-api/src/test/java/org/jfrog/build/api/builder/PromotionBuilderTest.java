@@ -25,6 +25,7 @@ public class PromotionBuilderTest {
         assertNull(promotion.getTimestamp(), "Unexpected default timestamp.");
         assertFalse(promotion.isDryRun(), "Unexpected default dry run state.");
         assertNull(promotion.getTargetRepo(), "Unexpected default target repo.");
+        assertNull(promotion.getSourceRepo(), "Unexpected default source repo.");
         assertFalse(promotion.isCopy(), "Unexpected default copy state.");
         assertTrue(promotion.isArtifacts(), "Unexpected default artifacts state.");
         assertFalse(promotion.isDependencies(), "Unexpected default dependencies state.");
@@ -38,8 +39,8 @@ public class PromotionBuilderTest {
         Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
-                timestamp("timestamp").dryRun(true).targetRepo("targetRepo").copy(false).artifacts(true).
-                dependencies(false).scopes(scopes).properties(properties).failFast(false).build();
+                timestamp("timestamp").dryRun(true).targetRepo("targetRepo").sourceRepo("sourceRepo").copy(false).
+                artifacts(true).dependencies(false).scopes(scopes).properties(properties).failFast(false).build();
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -47,6 +48,7 @@ public class PromotionBuilderTest {
         assertEquals(promotion.getTimestamp(), "timestamp", "Unexpected timestamp.");
         assertTrue(promotion.isDryRun(), "Unexpected dry run state.");
         assertEquals(promotion.getTargetRepo(), "targetRepo", "Unexpected target repo.");
+        assertEquals(promotion.getSourceRepo(), "sourceRepo", "Unexpected source repo.");
         assertFalse(promotion.isCopy(), "Unexpected copy state.");
         assertTrue(promotion.isArtifacts(), "Unexpected artifacts state.");
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");

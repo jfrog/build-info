@@ -27,6 +27,7 @@ public class PromotionTest {
         assertNull(promotion.getTimestamp(), "Unexpected default timestamp.");
         assertFalse(promotion.isDryRun(), "Unexpected default dry run state.");
         assertNull(promotion.getTargetRepo(), "Unexpected default target repo.");
+        assertNull(promotion.getSourceRepo(), "Unexpected default source repo.");
         assertFalse(promotion.isCopy(), "Unexpected default copy state.");
         assertTrue(promotion.isArtifacts(), "Unexpected default artifacts state.");
         assertFalse(promotion.isDependencies(), "Unexpected default dependencies state.");
@@ -39,7 +40,7 @@ public class PromotionTest {
         Map<String, Collection<String>> properties = Maps.newHashMap();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
-                true, "targetRepo", false, true, false, scopes, properties, false);
+                true, "targetRepo", "sourceRepo", false, true, false, scopes, properties, false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -47,6 +48,7 @@ public class PromotionTest {
         assertEquals(promotion.getTimestamp(), "timestamp", "Unexpected timestamp.");
         assertTrue(promotion.isDryRun(), "Unexpected dry run state.");
         assertEquals(promotion.getTargetRepo(), "targetRepo", "Unexpected target repo.");
+        assertEquals(promotion.getSourceRepo(), "sourceRepo", "Unexpected source repo.");
         assertFalse(promotion.isCopy(), "Unexpected copy state.");
         assertTrue(promotion.isArtifacts(), "Unexpected artifacts state.");
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
@@ -66,6 +68,7 @@ public class PromotionTest {
         promotion.setTimestamp("timestamp");
         promotion.setDryRun(true);
         promotion.setTargetRepo("targetRepo");
+        promotion.setSourceRepo("sourceRepo");
         promotion.setCopy(false);
         promotion.setArtifacts(true);
         promotion.setDependencies(false);
@@ -79,6 +82,7 @@ public class PromotionTest {
         assertEquals(promotion.getTimestamp(), "timestamp", "Unexpected timestamp.");
         assertTrue(promotion.isDryRun(), "Unexpected dry run state.");
         assertEquals(promotion.getTargetRepo(), "targetRepo", "Unexpected target repo.");
+        assertEquals(promotion.getSourceRepo(), "sourceRepo", "Unexpected source repo.");
         assertFalse(promotion.isCopy(), "Unexpected copy state.");
         assertTrue(promotion.isArtifacts(), "Unexpected artifacts state.");
         assertFalse(promotion.isDependencies(), "Unexpected dependencies state.");
@@ -88,7 +92,7 @@ public class PromotionTest {
     }
 
     public void testNullTimestampDateGetter() {
-        Promotion promotion = new Promotion(null, null, null, null, true, null, true, true, true, null, null, false);
+        Promotion promotion = new Promotion(null, null, null, null, true, null, null, true, true, true, null, null, false);
         assertNull(promotion.getTimestampDate(), "No timestamp was set. Should have received null");
     }
 
@@ -97,7 +101,7 @@ public class PromotionTest {
 
         Date timestampDate = new Date();
 
-        Promotion promotion = new Promotion(null, null, null, format.format(timestampDate), true, null, true, true,
+        Promotion promotion = new Promotion(null, null, null, format.format(timestampDate), true, null, null, true, true,
                 true, null, null, false);
         assertEquals(promotion.getTimestampDate(), timestampDate, "Unexpected timestamp date.");
     }

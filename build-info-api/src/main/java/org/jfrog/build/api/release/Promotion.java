@@ -25,6 +25,7 @@ public class Promotion implements Serializable {
     private String timestamp;
     private boolean dryRun;
     private String targetRepo;
+    private String sourceRepo;
     private boolean copy;
     private boolean artifacts = true;
     private boolean dependencies = false;
@@ -36,7 +37,7 @@ public class Promotion implements Serializable {
     }
 
     public Promotion(String status, String comment, String ciUser, String timestamp, boolean dryRun, String targetRepo,
-            boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
+                     String sourceRepo, boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
             Map<String, Collection<String>> properties, boolean failFast) {
         this.status = status;
         this.comment = comment;
@@ -44,6 +45,7 @@ public class Promotion implements Serializable {
         this.timestamp = timestamp;
         this.dryRun = dryRun;
         this.targetRepo = targetRepo;
+        this.sourceRepo = sourceRepo;
         this.copy = copy;
         this.artifacts = artifacts;
         this.dependencies = dependencies;
@@ -102,6 +104,14 @@ public class Promotion implements Serializable {
 
     public void setTargetRepo(String targetRepo) {
         this.targetRepo = targetRepo;
+    }
+
+    public String getSourceRepo() {
+        return sourceRepo;
+    }
+
+    public void setSourceRepo(String sourceRepo) {
+        this.sourceRepo = sourceRepo;
     }
 
     public boolean isCopy() {

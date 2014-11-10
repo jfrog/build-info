@@ -22,6 +22,7 @@ public class PromotionBuilder {
     private String timestamp;
     private boolean dryRun;
     private String targetRepo;
+    private String sourceRepo;
     private boolean copy;
     private boolean artifacts = true;
     private boolean dependencies = false;
@@ -67,6 +68,11 @@ public class PromotionBuilder {
 
     public PromotionBuilder targetRepo(String targetRepo) {
         this.targetRepo = targetRepo;
+        return this;
+    }
+
+    public PromotionBuilder sourceRepo(String sourceRepo) {
+        this.sourceRepo = sourceRepo;
         return this;
     }
 
@@ -126,7 +132,7 @@ public class PromotionBuilder {
     }
 
     public Promotion build() {
-        return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, copy, artifacts, dependencies,
+        return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, sourceRepo, copy, artifacts, dependencies,
                 scopes, properties, failFast);
     }
 }
