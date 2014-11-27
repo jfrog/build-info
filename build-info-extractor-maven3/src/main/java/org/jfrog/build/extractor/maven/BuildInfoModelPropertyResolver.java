@@ -17,10 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.api.BuildInfoFields.*;
 
@@ -119,6 +116,11 @@ public class BuildInfoModelPropertyResolver {
                 issues.setAffectedIssues(affectedIssuesSet);
             }
             builder.issues(issues);
+        }
+
+        for (Map.Entry<String, String> runParam : clientConf.info.getRunParameters().entrySet()) {
+            MatrixParameter matrixParameter = new MatrixParameter(runParam.getKey(), runParam.getValue());
+            builder.addRunParameters(matrixParameter);
         }
 
         return builder;

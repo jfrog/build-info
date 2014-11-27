@@ -33,6 +33,7 @@ public interface BuildBean extends Serializable {
     String ARTIFACT = "artifact";
     String DEPENDENCIES = "dependencies";
     String DEPENDENCY = "dependency";
+    String RUN_PARAMETERS = "runParameters";
 
     /**
      * Returns the properties of the bean

@@ -213,6 +213,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             bib.issues(issues);
         }
 
+        for (Map.Entry<String, String> runParam : clientConf.info.getRunParameters().entrySet()) {
+            MatrixParameter matrixParameter = new MatrixParameter(runParam.getKey(), runParam.getValue());
+            bib.addRunParameters(matrixParameter);
+        }
+
         if (clientConf.isIncludeEnvVars()) {
             Properties envProperties = new Properties();
             envProperties.putAll(clientConf.getAllProperties());
@@ -368,6 +373,4 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             }
         }
     }
-
-    ;
 }

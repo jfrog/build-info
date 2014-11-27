@@ -62,6 +62,7 @@ public class BuildInfoBuilderTest {
         assertNull(build.getModules(), "Default build modules should be null.");
         assertNull(build.getProperties(), "Default properties should be null.");
         assertNull(build.getVcsRevision(), "Default vcs revision should be null.");
+        assertNull(build.getVcsUrl(), "Default vcs url should be null.");
     }
 
     /**
@@ -104,6 +105,7 @@ public class BuildInfoBuilderTest {
         assertTrue(build.getModules().isEmpty(), "Build modules list should not have been populated.");
         assertEquals(build.getProperties(), properties, "Unexpected build properties.");
         assertTrue(build.getProperties().isEmpty(), "Build properties list should not have been populated.");
+        assertTrue(build.getRunParameters().isEmpty(), "Run Parameters list should not have been populated.");
     }
 
     /**

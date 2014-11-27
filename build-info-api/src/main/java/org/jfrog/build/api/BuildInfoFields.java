@@ -43,4 +43,5 @@ public interface BuildInfoFields {
     String RELEASE_ENABLED = "promotion.enabled";
     String RELEASE_COMMENT = "promotion.comment";
     String BUILD_ROOT = "build.root";
+    String RUN_PARAMETERS = "runParameters.";
 }

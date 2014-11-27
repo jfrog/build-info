@@ -23,7 +23,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -34,33 +33,10 @@ import java.util.Properties;
  *
  * @author Noam Y. Tenne
  */
-public class BuildInfoMavenBuilder {
-
-    private String version;
-    private String name;
-    private String started;
-    private String number;
-    private BuildType type;
-    private Agent agent;
-    private BuildAgent buildAgent;
-    private long durationMillis;
-    private String principal;
-    private String artifactoryPrincipal;
-    private String url;
-    private String parentName;
-    private String parentNumber;
-    private String vcsRevision;
-    private String vcsUrl;
-    private List<Module> modules;
-    private List<PromotionStatus> statuses;
-    private Properties properties;
-    private LicenseControl licenseControl;
-    private BuildRetention buildRetention;
-    private Issues issues;
-    private Governance governance;
+public class BuildInfoMavenBuilder extends BuildInfoBuilder {
 
     public BuildInfoMavenBuilder(String name) {
-        this.name = name;
+        super(name);
     }
 
     /**
@@ -69,42 +45,7 @@ public class BuildInfoMavenBuilder {
      * @return Assembled build
      */
     public Build build() {
-        if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Build must have a name");
-        }
-        if (StringUtils.isBlank(number)) {
-            throw new IllegalArgumentException("Build number must be set");
-        }
-        if (StringUtils.isBlank(started)) {
-            throw new IllegalArgumentException("Build start time must be set");
-        }
-
-        Build build = new Build();
-        if (StringUtils.isNotBlank(version)) {
-            build.setVersion(version);
-        }
-        build.setName(name);
-        build.setNumber(number);
-        build.setType(type);
-        build.setAgent(agent);
-        build.setBuildAgent(buildAgent);
-        build.setStarted(started);
-        build.setDurationMillis(durationMillis);
-        build.setPrincipal(principal);
-        build.setArtifactoryPrincipal(artifactoryPrincipal);
-        build.setUrl(url);
-        build.setParentName(parentName);
-        build.setParentNumber(parentNumber);
-        build.setModules(modules);
-        build.setStatuses(statuses);
-        build.setProperties(properties);
-        build.setVcsRevision(vcsRevision);
-        build.setVcsUrl(vcsUrl);
-        build.setLicenseControl(licenseControl);
-        build.setBuildRetention(buildRetention);
-        build.setIssues(issues);
-        build.setGovernance(governance);
-        return build;
+        return super.build();
     }
 
     /**
@@ -114,7 +55,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder version(String version) {
-        this.version = version;
+        super.version(version);
         return this;
     }
 
@@ -125,7 +66,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder name(String name) {
-        this.name = name;
+        super.name(name);
         return this;
     }
 
@@ -136,7 +77,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder number(String number) {
-        this.number = number;
+        super.number(number);
         return this;
     }
 
@@ -147,7 +88,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder type(BuildType type) {
-        this.type = type;
+        super.type(type);
         return this;
     }
 
@@ -158,7 +99,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder agent(Agent agent) {
-        this.agent = agent;
+        super.agent(agent);
         return this;
     }
 
@@ -169,7 +110,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder buildAgent(BuildAgent buildAgent) {
-        this.buildAgent = buildAgent;
+        super.buildAgent(buildAgent);
         return this;
     }
 
@@ -180,7 +121,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder started(String started) {
-        this.started = started;
+        super.started(started);
         return this;
     }
 
@@ -191,8 +132,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder startedDate(Date startedDate) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
-        this.started = simpleDateFormat.format(startedDate);
+        super.startedDate(startedDate);
         return this;
     }
 
@@ -203,7 +143,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder durationMillis(long durationMillis) {
-        this.durationMillis = durationMillis;
+        super.durationMillis(durationMillis);
         return this;
     }
 
@@ -214,7 +154,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder principal(String principal) {
-        this.principal = principal;
+        super.principal(principal);
         return this;
     }
 
@@ -225,7 +165,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder artifactoryPrincipal(String artifactoryPrincipal) {
-        this.artifactoryPrincipal = artifactoryPrincipal;
+        super.artifactoryPrincipal(artifactoryPrincipal);
         return this;
     }
 
@@ -236,7 +176,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder url(String url) {
-        this.url = url;
+        super.url(url);
         return this;
     }
 
@@ -248,7 +188,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder parentName(String parentName) {
-        this.parentName = parentName;
+        super.parentName(parentName);
         return this;
     }
 
@@ -259,7 +199,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder parentNumber(String parentNumber) {
-        this.parentNumber = parentNumber;
+        super.parentNumber(parentNumber);
         return this;
     }
 
@@ -270,7 +210,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder vcsRevision(String vcsRevision) {
-        this.vcsRevision = vcsRevision;
+        super.vcsRevision(vcsRevision);
         return this;
     }
 
@@ -281,7 +221,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder vcsUrl(String vcsUrl) {
-        this.vcsUrl = vcsUrl;
+        super.vcsUrl(vcsUrl);
         return this;
     }
 
@@ -292,24 +232,17 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder modules(List<Module> modules) {
-        this.modules = modules;
+        super.modules(modules);
         return this;
     }
 
-    public List<Module> getModules() {
-        return modules;
-    }
-
     public BuildInfoMavenBuilder statuses(List<PromotionStatus> statuses) {
-        this.statuses = statuses;
+        super.statuses(statuses);
         return this;
     }
 
     public BuildInfoMavenBuilder addStatus(PromotionStatus promotionStatus) {
-        if (statuses == null) {
-            statuses = Lists.newArrayList();
-        }
-        statuses.add(promotionStatus);
+        super.addStatus(promotionStatus);
         return this;
     }
 
@@ -320,7 +253,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder licenseControl(LicenseControl licenseControl) {
-        this.licenseControl = licenseControl;
+        super.licenseControl(licenseControl);
         return this;
     }
 
@@ -330,7 +263,7 @@ public class BuildInfoMavenBuilder {
      * @return Builder instance
      */
     public BuildInfoMavenBuilder buildRetention(BuildRetention buildRetention) {
-        this.buildRetention = buildRetention;
+        super.buildRetention(buildRetention);
         return this;
     }
 
@@ -340,6 +273,7 @@ public class BuildInfoMavenBuilder {
      * @param module Module to add
      * @return Builder instance
      */
+    @Override
     public BuildInfoMavenBuilder addModule(Module module) {
         if (modules == null) {
             modules = Lists.newArrayList();
@@ -347,6 +281,39 @@ public class BuildInfoMavenBuilder {
             return this;
         }
         mergeModule(module);
+        return this;
+    }
+
+    /**
+     * Sets the properties of the build
+     *
+     * @param properties Build properties
+     * @return Builder instance
+     */
+    public BuildInfoMavenBuilder properties(Properties properties) {
+        super.properties(properties);
+        return this;
+    }
+
+    /**
+     * Adds the given property to the properties object
+     *
+     * @param key   Key of property to add
+     * @param value Value of property to add
+     * @return Builder instance
+     */
+    public BuildInfoMavenBuilder addProperty(Object key, Object value) {
+        super.addProperty(key, value);
+        return this;
+    }
+
+    public BuildInfoMavenBuilder issues(Issues issues) {
+        super.issues(issues);
+        return this;
+    }
+
+    public BuildInfoMavenBuilder governance(Governance governance) {
+        super.governance(governance);
         return this;
     }
 
@@ -440,39 +407,4 @@ public class BuildInfoMavenBuilder {
         }, null);
     }
 
-    /**
-     * Sets the properties of the build
-     *
-     * @param properties Build properties
-     * @return Builder instance
-     */
-    public BuildInfoMavenBuilder properties(Properties properties) {
-        this.properties = properties;
-        return this;
-    }
-
-    /**
-     * Adds the given property to the properties object
-     *
-     * @param key   Key of property to add
-     * @param value Value of property to add
-     * @return Builder instance
-     */
-    public BuildInfoMavenBuilder addProperty(Object key, Object value) {
-        if (properties == null) {
-            properties = new Properties();
-        }
-        properties.put(key, value);
-        return this;
-    }
-
-    public BuildInfoMavenBuilder issues(Issues issues) {
-        this.issues = issues;
-        return this;
-    }
-
-    public BuildInfoMavenBuilder governance(Governance governance) {
-        this.governance = governance;
-        return this;
-    }
 }

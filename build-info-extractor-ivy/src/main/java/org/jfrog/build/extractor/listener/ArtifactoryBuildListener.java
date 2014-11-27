@@ -324,6 +324,11 @@ public class ArtifactoryBuildListener implements BuildListener {
             builder.issues(issues);
         }
 
+        for (Map.Entry<String, String> runParam : clientConf.info.getRunParameters().entrySet()) {
+            MatrixParameter matrixParameter = new MatrixParameter(runParam.getKey(), runParam.getValue());
+            builder.addRunParameters(matrixParameter);
+        }
+
         if (clientConf.isIncludeEnvVars()) {
             Properties envProperties = new Properties();
             envProperties.putAll(clientConf.getAllProperties());

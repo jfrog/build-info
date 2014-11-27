@@ -60,6 +60,9 @@ public class Build extends BaseBuildBean {
 
     private BuildRetention buildRetention;
 
+    @XStreamAlias(RUN_PARAMETERS)
+    private List<MatrixParameter> runParameters;
+
     @XStreamAlias(MODULES)
     private List<Module> modules;
 
@@ -70,6 +73,17 @@ public class Build extends BaseBuildBean {
     private Issues issues;
 
     private Governance governance;
+
+    /**
+     * Formats the timestamp to the ISO date time string format expected by the build info API.
+     *
+     * @param timestamp The build start time timestamp
+     * @return ISO date time formatted string
+     */
+    public static String formatBuildStarted(long timestamp) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
+        return dateFormat.format(timestamp);
+    }
 
     /**
      * Returns the version of the build
@@ -423,16 +437,28 @@ public class Build extends BaseBuildBean {
         this.licenseControl = licenseControl;
     }
 
-    public void setBuildRetention(BuildRetention buildRetention) {
-        this.buildRetention = buildRetention;
-    }
-
     public BuildRetention getBuildRetention() {
         return buildRetention;
     }
 
+    public void setBuildRetention(BuildRetention buildRetention) {
+        this.buildRetention = buildRetention;
+    }
+
+    public List<MatrixParameter> getRunParameters() {
+        return runParameters;
+    }
+
+    public void setRunParameters(List<MatrixParameter> runParameters) {
+        this.runParameters = runParameters;
+    }
+
     public List<PromotionStatus> getStatuses() {
         return statuses;
+    }
+
+    public void setStatuses(List<PromotionStatus> statuses) {
+        this.statuses = statuses;
     }
 
     public void addStatus(PromotionStatus promotionStatus) {
@@ -441,21 +467,6 @@ public class Build extends BaseBuildBean {
         }
 
         statuses.add(promotionStatus);
-    }
-
-    public void setStatuses(List<PromotionStatus> statuses) {
-        this.statuses = statuses;
-    }
-
-    /**
-     * Formats the timestamp to the ISO date time string format expected by the build info API.
-     *
-     * @param timestamp The build start time timestamp
-     * @return ISO date time formatted string
-     */
-    public static String formatBuildStarted(long timestamp) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
-        return dateFormat.format(timestamp);
     }
 
     /**
@@ -468,6 +479,15 @@ public class Build extends BaseBuildBean {
     }
 
     /**
+     * Sets build dependencies for this build
+     *
+     * @param buildDependencies List of #BuildDependency objects
+     */
+    public void setBuildDependencies(List<BuildDependency> buildDependencies) {
+        this.buildDependencies = buildDependencies;
+    }
+
+    /**
      * Adds one #BuildDependency to build dependencies list
      *
      * @param buildDependency the #BuildDependency to add
@@ -477,15 +497,6 @@ public class Build extends BaseBuildBean {
             buildDependencies = Lists.newArrayList();
         }
         buildDependencies.add(buildDependency);
-    }
-
-    /**
-     * Sets build dependencies for this build
-     *
-     * @param buildDependencies List of #BuildDependency objects
-     */
-    public void setBuildDependencies(List<BuildDependency> buildDependencies) {
-        this.buildDependencies = buildDependencies;
     }
 
     public Issues getIssues() {

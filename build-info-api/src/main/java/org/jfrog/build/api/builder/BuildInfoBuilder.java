@@ -33,28 +33,29 @@ import java.util.Properties;
  */
 public class BuildInfoBuilder {
 
-    private String version;
-    private String name;
-    private String started;
-    private String number;
-    private BuildType type;
-    private Agent agent;
-    private BuildAgent buildAgent;
-    private long durationMillis;
-    private String principal;
-    private String artifactoryPrincipal;
-    private String url;
-    private String parentName;
-    private String parentNumber;
-    private String vcsRevision;
-    private String vcsUrl;
-    private List<Module> modules;
-    private List<PromotionStatus> statuses;
-    private Properties properties;
-    private LicenseControl licenseControl;
-    private BuildRetention buildRetention;
-    private Issues issues;
-    private Governance governance;
+    protected String version;
+    protected String name;
+    protected String started;
+    protected String number;
+    protected BuildType type;
+    protected Agent agent;
+    protected BuildAgent buildAgent;
+    protected long durationMillis;
+    protected String principal;
+    protected String artifactoryPrincipal;
+    protected String url;
+    protected String parentName;
+    protected String parentNumber;
+    protected String vcsRevision;
+    protected String vcsUrl;
+    protected List<MatrixParameter> runParameters;
+    protected List<Module> modules;
+    protected List<PromotionStatus> statuses;
+    protected Properties properties;
+    protected LicenseControl licenseControl;
+    protected BuildRetention buildRetention;
+    protected Issues issues;
+    protected Governance governance;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -92,6 +93,7 @@ public class BuildInfoBuilder {
         build.setUrl(url);
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
+        build.setRunParameters(runParameters);
         build.setModules(modules);
         build.setStatuses(statuses);
         build.setProperties(properties);
@@ -320,11 +322,37 @@ public class BuildInfoBuilder {
     /**
      * Sets the post build retention period
      *
-     * @param licenseControl Build violation  recipients.
+     * @param buildRetention Build violation  recipients.
      * @return Builder instance
      */
     public BuildInfoBuilder buildRetention(BuildRetention buildRetention) {
         this.buildRetention = buildRetention;
+        return this;
+    }
+
+    /**
+     * Sets the post build retention period
+     *
+     * @param runParameters matrix parameters.
+     * @return Builder instance
+     */
+    public BuildInfoBuilder buildRunParameters(List<MatrixParameter> runParameters) {
+        this.runParameters = runParameters;
+        return this;
+    }
+
+    /**
+     * Sets the post build retention period
+     *
+     * @param parameter MatrixParameter.
+     * @return Builder instance
+     */
+    public BuildInfoBuilder addRunParameters(MatrixParameter parameter) {
+        if (runParameters == null) {
+            runParameters = Lists.newArrayList();
+        }
+        runParameters.add(parameter);
+
         return this;
     }
 
