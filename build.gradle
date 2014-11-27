@@ -19,7 +19,7 @@ buildscript {
     repositories {
         jcenter()
         //mavenLocal()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:2.2.5' }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1' }
     }
     configurations.classpath {
         resolutionStrategy {
@@ -43,7 +43,7 @@ defaultTasks 'clean', 'build', 'install'
 
 allprojects {
     apply plugin: 'idea'
-    apply plugin: 'artifactory'
+    apply plugin: 'com.jfrog.artifactory-upload'
 
     group = 'org.jfrog.buildinfo'
 
