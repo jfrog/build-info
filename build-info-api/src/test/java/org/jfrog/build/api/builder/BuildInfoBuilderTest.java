@@ -17,11 +17,7 @@
 package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
 
@@ -83,11 +79,13 @@ public class BuildInfoBuilderTest {
         String parentNumber = "5";
         List<Module> modules = Lists.newArrayList();
         Properties properties = new Properties();
+        List<MatrixParameter> runParameters = Lists.newArrayList();
 
         Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
-                .modules(modules).properties(properties).buildAgent(buildAgent).build();
+                .modules(modules).properties(properties).buildAgent(buildAgent).buildRunParameters(runParameters)
+                .build();
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
