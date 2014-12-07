@@ -148,20 +148,33 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         try {
             if (snapshot && !repo.getUrl().equals(artifactorySnapshotRepo.getUrl())) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactorySnapshotRepo.getUrl());
-                Field url = RemoteRepository.class.getDeclaredField("url");
-                url.setAccessible(true);
-                url.set(repo, artifactorySnapshotRepo.getUrl());
+                copyRepositoryFields(artifactorySnapshotRepo, repo);
                 setRepositoryPolicy(repo);
             } else
             if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl())) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactoryReleaseRepo.getUrl());
-                Field url = RemoteRepository.class.getDeclaredField("url");
-                url.setAccessible(true);
-                url.set(repo, artifactoryReleaseRepo.getUrl());
+                copyRepositoryFields(artifactoryReleaseRepo, repo);
                 setRepositoryPolicy(repo);
             }
         } catch (Exception e) {
             logger.error("Failed while replacing resolution repository URL", e);
+        }
+    }
+
+    private void copyRepositoryFields(RemoteRepository fromRepo, RemoteRepository toRepo)
+            throws IllegalAccessException, NoSuchFieldException {
+        Field url = RemoteRepository.class.getDeclaredField("url");
+        url.setAccessible(true);
+        url.set(toRepo, fromRepo.getUrl());
+        if (fromRepo.getAuthentication() != null) {
+            Field authentication = RemoteRepository.class.getDeclaredField("authentication");
+            authentication.setAccessible(true);
+            authentication.set(toRepo, fromRepo.getAuthentication());
+        }
+        if (fromRepo.getProxy() != null) {
+            Field proxy = RemoteRepository.class.getDeclaredField("proxy");
+            proxy.setAccessible(true);
+            proxy.set(toRepo, fromRepo.getProxy());
         }
     }
 
