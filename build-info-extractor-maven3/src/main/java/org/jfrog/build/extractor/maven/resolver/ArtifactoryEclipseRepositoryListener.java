@@ -104,6 +104,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
+        if (!resolutionHelper.resolutionRepositoriesConfigured()) {
+            return;
+        }
         if (event.getArtifact() == null && event.getMetadata() == null) {
             return;
         }
