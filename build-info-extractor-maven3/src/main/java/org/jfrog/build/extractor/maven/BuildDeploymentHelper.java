@@ -62,26 +62,16 @@ public class BuildDeploymentHelper {
     {
 
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
-        String             outputFile          = clientConf.getExportFile();
-        File               buildInfoFile       = StringUtils.isBlank( outputFile ) ?
-                                                    new File( basedir, "target/build-info.json" ) :
-                                                    new File( outputFile );
-        File aggregateDirectory  = null;
+
+        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo());
+
+        File aggregateDirectory;
         File buildInfoAggregated = null;
-
-        logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
-        logger.info( "Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
-
-        try {
-            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile.getCanonicalFile());
-        } catch ( IOException e ) {
-            throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
+        File buildInfoFile = null;
+        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.getAggregateArtifacts() != null) {
+            buildInfoFile = saveBuildInfoToFile(build, clientConf, basedir);
         }
-
-        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo() + " = " + clientConf.publisher.isPublishBuildInfo());
-        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishArtifacts() + " = " + clientConf);
-
-        if ( clientConf.publisher.getAggregateArtifacts() != null ){
+        if (clientConf.publisher.getAggregateArtifacts() != null) {
             aggregateDirectory                   = new File( clientConf.publisher.getAggregateArtifacts());
             buildInfoAggregated                  = new File( aggregateDirectory, "build-info.json" );
             boolean isCopyAggregatedArtifacts    = clientConf.publisher.isCopyAggregatedArtifacts();
@@ -130,6 +120,21 @@ public class BuildDeploymentHelper {
         }
     }
 
+    private File saveBuildInfoToFile(Build build, ArtifactoryClientConfiguration clientConf, File basedir) {
+        String outputFile = clientConf.getExportFile();
+        File buildInfoFile = StringUtils.isBlank(outputFile) ? new File(basedir, "target/build-info.json" ) :
+                new File(outputFile);
+
+        logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
+        logger.info("Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
+
+        try {
+            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile.getCanonicalFile());
+        } catch (IOException e) {
+            throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
+        }
+        return buildInfoFile;
+    }
 
     @SuppressWarnings({ "TypeMayBeWeakened" , "SuppressionAnnotation" })
     private Set<DeployDetails> aggregateArtifacts ( File               aggregateDirectory,
