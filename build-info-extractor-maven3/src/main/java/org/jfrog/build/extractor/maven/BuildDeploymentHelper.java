@@ -287,6 +287,13 @@ public class BuildDeploymentHelper {
                 Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "md5", "sha1");
                 artifact.setMd5(checksums.get("md5"));
                 artifact.setSha1(checksums.get("sha1"));
+
+                if (logger.isDebugEnabled()) {
+                    logger.debug("[buildinfo] Calculated checksums for file: " + artifactFile);
+                    logger.debug("[buildinfo] File content: " + FileUtils.readFileToString(artifactFile));
+                    logger.debug("[buildinfo] File md5: " + checksums.get("md5"));
+                    logger.debug("[buildinfo] File sha1: " + checksums.get("sha1"));
+                }
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + artifact.getName() + "': " + e.getMessage(), e);
             }
