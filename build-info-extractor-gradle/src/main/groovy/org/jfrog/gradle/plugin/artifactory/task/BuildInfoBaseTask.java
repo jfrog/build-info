@@ -354,12 +354,17 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             log.debug("Task '{}' activated", getPath());
             // Only the last buildInfo execution activate the deployment
             List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
-            int myIndex = orderedTasks.indexOf(this);
-            if (myIndex == -1) {
+            List<BuildInfoBaseTask> remainingTasks = new ArrayList<BuildInfoBaseTask>();
+            for(BuildInfoBaseTask task : getAllBuildInfoTasks()) {
+              if(!task.getState().getExecuted()) {
+                remainingTasks.add(task);
+              }
+            }
+            if (orderedTasks.indexOf(this) == -1) {
                 log.error("Could not find my own task {} in the task graph!", getPath());
                 return;
             }
-            if (myIndex == orderedTasks.size() - 1) {
+            if (remainingTasks.size() <= 1) {
                 log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                         new Object[]{getProject().getPath(), getPath()});
                 prepareAndDeploy();
