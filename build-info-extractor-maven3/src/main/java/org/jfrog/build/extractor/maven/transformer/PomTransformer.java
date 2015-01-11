@@ -16,7 +16,7 @@
 
 package org.jfrog.build.extractor.maven.transformer;
 
-import com.google.common.io.Closeables;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -31,7 +31,6 @@ import org.jfrog.build.extractor.maven.reader.ModuleName;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -138,7 +137,7 @@ public class PomTransformer {
                 }
                 outputter.output(document, outputStreamWriter);
             } finally {
-                Closeables.closeQuietly(outputStreamWriter);
+                IOUtils.closeQuietly(outputStreamWriter);
             }
         }
 

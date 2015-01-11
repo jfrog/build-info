@@ -18,7 +18,7 @@ package org.jfrog.build.client;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
@@ -112,7 +112,7 @@ public class ArtifactoryClientConfiguration {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            Closeables.closeQuietly(fos);
+            IOUtils.closeQuietly(fos);
         }
     }
 

@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.maven.reader;
 
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -82,7 +82,7 @@ public class ProjectReader {
         } catch (XmlPullParserException e) {
             throw new IOException(e);
         } finally {
-            Closeables.closeQuietly(stringReader);
+            IOUtils.closeQuietly(stringReader);
         }
     }
 

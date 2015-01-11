@@ -19,7 +19,7 @@ package org.jfrog.build.extractor.maven;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.google.common.io.Closeables;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -315,7 +315,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             } catch (XPathExpressionException e) {
                 logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.");
             } finally {
-                Closeables.closeQuietly(stream);
+                IOUtils.closeQuietly(stream);
             }
         }
         return false;

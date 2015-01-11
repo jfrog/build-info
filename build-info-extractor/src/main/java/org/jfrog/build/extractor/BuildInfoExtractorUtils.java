@@ -19,8 +19,8 @@ package org.jfrog.build.extractor;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
-import com.google.common.io.Closeables;
 import com.google.common.io.Files;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -80,7 +80,7 @@ public abstract class BuildInfoExtractorUtils {
                 throw new RuntimeException(
                         "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
             } finally {
-                Closeables.closeQuietly(inputStream);
+                IOUtils.closeQuietly(inputStream);
             }
         }
 
@@ -166,7 +166,7 @@ public abstract class BuildInfoExtractorUtils {
                 throw new RuntimeException(
                         "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
             } finally {
-                Closeables.closeQuietly(inputStream);
+                IOUtils.closeQuietly(inputStream);
             }
         }
         return props;

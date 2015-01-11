@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.maven;
 
-import com.google.common.io.Closeables;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.Maven;
 import org.apache.maven.execution.ExecutionEvent;
@@ -192,7 +192,7 @@ public class BuildInfoModelPropertyResolver {
                     "Error while extracting Maven version properties from: org/apache/maven/messages/build.properties",
                     e);
         } finally {
-            Closeables.closeQuietly(inputStream);
+            IOUtils.closeQuietly(inputStream);
         }
 
         String version = mavenVersionProperties.getProperty("version");
