@@ -15,6 +15,7 @@ import org.jfrog.build.extractor.maven.BuildInfoRecorder;
 import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositoryListener;
+import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.metadata.Metadata;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
@@ -23,6 +24,7 @@ import org.sonatype.aether.resolution.ArtifactRequest;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Properties;
 
 /**
  * Repository listener when running in Maven 3.0.x.
@@ -123,6 +125,7 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
      * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
+        initResolutionHelper(event.getSession());
         if (!resolutionHelper.resolutionRepositoriesConfigured()) {
             return;
         }
@@ -181,6 +184,16 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
         } catch (Exception e) {
             logger.error("Failed while replacing resolution repository URL", e);
         }
+    }
+
+    private void initResolutionHelper(RepositorySystemSession session) {
+        if (resolutionHelper.isInitialized()) {
+            return;
+        }
+        Properties allMavenProps = new Properties();
+        allMavenProps.putAll(session.getSystemProperties());
+        allMavenProps.putAll(session.getUserProperties());
+        resolutionHelper.init(allMavenProps);
     }
 
     private void copyRepositoryFields(RemoteRepository fromRepo, RemoteRepository toRepo)

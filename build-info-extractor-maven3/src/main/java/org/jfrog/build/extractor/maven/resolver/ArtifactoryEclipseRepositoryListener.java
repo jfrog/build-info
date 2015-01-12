@@ -14,6 +14,7 @@ import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
+import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -21,6 +22,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.jfrog.build.extractor.maven.BuildInfoRecorder;
 
 import java.lang.reflect.Field;
+import java.util.Properties;
 
 /**
  * Repository listener when running in Maven 3.1.x
@@ -104,6 +106,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
+        initResolutionHelper(event.getSession());
         if (!resolutionHelper.resolutionRepositoriesConfigured()) {
             return;
         }
@@ -162,6 +165,16 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         } catch (Exception e) {
             logger.error("Failed while replacing resolution repository URL", e);
         }
+    }
+
+    private void initResolutionHelper(RepositorySystemSession session) {
+        if (resolutionHelper.isInitialized()) {
+            return;
+        }
+        Properties allMavenProps = new Properties();
+        allMavenProps.putAll(session.getSystemProperties());
+        allMavenProps.putAll(session.getUserProperties());
+        resolutionHelper.init(allMavenProps);
     }
 
     private void copyRepositoryFields(RemoteRepository fromRepo, RemoteRepository toRepo)

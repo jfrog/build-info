@@ -18,8 +18,8 @@ public class ResolutionHelper {
 
     @Requirement
     private Logger logger;
-
     private ArtifactoryClientConfiguration internalConfiguration;
+    private boolean initialized = false;
 
     public void init(Properties allMavenProps) {
         if (internalConfiguration != null) {
@@ -30,6 +30,11 @@ public class ResolutionHelper {
         Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps, log);
         internalConfiguration = new ArtifactoryClientConfiguration(log);
         internalConfiguration.fillFromProperties(allProps);
+        initialized = true;
+    }
+
+    public boolean isInitialized() {
+        return initialized;
     }
 
     /**
