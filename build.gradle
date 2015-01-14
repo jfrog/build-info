@@ -408,7 +408,7 @@ project('artifactory-maven-plugin') {
                     'org.codehaus.plexus:plexus-utils:3.0.13',
                     'org.apache.ant:ant:1.9.2'
 
-            compile ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
+            uberJar ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
             compile ( 'org.codehaus.gmaven:gmaven-mojo:1.5'    ) { exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal' }
 
             testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
