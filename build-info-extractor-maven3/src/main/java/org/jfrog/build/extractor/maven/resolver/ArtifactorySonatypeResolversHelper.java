@@ -73,8 +73,9 @@ public class ArtifactorySonatypeResolversHelper {
                     logger.debug("Enforcing proxy: " + proxy + " for snapshot resolution repository");
                     releaseRepository.setProxy(proxy);
                 }
-                releaseRepository.setPolicy(false, releasePolicy);
-                releaseRepository.setPolicy(true, snapshotPolicy);
+
+                snapshotRepository.setPolicy(false, releasePolicy);
+                snapshotRepository.setPolicy(true, snapshotPolicy);
             }
 
             if (StringUtils.isNotBlank(releaseRepoUrl)) {
