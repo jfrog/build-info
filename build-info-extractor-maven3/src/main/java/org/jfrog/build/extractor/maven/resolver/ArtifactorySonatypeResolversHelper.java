@@ -67,11 +67,11 @@ public class ArtifactorySonatypeResolversHelper {
                 snapshotRepository = new RemoteRepository("artifactory-snapshot", "default", releaseRepoUrl);
                 if (authentication != null) {
                     logger.debug("Enforcing repository authentication: " + authentication + " for snapshot resolution repository");
-                    releaseRepository.setAuthentication(authentication);
+                    snapshotRepository.setAuthentication(authentication);
                 }
                 if (proxy != null) {
                     logger.debug("Enforcing proxy: " + proxy + " for snapshot resolution repository");
-                    releaseRepository.setProxy(proxy);
+                    snapshotRepository.setProxy(proxy);
                 }
 
                 snapshotRepository.setPolicy(false, releasePolicy);
