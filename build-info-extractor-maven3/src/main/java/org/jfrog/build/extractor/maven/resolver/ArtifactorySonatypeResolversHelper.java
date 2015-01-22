@@ -64,7 +64,7 @@ public class ArtifactorySonatypeResolversHelper {
                 logger.debug("Enforcing snapshot repository for resolution: " + snapshotRepoUrl);
                 RepositoryPolicy releasePolicy = new RepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
                 RepositoryPolicy snapshotPolicy = new RepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-                snapshotRepository = new RemoteRepository("artifactory-snapshot", "default", releaseRepoUrl);
+                snapshotRepository = new RemoteRepository("artifactory-snapshot", "default", snapshotRepoUrl);
                 if (authentication != null) {
                     logger.debug("Enforcing repository authentication: " + authentication + " for snapshot resolution repository");
                     snapshotRepository.setAuthentication(authentication);
