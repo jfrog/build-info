@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.project.DefaultProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.codehaus.plexus.PlexusConstants;
 import org.codehaus.plexus.PlexusContainer;
@@ -53,9 +54,10 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      *
      * @throws ComponentLookupException
      */
-    private void enforceArtifactoryResolver() throws ComponentLookupException {
+    private void enforceArtifactoryResolver() throws ComponentLookupException, NoSuchFieldException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
 
+        DefaultProjectDependenciesResolver pojectDependenciesResolver = (DefaultProjectDependenciesResolver)plexusContainer.lookup("org.apache.maven.project.ProjectDependenciesResolver");
         DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.eclipse.aether.impl.ArtifactDescriptorReader");
         org.eclipse.aether.internal.impl.DefaultRepositorySystem repositorySystem = (org.eclipse.aether.internal.impl.DefaultRepositorySystem)plexusContainer.lookup("org.eclipse.aether.RepositorySystem");
 
@@ -68,6 +70,10 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         descriptorReader.setArtifactResolver(artifactResolver);
         repositorySystem.setArtifactResolver(artifactResolver);
         repositorySystem.setMetadataResolver(metadataResolver);
+
+        Field repoSystemField = pojectDependenciesResolver.getClass().getDeclaredField("repoSystem");
+        repoSystemField.setAccessible(true);
+        repoSystemField.set(pojectDependenciesResolver, repositorySystem);
 
         artifactoryRepositoriesEnforced = true;
         synchronized (artifactoryRepositoriesEnforced) {
