@@ -9,6 +9,7 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactRequest;
 import org.sonatype.aether.resolution.ArtifactResolutionException;
 import org.sonatype.aether.resolution.ArtifactResult;
+import org.sonatype.aether.util.DefaultRepositorySystemSession;
 
 import javax.inject.Named;
 import java.util.Collection;
@@ -47,6 +48,12 @@ public class ArtifactorySonatypeArtifactResolver extends DefaultArtifactResolver
 
     public List<ArtifactResult> resolveArtifacts( RepositorySystemSession session, Collection<? extends ArtifactRequest> requests )
             throws ArtifactResolutionException {
+
+        if (session instanceof DefaultRepositorySystemSession) {
+            DefaultRepositorySystemSession defRepoSession = (DefaultRepositorySystemSession)session;
+            defRepoSession.setNotFoundCachingEnabled(false);
+            defRepoSession.setTransferErrorCachingEnabled(false);
+        }
 
         for(ArtifactRequest request : requests) {
             enforceResolutionRepositories(session, request);
