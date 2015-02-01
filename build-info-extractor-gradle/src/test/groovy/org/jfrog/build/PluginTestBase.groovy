@@ -5,15 +5,15 @@ import org.gradle.api.Project
 import org.gradle.api.internal.artifacts.repositories.DefaultMavenArtifactRepository
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
-import org.jfrog.build.client.ClientConfigurationFields
-import org.jfrog.build.client.ClientProperties
+import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields
+import org.jfrog.build.extractor.clientConfiguration.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import spock.lang.Specification
 
 import static org.spockframework.util.Assert.notNull
 import static org.spockframework.util.Assert.that
 import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
-import static org.jfrog.build.client.ClientProperties.PROP_CONTEXT_URL
+import static ClientProperties.PROP_CONTEXT_URL
 
 /**
  *

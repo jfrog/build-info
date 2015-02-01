@@ -5,7 +5,7 @@ import org.jfrog.build.api.BuildInfoFields
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.api.BuildInfoConfigProperties
-import org.jfrog.build.client.ClientProperties
+import org.jfrog.build.extractor.clientConfiguration.ClientProperties
 import java.lang.reflect.Field
 import java.lang.reflect.Method
 

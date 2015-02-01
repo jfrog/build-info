@@ -2,8 +2,8 @@ package org.jfrog.build.extractor.maven.plugin
 
 import org.gcontracts.annotations.Ensures
 import org.jfrog.build.api.util.NullLog
-import org.jfrog.build.client.ArtifactoryClientConfiguration
-import org.jfrog.build.client.PrefixPropertyHandler
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
+import org.jfrog.build.extractor.clientConfiguration.PrefixPropertyHandler
 
 
 class Config

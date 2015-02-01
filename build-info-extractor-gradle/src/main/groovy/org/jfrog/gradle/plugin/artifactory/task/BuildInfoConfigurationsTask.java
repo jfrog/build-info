@@ -38,9 +38,9 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.LayoutPatterns;
+import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 
@@ -56,11 +56,9 @@ import java.util.Set;
  */
 public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
 
-    private static final Logger log = Logging.getLogger(BuildInfoConfigurationsTask.class);
-
     public static final String PUBLISH_IVY = "publishIvy";
     public static final String PUBLISH_POM = "publishPom";
-
+    private static final Logger log = Logging.getLogger(BuildInfoConfigurationsTask.class);
     @InputFile
     @Optional
     protected File ivyDescriptor;

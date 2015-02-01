@@ -158,15 +158,6 @@ subprojects {
         downloadJavadoc = false
         downloadSources = true
     }
-}
-
-configure(baseProjects()) {
-    version = buildInfoVersion
-    status = version.status
-    dependencies {
-        compile "com.google.guava:guava:10.0.1"
-        compile "com.thoughtworks.xstream:xstream:1.3.1"
-    }
 
     test {
         test.useTestNG()
@@ -175,6 +166,15 @@ configure(baseProjects()) {
             events "started", "passed", "skipped", "failed", "standardOut", "standardError"
             minGranularity 0
         }
+    }
+}
+
+configure(baseProjects()) {
+    version = buildInfoVersion
+    status = version.status
+    dependencies {
+        compile "com.google.guava:guava:10.0.1"
+        compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
 
     artifactoryPublish {
@@ -272,7 +272,7 @@ project('build-info-client') {
     description = 'JFrog Build-Info Client'
     dependencies {
         compile project(':build-info-api')
-        compile ("org.apache.httpcomponents:httpclient:4.2.5"){
+        compile("org.apache.httpcomponents:httpclient:4.3.5") {
             exclude module: "commons-codec"
         }
         compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"
@@ -285,7 +285,8 @@ project('build-info-client') {
             }
         }
     }
-    processResources {//???
+
+    processResources {
         from(sourceSets.main.resources.srcDirs) {
             include '**/*bi.client.properties'
             filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])

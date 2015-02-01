@@ -27,10 +27,10 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.util.IvyResolverHelper;
 
@@ -51,8 +51,8 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
 
     private static final String MD5 = "MD5";
     private static final String SHA1 = "SHA1";
-    private BuildContext ctx;
     private final Filter filter;
+    private BuildContext ctx;
     private String eventName;
 
     public ArtifactoryBuildInfoTrigger(String eventName) {

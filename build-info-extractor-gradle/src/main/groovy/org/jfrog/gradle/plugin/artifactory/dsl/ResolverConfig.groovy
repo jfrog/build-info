@@ -20,7 +20,7 @@ import org.gradle.api.Project
 
 import java.lang.reflect.Method
 import org.gradle.util.ConfigureUtil
-import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.ResolverHandler
 
 /**
  * @author Tomer Cohen

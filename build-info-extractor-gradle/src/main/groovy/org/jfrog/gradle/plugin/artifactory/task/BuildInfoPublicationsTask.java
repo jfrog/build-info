@@ -41,9 +41,9 @@ import org.gradle.api.publish.maven.internal.publisher.MavenProjectIdentity;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.LayoutPatterns;
+import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 

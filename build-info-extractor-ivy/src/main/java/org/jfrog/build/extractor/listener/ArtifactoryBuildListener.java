@@ -14,6 +14,10 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.client.*;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
@@ -88,7 +92,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     /**
      * Called when the build has ended, this is the time where we will assemble the build-info object that its
      * information was collected by the {@link org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger} it will
-     * serialize the build-info object into a senadble JSON object to be used by the {@link ArtifactoryBuildInfoClient}
+     * serialize the build-info object into a senadble JSON object to be used by the {@link org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient}
      *
      * @param event The build event.
      */
@@ -345,8 +349,11 @@ public class ArtifactoryBuildListener implements BuildListener {
             ArtifactoryBuildInfoClient client =
                     new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
 
-
             configureProxy(clientConf, client);
+            configConnectionTimeout(clientConf, client);
+            configMaxTotalConnection(clientConf, client);
+            configMaxConnectionPerRoute(clientConf, client);
+            configSocketTimeout(clientConf, client);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
@@ -389,5 +396,25 @@ public class ArtifactoryBuildListener implements BuildListener {
                 client.setProxyConfiguration(proxyHost, proxy.getPort());
             }
         }
+    }
+
+    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
+        if(clientConf.getTimeout() != null)
+            client.setConnectionTimeout(clientConf.getTimeout());
+    }
+
+    protected void configSocketTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
+        if(clientConf.getSocketTimeout() != null)
+            client.setSocketTimeout(clientConf.getSocketTimeout());
+    }
+
+    protected void configMaxTotalConnection(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
+        if(clientConf.getMaxTotalConnection() != null)
+            client.setMaxTotalConnection(clientConf.getMaxTotalConnection());
+    }
+
+    protected void configMaxConnectionPerRoute(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
+        if(clientConf.getMaxConnectionPerRoute() != null)
+            client.setMaxConnectionsPerRoute(clientConf.getMaxConnectionPerRoute());
     }
 }

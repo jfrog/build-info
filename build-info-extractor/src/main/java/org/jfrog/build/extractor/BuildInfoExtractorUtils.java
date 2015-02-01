@@ -33,9 +33,9 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ClientProperties;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.*;
 import java.util.HashMap;

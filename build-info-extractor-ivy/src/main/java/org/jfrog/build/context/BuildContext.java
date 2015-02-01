@@ -2,7 +2,7 @@ package org.jfrog.build.context;
 
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 
 import java.util.ArrayList;

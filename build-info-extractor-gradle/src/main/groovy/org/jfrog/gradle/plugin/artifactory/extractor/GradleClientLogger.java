@@ -8,7 +8,7 @@ import org.jfrog.build.api.util.Log;
  * Logger that is to be used for the HTTP client when using Gradle.
  *
  * @author Tomer Cohen
- * @see org.jfrog.build.client.ArtifactoryBuildInfoClient
+ * @see org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient
  */
 public class GradleClientLogger implements Log {
 

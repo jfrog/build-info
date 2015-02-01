@@ -19,8 +19,8 @@ package org.jfrog.gradle.plugin.artifactory.dsl
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.artifacts.UnknownConfigurationException
-import org.jfrog.build.client.ArtifactSpec
-import org.jfrog.build.client.ArtifactSpecs
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs
 
 /**
  * @author Yoav Landman

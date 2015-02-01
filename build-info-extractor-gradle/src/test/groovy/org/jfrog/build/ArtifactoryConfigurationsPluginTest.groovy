@@ -4,7 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
-import org.jfrog.build.client.ArtifactSpec
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryConfigurationsPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
@@ -12,12 +12,12 @@ import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
 
 import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
-import static org.jfrog.build.client.ClientConfigurationFields.ARTIFACT_SPECS
-import static org.jfrog.build.client.ClientConfigurationFields.IVY
-import static org.jfrog.build.client.ClientConfigurationFields.MAVEN
-import static org.jfrog.build.client.ClientConfigurationFields.PUBLISH_ARTIFACTS
-import static org.jfrog.build.client.ClientConfigurationFields.REPO_KEY
-import static org.jfrog.build.client.ClientProperties.PROP_PUBLISH_PREFIX
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ARTIFACT_SPECS
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_ARTIFACTS
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.REPO_KEY
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PUBLISH_PREFIX
 
 /**
  * @author freds

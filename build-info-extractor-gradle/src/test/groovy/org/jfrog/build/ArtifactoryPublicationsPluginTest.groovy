@@ -1,19 +1,16 @@
 package org.jfrog.build
 
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin
 import org.gradle.api.publish.maven.plugins.MavenPublishPlugin
 import org.gradle.testfixtures.ProjectBuilder
-import org.jfrog.build.client.ArtifactSpec
-import org.jfrog.build.client.ClientConfigurationFields
-import org.jfrog.build.client.ClientProperties
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec
+import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields
+import org.jfrog.build.extractor.clientConfiguration.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPublicationsPlugin
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoPublicationsTask
 

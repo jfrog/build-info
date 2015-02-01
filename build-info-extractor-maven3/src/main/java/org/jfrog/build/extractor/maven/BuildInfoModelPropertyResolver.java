@@ -11,7 +11,7 @@ import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -18,13 +18,13 @@ import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.client.ArtifactSpec;
-import org.jfrog.build.client.ArtifactSpecs;
-import org.jfrog.build.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.client.IncludeExcludePatterns;
-import org.jfrog.build.client.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
@@ -51,27 +51,22 @@ import java.util.Set;
  * @author freds
  */
 public abstract class BuildInfoBaseTask extends DefaultTask {
-    private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
-
     public static final String BUILD_INFO_TASK_NAME = "artifactoryPublish";
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
     public static final String PUBLISH_BUILD_INFO = "publishBuildInfo";
     public static final String ARCHIVES_BASE_NAME = "archivesBaseName";
-
+    private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
     @Input
     protected final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 
     @Input
     protected final ArtifactSpecs artifactSpecs = new ArtifactSpecs();
-
-    @Input
-    private boolean skip = false;
-
+    protected final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
     protected Map<String, String> defaultProps;
-
-    protected final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
+    @Input
+    private boolean skip = false;
 
     @Input
     @Optional
@@ -275,7 +270,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             if (isPublishArtifacts(acc)) {
                 log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                 /**
-                 * if the {@link org.jfrog.build.client.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
+                 * if the {@link org.jfrog.build.extractor.clientConfiguration.ClientProperties#PROP_PUBLISH_ARTIFACT} is set the true,
                  * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be
                  * published only after a successful build. This is done before the build-info is sent.
                  */

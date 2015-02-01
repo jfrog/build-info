@@ -18,7 +18,7 @@ package org.jfrog.gradle.plugin.artifactory.dsl
 
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
-import org.jfrog.build.client.ArtifactoryClientConfiguration
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger
 
 /**

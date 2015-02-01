@@ -29,6 +29,10 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.*;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,16 +47,12 @@ import java.util.Set;
 @Component(role = BuildDeploymentHelper.class)
 public class BuildDeploymentHelper {
 
-    @Requirement
-    private Logger logger;
-
-    @Requirement
-    private BuildInfoClientBuilder buildInfoClientBuilder;
-
-
     private final JsonMergeHelper buildInfoMergeHelper   = new JsonMergeHelper( "id", "name" );
     private final JsonMergeHelper deployablesMergeHelper = new JsonMergeHelper( "artifactPath" );
-
+    @Requirement
+    private Logger logger;
+    @Requirement
+    private BuildInfoClientBuilder buildInfoClientBuilder;
 
     public void deploy( Build                          build,
                         ArtifactoryClientConfiguration clientConf,

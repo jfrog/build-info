@@ -16,20 +16,11 @@
 
 package org.jfrog.gradle.plugin.artifactory
 
-import org.apache.commons.lang.StringUtils
-import org.gradle.BuildAdapter
-import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
-import org.jfrog.build.client.ArtifactoryClientConfiguration
-import org.jfrog.build.client.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoPublicationsTask
-import org.slf4j.Logger
+
 import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
 
 class ArtifactoryConfigurationsPlugin extends ArtifactoryPluginBase {

@@ -21,7 +21,7 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoFields;
-import org.jfrog.build.client.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
 import java.text.ParseException;

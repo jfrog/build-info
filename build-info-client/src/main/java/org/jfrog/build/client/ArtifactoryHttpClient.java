@@ -24,6 +24,9 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
@@ -35,7 +38,6 @@ import org.jfrog.build.util.URI;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 /**
  * @author Noam Y. Tenne
@@ -49,20 +51,24 @@ public class ArtifactoryHttpClient {
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
-    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private final Log log;
     private final String artifactoryUrl;
-    private final String username;
-    private final String password;
-    private ProxyConfiguration proxyConfiguration;
+    private int MAX_CONNECTION_PER_ROUTE = 50; //Default
+    private int MAX_TOTAL_CONNECTION = 50;   //Default
+    private HttpClientConfigurator clientConfigurator;
+    private CloseableHttpClient client;
 
-    private PreemptiveHttpClient deployClient;
 
     public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        this.username = username;
-        this.password = password;
         this.log = log;
+
+        clientConfigurator = new HttpClientConfigurator().
+                            hostFromUrl(this.artifactoryUrl).
+                            authentication(username, password).
+                            connectionTimeout(DEFAULT_CONNECTION_TIMEOUT_SECS).
+                            maxTotalConnections(MAX_TOTAL_CONNECTION).
+                            defaultMaxConnectionsPerRoute(MAX_CONNECTION_PER_ROUTE);
     }
 
     public static String encodeUrl(String unescaped) {
@@ -90,11 +96,13 @@ public class ArtifactoryHttpClient {
      * @param password Password to authenticate with the proxy
      */
     public void setProxyConfiguration(String host, int port, String username, String password) {
-        proxyConfiguration = new ProxyConfiguration();
+        ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
         proxyConfiguration.host = host;
         proxyConfiguration.port = port;
         proxyConfiguration.username = username;
         proxyConfiguration.password = password;
+
+        clientConfigurator.proxy(proxyConfiguration);
     }
 
     /**
@@ -103,47 +111,55 @@ public class ArtifactoryHttpClient {
      * @param connectionTimeout Timeout in seconds.
      */
     public void setConnectionTimeout(int connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
+        clientConfigurator.connectionTimeout(connectionTimeout);
+    }
+
+    public void setDefaultMaxConnectionsPerRoute(int maxConnectionsPerHost) {
+        clientConfigurator.defaultMaxConnectionsPerRoute(maxConnectionsPerHost);
+    }
+
+    public void setMaxTotalConnections(int maxTotalConnections) {
+        clientConfigurator.maxTotalConnections(maxTotalConnections);
+    }
+
+    public void setSoTimeout(int soTimeout) {
+        clientConfigurator.soTimeout(soTimeout);
     }
 
     /**
      * Release all connection and cleanup resources.
      */
     public void shutdown() {
-        if (deployClient != null) {
-            deployClient.shutdown();
+        if (clientConfigurator != null) {
+            HttpClientUtils.closeQuietly(client);
         }
     }
 
-    public PreemptiveHttpClient getHttpClient() {
-        if (deployClient == null) {
-            PreemptiveHttpClient client = new PreemptiveHttpClient(username, password, connectionTimeout);
-            if (proxyConfiguration != null) {
-                client.setProxyConfiguration(proxyConfiguration.host, proxyConfiguration.port,
-                        proxyConfiguration.username, proxyConfiguration.password);
-            }
-            deployClient = client;
+    public CloseableHttpClient getHttpClient() {
+        if(client == null){
+            client = clientConfigurator.getClient();
+
         }
 
-        return deployClient;
+        return client;
     }
 
     public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
-        PreemptiveHttpClient client = getHttpClient();
+        CloseableHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
             HttpEntity httpEntity = response.getEntity();
             if (httpEntity != null) {
-                httpEntity.consumeContent();
+                EntityUtils.consume(httpEntity);
             }
             return ArtifactoryVersion.NOT_FOUND;
         }
         if (statusCode != HttpStatus.SC_OK) {
             if (response.getEntity() != null) {
-                response.getEntity().consumeContent();
+                EntityUtils.consume(response.getEntity());
             }
             throw new IOException(response.getStatusLine().getReasonPhrase());
         }
@@ -153,7 +169,7 @@ public class ArtifactoryHttpClient {
             JsonParser parser;
             try {
                 parser = createJsonParser(content);
-                httpEntity.consumeContent();
+                EntityUtils.consume(httpEntity);
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
                 String version = result.get("version").getTextValue();
@@ -166,6 +182,7 @@ public class ArtifactoryHttpClient {
                 }
             }
         }
+
         return ArtifactoryVersion.NOT_FOUND;
     }
 
