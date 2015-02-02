@@ -53,10 +53,8 @@ public class PomTransformerTest {
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "").transform(pomFile);
 
         String pomStr = getFileAsString(pomFile);
-        File expected = getResourceAsFile("/poms/parentonly/pom.xml");
-//        Document expected = PomTransformer.createSaxBuilder().build(
-//                getResourceAsFile("/poms/parentonly/pom.expected.xml"));
-        String expectedStr = getFileAsString(expected);
+        File expectedFile = getResourceAsFile("/poms/parentonly/pom.xml");
+        String expectedStr = getFileAsString(expectedFile);
 
         assertEquals(pomStr, expectedStr);
     }
@@ -70,10 +68,10 @@ public class PomTransformerTest {
         modules.put(new ModuleName("org.jfrog.test.nested", "two"), "3.6");
 
         new PomTransformer(new ModuleName("org.jfrog.test.nested", "two"), modules, "").transform(pomFile);
-
         String pomStr = getFileAsString(pomFile);
-        Document expected = PomTransformer.createSaxBuilder().build(getResourceAsFile("/poms/multi/pom.expected.xml"));
-        String expectedStr = new XMLOutputter().outputString(expected);
+
+        File expectedFile = getResourceAsFile("/poms/multi/pom.expected.xml");
+        String expectedStr = getFileAsString(expectedFile);
 
         assertEquals(pomStr, expectedStr);
     }
