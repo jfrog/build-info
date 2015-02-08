@@ -242,7 +242,7 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
         }
         if (!file.exists()) {
             throw new GradleException("File '" + file.getAbsolutePath() + "'" +
-                    " does not exists, and need to be published from publication " + publicationName);
+                    " does not exist, and need to be published from publication " + publicationName);
         }
         processedFiles.add(file.getAbsolutePath());
 

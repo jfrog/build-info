@@ -16,6 +16,9 @@ import org.sonatype.aether.AbstractRepositoryListener;
 import org.sonatype.aether.RepositoryEvent;
 import org.sonatype.aether.RepositoryListener;
 import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.impl.ArtifactResolver;
+import org.sonatype.aether.impl.MetadataResolver;
+import org.sonatype.aether.impl.internal.DefaultRepositorySystem;
 import org.sonatype.aether.metadata.Metadata;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
@@ -42,6 +45,18 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
     @Requirement
     private ResolutionHelper resolutionHelper;
 
+    @Requirement
+    private DefaultArtifactDescriptorReader descriptorReader;
+
+    @Requirement
+    private DefaultRepositorySystem repositorySystem;
+
+    @Requirement
+    private ArtifactResolver artifactoryArtifactResolver;
+
+    @Requirement
+    private MetadataResolver artifactoryMetadataResolver;
+
     BuildInfoRecorder buildInfoRecorder = null;
 
     private PlexusContainer plexusContainer;
@@ -60,12 +75,6 @@ public class ArtifactorySonatypeRepositoryListener extends AbstractRepositoryLis
      */
     private void enforceArtifactoryResolver() throws ComponentLookupException, InvocationTargetException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
-
-        DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.sonatype.aether.impl.ArtifactDescriptorReader");
-        org.sonatype.aether.impl.internal.DefaultRepositorySystem repositorySystem = (org.sonatype.aether.impl.internal.DefaultRepositorySystem)plexusContainer.lookup("org.sonatype.aether.RepositorySystem");
-
-        org.sonatype.aether.impl.ArtifactResolver artifactoryArtifactResolver = (org.sonatype.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver");
-        org.sonatype.aether.impl.MetadataResolver artifactoryMetadataResolver = (org.sonatype.aether.impl.MetadataResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver");
 
         this.artifactResolver = (ArtifactorySonatypeArtifactResolver)artifactoryArtifactResolver;
         this.metadataResolver = (ArtifactorySonatypeMetadataResolver)artifactoryMetadataResolver;

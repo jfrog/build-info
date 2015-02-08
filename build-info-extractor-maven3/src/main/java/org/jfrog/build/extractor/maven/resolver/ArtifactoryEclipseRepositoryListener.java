@@ -16,6 +16,9 @@ import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystemSession;
+import org.eclipse.aether.impl.ArtifactResolver;
+import org.eclipse.aether.impl.MetadataResolver;
+import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
@@ -40,6 +43,21 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     @Requirement
     private ResolutionHelper resolutionHelper;
 
+    @Requirement
+    private DefaultProjectDependenciesResolver pojectDependenciesResolver;
+
+    @Requirement
+    private DefaultArtifactDescriptorReader descriptorReader;
+
+    @Requirement
+    private DefaultRepositorySystem repositorySystem;
+
+    @Requirement
+    private ArtifactResolver artifactoryArtifactResolver;
+
+    @Requirement
+    private MetadataResolver artifactoryMetadataResolver;
+
     BuildInfoRecorder buildInfoRecorder = null;
 
     private PlexusContainer plexusContainer;
@@ -56,13 +74,6 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      */
     private void enforceArtifactoryResolver() throws ComponentLookupException, NoSuchFieldException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
-
-        DefaultProjectDependenciesResolver pojectDependenciesResolver = (DefaultProjectDependenciesResolver)plexusContainer.lookup("org.apache.maven.project.ProjectDependenciesResolver");
-        DefaultArtifactDescriptorReader descriptorReader = (DefaultArtifactDescriptorReader)plexusContainer.lookup("org.eclipse.aether.impl.ArtifactDescriptorReader");
-        org.eclipse.aether.internal.impl.DefaultRepositorySystem repositorySystem = (org.eclipse.aether.internal.impl.DefaultRepositorySystem)plexusContainer.lookup("org.eclipse.aether.RepositorySystem");
-
-        org.eclipse.aether.impl.ArtifactResolver artifactoryArtifactResolver = (org.eclipse.aether.impl.ArtifactResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver");
-        org.eclipse.aether.impl.MetadataResolver artifactoryMetadataResolver = (org.eclipse.aether.impl.MetadataResolver)plexusContainer.lookup("org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver");
 
         artifactResolver = (ArtifactoryEclipseArtifactResolver)artifactoryArtifactResolver;
         metadataResolver = (ArtifactoryEclipseMetadataResolver)artifactoryMetadataResolver;
