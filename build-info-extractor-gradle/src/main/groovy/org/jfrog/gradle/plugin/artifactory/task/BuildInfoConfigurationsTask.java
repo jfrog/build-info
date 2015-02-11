@@ -56,8 +56,6 @@ import java.util.Set;
  */
 public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
 
-    public static final String PUBLISH_IVY = "publishIvy";
-    public static final String PUBLISH_POM = "publishPom";
     private static final Logger log = Logging.getLogger(BuildInfoConfigurationsTask.class);
     @InputFile
     @Optional
@@ -73,23 +71,8 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
 
     private boolean publishConfigsSpecified;
 
-    @Input
-    @Optional
-    @Nullable
-    public Boolean getPublishIvy() {
-        // TODO: Need to take the default from ACC
-        return getFlag(PUBLISH_IVY);
-    }
-
     public void setPublishIvy(Object publishIvy) {
         setFlag(PUBLISH_IVY, toBoolean(publishIvy));
-    }
-
-    @Input
-    @Optional
-    @Nullable
-    public Boolean getPublishPom() {
-        return getFlag(PUBLISH_POM);
     }
 
     public void setPublishPom(Object publishPom) {
@@ -173,36 +156,17 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         return !publishConfigurations.isEmpty();
     }
 
-    @Nonnull
-    protected Boolean isPublishMaven(ArtifactoryClientConfiguration acc) {
-        Boolean publishPom = getPublishPom();
-        if (publishPom == null) {
-            return acc.publisher.isMaven();
-        }
-        return publishPom;
-    }
-
-    @Nonnull
-    protected Boolean isPublishIvy(ArtifactoryClientConfiguration acc) {
-        Boolean publishIvy = getPublishIvy();
-        if (publishIvy == null) {
-            return acc.publisher.isIvy();
-        }
-        return publishIvy;
-    }
-
     protected void collectDescriptorsAndArtifactsForUpload() throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
         deployDetails.addAll(deployDetailsFromProject);
 
-        //Add the ivy and maven descriptors if they exist
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
-        if (isPublishIvy(acc)) {
+        // In case the build is configured to do so, add the ivy and maven descriptors if they exist
+        if (isPublishIvy()) {
             if (ivyDescriptor != null && ivyDescriptor.exists()) {
                 deployDetails.add(getIvyDescriptorDeployDetails());
             }
         }
-        if (isPublishMaven(acc)) {
+        if (isPublishMaven()) {
             if (mavenDescriptor != null && mavenDescriptor.exists()) {
                 deployDetails.add(getMavenDeployDetails());
             }
@@ -270,7 +234,7 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
      * @param acc     The convention client configuration
      */
     @Override
-    protected void checkDependsOnArtifactsToPublish(Project project, ArtifactoryClientConfiguration acc) {
+    protected void checkDependsOnArtifactsToPublish(Project project) {
         // If no configuration no descriptors
         if (!hasConfigurations()) {
             if (publishConfigsSpecified) {
@@ -297,7 +261,7 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         }
 
         // Set ivy descriptor parameters
-        if (isPublishIvy(acc)) {
+        if (isPublishIvy()) {
             if (ivyDescriptor == null) {
                 setDefaultIvyDescriptor();
             }
@@ -306,7 +270,7 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         }
 
         // Set maven pom parameters
-        if (isPublishMaven(acc)) {
+        if (isPublishMaven()) {
             if (mavenDescriptor == null) {
                 setDefaultMavenDescriptor();
             }

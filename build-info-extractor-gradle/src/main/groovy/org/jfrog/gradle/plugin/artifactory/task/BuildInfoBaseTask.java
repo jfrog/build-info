@@ -55,6 +55,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
     public static final String PUBLISH_BUILD_INFO = "publishBuildInfo";
     public static final String ARCHIVES_BASE_NAME = "archivesBaseName";
+    public static final String PUBLISH_IVY = "publishIvy";
+    public static final String PUBLISH_POM = "publishPom";
     private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
     @Input
     protected final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
@@ -165,10 +167,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             }
         }
 
-        checkDependsOnArtifactsToPublish(project, acc);
+        checkDependsOnArtifactsToPublish(project);
     }
 
-    protected abstract void checkDependsOnArtifactsToPublish(Project project, ArtifactoryClientConfiguration acc);
+    protected abstract void checkDependsOnArtifactsToPublish(Project project);
 
     @Nonnull
     protected Boolean isPublishArtifacts(ArtifactoryClientConfiguration acc) {
@@ -408,4 +410,48 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     public abstract boolean hasModules();
+
+    @Nonnull
+    protected Boolean isPublishMaven() {
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        // Get the value from the client publisher configuration (in case a CI plugin configuration is used):
+        Boolean publishPom = acc.publisher.isMaven();
+        // It the value is null, it means that there's no CI plugin configuration, so the value should be taken from the
+        // artifactory DSL inside the gradle script:
+        if (publishPom == null) {
+            publishPom = getPublishPom();
+        }
+        return publishPom != null ? publishPom : true;
+    }
+
+    @Nonnull
+    protected Boolean isPublishIvy() {
+        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        // Get the value from the client publisher configuration (in case a CI plugin configuration is used):
+        Boolean publishIvy = acc.publisher.isIvy();
+        // It the value is null, it means that there's no CI plugin configuration, so the value should be taken from the
+        // artifactory DSL inside the gradle script:
+        if (publishIvy == null) {
+            publishIvy = getPublishIvy();
+        }
+        return publishIvy != null ? publishIvy : true;
+    }
+
+    @Input
+    @Optional
+    @Nullable
+    public Boolean getPublishIvy() {
+        return getFlag(PUBLISH_IVY);
+    }
+
+    public void setPublishIvy(Object publishIvy) {
+        setFlag(PUBLISH_IVY, toBoolean(publishIvy));
+    }
+
+    @Input
+    @Optional
+    @Nullable
+    public Boolean getPublishPom() {
+        return getFlag(PUBLISH_POM);
+    }
 }

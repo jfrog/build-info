@@ -76,15 +76,9 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             String url = resolverConf.getUrl()
             if (StringUtils.isNotBlank(url)) {
                 log.debug("Artifactory URL: $url")
-                // add artifactory url to the list of repositories
-                if (resolverConf.isIvyRepositoryDefined() && resolverConf.isMaven()) {
-                    createMavenRepo(project, url, resolverConf)
-                    createIvyRepo(project, url, resolverConf)
-                } else if (resolverConf.isMaven()) {
-                    createMavenRepo(project, url, resolverConf)
-                } else if (resolverConf.isIvyRepositoryDefined()) {
-                    createIvyRepo(project, url, resolverConf)
-                }
+                // Add artifactory url to the list of repositories
+                createMavenRepo(project, url, resolverConf)
+                createIvyRepo(project, url, resolverConf)
             } else {
                 log.debug("No repository resolution defined for ${project.path}")
             }

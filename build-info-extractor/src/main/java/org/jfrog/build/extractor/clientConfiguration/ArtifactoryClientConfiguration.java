@@ -547,7 +547,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isMaven() {
-            return getBooleanValue(MAVEN, true);
+            return getBooleanValue(MAVEN, null);
         }
 
         public void setIvy(Boolean enabled) {
@@ -555,7 +555,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Boolean isIvy() {
-            return getBooleanValue(IVY, false);
+            return getBooleanValue(IVY, null);
         }
 
         public boolean isM2Compatible() {
