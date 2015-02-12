@@ -312,6 +312,11 @@
                     <field-name>pojectDependenciesResolver</field-name>
                 </requirement>
                 <requirement>
+                    <role>org.apache.maven.plugin.internal.PluginDependenciesResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>pluginDependenciesResolver</field-name>
+                </requirement>
+                <requirement>
                     <role>org.eclipse.aether.impl.ArtifactDescriptorReader</role>
                     <role-hint>default</role-hint>
                     <field-name>descriptorReader</field-name>

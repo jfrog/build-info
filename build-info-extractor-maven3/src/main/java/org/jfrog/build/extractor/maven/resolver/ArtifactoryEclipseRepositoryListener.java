@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
 import org.codehaus.plexus.PlexusConstants;
@@ -47,6 +48,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     private DefaultProjectDependenciesResolver pojectDependenciesResolver;
 
     @Requirement
+    private DefaultPluginDependenciesResolver pluginDependenciesResolver;
+
+    @Requirement
     private DefaultArtifactDescriptorReader descriptorReader;
 
     @Requirement
@@ -82,9 +86,13 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         repositorySystem.setArtifactResolver(artifactResolver);
         repositorySystem.setMetadataResolver(metadataResolver);
 
-        Field repoSystemField = pojectDependenciesResolver.getClass().getDeclaredField("repoSystem");
-        repoSystemField.setAccessible(true);
-        repoSystemField.set(pojectDependenciesResolver, repositorySystem);
+        Field repoSystemProjectField = pojectDependenciesResolver.getClass().getDeclaredField("repoSystem");
+        repoSystemProjectField.setAccessible(true);
+        repoSystemProjectField.set(pojectDependenciesResolver, repositorySystem);
+
+        Field repoSystemPluginField = pluginDependenciesResolver.getClass().getDeclaredField("repoSystem");
+        repoSystemPluginField.setAccessible(true);
+        repoSystemPluginField.set(pluginDependenciesResolver, repositorySystem);
 
         artifactoryRepositoriesEnforced = true;
         synchronized (artifactoryRepositoriesEnforced) {
