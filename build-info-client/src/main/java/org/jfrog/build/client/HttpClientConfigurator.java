@@ -22,7 +22,6 @@ import org.apache.http.impl.conn.DefaultRoutePlanner;
 import org.apache.http.impl.conn.DefaultSchemePortResolver;
 import org.apache.http.protocol.HttpContext;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -141,7 +140,7 @@ public class HttpClientConfigurator {
         return this;
     }
 
-    public HttpClientConfigurator proxy(@Nullable ProxyConfiguration proxyConfiguration) {
+    public HttpClientConfigurator proxy(ProxyConfiguration proxyConfiguration) {
         configureProxy(proxyConfiguration);
         return this;
     }
