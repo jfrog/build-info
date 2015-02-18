@@ -267,7 +267,7 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile "org.codehaus.jackson:jackson-core-asl:1.9.12"
+        compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"
     }
 }
 
