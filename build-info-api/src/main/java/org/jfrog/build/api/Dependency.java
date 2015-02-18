@@ -88,4 +88,38 @@ public class Dependency extends BaseBuildFileBean {
     public void setRequiredBy(List<String> requiredBy) {
         this.requiredBy = requiredBy;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Dependency)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+        Dependency that = (Dependency) o;
+
+        if (id != null ? !id.equals(that.id) : that.id != null) {
+            return false;
+        }
+        if (requiredBy != null ? !requiredBy.equals(that.requiredBy) : that.requiredBy != null) {
+            return false;
+        }
+        if (scopes != null ? !scopes.equals(that.scopes) : that.scopes != null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + (id != null ? id.hashCode() : 0);
+        result = 31 * result + (scopes != null ? scopes.hashCode() : 0);
+        result = 31 * result + (requiredBy != null ? requiredBy.hashCode() : 0);
+        return result;
+    }
 }

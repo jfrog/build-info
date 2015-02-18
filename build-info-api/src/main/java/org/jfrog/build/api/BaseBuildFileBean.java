@@ -1,4 +1,4 @@
-/*
+    /*
  * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -49,5 +49,34 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
 
     public void setMd5(String md5) {
         this.md5 = md5;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof BaseBuildFileBean)) {
+            return false;
+        }
+        BaseBuildFileBean that = (BaseBuildFileBean) o;
+        if (md5 != null ? !md5.equals(that.md5) : that.md5 != null) {
+            return false;
+        }
+        if (sha1 != null ? !sha1.equals(that.sha1) : that.sha1 != null) {
+            return false;
+        }
+        if (type != null ? !type.equals(that.type) : that.type != null) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = type != null ? type.hashCode() : 0;
+        result = 31 * result + (sha1 != null ? sha1.hashCode() : 0);
+        result = 31 * result + (md5 != null ? md5.hashCode() : 0);
+        return result;
     }
 }
