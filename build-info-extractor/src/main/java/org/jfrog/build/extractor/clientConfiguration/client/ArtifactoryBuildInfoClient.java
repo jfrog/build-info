@@ -36,6 +36,7 @@ import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.release.BintrayUploadInfoOverride;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
@@ -344,6 +345,39 @@ public class ArtifactoryBuildInfoClient {
                     VersionCompatibilityType.INCOMPATIBLE);
         }
         return version;
+    }
+
+    public HttpResponse publishToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
+                                         BintrayUploadInfoOverride bintrayUploadInfo) throws IOException {
+        if (!bintrayUploadInfo.isValid()){
+            log.error("Invalid Bintray upload Info");
+            throw new IllegalArgumentException("Invalid Bintray upload Info.");
+        }
+        if (StringUtils.isBlank(buildName)) {
+            log.error("Build name is required for promotion");
+            throw new IllegalArgumentException("Build name is required for promotion.");
+        }
+        if (StringUtils.isBlank(buildNumber)) {
+            log.error("Build number is required for promotion");
+            throw new IllegalArgumentException("Build number is required for promotion.");
+        }
+
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/build/pushToBintray/").append(buildName)
+                .append("/" + buildNumber);
+
+        if (StringUtils.equals(signMethod, "sign")) {
+            urlBuilder.append("?gpgPassphrase=").append(passphrase).append("gpgSign=")
+                    .append("true");
+        }
+
+        String bintrayInfoJson = toJsonString(bintrayUploadInfo);
+        String url = urlBuilder.toString();
+        HttpPost httpPost = new HttpPost(url);
+        StringEntity entity = new StringEntity(bintrayInfoJson);
+        entity.setContentType("application/json");
+
+        httpPost.setEntity(entity);
+        return httpClient.getHttpClient().execute(httpPost);
     }
 
     public HttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
