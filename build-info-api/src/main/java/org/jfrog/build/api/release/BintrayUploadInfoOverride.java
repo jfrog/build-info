@@ -8,11 +8,9 @@ import java.util.List;
 
 /**
  * Represents override properties that can be passed to artifactory with the REST command instead of the descriptor
- *
  * @author Dan Feldman
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-
 public class BintrayUploadInfoOverride {
 
     public String subject;

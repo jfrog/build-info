@@ -64,6 +64,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_BROWSE_URL = "/webapp/builds";
+    private static final String PUSH_TO_BINTRAY_REST_URL = "/api/builds/pushToBintray/";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
     private final Log log;
     /**
@@ -347,20 +348,35 @@ public class ArtifactoryBuildInfoClient {
         return version;
     }
 
-    public HttpResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
+    /**
+     * Push build to bintray
+     *
+     * @param buildName         name of the build to push
+     * @param buildNumber       number of the build to push
+     * @param signMethod        flags if this artifacts should be signed or not
+     * @param passphrase        passphrase in case that the artifacts should be signed
+     * @param bintrayUploadInfo request body which contains the upload info
+     * @return http Response with the response outcome
+     * @throws IOException On any connection error
+     * @see org.jfrog.build.api.release.BintrayUploadInfoOverride;
+     */
+    public HttpResponse publishToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
                                          BintrayUploadInfoOverride bintrayUploadInfo) throws IOException {
         if (!bintrayUploadInfo.isValid()){
+            log.error("Invalid Bintray upload Info");
             throw new IllegalArgumentException("Invalid Bintray upload Info.");
         }
         if (StringUtils.isBlank(buildName)) {
+            log.error("Build name is required for promotion");
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
         if (StringUtils.isBlank(buildNumber)) {
+            log.error("Build number is required for promotion");
             throw new IllegalArgumentException("Build number is required for promotion.");
         }
 
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/build/pushToBintray/").append(buildName)
-                .append("/").append(buildNumber);
+                .append("/" + buildNumber);
 
         if (StringUtils.equals(signMethod, "sign")) {
             urlBuilder.append("?gpgPassphrase=").append(passphrase).append("gpgSign=")
