@@ -347,23 +347,20 @@ public class ArtifactoryBuildInfoClient {
         return version;
     }
 
-    public HttpResponse publishToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
+    public HttpResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
                                          BintrayUploadInfoOverride bintrayUploadInfo) throws IOException {
         if (!bintrayUploadInfo.isValid()){
-            log.error("Invalid Bintray upload Info");
             throw new IllegalArgumentException("Invalid Bintray upload Info.");
         }
         if (StringUtils.isBlank(buildName)) {
-            log.error("Build name is required for promotion");
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
         if (StringUtils.isBlank(buildNumber)) {
-            log.error("Build number is required for promotion");
             throw new IllegalArgumentException("Build number is required for promotion.");
         }
 
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/build/pushToBintray/").append(buildName)
-                .append("/" + buildNumber);
+                .append("/").append(buildNumber);
 
         if (StringUtils.equals(signMethod, "sign")) {
             urlBuilder.append("?gpgPassphrase=").append(passphrase).append("gpgSign=")
