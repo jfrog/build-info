@@ -41,14 +41,13 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.*;
+import org.jfrog.build.client.bintrayResponse.BintrayResponse;
+import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
@@ -62,9 +61,9 @@ public class ArtifactoryBuildInfoClient {
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
+    private static final String PUSH_TO_BINTRAY_REST_URL = "/api/build/pushToBintray/";
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_BROWSE_URL = "/webapp/builds";
-    private static final String PUSH_TO_BINTRAY_REST_URL = "/api/builds/pushToBintray/";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
     private final Log log;
     /**
@@ -360,37 +359,55 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      * @see org.jfrog.build.api.release.BintrayUploadInfoOverride;
      */
-    public HttpResponse publishToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
+    public BintrayResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
                                          BintrayUploadInfoOverride bintrayUploadInfo) throws IOException {
-        if (!bintrayUploadInfo.isValid()){
-            log.error("Invalid Bintray upload Info");
-            throw new IllegalArgumentException("Invalid Bintray upload Info.");
-        }
         if (StringUtils.isBlank(buildName)) {
-            log.error("Build name is required for promotion");
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
         if (StringUtils.isBlank(buildNumber)) {
-            log.error("Build number is required for promotion");
             throw new IllegalArgumentException("Build number is required for promotion.");
         }
 
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/build/pushToBintray/").append(buildName)
+        String requestUrl = createRequestUrl(buildName, buildNumber, signMethod, passphrase);
+        String requestBody = createJsonRequestBody(bintrayUploadInfo);
+        HttpPost httpPost = new HttpPost(requestUrl);
+        StringEntity entity = new StringEntity(requestBody);
+        entity.setContentType("application/json");
+        httpPost.setEntity(entity);
+        HttpResponse response = httpClient.getHttpClient().execute(httpPost);
+        return parseResponse(response);
+    }
+
+    // create pushToBintray request Url
+    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase){
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(PUSH_TO_BINTRAY_REST_URL).append(buildName)
                 .append("/" + buildNumber);
 
         if (StringUtils.equals(signMethod, "sign")) {
             urlBuilder.append("?gpgPassphrase=").append(passphrase).append("gpgSign=")
                     .append("true");
         }
+        return urlBuilder.toString();
+    }
 
-        String bintrayInfoJson = toJsonString(bintrayUploadInfo);
-        String url = urlBuilder.toString();
-        HttpPost httpPost = new HttpPost(url);
-        StringEntity entity = new StringEntity(bintrayInfoJson);
-        entity.setContentType("application/json");
+    // create pushToBintray request body
+    private String createJsonRequestBody(BintrayUploadInfoOverride info) throws IOException {
+        String bintrayInfoJson;
+        if (!info.isValid()) {
+            // empty json body to use the descriptor file if exists
+            bintrayInfoJson = "{}";
+        } else {
+            bintrayInfoJson = toJsonString(info);
+        }
+        return bintrayInfoJson;
+    }
 
-        httpPost.setEntity(entity);
-        return httpClient.getHttpClient().execute(httpPost);
+    private BintrayResponse parseResponse(HttpResponse response) throws IOException {
+        InputStream content = response.getEntity().getContent();
+        int status = response.getStatusLine().getStatusCode();
+        JsonParser parser = httpClient.createJsonFactory().createJsonParser(content);
+        BintrayResponse responseObject = BintrayResponseFactory.createResponse(status, parser);
+        return responseObject;
     }
 
     public HttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
