@@ -21,6 +21,10 @@ public class BintrayUploadInfoOverride {
     public List<String> licenses; //Mandatory only for OSS
     public String vcsUrl;         //Mandatory only for OSS
 
+    public BintrayUploadInfoOverride() {
+
+    }
+
     public BintrayUploadInfoOverride(String subject, String repoName, String packageName, String versionName,
                                      List<String> licenses, String vcsUrl) {
         this.subject = subject;
