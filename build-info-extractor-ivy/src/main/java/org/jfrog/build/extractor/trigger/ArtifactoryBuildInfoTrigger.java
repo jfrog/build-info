@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.trigger;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -27,11 +28,11 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
-import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
@@ -114,7 +115,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
                     Dependency dependency = findDependencyInList(id, type, moduleDependencies);
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                        dependencyBuilder.type(type).scopes(Lists.newArrayList(configuration));
+                        dependencyBuilder.type(type).scopes(Sets.newHashSet(configuration));
                         String idString = getModuleIdString(id.getOrganisation(),
                                 id.getName(), id.getRevision());
                         dependencyBuilder.id(idString);

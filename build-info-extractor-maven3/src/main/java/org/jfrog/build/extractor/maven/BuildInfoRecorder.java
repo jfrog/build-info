@@ -40,7 +40,7 @@ import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -49,6 +49,7 @@ import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 import org.xml.sax.InputSource;
+
 import javax.xml.xpath.*;
 import java.io.File;
 import java.io.FileInputStream;
@@ -105,7 +106,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     /**
      * The repository listeners (either ArtifactoryEclipseRepositoryListener or ArtifactorySonatypeRepositoryListener) invoke this method
      * with each artifact being resolved by Maven.
-     * @param artifact  The artifact being resolved by Maven.
+     *
+     * @param artifact The artifact being resolved by Maven.
      */
     public void artifactResolved(Artifact artifact) {
         if (artifact != null) {
@@ -410,13 +412,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     /**
      * Merge the dependencies taken from the MavenProject object with those collected inside the resolvedArtifacts collection.
-     * @param projectDependencies   The artifacts taken from the MavenProject object.
+     *
+     * @param projectDependencies The artifacts taken from the MavenProject object.
      */
     private void mergeProjectDependencies(Set<Artifact> projectDependencies) {
         // Go over all the artifacts taken from the MavenProject object, and replace their equals method, so that we are
         // able to merge them together with the artifacts inside the resolvedArtifacts set:
         Set<Artifact> dependecies = Sets.newHashSet();
-        for(Artifact artifact : projectDependencies) {
+        for (Artifact artifact : projectDependencies) {
             String classifier = artifact.getClassifier();
             classifier = classifier == null ? "" : classifier;
             DefaultArtifact art = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
@@ -595,7 +598,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                             dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
             if (StringUtils.isNotBlank(scopes)) {
-                dependencyBuilder.scopes(Lists.newArrayList(scopes));
+                dependencyBuilder.scopes(Sets.newHashSet(scopes));
             }
             setDependencyChecksums(depFile, dependencyBuilder);
             module.addDependency(dependencyBuilder.build());

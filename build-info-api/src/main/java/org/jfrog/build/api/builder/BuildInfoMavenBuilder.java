@@ -26,6 +26,7 @@ import org.jfrog.build.api.release.PromotionStatus;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * A temporary builder for the build class specifically for Maven extractor.
@@ -383,18 +384,14 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
             return;
         }
 
-        for (Dependency dependencyToMarge : dependenciesToMerge) {
-            Dependency foundDependency = findDependency(existingDependencies, dependencyToMarge.getId());
+        for (Dependency dependencyToMerge : dependenciesToMerge) {
+            Dependency foundDependency = findDependency(existingDependencies, dependencyToMerge.getId());
             if (foundDependency == null) {
-                existingDependencies.add(dependencyToMarge);
+                existingDependencies.add(dependencyToMerge);
             } else {
-                List<String> existingScopes = foundDependency.getScopes();
-                List<String> scopesToMerge = dependencyToMarge.getScopes();
-                for (String scopeToMerge : scopesToMerge) {
-                    if (!existingScopes.contains(scopeToMerge)) {
-                        existingScopes.add(scopeToMerge);
-                    }
-                }
+                Set<String> mergedDependencies = foundDependency.getScopes();
+                mergedDependencies.addAll(dependencyToMerge.getScopes());
+                foundDependency.setScopes(mergedDependencies);
             }
         }
     }

@@ -17,11 +17,13 @@
 package org.jfrog.build.api.builder;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import org.jfrog.build.api.Dependency;
 import org.testng.annotations.Test;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import static org.testng.Assert.*;
 
@@ -54,7 +56,7 @@ public class DependencyBuilderTest {
     public void testBuilderSetters() {
         String id = "moo";
         String type = "bob";
-        List<String> scopes = Lists.newArrayList("mitzi");
+        Set<String> scopes = Sets.newHashSet("mitzi");
         String sha1 = "pop";
         String md5 = "shmop";
         List<String> requiredBy = Lists.newArrayList("pitzi");
@@ -85,7 +87,7 @@ public class DependencyBuilderTest {
                 addProperty(propertyKey, propertyValue).build();
         List<String> requiredByList = dependency.getRequiredBy();
         assertFalse(requiredByList.isEmpty(), "A dependency requirement should have been added.");
-        assertEquals(requiredByList.get(0), requiredBy, "Unexpected dependency requirement.");
+        assertEquals(requiredByList.iterator().next(), requiredBy, "Unexpected dependency requirement.");
         assertTrue(dependency.getProperties().containsKey(propertyKey),
                 "A dependency property should have been added.");
         assertEquals(dependency.getProperties().get(propertyKey), propertyValue,

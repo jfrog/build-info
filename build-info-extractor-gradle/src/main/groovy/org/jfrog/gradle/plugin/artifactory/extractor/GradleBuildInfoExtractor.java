@@ -19,6 +19,7 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -32,12 +33,12 @@ import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
-import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
-import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask;
 
@@ -321,18 +322,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                     // if it's already in the dependencies list just add the current scope
                     if (any(dependencies, idEqualsPredicate)) {
                         Dependency existingDependency = find(dependencies, idEqualsPredicate);
-                        List<String> existingScopes = existingDependency.getScopes();
-                        String configScope = configuration.getName();
-                        if (!existingScopes.contains(configScope)) {
-                            existingScopes.add(configScope);
-                        }
+                        Set<String> existingScopes = existingDependency.getScopes();
+                        existingScopes.add(configuration.getName());
+                        existingDependency.setScopes(existingScopes);
                     } else {
                         Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
                         DependencyBuilder dependencyBuilder = new DependencyBuilder()
                                 .type(getTypeString(artifact.getType(),
                                         artifact.getClassifier(), artifact.getExtension()))
                                 .id(depId)
-                                .scopes(newArrayList(configuration.getName())).
+                                .scopes(Sets.newHashSet(configuration.getName())).
                                         md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
                         dependencies.add(dependencyBuilder.build());
                     }

@@ -19,6 +19,7 @@ package org.jfrog.build.api;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Contains the build module dependency information
@@ -31,7 +32,7 @@ public class Dependency extends BaseBuildFileBean {
     public static final String SCOPE_BUILD = "_build_";
 
     private String id;
-    private List<String> scopes;
+    private Set<String> scopes;
     private List<String> requiredBy;
 
     /**
@@ -57,7 +58,7 @@ public class Dependency extends BaseBuildFileBean {
      *
      * @return Dependency scope list
      */
-    public List<String> getScopes() {
+    public Set<String> getScopes() {
         return scopes;
     }
 
@@ -66,7 +67,7 @@ public class Dependency extends BaseBuildFileBean {
      *
      * @param scopes Dependency scope list
      */
-    public void setScopes(List<String> scopes) {
+    public void setScopes(Set<String> scopes) {
         this.scopes = scopes;
     }
 

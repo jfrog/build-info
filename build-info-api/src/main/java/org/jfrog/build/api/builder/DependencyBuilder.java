@@ -21,6 +21,7 @@ import org.jfrog.build.api.Dependency;
 
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * A builder for the dependency class
@@ -31,7 +32,7 @@ public class DependencyBuilder {
 
     private String id;
     private String type;
-    private List<String> scopes;
+    private Set<String> scopes;
     private String sha1;
     private String md5;
     private List<String> requiredBy;
@@ -82,7 +83,7 @@ public class DependencyBuilder {
      * @param scopes Dependency scope list
      * @return Builder instance
      */
-    public DependencyBuilder scopes(List<String> scopes) {
+    public DependencyBuilder scopes(Set<String> scopes) {
         this.scopes = scopes;
         return this;
     }
