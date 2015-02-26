@@ -381,7 +381,7 @@ public class ArtifactoryBuildInfoClient {
     // create pushToBintray request Url
     private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase){
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(PUSH_TO_BINTRAY_REST_URL).append(buildName)
-                .append("/" + buildNumber);
+                .append("/").append(buildNumber);
 
         if (StringUtils.equals(signMethod, "sign")) {
             urlBuilder.append("?gpgPassphrase=").append(passphrase).append("gpgSign=")
