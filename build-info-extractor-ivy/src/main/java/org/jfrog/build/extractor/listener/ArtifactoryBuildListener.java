@@ -6,6 +6,7 @@ import org.apache.ivy.ant.IvyAntSettings;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
+import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.plugins.trigger.Trigger;
 import org.apache.tools.ant.*;
 import org.apache.tools.ant.taskdefs.Ant;
@@ -185,14 +186,17 @@ public class ArtifactoryBuildListener implements BuildListener {
         List<EventManager> results = new ArrayList<EventManager>();
         Project project = task.getProject();
         Enumeration<Object> elements = project.getReferences().elements();
+        // Iterate the project elements, search for ivy:settings and return them:
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
             if (element instanceof IvyAntSettings) {
                 results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
             }
         }
+        // If no ivy:settings were found (the ivy script might not include them), return the resolve engine:
         if (results.isEmpty()) {
-            throw new BuildException("Did not find ivy settings reference for project " + project.getName());
+            ResolveEngine engine = IvyAntSettings.getDefaultInstance(task).getConfiguredIvyInstance(task).getResolveEngine();
+            results.add(engine.getEventManager());
         }
         return results;
     }
