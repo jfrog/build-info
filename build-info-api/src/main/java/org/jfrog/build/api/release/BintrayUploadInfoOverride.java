@@ -3,6 +3,7 @@ package org.jfrog.build.api.release;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class BintrayUploadInfoOverride {
     public String packageName;
     public String versionName;
     public List<String> licenses; //Mandatory only for OSS
+    @JsonProperty("vcs_url")
     public String vcsUrl;         //Mandatory only for OSS
 
     public BintrayUploadInfoOverride() {
