@@ -1062,5 +1062,13 @@ public class ArtifactoryClientConfiguration {
 
             return runParameters;
         }
+
+        public Boolean isIncremental() {
+            return getBooleanValue(INCREMENTAL, Boolean.FALSE);
+        }
+
+        public void setIncremental(Boolean incremental) {
+            setBooleanValue(INCREMENTAL, incremental);
+        }
     }
 }

@@ -65,5 +65,9 @@ class ArtifactoryPluginConvention {
     def proxy(Closure closure) {
         ConfigureUtil.configure(closure, new DoubleDelegateWrapper(clientConfig.proxy))
     }
+
+    def parent(Closure closure) {
+        new ParentConfig(this).config(closure)
+    }
 }
 
