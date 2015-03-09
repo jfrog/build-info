@@ -287,20 +287,21 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
             GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployDetails);
             Build build = gbie.extract(getProject().getRootProject());
+
             /**
              * The build-info will be always written to a file in its JSON form.
              */
             exportBuildInfo(build, getExportFile(acc));
             if (isPublishBuildInfo(acc)) {
-                log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                /**
-                 * After all the artifacts were uploaded successfully the next task is to send the build-info
-                 * object.
-                 */
-                // If export property set always save the file before sending it to artifactory
-                exportBuildInfo(build, getExportFile(acc));
-                client.sendBuildInfo(build);
+                if (acc.info.isIncremental()) {
+                    log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
+                    client.sendModuleInfo(build);
+                } else {
+                    log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
+                    client.sendBuildInfo(build);
+                }
             }
+
         } finally {
             client.shutdown();
         }
@@ -395,7 +396,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryBuildInfoClient client,
-            IncludeExcludePatterns patterns)
+                                 IncludeExcludePatterns patterns)
             throws IOException {
         for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
