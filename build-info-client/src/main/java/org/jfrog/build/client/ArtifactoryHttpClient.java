@@ -24,8 +24,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonNode;
@@ -53,22 +51,18 @@ public class ArtifactoryHttpClient {
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
     private final Log log;
     private final String artifactoryUrl;
-    private int MAX_CONNECTION_PER_ROUTE = 50; //Default
-    private int MAX_TOTAL_CONNECTION = 50;   //Default
-    private HttpClientConfigurator clientConfigurator;
-    private CloseableHttpClient client;
+    private final String username;
+    private final String password;
+    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
+    private ProxyConfiguration proxyConfiguration;
 
+    private PreemptiveHttpClient deployClient;
 
     public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
+        this.username = username;
+        this.password = password;
         this.log = log;
-
-        clientConfigurator = new HttpClientConfigurator().
-                            hostFromUrl(this.artifactoryUrl).
-                            authentication(username, password).
-                            connectionTimeout(DEFAULT_CONNECTION_TIMEOUT_SECS).
-                            maxTotalConnections(MAX_TOTAL_CONNECTION).
-                            defaultMaxConnectionsPerRoute(MAX_CONNECTION_PER_ROUTE);
     }
 
     public static String encodeUrl(String unescaped) {
@@ -96,13 +90,11 @@ public class ArtifactoryHttpClient {
      * @param password Password to authenticate with the proxy
      */
     public void setProxyConfiguration(String host, int port, String username, String password) {
-        ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
+        proxyConfiguration = new ProxyConfiguration();
         proxyConfiguration.host = host;
         proxyConfiguration.port = port;
         proxyConfiguration.username = username;
         proxyConfiguration.password = password;
-
-        clientConfigurator.proxy(proxyConfiguration);
     }
 
     /**
@@ -111,42 +103,34 @@ public class ArtifactoryHttpClient {
      * @param connectionTimeout Timeout in seconds.
      */
     public void setConnectionTimeout(int connectionTimeout) {
-        clientConfigurator.connectionTimeout(connectionTimeout);
-    }
-
-    public void setDefaultMaxConnectionsPerRoute(int maxConnectionsPerHost) {
-        clientConfigurator.defaultMaxConnectionsPerRoute(maxConnectionsPerHost);
-    }
-
-    public void setMaxTotalConnections(int maxTotalConnections) {
-        clientConfigurator.maxTotalConnections(maxTotalConnections);
-    }
-
-    public void setSoTimeout(int soTimeout) {
-        clientConfigurator.soTimeout(soTimeout);
+        this.connectionTimeout = connectionTimeout;
     }
 
     /**
      * Release all connection and cleanup resources.
      */
     public void shutdown() {
-        if (clientConfigurator != null) {
-            HttpClientUtils.closeQuietly(client);
+        if (deployClient != null) {
+            deployClient.shutdown();
         }
     }
 
-    public CloseableHttpClient getHttpClient() {
-        if(client == null){
-            client = clientConfigurator.getClient();
-
+    public PreemptiveHttpClient getHttpClient() {
+        if (deployClient == null) {
+            PreemptiveHttpClient client = new PreemptiveHttpClient(username, password, connectionTimeout);
+            if (proxyConfiguration != null) {
+                client.setProxyConfiguration(proxyConfiguration.host, proxyConfiguration.port,
+                        proxyConfiguration.username, proxyConfiguration.password);
+            }
+            deployClient = client;
         }
 
-        return client;
+        return deployClient;
     }
 
     public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
-        CloseableHttpClient client = getHttpClient();
+        PreemptiveHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(versionUrl);
         HttpResponse response = client.execute(httpGet);
         int statusCode = response.getStatusLine().getStatusCode();
@@ -218,8 +202,7 @@ public class ArtifactoryHttpClient {
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
                 } catch (Exception e) {
                     log.error("Failed while reading the response from: " + httpPut, e);
-                }
-                finally {
+        } finally {
                     content.close();
                 }
             }

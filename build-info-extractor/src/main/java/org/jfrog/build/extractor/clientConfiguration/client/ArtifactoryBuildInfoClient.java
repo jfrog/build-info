@@ -17,7 +17,9 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
 import com.google.common.base.Function;
-import com.google.common.collect.*;
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -28,7 +30,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonFactory;
@@ -47,7 +48,10 @@ import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
@@ -105,18 +109,6 @@ public class ArtifactoryBuildInfoClient {
      */
     public void setConnectionTimeout(int connectionTimeout) {
         httpClient.setConnectionTimeout(connectionTimeout);
-    }
-
-    public void setSocketTimeout(int socketTimeout) {
-        httpClient.setSoTimeout(socketTimeout);
-    }
-
-    public void setMaxTotalConnection(int maxTotalConnection) {
-        httpClient.setMaxTotalConnections(maxTotalConnection);
-    }
-
-    public void setMaxConnectionsPerRoute(int maxConnectionsPerRoute) {
-        httpClient.setDefaultMaxConnectionsPerRoute(maxConnectionsPerRoute);
     }
 
     /**
@@ -193,7 +185,7 @@ public class ArtifactoryBuildInfoClient {
 
     private List<String> getRepositoriesList(String restUrl) throws IOException {
         List<String> repositories = new ArrayList<String>();
-        CloseableHttpClient client = httpClient.getHttpClient();
+        PreemptiveHttpClient client = httpClient.getHttpClient();
 
         String reposUrl = artifactoryUrl + restUrl;
         log.debug("Requesting repositories list from: " + reposUrl);
@@ -255,7 +247,9 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(Build buildInfo) throws IOException {
         try {
             sendBuildInfo(buildInfoToJsonString(buildInfo));
-            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl + BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() + "/" + buildInfo.getStarted() + "/");
+            log.info("Build successfully deployed. Browse it in Artifactory under " + artifactoryUrl +
+                    BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() +
+                    "/" + buildInfo.getStarted() + "/");
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());

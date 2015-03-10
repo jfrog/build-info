@@ -355,9 +355,6 @@ public class ArtifactoryBuildListener implements BuildListener {
 
             configureProxy(clientConf, client);
             configConnectionTimeout(clientConf, client);
-            configMaxTotalConnection(clientConf, client);
-            configMaxConnectionPerRoute(clientConf, client);
-            configSocketTimeout(clientConf, client);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
@@ -405,20 +402,5 @@ public class ArtifactoryBuildListener implements BuildListener {
     protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
         if(clientConf.getTimeout() != null)
             client.setConnectionTimeout(clientConf.getTimeout());
-    }
-
-    protected void configSocketTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
-        if(clientConf.getSocketTimeout() != null)
-            client.setSocketTimeout(clientConf.getSocketTimeout());
-    }
-
-    protected void configMaxTotalConnection(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
-        if(clientConf.getMaxTotalConnection() != null)
-            client.setMaxTotalConnection(clientConf.getMaxTotalConnection());
-    }
-
-    protected void configMaxConnectionPerRoute(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
-        if(clientConf.getMaxConnectionPerRoute() != null)
-            client.setMaxConnectionsPerRoute(clientConf.getMaxConnectionPerRoute());
     }
 }

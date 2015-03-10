@@ -4,11 +4,11 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
 
 /**
  * Simple class to build {@link org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient} for deployment.
@@ -23,12 +23,8 @@ public class BuildInfoClientBuilder {
 
     public ArtifactoryBuildInfoClient resolveProperties(ArtifactoryClientConfiguration clientConf) {
         ArtifactoryBuildInfoClient client = resolveClientProps(clientConf);
-        resolveProxy(clientConf.proxy, client);
         resolveTimeout(clientConf, client);
-        resolveSocketTimeout(clientConf, client);
-        resolveMaxTotalConnection(clientConf, client);
-        resolveMaxConnectionPerRoute(clientConf, client);
-
+        resolveProxy(clientConf.proxy, client);
         return client;
     }
 
@@ -51,6 +47,21 @@ public class BuildInfoClientBuilder {
         }
     }
 
+    private void resolveTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getTimeout() == null) {
+            return;
+        }
+        String timeout = clientConf.getTimeout().toString();
+        if (StringUtils.isNotBlank(timeout)) {
+            logResolvedProperty(PROP_TIMEOUT, timeout);
+            if (!StringUtils.isNumeric(timeout)) {
+                logger.debug("Unable to resolve Artifactory Build Info Client timeout: value is non-numeric.");
+                return;
+            }
+            client.setConnectionTimeout(Integer.valueOf(timeout));
+        }
+    }
+
     private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,
                               ArtifactoryBuildInfoClient client) {
         String proxyHost = proxyConf.getHost();
@@ -68,66 +79,6 @@ public class BuildInfoClientBuilder {
             } else {
                 client.setProxyConfiguration(proxyHost, proxyConf.getPort());
             }
-        }
-    }
-
-    private void resolveTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getTimeout() == null) {
-            return;
-        }
-        String timeout = clientConf.getTimeout().toString();
-        if (StringUtils.isNotBlank(timeout)) {
-            logResolvedProperty(PROP_TIMEOUT, timeout);
-            if (!StringUtils.isNumeric(timeout)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client timeout: value is non-numeric.");
-                return;
-            }
-            client.setConnectionTimeout(Integer.valueOf(timeout));
-        }
-    }
-
-    private void resolveSocketTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getSocketTimeout() == null) {
-            return;
-        }
-        String socketTimeout = clientConf.getSocketTimeout().toString();
-        if (StringUtils.isNotBlank(socketTimeout)) {
-            logResolvedProperty(PROP_SO_TIMEOUT, socketTimeout);
-            if (!StringUtils.isNumeric(socketTimeout)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client socketTimeout: value is non-numeric.");
-                return;
-            }
-            client.setSocketTimeout(Integer.valueOf(socketTimeout));
-        }
-    }
-
-    private void resolveMaxTotalConnection(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getMaxTotalConnection() == null) {
-            return;
-        }
-        String maxTotalConnection = clientConf.getMaxTotalConnection().toString();
-        if (StringUtils.isNotBlank(maxTotalConnection)) {
-            logResolvedProperty(PROP_MAX_TOTAL_CO, maxTotalConnection);
-            if (!StringUtils.isNumeric(maxTotalConnection)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client socketTimeout: value is non-numeric.");
-                return;
-            }
-            client.setMaxTotalConnection(Integer.valueOf(maxTotalConnection));
-        }
-    }
-
-    private void resolveMaxConnectionPerRoute(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getMaxConnectionPerRoute() == null) {
-            return;
-        }
-        String maxConnectionPerRoute = clientConf.getMaxConnectionPerRoute().toString();
-        if (StringUtils.isNotBlank(maxConnectionPerRoute)) {
-            logResolvedProperty(PROP_MAX_CO_PER_ROUTE, maxConnectionPerRoute);
-            if (!StringUtils.isNumeric(maxConnectionPerRoute)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client socketTimeout: value is non-numeric.");
-                return;
-            }
-            client.setMaxConnectionsPerRoute(Integer.valueOf(maxConnectionPerRoute));
         }
     }
 

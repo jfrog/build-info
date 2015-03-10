@@ -275,7 +275,7 @@ project('build-info-client') {
     description = 'JFrog Build-Info Client'
     dependencies {
         compile project(':build-info-api')
-        compile("org.apache.httpcomponents:httpclient:4.4") {
+        compile("org.apache.httpcomponents:httpclient:4.2.5") {
             exclude module: "commons-codec"
         }
         compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"

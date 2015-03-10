@@ -27,7 +27,6 @@ import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.type.TypeReference;
@@ -37,6 +36,7 @@ import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
+import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
 
 import java.io.FileNotFoundException;
@@ -104,7 +104,7 @@ public class ArtifactoryDependenciesClient {
 
 
     public PatternResultFileSet searchArtifactsByPattern(String pattern) throws IOException {
-        CloseableHttpClient client = httpClient.getHttpClient();
+        PreemptiveHttpClient client = httpClient.getHttpClient();
 
         String url = artifactoryUrl + "/api/search/pattern?pattern=" + pattern;
         PatternResultFileSet result = readResponse(client.execute(new HttpGet(url)),
@@ -115,7 +115,7 @@ public class ArtifactoryDependenciesClient {
     }
 
     public PropertySearchResult searchArtifactsByProperties(String properties) throws IOException {
-        CloseableHttpClient client = httpClient.getHttpClient();
+        PreemptiveHttpClient client = httpClient.getHttpClient();
         String replacedProperties = StringUtils.replaceEach(properties, new String[]{";", "+"}, new String[]{"&", ""});
         String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
         PropertySearchResult result = readResponse(client.execute(new HttpGet(url)),
@@ -153,7 +153,9 @@ public class ArtifactoryDependenciesClient {
                 // http://wiki.fasterxml.com/JacksonDataBinding
                 return parser.readValueAs(valueType);
             } finally {
-                IOUtils.closeQuietly(content);
+                if (content != null) {
+                    IOUtils.closeQuietly(content);
+                }
             }
         } else {
             HttpEntity httpEntity = response.getEntity();
@@ -173,7 +175,7 @@ public class ArtifactoryDependenciesClient {
     }
 
     private HttpResponse execute(String artifactUrl, boolean isHead) throws IOException {
-        CloseableHttpClient client = httpClient.getHttpClient();
+        PreemptiveHttpClient client = httpClient.getHttpClient();
 
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);
         HttpRequestBase httpRequest = isHead ? new HttpHead(artifactUrl) : new HttpGet(artifactUrl);
