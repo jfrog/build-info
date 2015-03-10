@@ -429,8 +429,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
         // Get the value from the client publisher configuration (in case a CI plugin configuration is used):
         Boolean publishIvy = acc.publisher.isIvy();
-        // It the value is null, it means that there's no CI plugin configuration, so the value should be taken from the
-        // artifactory DSL inside the gradle script:
+        // It the value is null, it means that there's no CI Server Artifactory plugin configuration,
+        // so the value should be taken from the artifactory DSL inside the gradle script:
         if (publishIvy == null) {
             publishIvy = getPublishIvy();
         }
