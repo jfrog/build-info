@@ -72,9 +72,27 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    /**
+     * Add properties to the client configuration.
+     * @param props The properties to be added.
+     */
     public void fillFromProperties(Properties props) {
+        fillFromProperties(props, null);
+    }
+
+    /**
+     * Add properties to the client configuration, excluding specific properties, if they already exist in the client configuration.
+     * @param props The properties to be added to the client configuration.
+     * @param excludeIfAlreadyExists    A collection of property names which will not be added to the client configuration
+     *                                  if they already exist in it.
+     */
+    public void fillFromProperties(Properties props, Set<String> excludeIfAlreadyExists) {
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
-            root.setStringValue((String) entry.getKey(), (String) entry.getValue());
+            String key = (String) entry.getKey();
+            if (excludeIfAlreadyExists == null ||
+                    !excludeIfAlreadyExists.contains(key) || root.getStringValue(key) == null) {
+                root.setStringValue(key, (String)entry.getValue());
+            }
         }
     }
 
@@ -1061,6 +1079,14 @@ public class ArtifactoryClientConfiguration {
             }
 
             return runParameters;
+        }
+
+        public Boolean isIncremental() {
+            return getBooleanValue(INCREMENTAL, Boolean.FALSE);
+        }
+
+        public void setIncremental(Boolean incremental) {
+            setBooleanValue(INCREMENTAL, incremental);
         }
     }
 }

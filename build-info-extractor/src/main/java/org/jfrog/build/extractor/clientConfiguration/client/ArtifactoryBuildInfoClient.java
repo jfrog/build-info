@@ -25,6 +25,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
@@ -55,6 +56,8 @@ import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
+
+import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
 
 /**
  * Artifactory client to perform build info related tasks.
@@ -224,18 +227,7 @@ public class ArtifactoryBuildInfoClient {
     public void sendBuildInfo(String buildInfoJson) throws IOException {
         String url = artifactoryUrl + BUILD_REST_URL;
         HttpPut httpPut = new HttpPut(url);
-        StringEntity stringEntity = new StringEntity(buildInfoJson, "UTF-8");
-        stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
-        httpPut.setEntity(stringEntity);
-        log.info("Deploying build info to: " + url);
-        HttpResponse response = httpClient.getHttpClient().execute(httpPut);
-        if (response.getEntity() != null) {
-            EntityUtils.consume(response.getEntity());
-        }
-        StatusLine statusLine = response.getStatusLine();
-        if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            throwHttpIOException("Failed to send build info:", statusLine);
-        }
+        sendDescriptor(httpPut, buildInfoJson);
     }
 
     /**
@@ -245,18 +237,46 @@ public class ArtifactoryBuildInfoClient {
      * @throws IOException On any connection error
      */
     public void sendBuildInfo(Build buildInfo) throws IOException {
+        log.debug("Sending build info: " + buildInfo);
         try {
             sendBuildInfo(buildInfoToJsonString(buildInfo));
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
-
         String url = artifactoryUrl +
-                BUILD_BROWSE_URL + "/" + buildInfo.getName() + "/" + buildInfo.getNumber() +
-                "/" + buildInfo.getStarted() + "/" ;
-        log.info("Build successfully deployed. Browse it in Artifactory under " + url.replaceAll(" ", "%20"));
+                BUILD_BROWSE_URL + "/" + encodeUrl(buildInfo.getName()) + "/" + encodeUrl(buildInfo.getNumber()) +
+                "/" + buildInfo.getStarted() + "/";
+        log.info("Build successfully deployed. Browse it in Artifactory under " + url);
+    }
 
+    public void sendModuleInfo(Build build) throws IOException {
+        log.debug("Sending build info modules: " + build);
+        try {
+            String url = artifactoryUrl + BUILD_REST_URL + "/append/" + encodeUrl(build.getName()) + "/" +
+                    encodeUrl(build.getNumber());
+            HttpPost httpPost = new HttpPost(url);
+            String modulesAsJsonString = toJsonString(build.getModules());
+            sendDescriptor(httpPost, modulesAsJsonString);
+        } catch (Exception e) {
+            log.error("Could not build the build-info modules object.", e);
+            throw new IOException("Could not publish build-info modules: " + e.getMessage());
+        }
+    }
+
+    private void sendDescriptor(HttpEntityEnclosingRequestBase request, String content) throws IOException {
+        StringEntity stringEntity = new StringEntity(content, "UTF-8");
+        stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
+        request.setEntity(stringEntity);
+        log.info("Deploying build descriptor to: " + request.getURI().toString());
+        HttpResponse response = httpClient.getHttpClient().execute(request);
+        if (response.getEntity() != null) {
+            EntityUtils.consume(response.getEntity());
+        }
+        StatusLine statusLine = response.getStatusLine();
+        if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+            throwHttpIOException("Failed to send build descriptor :", statusLine);
+        }
     }
 
     public String getItemLastModified(String path) throws IOException, ParseException {
@@ -307,7 +327,7 @@ public class ArtifactoryBuildInfoClient {
         deploymentPathBuilder.append(details.getArtifactPath());
         String deploymentPath = deploymentPathBuilder.toString();
         log.info("Deploying artifact: " + deploymentPath);
-        deploymentPath = ArtifactoryHttpClient.encodeUrl(deploymentPath);
+        deploymentPath = encodeUrl(deploymentPath);
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
@@ -375,7 +395,7 @@ public class ArtifactoryBuildInfoClient {
     }
 
     // create pushToBintray request Url
-    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase){
+    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase) {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(PUSH_TO_BINTRAY_REST_URL).append(buildName)
                 .append("/").append(buildNumber);
 
@@ -415,8 +435,7 @@ public class ArtifactoryBuildInfoClient {
         }
 
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/promote/").
-                append(ArtifactoryHttpClient.encodeUrl(buildName)).append("/").append(ArtifactoryHttpClient.
-                encodeUrl(buildNumber));
+                append(encodeUrl(buildName)).append("/").append(encodeUrl(buildNumber));
 
         String promotionJson = toJsonString(promotion);
 
@@ -469,8 +488,8 @@ public class ArtifactoryBuildInfoClient {
     public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams)
             throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/staging/")
-                .append(ArtifactoryHttpClient.encodeUrl(strategyName)).append("?buildName=")
-                .append(ArtifactoryHttpClient.encodeUrl(buildName)).append("&");
+                .append(encodeUrl(strategyName)).append("?buildName=")
+                .append(encodeUrl(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpGet getRequest = new HttpGet(urlBuilder.toString());
         HttpResponse response = httpClient.getHttpClient().execute(getRequest);
@@ -501,8 +520,8 @@ public class ArtifactoryBuildInfoClient {
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
                                                    Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
-                .append(promotionName).append("/").append(ArtifactoryHttpClient.encodeUrl(buildName)).append("/")
-                .append(ArtifactoryHttpClient.encodeUrl(buildNumber)).append("?");
+                .append(promotionName).append("/").append(encodeUrl(buildName)).append("/")
+                .append(encodeUrl(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
@@ -522,13 +541,13 @@ public class ArtifactoryBuildInfoClient {
         if ((requestParams != null) && !requestParams.isEmpty()) {
             urlBuilder.append("params=");
             Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
-            String encodedPipe = ArtifactoryHttpClient.encodeUrl("|");
+            String encodedPipe = encodeUrl("|");
             while (paramEntryIterator.hasNext()) {
                 Map.Entry<String, String> paramEntry = paramEntryIterator.next();
-                urlBuilder.append(ArtifactoryHttpClient.encodeUrl(paramEntry.getKey()));
+                urlBuilder.append(encodeUrl(paramEntry.getKey()));
                 String paramValue = paramEntry.getValue();
                 if (StringUtils.isNotBlank(paramValue)) {
-                    urlBuilder.append("=").append(ArtifactoryHttpClient.encodeUrl(paramValue));
+                    urlBuilder.append("=").append(encodeUrl(paramValue));
                 }
 
                 if (paramEntryIterator.hasNext()) {

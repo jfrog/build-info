@@ -16,11 +16,13 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoFields;
+import org.jfrog.build.api.BuildInfoProperties;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
@@ -29,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
@@ -41,7 +44,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_
 public class GradleArtifactoryClientConfigUpdater {
 
     /**
-     * Returns a  configuration handler object out of a Gradle project. This method will aggregate the properties in our
+     * Returns a configuration handler object out of a Gradle project. This method will aggregate the properties in our
      * defined hierarchy.<br/> <ol><li>First search for the property as a system property, if found return it.</li>
      * <li>Second search for the property in the Gradle {@link org.gradle.StartParameter#getProjectProperties} container
      * and if found there, then return it.</li> <li>Third search for the property in {@link
@@ -69,9 +72,15 @@ public class GradleArtifactoryClientConfigUpdater {
                 BuildInfoExtractorUtils.stripPrefixFromProperties(buildInfoProperties, BUILD_INFO_PROP_PREFIX);
         mergedProps.putAll(buildInfoProperties);
 
-        config.fillFromProperties(mergedProps);
+        // Add the collected properties to the Artifactory client configuration.
+        // In case the build name and build number have already been added to the configuration
+        // from inside the gradle script, we do not want to override them by the values sent from
+        // the CI server plugin.
+        String prefix = BuildInfoProperties.BUILD_INFO_PREFIX;
+        Set<String> excludeIfExist = Sets.newHashSet(prefix + BuildInfoFields.BUILD_NAME, prefix + BuildInfoFields.BUILD_NUMBER);
+        config.fillFromProperties(mergedProps, excludeIfExist);
 
-        //After props are set, apply missing project props (not set by CI-plugin generated props)
+        // After props are set, apply missing project props (not set by CI-plugin generated props)
         setMissingBuildAttributes(config, project);
     }
 

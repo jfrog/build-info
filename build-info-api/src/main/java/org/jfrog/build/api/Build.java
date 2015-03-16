@@ -514,4 +514,34 @@ public class Build extends BaseBuildBean {
     public void setGovernance(Governance governance) {
         this.governance = governance;
     }
+
+    @Override
+    public String toString() {
+        return "Build{" +
+                "version='" + version + '\'' +
+                ", name='" + name + '\'' +
+                ", number='" + number + '\'' +
+                ", type=" + type +
+                ", buildAgent=" + buildAgent +
+                ", agent=" + agent +
+                ", started='" + started + '\'' +
+                ", durationMillis=" + durationMillis +
+                ", principal='" + principal + '\'' +
+                ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
+                ", url='" + url + '\'' +
+                ", parentName='" + parentName + '\'' +
+                ", parentNumber='" + parentNumber + '\'' +
+                ", vcsRevision='" + vcsRevision + '\'' +
+                ", vcsUrl='" + vcsUrl + '\'' +
+                ", parentBuildId='" + parentBuildId + '\'' +
+                ", licenseControl=" + licenseControl +
+                ", buildRetention=" + buildRetention +
+                ", runParameters=" + runParameters +
+                ", modules=" + modules +
+                ", statuses=" + statuses +
+                ", buildDependencies=" + buildDependencies +
+                ", issues=" + issues +
+                ", governance=" + governance +
+                '}';
+    }
 }

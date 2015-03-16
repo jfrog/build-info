@@ -292,14 +292,15 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
              */
             exportBuildInfo(build, getExportFile(acc));
             if (isPublishBuildInfo(acc)) {
-                log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                /**
-                 * After all the artifacts were uploaded successfully the next task is to send the build-info
-                 * object.
-                 */
                 // If export property set always save the file before sending it to artifactory
                 exportBuildInfo(build, getExportFile(acc));
-                client.sendBuildInfo(build);
+                if (acc.info.isIncremental()) {
+                    log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
+                    client.sendModuleInfo(build);
+                } else {
+                    log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
+                    client.sendBuildInfo(build);
+                }
             }
         } finally {
             client.shutdown();
