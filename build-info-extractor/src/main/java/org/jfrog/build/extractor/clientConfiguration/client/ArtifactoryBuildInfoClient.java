@@ -398,10 +398,11 @@ public class ArtifactoryBuildInfoClient {
     private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase) {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(PUSH_TO_BINTRAY_REST_URL).append(buildName)
                 .append("/").append(buildNumber);
-
-        if (Boolean.valueOf(signMethod)) {
+        if (signMethod.equals("true")) {
             urlBuilder.append("?gpgPassphrase=").append(passphrase).append("&gpgSign=")
                     .append("true");
+        } else if (signMethod.equals("descriptor")){
+            urlBuilder.append("?gpgPassphrase=").append(passphrase);
         }
         return urlBuilder.toString();
     }
