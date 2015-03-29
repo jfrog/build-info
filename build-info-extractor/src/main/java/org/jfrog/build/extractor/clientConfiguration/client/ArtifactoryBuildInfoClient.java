@@ -21,14 +21,12 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
@@ -53,6 +51,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
@@ -376,7 +375,7 @@ public class ArtifactoryBuildInfoClient {
      * @see org.jfrog.build.api.release.BintrayUploadInfoOverride;
      */
     public BintrayResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
-                                         BintrayUploadInfoOverride bintrayUploadInfo) throws IOException {
+                                         BintrayUploadInfoOverride bintrayUploadInfo) throws IOException, URISyntaxException {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
@@ -395,14 +394,15 @@ public class ArtifactoryBuildInfoClient {
     }
 
     // create pushToBintray request Url
-    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase) {
-        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(PUSH_TO_BINTRAY_REST_URL).append(buildName)
-                .append("/").append(buildNumber);
-        if (signMethod.equals("true")) {
-            urlBuilder.append("?gpgPassphrase=").append(passphrase).append("&gpgSign=")
-                    .append("true");
-        } else if (signMethod.equals("descriptor")){
-            urlBuilder.append("?gpgPassphrase=").append(passphrase);
+    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase) throws URISyntaxException {
+        URIBuilder urlBuilder = new URIBuilder();
+        urlBuilder.setPath(artifactoryUrl + PUSH_TO_BINTRAY_REST_URL + buildName + "/" + buildNumber);
+
+        if (StringUtils.isNotEmpty(passphrase)){
+            urlBuilder.setParameter("gpgPassphrase", passphrase);
+        }
+        if (StringUtils.equals(signMethod, "true")){
+            urlBuilder.setParameter("gpgSign", signMethod);
         }
         return urlBuilder.toString();
     }
