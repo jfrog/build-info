@@ -401,7 +401,7 @@ public class ArtifactoryBuildInfoClient {
         if (StringUtils.isNotEmpty(passphrase)){
             urlBuilder.setParameter("gpgPassphrase", passphrase);
         }
-        if (StringUtils.equals(signMethod, "true")){
+        if (!StringUtils.equals(signMethod, "descriptor")){
             urlBuilder.setParameter("gpgSign", signMethod);
         }
         return urlBuilder.toString();
