@@ -231,7 +231,6 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
      * Check all files to publish, depends on it (to generate Gradle task graph to create them).
      *
      * @param project The project of this task
-     * @param acc     The convention client configuration
      */
     @Override
     protected void checkDependsOnArtifactsToPublish(Project project) {
