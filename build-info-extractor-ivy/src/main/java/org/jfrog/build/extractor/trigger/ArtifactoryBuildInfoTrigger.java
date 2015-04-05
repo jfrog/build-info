@@ -190,7 +190,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
         // Set name from name of published file
         String fullPath = IvyResolverHelper.calculateArtifactPath(publisher, map, extraAttributes);
         int lastSlash = fullPath.lastIndexOf('/');
-        if (lastSlash > 0 && lastSlash + 1 < name.length()) {
+        if (lastSlash > 0 && lastSlash + 1 < fullPath.length()) {
             name = fullPath.substring(lastSlash + 1);
         }
         project.log("[buildinfo:collect] Collecting artifact " + name + " for module " + moduleName +
