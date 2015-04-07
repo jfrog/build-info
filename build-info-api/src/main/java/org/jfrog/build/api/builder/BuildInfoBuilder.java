@@ -22,9 +22,11 @@ import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A builder for the build class
@@ -49,7 +51,7 @@ public class BuildInfoBuilder {
     protected String vcsRevision;
     protected String vcsUrl;
     protected List<MatrixParameter> runParameters;
-    protected List<Module> modules;
+    protected ConcurrentHashMap<String, Module> modules;
     protected List<PromotionStatus> statuses;
     protected Properties properties;
     protected LicenseControl licenseControl;
@@ -94,7 +96,7 @@ public class BuildInfoBuilder {
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
         build.setRunParameters(runParameters);
-        build.setModules(modules);
+        build.setModules(new ArrayList<Module>(modules.values()));
         build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
@@ -290,8 +292,24 @@ public class BuildInfoBuilder {
      * @param modules Build modules
      * @return Builder instance
      */
-    public BuildInfoBuilder modules(List<Module> modules) {
+    public BuildInfoBuilder modules(ConcurrentHashMap<String, Module> modules) {
         this.modules = modules;
+        return this;
+    }
+
+    /**
+     * Sets the modules of the build
+     *
+     * @param modules Build modules
+     * @return Builder instance
+     */
+    public BuildInfoBuilder modules(List<Module> modules) {
+        ConcurrentHashMap<String, Module> modulesMap = new ConcurrentHashMap<String, Module>();
+        for(Module module : modules) {
+            modulesMap.put(module.getId(), module);
+        }
+
+        this.modules = modulesMap;
         return this;
     }
 
@@ -364,9 +382,13 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder addModule(Module module) {
         if (modules == null) {
-            modules = Lists.newArrayList();
+            synchronized(this) {
+                if (modules == null) {
+                    modules = new ConcurrentHashMap<String, Module>();
+                }
+            }
         }
-        modules.add(module);
+        modules.put(module.getId(), module);
         return this;
     }
 

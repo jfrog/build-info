@@ -18,7 +18,6 @@ package org.jfrog.build.api.builder;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -27,6 +26,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A temporary builder for the build class specifically for Maven extractor.
@@ -232,7 +232,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
      * @param modules Build modules
      * @return Builder instance
      */
-    public BuildInfoMavenBuilder modules(List<Module> modules) {
+    public BuildInfoMavenBuilder modules(ConcurrentHashMap<String, Module> modules) {
         super.modules(modules);
         return this;
     }
@@ -276,11 +276,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
      */
     @Override
     public BuildInfoMavenBuilder addModule(Module module) {
-        if (modules == null) {
-            modules = Lists.newArrayList();
-            modules.add(module);
-            return this;
-        }
+        super.addModule(module);
         mergeModule(module);
         return this;
     }
@@ -319,22 +315,12 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     private void mergeModule(Module moduleToMerge) {
-        Module existingModule = findModule(moduleToMerge.getId());
+        Module existingModule = modules.putIfAbsent(moduleToMerge.getId(), moduleToMerge);
         if (existingModule == null) {
-            modules.add(moduleToMerge);
             return;
         }
-
         mergeModuleArtifacts(existingModule, moduleToMerge);
         mergeModuleDependencies(existingModule, moduleToMerge);
-    }
-
-    private Module findModule(final String moduleKey) {
-        return Iterables.find(modules, new Predicate<Module>() {
-            public boolean apply(Module input) {
-                return input.getId().equals(moduleKey);
-            }
-        }, null);
     }
 
     private void mergeModuleArtifacts(Module existingModule, Module moduleToMerge) {
