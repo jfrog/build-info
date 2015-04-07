@@ -126,6 +126,7 @@ public class BuildInfoBuilderTest {
      */
     public void testBuilderAddMethod() {
         Module module = new Module();
+        module.setId("module-id");
         String propertyKey = "key";
         String propertyValue = "value";
         PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();
