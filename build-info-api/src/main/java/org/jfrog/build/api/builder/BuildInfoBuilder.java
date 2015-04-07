@@ -96,7 +96,7 @@ public class BuildInfoBuilder {
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
         build.setRunParameters(runParameters);
-        build.setModules(new ArrayList<Module>(modules.values()));
+        build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
         build.setStatuses(statuses);
         build.setProperties(properties);
         build.setVcsRevision(vcsRevision);
