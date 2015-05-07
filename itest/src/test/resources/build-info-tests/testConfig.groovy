@@ -6,6 +6,8 @@ artifacts {
     propertyValue = ["1", "2"]
 }
 
+
+
 artifactory {
     url="http://localhost:8081/artifactory"
     username="admin"
@@ -20,6 +22,6 @@ buildLauncher {
     projVariables = []
     javaHome=""
     propertiesFilesPath=["src\\test\\resources\\build-info-tests\\build.properties"]
-    buildScriptPath = "C:\\dev\\project-examples\\gradle2-example\\build.gradle"
-    commandPath="C:\\Installed\\gradle-2.3\\bin\\gradle.bat"
+    buildScriptPath = ""
+    commandPath=""
 }

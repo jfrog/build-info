@@ -1,12 +1,9 @@
-package org.jfrog.build.tests
+package org.jfrog.build.utils
 
 import org.jfrog.artifactory.client.ArtifactoryRequest
 import org.jfrog.artifactory.client.impl.ArtifactoryRequestImpl
 import spock.lang.Shared
 import spock.lang.Specification
-import org.jfrog.build.utils.TestConstants
-import org.jfrog.build.utils.TestSetup
-import org.jfrog.build.utils.TestUtils
 
 /**
  * @author Aviad Shikloshi
@@ -14,19 +11,20 @@ import org.jfrog.build.utils.TestUtils
 class BuildInfoTest extends Specification {
 
     @Shared
-    private def testSetup = TestSetup.getTestConfig()
-    private static Map<String, Object> buildInfo
+    private def testSetup = org.jfrog.build.utils.TestSetup.getTestConfig()
 
     def setupSpec() {
-        testSetup = TestSetup.getTestConfig()
+        testSetup = org.jfrog.build.utils.TestSetup.getTestConfig()
         TestUtils.setupArtifactory(testSetup.artifactory, testSetup.buildProperties.getBuildProperty(TestConstants.repoKey))
     }
+
+    private static Map<String, Object> buildInfo
 
     def "build info test"() {
 
         when:
         def exitCode = testSetup.buildLauncher.launch()
-        testSetup = TestSetup.getTestConfig()
+        testSetup = org.jfrog.build.utils.TestSetup.getTestConfig()
         def buildName = testSetup.buildProperties.getBuildProperty(TestConstants.buildName)
         def buildNumber = testSetup.buildProperties.getBuildProperty(TestConstants.buildNumber)
         buildInfo = TestUtils.getBuildInfo(testSetup.artifactory, buildName, buildNumber)
