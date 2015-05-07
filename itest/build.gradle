@@ -10,6 +10,8 @@ repositories {
 }
 
 dependencies {
+    compile 'org.jfrog.artifactory.client:artifactory-java-client-api:0.18-SNAPSHOT'
+    compile 'org.jfrog.artifactory.client:artifactory-java-client-services:0.18-SNAPSHOT'
     testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3')
     testCompile(group: 'org.apache.ant', name: 'ant', version: '1.9.2')
     testCompile group: 'junit', name: 'junit', version: '4.11'
