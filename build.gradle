@@ -37,7 +37,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
 project.version = '2'
-project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
+project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs', 'itest']
 
 defaultTasks 'clean', 'build', 'install'
 
@@ -84,8 +84,8 @@ subprojects {
         mavenLocal()
     }
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {
@@ -303,6 +303,8 @@ project('build-info-extractor') {
     dependencies {
         compile project(':build-info-client')
         testCompile "org.easymock:easymockclassextension:2.5.2"
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3')
+        testCompile(group: 'org.apache.ant', name: 'ant', version: '1.9.2')
     }
 }
 
@@ -345,8 +347,8 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
-            transitive = false
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3') {
+            transitive = true
         }
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
@@ -373,7 +375,7 @@ project('build-info-extractor-maven3') {
 
     dependencies {
         compile 'org.jdom:jdom:1.1.1',
-                'org.codehaus.groovy:groovy-all:2.1.6',
+                'org.codehaus.groovy:groovy-all:2.3.2',
                 'plexus:plexus-container-default:1.0-alpha-6',
                 'org.apache.maven:maven-core:3.1.0',
                 'org.sonatype.aether:aether-api:1.13.1',
@@ -386,6 +388,21 @@ project('build-info-extractor-maven3') {
         provided    'org.codehaus.plexus:plexus-component-annotations:1.5.5'
         testCompile 'org.easymock:easymockclassextension:2.5.2'
     }
+
+
+    /*** For integration test purposes ***/
+    task copyToLib(type: Copy) {
+        into "$rootDir/itest/src/test/resources/cache/artifactory-plugin"
+        from project.jar
+    }
+
+    task copyDeps(type: Copy) {
+        into "$rootDir/itest/src/test/resources/cache/artifactory-plugin"
+        from configurations.runtime
+    }
+
+    build.dependsOn copyToLib
+    copyToLib.dependsOn copyDeps
 
     configure(install.repositories.mavenInstaller) {
         pom.project {
@@ -414,7 +431,7 @@ project('artifactory-maven-plugin') {
             compile ( project( ':build-info-extractor-maven3' )) { exclude group: 'org.jdom', module: 'jdom' }
             compile ( 'org.codehaus.gmaven:gmaven-mojo:1.5'    ) { exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal' }
 
-            testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+            testCompile 'org.spockframework:spock-core:1.0-groovy-2.3'
             provided    'org.apache.maven:maven-core:3.1.0',
                         'org.apache.maven:maven-project:2.0.11'
         }
