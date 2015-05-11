@@ -8,15 +8,9 @@ import com.google.common.collect.Sets
  */
 class GradleLauncher extends Launcher{
     protected Map<String, Object> projProp = Maps.newHashMap()
-    protected Set<String> switches = Sets.newHashSet()
 
     public GradleLauncher(gradleCommandPath, gradleProjectFilePath) {
         super(gradleCommandPath, gradleProjectFilePath)
-    }
-
-    public Launcher addSwitch(String gradleSwitch) {
-        switches.add(gradleSwitch)
-        this
     }
 
     public Launcher addProjProp(String name, String value) {
@@ -36,19 +30,6 @@ class GradleLauncher extends Launcher{
         }
         sb
     }*/
-
-    private def switchesToString() {
-        StringBuilder sb = new StringBuilder()
-        int c = 0;
-        for(gradleSwitch in switches) {
-            gradleSwitch = gradleSwitch.startsWith("--") ? gradleSwitch : "--${gradleSwitch}"
-            sb.append(gradleSwitch)
-            if (c++ < switches.size()-1) {
-                sb.append(" ")
-            }
-        }
-        sb
-    }
 
     private def projPropToString() {
         StringBuilder sb = new StringBuilder()

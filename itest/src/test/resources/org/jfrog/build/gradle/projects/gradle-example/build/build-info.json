@@ -1,0 +1,199 @@
+{
+  "version" : "1.0.1",
+  "name" : "testing-gradle-3",
+  "number" : "10",
+  "type" : "GRADLE",
+  "buildAgent" : {
+    "name" : "Gradle",
+    "version" : "1.12"
+  },
+  "agent" : {
+    "name" : "Jenkins",
+    "version" : "1.607"
+  },
+  "started" : "2015-05-10T14:35:33.747+0300",
+  "durationMillis" : 91614306,
+  "principal" : "liorh",
+  "artifactoryPrincipal" : "admin",
+  "url" : "http://localhost:8000/job/mavenFreeStyleArfifactoryPlugin/32/",
+  "vcsRevision" : "d3515e13b5ebfe1b93d92bb09f585f9f8608bf83",
+  "vcsUrl" : "git@github.com:liorhson/project-examples.git",
+  "licenseControl" : {
+    "runChecks" : false,
+    "includePublishedArtifacts" : false,
+    "autoDiscover" : true,
+    "scopesList" : "",
+    "licenseViolationsRecipientsList" : ""
+  },
+  "buildRetention" : {
+    "count" : -1,
+    "deleteBuildArtifacts" : true,
+    "buildNumbersNotToBeDiscarded" : [ ]
+  },
+  "modules" : [ {
+    "id" : "org.jfrog.example.gradle:api:1.7-20150511130213",
+    "artifacts" : [ {
+      "type" : "ivy",
+      "sha1" : "d1c42fab4549109abc0481b7fce17177e2045593",
+      "md5" : "5e638adebf15e978a79b9f1dacd2a876",
+      "name" : "ivy-1.7-20150511130213.xml"
+    }, {
+      "type" : "jar",
+      "sha1" : "9ff8c66c3522f1af65d4ebf88abd688af6907152",
+      "md5" : "260ea6572c99c2a671176a049f6f4138",
+      "name" : "api-1.7-20150511130213.jar"
+    }, {
+      "type" : "javadoc-jar",
+      "sha1" : "d3465e27a140ae8415d1b28d403a273c5ec84484",
+      "md5" : "7c44e345b4a7c3673ca5a1febe56e055",
+      "name" : "api-1.7-20150511130213-javadoc.jar"
+    }, {
+      "type" : "sources-jar",
+      "sha1" : "f98bec2b6f71051f270d0215b74154237c0df28a",
+      "md5" : "bfed33a2b4ed330a88d13d4c180045cc",
+      "name" : "api-1.7-20150511130213-sources.jar"
+    } ],
+    "excludedArtifacts" : [ ],
+    "dependencies" : [ {
+      "type" : "jar",
+      "sha1" : "adc2919e3156b60dc125d70bec225430f583c6c3",
+      "md5" : "0be5d9917a264000978b2e65d42b139e",
+      "id" : "org.jfrog.example.gradle:shared:1.7-20150511130213",
+      "scopes" : [ "compile" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "16313e02a793435009f1e458fa4af5d879f6fb11",
+      "md5" : "237a8e845441bad2e535c57d985c8204",
+      "id" : "commons-lang:commons-lang:2.4",
+      "scopes" : [ "compile" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "14dd208c9077c462b813ed41c21c57f6a8153694",
+      "md5" : "4cad3d21b85b369c8b00dfb84e270e02",
+      "id" : "org.apache.wicket:wicket:1.3.7",
+      "scopes" : [ "compile" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "0ad6ae511ca4608a18317fcb19850fd113bb2ae8",
+      "md5" : "b0bf5f906af5a936992514ed087f1fa2",
+      "id" : "commons-io:commons-io:1.2",
+      "scopes" : [ "compile" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "61fce919969d134a4fa2ba4fd5bf151ea63fce13",
+      "md5" : "2d673736b993aa112fda47b9061e4e48",
+      "id" : "org.slf4j:slf4j-api:1.4.2",
+      "scopes" : [ "compile" ]
+    } ]
+  }, {
+    "id" : "org.jfrog.example.gradle:services:1.7-20150511130213",
+    "artifacts" : [ {
+      "type" : "ivy",
+      "sha1" : "f5e3da3e47117e4ff42fc3a9703117f20d51e372",
+      "md5" : "85adbeb6e7aa87b99626932d57d06b52",
+      "name" : "ivy-1.7-20150511130213.xml"
+    } ],
+    "excludedArtifacts" : [ ],
+    "dependencies" : [ ]
+  }, {
+    "id" : "org.jfrog.example.gradle:shared:1.7-20150511130213",
+    "artifacts" : [ {
+      "type" : "sources-jar",
+      "sha1" : "298b49849acefdb3717769288c00ee0ee067b007",
+      "md5" : "371bcc77581a2764eeadd95f0d4aaa1a",
+      "name" : "shared-1.7-20150511130213-sources.jar"
+    }, {
+      "type" : "ivy",
+      "sha1" : "8ab9a0de3038f3ffe5fc728b2704aa0761b1f353",
+      "md5" : "d4770003e93b7f5df5c880942a2495b0",
+      "name" : "ivy-1.7-20150511130213.xml"
+    }, {
+      "type" : "jar",
+      "sha1" : "adc2919e3156b60dc125d70bec225430f583c6c3",
+      "md5" : "0be5d9917a264000978b2e65d42b139e",
+      "name" : "shared-1.7-20150511130213.jar"
+    }, {
+      "type" : "javadoc-jar",
+      "sha1" : "47227f105d8c3131ef83476dbcd3c176c9f89e57",
+      "md5" : "577bbdbb8cd2f7c277f43a2eed6ba68f",
+      "name" : "shared-1.7-20150511130213-javadoc.jar"
+    } ],
+    "excludedArtifacts" : [ ],
+    "dependencies" : [ ]
+  }, {
+    "id" : "org.jfrog.example.gradle:webservice:1.7-20150511130213",
+    "artifacts" : [ {
+      "type" : "javadoc-jar",
+      "sha1" : "5c1b8ac595c813d81fa7b1f07306c008a374db76",
+      "md5" : "554835fdcc28177da303fa041986fd78",
+      "name" : "webservice-1.7-20150511130213-javadoc.jar"
+    }, {
+      "type" : "ivy",
+      "sha1" : "d7d9083b21576d5d3104d06c03eacf4612777bca",
+      "md5" : "9b9a14142d4b37db2a31067df9297ae1",
+      "name" : "ivy-1.7-20150511130213.xml"
+    }, {
+      "type" : "sources-jar",
+      "sha1" : "23152b7bc529a1a5b3e7bc6926b8417e0b89a879",
+      "md5" : "2f7e0307fe186f5399daa83603b4ff4a",
+      "name" : "webservice-1.7-20150511130213-sources.jar"
+    }, {
+      "type" : "war",
+      "sha1" : "58c08d715c7af9f8e3bbf5e1663a5b4452bf2c2e",
+      "md5" : "f2de67079b917b1ab26e55aa2aa9638f",
+      "name" : "webservice-1.7-20150511130213.war"
+    } ],
+    "excludedArtifacts" : [ ],
+    "dependencies" : [ {
+      "type" : "jar",
+      "sha1" : "adc2919e3156b60dc125d70bec225430f583c6c3",
+      "md5" : "0be5d9917a264000978b2e65d42b139e",
+      "id" : "org.jfrog.example.gradle:shared:1.7-20150511130213",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "f951934aa5ae5a88d7e6dfaa6d32307d834a88be",
+      "md5" : "7b9216b608d550787bdf43a63d88bf3b",
+      "id" : "commons-collections:commons-collections:3.2",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "0ad6ae511ca4608a18317fcb19850fd113bb2ae8",
+      "md5" : "b0bf5f906af5a936992514ed087f1fa2",
+      "id" : "commons-io:commons-io:1.2",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "16313e02a793435009f1e458fa4af5d879f6fb11",
+      "md5" : "237a8e845441bad2e535c57d985c8204",
+      "id" : "commons-lang:commons-lang:2.4",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "14dd208c9077c462b813ed41c21c57f6a8153694",
+      "md5" : "4cad3d21b85b369c8b00dfb84e270e02",
+      "id" : "org.apache.wicket:wicket:1.3.7",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "9ff8c66c3522f1af65d4ebf88abd688af6907152",
+      "md5" : "260ea6572c99c2a671176a049f6f4138",
+      "id" : "org.jfrog.example.gradle:api:1.7-20150511130213",
+      "scopes" : [ "compile", "runtime" ]
+    }, {
+      "type" : "jar",
+      "sha1" : "61fce919969d134a4fa2ba4fd5bf151ea63fce13",
+      "md5" : "2d673736b993aa112fda47b9061e4e48",
+      "id" : "org.slf4j:slf4j-api:1.4.2",
+      "scopes" : [ "compile", "runtime" ]
+    } ]
+  } ],
+  "governance" : {
+    "blackDuckProperties" : {
+      "runChecks" : false,
+      "includePublishedArtifacts" : false,
+      "autoCreateMissingComponentRequests" : false,
+      "autoDiscardStaleComponentRequests" : false
+    }
+  }
+}

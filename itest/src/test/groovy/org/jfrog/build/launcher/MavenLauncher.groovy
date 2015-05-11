@@ -51,6 +51,6 @@ class MavenLauncher extends Launcher{
         DirectoryScanner ds = fs.getDirectoryScanner(new Project())
         String[] files = ds.getIncludedFiles()
 
-        files[0];
+        files[0]
     }
 }

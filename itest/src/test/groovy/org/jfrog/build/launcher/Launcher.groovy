@@ -2,23 +2,27 @@ package org.jfrog.build.launcher
 
 import com.google.common.collect.Maps
 import com.google.common.collect.Sets
+import com.google.inject.internal.Lists
 
 /**
  * @author Lior Hasson
  */
 public abstract class Launcher {
+
+    protected def processEnvironment = Maps.newHashMap()
     protected def cmd
     protected def commandPath
     protected def projectFilePath
     protected Map<String, Object> envVars = Maps.newHashMap()
     protected Map<String, Object> systemProps = Maps.newHashMap()
     protected Set<String> tasks = Sets.newHashSet()
+    protected Set<String> switches = Sets.newHashSet()
 
-    public Launcher(projectFilePath){
+    public Launcher(projectFilePath) {
         this.projectFilePath = projectFilePath
     }
 
-    public Launcher(commandPath, projectFilePath){
+    public Launcher(commandPath, projectFilePath) {
         this.commandPath = commandPath
         this.projectFilePath = projectFilePath
     }
@@ -47,13 +51,18 @@ public abstract class Launcher {
         this
     }
 
+    public Launcher addSwitch(String gradleSwitch) {
+        switches.add(gradleSwitch)
+        this
+    }
+
     protected def systemPropsToString() {
         StringBuilder sb = new StringBuilder()
         int c = 0;
-        for(var in systemProps) {
+        for (var in systemProps) {
             def key = var.key.startsWith("-D") ? var.key : "-D${var.key}"
             sb.append(key).append("=").append(var.value)
-            if (c++ < systemProps.size()-1) {
+            if (c++ < systemProps.size() - 1) {
                 sb.append(" ")
             }
         }
@@ -63,9 +72,22 @@ public abstract class Launcher {
     protected def tasksToString() {
         StringBuilder sb = new StringBuilder()
         int c = 0;
-        for(task in tasks) {
+        for (task in tasks) {
             sb.append(task)
-            if (c++ < tasks.size()-1) {
+            if (c++ < tasks.size() - 1) {
+                sb.append(" ")
+            }
+        }
+        sb
+    }
+
+    protected def switchesToString() {
+        StringBuilder sb = new StringBuilder()
+        int c = 0;
+        for(gradleSwitch in switches) {
+            gradleSwitch = gradleSwitch.startsWith("--") ? gradleSwitch : "--${gradleSwitch}"
+            sb.append(gradleSwitch)
+            if (c++ < switches.size()-1) {
                 sb.append(" ")
             }
         }
@@ -76,8 +98,17 @@ public abstract class Launcher {
         Process p
         try {
             def cmd = getCmd()
-            println "Launching Gradle process: $cmd"
+            println "Launching build tool process: $cmd"
             p = Runtime.getRuntime().exec(cmd)
+
+            ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(cmd.split(" ")))
+
+            def currentCmd = pb.command()
+            println currentCmd
+            pb.environment().putAll(processEnvironment)
+
+            println "Launching build process: $cmd"
+            p = pb.start()
 
             LogPrinter inputPrinter = new LogPrinter(p.getInputStream())
             LogPrinter errorPrinter = new LogPrinter(p.getErrorStream())
@@ -92,7 +123,7 @@ public abstract class Launcher {
 
             p.waitFor()
 
-            println "Gradle process finished with exit code ${p.exitValue()}"
+            println "Build tool process finished with exit code ${p.exitValue()}"
             p.exitValue()
         } finally {
             if (p != null) {
@@ -123,7 +154,7 @@ public abstract class Launcher {
 
             processReader.withReader {
                 def line
-                while ((line = it.readLine()) != null){
+                while ((line = it.readLine()) != null) {
                     println(line)
                 }
             }

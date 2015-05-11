@@ -1,6 +1,5 @@
 package org.jfrog.build.utils
 
-import groovyx.net.http.ContentType
 import org.jfrog.artifactory.client.Artifactory
 import org.jfrog.artifactory.client.ArtifactoryRequest
 import org.jfrog.artifactory.client.impl.ArtifactoryRequestImpl

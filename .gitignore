@@ -15,4 +15,4 @@ build-info.ipr
 build-info.iws
 atlassian-*.xml
 /.nb-gradle/private/
-/itest/src/test/resources/cache
+/itest/src/test/resources/org/jfrog/build/cache
