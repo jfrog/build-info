@@ -17,7 +17,7 @@ dependencies {
     compile "com.google.guava:guava:15.0"
 }
 
-test {
+/*test {
     //Spoke run with JUnit (the parent uses TestNG)
     test.useJUnit()
     testLogging {
@@ -25,4 +25,4 @@ test {
         events "started", "passed", "skipped", "failed", "standardOut", "standardError"
         minGranularity 0
     }
-}
+}*/
