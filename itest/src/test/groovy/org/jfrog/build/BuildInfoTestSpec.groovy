@@ -1,5 +1,7 @@
 package org.jfrog.build
 
+import org.jfrog.artifactory.client.ArtifactoryRequest
+import org.jfrog.artifactory.client.impl.ArtifactoryRequestImpl
 import org.jfrog.build.utils.TestConstants
 import org.jfrog.build.utils.TestUtils
 
@@ -9,21 +11,18 @@ import org.jfrog.build.utils.TestUtils
 class BuildInfoTestSpec extends BuildInfoTestBase {
 
     def "build info test"() {
-        when:
-        testSetup.each {
-            it.buildName = it.buildProperties.get(TestConstants.buildName)
-            it.buildNumber = it.buildProperties.get(TestConstants.buildNumber)
-            it.launch()
-            it.buildInfo = TestUtils.getBuildInfo(it.artifactory, it.buildName, it.buildNumber)
-        }
+        setup:
+        testConfig.buildName = testConfig.buildProperties.get(TestConstants.buildName)
+        testConfig.buildNumber = testConfig.buildProperties.get(TestConstants.buildNumber)
+        testConfig.launch()
+        testConfig.buildInfo = TestUtils.getBuildInfo(testConfig.artifactory, testConfig.buildName, testConfig.buildNumber)
 
-        then:
-        tmpTestSetup.exitCode == 0
-        tmpTestSetup.buildInfo != null
-//            assert it.exitCode == 0 : "exitcode fail on build: $it.buildName"
-//            assert it.buildInfo != null : "fail on build: $it.buildName"
+        expect:
+        testConfig.exitCode == 0
+        testConfig.buildInfo != null
+
         where:
-        tmpTestSetup << testSetup
+        testConfig << testConfigurations
     }
 
 //    def "blackduck test"(){
@@ -32,7 +31,7 @@ class BuildInfoTestSpec extends BuildInfoTestBase {
 //        def blackDuckProperties = ["runChecks", "includePublishedArtifacts", "autoCreateMissingComponentRequests", "autoDiscardStaleComponentRequests"]
 //        blackDuckProperties.each {
 //            def key = "buildInfo.governance.blackduck." + it
-//            def input = testSetup.buildProperties.getBuildProperty(key)
+//            def input = testConfigurations.buildProperties.getBuildProperty(key)
 //            def output = TestUtils.getBuildInfoFieldFromProperty(buildInfo, "buildInfo.governance.blackDuckProperties." + it)
 //            input.equals(output)
 //        }
@@ -43,26 +42,39 @@ class BuildInfoTestSpec extends BuildInfoTestBase {
 //        def licenseFields = ['runChecks', 'includePublishedArtifacts', 'autoDiscover']
 //        licenseFields.each {
 //            def key = "buildInfo.licenseControl." + it
-//            def input = testSetup.buildProperties.getBuildProperty(key)
+//            def input = testConfigurations.buildProperties.getBuildProperty(key)
 //            def output = TestUtils.getBuildInfoFieldFromProperty(buildInfo, key)
 //            input.equals(output)
 //        }
 //    }
 //
 //    def "publish to artifactory test"() {
+//
+//        setup:
+//        Map<String,Object> body = testConfigurations.get(0).testConfig.artifacts.mappings
+//
 //        expect:
 //        ArtifactoryRequest searchArtifacts = new ArtifactoryRequestImpl()
 //                .apiUrl("api/search/artifact")
-//                .method(ArtifactoryRequest.Method.GET)
+//                .method(ArtifactoryRequest.Method.POST)
+//                .requestType(ArtifactoryRequest.ContentType.JSON)
 //                .responseType(ArtifactoryRequest.ContentType.JSON)
-//                .addQueryParam("name", artifactName)
-//                .addQueryParam("repos", currentConf.getBuildProperty(TestConstants.repoKey))
-//        Map<String, Object> response = testSetup.artifactory.restCall(searchArtifacts)
+//                .requestBody()
+////                .addQueryParam("name", artifactName)
+////                .addQueryParam("repos", currentConf.get(TestConstants.repoKey))
+//
+////        artifactory.repositories()searches().artifactsByName(artifactName).repositories()
+//
+//        Map<String, Object> response = artifactory.restCall(searchArtifacts)
 //        response.get("results").size() != 0
-//        response.get("results").size() != 0
+//
 //        where:
-//        artifactName << testSetup.testConfig.artifacts.publishedArtifacts
-//        currentConf = testSetup.buildProperties
+//        testConfig << testConfigurations
+//
+////        where:
+////        artifactName << testConfigurations.testConfig.artifacts.publishedArtifacts
+////        currentConf = testConfigurations.buildProperties
+////        respositories = testConfigurations.buildProperties.
 //    }
 //
 //    def "include environment variable test"() {
@@ -87,22 +99,13 @@ class BuildInfoTestSpec extends BuildInfoTestBase {
 //                .responseType(ArtifactoryRequest.ContentType.JSON)
 //                .method(ArtifactoryRequest.Method.GET)
 //                .addQueryParam(key, value)
-//        Map<String, Object> files = testSetup.artifactory.restCall(propertySearch)
+//        Map<String, Object> files = testConfigurations.artifactory.restCall(propertySearch)
 //        files.get("results").size() != 0
 //        where:
-//        key << testSetup.testConfig.artifacts.propertyKey
-//        value << testSetup.testConfig.artifacts.propertyValue
+//        key << testConfigurations.testConfig.artifacts.propertyKey
+//        value << testConfigurations.testConfig.artifacts.propertyValue
 //
 //    }
 //
-    def cleanupSpec() {
-        testSetup.each {
-            def repoName = it.buildProperties.get(TestConstants.repoKey)
-            def buildName = it.buildProperties.get(TestConstants.buildName)
-            def buildNumber = it.buildProperties.get(TestConstants.buildNumber)
-            TestUtils.deleteBuildFromArtifactory(it.artifactory, buildName, buildNumber)
-            TestUtils.deleteRepository(it.artifactory, repoName)
-            it.artifactory.close()
-        }
-    }
+
 }

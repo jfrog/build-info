@@ -9,10 +9,6 @@ artifacts {
     propertyValue = ["1", "2"]
 }
 
-resolvers {
-
-}
-
 buildInfoProperties {
     buildInfo{
         build{
@@ -22,13 +18,6 @@ buildInfoProperties {
             version="1.5"
         }
     }
-}
-
-
-artifactory {
-    url="http://localhost:8080/artifactory"
-    username="admin"
-    password="password"
 }
 
 buildLauncher {

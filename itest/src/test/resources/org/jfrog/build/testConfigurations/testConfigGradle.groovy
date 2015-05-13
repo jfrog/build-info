@@ -1,6 +1,10 @@
 package org.jfrog.build.testConfigurations
 
 artifacts {
+    mappings{
+        input=["(.+).jar"]
+    }
+
     artifactNames=["", ""]
     archiveType= "zip"
     publishedArtifacts = ["api", "shared", "webservice"]
@@ -13,6 +17,7 @@ buildInfoProperties {
         build{
             name="testing-gradle-3"
             number="10"
+            //started="" !!!!!
         }
         agent {
             version="1.607"
@@ -24,6 +29,8 @@ buildInfoProperties {
                 repoKey = "gradle-local"
             }
             repoKey = "gradle-local"
+
+            //buildInfo.build.timestamp !!!!!!
         }
         deploy{
             build{
@@ -33,19 +40,13 @@ buildInfoProperties {
     }
 }
 
-
-artifactory {
-    url="http://localhost:8080/artifactory"
-    username="admin"
-    password="password"
-}
-
 buildLauncher {
     buildTool="gradle"
     buildToolVersion="2.3"
-    tasks = ["clean", "artifactoryPublish"]
+    tasks = ["clean", "artifactoryPublish", "--stacktrace"]
     systemVariables= []
     projVariables = []
     buildScriptPath = "/org/jfrog/build/gradle/projects/gradle-example/build.gradle"
     commandPath="/org/jfrog/build/gradle/projects/gradle-example/gradlew.bat"
+    workingDir="/org/jfrog/build/gradle/projects/gradle-example"
 }

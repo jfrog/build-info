@@ -33,17 +33,4 @@ class PropertyFileAggregator {
 
         tempFile.path
     }
-
-    static def mergeProperties(Properties globalProperties, Properties propertiesToMerge) {
-        globalProperties.putAll(propertiesToMerge)
-    }
-
-    static def extractPropertiesFromFile(def filePath) {
-        Properties properties = new Properties()
-        new File(filePath).withInputStream { stream ->
-            properties.load(stream)
-        }
-        properties
-    }
-
 }

@@ -17,6 +17,7 @@ public abstract class Launcher {
     protected Map<String, Object> systemProps = Maps.newHashMap()
     protected Set<String> tasks = Sets.newHashSet()
     protected Set<String> switches = Sets.newHashSet()
+    protected File workingDirectory;
 
     public Launcher(projectFilePath) {
         this.projectFilePath = projectFilePath
@@ -99,13 +100,16 @@ public abstract class Launcher {
         try {
             def cmd = getCmd()
             println "Launching build tool process: $cmd"
-            p = Runtime.getRuntime().exec(cmd)
 
             ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(cmd.split(" ")))
 
             def currentCmd = pb.command()
             println currentCmd
             pb.environment().putAll(processEnvironment)
+
+            if(workingDirectory){
+                pb.directory(workingDirectory)
+            }
 
             println "Launching build process: $cmd"
             p = pb.start()
