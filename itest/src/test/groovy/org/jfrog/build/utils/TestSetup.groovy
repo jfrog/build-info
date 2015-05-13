@@ -1,6 +1,5 @@
 package org.jfrog.build.utils
 
-import org.jfrog.artifactory.client.ArtifactoryClient
 import org.jfrog.build.launcher.GradleLauncher
 import org.jfrog.build.launcher.IvyLauncher
 import org.jfrog.build.launcher.MavenLauncher
@@ -10,30 +9,69 @@ import org.jfrog.build.launcher.MavenLauncher
  */
 class TestSetup {
 
+    public ConfigObject testConfig
+    public String buildPropertiesPath
     public def artifactory
     public def buildLauncher
     public def buildProperties
-    public ConfigObject testConfig
-    public String buildPropertiesPath
-    public def exitCode;
-    public def buildInfo;
-    public def buildName;
-    public def buildNumber;
+    public def exitCode
+    public def buildInfo
+    public def buildName
+    public def buildNumber
+    public def repositories
 
-    TestSetup(File testConfigFile){
+    TestSetup(File testConfigFile, def artifactory) {
+        repositories = []
         this.testConfig = new ConfigSlurper().parse(testConfigFile.toURI().toURL())
         buildProperties = PropertyFileAggregator.aggregateBuildProperties(this.testConfig)
+        this.artifactory = artifactory
+        initSpecialProperties()
         buildPropertiesPath = PropertyFileAggregator.toFile(buildProperties)
-        createArtifactoryClient()
         createBuildLauncher()
     }
 
-    TestSetup(String testConfigPath){
-        TestSetup(new File(testConfigPath))
+    def initSpecialProperties() {
+
+        def timestamp = System.currentTimeMillis()
+        def artifactoryUrl = artifactory.getUri() + "/" + artifactory.getContextName()
+
+        createRepositories(buildProperties.get(TestConstants.buildName), timestamp)
+
+        buildProperties.put(TestConstants.artifactoryUrl, artifactoryUrl)
+        buildProperties.put(TestConstants.artifactoryResolveUrl, artifactoryUrl)
+        buildProperties.put(TestConstants.artifactoryPublishUsername, artifactory.getUsername())
+        buildProperties.put(TestConstants.artifactoryPublishPassword, "password")
+
+        buildProperties.put(TestConstants.artifactoryResolveUsername, artifactory.getUsername())
+        buildProperties.put(TestConstants.artifactoryResolvePassword, "password")
+
+        buildProperties.put(TestConstants.timestamp, timestamp.toString())
+        //buildProperties.put(TestConstants.started, (new Date()).toString());
+
     }
 
-    private void createBuildLauncher(){
-        switch (testConfig.buildLauncher.buildTool.toLowerCase()){
+    private void createRepositories(buildName, long timestamp) {
+        createRepo(TestConstants.repoKey, buildName + "_", timestamp)
+        createRepo(TestConstants.snapshotRepoKey, buildName + "_snapshot_", timestamp)
+
+        buildProperties.put(TestConstants.resolveSnapshotKey, "remote-repos")
+        buildProperties.put(TestConstants.resolveRepokey, "remote-repos")
+        //createRepo(TestConstants.resolveSnapshotKey, buildName + "_resolve_snapshot_", timestamp)
+        //createRepo(TestConstants.resolveRepokey, buildName + "_resolve_", timestamp)
+    }
+
+    private void createRepo(String propertyKey, String newName, long timestamp) {
+        def repoName = buildProperties.get(propertyKey)
+        if (repoName == null) {
+            repoName = newName + timestamp
+        }
+        TestUtils.createRepository(artifactory, repoName)
+        repositories << repoName
+        buildProperties.put(propertyKey, repoName)
+    }
+
+    private void createBuildLauncher() {
+        switch (testConfig.buildLauncher.buildTool.toLowerCase()) {
             case 'gradle':
                 def buildScriptPath = getClass().getResource(testConfig.buildLauncher.buildScriptPath).path;
                 def commandPath = getClass().getResource(testConfig.buildLauncher.commandPath).path;
@@ -49,13 +87,14 @@ class TestSetup {
                 buildLauncher.addSystemProp("buildInfoConfig.propertiesFile", buildPropertiesPath)
                 buildLauncher.addSystemProp("m3plugin.lib", getClass().getResource(testConfig.buildLauncher.m3pluginLib).path)
                 buildLauncher.addSystemProp("classworlds.conf", getClass().getResource(testConfig.buildLauncher.classworldsConf).path)
-
                 break
             case 'ivy':
                 buildLauncher = new IvyLauncher(testConfig.buildLauncher.commandPath, testConfig.buildLauncher.buildScriptPath, testConfig.buildLauncher.propertiesFilesPath[0])
+                break
             default:
                 throw new IllegalArgumentException("Build tool is invalid.")
         }
+
         testConfig.buildLauncher.tasks.each {
             buildLauncher.addTask(it)
         }
@@ -66,13 +105,7 @@ class TestSetup {
             buildLauncher.addSystemProp(key, val)
         }
 
-        //TODO: add environment, system properties etc.
         //TODO: delete new file
-    }
-
-    private void createArtifactoryClient(){
-        artifactory = ArtifactoryClient.create(testConfig.artifactory.url, testConfig.artifactory.username,
-                testConfig.artifactory.password)
     }
 
     def launch(){
