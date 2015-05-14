@@ -36,7 +36,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 
 // Root project version should not be used
 project.version = '2'
-project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs', 'itest']
+project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
 
 defaultTasks 'clean', 'build', 'install'
 

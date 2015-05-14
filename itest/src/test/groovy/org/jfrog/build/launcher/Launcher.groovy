@@ -2,7 +2,7 @@ package org.jfrog.build.launcher
 
 import com.google.common.collect.Maps
 import com.google.common.collect.Sets
-import com.google.inject.internal.Lists
+import com.google.common.collect.Lists
 
 /**
  * @author Lior Hasson

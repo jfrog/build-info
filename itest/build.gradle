@@ -1,23 +1,60 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath(group: 'eu.appsatori', name: 'gradle-fatjar-plugin', version: '0.3')
+    }
+}
+
 apply plugin: 'java'
 apply plugin: 'groovy'
+apply plugin: 'eu.appsatori.fatjar'
 
 version = '1.0'
 description = 'Build Info itest'
 println description
 
-repositories {
-    mavenCentral()
+
+allprojects {
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
+
+    repositories {
+        maven { url "https://oss.jfrog.org/jfrog-dependencies" }
+        jcenter()
+    }
+
+/*    task jarAll(type: Jar) {
+        dependsOn jar
+        //Add the directory of the archive as the input files for this task
+        classifier = 'uber'
+    }*/
+
+   /* fatJar{
+        classifier = 'all'
+        //from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    }*/
+
+    dependencies {
+        testCompile(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-ivy', version: '2.5.x-SNAPSHOT'){
+            exclude group: 'org.codehaus.groovy', module:'groovy-all'
+        }
+        testCompile(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-maven3', version: '2.5.x-SNAPSHOT'){
+            exclude group: 'org.codehaus.groovy', module:'groovy-all'
+        }
+        testCompile 'org.jfrog.artifactory.client:artifactory-java-client-api:0.18-SNAPSHOT'
+        testCompile 'org.jfrog.artifactory.client:artifactory-java-client-services:0.18-SNAPSHOT'
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3') {
+                    exclude group: 'org.codehaus.groovy', module:'groovy-all'
+        }
+        testCompile(group: 'org.apache.ant', name: 'ant', version: '1.9.2')
+        testCompile 'org.codehaus.groovy:groovy-all:2.3.6'
+    }
+
 }
 
-dependencies {
-    compile 'org.jfrog.artifactory.client:artifactory-java-client-api:0.18-SNAPSHOT'
-    compile 'org.jfrog.artifactory.client:artifactory-java-client-services:0.18-SNAPSHOT'
-    testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3')
-    testCompile(group: 'org.apache.ant', name: 'ant', version: '1.9.2')
-    compile "com.google.guava:guava:15.0"
-}
-
-/*test {
+test {
     //Spoke run with JUnit (the parent uses TestNG)
     test.useJUnit()
     testLogging {
@@ -25,4 +62,9 @@ dependencies {
         events "started", "passed", "skipped", "failed", "standardOut", "standardError"
         minGranularity 0
     }
-}*/
+}
+
+task wrapper(type: Wrapper) {
+    description = 'Generates gradlew[.bat] scripts'
+    gradleVersion = '2.1'
+}

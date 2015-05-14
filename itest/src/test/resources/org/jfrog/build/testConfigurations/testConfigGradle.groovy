@@ -1,8 +1,11 @@
 package org.jfrog.build.testConfigurations
 
+
 artifacts {
-    mappings{
-        input=["(.+).jar"]
+    buildArtifacts{
+        mappings=[[input:"(.+).jar"], [input:"(.+)-SNAPSHOT.jar"]]
+
+
     }
 
     artifactNames=["", ""]

@@ -54,6 +54,7 @@ class TestSetup {
         createRepo(TestConstants.repoKey, buildName + "_", timestamp)
         createRepo(TestConstants.snapshotRepoKey, buildName + "_snapshot_", timestamp)
 
+        //TODO
         buildProperties.put(TestConstants.resolveSnapshotKey, "remote-repos")
         buildProperties.put(TestConstants.resolveRepokey, "remote-repos")
         //createRepo(TestConstants.resolveSnapshotKey, buildName + "_resolve_snapshot_", timestamp)

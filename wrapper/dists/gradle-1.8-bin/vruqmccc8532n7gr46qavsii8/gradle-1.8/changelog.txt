@@ -1,3 +1,0 @@
-Release Notes - Gradle - Version 1.8
-
-See http://wiki.gradle.org/display/GRADLE/Gradle+1.8+Release+Notes
