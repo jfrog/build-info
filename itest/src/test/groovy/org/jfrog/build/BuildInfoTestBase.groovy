@@ -33,9 +33,6 @@ class BuildInfoTestBase extends Specification{
         dir.eachFileRecurse (FileType.FILES) { file ->
             testConfigurations.add(new TestSetup(file, artifactory))
         }
-        testConfigurations.each {
-            TestUtils.createRepository(it.artifactory, it.buildProperties.get(TestConstants.repoKey))
-        }
     }
 
     def cleanupSpec() {
