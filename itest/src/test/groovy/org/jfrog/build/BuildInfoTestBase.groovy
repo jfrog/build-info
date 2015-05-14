@@ -42,8 +42,8 @@ class BuildInfoTestBase extends Specification{
             def buildNumber = it.buildProperties.get(TestConstants.buildNumber)
             TestUtils.deleteBuildFromArtifactory(it.artifactory, buildName, buildNumber)
             TestUtils.deleteRepository(it.artifactory, repoName)
-            it.artifactory.close()
         }
+        artifactory.close()
     }
 
     private def createArtifactoryClient() {

@@ -12,6 +12,8 @@ class IvyLauncher extends Launcher {
 
     @Override
     protected void createCmd() {
-        cmd = "${commandPath} -file ${projectFilePath} ${tasksToString()} -lib ${this.getClass().getResource("/cache/artifactory-plugin").path} -listener org.jfrog.build.extractor.listener.ArtifactoryBuildListener"
+        cmd = "${commandPath} -file ${projectFilePath} ${tasksToString()} -lib " +
+                "${this.getClass().getResource("/org/jfrog/build/cache/artifactory-plugin").path} " +
+                "-listener org.jfrog.build.extractor.listener.ArtifactoryBuildListener"
     }
 }

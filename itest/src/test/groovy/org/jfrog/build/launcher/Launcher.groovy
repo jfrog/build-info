@@ -103,8 +103,6 @@ public abstract class Launcher {
 
             ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(cmd.split(" ")))
 
-            def currentCmd = pb.command()
-            println currentCmd
             pb.environment().putAll(processEnvironment)
 
             if(workingDirectory){

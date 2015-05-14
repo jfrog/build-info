@@ -71,9 +71,9 @@ class TestSetup {
     }
 
     private void createBuildLauncher() {
+        def buildScriptPath = getClass().getResource(testConfig.buildLauncher.buildScriptPath).path;
         switch (testConfig.buildLauncher.buildTool.toLowerCase()) {
             case 'gradle':
-                def buildScriptPath = getClass().getResource(testConfig.buildLauncher.buildScriptPath).path;
                 def commandPath = getClass().getResource(testConfig.buildLauncher.commandPath).path;
                 buildLauncher = new GradleLauncher(commandPath, buildScriptPath)
                 buildLauncher.addProjProp("buildInfoConfig.propertiesFile", buildPropertiesPath)
@@ -82,14 +82,13 @@ class TestSetup {
                 }
                 break
             case 'maven':
-                def buildScriptPath = getClass().getResource(testConfig.buildLauncher.buildScriptPath).path;
                 buildLauncher = new MavenLauncher(testConfig.buildLauncher.javaHome, testConfig.buildLauncher.mavenHome, buildScriptPath)
                 buildLauncher.addSystemProp("buildInfoConfig.propertiesFile", buildPropertiesPath)
                 buildLauncher.addSystemProp("m3plugin.lib", getClass().getResource(testConfig.buildLauncher.m3pluginLib).path)
                 buildLauncher.addSystemProp("classworlds.conf", getClass().getResource(testConfig.buildLauncher.classworldsConf).path)
                 break
             case 'ivy':
-                buildLauncher = new IvyLauncher(testConfig.buildLauncher.commandPath, testConfig.buildLauncher.buildScriptPath, testConfig.buildLauncher.propertiesFilesPath[0])
+                buildLauncher = new IvyLauncher(testConfig.buildLauncher.commandPath, buildScriptPath, buildPropertiesPath)
                 break
             default:
                 throw new IllegalArgumentException("Build tool is invalid.")
