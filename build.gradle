@@ -18,8 +18,7 @@
 buildscript {
     repositories {
         jcenter()
-        //mavenLocal()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.0.1' }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.1.0' }
     }
     configurations.classpath {
         resolutionStrategy {
@@ -538,7 +537,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '2.0'
+    gradleVersion = '2.4'
 }
 
 
