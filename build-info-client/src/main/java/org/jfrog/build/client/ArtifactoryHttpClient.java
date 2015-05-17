@@ -17,6 +17,7 @@
 package org.jfrog.build.client;
 
 import org.apache.commons.codec.net.URLCodec;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -175,6 +176,11 @@ public class ArtifactoryHttpClient {
         return jsonFactory.createJsonParser(in);
     }
 
+    public JsonParser createJsonParser(String content) throws IOException {
+        JsonFactory jsonFactory = createJsonFactory();
+        return jsonFactory.createJsonParser(content);
+    }
+
     public JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
@@ -195,15 +201,16 @@ public class ArtifactoryHttpClient {
         StatusLine statusLine = response.getStatusLine();
         HttpEntity entity = response.getEntity();
         if (entity != null) {
-            InputStream content = entity.getContent();
-            if (content != null) {
+            InputStream in = entity.getContent();
+            if (in != null) {
+                String content = IOUtils.toString(in, "UTF-8");
                 try {
                     JsonParser parser = createJsonParser(content);
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
                 } catch (Exception e) {
                     log.error("Failed while reading the response from: " + httpPut, e);
-        } finally {
-                    content.close();
+                } finally {
+                    in.close();
                 }
             }
         }
