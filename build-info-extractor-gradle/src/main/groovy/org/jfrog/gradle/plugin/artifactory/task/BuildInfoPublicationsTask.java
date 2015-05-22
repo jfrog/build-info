@@ -146,6 +146,8 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 continue;
             }
             dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
+            String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() + mavenPublication.getName().substring(1);
+            dependsOn(String.format("generatePomFileFor%sPublication", capitalizedPublicationName));
         }
     }
 
