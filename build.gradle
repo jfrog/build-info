@@ -537,7 +537,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '2.4'
+    gradleVersion = '1.8'
 }
 
 
