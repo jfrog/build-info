@@ -92,8 +92,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         setFlag(PUBLISH_ARTIFACTS, toBoolean(publishArtifacts));
     }
 
-    protected Boolean toBoolean(Object publishIvy) {
-        return Boolean.valueOf(publishIvy.toString());
+    protected Boolean toBoolean(Object o) {
+        return Boolean.valueOf(o.toString());
     }
 
     @Nullable
@@ -454,5 +454,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     @Nullable
     public Boolean getPublishPom() {
         return getFlag(PUBLISH_POM);
+    }
+
+    public void setPublishPom(Object publishPom) {
+        setFlag(PUBLISH_POM, toBoolean(publishPom));
     }
 }
