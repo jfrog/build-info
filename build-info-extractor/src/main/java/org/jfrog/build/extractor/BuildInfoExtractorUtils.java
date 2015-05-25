@@ -61,15 +61,18 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
+    private static String propertiesFilePath = null;
+    private static boolean propertiesFilePathInit = false;
+
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
         return mergePropertiesWithSystemAndPropertyFile(existingProps, null);
     }
 
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties props = new Properties();
-        String propertiesFilePath = getAdditionalPropertiesFile(existingProps, log);
-        if (StringUtils.isNotBlank(propertiesFilePath)) {
-            File propertiesFile = new File(propertiesFilePath);
+        String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
+        if (StringUtils.isNotBlank(propsFilePath)) {
+            File propertiesFile = new File(propsFilePath);
             InputStream inputStream = null;
             try {
                 if (propertiesFile.exists()) {
@@ -151,9 +154,9 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         // TODO: [by FSI] Test if this is needed! Since start props are used now
-        String propertiesFilePath = getAdditionalPropertiesFile(startProps, log);
-        if (StringUtils.isNotBlank(propertiesFilePath)) {
-            File propertiesFile = new File(propertiesFilePath);
+        String propsFilePath = getAdditionalPropertiesFile(startProps, log);
+        if (StringUtils.isNotBlank(propsFilePath)) {
+            File propertiesFile = new File(propsFilePath);
             InputStream inputStream = null;
             try {
                 if (propertiesFile.exists()) {
@@ -234,42 +237,47 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
+        if (propertiesFilePathInit) {
+            return propertiesFilePath;
+        }
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
-        String propertiesFilePath = System.getProperty(key);
+        String filePath = System.getProperty(key);
         String propFoundPath = "System.getProperty(" + key + ")";
-        if (StringUtils.isBlank(propertiesFilePath) && additionalProps != null) {
-            propertiesFilePath = additionalProps.getProperty(key);
+        if (StringUtils.isBlank(filePath) && additionalProps != null) {
+            filePath = additionalProps.getProperty(key);
             propFoundPath = "additionalProps.getProperty(" + key + ")";
         }
-        if (StringUtils.isBlank(propertiesFilePath)) {
+        if (StringUtils.isBlank(filePath)) {
             // Jenkins prefixes these variables with "env." so let's try that
-            propertiesFilePath = additionalProps.getProperty("env." + key);
-            if (StringUtils.isBlank(propertiesFilePath)) {
-                propertiesFilePath = System.getenv(key);
+            filePath = additionalProps.getProperty("env." + key);
+            if (StringUtils.isBlank(filePath)) {
+                filePath = System.getenv(key);
                 propFoundPath = "System.getenv(" + key + ")";
             } else {
                 propFoundPath = "additionalProps.getProperty(env." + key + ")";
             }
         }
-        if (StringUtils.isBlank(propertiesFilePath)) {
+        if (StringUtils.isBlank(filePath)) {
             // Jenkins prefixes these variables with "env." so let's try that
             key = BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE;
-            propertiesFilePath = additionalProps.getProperty("env." + key);
-            if (StringUtils.isBlank(propertiesFilePath)) {
-                propertiesFilePath = System.getenv(key);
+            filePath = additionalProps.getProperty("env." + key);
+            if (StringUtils.isBlank(filePath)) {
+                filePath = System.getenv(key);
                 propFoundPath = "System.getenv(" + key + ")";
             } else {
                 propFoundPath = "additionalProps.getProperty(env." + key + ")";
             }
         }
         if (log != null) {
-            if (StringUtils.isBlank(propertiesFilePath)) {
+            if (StringUtils.isBlank(filePath)) {
                 log.info("[buildinfo] Not using buildInfo properties file for this build.");
             } else {
-                log.info("[buildinfo] Properties file found at '" + propertiesFilePath + "'");
-                log.debug("[buildinfo] Properties file '" + propertiesFilePath + "' retrieved from '" + propFoundPath + "'");
+                log.info("[buildinfo] Properties file found at '" + filePath + "'");
+                log.debug("[buildinfo] Properties file '" + filePath + "' retrieved from '" + propFoundPath + "'");
             }
         }
+        propertiesFilePath = filePath;
+        propertiesFilePathInit = true;
         return propertiesFilePath;
     }
 
