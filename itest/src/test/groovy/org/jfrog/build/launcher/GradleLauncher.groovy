@@ -1,35 +1,42 @@
 package org.jfrog.build.launcher
 
 import com.google.common.collect.Maps
-import com.google.common.collect.Sets
 
 /**
  * @author Eyal B
  */
 class GradleLauncher extends Launcher{
+    static final OS_WIN = System.getProperty("os.name").contains("Windows")
+
     protected Map<String, Object> projProp = Maps.newHashMap()
 
     public GradleLauncher(gradleCommandPath, gradleProjectFilePath) {
         super(gradleCommandPath, gradleProjectFilePath)
     }
 
+    protected void createCmd() {
+        buildToolVersionHandler().each {
+            cmd.add(it)
+            cmd.add("${gradleWrapperScript()} -v")
+            cmd.add("$commandPath ${switchesToString()} ${projPropToString()} ${systemPropsToString()} " +
+                    "-b $projectFilePath ${tasksToString()}"
+            )
+        }
+    }
+
+    @Override
+    protected def buildToolVersionHandler() {
+        def wrappers = []
+        buildToolVersions.each {
+            wrappers.add("${gradleScript()} wrapper --gradle-version $it")
+        }
+        wrappers
+    }
+
     public Launcher addProjProp(String name, String value) {
         projProp.put(name, value)
         this
     }
-
-    /*    protected def envVarsToString() {
-        StringBuilder sb = new StringBuilder()
-        int c = 0;
-        for(var in envVars) {
-            def key = var.key.startsWith("-P") ? var.key : "-P${var.key}"
-            sb.append(key).append("=").append(var.value)
-            if (c++ < envVars.size()-1) {
-                sb.append(" ")
-            }
-        }
-        sb
-    }*/
 
     private def projPropToString() {
         StringBuilder sb = new StringBuilder()
@@ -44,8 +51,11 @@ class GradleLauncher extends Launcher{
         sb
     }
 
-    protected void createCmd() {
-        cmd = "$commandPath ${switchesToString()} ${projPropToString()} ${systemPropsToString()} " +
-                "-b $projectFilePath ${tasksToString()}"
+    static def gradleWrapperScript(){
+        (OS_WIN ? "gradlew.bat" : "./gradlew")
+    }
+
+    static def gradleScript(){
+        (OS_WIN ? "gradle.bat" : "./gradle")
     }
 }

@@ -3,6 +3,8 @@ package org.jfrog.build.utils
 import static java.lang.System.getenv
 
 /**
+ * A class that represents the integration tests configurations, such as Artifactory instance and etc.
+ *
  * @author Lior Hasson
  */
 class TestsConfig {
@@ -14,7 +16,7 @@ class TestsConfig {
     }
 
     private TestsConfig() {
-        config = new ConfigSlurper().parse(this.class.getResource('/org/jfrog/build/config.groovy')).conf
+        config = new ConfigSlurper().parse(this.getClass().getResource('/org/jfrog/build/config.groovy')).conf
 
         def artifactoryUrl = getenv('ARTIFACTORY_URL')
         if (!artifactoryUrl) {

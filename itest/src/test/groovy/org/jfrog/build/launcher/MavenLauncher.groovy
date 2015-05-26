@@ -39,8 +39,14 @@ class MavenLauncher extends Launcher{
     protected void createCmd() {
         extractClassWorldJar()
 
-        cmd = "$javaHome -classpath ${mavenHome}\\boot\\${extractClassWorldJar()} ${systemPropsToString()} " +
+        cmd.add("$javaHome -classpath ${mavenHome}\\boot\\${extractClassWorldJar()} ${systemPropsToString()} " +
                 "org.codehaus.plexus.classworlds.launcher.Launcher -f $projectFilePath ${tasksToString()}"
+        )
+    }
+
+    @Override
+    protected def buildToolVersionHandler() {
+        //TODO
     }
 
     private String extractClassWorldJar() {

@@ -1,20 +1,11 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath(group: 'eu.appsatori', name: 'gradle-fatjar-plugin', version: '0.3')
-    }
-}
 
 apply plugin: 'java'
 apply plugin: 'groovy'
-apply plugin: 'eu.appsatori.fatjar'
+apply plugin: 'idea'
 
 version = '1.0'
 description = 'Build Info itest'
 println description
-
 
 allprojects {
     sourceCompatibility = 1.7
@@ -24,39 +15,51 @@ allprojects {
         maven { url "https://oss.jfrog.org/jfrog-dependencies" }
         jcenter()
     }
+}
 
-/*    task jarAll(type: Jar) {
-        dependsOn jar
-        //Add the directory of the archive as the input files for this task
-        classifier = 'uber'
-    }*/
-
-   /* fatJar{
-        classifier = 'all'
-        //from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-    }*/
-
-    dependencies {
-        testCompile(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-ivy', version: '2.5.x-SNAPSHOT'){
-            exclude group: 'org.codehaus.groovy', module:'groovy-all'
-        }
-        testCompile(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-maven3', version: '2.5.x-SNAPSHOT'){
-            exclude group: 'org.codehaus.groovy', module:'groovy-all'
-        }
-        testCompile 'org.jfrog.artifactory.client:artifactory-java-client-api:0.18-SNAPSHOT'
-        testCompile 'org.jfrog.artifactory.client:artifactory-java-client-services:0.18-SNAPSHOT'
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '1.0-groovy-2.3') {
-                    exclude group: 'org.codehaus.groovy', module:'groovy-all'
-        }
-        testCompile(group: 'org.apache.ant', name: 'ant', version: '1.9.2')
-        testCompile 'org.codehaus.groovy:groovy-all:2.3.6'
+configurations {
+    uberJar {
+        description = 'All jars that should be included in the Uber Jar'
+        transitive = true
     }
+}
 
+/* Collect all the jars that was recorded by the "uberJar" configuration.
+ * In our case we record buildInfo Maven and Ivy extractors modules with all their dependencies.
+ * we use is for Maven and Ivy tests
+ */
+task buildInfoClassPath(type: Copy) {
+    from (configurations.uberJar)
+        into project.file('src/test/resources/org/jfrog/build/cache/artifactory-plugin')
+}
+
+assemble {
+    dependsOn buildInfoClassPath
+}
+
+dependencies {
+    uberJar(group:'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+'){
+        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    }
+    uberJar(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+' ){
+        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    }
+    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+')
+    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
+        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    }
+    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-api', version:'+')
+    testCompile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-api', version:'+')
+    testCompile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-services', version:'+')
+    testCompile(group:'org.spockframework', name:'spock-core', version:'1.0-groovy-2.3')
+    testCompile(group:'org.apache.ant', name:'ant', version:'1.9.2')
 }
 
 test {
-    //Spoke run with JUnit (the parent uses TestNG)
+    //Spoke run with JUnit
     test.useJUnit()
+    exclude 'org/jfrog/build/specs'
+
     testLogging {
         exceptionFormat "full"
         events "started", "passed", "skipped", "failed", "standardOut", "standardError"
@@ -66,5 +69,5 @@ test {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '2.1'
+    gradleVersion = '2.4'
 }

@@ -50,7 +50,7 @@ subprojects {
   apply plugin: 'maven'
 
   if (project.plugins.hasPlugin('java')) {
-    manifest.mainAttributes(provider: 'gradle')
+    //manifest.mainAttributes(provider: 'gradle')
     configurations {
       published
     }
@@ -87,8 +87,8 @@ configurations {
 
 artifactory {
   //contextUrl = 'http://repo.jfrog.org/artifactory'
-  //contextUrl = 'http://localhost:8080/artifactory'
-  contextUrl = "${artifactory_contextUrl}"
+  contextUrl = 'http://localhost:8080/artifactory'
+  //contextUrl = "${artifactory_contextUrl}"
   publish {
     repository {
       repoKey = 'gradle-snapshot-local' //The Artifactory repository key to publish to
@@ -119,9 +119,9 @@ artifactory {
 
 }
 
-task wrapper(type: Wrapper) {
+/*task wrapper(type: Wrapper) {
   gradleVersion = '1.12'
-}
+}*/
 
 class Version {
   String originalVersion

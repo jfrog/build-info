@@ -8,12 +8,19 @@ class IvyLauncher extends Launcher {
     IvyLauncher(String commandPath, String projectFilePath, String propertyFilePath) {
         super(commandPath, projectFilePath)
         processEnvironment.put("BUILDINFO_PROPFILE", propertyFilePath)
+        processEnvironment.put("buildInfoConfig.propertiesFile", propertyFilePath)
     }
 
     @Override
     protected void createCmd() {
-        cmd = "${commandPath} -file ${projectFilePath} ${tasksToString()} -lib " +
+        cmd.add("${commandPath} -file ${projectFilePath} ${tasksToString()} -lib " +
                 "${this.getClass().getResource("/org/jfrog/build/cache/artifactory-plugin").path} " +
                 "-listener org.jfrog.build.extractor.listener.ArtifactoryBuildListener"
+        )
+    }
+
+    @Override
+    protected def buildToolVersionHandler() {
+        //TODO
     }
 }
