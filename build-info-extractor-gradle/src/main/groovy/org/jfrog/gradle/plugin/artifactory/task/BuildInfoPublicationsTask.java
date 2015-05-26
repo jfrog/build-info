@@ -137,6 +137,8 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 continue;
             }
             dependsOn(((IvyPublicationInternal) ivyPublication).getPublishableFiles());
+            String capitalizedPublicationName = ivyPublication.getName().substring(0, 1).toUpperCase() + ivyPublication.getName().substring(1);
+            dependsOn(String.format("generateDescriptorFileFor%sPublication", capitalizedPublicationName));
         }
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
@@ -146,6 +148,8 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 continue;
             }
             dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
+            String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() + mavenPublication.getName().substring(1);
+            dependsOn(String.format("generatePomFileFor%sPublication", capitalizedPublicationName));
         }
     }
 
