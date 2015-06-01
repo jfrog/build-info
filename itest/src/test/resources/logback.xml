@@ -13,7 +13,7 @@
 
     <!--Logger for Artifactory Java Client-->
     <logger name="groovyx.net.http">
-        <level value="INFO"/>
+        <level value="DEBUG"/>
     </logger>
 
 </configuration>

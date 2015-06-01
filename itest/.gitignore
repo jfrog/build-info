@@ -4,6 +4,7 @@
 /out
 /build
 /*/build
+**/build
 /*/out
 build-info.ipr
 build-info.iws

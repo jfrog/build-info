@@ -13,7 +13,15 @@ allprojects {
 
     repositories {
         maven { url "https://oss.jfrog.org/jfrog-dependencies" }
-        jcenter()
+        maven {
+            url "https://repo.artifactoryonline.com/artifactory/artifactory-dependencies"
+            credentials {
+                username = "${artifactory_user}"
+                password = "${artifactory_password}"
+            }
+        }
+
+        //mavenLocal()
     }
 }
 
@@ -24,13 +32,13 @@ configurations {
     }
 }
 
-/* Collect all the jars that was recorded by the "uberJar" configuration.
+/* Collect all the jars that were recorded by the "uberJar" configuration.
  * In our case we record buildInfo Maven and Ivy extractors modules with all their dependencies.
- * we use is for Maven and Ivy tests
+ * We use is for Maven and Ivy tests
  */
 task buildInfoClassPath(type: Copy) {
     from (configurations.uberJar)
-        into project.file('src/test/resources/org/jfrog/build/cache/artifactory-plugin')
+        into project.file('src/test/build/cache/artifactory-plugin')
 }
 
 assemble {
@@ -44,21 +52,24 @@ dependencies {
     uberJar(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+' ){
         exclude group: 'org.codehaus.groovy', module:'groovy-all'
     }
-    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+')
-    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
+    compile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+')
+    compile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
         exclude group: 'org.codehaus.groovy', module:'groovy-all'
     }
-    testCompile(group: 'org.jfrog.buildinfo', name:'build-info-api', version:'+')
-    testCompile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-api', version:'+')
-    testCompile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-services', version:'+')
-    testCompile(group:'org.spockframework', name:'spock-core', version:'1.0-groovy-2.3')
-    testCompile(group:'org.apache.ant', name:'ant', version:'1.9.2')
+    compile(group: 'org.jfrog.buildinfo', name:'build-info-api', version:'+')
+    compile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-api', version:'+')
+    compile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-services', version:'+')
+    compile(group:'org.spockframework', name:'spock-core', version:'1.0-groovy-2.3')
+    compile(group:'org.apache.ant', name:'ant', version:'1.9.2')
+    compile(group:'org.jfrog.util', name:'docker-remote-util', version:'0.1-SNAPSHOT'){
+        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    }
 }
 
 test {
-    //Spoke run with JUnit
+    //Spock run with JUnit
     test.useJUnit()
-    exclude 'org/jfrog/build/specs'
+    exclude 'build/specs'
 
     testLogging {
         exceptionFormat "full"
