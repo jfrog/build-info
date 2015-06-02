@@ -20,8 +20,7 @@ allprojects {
                 password = "${artifactory_password}"
             }
         }
-
-        //mavenLocal()
+//        mavenLocal()
     }
 }
 

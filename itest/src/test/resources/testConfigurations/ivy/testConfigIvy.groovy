@@ -1,5 +1,7 @@
 package testConfigurations.ivy
 
+labels=['buildInfoProperties', 'artifacts']
+
 artifacts {
     buildArtifacts{
         mappings=[[input:"(.+).jar"], [input:"(.+)-SNAPSHOT.jar"]]
@@ -45,7 +47,7 @@ buildLauncher {
     systemProperties = [:]
     projVariables = []
     javaHome = "java"
-    buildScriptPath = "/org/jfrog/build/ivy/projects/ivy-example/build.xml"
-    buildInfoClassPath="/org/jfrog/build/cache/artifactory-plugin"
+    projectPath = ["/projects/ivy/ivy-example"]
     antPath = "ant.bat"
+    buildScriptFile = "build.xml"
 }
