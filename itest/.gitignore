@@ -3,8 +3,9 @@
 *.iml
 /out
 /build
-/*/build
-**/build
+/src/test/resources/projects/gradle/**/build
+/src/test/build/
+src/test/resources/cache/
 /*/out
 build-info.ipr
 build-info.iws

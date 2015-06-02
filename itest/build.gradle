@@ -27,7 +27,7 @@ allprojects {
 
 configurations {
     uberJar {
-        description = 'All jars that should be included in the Uber Jar'
+        description = 'All jars that should be collected'
         transitive = true
     }
 }
