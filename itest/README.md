@@ -11,10 +11,10 @@ There are two ways to setup Artifactory for the integration tests:
 * Set **environment variables** or **system properties**.
 
 Available Project Properties:
-* ARTIFACTORY_URL -         Artifactory address [Madatory]
-* ARTIFACTORY_USER -        Artifactory user [Madatory]
-* ARTIFACTORY_PASSWORD -    Artifactory user password [Madatory]
-* TEST_CONFIGURATION_PATH - Path to the test configuration file
+* ARTIFACTORY_URL -         Artifactory address
+* ARTIFACTORY_USER -        Artifactory user
+* ARTIFACTORY_PASSWORD -    Artifactory user password
+* TEST_CONFIGURATION_PATH - Path to the test configuration file [Optinal, the defualt path is in the project resources]
 
 ### Setup Docker
 Basically this project interact with Docker via his Remote API.
@@ -62,7 +62,7 @@ There are two ways to use this annotation:
 * Give `registry` and `repo` input in order to fetch the image from docker registry
 * Give docker file path (`dockerFilePath`) in order to build the image from it
  
-Either way image ID (`imageId`) is mandatory, `containerPort` is the port that is exposed from the container, `hostPort` is the port that is mapped from the container to the host.
+Either way image ID (`imageId`) is mandatory, `containerPort` is the port that exposed from the container, `hostPort` is the port that is mapped from the container to the host.
 
 
 
