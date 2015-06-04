@@ -9,10 +9,10 @@
         <ivy pattern="${ivy.settings.dir}/../repository/[module]-ivy-[revision].xml"/>
         <artifact pattern="${ivy.settings.dir}/../repository/[module]-[revision].[ext]"/>
       </filesystem>
-      <ibiblio name="public" m2compatible="true" root="http://10.0.0.143:8080/artifactory/libs-release" />
+      <ibiblio name="public" m2compatible="true" root="${artifactory.url}/libs-release" />
       <url name="artifactory" m2compatible="false">
-        <ivy pattern="http://10.0.0.143:8080/artifactory/ivy-local/[organization]/[module]/[revision]/[type]s/ivy-[revision].xml" />
-	<artifact pattern="http://10.0.0.143:8080/artifactory/ivy-local/[organization]/[module]/[revision]/[type]s/[module](-[classifier])-[revision].[ext]" />
+        <ivy pattern="${artifactory.url}/ivy-local/[organization]/[module]/[revision]/[type]s/ivy-[revision].xml" />
+	<artifact pattern="${artifactory.url}/artifactory/ivy-local/[organization]/[module]/[revision]/[type]s/[module](-[classifier])-[revision].[ext]" />
       </url>
     </chain>
   </resolvers>

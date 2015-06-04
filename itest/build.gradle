@@ -37,7 +37,7 @@ configurations {
  */
 task buildInfoClassPath(type: Copy) {
     from (configurations.uberJar)
-        into project.file('src/test/build/cache/artifactory-plugin')
+        into project.file('src/test/resources/cache/artifactory-plugin')
 }
 
 assemble {

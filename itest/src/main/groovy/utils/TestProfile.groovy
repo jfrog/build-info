@@ -52,6 +52,8 @@ class TestProfile {
                 break
             case 'ivy':
                 buildLauncher = new IvyLauncher(testConfig.buildLauncher.antPath, buildScriptPath, buildPropertiesPath)
+                def artifactoryUrl = "${artifactory.getUri()}/${artifactory.getContextName()}"
+                buildLauncher.addSystemProp("artifactory.url", artifactoryUrl)
                 break
             default:
                 throw new IllegalArgumentException("Build tool ${testConfig.buildLauncher.buildTool} is invalid.")
@@ -84,7 +86,7 @@ class TestProfile {
     def initSpecialProperties(def config) {
 
         def timestamp = System.currentTimeMillis()
-        def artifactoryUrl = artifactory.getUri() + "/" + artifactory.getContextName()
+        def artifactoryUrl = "${artifactory.getUri()}/${artifactory.getContextName()}".toString()
         createRepositories(buildProperties.get(TestConstants.buildName), timestamp)
 
         buildProperties.put(TestConstants.buildName, buildProperties.get(TestConstants.buildName) + "_" + timestamp)
