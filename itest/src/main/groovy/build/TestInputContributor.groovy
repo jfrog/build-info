@@ -1,9 +1,9 @@
-package build.launcher
+package build
 
 /**
  * @author Lior Hasson  
  */
-interface InputContributor {
+interface TestInputContributor {
 
     def contribute()
 }

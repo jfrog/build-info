@@ -4,10 +4,10 @@ labels=['buildInfoProperties', 'artifacts']
 
 artifacts {
     buildArtifacts{
-        mappings=[[input:"(.+).jar"], [input:"(.+)-SNAPSHOT.jar"]]
+        mappings=[[input:"(.+).jar"], [input:"(.+).xml"]]
     }
     expected{
-        numberExpected=8
+        numberExpected=12
     }
 }
 
@@ -28,7 +28,8 @@ buildInfoProperties {
             }
             repoKey = "gradle-local"*/
 
-            //buildInfo.build.timestamp !!!!!!
+            buildInfo="true"
+            artifacts="true"
         }
         deploy{
             build{
@@ -48,6 +49,7 @@ buildLauncher {
     projVariables = []
     javaHome = "java"
     projectPath = ["/projects/ivy/ivy-example"]
+    buildInfoClassPath="/cache/artifactory-plugin"
     antPath = "ant.bat"
     buildScriptFile = "build.xml"
 }

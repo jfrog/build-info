@@ -14,9 +14,9 @@ class PropertyFileAggregator {
      * @param {@link ConfigObject} groovy object that represents the test config properties file
      * @return {@link Properties} Object
      */
-    static def aggregateBuildProperties(ConfigObject config) {
-        def aggregatedProperties = new Properties()
-        def filePath = this.getClass().getResource("/conf/defaultBuildInfo.properties").path
+    static Properties aggregateBuildProperties(ConfigObject config) {
+        Properties aggregatedProperties = new Properties()
+        String filePath = this.getClass().getResource("/conf/defaultBuildInfo.properties").path
         aggregatedProperties.load(new FileInputStream(filePath))
         Map flat = config.getProperty("buildInfoProperties").flatten()
         aggregatedProperties.putAll(flat)
@@ -30,7 +30,7 @@ class PropertyFileAggregator {
      * @param config {@link Properties} representing the test config properties file
      * @return path to the property file
      */
-    static def toFile(Properties buildProperties){
+    static String toFile(Properties buildProperties){
         File tempFile = File.createTempFile("buildInfo", ".properties");
         FileOutputStream stream = new FileOutputStream(tempFile);
         try {

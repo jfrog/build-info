@@ -1,12 +1,13 @@
 package build.launcher
 
+import build.TestInputContributor
 import com.google.common.collect.Maps
 import com.google.common.collect.Lists
 
 /**
  * @author Lior Hasson
  */
-public abstract class Launcher implements InputContributor{
+abstract class Launcher implements TestInputContributor{
 
     protected def processEnvironment = Maps.newHashMap()
     protected def cmd = []
@@ -19,11 +20,11 @@ public abstract class Launcher implements InputContributor{
     protected List<String> buildToolVersions = Lists.newLinkedList()
     protected File workingDirectory;
 
-    public Launcher(projectFilePath) {
+    Launcher(projectFilePath) {
         this.projectFilePath = projectFilePath
     }
 
-    public Launcher(commandPath, projectFilePath) {
+    Launcher(commandPath, projectFilePath) {
         this.commandPath = commandPath
         this.projectFilePath = projectFilePath
     }
@@ -43,27 +44,27 @@ public abstract class Launcher implements InputContributor{
         this.workingDirectory = workingDirectory
     }
 
-    public Launcher addEnvVar(String name, String value) {
+    Launcher addEnvVar(String name, String value) {
         envVars.put(name, value)
         this
     }
 
-    public Launcher addSystemProp(String name, String value) {
+    Launcher addSystemProp(String name, String value) {
         systemProps.put(name, value)
         this
     }
 
-    public Launcher addTask(String task) {
+    Launcher addTask(String task) {
         tasks.add(task)
         this
     }
 
-    public Launcher addSwitch(String gradleSwitch) {
+    Launcher addSwitch(String gradleSwitch) {
         switches.add(gradleSwitch)
         this
     }
 
-    public Launcher addToolVersions(String version) {
+    Launcher addToolVersions(String version) {
         buildToolVersions.add(version)
         this
     }
@@ -107,7 +108,7 @@ public abstract class Launcher implements InputContributor{
     }
 
     @Override
-    public def contribute() {
+    def contribute() {
         //exit code for a set of commands
         int totalExitCode = 0
         Process p

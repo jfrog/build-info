@@ -41,7 +41,8 @@ buildInfoProperties {
             }
             repoKey = "gradle-local"*/
 
-            //buildInfo.build.timestamp !!!!!!
+            buildInfo="true"
+            artifacts="true"
         }
         deploy{
             build{

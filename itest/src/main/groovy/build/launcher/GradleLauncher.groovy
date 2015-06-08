@@ -10,7 +10,7 @@ class GradleLauncher extends Launcher{
 
     protected Map<String, Object> projProp = Maps.newHashMap()
 
-    public GradleLauncher(gradleCommandPath, gradleProjectFilePath) {
+    GradleLauncher(gradleCommandPath, gradleProjectFilePath) {
         super(gradleCommandPath, gradleProjectFilePath)
     }
 
@@ -33,7 +33,7 @@ class GradleLauncher extends Launcher{
         wrappers
     }
 
-    public Launcher addProjProp(String name, String value) {
+    Launcher addProjProp(String name, String value) {
         projProp.put(name, value)
         this
     }

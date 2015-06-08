@@ -1,9 +1,12 @@
 package utils
 
+import build.generic.Generic
 import build.launcher.GradleLauncher
-import build.launcher.InputContributor
+import build.TestInputContributor
 import build.launcher.IvyLauncher
+import build.launcher.Launcher
 import build.launcher.MavenLauncher
+import org.jfrog.artifactory.client.Artifactory
 import org.jfrog.build.api.Build
 
 /**
@@ -12,26 +15,32 @@ import org.jfrog.build.api.Build
  * @author Aviad Shikloshi
  */
 class TestProfile {
-    public ConfigObject testConfig
-    public String buildPropertiesPath
-    public def artifactory
-    public InputContributor buildLauncher
-    public def buildProperties
-    public def exitCode
-    public def buildInfo
-    public def buildName
-    public def buildNumber
-    public def repositories = []
+     ConfigObject testConfig
+     String buildPropertiesPath
+     Artifactory artifactory
+     TestInputContributor buildLauncher
+     Properties buildProperties
 
-    TestProfile(ConfigObject testConfig, def artifactory) {
+    /**
+    * The actual buildInfo from Artifactory
+    * */
+    def buildInfo
+    def repositories = []
+    def buildName
+    def buildNumber
+    def config
+    def exitCode
+
+    TestProfile(ConfigObject testConfig, Artifactory artifactory, def config) {
         this.testConfig = testConfig
         this.artifactory = artifactory
+        this.config = config
         buildProperties = PropertyFileAggregator.aggregateBuildProperties(this.testConfig)
     }
 
-    public void createBuildLauncher() {
+    void createBuildLauncher() {
         def projectPath = getClass().getResource(testConfig.buildLauncher.projectPath).path
-        def buildScriptPath = projectPath + "/" + testConfig.buildLauncher.buildScriptFile
+        def buildScriptPath = "${projectPath}/${testConfig.buildLauncher.buildScriptFile}"
 
         switch (testConfig.buildLauncher.buildTool.toLowerCase()) {
             case 'gradle':
@@ -43,32 +52,28 @@ class TestProfile {
                     testConfig.buildLauncher.systemProperties.each { key, val->
                     ((GradleLauncher)buildLauncher).addProjProp(key, val)
                 }
+                initLauncher(buildLauncher)
                 break
             case 'maven':
                 buildLauncher = new MavenLauncher(testConfig.buildLauncher.javaHome, testConfig.buildLauncher.mavenHome, buildScriptPath)
                 buildLauncher.addSystemProp("buildInfoConfig.propertiesFile", buildPropertiesPath)
                 buildLauncher.addSystemProp("m3plugin.lib", getClass().getResource(testConfig.buildLauncher.m3pluginLib).path)
                 buildLauncher.addSystemProp("classworlds.conf", getClass().getResource(testConfig.buildLauncher.classworldsConf).path)
+                initLauncher(buildLauncher)
                 break
             case 'ivy':
                 buildLauncher = new IvyLauncher(testConfig.buildLauncher.antPath, buildScriptPath, buildPropertiesPath)
                 def artifactoryUrl = "${artifactory.getUri()}/${artifactory.getContextName()}"
                 buildLauncher.addSystemProp("artifactory.url", artifactoryUrl)
+                initLauncher(buildLauncher)
+                break
+            case 'generic':
+                buildLauncher = new Generic(this, config)
                 break
             default:
                 throw new IllegalArgumentException("Build tool ${testConfig.buildLauncher.buildTool} is invalid.")
         }
 
-        buildLauncher.addToolVersions(testConfig.buildLauncher.buildToolVersions)
-        testConfig.buildLauncher.tasks.each {
-            buildLauncher.addTask(it)
-        }
-        testConfig.buildLauncher.switches.each {
-            buildLauncher.addSwitch(it)
-        }
-        testConfig.buildLauncher.systemProperties.each { key, val->
-            buildLauncher.addSystemProp(key, val)
-        }
 
         //TODO: delete new file
     }
@@ -77,16 +82,29 @@ class TestProfile {
         exitCode = buildLauncher.contribute()
     }
 
+    private void initLauncher(Launcher buildLauncher) {
+        buildLauncher.addToolVersions(testConfig.buildLauncher.buildToolVersions)
+        testConfig.buildLauncher.tasks.each {
+            buildLauncher.addTask(it)
+        }
+        testConfig.buildLauncher.switches.each {
+            buildLauncher.addSwitch(it)
+        }
+        testConfig.buildLauncher.systemProperties.each { key, val ->
+            buildLauncher.addSystemProp(key, val)
+        }
+    }
+
     /**
      * Add dynamic properties to the test buildInfo properties, such as unique build name and repositories
      *
      * @param config {@link TestsConfig}
      * @return
      */
-    def initSpecialProperties(def config) {
+    void initSpecialProperties() {
 
-        def timestamp = System.currentTimeMillis()
-        def artifactoryUrl = "${artifactory.getUri()}/${artifactory.getContextName()}".toString()
+        long timestamp = System.currentTimeMillis()
+        String artifactoryUrl = "${artifactory.getUri()}/${artifactory.getContextName()}".toString()
         createRepositories(buildProperties.get(TestConstants.buildName), timestamp)
 
         buildProperties.put(TestConstants.buildName, buildProperties.get(TestConstants.buildName) + "_" + timestamp)
@@ -124,8 +142,8 @@ class TestProfile {
         //createRepo(TestConstants.resolveRepokey, buildName + "_resolve_", timestamp)
     }
 
-    private void createRepo(String propertyKey, String newName, long timestamp) {
-        def repoName = buildProperties.get(propertyKey)
+    private void createRepo(String propertyKey, newName, long timestamp) {
+        String repoName = buildProperties.get(propertyKey)
         if (repoName == null) {
             repoName = newName + timestamp
         }
@@ -136,7 +154,7 @@ class TestProfile {
 
 
     @Override
-    public String toString() {
+    String toString() {
         return "TestProfile{" +
                 "testConfig=" + testConfig +
                 ", buildPropertiesPath='" + buildPropertiesPath + '\'' +

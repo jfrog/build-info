@@ -2,11 +2,7 @@ package build.extensions
 
 import org.spockframework.runtime.extension.ExtensionAnnotation
 
-import java.lang.annotation.Documented
-import java.lang.annotation.ElementType
-import java.lang.annotation.Retention
-import java.lang.annotation.RetentionPolicy
-import java.lang.annotation.Target
+import java.lang.annotation.*
 
 /**
  * @author Lior Hasson  
@@ -20,12 +16,12 @@ import java.lang.annotation.Target
  * The population logic is by matching labels from the test config file to the specific Spec
  *
  * example:
- * For the following closure
+ * For the following labels under the test config file:
  * <pre>
  *  labels=['artifacts']
  * </pre>
  *
- * You need to add the following annotation
+ * You need to add the following annotation:
  * <pre>
  *  @LabelMatch(['artifacts'])
  * </pre>
@@ -36,7 +32,7 @@ import java.lang.annotation.Target
 //Specify the extension class that backs this annotation
 @ExtensionAnnotation(LabelMatchExtension)
 @Documented
-public @interface LabelMatch {
+@interface LabelMatch {
     //Accept a string values that represents the supported Closures for a particular Spec
     String[] value() default []
 }

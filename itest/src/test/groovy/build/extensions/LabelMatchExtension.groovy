@@ -1,6 +1,7 @@
 package build.extensions
 
 import org.spockframework.runtime.extension.AbstractAnnotationDrivenExtension
+import org.spockframework.runtime.extension.IMethodInterceptor
 import org.spockframework.runtime.model.FieldInfo
 import org.spockframework.runtime.model.SpecInfo
 
@@ -22,7 +23,7 @@ class LabelMatchExtension extends AbstractAnnotationDrivenExtension<LabelMatch>{
     @Override
     void visitSpec(SpecInfo spec) {
         //Construct and subscribe our event interceptor
-        def interceptor = new LabelMatchInterceptor(labels: labels, fieldName: fieldName)
+        IMethodInterceptor interceptor = new LabelMatchInterceptor(labels: labels, fieldName: fieldName)
         spec.addInterceptor(interceptor)
     }
 }

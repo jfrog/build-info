@@ -20,7 +20,7 @@ import java.lang.annotation.Annotation
  */
 abstract class AbstractJUnitTest {
     @ClassRule
-    public static ExternalResource runAnnotations() {
+    static ExternalResource runAnnotations() {
         return new ExternalResource() {
             @Override
             Statement apply(final Statement base, final Description description) {
@@ -32,16 +32,16 @@ abstract class AbstractJUnitTest {
                         try {
                             decorateWithRules(description, base, extensions).evaluate()
                         } catch (AssumptionViolatedException e) {
-                            logger.error("Skipping %s: %s%n", description.getDisplayName(), e.getMessage());
+                            logger.error("Skipping "+ description.getDisplayName() +" : " + e.getMessage());
                             throw e;
                         } catch (Exception | AssertionError e) { // Errors and failures
-                            logger.error("Error in %s: %s%n", description.getDisplayName(), e.getMessage());
+                            logger.error("Error in "+ description.getDisplayName() +" : " + e.getMessage());
                             throw e;
                         }
                         finally {
                             //Run all the after methods, can be use for cleanup etc.
                             for (TestAnnotationExtension rule : extensions) {
-                                    rule.after();
+                                rule.after();
                             }
                         }
                     }
@@ -49,7 +49,7 @@ abstract class AbstractJUnitTest {
                     /**
                      * Look for annotations on a test and honor {@link RuleAnnotation}s in them.
                      */
-                    public Statement decorateWithRules(Description d, Statement body, List<TestAnnotationExtension> extensions) {
+                    Statement decorateWithRules(Description d, Statement body, List<TestAnnotationExtension> extensions) {
                         for (Annotation a : d.getAnnotations()) {
                             RuleAnnotation r = a.annotationType().getAnnotation(RuleAnnotation.class)
                             if (r != null) {

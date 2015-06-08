@@ -1,4 +1,4 @@
-package docker;
+package docker.docker;
 
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;

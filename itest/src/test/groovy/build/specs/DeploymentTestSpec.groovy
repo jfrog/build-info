@@ -10,8 +10,6 @@ import utils.TestUtils
 /**
  * @author Lior Hasson  
  */
-
-
 class DeploymentTestSpec extends Specification {
 
     @Shared

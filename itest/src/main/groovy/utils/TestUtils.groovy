@@ -1,7 +1,9 @@
 package utils
 
 import groovyx.net.http.HttpResponseException
+import org.jfrog.artifactory.client.Artifactory
 import org.jfrog.artifactory.client.ArtifactoryRequest
+import org.jfrog.artifactory.client.UploadableArtifact
 import org.jfrog.artifactory.client.impl.ArtifactoryRequestImpl
 import org.jfrog.artifactory.client.model.Repository
 
@@ -12,14 +14,35 @@ import org.slf4j.LoggerFactory
  * @author Aviad Shikloshi
  */
 class TestUtils {
-    public static final OS_WIN = System.getProperty("os.name").contains("Windows")
+    static final OS_WIN = System.getProperty("os.name").contains("Windows")
     private static final Logger logger = LoggerFactory.getLogger(TestUtils.class);
 
     static def gradleWrapperScript(){
         (OS_WIN ? "gradlew.bat" : "./gradlew")
     }
 
-    static def createRepository(def client, def repoName) {
+    static def uploadArtifacts(Artifactory client, String repoKey, String targetPath, File file, properties){
+        UploadableArtifact uploadableArtifact = client.repository(repoKey).upload(targetPath, file)
+
+        if(properties){
+            properties.each{key, val ->
+                uploadableArtifact.withProperty(key, val)
+            }
+        }
+
+        try{
+            def deployed = uploadableArtifact.doUpload()
+            deployed
+        }
+        catch (Exception e){
+            if (logger != null) {
+                logger.error("Error while uploading artifact: ${repoKey}:${targetPath} in Artifactory: ${client.getUri()}, error: ${e.getMessage()}")
+            }
+            throw e
+        }
+    }
+
+    static def createRepository(Artifactory client, String repoName) {
         try {
             Repository testRepository = client.repositories().builders().localRepositoryBuilder().key(repoName).build()
             client.repositories().create(0, testRepository)
@@ -31,12 +54,16 @@ class TestUtils {
         }
     }
 
-    static def getBuildArtifacts(def client, def testConfig){
+    static def getBuildArtifacts(Artifactory client, TestProfile testConfig){
         Map<String, Object> response;
         Map<String,Object> body = testConfig.testConfig.artifacts.buildArtifacts
         body.put("buildName", testConfig.buildProperties.get(TestConstants.buildName))
         body.put("buildNumber", testConfig.buildProperties.get(TestConstants.buildNumber))
-        body.put("repos", [testConfig.buildProperties.get(TestConstants.repoKey), testConfig.buildProperties.get(TestConstants.snapshotRepoKey)])
+        body.put("repos", [
+                            testConfig.buildProperties.get(TestConstants.repoKey),
+                            testConfig.buildProperties.get(TestConstants.snapshotRepoKey)
+                          ]
+        )
 
         ArtifactoryRequest searchArtifacts = new ArtifactoryRequestImpl()
                 .apiUrl("api/search/buildArtifacts")
@@ -68,7 +95,7 @@ class TestUtils {
         }
     }
 
-    static def deleteBuildFromArtifactory(def client, def buildName, def buildNumber) {
+    static def deleteBuildFromArtifactory(Artifactory client, String buildName, String buildNumber) {
         def removeBuildRequest = new ArtifactoryRequestImpl()
                 .method(ArtifactoryRequest.Method.DELETE)
                 .responseType(ArtifactoryRequest.ContentType.TEXT)
@@ -84,7 +111,7 @@ class TestUtils {
         }
     }
 
-    static def getBuildInfo(def client, def buildName, def buildNumber) {
+    static def getBuildInfo(Artifactory client, String buildName, String buildNumber) {
         ArtifactoryRequest getBuildInfo = new ArtifactoryRequestImpl()
                 .method(ArtifactoryRequest.Method.GET)
                 .responseType(ArtifactoryRequest.ContentType.JSON)
@@ -99,7 +126,7 @@ class TestUtils {
         }
     }
 
-    static def deleteRepository(def client, def repoName) {
+    static def deleteRepository(Artifactory client, String repoName) {
         try {
             client.repositories().repository(repoName).delete()
         } catch (Exception e) {
@@ -110,7 +137,7 @@ class TestUtils {
         }
     }
 
-    static def saveLicense(def client) {
+    static def saveLicense(Artifactory client) {
         def lic = this.getClass().getResource("/artifactory/pro.lic").text
         try {
             ArtifactoryRequest addLicense = new ArtifactoryRequestImpl()

@@ -11,7 +11,7 @@ class MavenLauncher extends Launcher{
     private def mavenHome
     private def javaHome
 
-    public MavenLauncher(String javaHome, String mavenHome, String projectFilePath) {
+    MavenLauncher(String javaHome, String mavenHome, String projectFilePath) {
         super(projectFilePath)
         this.mavenHome = mavenHome
         this.javaHome = javaHome

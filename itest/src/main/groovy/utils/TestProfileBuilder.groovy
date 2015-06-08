@@ -8,11 +8,11 @@ import org.jfrog.artifactory.client.Artifactory
  */
 class TestProfileBuilder {
     private List<TestProfile> testProfiles = new ArrayList<TestProfile>();
-    private def config
-    private File sourceFile
-    private def splitByProperty = []
     private List<ConfigObject> confList = new ArrayList<ConfigObject>()
-    protected Artifactory artifactory
+    private File sourceFile
+    private Artifactory artifactory
+    private def splitByProperty = []
+    private def config
 
     TestProfileBuilder(config, file, artifactory) {
         this.config = config
@@ -32,15 +32,14 @@ class TestProfileBuilder {
         profileMultiplicity()
 
         confList.each { configObject ->
-            def testSetup = new TestProfile(configObject, artifactory)
-            testSetup.initSpecialProperties(config)
+            TestProfile testSetup = new TestProfile(configObject, artifactory, config)
+            testSetup.initSpecialProperties()
             testSetup.createBuildLauncher()
             testProfiles << testSetup
         }
 
         testProfiles
     }
-
 
     private void profileMultiplicity() {
         splitByProperty.each { prop ->
@@ -63,7 +62,6 @@ class TestProfileBuilder {
             confList = tmp
         }
     }
-
 
     private def deepCopy(ConfigObject orig) {
         ConfigObject copy = new ConfigObject()

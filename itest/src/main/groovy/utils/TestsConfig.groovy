@@ -46,8 +46,8 @@ class TestsConfig {
         if (testConfigurationsPath) {
             config.testConfigurationsPath = testConfigurationsPath
         }
-        if (!config.testConfigurationsPath) {
-            config.testConfigurationsPath = getClass().getResource("/testConfigurations").path;
+        else {
+            config.testConfigurationsPath = getClass().getResource(config.artifactory.testConfigurationsPath).path;
         }
     }
 }

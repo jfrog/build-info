@@ -19,42 +19,8 @@ class BuildInfoTestSpec extends Specification {
 
     def "process executed good and build info exists"() {
         expect:
-        testProfile.buildName != null
-
         testProfile.exitCode == 0
         testProfile.buildInfo != null
-
-        where:
-        testProfile << buildInfoTestProfiles
-    }
-
-    def "blackduck build info values"(){
-        when:
-        Map blackduck = testProfile.testConfig.get("buildInfoProperties").get("buildInfo").get("governance").get("blackduck")
-        blackduck != null
-
-        then:
-        testProfile.buildInfo.get("buildInfo").get("governance").get("blackDuckProperties").each{
-            def input = it.value
-            def expected = blackduck.get(it.key)
-            input.equals(expected)
-        }
-
-        where:
-        testProfile << buildInfoTestProfiles
-    }
-
-    def "license control build info values"() {
-        when:
-        Map licenseControl = testProfile.testConfig.get("buildInfoProperties").get("buildInfo").get("licenseControl")
-        licenseControl != null
-
-        then:
-        testProfile.buildInfo.get("buildInfo").get("licenseControl").each{
-            def input = it.value
-            def expected = licenseControl.get(it.key)
-            input.equals(expected)
-        }
 
         where:
         testProfile << buildInfoTestProfiles

@@ -11,7 +11,7 @@
     </root>
 
 
-    <!--Logger for Artifactory Java Client-->
+    <!--Logger for Artifactory Java Client and Docker rest client-->
     <logger name="groovyx.net.http">
         <level value="DEBUG"/>
     </logger>

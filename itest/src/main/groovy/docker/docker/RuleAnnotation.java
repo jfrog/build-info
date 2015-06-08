@@ -1,4 +1,4 @@
-package docker;
+package docker.docker;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;

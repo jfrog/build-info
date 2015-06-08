@@ -1,4 +1,4 @@
-package docker;
+package docker.docker;
 
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.util.docker.DockerClient;
@@ -11,7 +11,6 @@ import java.io.File;
  * @author Lior Hasson
  */
 public class Docker {
-//    String dockerUrl = "http://boot2docker:2375/";
     String dockerUrl = System.getenv("DOCKER_HTTP_HOST")!=null?System.getenv("DOCKER_HTTP_HOST"):System.getProperty("DOCKER_HTTP_HOST");
 
     private String repo;
@@ -50,6 +49,22 @@ public class Docker {
         startContainer();
     }
 
+    /**
+     * Delete the container include its volume
+     */
+    public void close(){
+        try {
+            container.doDelete(true, true);
+        }
+        finally {
+            dockerClient.close();
+        }
+    }
+
+    public boolean ping(){
+        return  dockerClient.ping();
+    }
+
     private void buildArtifactoryServer() {
         dockerClient.build(new File(
                         this.getClass().getResource(dockerFilePath).getPath()),
@@ -77,20 +92,8 @@ public class Docker {
         container.doStart();
     }
 
-
-    /**
-     * Delete the container include its volume
-     */
-    public void close(){
-        try {
-            container.doDelete(true, true);
-        }
-        finally {
-            dockerClient.close();
-        }
-    }
-
     Docker repo(String repo) {
+
         this.repo = repo;
         return this;
     }

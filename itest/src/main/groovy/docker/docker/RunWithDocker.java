@@ -1,4 +1,4 @@
-package docker;
+package docker.docker;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.rules.ExternalResource;
@@ -45,15 +45,18 @@ public @interface RunWithDocker {
     String registry() default StringUtils.EMPTY;
 
     /**
-     * repo in the registry from which docker should look for the image
+     * Repo in the registry from which docker should look for the image
      */
     String repo() default StringUtils.EMPTY;
 
     /**
-     * image ID, mandatory field
+     * Image ID, mandatory field
      */
     String imageId();
 
+    /**
+     * Image tag, default is 'latest'
+     */
     String tag() default StringUtils.EMPTY;
 
     String containerId() default StringUtils.EMPTY;
@@ -101,7 +104,10 @@ public @interface RunWithDocker {
                             containerPort(runWithDocker.containerPort()).
                             hostPort(runWithDocker.hostPort());
 
-                    docker.run();
+                    if(docker.ping()){
+                        docker.run();
+                    }
+
                     base.evaluate();
                 }
             };
@@ -109,7 +115,9 @@ public @interface RunWithDocker {
 
         @Override
         public void after() {
-            docker.close();
+            if(docker.ping()) {
+                docker.close();
+            }
         }
     }
 }

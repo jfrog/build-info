@@ -1,21 +1,35 @@
-package testConfigurations.gradle
+package testConfigurations.generic
 
-labels=['buildInfoProperties', 'artifacts', 'licenseControl']
+labels=['buildInfoProperties', 'artifacts']
 
 
 artifacts {
     buildArtifacts{
-        mappings=[[input:"(.+).jar"], [input:"(.+)-SNAPSHOT.jar"]]
+        mappings = [[input:"(.+).sh"]]
     }
     expected{
-        numberExpected=8
+        numberExpected = 2
     }
+}
+
+generic{
+
+    //Prepare files before the generic starts, in order to test the resolve
+    prepareData{
+        dataPath = "prepare-data"
+        properties = ['build.itest':'generic']
+    }
+
+    //Generic resolve patterns (without source repository, that is calculated on run time)
+    resolvePattern = ['${sourceRepo}:prepare-data/org/jfrog/test/**/*.jar;build.itest=generic']
+    deployPattern = ['**/*.sh', '**/*.properties=>gradle']
+    deploymentProperties = ""
 }
 
 buildInfoProperties {
     buildInfo{
         build{
-            name="testing-gradle-3"
+            name="testing-generic"
             number="1"
         }
         /*agent {
@@ -47,7 +61,7 @@ buildInfoProperties {
         }
         deploy{
             build{
-                name="testing-gradle-3"
+                name="testing-generic"
                 number = "1"
             }
         }
@@ -58,11 +72,9 @@ buildInfoProperties {
 }
 
 buildLauncher {
-    buildTool ="gradle"
-    buildToolVersions = ["2.4"]
-    tasks = ["clean", "artifactoryPublish", "--stacktrace"]
-    systemVariables= []
+    buildTool = "generic"
+    buildToolVersions = ["1.0"]
+    systemVariables = []
     projVariables = []
-    projectPath = ["/projects/gradle/gradle-example"]
-    buildScriptFile = "build.gradle"
+    projectPath = ["/projects/generic/generic-example"]
 }

@@ -2,6 +2,7 @@ package build
 
 import build.specs.BuildInfoTestSpec
 import build.specs.DeploymentTestSpec
+import build.specs.LicensesTestSpec
 import docker.RunWithDocker
 import groovy.io.FileType
 import org.jfrog.artifactory.client.Artifactory
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory
 import utils.*
 
 /**
- * This class represents a suite of tests that covers the build process together with BuildInfo extractors such as
+ * This class represents a suite of tests that covers the "build process" together with BuildInfo extractors such as
  * Gradle/Maven/Ivy and Generic
  *
  * The main flow is to create {@link TestProfile} instances according to test configuration files under
@@ -27,17 +28,17 @@ import utils.*
  */
 
 @RunWith(Suite)
-@Suite.SuiteClasses([DeploymentTestSpec.class, BuildInfoTestSpec.class])
+@Suite.SuiteClasses([DeploymentTestSpec.class, BuildInfoTestSpec.class, LicensesTestSpec.class])
 @RunWithDocker(
-    imageId = "artifactory-pro", tag = "3.7.0", repo = "artifactory", registry = "docker.jfrog.info",
+    registry = "docker.jfrog.info", imageId = "artifactory-pro", repo = "artifactory",
     containerPort = 80, hostPort = 8888
 )
 
 class BuildTestBaseSpec extends AbstractJUnitTest{
     private static final Logger logger = LoggerFactory.getLogger(BuildTestBaseSpec.class);
     private static def config = TestsConfig.getInstance().config
-    public static List<TestProfile> testProfiles = new ArrayList<TestProfile>()
-    public static Artifactory artifactory
+    static List<TestProfile> testProfiles = new ArrayList<TestProfile>()
+    static Artifactory artifactory
 
     @BeforeClass
     static void setup() {
@@ -48,7 +49,6 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
 
         waitForArtifactoryToLoad()
         def dir = new File(((String) config.testConfigurationsPath))
-
         //Iterates over all the test Config files to create test profile from them
         dir.eachFileRecurse (FileType.FILES) { file ->
             def builder = new TestProfileBuilder(config, file, artifactory)
@@ -75,9 +75,9 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
     static void cleanup() {
         try {
             testProfiles.each {
-                def repoName = it.buildProperties.get(TestConstants.repoKey)
-                def buildName = it.buildProperties.get(TestConstants.buildName)
-                def buildNumber = it.buildProperties.get(TestConstants.buildNumber)
+                String repoName = it.buildProperties.get(TestConstants.repoKey)
+                String buildName = it.buildProperties.get(TestConstants.buildName)
+                String buildNumber = it.buildProperties.get(TestConstants.buildNumber)
                 TestUtils.deleteBuildFromArtifactory(it.artifactory, buildName, buildNumber)
                 TestUtils.deleteRepository(it.artifactory, repoName)
             }
@@ -106,10 +106,10 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
         boolean isUp = false
         while (retries > 0) {
             retries--
-            TestUtils.saveLicense(artifactory)
             if (artifactory.system().ping()) {
                 message = 'Artifactory is fully UP!'
                 isUp = true
+                TestUtils.saveLicense(artifactory)
                 break
             }
             sleep 2000
