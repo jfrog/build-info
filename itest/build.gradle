@@ -78,6 +78,10 @@ test {
         events "started", "passed", "skipped", "failed", "standardOut", "standardError"
         minGranularity 0
     }
+
+    System.getProperties().each{
+        systemProperties.put(it.key, it.value)
+    }
 }
 
 task wrapper(type: Wrapper) {
