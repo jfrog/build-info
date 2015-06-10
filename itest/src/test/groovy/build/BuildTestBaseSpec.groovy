@@ -31,7 +31,7 @@ import utils.*
 @Suite.SuiteClasses([DeploymentTestSpec.class, BuildInfoTestSpec.class, LicensesTestSpec.class])
 @RunWithDocker(
     registry = "docker.jfrog.info", imageId = "artifactory-pro", repo = "artifactory",
-    containerPort = 80, hostPort = 8888
+    containerPort = 8081, hostPort = 8888
 )
 
 class BuildTestBaseSpec extends AbstractJUnitTest{
@@ -106,10 +106,10 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
         boolean isUp = false
         while (retries > 0) {
             retries--
+            TestUtils.saveLicense(artifactory)
             if (artifactory.system().ping()) {
                 message = 'Artifactory is fully UP!'
                 isUp = true
-                TestUtils.saveLicense(artifactory)
                 break
             }
             sleep 2000

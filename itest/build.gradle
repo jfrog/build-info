@@ -12,18 +12,10 @@ allprojects {
     targetCompatibility = 1.7
 
     repositories {
-        maven { url "https://oss.jfrog.org/jfrog-dependencies" }
+        jcenter()
         maven {
-            url "https://repo.artifactoryonline.com/artifactory/artifactory-dependencies"
-            credentials {
-                /*username = "${artifactory_user}"
-                password = "${artifactory_password}"*/
-
-                username = project.hasProperty("artifactory_user") ? artifactory_user : System.getenv("artifactory_user")
-                password = project.hasProperty("artifactory_password") ? artifactory_password : System.getenv("artifactory_password")
-            }
+            url "https://oss.jfrog.org/jfrog-dependencies"
         }
-//        mavenLocal()
     }
 }
 
@@ -63,7 +55,7 @@ dependencies {
     compile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-services', version:'+')
     compile(group:'org.spockframework', name:'spock-core', version:'1.0-groovy-2.3')
     compile(group:'org.apache.ant', name:'ant', version:'1.9.2')
-    compile(group:'org.jfrog.util', name:'docker-remote-util', version:'0.1-SNAPSHOT'){
+    compile(group:'org.jfrog.util', name:'docker-remote-util', version:'0.1'){
         exclude group: 'org.codehaus.groovy', module:'groovy-all'
     }
 }

@@ -33,19 +33,25 @@ class Generic implements TestInputContributor{
 
     @Override
     def contribute() {
-        if (testProfile.testConfig.generic.prepareData) {
-            prepareData()
-        }
+        try {
+            if (testProfile.testConfig.generic.prepareData) {
+                prepareData()
+            }
 
-        if (testProfile.testConfig.generic.resolvePattern) {
-            resolve()
-        }
+            if (testProfile.testConfig.generic.resolvePattern) {
+                resolve()
+            }
 
-        if (testProfile.testConfig.generic.deployPattern) {
-            deploy()
-        }
+            if (testProfile.testConfig.generic.deployPattern) {
+                deploy()
+            }
 
-        buildInfo()
+            buildInfo()
+        }
+        catch (Exception e){
+            buildInfoLog.error("Generic Build Error: $e.message")
+            return -1
+        }
 
         return 0
     }

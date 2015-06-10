@@ -27,11 +27,11 @@ class Docker {
 
 
     void run() {
-        imageId = "itest_$imageId"
-
         if(StringUtils.isEmpty(containerId)){
             containerId = imageId
         }
+
+        containerId = "itest_$containerId"
 
         //Create Image from Docker File
         if(StringUtils.isNotEmpty(dockerFilePath)){
@@ -78,9 +78,9 @@ class Docker {
     }
 
     private void createContainer() {
-//        Map<String, Map> portMapping = new HashMap<>()
-//        portMapping.put("8081/tcp", new HashMap())
-//        container.getCreateConfig().setExposedPorts(portMapping)
+        Map<String, Map> portMapping = new HashMap<>()
+        portMapping.put("$containerPort/tcp", new HashMap())
+        container.getCreateConfig().setExposedPorts(portMapping)
         container.getCreateConfig().setHostname("artifactory")
         container.doCreate()
     }
