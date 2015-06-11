@@ -27,9 +27,9 @@ class GradleLauncher extends Launcher{
     @Override
     protected def buildToolVersionHandler() {
         def wrappers = []
-        buildToolVersions.each {
+        /*buildToolVersions.each {
             wrappers.add("${gradleScript()} wrapper --gradle-version $it")
-        }
+        }*/
         wrappers
     }
 
@@ -52,7 +52,7 @@ class GradleLauncher extends Launcher{
     }
 
     static def gradleWrapperScript(){
-        (OS_WIN ? "gradlew.bat" : "./gradlew")
+        (OS_WIN ? "gradlew.bat" : "gradlew")
     }
 
     static def gradleScript(){

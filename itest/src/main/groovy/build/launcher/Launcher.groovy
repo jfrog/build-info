@@ -115,10 +115,7 @@ abstract class Launcher implements TestInputContributor{
             getCmd().each {
                 def command = it
                 try {
-                    println "Launching build tool process: $command"
-
                     ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(command.split(" ")))
-
                     pb.environment().putAll(processEnvironment)
 
                     if(workingDirectory){

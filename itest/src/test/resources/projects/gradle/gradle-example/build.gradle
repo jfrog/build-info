@@ -111,10 +111,6 @@ artifactory {
   }
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '2.2'
-}
-
 class Version {
   String originalVersion
   String thisVersion
