@@ -52,7 +52,7 @@ class GradleLauncher extends Launcher{
     }
 
     static def gradleWrapperScript(){
-        (OS_WIN ? "gradlew.bat" : "gradlew")
+        (OS_WIN ? "gradlew.bat" : "./gradlew")
     }
 
     static def gradleScript(){
