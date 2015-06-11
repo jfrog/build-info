@@ -16,8 +16,8 @@ class GradleLauncher extends Launcher{
 
     protected void createCmd() {
         buildToolVersionHandler().each {
-            cmd.add(it)
-            cmd.add("${gradleWrapperScript()} -v")
+            //cmd.add(it)
+            //cmd.add("${gradleWrapperScript()} -v")
             cmd.add("$commandPath ${switchesToString()} ${projPropToString()} ${systemPropsToString()} " +
                     "-b $projectFilePath ${tasksToString()}"
             )
@@ -27,9 +27,9 @@ class GradleLauncher extends Launcher{
     @Override
     protected def buildToolVersionHandler() {
         def wrappers = []
-        /*buildToolVersions.each {
+        buildToolVersions.each {
             wrappers.add("${gradleScript()} wrapper --gradle-version $it")
-        }*/
+        }
         wrappers
     }
 
