@@ -18,7 +18,7 @@ class TestUtils {
     private static final Logger logger = LoggerFactory.getLogger(TestUtils.class);
 
     static def gradleWrapperScript(){
-        (OS_WIN ? "gradlew.bat" : "gradlew")
+        (OS_WIN ? "gradlew.bat" : "./gradlew")
     }
 
     static def uploadArtifacts(Artifactory client, String repoKey, String targetPath, File file, properties){

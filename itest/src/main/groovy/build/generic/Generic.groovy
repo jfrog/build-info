@@ -25,7 +25,6 @@ class Generic implements TestInputContributor{
     private Set<DeployDetails> artifactsToDeploy
     private def config
 
-
     Generic(TestProfile testProfile, config) {
         this.testProfile = testProfile
         this.config = config
@@ -84,7 +83,7 @@ class Generic implements TestInputContributor{
         artifactsToDeploy = artifactsDeployer.getArtifactsToDeploy()
     }
 
-    private void buildInfo(){
+    private void buildInfo() {
         ArtifactoryBuildInfoClient client = createBuildInfoClient()
         GenericBuildInfoDeployer buildInfoDeployer = new GenericBuildInfoDeployer(client, buildDependencies, dependencies, artifactsToDeploy)
         buildInfoDeployer.buildInfo(testProfile.buildProperties)

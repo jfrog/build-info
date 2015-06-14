@@ -16,9 +16,9 @@ class GradleLauncher extends Launcher{
 
     protected void createCmd() {
         buildToolVersionHandler().each {
-            //cmd.add(it)
-            //cmd.add("${gradleWrapperScript()} -v")
-            cmd.add("$commandPath ${switchesToString()} ${projPropToString()} ${systemPropsToString()} " +
+            cmd.add(it)
+            cmd.add("${gradleWrapperScript()} -v")
+            cmd.add("$commandPath${switchesToString()} ${projPropToString()} ${systemPropsToString()}" +
                     "-b $projectFilePath ${tasksToString()}"
             )
         }
@@ -52,7 +52,7 @@ class GradleLauncher extends Launcher{
     }
 
     static def gradleWrapperScript(){
-        (OS_WIN ? "gradlew.bat" : "gradlew")
+        (OS_WIN ? "gradlew.bat" : "./gradlew")
     }
 
     static def gradleScript(){
