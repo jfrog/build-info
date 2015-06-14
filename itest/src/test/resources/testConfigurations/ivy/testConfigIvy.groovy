@@ -42,7 +42,7 @@ buildInfoProperties {
 
 buildLauncher {
     buildTool = "ivy"
-    buildToolVersions = ["2.4.0"]
+    buildToolVersions = ["2.3.0"]
     tasks = ["publish-ci"]
     switches = []
     systemProperties = [:]
@@ -50,6 +50,6 @@ buildLauncher {
     javaHome = "java"
     projectPath = ["/projects/ivy/ivy-example"]
     buildInfoClassPath="/cache/artifactory-plugin"
-    antPath = "ant.bat"
+    antPath = "/var/tools/ivy/apache-ant-1.9.5/bin/ant"
     buildScriptFile = "build.xml"
 }

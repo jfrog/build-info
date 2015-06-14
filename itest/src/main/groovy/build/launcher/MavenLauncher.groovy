@@ -39,7 +39,7 @@ class MavenLauncher extends Launcher{
     protected void createCmd() {
         extractClassWorldJar()
 
-        cmd.add("$javaHome -classpath ${mavenHome}\\boot\\${extractClassWorldJar()} ${systemPropsToString()} " +
+        cmd.add("$javaHome -classpath ${mavenHome}${File.separatorChar}boot$File.separatorChar${extractClassWorldJar()} ${systemPropsToString()} " +
                 "org.codehaus.plexus.classworlds.launcher.Launcher -f $projectFilePath ${tasksToString()}"
         )
     }
@@ -51,7 +51,7 @@ class MavenLauncher extends Launcher{
 
     private String extractClassWorldJar() {
         FileSet fs = new FileSet()
-        fs.setDir(new File(mavenHome + "\\boot"))
+        fs.setDir(new File("$mavenHome${File.separatorChar}boot"))
         fs.setProject(new Project())
         fs.createInclude().setName("plexus-classworlds*.jar")
         DirectoryScanner ds = fs.getDirectoryScanner(new Project())
