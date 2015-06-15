@@ -8,7 +8,7 @@ import com.google.common.collect.Lists
  * @author Lior Hasson
  */
 abstract class Launcher implements TestInputContributor{
-
+    static final OS_WIN = System.getProperty("os.name").contains("Windows")
     protected def processEnvironment = Maps.newHashMap()
     protected def cmd = []
     protected def commandPath

@@ -6,8 +6,6 @@ import com.google.common.collect.Maps
  * @author Eyal B
  */
 class GradleLauncher extends Launcher{
-    static final OS_WIN = System.getProperty("os.name").contains("Windows")
-
     protected Map<String, Object> projProp = Maps.newHashMap()
 
     GradleLauncher(gradleCommandPath, gradleProjectFilePath) {
@@ -51,11 +49,11 @@ class GradleLauncher extends Launcher{
         sb
     }
 
-    static def gradleWrapperScript(){
+    private static def gradleWrapperScript(){
         (OS_WIN ? "gradlew.bat" : "./gradlew")
     }
 
-    static def gradleScript(){
+    private static def gradleScript(){
         (OS_WIN ? "gradle.bat" : "gradle")
     }
 }

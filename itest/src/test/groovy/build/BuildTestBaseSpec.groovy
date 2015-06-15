@@ -55,6 +55,7 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
             testProfiles.addAll(builder
                     .splitByProperty('buildLauncher.buildToolVersions')
                     .splitByProperty('buildLauncher.projectPath')
+                    .splitByProperty('buildLauncher.mavenHome')
                     .build()
             )
         }

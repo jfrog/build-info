@@ -83,7 +83,9 @@ class TestProfile {
     }
 
     private void initLauncher(Launcher buildLauncher) {
-        buildLauncher.addToolVersions(testConfig.buildLauncher.buildToolVersions)
+        testConfig.buildLauncher.buildToolVersions.each {
+            buildLauncher.addToolVersions(it)
+        }
         testConfig.buildLauncher.tasks.each {
             buildLauncher.addTask(it)
         }

@@ -38,7 +38,7 @@ class MavenLauncher extends Launcher{
     @Override
     protected void createCmd() {
         extractClassWorldJar()
-
+        cmd.add("${mavenHome}${File.separatorChar}bin${File.separatorChar}${mavenScript()} -v")
         cmd.add("$javaHome -classpath ${mavenHome}${File.separatorChar}boot$File.separatorChar${extractClassWorldJar()} ${systemPropsToString()} " +
                 "org.codehaus.plexus.classworlds.launcher.Launcher -f $projectFilePath ${tasksToString()}"
         )
@@ -46,7 +46,7 @@ class MavenLauncher extends Launcher{
 
     @Override
     protected def buildToolVersionHandler() {
-        //TODO
+        return null
     }
 
     private String extractClassWorldJar() {
@@ -58,5 +58,9 @@ class MavenLauncher extends Launcher{
         String[] files = ds.getIncludedFiles()
 
         files[0]
+    }
+
+    private static def mavenScript(){
+        (OS_WIN ? "mvn.bat" : "mvn")
     }
 }

@@ -26,8 +26,8 @@ class TestProfileBuilder {
     }
 
     public List<TestProfile> build(){
-        //Read the config file and creates the first ConfigObject (father); from that object we will
-        //fork other object according to the split properties
+        //Read the config file and creates the first ConfigObject (father).
+        //From that object we will fork other object according to the split properties
         confList.add(new ConfigSlurper().parse(sourceFile.toURI().toURL()))
         profileMultiplicity()
 
@@ -45,24 +45,34 @@ class TestProfileBuilder {
         splitByProperty.each { prop ->
             def tmp = []
             confList.each { testProfile ->
-                testProfile.flatten().get(prop).each { val ->
-                    ConfigObject clone = deepCopy(testProfile)
-                    def node = clone
-                    def leaf = clone
-                    def leafProp
-                    prop.split('\\.').each {
-                        node = leaf
-                        leaf = node.get(it)
-                        leafProp = it
+                if (testProfile.flatten().get(prop)) {
+                    testProfile.flatten().get(prop).each { val ->
+                        ConfigObject clone = deepCopy(testProfile)
+                        def node = clone
+                        def leaf = clone
+                        def leafProp
+                        prop.split('\\.').each {
+                            node = leaf
+                            leaf = node.get(it)
+                            leafProp = it
+                        }
+                        node.put(leafProp, "$val")
+                        tmp << clone
                     }
-                    node.put(leafProp, "$val")
-                    tmp << clone
+                }
+                else {
+                    tmp << testProfile
                 }
             }
             confList = tmp
         }
     }
 
+    /**
+     * Deep copy for {@link ConfigObject}
+     * @param orig - instance to copy
+     * @return
+     */
     private def deepCopy(ConfigObject orig) {
         ConfigObject copy = new ConfigObject()
         orig.keySet().each { key ->
