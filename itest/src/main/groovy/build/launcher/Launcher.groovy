@@ -115,7 +115,7 @@ abstract class Launcher implements TestInputContributor{
             getCmd().each {
                 def command = it
                 try {
-                    ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(command.split(" ")))
+                    ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(command.split("\\s+")))
                     pb.environment().putAll(processEnvironment)
 
                     if(workingDirectory){

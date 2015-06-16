@@ -38,7 +38,7 @@ class MavenLauncher extends Launcher{
     @Override
     protected void createCmd() {
         extractClassWorldJar()
-        cmd.add("${mavenScript()} ${mavenHome}${File.separatorChar}bin${File.separatorChar}mvn -v")
+        cmd.add("${mavenScript()}${mavenHome}${File.separatorChar}bin${File.separatorChar}mvn -v")
         cmd.add("$javaHome -classpath ${mavenHome}${File.separatorChar}boot$File.separatorChar${extractClassWorldJar()} ${systemPropsToString()} " +
                 "org.codehaus.plexus.classworlds.launcher.Launcher -f $projectFilePath ${tasksToString()}"
         )
@@ -61,6 +61,6 @@ class MavenLauncher extends Launcher{
     }
 
     private static def mavenScript(){
-        (OS_WIN ? "cmd /C" : "")
+        (OS_WIN ? "cmd /C " : "")
     }
 }
