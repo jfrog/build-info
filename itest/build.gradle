@@ -41,22 +41,23 @@ assemble {
 
 dependencies {
     uberJar(group:'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+'){
-        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+        exclude group:'org.codehaus.groovy', module:'groovy-all'
     }
-    uberJar(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+' ){
-        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    uberJar(group:'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
+        exclude group:'org.codehaus.groovy', module:'groovy-all'
+        exclude group:'org.apache.maven'
     }
-    compile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+')
-    compile(group: 'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
-        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+    compile(group:'org.jfrog.buildinfo', name:'build-info-extractor-ivy', version:'+')
+    compile(group:'org.jfrog.buildinfo', name:'build-info-extractor-maven3', version:'+'){
+        exclude group:'org.codehaus.groovy', module:'groovy-all'
     }
-    compile(group: 'org.jfrog.buildinfo', name:'build-info-api', version:'+')
+    compile(group:'org.jfrog.buildinfo', name:'build-info-api', version:'+')
     compile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-api', version:'+')
     compile(group:'org.jfrog.artifactory.client', name:'artifactory-java-client-services', version:'+')
     compile(group:'org.spockframework', name:'spock-core', version:'1.0-groovy-2.3')
     compile(group:'org.apache.ant', name:'ant', version:'1.9.2')
     compile(group:'org.jfrog.util', name:'docker-remote-util', version:'0.1'){
-        exclude group: 'org.codehaus.groovy', module:'groovy-all'
+        exclude group:'org.codehaus.groovy', module:'groovy-all'
     }
 }
 

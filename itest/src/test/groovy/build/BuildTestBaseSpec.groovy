@@ -65,7 +65,14 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
             testProfile.buildName = testProfile.buildProperties.get(TestConstants.buildName)
             testProfile.buildNumber = testProfile.buildProperties.get(TestConstants.buildNumber)
             testProfile.launch()
-            testProfile.buildInfo = TestUtils.getBuildInfo(testProfile.artifactory, testProfile.buildName, testProfile.buildNumber)
+
+            //Exception here will crashes the all tests
+            try{
+                testProfile.buildInfo = TestUtils.getBuildInfo(testProfile.artifactory, testProfile.buildName, testProfile.buildNumber)
+            }
+            catch (any){
+                logger.error("Get buildInfo error: ${any.getMessage()}")
+            }
         }
     }
 
@@ -79,8 +86,11 @@ class BuildTestBaseSpec extends AbstractJUnitTest{
                 String repoName = it.buildProperties.get(TestConstants.repoKey)
                 String buildName = it.buildProperties.get(TestConstants.buildName)
                 String buildNumber = it.buildProperties.get(TestConstants.buildNumber)
-                TestUtils.deleteBuildFromArtifactory(it.artifactory, buildName, buildNumber)
-                TestUtils.deleteRepository(it.artifactory, repoName)
+                try {
+                    TestUtils.deleteBuildFromArtifactory(it.artifactory, buildName, buildNumber)
+                    TestUtils.deleteRepository(it.artifactory, repoName)
+                }
+                catch (any){}
             }
         }
         finally {

@@ -59,6 +59,7 @@ class TestProfile {
                 buildLauncher.addSystemProp("buildInfoConfig.propertiesFile", buildPropertiesPath)
                 buildLauncher.addSystemProp("m3plugin.lib", getClass().getResource(testConfig.buildLauncher.m3pluginLib).path)
                 buildLauncher.addSystemProp("classworlds.conf", getClass().getResource(testConfig.buildLauncher.classworldsConf).path)
+                buildLauncher.addSystemProp("maven.multiModuleProjectDirectory", getClass().getResource(testConfig.buildLauncher.projectPath).path)
                 initLauncher(buildLauncher)
                 break
             case 'ivy':

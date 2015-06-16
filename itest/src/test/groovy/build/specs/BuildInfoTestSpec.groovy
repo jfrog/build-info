@@ -3,6 +3,7 @@ package build.specs
 import build.extensions.LabelMatch
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Stepwise
 import utils.TestProfile
 
 //import spock.lang.Unroll
@@ -11,6 +12,7 @@ import utils.TestProfile
  * @author Aviad Shikloshi
  */
 
+@Stepwise
 class BuildInfoTestSpec extends Specification {
 
     @Shared
