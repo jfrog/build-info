@@ -56,7 +56,7 @@ class TestUtils {
 
     static def getBuildArtifacts(Artifactory client, TestProfile testConfig){
         Map<String, Object> response;
-        Map<String,Object> body = testConfig.testConfig.artifacts.buildArtifacts
+        Map<String,Object> body = testConfig.testConfig.artifacts.deployed
         body.put("buildName", testConfig.buildProperties.get(TestConstants.buildName))
         body.put("buildNumber", testConfig.buildProperties.get(TestConstants.buildNumber))
         body.put("repos", [
@@ -90,6 +90,31 @@ class TestUtils {
         catch (Exception e) {
             if (logger != null) {
                 logger.error("Error in rest call to Artifactory: ${e.getMessage()}")
+            }
+            throw e
+        }
+    }
+
+    static def propertySearch(Artifactory client, properties, repos){
+        def propSearchRequest = new ArtifactoryRequestImpl()
+                .method(ArtifactoryRequest.Method.GET)
+                .responseType(ArtifactoryRequest.ContentType.JSON)
+                .apiUrl("api/search/prop")
+
+        if(properties){
+            properties.each{key, val ->
+                propSearchRequest.addQueryParam(key, val)
+            }
+        }
+
+        if(repos)
+            propSearchRequest.addQueryParam("repos", repos.join(','))
+
+        try {
+            client.restCall(propSearchRequest)
+        } catch (Exception e) {
+            if (logger != null) {
+                logger.error("Error while searching properties: ${properties} from Artifactory: ${client.getUri()}, error: ${e.getMessage()}")
             }
             throw e
         }

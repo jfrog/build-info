@@ -10,11 +10,10 @@ import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPublicationsPlugin
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoPublicationsTask
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
-import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 
 /**
@@ -24,7 +23,7 @@ import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
 public class ArtifactoryPublicationsPluginTest extends PluginTestBase {
 
     ArtifactoryPluginBase createPlugin() {
-        new ArtifactoryPublicationsPlugin()
+        new ArtifactoryPlugin()
     }
 
     def populatePublicationFromDsl() {
@@ -52,9 +51,9 @@ public class ArtifactoryPublicationsPluginTest extends PluginTestBase {
         project.plugins.apply(JavaPlugin)
         project.plugins.apply(IvyPublishPlugin)
         project.plugins.apply(MavenPublishPlugin)
-        project.plugins.apply(ArtifactoryPublicationsPlugin)
+        project.plugins.apply(ArtifactoryPlugin)
 
-        BuildInfoPublicationsTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        ArtifactoryTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         def clientConfig = ArtifactoryPluginUtil.getArtifactoryConvention(project).getClientConfig()
         project.evaluate()
         projectEvaluated(project)

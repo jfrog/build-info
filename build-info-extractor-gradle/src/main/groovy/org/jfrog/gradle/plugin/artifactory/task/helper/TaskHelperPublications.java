@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-package org.jfrog.gradle.plugin.artifactory.task;
+
+package org.jfrog.gradle.plugin.artifactory.task.helper;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -38,36 +39,34 @@ import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.MavenPublicationInternal;
 import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublication;
 import org.gradle.api.publish.maven.internal.publisher.MavenProjectIdentity;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.Optional;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * @author Fred Simon
  */
-public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
-
-    private static final Logger log = Logging.getLogger(BuildInfoPublicationsTask.class);
-
-    @Input
-    @Optional
+public class TaskHelperPublications extends TaskHelper{
+    private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
     private Set<IvyPublication> ivyPublications = Sets.newHashSet();
-
-    @Input
-    @Optional
     private Set<MavenPublication> mavenPublications = Sets.newHashSet();
-
     private boolean publishPublicationsSpecified;
+
+    public TaskHelperPublications(ArtifactoryTask artifactoryTask) {
+        super(artifactoryTask);
+        this.ivyPublications = artifactoryTask.ivyPublications;
+        this.mavenPublications = artifactoryTask.mavenPublications;
+    }
 
     public void publications(Object... publications) {
         if (publications == null) {
@@ -93,17 +92,6 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
         publishPublicationsSpecified = true;
     }
 
-    private void addPublication(Publication publicationObj) {
-        if (publicationObj instanceof IvyPublication) {
-            ivyPublications.add((IvyPublication) publicationObj);
-        } else if (publicationObj instanceof MavenPublication) {
-            mavenPublications.add((MavenPublication) publicationObj);
-        } else {
-            log.warn("Publication named '{}' in project '{}' is of unknown type '{}'",
-                    publicationObj.getName(), getProject().getPath(), publicationObj.getClass());
-        }
-    }
-
     public Set<IvyPublication> getIvyPublications() {
         return ivyPublications;
     }
@@ -116,16 +104,15 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
         return !ivyPublications.isEmpty() || !mavenPublications.isEmpty();
     }
 
-    @Override
-    protected void checkDependsOnArtifactsToPublish(Project project) {
+    public void checkDependsOnArtifactsToPublish() {
         // If no publications in the list
         if (!hasPublications()) {
             // If some were declared => Warning
             if (publishPublicationsSpecified) {
                 log.warn("None of the specified publications matched for project '{}' - nothing to publish.",
-                        project.getPath());
+                        getProject().getPath());
             } else {
-                log.debug("No publications specified for project '{}'", project.getPath());
+                log.debug("No publications specified for project '{}'", getProject().getPath());
             }
             return;
         }
@@ -148,31 +135,27 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
                 continue;
             }
             dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
-            String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() + mavenPublication.getName().substring(1);
+            String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() +
+                    mavenPublication.getName().substring(1);
             dependsOn(String.format("generatePomFileFor%sPublication", capitalizedPublicationName));
         }
     }
 
-    @Override
-    protected void collectDescriptorsAndArtifactsForUpload() throws IOException {
+    public void collectDescriptorsAndArtifactsForUpload() throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
-        deployDetails.addAll(deployDetailsFromProject);
+        artifactoryTask.deployDetails.addAll(deployDetailsFromProject);
     }
 
-    @Override
     public boolean hasModules() {
         return hasPublications();
     }
 
-    protected Set<GradleDeployDetails> getArtifactDeployDetails() {
+    public Set<GradleDeployDetails> getArtifactDeployDetails() {
         Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
         if (!hasPublications()) {
             log.info("No publications to publish for project '{}'.", getProject().getPath());
             return deployDetails;
         }
-
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-
 
         Set<String> processedFiles = Sets.newHashSet();
         for (IvyPublication ivyPublication : ivyPublications) {
@@ -246,6 +229,17 @@ public class BuildInfoPublicationsTask extends BuildInfoBaseTask {
             }
         }
         return deployDetails;
+    }
+
+    private void addPublication(Publication publicationObj) {
+        if (publicationObj instanceof IvyPublication) {
+            ivyPublications.add((IvyPublication) publicationObj);
+        } else if (publicationObj instanceof MavenPublication) {
+            mavenPublications.add((MavenPublication) publicationObj);
+        } else {
+            log.warn("Publication named '{}' in project '{}' is of unknown type '{}'",
+                    publicationObj.getName(), getProject().getPath(), publicationObj.getClass());
+        }
     }
 
     private DeployDetails.Builder createBuilder(Set<String> processedFiles, File file, String publicationName) {

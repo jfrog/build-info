@@ -62,7 +62,7 @@ dependencies {
 }
 
 test {
-    //Spock run with JUnit
+    //Spock runs with JUnit
     test.useJUnit()
     exclude 'build/specs'
 

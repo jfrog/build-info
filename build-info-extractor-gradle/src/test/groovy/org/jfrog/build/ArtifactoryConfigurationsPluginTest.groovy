@@ -5,19 +5,15 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.testfixtures.ProjectBuilder
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryConfigurationsPlugin
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginBase
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
-import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_PROPS_FILE
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ARTIFACT_SPECS
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_ARTIFACTS
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.REPO_KEY
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PUBLISH_PREFIX
+import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 
 /**
  * @author freds
@@ -27,13 +23,13 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
 
     @Override
     ArtifactoryPluginBase createPlugin() {
-        return new ArtifactoryConfigurationsPlugin()
+        return new ArtifactoryPlugin()
     }
 
     def buildInfoTaskConfiguration() {
         Project project = ProjectBuilder.builder().build()
         JavaPlugin javaPlugin = new JavaPlugin()
-        ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
         project.ext.set(REPO_KEY, '')
@@ -43,7 +39,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
-        BuildInfoConfigurationsTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        ArtifactoryTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         projectEvaluated(project)
         expect:
         buildInfoTask.ivyDescriptor != null
@@ -52,7 +48,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
     def buildInfoTaskDependsOn() {
         Project project = ProjectBuilder.builder().build()
         JavaPlugin javaPlugin = new JavaPlugin()
-        ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
         // Disable resolving
         project.ext.set(REPO_KEY, '')
@@ -94,13 +90,12 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
                         'archives com.jfrog:*:*:src@* key3: val 3')
 
         JavaPlugin javaPlugin = new JavaPlugin()
-        ArtifactoryConfigurationsPlugin artifactoryPlugin = new ArtifactoryConfigurationsPlugin()
+        ArtifactoryPlugin artifactoryPlugin = new ArtifactoryPlugin()
 
-        //project.setProperty(ClientProperties.PROP_PUBLISH_PREFIX + ClientConfigurationFields.MAVEN, 'true')
         javaPlugin.apply(project)
         artifactoryPlugin.apply(project)
 
-        BuildInfoConfigurationsTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
+        ArtifactoryTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         def clientConfig = ArtifactoryPluginUtil.getArtifactoryConvention(project).getClientConfig()
         project.evaluate()
         projectEvaluated(project)

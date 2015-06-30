@@ -48,4 +48,27 @@ public class GradleDeployDetails {
     public PublishArtifactInfo getPublishArtifact() {
         return publishArtifact;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        GradleDeployDetails that = (GradleDeployDetails) o;
+
+        if (deployDetails != null ? !deployDetails.equals(that.deployDetails) : that.deployDetails != null)
+            return false;
+        if (publishArtifact != null ? !publishArtifact.equals(that.publishArtifact) : that.publishArtifact != null)
+            return false;
+        return !(project != null ? !project.equals(that.project) : that.project != null);
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = deployDetails != null ? deployDetails.hashCode() : 0;
+        result = 31 * result + (publishArtifact != null ? publishArtifact.hashCode() : 0);
+        result = 31 * result + (project != null ? project.hashCode() : 0);
+        return result;
+    }
 }

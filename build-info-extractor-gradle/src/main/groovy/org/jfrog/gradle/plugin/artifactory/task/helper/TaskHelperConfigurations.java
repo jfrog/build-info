@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.gradle.plugin.artifactory.task;
+package org.jfrog.gradle.plugin.artifactory.task.helper;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -31,10 +31,6 @@ import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.plugins.MavenPluginConvention;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -43,8 +39,8 @@ import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
@@ -54,75 +50,15 @@ import java.util.Set;
 /**
  * @author Fred Simon
  */
-public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
-
-    private static final Logger log = Logging.getLogger(BuildInfoConfigurationsTask.class);
-    @InputFile
-    @Optional
-    protected File ivyDescriptor;
-
-    @InputFile
-    @Optional
-    protected File mavenDescriptor;
-
-    @InputFiles
-    @Optional
-    private Set<Configuration> publishConfigurations = Sets.newHashSet();
-
+public class TaskHelperConfigurations extends TaskHelper {
+    private static final Logger log = Logging.getLogger(TaskHelperConfigurations.class);
+    public static final String ARCHIVES_BASE_NAME = "archivesBaseName";
+    private Set<Configuration> publishConfigurations;
     private boolean publishConfigsSpecified;
 
-    public void setPublishIvy(Object publishIvy) {
-        setFlag(PUBLISH_IVY, toBoolean(publishIvy));
-    }
-
-    public void setPublishPom(Object publishPom) {
-        setFlag(PUBLISH_POM, toBoolean(publishPom));
-    }
-
-    public File getIvyDescriptor() {
-        return ivyDescriptor;
-    }
-
-    public void setIvyDescriptor(Object ivyDescriptor) {
-        if (ivyDescriptor != null) {
-            if (ivyDescriptor instanceof File) {
-                this.ivyDescriptor = (File) ivyDescriptor;
-            } else if (ivyDescriptor instanceof CharSequence) {
-                if (FileUtils.isAbsolutePath(ivyDescriptor.toString())) {
-                    this.ivyDescriptor = new File(ivyDescriptor.toString());
-                } else {
-                    this.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
-                }
-            } else {
-                log.warn("Unknown type '{}' for ivy descriptor in task '{}'",
-                        new Object[]{ivyDescriptor.getClass().getName(), getPath()});
-            }
-        } else {
-            this.ivyDescriptor = null;
-        }
-    }
-
-    public File getMavenDescriptor() {
-        return mavenDescriptor;
-    }
-
-    public void setMavenDescriptor(Object mavenDescriptor) {
-        if (mavenDescriptor != null) {
-            if (mavenDescriptor instanceof File) {
-                this.mavenDescriptor = (File) mavenDescriptor;
-            } else if (mavenDescriptor instanceof CharSequence) {
-                if (FileUtils.isAbsolutePath(mavenDescriptor.toString())) {
-                    this.mavenDescriptor = new File(mavenDescriptor.toString());
-                } else {
-                    this.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
-                }
-            } else {
-                log.warn("Unknown type '{}' for maven descriptor in task '{}'",
-                        new Object[]{mavenDescriptor.getClass().getName(), getPath()});
-            }
-        } else {
-            this.mavenDescriptor = null;
-        }
+    public TaskHelperConfigurations(ArtifactoryTask artifactoryTask) {
+        super(artifactoryTask);
+        publishConfigurations = artifactoryTask.publishConfigurations;
     }
 
     public void publishConfigs(Object... confs) {
@@ -156,104 +92,28 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         return !publishConfigurations.isEmpty();
     }
 
-    protected void collectDescriptorsAndArtifactsForUpload() throws IOException {
+    public void collectDescriptorsAndArtifactsForUpload() throws IOException {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
-        deployDetails.addAll(deployDetailsFromProject);
+        artifactoryTask.deployDetails.addAll(deployDetailsFromProject);
 
         // In case the build is configured to do so, add the ivy and maven descriptors if they exist
         if (isPublishIvy()) {
-            if (ivyDescriptor != null && ivyDescriptor.exists()) {
-                deployDetails.add(getIvyDescriptorDeployDetails());
+            if (artifactoryTask.ivyDescriptor != null && artifactoryTask.ivyDescriptor.exists()) {
+                artifactoryTask.deployDetails.add(getIvyDescriptorDeployDetails());
             }
         }
         if (isPublishMaven()) {
-            if (mavenDescriptor != null && mavenDescriptor.exists()) {
-                deployDetails.add(getMavenDeployDetails());
+            if (artifactoryTask.mavenDescriptor != null && artifactoryTask.mavenDescriptor.exists()) {
+                artifactoryTask.deployDetails.add(getMavenDeployDetails());
             }
         }
-    }
-
-    @Override
-    public boolean hasModules() {
-        return hasConfigurations();
-    }
-
-    private GradleDeployDetails getIvyDescriptorDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(ivyDescriptor);
-        try {
-            Map<String, String> checksums =
-                    FileChecksumCalculator.calculateChecksums(ivyDescriptor, "MD5", "SHA1");
-            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
-        } catch (Exception e) {
-            throw new GradleException(
-                    "Failed to calculate checksums for artifact: " + ivyDescriptor.getAbsolutePath(), e);
-        }
-        String gid = getProject().getGroup().toString();
-        if (clientConf.publisher.isM2Compatible()) {
-            gid = gid.replace(".", "/");
-        }
-        artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(clientConf.publisher.getIvyPattern(), gid, getModuleName(),
-                        getProject().getVersion().toString(), null, "ivy", "xml"));
-        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        PublishArtifactInfo artifactInfo =
-                new PublishArtifactInfo(ivyDescriptor.getName(), "xml", "ivy", null, ivyDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
-        artifactBuilder.addProperties(propsToAdd);
-        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
-    }
-
-    private GradleDeployDetails getMavenDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(mavenDescriptor);
-        try {
-            Map<String, String> checksums =
-                    FileChecksumCalculator.calculateChecksums(mavenDescriptor, "MD5", "SHA1");
-            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
-        } catch (Exception e) {
-            throw new GradleException(
-                    "Failed to calculate checksums for artifact: " + mavenDescriptor.getAbsolutePath(), e);
-        }
-        // for pom files always enforce the M2 pattern
-        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
-                getProject().getGroup().toString().replace(".", "/"), getModuleName(),
-                getProject().getVersion().toString(), null, "pom", "pom"));
-        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
-        PublishArtifactInfo artifactInfo =
-                new PublishArtifactInfo(mavenDescriptor.getName(), "pom", "pom", null, mavenDescriptor);
-        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
-        artifactBuilder.addProperties(propsToAdd);
-        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
     }
 
     /**
      * Check all files to publish, depends on it (to generate Gradle task graph to create them).
      *
-     * @param project The project of this task
      */
-    @Override
-    protected void checkDependsOnArtifactsToPublish(Project project) {
-        // If no configuration no descriptors
-        if (!hasConfigurations()) {
-            if (publishConfigsSpecified) {
-                log.warn("None of the specified publish configurations matched for project '{}' - nothing to publish.",
-                        project.getPath());
-                return;
-            } else {
-                Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-                if (archiveConfig != null) {
-                    log.info("No publish configurations specified for project '{}' - using the default '{}' " +
-                            "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    publishConfigurations.add(archiveConfig);
-                } else {
-                    log.warn("No publish configurations specified for project '{}' and the default '{}' " +
-                            "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    return;
-                }
-            }
-        }
-
+    public void checkDependsOnArtifactsToPublish() {
         // The task depends on the produced artifacts of all configurations "to publish"
         for (Configuration publishConfiguration : publishConfigurations) {
             dependsOn(publishConfiguration.getArtifacts());
@@ -261,21 +121,25 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
 
         // Set ivy descriptor parameters
         if (isPublishIvy()) {
-            if (ivyDescriptor == null) {
+            if (artifactoryTask.ivyDescriptor == null) {
                 setDefaultIvyDescriptor();
             }
         } else {
-            ivyDescriptor = null;
+            artifactoryTask.ivyDescriptor = null;
         }
 
         // Set maven pom parameters
         if (isPublishMaven()) {
-            if (mavenDescriptor == null) {
+            if (artifactoryTask.mavenDescriptor == null) {
                 setDefaultMavenDescriptor();
             }
         } else {
-            mavenDescriptor = null;
+            artifactoryTask.mavenDescriptor = null;
         }
+    }
+
+    public boolean hasModules() {
+        return hasConfigurations();
     }
 
     protected void setDefaultIvyDescriptor() {
@@ -310,7 +174,7 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
                                 uploadTask.getPath());
                         uploadTask.setUploadDescriptor(true);
                     }
-                    ivyDescriptor = uploadTask.getDescriptorDestination();
+                    artifactoryTask.ivyDescriptor = uploadTask.getDescriptorDestination();
                     dependsOn(candidateUploadTask);
                 }
             }
@@ -318,7 +182,7 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
     }
 
     protected void setDefaultMavenDescriptor() {
-        // Flag to publish the Maven POM, but no pom file inputted, activate default Maven install.
+        // Flag to publish the Maven POM, but no pom file inputted, activate default Maven "install" task.
         // if the project doesn't have the maven install task, warn
         Project project = getProject();
         TaskContainer tasks = project.getTasks();
@@ -327,9 +191,9 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
             log.warn("Cannot publish pom for project '{}' since it does not contain the Maven " +
                     "plugin install task and task '{}' does not specify a custom pom path.",
                     new Object[]{project.getPath(), getPath()});
-            mavenDescriptor = null;
+            artifactoryTask.mavenDescriptor = null;
         } else {
-            mavenDescriptor = new File(
+            artifactoryTask.mavenDescriptor = new File(
                     project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
                     "pom-default.xml");
             dependsOn(installTask);
@@ -357,6 +221,78 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         return deployDetails;
     }
 
+    public boolean AddDefaultArchiveConfiguration(Project project) {
+        if (!hasConfigurations()) {
+            if (publishConfigsSpecified) {
+                log.warn("None of the specified publish configurations matched for project '{}' - nothing to publish.",
+                        project.getPath());
+                return true;
+            } else {
+                Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+                if (archiveConfig != null) {
+                    log.info("No publish configurations specified for project '{}' - using the default '{}' " +
+                            "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
+                    publishConfigurations.add(archiveConfig);
+                } else {
+                    log.warn("No publish configurations specified for project '{}' and the default '{}' " +
+                            "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private GradleDeployDetails getIvyDescriptorDeployDetails() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.ivyDescriptor);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(artifactoryTask.ivyDescriptor, "MD5", "SHA1");
+            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new GradleException(
+                    "Failed to calculate checksums for artifact: " + artifactoryTask.ivyDescriptor.getAbsolutePath(), e);
+        }
+        String gid = getProject().getGroup().toString();
+        if (clientConf.publisher.isM2Compatible()) {
+            gid = gid.replace(".", "/");
+        }
+        artifactBuilder.artifactPath(IvyPatternHelper
+                .substitute(clientConf.publisher.getIvyPattern(), gid, getModuleName(),
+                        getProject().getVersion().toString(), null, "ivy", "xml"));
+        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        PublishArtifactInfo artifactInfo =
+                new PublishArtifactInfo(artifactoryTask.ivyDescriptor.getName(), "xml", "ivy", null,
+                        artifactoryTask.ivyDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
+        artifactBuilder.addProperties(propsToAdd);
+        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
+    }
+
+    private GradleDeployDetails getMavenDeployDetails() {
+        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.mavenDescriptor);
+        try {
+            Map<String, String> checksums =
+                    FileChecksumCalculator.calculateChecksums(artifactoryTask.mavenDescriptor, "MD5", "SHA1");
+            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+        } catch (Exception e) {
+            throw new GradleException(
+                    "Failed to calculate checksums for artifact: " + artifactoryTask.mavenDescriptor.getAbsolutePath(), e);
+        }
+        // for pom files always enforce the M2 pattern
+        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
+                getProject().getGroup().toString().replace(".", "/"), getModuleName(),
+                getProject().getVersion().toString(), null, "pom", "pom"));
+        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        PublishArtifactInfo artifactInfo =
+                new PublishArtifactInfo(artifactoryTask.mavenDescriptor.getName(), "pom", "pom", null, artifactoryTask.mavenDescriptor);
+        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
+        artifactBuilder.addProperties(propsToAdd);
+        return new GradleDeployDetails(artifactInfo, artifactBuilder.build(), getProject());
+    }
+
     public GradleDeployDetails gradleDeployDetails(
             PublishArtifact artifact, String configuration) {
         return gradleDeployDetails(artifact, configuration, null, null);
@@ -365,6 +301,53 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
     public GradleDeployDetails gradleDeployDetails(
             PublishArtifact artifact, String configuration, @Nullable String artifactPath) {
         return gradleDeployDetails(artifact, configuration, artifactPath, null);
+    }
+
+    public void setIvyDescriptor(Object ivyDescriptor) {
+        if (ivyDescriptor != null) {
+            if (ivyDescriptor instanceof File) {
+                artifactoryTask.ivyDescriptor = (File) ivyDescriptor;
+            } else if (ivyDescriptor instanceof CharSequence) {
+                if (FileUtils.isAbsolutePath(ivyDescriptor.toString())) {
+                    artifactoryTask.ivyDescriptor = new File(ivyDescriptor.toString());
+                } else {
+                    artifactoryTask.ivyDescriptor = new File(getProject().getProjectDir(), ivyDescriptor.toString());
+                }
+            } else {
+                log.warn("Unknown type '{}' for ivy descriptor in task '{}'",
+                        new Object[]{ivyDescriptor.getClass().getName(), getPath()});
+            }
+        } else {
+            artifactoryTask.ivyDescriptor = null;
+        }
+    }
+
+    public void setMavenDescriptor(Object mavenDescriptor) {
+        if (mavenDescriptor != null) {
+            if (mavenDescriptor instanceof File) {
+                artifactoryTask.mavenDescriptor = (File) mavenDescriptor;
+            } else if (mavenDescriptor instanceof CharSequence) {
+                if (FileUtils.isAbsolutePath(mavenDescriptor.toString())) {
+                    artifactoryTask.mavenDescriptor = new File(mavenDescriptor.toString());
+                } else {
+                    artifactoryTask.mavenDescriptor = new File(getProject().getProjectDir(), mavenDescriptor.toString());
+                }
+            } else {
+                log.warn("Unknown type '{}' for maven descriptor in task '{}'",
+                        new Object[]{mavenDescriptor.getClass().getName(), getPath()});
+            }
+        } else {
+            artifactoryTask.mavenDescriptor = null;
+        }
+    }
+
+    protected String getModuleName() {
+        Project project = getProject();
+        //Take into account the archivesBaseName if applied to the project by the Java plugin
+        if (project.hasProperty(ARCHIVES_BASE_NAME)) {
+            return project.property(ARCHIVES_BASE_NAME).toString();
+        }
+        return project.getName();
     }
 
     private GradleDeployDetails gradleDeployDetails(PublishArtifact artifact, String configuration, Set<String> files) {
@@ -426,5 +409,4 @@ public class BuildInfoConfigurationsTask extends BuildInfoBaseTask {
         GradleDeployDetails gdd = new GradleDeployDetails(artifactInfo, details, getProject());
         return gdd;
     }
-
 }

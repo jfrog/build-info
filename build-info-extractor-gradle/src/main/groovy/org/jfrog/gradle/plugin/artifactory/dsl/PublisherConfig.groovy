@@ -41,7 +41,12 @@ class PublisherConfig {
         //println "1: missing method $name"
         Method[] methods = publisher.getClass().getMethods()
         def method = methods.find {it.name.matches(name)}
-        method.invoke(publisher, args[0])
+        try {
+            method.invoke(publisher, args[0])
+        }
+        catch (any){
+            printf "$args[0]"
+        }
     }
 
     def propertyMissing(String name) {

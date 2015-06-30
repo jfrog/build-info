@@ -294,7 +294,6 @@ project('build-info-client') {
             filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
         }
     }
-
 }
 
 project('build-info-extractor') {
@@ -344,13 +343,15 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.5-groovy-1.8') {
-            transitive = false
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-1.8') {
+            transitive = true
         }
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
 
     test {
+        //Spock runs with JUnit
+        test.useJUnit()
         systemProperties['buildInfoConfig.propertiesFile'] = ''
         environment['buildInfoConfig.propertiesFile'] = ''
     }
@@ -483,6 +484,11 @@ project('artifactory-maven-plugin') {
                     }
                 }
             }
+        }
+
+        test{
+            //Spock runs with JUnit
+            test.useJUnit()
         }
 }
 

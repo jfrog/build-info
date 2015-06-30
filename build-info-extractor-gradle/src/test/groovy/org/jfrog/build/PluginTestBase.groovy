@@ -12,7 +12,7 @@ import spock.lang.Specification
 
 import static org.spockframework.util.Assert.notNull
 import static org.spockframework.util.Assert.that
-import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 import static ClientProperties.PROP_CONTEXT_URL
 
 /**
@@ -60,7 +60,7 @@ abstract class PluginTestBase extends Specification {
         // TODO: Test the buildSrc project issue
         DefaultMavenArtifactRepository libsResolvers = project.repositories.getByName(expectedName)
         expect:
-//        that libsResolvers.size() == 1
+
         that libsResolvers.name == expectedName
         that libsResolvers.url.toString() == rootUrl + 'repo'
         notNull project.tasks.findByName(BUILD_INFO_TASK_NAME)

@@ -66,7 +66,5 @@ buildLauncher {
     projectPath = ["/projects/maven/maven-example"]
     buildScriptFile = "pom.xml"
 
-    mavenHome=["/var/tools/maven/apache-maven-3.2.1",
-               "/var/tools/maven/apache-maven-3.2.5",
-               "/var/tools/maven/apache-maven-3.3.3"]
+    mavenHome=["C:\\Software\\apache-maven-3.3.3"]
 }

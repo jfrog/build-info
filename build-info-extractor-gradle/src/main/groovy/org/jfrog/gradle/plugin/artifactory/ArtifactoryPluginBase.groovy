@@ -16,24 +16,19 @@
 
 package org.jfrog.gradle.plugin.artifactory
 
-import org.apache.commons.lang.StringUtils
-import org.gradle.BuildAdapter
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.ResolverHandler
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
+import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoConfigurationsTask
 import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
-import static BuildInfoConfigurationsTask.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
-    private static final Logger log = org.slf4j.LoggerFactory.getLogger(ArtifactoryPluginBase.class);
-    public static final String ENCODING = "UTF-8"
+    private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
+    static final String PUBLISH_TASK_GROUP = "publishing"
 
     def void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -41,14 +36,16 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             return
         }
         // Add a singleton artifactory plugin convention to the root project if needed
-        // Then add the build info task
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
+        // Then add the build info task
         addArtifactoryPublishTask(project)
         if (!conv.clientConfig.info.buildStarted) {
             conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
+
+        //Add build listener that responsible to override the resolve repositories
         if (!conv.clientConfig.isBuildListernerAdded()) {
             def gradle = project.getGradle()
             gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
@@ -56,85 +53,34 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         }
     }
 
-    private static class ProjectsEvaluatedBuildListener extends BuildAdapter {
-        def void projectsEvaluated(Gradle gradle) {
-            ArtifactoryClientConfiguration configuration =
-                ArtifactoryPluginUtil.getArtifactoryConvention(gradle.rootProject).getClientConfig()
-            //Fill-in the client config for the global, then adjust children project
-            GradleArtifactoryClientConfigUpdater.update(configuration, gradle.rootProject)
-            gradle.rootProject.allprojects.each {
-                //pass in the resolver of the cc
-                defineResolvers(it, configuration.resolver)
-            }
-            //Configure the artifactoryPublish tasks. Deployment happens on task execution
-            gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each { BuildInfoBaseTask bit ->
-                bit.projectsEvaluated()
-            }
-        }
+    protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project)
+    protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
 
-        private void defineResolvers(Project project, ResolverHandler resolverConf) {
-            String url = resolverConf.getUrl()
-            if (StringUtils.isNotBlank(url)) {
-                log.debug("Artifactory URL: $url")
-                // Add artifactory url to the list of repositories
-                createMavenRepo(project, url, resolverConf)
-                createIvyRepo(project, url, resolverConf)
-            } else {
-                log.debug("No repository resolution defined for ${project.path}")
-            }
-        }
-
-        private def createMavenRepo(Project project, String pUrl, ResolverHandler resolverConf) {
-            return project.repositories.maven {
-                name = 'artifactory-maven-resolver'
-                url = resolverConf.urlWithMatrixParams(pUrl)
-                if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
-                    credentials {
-                        username = resolverConf.username
-                        password = resolverConf.password
-                    }
-                }
-            }
-        }
-
-        private def createIvyRepo(Project project, String pUrl, ResolverHandler resolverConf) {
-            return project.repositories.ivy {
-                name = 'artifactory-ivy-resolver'
-                url = resolverConf.urlWithMatrixParams(pUrl)
-                layout 'pattern', {
-                    artifact resolverConf.getIvyArtifactPattern()
-                    ivy resolverConf.getIvyPattern()
-                }
-                if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
-                    credentials {
-                        username = resolverConf.username
-                        password = resolverConf.password
-                    }
-                }
-            }
-        }
-    }
-
-    ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
+    /**
+    *  Set the plugin convention closure object
+    *  artifactory {
+    *      ...
+    *  }
+    */
+    private ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
         if (project.rootProject.convention.plugins.artifactory == null) {
             project.rootProject.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
         }
         return project.rootProject.convention.plugins.artifactory
     }
 
-    protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project);
-
-    BuildInfoBaseTask addArtifactoryPublishTask(Project project) {
+    /**
+     * Add the "ArtifactoryPublish" gradle task (under "publishing" task group)
+     */
+    private BuildInfoBaseTask addArtifactoryPublishTask(Project project) {
         BuildInfoBaseTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         if (buildInfo == null) {
             def isRoot = project.equals(project.getRootProject())
             log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
             buildInfo = createArtifactoryPublishTask(project)
-            buildInfo.setGroup("publishing")
+            buildInfo.setGroup(PUBLISH_TASK_GROUP)
         }
         buildInfo
     }
-
-    protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project);
 }
 
