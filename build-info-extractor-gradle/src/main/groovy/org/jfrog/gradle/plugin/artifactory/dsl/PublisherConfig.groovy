@@ -88,6 +88,7 @@ class PublisherConfig {
         }
 
         def setIvyLayout(def ivyLayout) {
+            PublisherConfig.this.publisher.setIvy(true)
             PublisherConfig.this.publisher.setIvyPattern(ivyLayout?.toString())
         }
 
@@ -104,7 +105,6 @@ class PublisherConfig {
         }
 
         def ivy(Closure closure) {
-            PublisherConfig.this.publisher.setIvy(true)
             ConfigureUtil.configure(closure, this)
         }
     }
