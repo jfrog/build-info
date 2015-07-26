@@ -302,11 +302,6 @@
                     <field-name>logger</field-name>
                 </requirement>
                 <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
-                    <role-hint>default</role-hint>
-                    <field-name>resolutionHelper</field-name>
-                </requirement>
-                <requirement>
                     <role>org.apache.maven.project.ProjectDependenciesResolver</role>
                     <role-hint>default</role-hint>
                     <field-name>pojectDependenciesResolver</field-name>
@@ -325,16 +320,6 @@
                     <role>org.eclipse.aether.RepositorySystem</role>
                     <role-hint>default</role-hint>
                     <field-name>repositorySystem</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>artifactoryArtifactResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>artifactoryMetadataResolver</field-name>
                 </requirement>
             </requirements>
         </component>

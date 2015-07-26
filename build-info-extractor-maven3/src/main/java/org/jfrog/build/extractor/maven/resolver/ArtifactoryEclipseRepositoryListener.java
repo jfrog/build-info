@@ -17,8 +17,6 @@ import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
 import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.impl.ArtifactResolver;
-import org.eclipse.aether.impl.MetadataResolver;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.RemoteRepository;
@@ -42,9 +40,6 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     private Logger logger;
 
     @Requirement
-    private ResolutionHelper resolutionHelper;
-
-    @Requirement
     private DefaultProjectDependenciesResolver pojectDependenciesResolver;
 
     @Requirement
@@ -56,13 +51,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     @Requirement
     private DefaultRepositorySystem repositorySystem;
 
-    @Requirement
-    private ArtifactResolver artifactoryArtifactResolver;
-
-    @Requirement
-    private MetadataResolver artifactoryMetadataResolver;
-
-    BuildInfoRecorder buildInfoRecorder = null;
+    private BuildInfoRecorder buildInfoRecorder = null;
 
     private PlexusContainer plexusContainer;
 
@@ -79,8 +68,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     private void enforceArtifactoryResolver() throws ComponentLookupException, NoSuchFieldException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
 
-        artifactResolver = (ArtifactoryEclipseArtifactResolver)artifactoryArtifactResolver;
-        metadataResolver = (ArtifactoryEclipseMetadataResolver)artifactoryMetadataResolver;
+        artifactResolver = (ArtifactoryEclipseArtifactResolver)plexusContainer.lookup(ArtifactoryEclipseArtifactResolver.class.getName());
+        metadataResolver = (ArtifactoryEclipseMetadataResolver)plexusContainer.lookup(ArtifactoryEclipseMetadataResolver.class.getName());
+        buildInfoRecorder = (BuildInfoRecorder)plexusContainer.lookup(BuildInfoRecorder.class.getName());
 
         descriptorReader.setArtifactResolver(artifactResolver);
         repositorySystem.setArtifactResolver(artifactResolver);
@@ -101,16 +91,6 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     }
 
     private BuildInfoRecorder getBuildInfoRecorder() {
-        if (buildInfoRecorder == null) {
-            try {
-                buildInfoRecorder = (BuildInfoRecorder)plexusContainer.lookup(BuildInfoRecorder.class.getName());
-            } catch (ComponentLookupException e) {
-                logger.error("Failed while trying to fetch BuildInfoRecorder from the container in " + this.getClass().getName(), e);
-            }
-            if (buildInfoRecorder == null) {
-                logger.error("Could not fetch BuildInfoRecorder from the container in " + this.getClass().getName() + ". Artifacts resolution cannot be recorded.");
-            }
-        }
         return buildInfoRecorder;
     }
 
@@ -124,26 +104,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         verifyArtifactoryResolutionEnforced(event);
     }
 
-    /**
-     * The enforceArtifactoryResolver() method replaces the default artifact resolver instance with a resolver that enforces Artifactory
-     * resolution repositories. However, since there's a chance that Maven started resolving a few artifacts before the instance replacement,
-     * this method makes sure those artifacts will be resolved from Artifactory as well.
-     * @param event
-     */
-    private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
-        initResolutionHelper(event.getSession());
-        if (!resolutionHelper.resolutionRepositoriesConfigured()) {
-            return;
-        }
-        if (event.getArtifact() == null && event.getMetadata() == null) {
-            return;
-        }
-        if (!(event.getRepository() instanceof RemoteRepository)) {
-            return;
-        }
-
-        RemoteRepository repo = (RemoteRepository)event.getRepository();
-
+    private void waitForResolutionToBeSet() {
         // In case the Artifactory resolver is not yet set, we wait for it first:
         if (!artifactoryRepositoriesEnforced) {
             synchronized (artifactoryRepositoriesEnforced) {
@@ -156,6 +117,29 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
                 }
             }
         }
+    }
+
+    /**
+     * The enforceArtifactoryResolver() method replaces the default artifact resolver instance with a resolver that enforces Artifactory
+     * resolution repositories. However, since there's a chance that Maven started resolving a few artifacts before the instance replacement,
+     * this method makes sure those artifacts will be resolved from Artifactory as well.
+     * @param event
+     */
+    private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
+        initResolutionHelper(event.getSession());
+        if (!getBuildInfoRecorder().getResolutionHelper().resolutionRepositoriesConfigured()) {
+            return;
+        }
+        if (event.getArtifact() == null && event.getMetadata() == null) {
+            return;
+        }
+        if (!(event.getRepository() instanceof RemoteRepository)) {
+            return;
+        }
+
+        RemoteRepository repo = (RemoteRepository)event.getRepository();
+
+        waitForResolutionToBeSet();
 
         // Now that the resolver enforcement is done, we make sure that the Artifactory resolution repositories in the resolver are initialized:
         artifactResolver.initResolutionRepositories(event.getSession());
@@ -193,13 +177,14 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     }
 
     private void initResolutionHelper(RepositorySystemSession session) {
-        if (resolutionHelper.isInitialized()) {
+        ResolutionHelper helper = getBuildInfoRecorder().getResolutionHelper();
+        if (helper.isInitialized()) {
             return;
         }
         Properties allMavenProps = new Properties();
         allMavenProps.putAll(session.getSystemProperties());
         allMavenProps.putAll(session.getUserProperties());
-        resolutionHelper.init(allMavenProps);
+        helper.init(allMavenProps);
     }
 
     private void copyRepositoryFields(RemoteRepository fromRepo, RemoteRepository toRepo)
@@ -238,15 +223,14 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      */
     @Override
     public void artifactResolved(RepositoryEvent event) {
+        waitForResolutionToBeSet();
+
         String requestContext = ((ArtifactRequest)event.getTrace().getData()).getRequestContext();
-        String scope = resolutionHelper.getScopeByRequestContext(requestContext);
+        String scope = getBuildInfoRecorder().getResolutionHelper().getScopeByRequestContext(requestContext);
         org.apache.maven.artifact.Artifact artifact = toMavenArtifact(event.getArtifact(), scope);
         if (event.getRepository() != null) {
             logger.debug("[buildinfo] Resolved artifact: " + artifact + " from: " + event.getRepository() + " Context is: " + requestContext);
-
-            if (getBuildInfoRecorder() != null) {
-                getBuildInfoRecorder().artifactResolved(artifact);
-            }
+            getBuildInfoRecorder().artifactResolved(artifact);
         } else {
             logger.debug("[buildinfo] Could not resolve artifact: " + artifact);
         }

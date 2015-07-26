@@ -18,7 +18,7 @@
 buildscript {
     repositories {
         jcenter()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.1.0' }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1' }
     }
     configurations.classpath {
         resolutionStrategy {
@@ -374,15 +374,16 @@ project('build-info-extractor-maven3') {
         compile 'org.jdom:jdom:1.1.1',
                 'org.codehaus.groovy:groovy-all:2.1.6',
                 'plexus:plexus-container-default:1.0-alpha-6',
-                'org.apache.maven:maven-core:3.1.0',
+                'org.apache.maven:maven-core:3.3.3',
                 'org.sonatype.aether:aether-api:1.13.1',
                 'org.sonatype.aether:aether-util:1.13.1',
                 'org.sonatype.aether:aether-impl:1.13.1',
-                'org.eclipse.aether:aether-api:0.9.0.M3',
-                'org.eclipse.aether:aether-util:0.9.0.M3',
-                'org.eclipse.aether:aether-impl:1.0.0.v20140518'
-        uberJar 'org.eclipse.aether:aether-impl:1.0.0.v20140518'
-        provided 'org.codehaus.plexus:plexus-component-annotations:1.5.5'
+                'org.eclipse.aether:aether-api:1.0.2.v20150114',
+                'org.eclipse.aether:aether-util:1.0.2.v20150114',
+                'org.eclipse.aether:aether-impl:1.0.2.v20150114',
+                'org.apache.maven.plugins:maven-deploy-plugin:2.8.2'
+        uberJar 'org.eclipse.aether:aether-impl:1.0.2.v20150114'
+        provided 'org.codehaus.plexus:plexus-component-annotations:1.6'
         testCompile 'org.easymock:easymockclassextension:2.5.2'
     }
 
@@ -416,8 +417,8 @@ project('artifactory-maven-plugin') {
             }
 
             testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
-            provided    'org.apache.maven:maven-core:3.1.0',
-                        'org.apache.maven:maven-project:2.0.11'
+            provided    'org.apache.maven:maven-core:3.3.3',
+                        'org.apache.maven:maven-project:3.0-alpha-2'
         }
 
         clean { delete('pom.xml') }

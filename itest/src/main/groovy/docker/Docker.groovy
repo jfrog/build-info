@@ -4,14 +4,17 @@ import org.apache.commons.lang.StringUtils
 import org.jfrog.util.docker.DockerClient
 import org.jfrog.util.docker.DockerContainer
 import org.jfrog.util.docker.DockerImage
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 
 
 /**
  * @author Lior Hasson
  */
 class Docker {
-    String dockerUrl = System.getenv("DOCKER_HTTP_HOST")?:System.getProperty("dockerHttpHost")
+    private static final Logger log = LoggerFactory.getLogger(Docker.class);
 
+    private String dockerUrl = System.getenv("DOCKER_HTTP_HOST")?:System.getProperty("dockerHttpHost")
     private String repo
     private String registry
     private String imageId
@@ -21,26 +24,39 @@ class Docker {
     private int containerPort
     private int hostPort
 
-    DockerClient dockerClient = new DockerClient(dockerUrl)
+    DockerClient dockerClient
     DockerImage image
     DockerContainer container
 
+    Docker() {
+        if (dockerUrl != null) {
+            dockerClient = new DockerClient(dockerUrl)
+        }
+    }
 
     void run() {
-        if(StringUtils.isEmpty(containerId)){
+        if (dockerUrl == null) {
+            println "Docker URL not configured. Skipping Artifactory server setup."
+            return
+        }
+        if (!ping()) {
+            println "No ping to Docker server. Skipping Artifactory server setup."
+            return
+        }
+        if (StringUtils.isEmpty(containerId)){
             containerId = imageId
         }
 
         containerId = "itest_$containerId"
 
         //Create Image from Docker File
-        if(StringUtils.isNotEmpty(dockerFilePath)){
+        if (StringUtils.isNotEmpty(dockerFilePath)){
             image = dockerClient.getImage(imageId).withTag(tag)
             container = image.getNewContainer(containerId)
             buildArtifactoryServer()
         }
         //Pull exists image
-        else{
+        else {
             image = dockerClient.getImage(imageId).withTag(tag).fromRepo(repo).fromRegistry(registry)
             container = image.getNewContainer(containerId)
             pullImage()
@@ -53,7 +69,10 @@ class Docker {
     /**
      * Delete the container include its volume
      */
-    void close(){
+    void close() {
+        if (dockerUrl == null) {
+            return
+        }
         try {
             container.doDelete(true, true)
         }
@@ -62,8 +81,10 @@ class Docker {
         }
     }
 
-    boolean ping(){
-        return  dockerClient.ping()
+    boolean ping() {
+        if (dockerUrl != null) {
+            return dockerClient.ping()
+        }
     }
 
     private void buildArtifactoryServer() {
@@ -86,7 +107,7 @@ class Docker {
     }
 
     private void startContainer() {
-        if(containerPort != 0 && hostPort != 0){
+        if (containerPort != 0 && hostPort != 0) {
             container.getStartConfig().addPortBinding(containerPort, "tcp", "", hostPort)
         }
 

@@ -112,34 +112,34 @@ abstract class Launcher implements TestInputContributor{
         //exit code for a set of commands
         int totalExitCode = 0
         Process p
-            getCmd().each {
-                def command = it
-                try {
-                    ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(command.split("\\s+")))
-                    pb.environment().putAll(processEnvironment)
+        getCmd().each {
+            def command = it
+            try {
+                ProcessBuilder pb = new ProcessBuilder(Lists.newArrayList(command.split("\\s+")))
+                pb.environment().putAll(processEnvironment)
 
-                    if(workingDirectory){
-                        pb.directory(workingDirectory)
-                    }
+                if (workingDirectory) {
+                    pb.directory(workingDirectory)
+                }
 
-                    println "Launching build process: $command"
-                    p = pb.start()
+                println "Launching build process: $command"
+                p = pb.start()
 
-                    LogPrinter inputPrinter = new LogPrinter(p.getInputStream())
-                    LogPrinter errorPrinter = new LogPrinter(p.getErrorStream())
+                LogPrinter inputPrinter = new LogPrinter(p.getInputStream())
+                LogPrinter errorPrinter = new LogPrinter(p.getErrorStream())
 
-                    Thread t1 = new Thread(inputPrinter)
-                    t1.start()
-                    Thread t2 = new Thread(errorPrinter)
-                    t2.start()
+                Thread t1 = new Thread(inputPrinter)
+                t1.start()
+                Thread t2 = new Thread(errorPrinter)
+                t2.start()
 
-                    t1.join()
-                    t2.join()
+                t1.join()
+                t2.join()
 
-                    p.waitFor()
+                p.waitFor()
 
-                    println "Build tool process finished with exit code ${p.exitValue()}"
-                    totalExitCode += p.exitValue()
+                println "Build tool process finished with exit code ${p.exitValue()}"
+                totalExitCode += p.exitValue()
             } finally {
                 if (p != null) {
                     if (p.getInputStream() != null) {

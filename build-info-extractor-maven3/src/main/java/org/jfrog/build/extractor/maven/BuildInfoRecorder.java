@@ -656,6 +656,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         return null;
     }
 
+    public ResolutionHelper getResolutionHelper() {
+        return resolutionHelper;
+    }
+
     /**
      * Set pattern for the "Surefire" plugin report, this pattern check if we
      * have failures or error is a specific test

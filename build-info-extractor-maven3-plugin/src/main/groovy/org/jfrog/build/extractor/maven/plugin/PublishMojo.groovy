@@ -123,7 +123,10 @@ class PublishMojo extends GroovyMojo
      */
     private void skipDefaultDeploy ()
     {
-        session.executionProperties[ 'maven.deploy.skip' ] = 'true'
+        // For Maven versions < 3.3.3:
+        session.executionProperties[ 'maven.deploy.skip' ] = Boolean.TRUE.toString()
+        // For Maven versions >= 3.3.3:
+        session.getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString())
     }
 
 
