@@ -607,12 +607,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     private String getExtension(File depFile) {
         String extension = "";
-        String fileName = depFile.getName();
-        if (depFile != null && fileName != null) {
-            int lastDot = fileName.lastIndexOf('.');
-            if (lastDot > 0 && lastDot + 1 < fileName.length()) {
-                extension = fileName.substring(lastDot + 1);
-            }
+        if (depFile != null) {
+           String fileName = depFile.getName();
+           if (fileName != null) {
+               int lastDot = fileName.lastIndexOf('.');
+               if (lastDot > 0 && lastDot + 1 < fileName.length()) {
+                   extension = fileName.substring(lastDot + 1);
+               }
+           }
         }
         return extension;
     }
