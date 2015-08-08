@@ -47,6 +47,7 @@ public class Build extends BaseBuildBean {
     private long durationMillis;
     private String principal;
     private String artifactoryPrincipal;
+    private String artifactoryPluginVersion;
     private String url;
     private String parentName;
     private String parentNumber;
@@ -352,6 +353,22 @@ public class Build extends BaseBuildBean {
     }
 
     /**
+     * Returns the Artifactory plugin version of the build
+     *
+     * @return Artifactory plugin version
+     */
+    public String getArtifactoryPluginVersion() {return artifactoryPluginVersion;}
+
+    /**
+     * Sets the Artifactory plugin version of the build
+     *
+     * @param artifactoryPluginVersion Artifactory plugin version
+     */
+    public void setArtifactoryPluginVersion (String artifactoryPluginVersion){
+        this.artifactoryPluginVersion = artifactoryPluginVersion;
+    }
+
+    /**
      * Returns the URL of the build
      *
      * @return Build URL
@@ -528,6 +545,7 @@ public class Build extends BaseBuildBean {
                 ", durationMillis=" + durationMillis +
                 ", principal='" + principal + '\'' +
                 ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
+                ", artifactoruyPlugin='" + artifactoryPluginVersion + '\''+
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +

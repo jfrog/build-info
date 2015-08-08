@@ -23,6 +23,7 @@ public interface BuildInfoFields {
     String BUILD_NUMBER = "build.number";
     String BUILD_TIMESTAMP = "build.timestamp";
     String BUILD_STARTED = "build.started";
+    String ARTIFACTORY_PLUGIN_VERSION = "artifactoryPluginVersion";
     String BUILD_PARENT_NAME = "build.parentName";
     String BUILD_PARENT_NUMBER = "build.parentNumber";
     String VCS_REVISION = "vcs.revision";

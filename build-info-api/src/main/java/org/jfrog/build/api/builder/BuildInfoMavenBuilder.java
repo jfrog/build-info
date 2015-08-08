@@ -170,6 +170,11 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
         return this;
     }
 
+    public BuildInfoMavenBuilder artifactoryPluginVersion(String artifactoryPluginVersion){
+        super.artifactoryPluginVersion(artifactoryPluginVersion);
+        return this;
+    }
+
     /**
      * Sets the URL of the build
      *

@@ -133,6 +133,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             artifactoryPrincipal = System.getProperty("user.name");
         }
         bib.artifactoryPrincipal(artifactoryPrincipal);
+
+        String artifactoryPluginVersion = clientConf.info.getArtifactoryPluginVersion();
+        if (StringUtils.isBlank(artifactoryPluginVersion)){
+            artifactoryPluginVersion = "Not Defined";
+        }
+        bib.artifactoryPluginVersion(artifactoryPluginVersion);
+
         String buildUrl = clientConf.info.getBuildUrl();
         if (StringUtils.isNotBlank(buildUrl)) {
             bib.url(buildUrl);

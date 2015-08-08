@@ -39,6 +39,7 @@ public class BuildInfoBuilder {
     protected String name;
     protected String started;
     protected String number;
+    protected String artifactoryPluginVersion;
     protected BuildType type;
     protected Agent agent;
     protected BuildAgent buildAgent;
@@ -92,6 +93,7 @@ public class BuildInfoBuilder {
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
         build.setArtifactoryPrincipal(artifactoryPrincipal);
+        build.setArtifactoryPluginVersion(artifactoryPluginVersion);
         build.setUrl(url);
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
@@ -227,6 +229,11 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder artifactoryPrincipal(String artifactoryPrincipal) {
         this.artifactoryPrincipal = artifactoryPrincipal;
+        return this;
+    }
+
+    public BuildInfoBuilder artifactoryPluginVersion(String artifactoryPluginVersion){
+        this.artifactoryPluginVersion = artifactoryPluginVersion;
         return this;
     }
 
