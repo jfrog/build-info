@@ -136,7 +136,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
         String artifactoryPluginVersion = clientConf.info.getArtifactoryPluginVersion();
         if (StringUtils.isBlank(artifactoryPluginVersion)){
-            artifactoryPluginVersion = "Not Defined";
+            artifactoryPluginVersion = "Unknown";
         }
         bib.artifactoryPluginVersion(artifactoryPluginVersion);
 

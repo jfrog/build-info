@@ -545,7 +545,7 @@ public class Build extends BaseBuildBean {
                 ", durationMillis=" + durationMillis +
                 ", principal='" + principal + '\'' +
                 ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
-                ", artifactoruyPlugin='" + artifactoryPluginVersion + '\''+
+                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\''+
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +

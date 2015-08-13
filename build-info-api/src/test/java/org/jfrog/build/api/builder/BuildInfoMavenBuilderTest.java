@@ -40,6 +40,7 @@ public class BuildInfoMavenBuilderTest {
         assertEquals(build.getDurationMillis(), 0, "Default build duration millis should be zero.");
         assertNull(build.getPrincipal(), "Default build principal should be null.");
         assertNull(build.getArtifactoryPrincipal(), "Default build artifactory principal should be null.");
+        assertNull(build.getArtifactoryPluginVersion(), "Default build ArtifactoryPluginVersion should be null.");
         assertNull(build.getUrl(), "Default build URL should be null.");
         assertNull(build.getParentName(), "Default build parent build name should be null.");
         assertNull(build.getParentNumber(), "Default build parent build number should be null.");
@@ -61,6 +62,7 @@ public class BuildInfoMavenBuilderTest {
         long durationMillis = 6L;
         String principal = "bob";
         String artifactoryPrincipal = "too";
+        String artifactoryPluginVersion = "2.3.1";
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
@@ -70,7 +72,8 @@ public class BuildInfoMavenBuilderTest {
         Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
-                .modules(modules).properties(properties).buildAgent(buildAgent).build();
+                .modules(modules).properties(properties).buildAgent(buildAgent)
+                .artifactoryPluginVersion(artifactoryPluginVersion).build();
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
@@ -81,6 +84,7 @@ public class BuildInfoMavenBuilderTest {
         assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");
         assertEquals(build.getPrincipal(), principal, "Unexpected build principal.");
         assertEquals(build.getArtifactoryPrincipal(), artifactoryPrincipal, "Unexpected build artifactory principal.");
+        assertEquals(build.getArtifactoryPluginVersion(), artifactoryPluginVersion, "Unexpected build artifactory Plugin Version.");
         assertEquals(build.getUrl(), url, "Unexpected build URL.");
         assertEquals(build.getParentName(), parentName, "Unexpected build parent name.");
         assertEquals(build.getParentNumber(), parentNumber, "Unexpected build parent build number.");

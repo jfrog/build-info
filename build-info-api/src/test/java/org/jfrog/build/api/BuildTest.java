@@ -59,6 +59,7 @@ public class BuildTest {
         assertEquals(build.getDurationMillis(), 0, "Build duration should have not been initialized.");
         assertNull(build.getPrincipal(), "Build principal should have not been initialized.");
         assertNull(build.getArtifactoryPrincipal(), "Build artifactory principal should have not been initialized.");
+        assertNull(build.getArtifactoryPluginVersion(), "Build Artifactory Plugin Version should have not been initialized.");
         assertNull(build.getUrl(), "Build URL should have not been initialized.");
         assertNull(build.getParentBuildId(), "Build parent build ID should have not been initialized.");
         assertNull(build.getModules(), "Build modules should have not been initialized.");
@@ -78,6 +79,7 @@ public class BuildTest {
         long durationMillis = 6L;
         String principal = "bob";
         String artifactoryPrincipal = "too";
+        String artifactoryPluginVersion = "2.3.1";
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
@@ -99,6 +101,7 @@ public class BuildTest {
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
         build.setArtifactoryPrincipal(artifactoryPrincipal);
+        build.setArtifactoryPluginVersion(artifactoryPluginVersion);
         build.setUrl(url);
         build.setParentName(parentName);
         build.setParentNumber(parentNumber);
@@ -116,6 +119,7 @@ public class BuildTest {
         assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");
         assertEquals(build.getPrincipal(), principal, "Unexpected build principal.");
         assertEquals(build.getArtifactoryPrincipal(), artifactoryPrincipal, "Unexpected build artifactory principal.");
+        assertEquals(build.getArtifactoryPluginVersion(), artifactoryPluginVersion, "Unexpected build artifactory principal.");
         assertEquals(build.getUrl(), url, "Unexpected build URL.");
         assertEquals(build.getParentName(), parentName, "Unexpected build parent build name.");
         assertEquals(build.getParentNumber(), parentNumber, "Unexpected build parent build number.");

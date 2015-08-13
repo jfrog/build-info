@@ -39,7 +39,7 @@ and the gradle wrapper in Windows
     "version" : "1.554.2" // CI server version
   },
   "started" : "2014-09-30T12:00:19.893+0300", // Build start time in the format of yyyy-MM-dd'T'HH:mm:ss.SSSZ
-  "artifactoryPluginVersion" : "Jenkins Artifactory Plugin: 2.3.1",
+  "artifactoryPluginVersion" : "2.3.1",
   "durationMillis" : 9762, // Build duration in milliseconds
   "artifactoryPrincipal" : "james", // Artifactory principal (the Artifactory user used for deployment)
   "url" : "http://my-ci-server/jenkins/job/My-project-name/28/", // CI server URL

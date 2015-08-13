@@ -267,7 +267,9 @@ public class ArtifactoryBuildListener implements BuildListener {
         String artifactoryPluginVersion = clientConf.info.getArtifactoryPluginVersion();
         if (StringUtils.isNotBlank(artifactoryPluginVersion)) {
             builder.artifactoryPluginVersion(artifactoryPluginVersion);
-        }else builder.artifactoryPluginVersion("Plugin version not found");
+        } else {
+            builder.artifactoryPluginVersion("Unknown");
+        }
         String principal = clientConf.info.getPrincipal();
         if (StringUtils.isNotBlank(principal)) {
             builder.principal(principal);
