@@ -34,7 +34,7 @@ public class BuildInfoModelPropertyResolver {
 
     public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
-                artifactoryPrincipal(clientConf.publisher.getName()).
+                artifactoryPrincipal(clientConf.publisher.getName()).artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion()).
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber());
@@ -104,6 +104,8 @@ public class BuildInfoModelPropertyResolver {
         attachStagingIfNeeded(clientConf, builder);
         builder.buildRetention(buildRetention);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
+
+        builder.artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion());
 
         String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {
