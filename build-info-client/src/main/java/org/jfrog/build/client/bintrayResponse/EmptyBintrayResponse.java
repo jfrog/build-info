@@ -11,13 +11,17 @@ public class EmptyBintrayResponse extends BintrayResponse {
 
     private int status;
 
-    public EmptyBintrayResponse(int status){
+    public EmptyBintrayResponse(int status) {
         this.status = status;
     }
 
     @Override
-    public String toString(){
+    public String toString() {
         return "\nStatus Code: " + status + "\nView Artifactory logs for more details.\n";
     }
 
+    @Override
+    public boolean isSuccessful() {
+        return false;
+    }
 }
