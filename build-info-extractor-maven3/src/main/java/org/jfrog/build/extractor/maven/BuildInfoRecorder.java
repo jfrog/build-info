@@ -678,4 +678,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         return null;
     }
+
+    public ResolutionHelper getResolutionHelper() {
+        return resolutionHelper;
+    }
 }
