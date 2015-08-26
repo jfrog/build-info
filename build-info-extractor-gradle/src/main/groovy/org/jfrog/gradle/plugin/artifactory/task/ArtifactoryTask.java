@@ -1,11 +1,7 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import com.google.common.collect.Sets;
-import groovy.lang.Lazy;
-import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Input;
@@ -48,10 +44,12 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
 
     @Override
     public void checkDependsOnArtifactsToPublish() {
-        if(helperConfigurations.hasConfigurations())
+        if(helperConfigurations.hasConfigurations()){
             helperConfigurations.checkDependsOnArtifactsToPublish();
-        if(helperPublications.hasPublications())
+        }
+        if(helperPublications.hasPublications()){
             helperPublications.checkDependsOnArtifactsToPublish();
+        }
 
         /*Backward compatibility for Gradle publish configuration approach:
         * Users that didn`t defined any configurations to the plugin, got the "archives" configuration
@@ -65,10 +63,12 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
 
     @Override
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
-        if(helperConfigurations.hasConfigurations())
+        if(helperConfigurations.hasConfigurations()){
             helperConfigurations.collectDescriptorsAndArtifactsForUpload();
-        if(helperPublications.hasPublications())
+        }
+        if(helperPublications.hasPublications()){
             helperPublications.collectDescriptorsAndArtifactsForUpload();
+        }
     }
 
     @Override

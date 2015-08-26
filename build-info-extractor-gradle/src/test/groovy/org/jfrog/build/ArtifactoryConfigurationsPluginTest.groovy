@@ -42,7 +42,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         ArtifactoryTask buildInfoTask = project.tasks.findByName(BUILD_INFO_TASK_NAME)
         projectEvaluated(project)
         expect:
-        buildInfoTask.ivyDescriptor != null
+        buildInfoTask.ivyDescriptor == null
     }
 
     def buildInfoTaskDependsOn() {
@@ -63,8 +63,8 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         expect:
         buildInfoTask.dependsOn != null
         !buildInfoTask.dependsOn.isEmpty()
-        // depends on the archives configuration, and the archives.artifacts file collection
-        buildInfoTask.dependsOn.size() == 2
+        // depends on archives.artifacts file collection
+        buildInfoTask.dependsOn.size() == 1
     }
 
     def populateConfigurationFromDsl() {
