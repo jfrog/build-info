@@ -244,8 +244,7 @@ public class ArtifactoryBuildInfoClient {
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
         String url = artifactoryUrl +
-                BUILD_BROWSE_URL + "/" + encodeUrl(buildInfo.getName()) + "/" + encodeUrl(buildInfo.getNumber()) +
-                "/" + buildInfo.getStarted() + "/";
+                BUILD_BROWSE_URL + "/" + encodeUrl(buildInfo.getName()) + "/" + encodeUrl(buildInfo.getNumber());
         log.info("Build successfully deployed. Browse it in Artifactory under " + url);
     }
 

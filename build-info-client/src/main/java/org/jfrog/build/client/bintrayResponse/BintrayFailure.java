@@ -33,6 +33,11 @@ public class BintrayFailure extends BintrayResponse {
         this.errors = error;
     }
 
+    @Override
+    public boolean isSuccessful() {
+        return false;
+    }
+
     private static class BintrayError {
 
         private int status;

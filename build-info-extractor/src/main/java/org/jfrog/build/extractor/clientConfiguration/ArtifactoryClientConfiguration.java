@@ -903,6 +903,11 @@ public class ArtifactoryClientConfiguration {
             setStringValue(PRINCIPAL, principal);
         }
 
+        public String getArtifactoryPluginVersion(){ return getStringValue(ARTIFACTORY_PLUGIN_VERSION);}
+
+        public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
+            setStringValue(ARTIFACTORY_PLUGIN_VERSION, artifactoryPluginVersion);}
+
         public String getBuildUrl() {
             return getStringValue(BUILD_URL);
         }

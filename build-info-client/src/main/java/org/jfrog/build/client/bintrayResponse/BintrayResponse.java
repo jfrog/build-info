@@ -5,4 +5,6 @@ package org.jfrog.build.client.bintrayResponse;
  */
 public abstract class BintrayResponse {
 
+    public abstract boolean isSuccessful();
+
 }

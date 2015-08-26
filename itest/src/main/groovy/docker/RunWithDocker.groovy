@@ -88,11 +88,7 @@ import java.lang.annotation.*
                 void evaluate() throws Throwable {
                     RunWithDocker runWithDocker = ((RunWithDocker)hostAnnotation)
                     buildDocker(runWithDocker)
-
-                    if(docker.ping()){
-                        docker.run()
-                    }
-
+                    docker.run()
                     base.evaluate()
                 }
 

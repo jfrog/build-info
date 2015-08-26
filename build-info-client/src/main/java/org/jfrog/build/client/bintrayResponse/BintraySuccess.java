@@ -25,4 +25,8 @@ public class BintraySuccess extends BintrayResponse {
         this.message = message;
     }
 
+    @Override
+    public boolean isSuccessful() {
+        return true;
+    }
 }

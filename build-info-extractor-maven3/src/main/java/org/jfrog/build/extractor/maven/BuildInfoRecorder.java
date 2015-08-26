@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
@@ -55,15 +55,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
 /*
-* Will be called for every project/module in the Maven project.
-*/
-
+ * Will be called for every project/module in the Maven project.
+ */
 /**
  * @author Noam Y. Tenne
  */
@@ -90,10 +91,22 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private volatile boolean projectHasTestFailures;
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
-    private Map<String, String> matrixParams;
-    private XPath xPath;
-    private XPathExpression xPathExpression;
+    private Map<String, String> matrixParams; 
     private Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
+    private final ThreadLocal<XPathExpression> xPathExpression
+            = new ThreadLocal<XPathExpression>() {
+                @Override 
+                protected XPathExpression initialValue() {
+                    XPathExpression result = null;
+                    try {
+                        result = XPathFactory.newInstance().newXPath().
+                            compile("/testsuite/@failures>0 or /testsuite/@errors>0");
+                    }catch (XPathExpressionException ex) {
+                        logger.error("Fail to create XPathExpression", ex);
+                    }
+                    return result;
+                }
+            };
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -104,8 +117,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
-     * The repository listeners (either ArtifactoryEclipseRepositoryListener or ArtifactorySonatypeRepositoryListener) invoke this method
-     * with each artifact being resolved by Maven.
+     * The repository listeners (either ArtifactoryEclipseRepositoryListener or
+     * ArtifactorySonatypeRepositoryListener) invoke this method with each
+     * artifact being resolved by Maven.
      *
      * @param artifact The artifact being resolved by Maven.
      */
@@ -127,8 +141,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         try {
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
-            deployableArtifactBuilderMap = Maps.newHashMap();
-            matrixParams = Maps.newHashMap();
+            deployableArtifactBuilderMap = Maps.newConcurrentMap();
+            matrixParams = Maps.newConcurrentMap();
             Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
             for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
                 String key = matrixParamProp.getKey();
@@ -287,13 +301,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         String[] xmls;
         try {
             xmls = surefireDirectory.list(new FilenameFilter() {
+                @Override
                 public boolean accept(File dir, String name) {
                     return name.endsWith("xml");
                 }
             });
         } catch (Exception e) {
-            logger.error("Error occurred: " + e.getMessage() + " while retrieving surefire descriptors at: " +
-                    surefireDirectory.getAbsolutePath(), e);
+            logger.error("Error occurred: " + e.getMessage() + " while retrieving surefire descriptors at: "
+                    + surefireDirectory.getAbsolutePath(), e);
             return Lists.newArrayList();
         }
         if (xmls != null) {
@@ -310,16 +325,16 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(report);
-                setXpathPattern();
-                Object evaluate = xPathExpression.evaluate(new InputSource(stream),
+                Object evaluate = xPathExpression.get().evaluate(new InputSource(stream),
                         XPathConstants.STRING);
+                        
                 if (evaluate != null && StringUtils.isNotBlank(evaluate.toString()) && evaluate.toString().equals("true")) {
                     return true;
                 }
             } catch (FileNotFoundException e) {
-                logger.error("File '" + report.getAbsolutePath() + "' does not exist.");
+                logger.error("File '" + report.getAbsolutePath() + "' does not exist.", e);
             } catch (XPathExpressionException e) {
-                logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.");
+                logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.", e);
             } finally {
                 IOUtils.closeQuietly(stream);
             }
@@ -345,14 +360,15 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info module initialization: Null project.");
             return;
         }
+        
         ModuleBuilder module = new ModuleBuilder();
         module.id(getModuleIdString(project.getGroupId(), project.getArtifactId(), project.getVersion()));
         module.properties(project.getProperties());
 
         currentModule.set(module);
 
-        currentModuleArtifacts.set(Sets.<Artifact>newHashSet());
-        currentModuleDependencies.set(Sets.<Artifact>newHashSet());
+        currentModuleArtifacts.set(Sets.<Artifact>newConcurrentHashSet());
+        currentModuleDependencies.set(Sets.<Artifact>newConcurrentHashSet());
     }
 
     private void extractArtifactsAndDependencies(MavenProject project) {
@@ -388,9 +404,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
 
     /*
-    * Attached Artifacts- are the artifacts/assemblies like tests, sources and so on....
-    *   Not include the Pom file
-    */
+     * Attached Artifacts- are the artifacts/assemblies like tests, sources and so on....
+     *   Not include the Pom file
+     */
     private void extractModuleAttachedArtifacts(MavenProject project, Set<Artifact> artifacts) {
         List<Artifact> attachedArtifacts = project.getAttachedArtifacts();
         if (attachedArtifacts != null) {
@@ -411,9 +427,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
-     * Merge the dependencies taken from the MavenProject object with those collected inside the resolvedArtifacts collection.
+     * Merge the dependencies taken from the MavenProject object with those
+     * collected inside the resolvedArtifacts collection.
      *
-     * @param projectDependencies The artifacts taken from the MavenProject object.
+     * @param projectDependencies The artifacts taken from the MavenProject
+     * object.
      */
     private void mergeProjectDependencies(Set<Artifact> projectDependencies) {
         // Go over all the artifacts taken from the MavenProject object, and replace their equals method, so that we are
@@ -503,8 +521,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
 
             /*
-            * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
-            */
+             * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
+             */
             if (!isPomProject(moduleArtifact)) {
                 for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
                     if (metadata instanceof ProjectArtifactMetadata) {  // the pom metadata
@@ -551,7 +569,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
+            String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
@@ -560,13 +578,15 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
         String myArtifactId = BuildInfoExtractorUtils.getArtifactId(currentModule.get().build().getId(),
                 artifact.getName());
+
         deployableArtifactBuilderMap.put(myArtifactId, deployable);
     }
 
     /**
      * @param deployPath the full path string to extract the repo from
-     * @return Return the target deployment repository. Either the releases repository (default) or snapshots if defined
-     * and the deployed file is a snapshot.
+     * @return Return the target deployment repository. Either the releases
+     * repository (default) or snapshots if defined and the deployed file is a
+     * snapshot.
      */
     public String getTargetRepository(String deployPath) {
         String snapshotsRepository = conf.publisher.getSnapshotRepoKey();
@@ -577,7 +597,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-                                     String fileExtension) {
+            String fileExtension) {
         return new StringBuilder(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
                 append("/").append(getArtifactName(artifactId, version, classifier, fileExtension)).toString();
     }
@@ -585,17 +605,17 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void addDependenciesToCurrentModule(ModuleBuilder module) {
         Set<Artifact> moduleDependencies = currentModuleDependencies.get();
         if (moduleDependencies == null) {
-            logger.warn("Skipping Artifactory Build-Info module dependency addition: Null current module dependency " +
-                    "list.");
+            logger.warn("Skipping Artifactory Build-Info module dependency addition: Null current module dependency "
+                    + "list.");
             return;
         }
         for (Artifact dependency : moduleDependencies) {
             File depFile = dependency.getFile();
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
                     .id(getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(),
-                            dependency.getVersion()))
+                                    dependency.getVersion()))
                     .type(getTypeString(dependency.getType(),
-                            dependency.getClassifier(), getExtension(depFile)));
+                                    dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
             if (StringUtils.isNotBlank(scopes)) {
                 dependencyBuilder.scopes(Sets.newHashSet(scopes));
@@ -624,13 +644,16 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void setDependencyChecksums(File dependencyFile, DependencyBuilder dependencyBuilder) {
         if ((dependencyFile != null) && (dependencyFile.isFile())) {
             try {
-                Map<String, String> checksumsMap =
-                        FileChecksumCalculator.calculateChecksums(dependencyFile, "md5", "sha1");
+                Map<String, String> checksumsMap
+                        = FileChecksumCalculator.calculateChecksums(dependencyFile, "md5", "sha1");
                 dependencyBuilder.md5(checksumsMap.get("md5"));
                 dependencyBuilder.sha1(checksumsMap.get("sha1"));
-            } catch (Exception e) {
-                logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': " +
-                        e.getMessage(), e);
+            } catch (NoSuchAlgorithmException e) {
+                logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
+                        + e.getMessage(), e);
+            } catch (IOException e) {
+                logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
+                        + e.getMessage(), e);
             }
         }
     }
@@ -656,14 +679,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         return null;
     }
 
-    /**
-     * Set pattern for the "Surefire" plugin report, this pattern check if we
-     * have failures or error is a specific test
-     */
-    private void setXpathPattern() throws XPathExpressionException {
-        if (xPath == null) {
-            xPath = XPathFactory.newInstance().newXPath();
-            xPathExpression = xPath.compile("/testsuite/@failures>0 or /testsuite/@errors>0");
-        }
+    public ResolutionHelper getResolutionHelper() {
+        return resolutionHelper;
     }
 }
