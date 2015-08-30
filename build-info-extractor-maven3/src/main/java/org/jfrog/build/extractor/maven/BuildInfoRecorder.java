@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package org.jfrog.build.extractor.maven;
 
 import com.google.common.collect.Lists;
@@ -50,12 +50,11 @@ import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 import org.xml.sax.InputSource;
 
-import javax.xml.xpath.*;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -65,6 +64,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 /*
  * Will be called for every project/module in the Maven project.
  */
+
 /**
  * @author Noam Y. Tenne
  */
@@ -91,22 +91,22 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private volatile boolean projectHasTestFailures;
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     private ArtifactoryClientConfiguration conf;
-    private Map<String, String> matrixParams; 
+    private Map<String, String> matrixParams;
     private Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
     private final ThreadLocal<XPathExpression> xPathExpression
             = new ThreadLocal<XPathExpression>() {
-                @Override 
-                protected XPathExpression initialValue() {
-                    XPathExpression result = null;
-                    try {
-                        result = XPathFactory.newInstance().newXPath().
-                            compile("/testsuite/@failures>0 or /testsuite/@errors>0");
-                    }catch (XPathExpressionException ex) {
-                        logger.error("Fail to create XPathExpression", ex);
-                    }
-                    return result;
-                }
-            };
+        @Override
+        protected XPathExpression initialValue() {
+            XPathExpression result = null;
+            try {
+                result = XPathFactory.newInstance().newXPath().
+                        compile("/testsuite/@failures>0 or /testsuite/@errors>0");
+            } catch (XPathExpressionException ex) {
+                logger.error("Fail to create XPathExpression", ex);
+            }
+            return result;
+        }
+    };
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -327,7 +327,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 stream = new FileInputStream(report);
                 Object evaluate = xPathExpression.get().evaluate(new InputSource(stream),
                         XPathConstants.STRING);
-                        
+
                 if (evaluate != null && StringUtils.isNotBlank(evaluate.toString()) && evaluate.toString().equals("true")) {
                     return true;
                 }
@@ -360,7 +360,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.warn("Skipping Artifactory Build-Info module initialization: Null project.");
             return;
         }
-        
+
         ModuleBuilder module = new ModuleBuilder();
         module.id(getModuleIdString(project.getGroupId(), project.getArtifactId(), project.getVersion()));
         module.properties(project.getProperties());
@@ -431,7 +431,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
      * collected inside the resolvedArtifacts collection.
      *
      * @param projectDependencies The artifacts taken from the MavenProject
-     * object.
+     *                            object.
      */
     private void mergeProjectDependencies(Set<Artifact> projectDependencies) {
         // Go over all the artifacts taken from the MavenProject object, and replace their equals method, so that we are
@@ -569,7 +569,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile,
-            String groupId, String artifactId, String version, String classifier, String fileExtension) {
+                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
         String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
@@ -597,7 +597,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-            String fileExtension) {
+                                     String fileExtension) {
         return new StringBuilder(groupId.replace(".", "/")).append("/").append(artifactId).append("/").append(version).
                 append("/").append(getArtifactName(artifactId, version, classifier, fileExtension)).toString();
     }
@@ -613,9 +613,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             File depFile = dependency.getFile();
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
                     .id(getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(),
-                                    dependency.getVersion()))
+                            dependency.getVersion()))
                     .type(getTypeString(dependency.getType(),
-                                    dependency.getClassifier(), getExtension(depFile)));
+                            dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
             if (StringUtils.isNotBlank(scopes)) {
                 dependencyBuilder.scopes(Sets.newHashSet(scopes));
@@ -626,12 +626,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getExtension(File depFile) {
-        String extension = "";
-        String fileName = depFile.getName();
-        if (depFile != null && fileName != null) {
-            int lastDot = fileName.lastIndexOf('.');
-            if (lastDot > 0 && lastDot + 1 < fileName.length()) {
-                extension = fileName.substring(lastDot + 1);
+        String extension = StringUtils.EMPTY;
+        if (depFile != null) {
+            String fileName = depFile.getName();
+            if (fileName != null) {
+                int lastDot = fileName.lastIndexOf('.');
+                if (lastDot > 0 && lastDot + 1 < fileName.length()) {
+                    extension = fileName.substring(lastDot + 1);
+                }
             }
         }
         return extension;
