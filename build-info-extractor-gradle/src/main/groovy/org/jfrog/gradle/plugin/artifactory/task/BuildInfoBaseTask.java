@@ -9,7 +9,6 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -21,13 +20,19 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.clientConfiguration.*;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
 import org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig;
-import org.jfrog.gradle.plugin.artifactory.extractor.*;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -55,7 +60,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
 
     public abstract void checkDependsOnArtifactsToPublish();
+
     public abstract void collectDescriptorsAndArtifactsForUpload() throws IOException;
+
     public abstract boolean hasModules();
 
     @Input
@@ -107,8 +114,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             }
 
             List<BuildInfoBaseTask> remainingTasks = new ArrayList<BuildInfoBaseTask>();
-            for(BuildInfoBaseTask task : getAllBuildInfoTasks()) {
-                if(!task.getState().getExecuted()) {
+            for (BuildInfoBaseTask task : getAllBuildInfoTasks()) {
+                if (!task.getState().getExecuted()) {
                     remainingTasks.add(task);
                 }
             }
@@ -190,7 +197,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         return artifactSpecs;
     }
 
-    /** Setters (Object and DSL)**/
+    /**
+     * Setters (Object and DSL)
+     **/
 
     public void properties(Closure closure) {
         Project project = getProject();
@@ -345,7 +354,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         acc.publisher.getIncludePatterns(),
                         acc.publisher.getExcludePatterns());
                 configureProxy(acc, client);
-                deployArtifacts(allDeployDetails, client, patterns);
+                Map<String, Set<GradleDeployDetails>> deployDetailsPerProject = arrangeDeployDetailsByProject(allDeployDetails);
+                deployArtifacts(deployDetailsPerProject, client, patterns);
             }
 
             //Extract build info and update the clientConf info accordingly (build name, num, etc.)
@@ -364,6 +374,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 } else {
                     log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                     client.sendBuildInfo(build);
+                    client.sendBuildInfo(build);
                 }
             }
         } finally {
@@ -371,18 +382,42 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         }
     }
 
-    private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryBuildInfoClient client,
+    /**
+     * Group artifacts by the project name
+     *
+     * @param gradleDeployDetailsSet flatten set of all artifacts deploy details
+     * @return map with project names as keys and group of all project related artifacts details
+     */
+    private Map<String, Set<GradleDeployDetails>> arrangeDeployDetailsByProject(Set<GradleDeployDetails> gradleDeployDetailsSet) {
+        Map<String, Set<GradleDeployDetails>> arrangedDeployDetails = Maps.newHashMap();
+        for (GradleDeployDetails gradleDeployDetails : gradleDeployDetailsSet) {
+            String projectName = gradleDeployDetails.getProject().getName();
+            if (arrangedDeployDetails.containsKey(projectName)) {
+                arrangedDeployDetails.get(projectName).add(gradleDeployDetails);
+            } else {
+                Set<GradleDeployDetails> gradleDeployDetailsForProject = Sets.newHashSet(gradleDeployDetails);
+                arrangedDeployDetails.put(projectName, gradleDeployDetailsForProject);
+            }
+        }
+        return arrangedDeployDetails;
+    }
+
+
+    private void deployArtifacts(Map<String, Set<GradleDeployDetails>> deployDetailsPerProject, ArtifactoryBuildInfoClient client,
                                  IncludeExcludePatterns patterns)
             throws IOException {
-        for (GradleDeployDetails detail : allDeployDetails) {
-            DeployDetails deployDetails = detail.getDeployDetails();
-            String artifactPath = deployDetails.getArtifactPath();
-            if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
-                log.log(LogLevel.LIFECYCLE, "Skipping the deployment of '" + artifactPath +
-                        "' due to the defined include-exclude patterns.");
-                continue;
+        for (String projectName : deployDetailsPerProject.keySet()) {
+            Set<GradleDeployDetails> deployDetailsForProject = deployDetailsPerProject.get(projectName);
+            for (GradleDeployDetails detail : deployDetailsForProject) {
+                DeployDetails deployDetails = detail.getDeployDetails();
+                String artifactPath = deployDetails.getArtifactPath();
+                if (PatternMatcher.pathConflicts(artifactPath, patterns)) {
+                    log.log(LogLevel.LIFECYCLE, "Skipping the deployment of '" + artifactPath +
+                            "' due to the defined include-exclude patterns.");
+                    continue;
+                }
+                client.deployArtifact(deployDetails);
             }
-            client.deployArtifact(deployDetails);
         }
     }
 
