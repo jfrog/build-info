@@ -343,8 +343,8 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-1.8') {
-            transitive = true
+        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-2.0') {
+            transitive = false
         }
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
     }
@@ -516,7 +516,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    gradleVersion = '1.8'
+    distributionUrl = 'https://services.gradle.org/distributions/gradle-2.1-all.zip'
 }
 
 

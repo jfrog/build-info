@@ -19,6 +19,8 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import org.gradle.api.artifacts.PublishArtifact;
 
 import java.io.File;
+import java.util.Map;
+import javax.xml.namespace.QName;
 
 /**
  * Minimal impl of a publish artifact model
@@ -31,6 +33,7 @@ public class PublishArtifactInfo {
     private final String extension;
     private final String type;
     private final String classifier;
+    private final Map<QName, String> extraInfo;
     private final File file;
 
     public PublishArtifactInfo(PublishArtifact artifact) {
@@ -38,14 +41,21 @@ public class PublishArtifactInfo {
         this.extension = artifact.getExtension();
         this.type = artifact.getType();
         this.classifier = artifact.getClassifier();
+        this.extraInfo = null;
         this.file = artifact.getFile();
     }
 
     public PublishArtifactInfo(String name, String extension, String type, String classifier, File file) {
+        this(name, extension, type, classifier, null, file);
+    }
+
+    public PublishArtifactInfo(String name, String extension, String type, String classifier,
+                               Map<QName, String> extraInfo, File file) {
         this.name = name;
         this.extension = extension;
         this.type = type;
         this.classifier = classifier;
+        this.extraInfo = extraInfo;
         this.file = file;
     }
 
@@ -63,6 +73,10 @@ public class PublishArtifactInfo {
 
     public String getClassifier() {
         return classifier;
+    }
+
+    public Map<QName, String> getExtraInfo() {
+        return extraInfo;
     }
 
     public File getFile() {
