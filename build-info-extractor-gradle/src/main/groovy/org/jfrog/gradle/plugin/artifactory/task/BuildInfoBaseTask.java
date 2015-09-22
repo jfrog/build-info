@@ -374,7 +374,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 } else {
                     log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                     client.sendBuildInfo(build);
-                    client.sendBuildInfo(build);
                 }
             }
         } finally {
