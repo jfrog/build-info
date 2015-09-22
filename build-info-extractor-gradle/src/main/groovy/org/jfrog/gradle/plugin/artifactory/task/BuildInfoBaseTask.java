@@ -39,7 +39,6 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -328,16 +327,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             password = "";
         }
 
-        //Sort all the deploy artifacts by project and then filename so they get uploaded in a deterministic order
-        Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet(new Comparator<GradleDeployDetails>() {
-            public int compare(GradleDeployDetails details, GradleDeployDetails otherDetails) {
-                int val = details.getProject().compareTo(otherDetails.getProject());
-                if(val == 0) {
-                    val = details.getPublishArtifact().compareTo(otherDetails.getPublishArtifact());
-                }
-                return val;
-            }
-        });
+        //Sort all the deploy artifacts by the natural ordering of GradleDeployDetails
+        Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
 
         // Update the artifacts for all project build info task
         List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();

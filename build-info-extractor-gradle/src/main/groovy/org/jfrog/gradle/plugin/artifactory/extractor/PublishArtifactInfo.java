@@ -19,6 +19,7 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import org.gradle.api.artifacts.PublishArtifact;
 
 import java.io.File;
+import java.lang.Comparable;
 
 /**
  * Minimal impl of a publish artifact model
@@ -71,5 +72,22 @@ public class PublishArtifactInfo implements Comparable<PublishArtifactInfo> {
     
     public int compareTo(PublishArtifactInfo other) {
         return file.compareTo(other.getFile());
+    }
+    
+     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PublishArtifactInfo info = (PublishArtifactInfo) o;
+        return file.equals(info.file);
+    }
+
+    @Override
+    public int hashCode() {
+        return file.hashCode();
     }
 }
