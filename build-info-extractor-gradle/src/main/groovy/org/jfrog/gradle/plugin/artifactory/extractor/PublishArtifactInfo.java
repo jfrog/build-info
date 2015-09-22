@@ -25,7 +25,7 @@ import java.io.File;
  *
  * @author Yoav Landman
  */
-public class PublishArtifactInfo {
+public class PublishArtifactInfo implements Comparable<PublishArtifactInfo> {
 
     private final String name;
     private final String extension;
@@ -67,5 +67,9 @@ public class PublishArtifactInfo {
 
     public File getFile() {
         return file;
+    }
+    
+    public int compareTo(PublishArtifactInfo other) {
+        return file.compareTo(other.getFile());
     }
 }
