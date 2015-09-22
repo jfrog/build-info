@@ -6,9 +6,10 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.client.DeployDetails;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 
 /**
@@ -27,7 +28,12 @@ public class BuildContext {
 
     public BuildContext(ArtifactoryClientConfiguration clientConf) {
         this.clientConf = clientConf;
-        deployDetails = new HashSet<DeployDetails>();
+        //Sort the deploy details by file name to ensure consistent publish order
+        deployDetails = new TreeSet(new Comparator<DeployDetails>() {
+            public int compare(DeployDetails details, DeployDetails otherDetails) {
+                return details.getFile().compareTo(otherDetails.getFile());
+            }
+        });
         modules = new ArrayList<Module>();
         dependencies = new ArrayList<Dependency>();
         buildStartTime = System.currentTimeMillis();
