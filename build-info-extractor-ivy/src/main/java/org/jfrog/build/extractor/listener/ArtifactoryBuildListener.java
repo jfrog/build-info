@@ -204,7 +204,15 @@ public class ArtifactoryBuildListener implements BuildListener {
         // Iterate the project elements, search for ivy:settings and return them:
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
-            if (element instanceof IvyAntSettings) {
+            if (element instanceof UnknownTask ) {
+                UnknownElement unknown = (UnknownElement) element;
+                Object element = unknown.getRealThing();
+                if(element == null) {
+                    unknown.maybeConfigure();
+                    element = unknown.getRealThing();
+                }
+            }
+            if (element instanceof IvyAntSettings ) {
                 results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
             }
         }
