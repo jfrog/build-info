@@ -30,6 +30,7 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
+import org.gradle.api.publish.ivy.internal.publication.IvyModuleDescriptorSpecInternal;
 import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
@@ -51,6 +52,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.namespace.QName;
 
 
 /**
@@ -169,6 +171,7 @@ public class TaskHelperPublications extends TaskHelper{
             IvyPublicationInternal ivyPublicationInternal = (IvyPublicationInternal) ivyPublication;
             IvyNormalizedPublication ivyNormalizedPublication = ivyPublicationInternal.asNormalisedPublication();
             IvyPublicationIdentity projectIdentity = ivyNormalizedPublication.getProjectIdentity();
+            Map<QName, String> extraInfo = ivyPublication.getDescriptor().getExtraInfo().asMap();
 
             // First adding the Ivy descriptor (if the build is configured to add it):
             if (isPublishIvy()) {
@@ -176,7 +179,7 @@ public class TaskHelperPublications extends TaskHelper{
                 DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            projectIdentity.getModule(), "xml", "ivy", null, file);
+                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, file);
                     addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
                 }
             }
@@ -188,7 +191,7 @@ public class TaskHelperPublications extends TaskHelper{
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
                         artifact.getName(), artifact.getExtension(), artifact.getType(), artifact.getClassifier(),
-                        file);
+                        extraInfo, file);
                 addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
             }
         }
@@ -268,6 +271,16 @@ public class TaskHelperPublications extends TaskHelper{
         Map<String, String> extraTokens = Maps.newHashMap();
         if (StringUtils.isNotBlank(artifactInfo.getClassifier())) {
             extraTokens.put("classifier", artifactInfo.getClassifier());
+        }
+        Map<QName, String> extraInfo = artifactInfo.getExtraInfo();
+        if (extraInfo != null) {
+            for (Map.Entry<QName, String> extraToken : extraInfo.entrySet()) {
+                String key = extraToken.getKey().getLocalPart();
+                if (extraTokens.containsKey(key)) {
+                    throw new GradleException("Duplicated extra info '" + key + "'.");
+                }
+                extraTokens.put(key, extraToken.getValue());
+            }
         }
         return extraTokens;
     }
