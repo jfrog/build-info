@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.listener;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.ant.IvyAntSettings;
+import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.event.EventManager;
 import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
@@ -130,10 +131,24 @@ public class ArtifactoryBuildListener implements BuildListener {
 
     private Task extractIvyTask(BuildEvent event) {
         Task task = event.getTask();
+        
+        //Handle ivy tasks that are wrapped
+        if(task instanceof UnknownElement) {
+            UnknownElement unknown = (UnknownElement) task;
+            Object realThing = unknown.getRealThing();
+            if(realThing == null) {
+                unknown.maybeConfigure();
+            }
+            realThing = unknown.getRealThing();
+            if (realThing instanceof Task) {
+                task = (Task)realThing;
+            }
+        }
+        
         // Interested only in Ivy tasks
         String taskType = task.getTaskType();
         if (taskType != null
-                && (taskType.contains("org.apache.ivy") || taskType.contains("fr.jayasoft.ivy"))) {
+                && (taskType.contains("org.apache.ivy") || taskType.contains("fr.jayasoft.ivy") || task instanceof IvyTask)) {
             return task;
         }
         return null;
@@ -189,7 +204,15 @@ public class ArtifactoryBuildListener implements BuildListener {
         // Iterate the project elements, search for ivy:settings and return them:
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
-            if (element instanceof IvyAntSettings) {
+            if (element instanceof UnknownTask ) {
+                UnknownElement unknown = (UnknownElement) element;
+                Object element = unknown.getRealThing();
+                if(element == null) {
+                    unknown.maybeConfigure();
+                    element = unknown.getRealThing();
+                }
+            }
+            if (element instanceof IvyAntSettings ) {
                 results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
             }
         }
