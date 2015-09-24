@@ -204,9 +204,9 @@ public class ArtifactoryBuildListener implements BuildListener {
         // Iterate the project elements, search for ivy:settings and return them:
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
-            if (element instanceof UnknownTask ) {
-                UnknownElement unknown = (UnknownElement) element;
-                Object element = unknown.getRealThing();
+            if (element instanceof UnknownElement) {
+                UnknownElement unknown = (UnknownElement)element;
+                element = unknown.getRealThing();
                 if(element == null) {
                     unknown.maybeConfigure();
                     element = unknown.getRealThing();

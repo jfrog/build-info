@@ -398,77 +398,77 @@ project('build-info-extractor-maven3') {
     }
 }
 
-project('artifactory-maven-plugin') {
+boolean excludeMavenPluginBuild = project.hasProperty('excludeMavenPluginBuild') && project.property('excludeMavenPluginBuild')
+if (!excludeMavenPluginBuild) {
+    project('artifactory-maven-plugin') {
+        Project p ->
+            apply plugin: 'groovy'
+            description = 'JFrog Build-Info Maven 3 Plugin'
 
-    Project p ->
+            dependencies {
+                compile project(':build-info-api'),
+                        'org.apache.maven.plugin-tools:maven-plugin-annotations:3.2',
+                        'org.gcontracts:gcontracts-core:1.2.12',
+                        'org.codehaus.plexus:plexus-utils:3.0.13',
+                        'org.apache.ant:ant:1.9.2'
 
-        apply plugin: 'groovy'
-        description = 'JFrog Build-Info Maven 3 Plugin'
+                compile(project(':build-info-extractor-maven3')) { exclude group: 'org.jdom', module: 'jdom' }
+                compile('org.codehaus.gmaven:gmaven-mojo:1.5') {
+                    exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal'
+                }
 
-        dependencies {
-            compile project(':build-info-api'),
-                    'org.apache.maven.plugin-tools:maven-plugin-annotations:3.2',
-                    'org.gcontracts:gcontracts-core:1.2.12',
-                    'org.codehaus.plexus:plexus-utils:3.0.13',
-                    'org.apache.ant:ant:1.9.2'
-
-            compile(project(':build-info-extractor-maven3')) { exclude group: 'org.jdom', module: 'jdom' }
-            compile('org.codehaus.gmaven:gmaven-mojo:1.5') {
-                exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal'
+                testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
+                provided    'org.apache.maven:maven-core:3.3.3',
+                        'org.apache.maven:maven-project:3.0-alpha-2'
             }
 
-            testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
-            provided    'org.apache.maven:maven-core:3.3.3',
-                        'org.apache.maven:maven-project:3.0-alpha-2'
-        }
+            clean { delete('pom.xml') }
 
-        clean { delete('pom.xml') }
+            task pluginDescriptor(type: Exec) {
+                // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
 
-        task pluginDescriptor(type: Exec) {
-            // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
+                final mvn = project.hasProperty('mvn') ? project.mvn : System.getProperty('os.name')?.toLowerCase()?.contains('win') ? 'mvn.bat' : 'mvn'
+                final mvnArgs = project.hasProperty('mvnArgs') ? project.mvnArgs : ''
+                final File pom = project.file("$buildDir/pom.xml")
+                final allArgs = ['-e', '-B', '-f', pom.canonicalPath, mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'].grep()
 
-            final mvn = project.hasProperty('mvn') ? project.mvn : System.getProperty('os.name')?.toLowerCase()?.contains('win') ? 'mvn.bat' : 'mvn'
-            final mvnArgs = project.hasProperty('mvnArgs') ? project.mvnArgs : ''
-            final File pom = project.file("$buildDir/pom.xml")
-            final allArgs = ['-e', '-B', '-f', pom.canonicalPath, mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'].grep()
+                executable mvn
+                args allArgs
 
-            executable mvn
-            args allArgs
+                doFirst {
+                    assert project.compileGroovy.destinationDir.directory
+                    install.repositories.mavenInstaller.pom.writeTo(pom)
+                    assert pom.file, "[$pom.canonicalPath] was not generated"
+                    println "POM is generated at file:$pom.canonicalPath"
 
-            doFirst {
-                assert project.compileGroovy.destinationDir.directory
-                install.repositories.mavenInstaller.pom.writeTo(pom)
-                assert pom.file, "[$pom.canonicalPath] was not generated"
-                println "POM is generated at file:$pom.canonicalPath"
-
-                pom.text = pom.text.
-                        replace('<groupId>unknown</groupId>', "<groupId>${project.group}</groupId>").
-                        replace('<artifactId>empty-project</artifactId>', "<artifactId>${project.name}</artifactId>").
-                        replace('<version>0</version>', """
+                    pom.text = pom.text.
+                            replace('<groupId>unknown</groupId>', "<groupId>${project.group}</groupId>").
+                            replace('<artifactId>empty-project</artifactId>', "<artifactId>${project.name}</artifactId>").
+                            replace('<version>0</version>', """
                                                                    |<version>${version}</version>
                                                                    |  <packaging>maven-plugin</packaging>
                                                                    |  <build>
                                                                    |    <directory>${project.buildDir.canonicalPath}</directory>
                                                                    |    <outputDirectory>${
-                            project.compileGroovy.destinationDir.canonicalPath
-                        }</outputDirectory>
+                                project.compileGroovy.destinationDir.canonicalPath
+                            }</outputDirectory>
                                                                    |  </build>""".stripMargin().trim())
 
-                println "Running '$mvn' with arguments $allArgs"
+                    println "Running '$mvn' with arguments $allArgs"
+                }
+                doLast {
+                    final pluginDescriptor = new File((File) project.compileGroovy.destinationDir, 'META-INF/maven/plugin.xml')
+                    assert pluginDescriptor.file, "[$pluginDescriptor.canonicalPath] was not created"
+                    println "Plugin descriptor file:$pluginDescriptor.canonicalPath is created"
+                }
             }
-            doLast {
-                final pluginDescriptor = new File((File) project.compileGroovy.destinationDir, 'META-INF/maven/plugin.xml')
-                assert pluginDescriptor.file, "[$pluginDescriptor.canonicalPath] was not created"
-                println "Plugin descriptor file:$pluginDescriptor.canonicalPath is created"
-            }
-        }
 
-        /**
-         * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
-         */
-        p.rootProject.subprojects.findAll { it.hasProperty('install') && (it.name != p.name) }.
-                each { pluginDescriptor.dependsOn(it.install) }
-        p.jar.dependsOn(pluginDescriptor)
+            /**
+             * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
+             */
+            p.rootProject.subprojects.findAll { it.hasProperty('install') && (it.name != p.name) }.
+                    each { pluginDescriptor.dependsOn(it.install) }
+            p.jar.dependsOn(pluginDescriptor)
 
         configure(install.repositories.mavenInstaller) {
             pom.project {
@@ -487,10 +487,11 @@ project('artifactory-maven-plugin') {
             }
         }
 
-        test{
-            //Spock runs with JUnit
-            test.useJUnit()
-        }
+            test{
+                //Spock runs with JUnit
+                test.useJUnit()
+            }
+    }
 }
 
 idea {
