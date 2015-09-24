@@ -30,9 +30,10 @@ buildscript {
     }
 }
 
-
 import org.jfrog.build.Version
 import org.apache.tools.ant.filters.ReplaceTokens
+
+boolean excludeMavenPluginBuild = project.hasProperty('excludeMavenPluginBuild') && project.property('excludeMavenPluginBuild')
 
 // Root project version should not be used
 project.version = '2'
@@ -255,7 +256,9 @@ configure(extractorProjects()) {
     artifactoryPublish {
         properties {
             all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
-            all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+            if (!excludeMavenPluginBuild) {
+                all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+            }
         }
     }
 }
@@ -398,7 +401,6 @@ project('build-info-extractor-maven3') {
     }
 }
 
-boolean excludeMavenPluginBuild = project.hasProperty('excludeMavenPluginBuild') && project.property('excludeMavenPluginBuild')
 if (!excludeMavenPluginBuild) {
     project('artifactory-maven-plugin') {
         Project p ->
