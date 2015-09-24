@@ -29,6 +29,7 @@ import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.TaskState;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
@@ -44,6 +45,7 @@ import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -66,7 +68,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     private static final String MD5 = "md5";
     private final ArtifactoryClientConfiguration clientConf;
     private final Set<GradleDeployDetails> gradleDeployDetails;
-
 
     public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
                                     Set<GradleDeployDetails> gradleDeployDetails) {
@@ -249,12 +250,32 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             return null;
         }
         BuildInfoBaseTask buildInfoTask = (BuildInfoBaseTask) tasks.iterator().next();
-        if (buildInfoTask.getState().getDidWork()) {
+        if (taskDidWork(buildInfoTask)) {
             return buildInfoTask;
         }
         return null;
     }
 
+    /**
+     * Determines if the task actually did any work.
+     * This methods wraps Gradle's task.getState().getDidWork().
+     * @param task  The BuildInfoBaseTask
+     * @return      true if the task actually did any work.
+     */
+    private boolean taskDidWork(BuildInfoBaseTask task) {
+        try {
+            return task.getState().getDidWork();
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            try {
+                Method m = task.getClass().getMethod("getState");
+                TaskState state = (TaskState)m.invoke(task);
+                return state.getDidWork();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     public Module extractModule(Project project) {
         String artifactName = project.getName();
