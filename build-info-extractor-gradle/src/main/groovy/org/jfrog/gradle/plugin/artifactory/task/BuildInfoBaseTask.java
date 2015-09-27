@@ -288,6 +288,12 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             }
         }
     }
+    
+    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
+        if(clientConf.getTimeout() != null) {
+            client.setConnectionTimeout(clientConf.getTimeout());
+        }
+    }
 
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
         String fileExportPath = clientConf.getExportFile();
@@ -378,6 +384,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         acc.publisher.getIncludePatterns(),
                         acc.publisher.getExcludePatterns());
                 configureProxy(acc, client);
+                configConnectionTimeout(acc, client);
                 Map<String, Set<GradleDeployDetails>> deployDetailsPerProject = arrangeDeployDetailsByProject(allDeployDetails);
                 deployArtifacts(deployDetailsPerProject, client, patterns);
             }
