@@ -367,8 +367,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         currentModule.set(module);
 
-        currentModuleArtifacts.set(Sets.<Artifact>newConcurrentHashSet());
-        currentModuleDependencies.set(Sets.<Artifact>newConcurrentHashSet());
+        currentModuleArtifacts.set(Collections.synchronizedSet(new HashSet<Artifact>()));
+        currentModuleDependencies.set(Collections.synchronizedSet(new HashSet<Artifact>()));
     }
 
     private void extractArtifactsAndDependencies(MavenProject project) {
