@@ -59,11 +59,11 @@ class ArtifactoryPluginConvention {
     }
 
     def buildInfo(Closure closure) {
-        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(clientConfig.info))
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, clientConfig.info))
     }
 
     def proxy(Closure closure) {
-        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(clientConfig.proxy))
+        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, clientConfig.proxy))
     }
 
     def parent(Closure closure) {
