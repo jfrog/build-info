@@ -19,6 +19,7 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import org.gradle.api.artifacts.PublishArtifact;
 
 import java.io.File;
+import java.lang.Comparable;
 import java.util.Map;
 import javax.xml.namespace.QName;
 
@@ -27,7 +28,7 @@ import javax.xml.namespace.QName;
  *
  * @author Yoav Landman
  */
-public class PublishArtifactInfo {
+public class PublishArtifactInfo implements Comparable<PublishArtifactInfo> {
 
     private final String name;
     private final String extension;
@@ -81,5 +82,26 @@ public class PublishArtifactInfo {
 
     public File getFile() {
         return file;
+    }
+    
+    public int compareTo(PublishArtifactInfo other) {
+        return file.compareTo(other.getFile());
+    }
+    
+     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        PublishArtifactInfo info = (PublishArtifactInfo) o;
+        return file.equals(info.file);
+    }
+
+    @Override
+    public int hashCode() {
+        return file.hashCode();
     }
 }
