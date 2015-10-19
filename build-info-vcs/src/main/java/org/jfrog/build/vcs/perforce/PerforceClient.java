@@ -6,13 +6,14 @@ import com.perforce.p4java.core.*;
 import com.perforce.p4java.core.file.FileSpecBuilder;
 import com.perforce.p4java.core.file.FileSpecOpStatus;
 import com.perforce.p4java.core.file.IFileSpec;
-import com.perforce.p4java.exception.P4JavaException;
+import com.perforce.p4java.exception.*;
 import com.perforce.p4java.impl.generic.client.ClientView;
 import com.perforce.p4java.impl.generic.core.Changelist;
 import com.perforce.p4java.impl.generic.core.ChangelistSummary;
 import com.perforce.p4java.impl.generic.core.Label;
 import com.perforce.p4java.option.changelist.SubmitOptions;
-import com.perforce.p4java.server.IServer;
+import com.perforce.p4java.option.server.TrustOptions;
+import com.perforce.p4java.server.IOptionsServer;
 import com.perforce.p4java.server.PerforceCharsets;
 import com.perforce.p4java.server.ServerFactory;
 import org.apache.commons.lang.StringUtils;
@@ -25,13 +26,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
+import static com.perforce.p4java.server.IServerAddress.Protocol;
+
 /**
  * Client to communicate with perforce.
  *
  * @author Shay Yaakov
  */
 public class PerforceClient {
-    private IServer server;
+
+    private IOptionsServer server;
     private IClient client;
 
     private PerforceClient(String hostAddress, String clientId, String username, String password, String charset)
@@ -48,7 +52,7 @@ public class PerforceClient {
             Properties props = new Properties();
             props.put("autoConnect", true);
             props.put("autoLogin", true);
-            server = ServerFactory.getServer("p4java://" + hostAddress, props);
+            initServerWithTrust(hostAddress, props);
             if (!StringUtils.isBlank(charset)) {
                 if (PerforceCharsets.isSupported(charset)) {
                     server.setCharsetName(charset);
@@ -59,7 +63,9 @@ public class PerforceClient {
             server.connect();
             // login only after the connection
             server.setUserName(username);
-            server.login(password);
+            if (StringUtils.isNotBlank(password)) {
+                server.login(password);
+            }
             client = server.getClient(clientId);
             server.setCurrentClient(client);
         } catch (URISyntaxException e) {
@@ -67,6 +73,24 @@ public class PerforceClient {
         } catch (P4JavaException e) {
             throw new IOException("Perforce execution failed: '" + e.getMessage() + "'", e);
         }
+    }
+
+    private void initServerWithTrust(String hostAddress, Properties props) throws P4JavaException,
+            URISyntaxException {
+        boolean isSsl = isSslHostAddress(hostAddress);
+        Protocol protocol = isSsl ? Protocol.P4JAVASSL : Protocol.P4JAVA;
+        server = ServerFactory.getOptionsServer(protocol.toString() + "://" + stripSslPrefixIfExist(hostAddress), props);
+        if (isSsl) {
+            server.addTrust(new TrustOptions().setAutoAccept(true).setForce(true));
+        }
+    }
+
+    private boolean isSslHostAddress(String hostAddress) {
+        return hostAddress.substring(0, hostAddress.indexOf(":")).toLowerCase().equals("ssl");
+    }
+
+    private String stripSslPrefixIfExist(String hostAddress) {
+        return StringUtils.stripStart(hostAddress, "ssl:");
     }
 
     /**

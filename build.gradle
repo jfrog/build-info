@@ -310,7 +310,7 @@ project('build-info-extractor') {
 project('build-info-vcs') {
     description = 'JFrog Build-Info VCS'
     dependencies {
-        compile(group: 'com.perforce', name: 'p4java-jfrog', version: '2011.1.297684')
+        compile(group: 'com.perforce', name: 'p4java', version: '2015.1.1210280')
     }
 }
 
