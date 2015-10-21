@@ -68,8 +68,8 @@ public abstract class DeploymentUrlUtils {
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
                 for (String propertyValue : matrixParams.get(propertyKey)) {
-                    matrix.append(";").append(ArtifactoryHttpClient.encodeUrl(propertyKey))
-                            .append("=").append(ArtifactoryHttpClient.encodeUrl(propertyValue));
+                    matrix.append(";").append(URLEncoder.encode(propertyKey, "UTF-8"))
+                            .append("=").append(URLEncoder.encode(propertyValue, "UTF-8"));
                 }
             }
         }
