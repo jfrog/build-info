@@ -208,6 +208,8 @@ public class ArtifactoryHttpClient {
                     JsonParser parser = createJsonParser(content);
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
                 } catch (Exception e) {
+                    // Displays the response received from the client and the stacktrace in case an Exception caught.
+                    log.info("Response received: \n\n" + content + "\n\n");
                     log.error("Failed while reading the response from: " + httpPut, e);
                 } finally {
                     in.close();
