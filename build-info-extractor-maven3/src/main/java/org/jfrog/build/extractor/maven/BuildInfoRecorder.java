@@ -491,6 +491,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                 publisher.getIncludePatterns(), publisher.getExcludePatterns());
         boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
+
+        boolean pomFileAdded = false;
+        Artifact nonPomArtifact = null;
+        String pomFileName = null;
+
         for (Artifact moduleArtifact : moduleArtifacts) {
             String artifactId = moduleArtifact.getArtifactId();
             String artifactVersion = moduleArtifact.getVersion();
@@ -502,10 +507,19 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactName).type(type);
             File artifactFile = moduleArtifact.getFile();
-            // for pom projects take the file from the project if the artifact file is null
-            if (isPomProject(moduleArtifact) && moduleArtifact.equals(project.getArtifact())) {
-                artifactFile = project.getFile();   // project.getFile() returns the project pom file
+
+            if ("pom".equals(type)) {
+                pomFileAdded = true;
+                // For pom projects take the file from the project if the artifact file is null.
+                if (moduleArtifact.equals(project.getArtifact())) {
+                    artifactFile = project.getFile();   // project.getFile() returns the project pom file
+                }
+            } else
+            if (moduleArtifact.getMetadataList().size() > 0) {
+                nonPomArtifact = moduleArtifact;
+                pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
             }
+
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             String groupId = moduleArtifact.getGroupId();
             String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
@@ -517,34 +531,47 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
             if (isPublishArtifacts(artifactFile)) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
-                        artifactId, artifactVersion, artifactClassifier, artifactExtension);
+                    artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
+        }
+        /*
+         * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
+         */
+        if (!pomFileAdded && nonPomArtifact != null) {
+            String deploymentPath = getDeploymentPath(
+                    nonPomArtifact.getGroupId(),
+                    nonPomArtifact.getArtifactId(),
+                    nonPomArtifact.getVersion(),
+                    nonPomArtifact.getClassifier(), "pom");
 
-            /*
-             * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
-             */
-            if (!isPomProject(moduleArtifact)) {
-                for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
-                    if (metadata instanceof ProjectArtifactMetadata) {  // the pom metadata
-                        File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
-                        artifactBuilder.type("pom");
-                        String pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
-                        artifactBuilder.name(pomFileName);
-                        org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
-                        deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, "pom");
-                        if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
-                            module.addExcludedArtifact(pomArtifact);
-                        } else {
-                            module.addArtifact(pomArtifact);
-                        }
-                        if (isPublishArtifacts(pomFile)) {
-                            addDeployableArtifact(pomArtifact, pomFile, moduleArtifact.getGroupId(),
-                                    artifactId, artifactVersion,
-                                    artifactClassifier, "pom");
-                        }
-                        break;
-                    }
+            addPomArtifact(nonPomArtifact, module, patterns, deploymentPath, pomFileName, excludeArtifactsFromBuild);
+        }
+    }
+
+    private void addPomArtifact(Artifact nonPomArtifact, ModuleBuilder module,
+        IncludeExcludePatterns patterns, String deploymentPath, String pomFileName, boolean excludeArtifactsFromBuild) {
+
+        for (ArtifactMetadata metadata : nonPomArtifact.getMetadataList()) {
+            if (metadata instanceof ProjectArtifactMetadata) { // The pom metadata
+                ArtifactBuilder artifactBuilder = new ArtifactBuilder(pomFileName).type("pom");
+                File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
+                org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
+
+                if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
+                    module.addExcludedArtifact(pomArtifact);
+                } else {
+                    module.addArtifact(pomArtifact);
                 }
+                if (isPublishArtifacts(pomFile)) {
+                    addDeployableArtifact(
+                        pomArtifact,
+                        pomFile,
+                        nonPomArtifact.getGroupId(),
+                        nonPomArtifact.getArtifactId(),
+                        nonPomArtifact.getVersion(),
+                        nonPomArtifact.getClassifier(), "pom");
+                }
+                break;
             }
         }
     }
