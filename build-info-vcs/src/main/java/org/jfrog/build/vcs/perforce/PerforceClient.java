@@ -6,7 +6,7 @@ import com.perforce.p4java.core.*;
 import com.perforce.p4java.core.file.FileSpecBuilder;
 import com.perforce.p4java.core.file.FileSpecOpStatus;
 import com.perforce.p4java.core.file.IFileSpec;
-import com.perforce.p4java.exception.*;
+import com.perforce.p4java.exception.P4JavaException;
 import com.perforce.p4java.impl.generic.client.ClientView;
 import com.perforce.p4java.impl.generic.core.Changelist;
 import com.perforce.p4java.impl.generic.core.ChangelistSummary;
@@ -41,6 +41,18 @@ public class PerforceClient {
     private PerforceClient(String hostAddress, String clientId, String username, String password, String charset)
             throws IOException {
         createServer(hostAddress, clientId, username, password, charset);
+    }
+
+    public PerforceClient(IOptionsServer server, IClient client) throws Exception{
+        this.server = server;
+        this.client = client;
+    }
+
+    public void initConnection() throws Exception {
+        if (server != null) {
+            this.server.setCurrentClient(this.client);
+            this.server.connect();
+        }
     }
 
     /**
@@ -90,7 +102,10 @@ public class PerforceClient {
     }
 
     private String stripSslPrefixIfExist(String hostAddress) {
-        return StringUtils.stripStart(hostAddress, "ssl:");
+        if (StringUtils.startsWith(hostAddress, "ssl:")) {
+            return StringUtils.substring(hostAddress, 4);
+        }
+        return hostAddress;
     }
 
     /**
