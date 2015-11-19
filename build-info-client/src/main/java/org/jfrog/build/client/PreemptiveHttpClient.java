@@ -20,6 +20,7 @@ import org.apache.http.*;
 import org.apache.http.auth.*;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.params.ClientPNames;
 import org.apache.http.client.protocol.ClientContext;
 import org.apache.http.conn.params.ConnRoutePNames;
 import org.apache.http.impl.auth.BasicScheme;
@@ -97,6 +98,8 @@ public class PreemptiveHttpClient {
         HttpConnectionParams.setConnectionTimeout(params, timeoutMilliSeconds);
         HttpConnectionParams.setSoTimeout(params, timeoutMilliSeconds);
         DefaultHttpClient client = new DefaultHttpClient(params);
+
+        client.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true);
 
         if (userName != null && !"".equals(userName)) {
             client.getCredentialsProvider().setCredentials(
