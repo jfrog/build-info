@@ -10,8 +10,6 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
-
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
@@ -83,7 +81,7 @@ public class DependenciesDownloaderHelper {
 
                 // If the checksums map is null then something went wrong and we should fail the build
                 if (checksumsMap == null) {
-                    throw new IOException("Received null checksums map");
+                    throw new IOException("Received null checksums map for downloaded file.");
                 }
 
                 String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
@@ -92,14 +90,8 @@ public class DependenciesDownloaderHelper {
                 log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
                 dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
             }
-        } catch (FileNotFoundException e) {
-            if (StringUtils.isNotBlank(matrixParams)) {
-                String skippedMessage = "Skipping download of '" + uriWithParams + "' due to matrix params mismatch.";
-                log.debug(skippedMessage);
-            } else {
-                String warningMessage = "Error occurred while resolving published dependency: " + e.getMessage();
-                log.warn(warningMessage);
-            }
+        } catch (IOException e) {
+            log.warn("Error occurred while resolving published dependency: " + uriWithParams + " "  + e.getMessage());
         }
 
         return dependencyResult;
