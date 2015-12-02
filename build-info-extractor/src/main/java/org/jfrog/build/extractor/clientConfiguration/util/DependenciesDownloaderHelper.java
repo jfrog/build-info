@@ -68,11 +68,19 @@ public class DependenciesDownloaderHelper {
         String matrixParams = downloadableArtifact.getMatrixParameters();
         final String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
+
+        Checksums checksums = downloadArtifactCheckSums(uriWithParams);
+        // If Artifactory returned no checksums, this is probably because the URL points to a folder,
+        // so there's no need to download it.
+        if (StringUtils.isBlank(checksums.getMd5()) && StringUtils.isBlank(checksums.getSha1())) {
+            return null;
+        }
+
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
-                downloadableArtifact.getRelativeDirPath());
+            downloadableArtifact.getRelativeDirPath());
 
         try {
-            dependencyResult = getDependencyLocally(uriWithParams, fileDestination);
+            dependencyResult = getDependencyLocally(checksums, fileDestination);
             if (dependencyResult == null) {
                 log.info("Downloading '" + uriWithParams + "' ...");
                 HttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
@@ -98,23 +106,28 @@ public class DependenciesDownloaderHelper {
     }
 
     /**
-     * Perform HEAD request to get the artifact checksums and check if the local file is the same.
+     * Returns the dependency if it exists locally and has the sent checksums.
+     * Otherwise return null.
      *
-     * @param uriWithParams The uri for the artifact to perform HEAD request to
+     * @param checksums     The artifact checksums returned from Artifactory.
      * @param filePath      The locally file path
      */
-    private Dependency getDependencyLocally(String uriWithParams, String filePath) throws IOException {
-        Dependency dependencyResult = null;
-        HttpResponse artifactChecksums = downloader.getClient().getArtifactChecksums(uriWithParams);
-        String md5 = getMD5ChecksumFromResponse(artifactChecksums);
-        String sha1 = getSHA1ChecksumFromResponse(artifactChecksums);
-
-        if (downloader.isFileExistsLocally(filePath, md5, sha1)) {
+    private Dependency getDependencyLocally(Checksums checksums, String filePath) throws IOException {
+        if (downloader.isFileExistsLocally(filePath, checksums.getMd5(), checksums.getSha1())) {
             log.debug("File '" + filePath + "' already exists locally, skipping remote download.");
-            dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
+            return new DependencyBuilder().id(filePath).md5(checksums.getMd5()).sha1(checksums.getSha1()).build();
         }
+        return null;
+    }
 
-        return dependencyResult;
+    private Checksums downloadArtifactCheckSums(String url) throws IOException {
+        HttpResponse response = downloader.getClient().getArtifactChecksums(url);
+
+        Checksums checksums = new Checksums();
+        checksums.setMd5(getMD5ChecksumFromResponse(response));
+        checksums.setSha1(getSHA1ChecksumFromResponse(response));
+
+        return checksums;
     }
 
     private String validateMd5Checksum(HttpResponse httpResponse, String calculatedMd5) throws IOException {
@@ -153,5 +166,26 @@ public class DependenciesDownloaderHelper {
             md5 = md5Header.getValue();
         }
         return md5;
+    }
+
+    private static class Checksums {
+        private String sha1;
+        private String md5;
+
+        public String getSha1() {
+            return sha1;
+        }
+
+        public void setSha1(String sha1) {
+            this.sha1 = sha1;
+        }
+
+        public String getMd5() {
+            return md5;
+        }
+
+        public void setMd5(String md5) {
+            this.md5 = md5;
+        }
     }
 }
