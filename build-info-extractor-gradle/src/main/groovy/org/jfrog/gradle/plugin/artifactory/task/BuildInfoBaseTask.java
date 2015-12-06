@@ -15,6 +15,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskState;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -40,6 +41,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -352,12 +355,19 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             log.debug("Task '{}' activated", getPath());
             // Only the last buildInfo execution activate the deployment
             List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
-            int myIndex = orderedTasks.indexOf(this);
-            if (myIndex == -1) {
+            if (orderedTasks.indexOf(this) == -1) {
                 log.error("Could not find my own task {} in the task graph!", getPath());
                 return;
             }
-            if (myIndex == orderedTasks.size() - 1) {
+
+            List<BuildInfoBaseTask> remainingTasks = new ArrayList<BuildInfoBaseTask>();
+            for (BuildInfoBaseTask task : getAllBuildInfoTasks()) {
+                if (!isTaskExecuted(task)) {
+                    remainingTasks.add(task);
+                }
+            }
+
+            if (remainingTasks.size() <= 1) {
                 log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                         new Object[]{getProject().getPath(), getPath()});
                 prepareAndDeploy();
@@ -369,6 +379,27 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 if (file.exists()) {
                     file.delete();
                 }
+            }
+        }
+    }
+
+    /**
+     * Determines if the BuildInfoBaseTask has already been executed.
+     * This methods wraps Gradle's task.getState().getExecuted().
+     * @param task  The BuildInfoBaseTask
+     * @return      true if the task has already been executed in this build.
+     */
+    private boolean isTaskExecuted(BuildInfoBaseTask task) {
+        try {
+            return task.getState().getExecuted();
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            try {
+                Method m = task.getClass().getMethod("getState");
+                TaskState state = (TaskState)m.invoke(task);
+                return state.getExecuted();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
         }
     }
