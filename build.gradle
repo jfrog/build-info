@@ -18,7 +18,7 @@
 buildscript {
     repositories {
         jcenter()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1' }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.2.0' }
     }
     configurations.classpath {
         resolutionStrategy {
