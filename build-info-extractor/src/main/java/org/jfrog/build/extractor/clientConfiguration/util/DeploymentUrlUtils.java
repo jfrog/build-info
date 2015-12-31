@@ -67,9 +67,12 @@ public abstract class DeploymentUrlUtils {
         StringBuilder matrix = new StringBuilder();
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
-                for (String propertyValue : matrixParams.get(propertyKey)) {
-                    matrix.append(";").append(URLEncoder.encode(propertyKey, "UTF-8"))
-                            .append("=").append(URLEncoder.encode(propertyValue, "UTF-8"));
+                for (Object propertyValue : matrixParams.get(propertyKey)) {
+                    if (propertyValue instanceof String) {
+                        String value = (String)propertyValue;
+                        matrix.append(";").append(URLEncoder.encode(propertyKey, "UTF-8"))
+                            .append("=").append(URLEncoder.encode(value, "UTF-8"));
+                    }
                 }
             }
         }
