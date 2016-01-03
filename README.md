@@ -122,6 +122,25 @@ and the gradle wrapper in Windows
       "scopes" : [ "compile" ]
     } ]
   } ],
+    "issues" : {
+    "tracker" : {
+      "name" : "JIRA",
+      "version" : "6.0.1"
+    },
+    "aggregateBuildIssues" : true,
+    "aggregationBuildStatus" : "Released",
+    "affectedIssues" : [ {
+      "key" : "RTFACT-1234",
+      "url" : "https://www.jfrog.com/jira/browse/RTFACT-1234",
+      "summary" : "Description of the relevant issue",
+      "aggregated" : false
+    }, {
+      "key" : "RTFACT-5469",
+      "url" : "https://www.jfrog.com/jira/browse/RTFACT-5678",
+      "summary" : "Description of the relevant issue",
+      "aggregated" : true
+    } ] 
+  },  
   "governance" : { // Black Duck Code Center integration information
     "blackDuckProperties" : {
       "appName" : "", // The Black Duck Code Center application name
