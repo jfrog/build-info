@@ -127,13 +127,13 @@ and the gradle wrapper in Windows
       "name" : "JIRA",
       "version" : "6.0.1"
     },
-    "aggregateBuildIssues" : true,
+    "aggregateBuildIssues" : true,  //whether or not there are issues that already appeared in previous builds
     "aggregationBuildStatus" : "Released",
     "affectedIssues" : [ {
       "key" : "RTFACT-1234",
       "url" : "https://www.jfrog.com/jira/browse/RTFACT-1234",
       "summary" : "Description of the relevant issue",
-      "aggregated" : false
+      "aggregated" : false  //whether or not this specific issue already appeared in previous builds
     }, {
       "key" : "RTFACT-5469",
       "url" : "https://www.jfrog.com/jira/browse/RTFACT-5678",
