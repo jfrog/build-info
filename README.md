@@ -122,6 +122,7 @@ and the gradle wrapper in Windows
       "scopes" : [ "compile" ]
     } ]
   } ],
+  /* List of issues related to the build */
     "issues" : {
     "tracker" : {
       "name" : "JIRA",
