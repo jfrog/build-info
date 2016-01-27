@@ -10,7 +10,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
 /**
  * @author Lior Hasson  
  */
-class ArtifactoryPlugin extends ArtifactoryPluginBase{
+class ArtifactoryPlugin extends ArtifactoryPluginBase {
     @Override
     protected ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project) {
         return new ArtifactoryPluginConvention(project)

@@ -18,18 +18,9 @@
 buildscript {
     repositories {
         jcenter()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:3.2.0' }
-    }
-    configurations.classpath {
-        resolutionStrategy {
-            failOnVersionConflict()
-            cacheDynamicVersionsFor 0, 'seconds'
-            cacheChangingModulesFor 0, 'seconds'
-			force "commons-codec:commons-codec:1.8"
-        }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.0.0' }
     }
 }
-
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
@@ -44,7 +35,7 @@ defaultTasks 'clean', 'build', 'install'
 
 allprojects {
     apply plugin: 'idea'
-    apply plugin: 'com.jfrog.artifactory-upload'
+    apply plugin: 'com.jfrog.artifactory'
 
     group = 'org.jfrog.buildinfo'
 
@@ -174,7 +165,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile "com.google.guava:guava:15.0"
+        compile "com.google.guava:guava:18.0"
         compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
 

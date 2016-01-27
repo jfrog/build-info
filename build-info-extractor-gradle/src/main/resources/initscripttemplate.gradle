@@ -1,4 +1,5 @@
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryConfigurationsPlugin
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
 initscript {
     dependencies {
@@ -16,8 +17,19 @@ class BuildInfoPluginListener extends BuildAdapter {
         if (!"buildSrc".equals(root.name)) {
             root.allprojects {
                 apply {
-                    apply plugin: ArtifactoryConfigurationsPlugin
+                    apply plugin: JavaPlugin
+                    apply plugin: ArtifactoryPlugin
                 }
+            }
+        }
+
+        // Set the "archives" configuration to all Artifactory tasks.
+        for (Project p : root.getAllprojects()) {
+            Task t = p.getTasks().findByName(ArtifactoryTask.BUILD_INFO_TASK_NAME);
+            if (t != null) {
+                ArtifactoryTask task = (ArtifactoryTask)t
+                task.publishConfigs(Dependency.ARCHIVES_CONFIGURATION);
+                task.helperConfigurations.checkDependsOnArtifactsToPublish()
             }
         }
     }
