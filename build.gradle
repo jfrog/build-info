@@ -372,14 +372,25 @@ project('build-info-extractor-maven3') {
         compile 'org.jdom:jdom:1.1.1',
                 'org.codehaus.groovy:groovy-all:2.1.6',
                 'plexus:plexus-container-default:1.0-alpha-6',
-                'org.apache.maven:maven-core:3.3.3',
                 'org.sonatype.aether:aether-api:1.13.1',
                 'org.sonatype.aether:aether-util:1.13.1',
                 'org.sonatype.aether:aether-impl:1.13.1',
                 'org.eclipse.aether:aether-api:1.0.2.v20150114',
                 'org.eclipse.aether:aether-util:1.0.2.v20150114',
                 'org.eclipse.aether:aether-impl:1.0.2.v20150114',
-                'org.apache.maven.plugins:maven-deploy-plugin:2.8.2'
+                'org.codehaus.plexus:plexus-utils:3.0.10',
+                'org.apache.maven:maven-repository-metadata:3.1.0',
+                'org.apache.maven:maven-model:3.1.0'
+
+        compile('org.apache.maven.plugins:maven-deploy-plugin:2.8.2') {
+            exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
+            exclude group: 'org.apache.maven', module: 'maven-model'
+        }
+        compile('org.apache.maven:maven-core:3.3.3') {
+            exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
+            exclude group: 'org.apache.maven', module: 'maven-model'
+        }
+
         uberJar 'org.eclipse.aether:aether-impl:1.0.2.v20150114'
         provided 'org.codehaus.plexus:plexus-component-annotations:1.6'
         testCompile 'org.easymock:easymockclassextension:2.5.2'
