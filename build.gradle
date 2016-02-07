@@ -524,7 +524,7 @@ idea {
 
 task wrapper(type: Wrapper) {
     description = 'Generates gradlew[.bat] scripts'
-    distributionUrl = 'https://services.gradle.org/distributions/gradle-2.1-all.zip'
+    distributionUrl = 'https://services.gradle.org/distributions/gradle-2.9-all.zip'
 }
 
 
