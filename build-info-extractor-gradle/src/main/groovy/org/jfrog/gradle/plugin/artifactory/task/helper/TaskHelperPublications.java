@@ -127,19 +127,21 @@ public class TaskHelperPublications extends TaskHelper{
             }
             dependsOn(((IvyPublicationInternal) ivyPublication).getPublishableFiles());
             String capitalizedPublicationName = ivyPublication.getName().substring(0, 1).toUpperCase() + ivyPublication.getName().substring(1);
-            dependsOn(String.format("generateDescriptorFileFor%sPublication", capitalizedPublicationName));
+            dependsOn(String.format("%s:generateDescriptorFileFor%sPublication",
+                getProject().getPath(), capitalizedPublicationName));
         }
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
                 // TODO: Check how the output files can be extracted without using getPublishableFiles
                 log.warn("Maven publication name '{}' is of unsupported type '{}'!",
-                        mavenPublication.getName(), mavenPublication.getClass());
+                    mavenPublication.getName(), mavenPublication.getClass());
                 continue;
             }
             dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
             String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() +
-                    mavenPublication.getName().substring(1);
-            dependsOn(String.format("generatePomFileFor%sPublication", capitalizedPublicationName));
+                mavenPublication.getName().substring(1);
+            dependsOn(String.format("%s:generatePomFileFor%sPublication",
+                getProject().getPath(), capitalizedPublicationName));
         }
     }
 
