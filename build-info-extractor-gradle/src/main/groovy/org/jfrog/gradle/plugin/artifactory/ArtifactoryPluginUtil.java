@@ -27,10 +27,14 @@ public class ArtifactoryPluginUtil {
      * @return the first concrete plugin convention up the project modules tree.
      */
     public static ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
-        ArtifactoryPluginConvention acc = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
-        while(!acc.getConventionSet() && project != null) {
-            project = project.getParent();
+        ArtifactoryPluginConvention acc = null;
+        while(project != null) {
             acc = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
+            if(acc != null && acc.getConventionSet()){
+                return acc;
+            }
+
+            project = project.getParent();
         }
         return acc;
     }
