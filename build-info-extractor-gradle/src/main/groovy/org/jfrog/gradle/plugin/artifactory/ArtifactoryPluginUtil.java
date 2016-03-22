@@ -21,7 +21,17 @@ import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 public class ArtifactoryPluginUtil {
 
+    /**
+     * Get Artifactory plugin convention
+     * @param project
+     * @return the first concrete plugin convention up the project modules tree.
+     */
     public static ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
-        return project.getRootProject().getConvention().getPlugin(ArtifactoryPluginConvention.class);
+        ArtifactoryPluginConvention acc = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
+        while(!acc.getConventionSet() && project != null) {
+            project = project.getParent();
+            acc = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
+        }
+        return acc;
     }
 }

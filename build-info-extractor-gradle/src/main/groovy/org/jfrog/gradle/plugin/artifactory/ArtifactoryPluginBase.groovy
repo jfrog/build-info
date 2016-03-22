@@ -35,7 +35,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             log.debug("Artifactory Plugin disabled for ${project.path}")
             return
         }
-        // Add a singleton artifactory plugin convention to the root project if needed
+        // Add an Artifactory plugin convention to all the project modules
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
         // Then add the build info task
         addArtifactoryPublishTask(project)
@@ -63,10 +63,10 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     *  }
     */
     private ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
-        if (project.rootProject.convention.plugins.artifactory == null) {
-            project.rootProject.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
+        if (project.convention.plugins.artifactory == null) {
+            project.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
         }
-        return project.rootProject.convention.plugins.artifactory
+        return project.convention.plugins.artifactory
     }
 
     /**

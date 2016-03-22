@@ -28,6 +28,7 @@ class ArtifactoryPluginConvention {
     final Project project
     final ArtifactoryClientConfiguration clientConfig
     def PublisherConfig publisherConfig
+    def boolean conventionSet = false
 
     ArtifactoryPluginConvention(Project project) {
         this.project = project
@@ -38,6 +39,7 @@ class ArtifactoryPluginConvention {
         closure.delegate = this
         closure.call()
         project.logger.debug("Artifactory plugin: configured")
+        conventionSet = true
     }
 
     def propertyMissing(String name) {
