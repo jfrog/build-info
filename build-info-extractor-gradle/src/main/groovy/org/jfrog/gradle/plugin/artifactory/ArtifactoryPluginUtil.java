@@ -28,9 +28,9 @@ public class ArtifactoryPluginUtil {
      */
     public static ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
         ArtifactoryPluginConvention acc = null;
-        while(project != null) {
+        while (project != null) {
             acc = project.getConvention().getPlugin(ArtifactoryPluginConvention.class);
-            if(acc != null && acc.getConventionSet()){
+            if (acc != null && acc.getConventionSet()) {
                 return acc;
             }
 
