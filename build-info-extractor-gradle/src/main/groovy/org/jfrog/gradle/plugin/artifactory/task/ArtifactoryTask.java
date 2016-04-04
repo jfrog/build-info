@@ -39,26 +39,21 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
     @Optional
     public Set<MavenPublication> mavenPublications = Sets.newHashSet();
 
+    private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);
 
     @Override
     public void checkDependsOnArtifactsToPublish() {
-        if(helperConfigurations.hasConfigurations()){
+        if (addArchivesConfigToTask) {
+            helperConfigurations.AddDefaultArchiveConfiguration(getProject());
+        }
+        if (helperConfigurations.hasConfigurations()) {
             helperConfigurations.checkDependsOnArtifactsToPublish();
         }
-        if(helperPublications.hasPublications()){
+        if (helperPublications.hasPublications()) {
             helperPublications.checkDependsOnArtifactsToPublish();
         }
-
-        /*Backward compatibility for Gradle publish configuration approach:
-        * Users that didn`t defined any configurations to the plugin, got the "archives" configuration
-        * as default.
-        */
-        /*if(!hasConfigurations() && !hasPublications()){
-            helperConfigurations.AddDefaultArchiveConfiguration(getProject());
-            helperConfigurations.checkDependsOnArtifactsToPublish();
-        }*/
     }
 
     @Override
@@ -106,5 +101,9 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
 
     public File getMavenDescriptor() {
         return mavenDescriptor;
+    }
+
+    public void setAddArchivesConfigToTask(boolean addArchivesConfigToTask) {
+        this.addArchivesConfigToTask = addArchivesConfigToTask;
     }
 }

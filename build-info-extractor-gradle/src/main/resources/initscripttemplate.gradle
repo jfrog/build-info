@@ -17,7 +17,6 @@ class BuildInfoPluginListener extends BuildAdapter {
         if (!"buildSrc".equals(root.name)) {
             root.allprojects {
                 apply {
-                    apply plugin: JavaPlugin
                     apply plugin: ArtifactoryPlugin
                 }
             }
@@ -25,11 +24,10 @@ class BuildInfoPluginListener extends BuildAdapter {
 
         // Set the "archives" configuration to all Artifactory tasks.
         for (Project p : root.getAllprojects()) {
-            Task t = p.getTasks().findByName(ArtifactoryTask.BUILD_INFO_TASK_NAME);
+            Task t = p.getTasks().findByName(ArtifactoryTask.BUILD_INFO_TASK_NAME)
             if (t != null) {
                 ArtifactoryTask task = (ArtifactoryTask)t
-                task.publishConfigs(Dependency.ARCHIVES_CONFIGURATION);
-                task.helperConfigurations.checkDependsOnArtifactsToPublish()
+                task.setAddArchivesConfigToTask(true)
             }
         }
     }
