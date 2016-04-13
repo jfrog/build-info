@@ -104,7 +104,8 @@ class PublishMojo extends GroovyMojo
     void execute ()
          throws MojoExecutionException , MojoFailureException
     {
-        boolean invokedAlready = ( session.request.executionListener instanceof BuildInfoRecorder )
+        // Cannot use instanceof because of classLoader issues
+        boolean invokedAlready = session.request.executionListener.getClass().getCanonicalName().equals(BuildInfoRecorder.class.getCanonicalName())
 
         if ( invokedAlready ){ return }
 
