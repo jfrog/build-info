@@ -152,13 +152,13 @@ public class PomTransformer {
 
         ModuleName parentName = extractModuleName(parentElement, ns);
         if (versionsByModule.containsKey(parentName)) {
-            setVersion(parentElement, ns, versionsByModule.get(parentName));
+            setVersion(parentElement, ns, versionsByModule.get(parentName), true);
         }
         verifyNonSnapshotVersion(parentName, parentElement, ns);
     }
 
     private void changeCurrentModuleVersion(Element rootElement, Namespace ns) {
-        setVersion(rootElement, ns, versionsByModule.get(currentModule));
+        setVersion(rootElement, ns, versionsByModule.get(currentModule), true);
         verifyNonSnapshotVersion(currentModule, rootElement, ns);
     }
 
@@ -175,7 +175,7 @@ public class PomTransformer {
 
         List<Element> dependencies = dependenciesElement.getChildren("dependency", ns);
         for (Element dependency : dependencies) {
-            changeDependencyVersion(ns, dependency);
+            changeDependencyVersion(ns, dependency, false);
         }
     }
 
@@ -187,14 +187,14 @@ public class PomTransformer {
 
         List<Element> dependencies = dependenciesElement.getChildren("dependency", ns);
         for (Element dependency : dependencies) {
-            changeDependencyVersion(ns, dependency);
+            changeDependencyVersion(ns, dependency, true);
         }
     }
 
-    private void changeDependencyVersion(Namespace ns, Element dependency) {
+    private void changeDependencyVersion(Namespace ns, Element dependency, boolean replaceVariables) {
         ModuleName moduleName = extractModuleName(dependency, ns);
         if (versionsByModule.containsKey(moduleName)) {
-            setVersion(dependency, ns, versionsByModule.get(moduleName));
+            setVersion(dependency, ns, versionsByModule.get(moduleName), replaceVariables);
         }
         verifyNonSnapshotVersion(moduleName, dependency, ns);
     }
@@ -218,12 +218,12 @@ public class PomTransformer {
         }
     }
 
-    private void setVersion(Element element, Namespace ns, String version) {
+    private void setVersion(Element element, Namespace ns, String version, boolean replaceVariable) {
         Element versionElement = element.getChild("version", ns);
         if (versionElement != null) {
             String currentVersion = versionElement.getText();
             if (!version.equals(currentVersion)) {
-                if (currentVersion == null || !currentVersion.contains("${")) {
+                if (replaceVariable || currentVersion == null || !currentVersion.contains("${")) {
                     versionElement.setText(version);
                     modified = true;
                 }
