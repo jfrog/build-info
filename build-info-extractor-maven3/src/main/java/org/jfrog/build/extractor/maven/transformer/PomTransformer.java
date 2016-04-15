@@ -223,8 +223,10 @@ public class PomTransformer {
         if (versionElement != null) {
             String currentVersion = versionElement.getText();
             if (!version.equals(currentVersion)) {
-                versionElement.setText(version);
-                modified = true;
+                if (currentVersion == null || !currentVersion.contains("${")) {
+                    versionElement.setText(version);
+                    modified = true;
+                }
             }
         }
     }

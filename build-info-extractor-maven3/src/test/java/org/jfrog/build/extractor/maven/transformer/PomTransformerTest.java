@@ -16,10 +16,9 @@
 
 package org.jfrog.build.extractor.maven.transformer;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 import org.testng.annotations.Test;
 
@@ -29,6 +28,8 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.testng.Assert.*;
 
@@ -38,6 +39,7 @@ import static org.testng.Assert.*;
  *
  * @author Yossi Shaul
  */
+@SuppressWarnings("HardcodedLineSeparator")
 public class PomTransformerTest {
 
     private static final String pomHeader = "<project xmlns=\"http://maven.apache.org/POM/4.0.0\" " +
@@ -186,6 +188,46 @@ public class PomTransformerTest {
         String transformedValue = transformPomWithEol("\r\n");
         assertTrue(transformedValue.contains("\r"));
         assertTrue(transformedValue.contains("\n"));
+    }
+
+    @Test
+    public void testSkipDependencyManagementVersionModification() throws IOException {
+        File pomFile = getResourceAsFile("/poms/multi/pom.variables.xml");
+        ModuleName topModuleName = new ModuleName("com.marand.thinkehr", "thinkehr-apis");
+        Map<ModuleName, String> moduleVersions = ImmutableMap.of(topModuleName, "2.4.0",
+                                                                 new ModuleName("com.marand.thinkehr", "thinkehr-remoting"), "2.4.0",
+                                                                 new ModuleName("com.marand.thinkehr", "thinkehr-common"), "2.4.0",
+                                                                 new ModuleName("com.marand.thinkehr", "thinkehr-path"), "2.4.0"
+                                                            );
+        PomTransformer transformer = new PomTransformer(topModuleName, moduleVersions, "");
+        Boolean transformed = transformer.transform(pomFile);
+        assertTrue(transformed);
+
+        String transformedPom = getFileAsString(pomFile);
+
+
+        Pattern p1 = Pattern.compile("<groupId>com\\.marand\\.thinkehr</groupId>\\s*<artifactId>thinkehr-apis</artifactId>\\s*<version>2\\.4\\.0</version>",
+                                     Pattern.MULTILINE);
+        assertTrue(p1.matcher(transformedPom).find());
+
+        Pattern p2 = Pattern.compile("<groupId>com\\.marand\\.thinkehr</groupId>\\s*<artifactId>thinkehr-remoting</artifactId>\\s*<version>2\\.4\\.0</version>",
+                                     Pattern.MULTILINE);
+        assertTrue(p2.matcher(transformedPom).find());
+
+        Pattern p3 = Pattern.compile("<groupId>com\\.marand\\.thinkehr</groupId>\\s*<artifactId>thinkehr-common</artifactId>\\s*" +
+                                             "<version>\\$\\{project\\.version\\}</version>",
+                                     Pattern.MULTILINE);
+        assertTrue(p3.matcher(transformedPom).find());
+
+        Pattern p4 = Pattern.compile("<groupId>com\\.marand\\.thinkehr</groupId>\\s*<artifactId>thinkehr-path</artifactId>\\s*" +
+                                             "<version>\\$\\{project\\.version\\}</version>",
+                                     Pattern.MULTILINE);
+        assertTrue(p4.matcher(transformedPom).find());
+
+        Pattern p5 = Pattern.compile("<groupId>com\\.marand\\.thinkehr</groupId>\\s*<artifactId>thinkehr-path</artifactId>\\s*" +
+                                             "<version>2\\.4\\.0</version>",
+                                     Pattern.MULTILINE);
+        assertFalse(p5.matcher(transformedPom).find());
     }
 
     private String getPomContent(String eol) {

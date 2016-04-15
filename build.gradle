@@ -43,6 +43,11 @@ allprojects {
         maven { url "https://oss.jfrog.org/jfrog-dependencies" }
         jcenter()
     }
+
+    tasks.withType(Javadoc) {
+        options.addStringOption('Xdoclint:none', '-quiet')
+        enabled = false
+    }
 }
 
 artifactory {
