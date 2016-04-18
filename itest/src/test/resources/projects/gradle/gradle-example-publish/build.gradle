@@ -41,11 +41,15 @@ allprojects {
     status = 'Integration'
 }
 
-//artifactoryPublish.skip = true
-//
-//project('services') {
-//    artifactoryPublish.skip = true
-//}
+artifactoryPublish.skip = true
+
+project('services') {
+    artifactoryPublish.skip = true
+}
+
+project('services') {
+    artifactoryPublish.skip = true
+}
 
 configure(javaProjects()) {
     apply plugin: 'java'
@@ -86,9 +90,9 @@ project('api') {
         }
     }
 
-//    artifactoryPublish {
-//        publications(publishing.publications.ivyJava)
-//    }
+    artifactoryPublish {
+        publications(publishing.publications.ivyJava)
+    }
 }
 
 artifactory {

@@ -43,17 +43,17 @@ def javaProjects() {
 }
 
 allprojects {
-//    apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'com.jfrog.artifactory'
     group = 'org.jfrog.test.gradle.publish'
     version = globalVersion
     status = version.status
 }
 
-//artifactoryPublish.skip = true
+artifactoryPublish.skip = true
 
-//project('services') {
-//    artifactoryPublish.skip = true
-//}
+project('services') {
+    artifactoryPublish.skip = true
+}
 
 configure(javaProjects()) {
     apply plugin: 'java'
@@ -73,67 +73,67 @@ configure(javaProjects()) {
     }
 }
 
-//project('api') {
-//    apply plugin: 'ivy-publish'
-//
-//    publishing {
-//        publications {
-//            ivyJava(IvyPublication) {
-//                from components.java
-//                artifact(file("$rootDir/settings.gradle")) {
-//                    name "gradle-settings"
-//                    extension "txt"
-//                    type "text"
-//                }
-//            }
-//        }
-//    }
-//
-//    artifactoryPublish {
-//        publications(publishing.publications.ivyJava)
-//        properties {
-//            simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
-//        }
-//    }
-//}
+project('api') {
+    apply plugin: 'ivy-publish'
 
-//artifactoryPublish.skip = true
+    publishing {
+        publications {
+            ivyJava(IvyPublication) {
+                from components.java
+                artifact(file("$rootDir/settings.gradle")) {
+                    name "gradle-settings"
+                    extension "txt"
+                    type "text"
+                }
+            }
+        }
+    }
 
-//artifactory {
-//    clientConfig.setIncludeEnvVars(true)
-//    clientConfig.info.addEnvironmentProperty('test.adding.dynVar',new java.util.Date().toString())
-//    clientConfig.info.setBuildName('new-strange-name')
-//    clientConfig.info.setBuildNumber(new java.util.Random(System.currentTimeMillis()).nextInt(20000))
-//
-//    //contextUrl = 'http://repo.jfrog.org/artifactory'
-//    contextUrl = 'http://repo-demo:9090 /artifactory'
-//    publish {
-//        repository {
-//            repoKey = 'gradle-snapshot-local'
-//            username = 'admin'
-//            password = 'password'
-//            ivy {
-//                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
-//            }
-//        }
-//        defaults {
-//            //publishIvy & publishPom are true by default
-//            publishArtifacts = true
-//            publications('mavenJava')
-//            properties = ['qa.level': 'basic']
-//            properties {
-//                archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
-//                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
-//                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
-//                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
-//                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
-//            }
-//        }
-//    }
-//    resolve {
-//        repoKey = 'repo'
-//    }
-//}
+    artifactoryPublish {
+        publications(publishing.publications.ivyJava)
+        properties {
+            simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
+        }
+    }
+}
+
+artifactoryPublish.skip = true
+
+artifactory {
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.info.addEnvironmentProperty('test.adding.dynVar',new java.util.Date().toString())
+    clientConfig.info.setBuildName('new-strange-name')
+    clientConfig.info.setBuildNumber(new java.util.Random(System.currentTimeMillis()).nextInt(20000))
+
+    //contextUrl = 'http://repo.jfrog.org/artifactory'
+    contextUrl = 'http://repo-demo:9090 /artifactory'
+    publish {
+        repository {
+            repoKey = 'gradle-snapshot-local'
+            username = 'admin'
+            password = 'password'
+            ivy {
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+            }
+        }
+        defaults {
+            //publishIvy & publishPom are true by default
+            publishArtifacts = true
+            publications('mavenJava')
+            properties = ['qa.level': 'basic']
+            properties {
+                archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
+                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
+                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
+                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
+                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
+            }
+        }
+    }
+    resolve {
+        repoKey = 'repo'
+    }
+}
 
 class Version {
     String originalVersion
