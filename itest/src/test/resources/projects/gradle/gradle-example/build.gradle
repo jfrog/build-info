@@ -25,7 +25,7 @@ buildscript {
 }
 
 allprojects {
-  apply plugin: 'com.jfrog.artifactory'
+//  apply plugin: 'com.jfrog.artifactory'
   apply plugin: 'idea'
   configure(subprojects.findAll { new File(it.projectDir, 'src').directory }) {
     apply plugin: 'java'
@@ -35,7 +35,7 @@ allprojects {
   status = 'Integration'
 }
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 
 subprojects {
   apply plugin: 'maven'
@@ -59,9 +59,9 @@ subprojects {
       classifier = 'javadoc'
       from javadoc.destinationDir
     }
-    artifactoryPublish {
-      dependsOn sourceJar, javadocJar
-    }
+//    artifactoryPublish {
+//      dependsOn sourceJar, javadocJar
+//    }
     artifacts {
       published sourceJar
       published javadocJar

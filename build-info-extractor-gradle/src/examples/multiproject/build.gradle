@@ -45,17 +45,17 @@ def javaProjects() {
 }
 
 allprojects {
-    apply plugin: 'com.jfrog.artifactory-upload'
+//    apply plugin: 'com.jfrog.artifactory-upload'
     group = 'org.jfrog.test.gradle'
     version = globalVersion
     status = version.status
 }
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 
-project('services') {
-    artifactoryPublish.skip = true
-}
+//project('services') {
+//    artifactoryPublish.skip = true
+//}
 
 configure(javaProjects()) {
     apply plugin: 'java'
@@ -77,56 +77,56 @@ project('api') {
                 new Date(), file("$rootDir/settings.gradle"))
     }
 
-    artifactoryPublish {
-        publishConfigs configurations.simpleFile
-        publishIvy = true
-        publishPom = true
-        properties {
-            simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
-        }
-    }
+//    artifactoryPublish {
+//        publishConfigs configurations.simpleFile
+//        publishIvy = true
+//        publishPom = true
+//        properties {
+//            simpleFile '**:**:**:*@*', simpleFile: 'only on settings file'
+//        }
+//    }
 
-    artifactoryPublish.doFirst {
-        def gdd = gradleDeployDetails(new DefaultPublishArtifact("build.gradle", "gradle", "text", null,
-                        new Date(), file("$rootDir/build.gradle")), 'artifacts', 'a/b/build.gradle')
-        deployDetails.add(gdd)
-    }
+//    artifactoryPublish.doFirst {
+//        def gdd = gradleDeployDetails(new DefaultPublishArtifact("build.gradle", "gradle", "text", null,
+//                        new Date(), file("$rootDir/build.gradle")), 'artifacts', 'a/b/build.gradle')
+//        deployDetails.add(gdd)
+//    }
 }
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 
-artifactory {
-    //contextUrl = 'http://repo.jfrog.org/artifactory'
-    contextUrl = 'http://repo-demo:9090/artifactory'
-    publish {
-        repository {
-            repoKey = 'libs-snapshot-local'
-            username = 'admin'
-            password = 'password'
-            ivy {
-                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
-            }
-        }
-        defaults {
-            //publishIvy & publishPom are true by default
-            publishArtifacts = true
-            publishConfigs('archives')
-            //publishIvy = false
-            //publishPom = false
-            properties = ['qa.level': 'basic']
-            properties {
-                archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
-                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
-                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
-                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
-                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
-            }
-        }
-    }
-    resolve {
-        repoKey = 'repo'
-    }
-}
+//artifactory {
+//    //contextUrl = 'http://repo.jfrog.org/artifactory'
+//    contextUrl = 'http://repo-demo:9090/artifactory'
+//    publish {
+//        repository {
+//            repoKey = 'libs-snapshot-local'
+//            username = 'admin'
+//            password = 'password'
+//            ivy {
+//                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+//            }
+//        }
+//        defaults {
+//            //publishIvy & publishPom are true by default
+//            publishArtifacts = true
+//            publishConfigs('archives')
+//            //publishIvy = false
+//            //publishPom = false
+//            properties = ['qa.level': 'basic']
+//            properties {
+//                archives 'org.jfrog:*:*:*@*', key1: 'val1 only on jars', key2: 'val2 only on jars'
+//                all 'org.jfrog:shared:1.?:*@*', key3: 'val3 only in shared', key4: 'val4 only in shared'
+//                all 'org.jfrog:*:1.?:*@*', key5: 'val5 on everything published', key6: 'val6 on everything published'
+//                all 'org.jfrog:*:2.?:*@*', nokey1: 'noVal1'
+//                foo 'org.jfrog:*:2.?:*@*', nokey1: 'noVal2'
+//            }
+//        }
+//    }
+//    resolve {
+//        repoKey = 'repo'
+//    }
+//}
 
 class Version {
     String originalVersion
