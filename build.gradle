@@ -35,7 +35,7 @@ defaultTasks 'clean', 'build', 'install'
 
 allprojects {
     apply plugin: 'idea'
-    apply plugin: 'com.jfrog.artifactory'
+//    apply plugin: 'com.jfrog.artifactory'
 
     group = 'org.jfrog.buildinfo'
 
@@ -50,18 +50,18 @@ allprojects {
     }
 }
 
-artifactory {
-    contextUrl = 'https://localhost:8080/artifactory'
-    //contextUrl = 'https://oss.jfrog.org'
-    publish {
-        defaults {
-            publishConfigs('archives', 'published')
-            properties = ['build.status': "$it.project.status".toString(), 'bintray.repo': 'jfrog/jfrog-jars']
-        }
-    }
-}
+//artifactory {
+//    contextUrl = 'https://localhost:8080/artifactory'
+//    //contextUrl = 'https://oss.jfrog.org'
+//    publish {
+//        defaults {
+//            publishConfigs('archives', 'published')
+//            properties = ['build.status': "$it.project.status".toString(), 'bintray.repo': 'jfrog/jfrog-jars']
+//        }
+//    }
+//}
 
-artifactoryPublish.skip = true
+//artifactoryPublish.skip = true
 
 def baseProjects() {
     subprojects.findAll { p -> baseProjectNames.contains(p.name) }
@@ -136,9 +136,9 @@ subprojects {
         uploadDescriptor = true
     }
 
-    artifactoryPublish {
-        dependsOn build
-    }
+//    artifactoryPublish {
+//        dependsOn build
+//    }
 
     // Add the sourceJars to non-extractor modules
     artifacts {
@@ -174,11 +174,11 @@ configure(baseProjects()) {
         compile "com.thoughtworks.xstream:xstream:1.3.1"
     }
 
-    artifactoryPublish {
-        properties {
-            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': 'build-info', 'bintray.version': version.toString()
-        }
-    }
+//    artifactoryPublish {
+//        properties {
+//            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': 'build-info', 'bintray.version': version.toString()
+//        }
+//    }
 }
 
 // Create configurations for the extractor projects
@@ -250,14 +250,14 @@ configure(extractorProjects()) {
         pom.scopeMappings.addMapping(MavenPlugin.COMPILE_PRIORITY + 2, configurations.provided, "provided")
     }
 
-    artifactoryPublish {
-        properties {
-            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
-            if (!excludeMavenPluginBuild) {
-                all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
-            }
-        }
-    }
+//    artifactoryPublish {
+//        properties {
+//            all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+//            if (!excludeMavenPluginBuild) {
+//                all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
+//            }
+//        }
+//    }
 }
 
 // Declare the root project to build its children first
