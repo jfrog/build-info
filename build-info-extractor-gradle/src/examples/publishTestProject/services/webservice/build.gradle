@@ -23,15 +23,15 @@ dependencies {
     compile project(':api')
 }
 
-publishing {
-    publications {
-        mavenWar(MavenPublication) {
-            from components.web
-        }
-    }
-}
-
-artifactoryPublish {
-    publications(publishing.publications.mavenWar)
-}
+//publishing {
+//    publications {
+//        mavenWar(MavenPublication) {
+//            from components.web
+//        }
+//    }
+//}
+//
+//artifactoryPublish {
+//    publications(publishing.publications.mavenWar)
+//}
 
