@@ -309,6 +309,15 @@ and the gradle wrapper in Windows
       "items": {
         "type": "object",
         "properties": {
+          "properties": {
+             "description": "Module properties",
+             "type": "object",
+             "patternProperties": {
+                "^.+$": {
+                  "type": "string"
+                }
+             }
+          },
           "id": {
             "description": "Module ID",
             "type": "string"
