@@ -221,6 +221,10 @@ and the gradle wrapper in Windows
       "description": "Build duration in milliseconds",
       "type": "integer"
     },
+    "artifactoryPrincipal": {
+      "description": "Artifactory user used for deployment",
+      "type": "string"
+    },
     "url": {
       "description": "CI server URL",
       "type": "string"
