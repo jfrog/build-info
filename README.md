@@ -263,28 +263,45 @@ and the gradle wrapper in Windows
     "buildRetention": {
       "description": "Build Retention Information",
       "type": "object",
-      "properties": {
-        "deleteBuildArtifacts": {
-          "description": "Automatically remove build artifacts stored in Artifactory",
-          "type": "boolean"
-        },
-        "count": {
-          "description": "Maximum number of builds to store in Artifactory",
-          "type": "integer"
-        },
-        "minimumBuildDate": {
-          "description": "Earliest build date to store in Artifactory",
-          "type": "integer"
-        },
-        "buildNumbersNotToBeDiscarded": {
-          "description": "List of build numbers that should not be removed from Artifactory",
-          "type": "array",
-          "items": {
-            "type": "integer"
+      "allOf": [
+        {
+          "properties": {
+            "deleteBuildArtifacts": {
+              "description": "Automatically remove build artifacts stored in Artifactory",
+              "type": "boolean"
+            },
+            "buildNumbersNotToBeDiscarded": {
+              "description": "List of build numbers that should not be removed from Artifactory",
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            }
           }
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "count": {
+                  "description": "Maximum number of builds to store in Artifactory",
+                  "type": "integer"
+                }
+              },
+              "required": [ "count" ]
+            },
+            {
+              "properties": {
+                "minimumBuildDate": {
+                  "description": "Earliest build date to store in Artifactory",
+                  "type": "integer"
+                }
+              },
+              "required": [ "minimumBuildDate" ]
+            }
+          ]
         }
-      },
-      "required": [ "deleteBuildArtifacts", "count", "minimumBuildDate", "buildNumbersNotToBeDiscarded" ]
+      ]
     },
     "modules": {
       "description": "Artifactory License Control Information",
