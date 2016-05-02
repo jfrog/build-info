@@ -364,7 +364,7 @@ and the gradle wrapper in Windows
                   "$ref": "#/definitions/md5"
                 }
               },
-              "required": [ "type", "name", "sha1", "md5" ]
+              "required": [ "name", "sha1", "md5" ]
             }
           },
           "dependencies": {
@@ -392,7 +392,7 @@ and the gradle wrapper in Windows
                   }
                 }
               },
-              "required": [ "type", "id", "sha1", "md5" ]
+              "required": [ "id", "sha1", "md5" ]
             }
           }
         },
