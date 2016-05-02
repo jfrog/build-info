@@ -165,6 +165,15 @@ and the gradle wrapper in Windows
   "description": "Artifactory build-info",
   "type": "object",
   "properties": {
+    "properties": {
+      "type": "object",
+      "description": "Environment variables and properties collected from the CI server",
+      "patternProperties": {
+        "^.+$": {
+          "type": "string"
+        }
+      }
+    },
     "version": {
       "description": "Build info schema version",
       "type": "string"
