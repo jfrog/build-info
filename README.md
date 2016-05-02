@@ -195,7 +195,8 @@ and the gradle wrapper in Windows
           "type": "string"
         }
       },
-      "required": [ "name", "version" ]
+      "required": [ "name", "version" ],
+      "additionalProperties": false
     },
     "agent": {
       "description": "CI server information",
@@ -210,7 +211,8 @@ and the gradle wrapper in Windows
           "type": "string"
         }
       },
-      "required": [ "name", "version" ]
+      "required": [ "name", "version" ],
+      "additionalProperties": false
     },
     "started": {
       "description": "Build start time",
@@ -262,7 +264,8 @@ and the gradle wrapper in Windows
           "type": "string"
         }
       },
-      "required": [ "runChecks", "includePublishedArtifacts", "autoDiscover", "scopesList", "licenseViolationsRecipientsList" ]
+      "required": [ "runChecks", "includePublishedArtifacts", "autoDiscover", "scopesList", "licenseViolationsRecipientsList" ],
+      "additionalProperties": false
     },
     "buildRetention": {
       "description": "Build Retention Information",
@@ -280,8 +283,11 @@ and the gradle wrapper in Windows
               "items": {
                 "type": "integer"
               }
-            }
-          }
+            },
+            "count": {},
+            "minimumBuildDate": {}
+          },
+          "additionalProperties": false
         },
         {
           "anyOf": [
@@ -377,7 +383,8 @@ and the gradle wrapper in Windows
             }
           }
         },
-        "required": [ "id", "artifacts", "dependencies" ]
+        "required": [ "id", "artifacts", "dependencies" ],
+        "additionalProperties": false
       }
     },
     "issues": {
@@ -426,7 +433,8 @@ and the gradle wrapper in Windows
           }
         }
       },
-      "required": [ "tracker", "aggregateBuildIssues", "aggregationBuildStatus", "affectedIssues" ]
+      "required": [ "tracker", "aggregateBuildIssues", "aggregationBuildStatus", "affectedIssues" ],
+      "additionalProperties": false
     },
     "governence": {
       "description": "Black duck code center integration information",
@@ -468,12 +476,16 @@ and the gradle wrapper in Windows
               "type": "boolean"
             }
           },
-          "required": [ "appName", "appVersion", "reportRecipients", "scopes", "runChecks", "includePublishedArtifacts", "autoCreateMissingComponentRequests", "autoDiscardStaleComponentRequests" ]
+          "required": [ "appName", "appVersion", "reportRecipients", "scopes", "runChecks", "includePublishedArtifacts", "autoCreateMissingComponentRequests", "autoDiscardStaleComponentRequests" ],
+          "additionalProperties": false
         }
-      }
+      },
+      "required": [ "blackDuckProperties" ],
+      "additionalProperties": false
     }
   },
   "required": [ "version", "name", "number", "type", "started", "durationMillis", "modules" ],
+  "additionalProperties": false,
   "definitions": {
     "sha1": {
       "description": "sha1 hash",
