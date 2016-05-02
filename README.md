@@ -272,6 +272,13 @@ and the gradle wrapper in Windows
           "description": "Space-separated list of dependency scopes to run license violation checks",
           "type": "string"
         },
+        "licenseViolationRecipients": {
+          "description": "List of email addresses to be notified of license violations",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "licenseViolationsRecipientsList": {
           "description": "Space-separated list of email addresses to be notified of license violations",
           "type": "string"
