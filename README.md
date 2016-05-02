@@ -223,6 +223,10 @@ and the gradle wrapper in Windows
       "description": "Build duration in milliseconds",
       "type": "integer"
     },
+    "principal": {
+      "description": "",
+      "type": "string"
+    },
     "artifactoryPrincipal": {
       "description": "Artifactory user used for deployment",
       "type": "string"
