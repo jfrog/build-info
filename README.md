@@ -331,22 +331,21 @@ and the gradle wrapper in Windows
             "type": "array",
             "items": {
               "type": "object",
-              "allOf": [
-                {
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    },
-                    "name": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [ "type", "name" ]
+              "properties": {
+                "type": {
+                  "type": "string"
                 },
-                {
-                  "$ref": "#/definitions/hash"
+                "name": {
+                  "type": "string"
+                },
+                "sha1": {
+                  "$ref": "#/definitions/sha1"
+                },
+                "md5": {
+                  "$ref": "#/definitions/md5"
                 }
-              ]
+              },
+              "required": [ "type", "name", "sha1", "md5" ]
             }
           },
           "dependencies": {
@@ -354,28 +353,27 @@ and the gradle wrapper in Windows
             "type": "array",
             "items": {
               "type": "object",
-              "allOf": [
-                {
-                  "properties": {
-                    "type": {
-                      "type": "string"
-                    },
-                    "id": {
-                      "type": "string"
-                    },
-                    "scopes": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  "required": [ "type", "id" ]
+              "properties": {
+                "type": {
+                  "type": "string"
                 },
-                {
-                  "$ref": "#/definitions/hash"
+                "id": {
+                  "type": "string"
+                },
+                "sha1": {
+                  "$ref": "#/definitions/sha1"
+                },
+                "md5": {
+                  "$ref": "#/definitions/md5"
+                },
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
-              ]
+              },
+              "required": [ "type", "id", "sha1", "md5" ]
             }
           }
         },
@@ -486,27 +484,6 @@ and the gradle wrapper in Windows
       "description": "md5 hash",
       "type": "string",
       "pattern": "^[0-9a-f]{32}$"
-    },
-    "hash": {
-      "description": "md5, sha1, or both",
-      "anyOf": [
-        {
-          "properties": {
-            "sha1": {
-              "$ref": "#/definitions/sha1"
-            }
-          },
-          "required": [ "sha1" ]
-        },
-        {
-          "properties": {
-            "md5": {
-              "$ref": "#/definitions/md5"
-            }
-          },
-          "required": [ "md5" ]
-        }
-      ]
     }
   }
 }
