@@ -255,37 +255,66 @@ and the gradle wrapper in Windows
     "licenseControl": {
       "description": "Artifactory License Control Information",
       "type": "object",
-      "properties": {
-        "runChecks": {
-          "description": "Run automatic license scanning after the build is complete",
-          "type": "boolean"
+      "allOf": [
+        {
+          "properties": {
+            "runChecks": {
+              "description": "Run automatic license scanning after the build is complete",
+              "type": "boolean"
+            },
+            "includePublishedArtifacts": {
+              "description": "Run license checks on artifacts in addition to build dependencies",
+              "type": "boolean"
+            },
+            "autoDiscover": {
+              "description": "Artifactory should auto-discover license",
+              "type": "boolean"
+            },
+            "scopesList": {
+              "description": "Space-separated list of dependency scopes to run license violation checks",
+              "type": "string"
+            },
+            "licenseViolationRecipients": {},
+            "licenseViolationsRecipientsList": {}
+          },
+          "required": [ "runChecks", "includePublishedArtifacts", "autoDiscover", "scopesList" ],
+          "additionalProperties": false
         },
-        "includePublishedArtifacts": {
-          "description": "Run license checks on artifacts in addition to build dependencies",
-          "type": "boolean"
-        },
-        "autoDiscover": {
-          "description": "Artifactory should auto-discover license",
-          "type": "boolean"
-        },
-        "scopesList": {
-          "description": "Space-separated list of dependency scopes to run license violation checks",
-          "type": "string"
-        },
-        "licenseViolationRecipients": {
-          "description": "List of email addresses to be notified of license violations",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "licenseViolationsRecipientsList": {
-          "description": "Space-separated list of email addresses to be notified of license violations",
-          "type": "string"
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "count": {
+                  "description": "Maximum number of builds to store in Artifactory",
+                  "type": "integer"
+                }
+              },
+              "required": [ "count" ]
+            },
+            {
+              "properties": {
+                "licenseViolationRecipients": {
+                  "description": "List of email addresses to be notified of license violations",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [ "licenseViolationRecipients" ]
+            },
+            {
+              "properties": {
+                "licenseViolationsRecipientsList": {
+                  "description": "Space-separated list of email addresses to be notified of license violations",
+                  "type": "string"
+                }
+              },
+              "required": [ "licenseViolationsRecipientsList" ]
+            }
+          ]
         }
-      },
-      "required": [ "runChecks", "includePublishedArtifacts", "autoDiscover", "scopesList", "licenseViolationsRecipientsList" ],
-      "additionalProperties": false
+      ]
     },
     "buildRetention": {
       "description": "Build Retention Information",
