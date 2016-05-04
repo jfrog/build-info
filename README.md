@@ -441,7 +441,8 @@ and the gradle wrapper in Windows
               "type": "string"
             }
           },
-          "required": [ "name", "version" ]
+          "required": [ "name", "version" ],
+          "additionalProperties": false
         },
         "aggregateBuildIssues": {
           "description": "Whether issues have appeared in previous builds",
@@ -469,7 +470,8 @@ and the gradle wrapper in Windows
                 "type": "boolean"
               }
             },
-            "required": [ "key", "url", "summary", "aggregated" ]
+            "required": [ "key", "url", "summary", "aggregated" ],
+            "additionalProperties": false
           }
         }
       },
