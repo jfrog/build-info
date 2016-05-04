@@ -284,15 +284,6 @@ and the gradle wrapper in Windows
           "anyOf": [
             {
               "properties": {
-                "count": {
-                  "description": "Maximum number of builds to store in Artifactory",
-                  "type": "integer"
-                }
-              },
-              "required": [ "count" ]
-            },
-            {
-              "properties": {
                 "licenseViolationRecipients": {
                   "description": "List of email addresses to be notified of license violations",
                   "type": "array",
