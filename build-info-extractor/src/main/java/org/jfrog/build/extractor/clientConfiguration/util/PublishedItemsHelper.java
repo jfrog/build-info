@@ -211,30 +211,33 @@ public class PublishedItemsHelper {
      * @return a Multimap containing the targets as keys and the files as values
      * @throws IOException in case of any file system exception
      */
-    public static Multimap<String, File> wildCardBuildPublishingData(File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive)
+    public static Multimap<String, File> wildCardBuildPublishingData(File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp)
             throws IOException {
         Multimap<String, File> filePathsMap = HashMultimap.create();
-        Pattern regexPattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(pattern));
+
+        if (!regexp) {
+            pattern = PlaceholderReplacementUtils.pathToRegExp(pattern);
+        }
+
+        Pattern regexPattern = Pattern.compile(pattern);
         String simplePattern = pattern.replaceAll("[()]", "");
 
         Pattern findFilesPattern = null;
         List<File> files = new ArrayList<File>();
 
-        if (isRecursive) {
-            findFilesPattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(simplePattern));
+        if (regexp) {
+            findFilesPattern = Pattern.compile(simplePattern);
         } else {
-            findFilesPattern = Pattern.compile(PlaceholderReplacementUtils.wildcardPatternToRegex(simplePattern));
+            findFilesPattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(simplePattern));
         }
 
         collectMatchedFiles(checkoutDir, checkoutDir, findFilesPattern, files, isRecursive);
 
         for (File file : files) {
             String fileTargetPath = targetPath;
-            String path = "";
-            String fileName = "";
+            String path;
 
             if (!StringUtils.endsWith(fileTargetPath, "/")) {
-                fileName = StringUtils.substringAfterLast(fileTargetPath, "/");
                 path = StringUtils.substringBeforeLast(fileTargetPath, "/");
             } else {
                 path = targetPath;
@@ -243,7 +246,7 @@ public class PublishedItemsHelper {
             if (!flat) {
                 fileTargetPath = calculateFileTargetPath(checkoutDir, file, path);
                 // handle win file system
-                fileTargetPath =  fileTargetPath.replace('\\', '/');
+                fileTargetPath = fileTargetPath.replace('\\', '/');
             }
 
             fileTargetPath = PlaceholderReplacementUtils.reformatRegexp(getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
@@ -449,6 +452,7 @@ public class PublishedItemsHelper {
             }
         }
     }
+
     // We need also take into account if we are doing a recursive search
     private static void collectMatchedFiles(File absoluteRoot, File root, Pattern pattern, List files, boolean recursive) {
         File dirs[] = root.listFiles();
@@ -465,10 +469,29 @@ public class PublishedItemsHelper {
                 if (pattern.matcher(path).matches() || (recursive && pattern.matcher(StringUtils.substringAfterLast(path, "/")).matches())) {
                     files.add(dir);
                 }
-            } else {
+            } else if (continueDepthSearch(absoluteRoot, dir, pattern, recursive)) {
                 collectMatchedFiles(absoluteRoot, dir, pattern, files, recursive);
             }
         }
+    }
+
+    /**
+     * Checks whether to continue searching recursively for files.
+     *
+     * @param absoluteRoot
+     * @param dir
+     * @param pattern
+     * @param recursive
+     * @return boolean
+     */
+    private static boolean continueDepthSearch(File absoluteRoot, File dir, Pattern pattern, boolean recursive) {
+        if (recursive) {
+            return true;
+        }
+
+        int relativePathDepth = StringUtils.countMatches(getRelativePath(absoluteRoot, dir).replace("\\", "/"), "/");
+        int patternPathDepth = StringUtils.countMatches(pattern.toString(), "/");
+        return relativePathDepth < patternPathDepth;
     }
 
     /**

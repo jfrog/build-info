@@ -44,11 +44,6 @@ public class PlaceholderReplacementUtils {
         return newPath;
     }
 
-    public static String wildcardPatternToRegex(String path) {
-        String newPath = pathToRegExp(path);
-        return newPath.replace(".*", "[^/\\\\]*");
-    }
-
     /**
      * @param targetPath the path which the file name will be taken targetDir/targetPath/targetFileName
      * @param srcPath    the path which the file name will be replace srcDir/srcPath/srcFileName
