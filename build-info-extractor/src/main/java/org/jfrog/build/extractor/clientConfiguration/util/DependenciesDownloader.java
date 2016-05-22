@@ -55,4 +55,15 @@ public interface DependenciesDownloader {
      * @param forDeletionFiles A set of resolved files from patterns with mark for deletion (=!>)
      */
     void removeUnusedArtifactsFromLocal(Set<String> allResolvesFiles, Set<String> forDeletionFiles) throws IOException;
+
+    /**
+     * Set the flat download flag
+     *@param flat , flat download flag nva value
+     */
+    void setFlatDownload(boolean flat);
+
+    /**
+     * return the flat download flag
+     */
+    boolean getFlatDownload();
 }

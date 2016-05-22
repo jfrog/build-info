@@ -65,8 +65,16 @@ public class DownloadableArtifact implements Serializable {
         return targetDirPath;
     }
 
+    public void setTargetDirPath(String targetDirPath) {
+         this.targetDirPath = targetDirPath;
+    }
+
     public String getRelativeDirPath() {
         return relativeDirPath;
+    }
+
+    public void setRelativeDirPath(String relativeDirPath) {
+        this.relativeDirPath = relativeDirPath;
     }
 
     public String getFilePath() {

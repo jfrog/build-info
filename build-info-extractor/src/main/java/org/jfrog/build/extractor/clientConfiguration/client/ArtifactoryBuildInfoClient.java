@@ -63,7 +63,7 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
  *
  * @author Yossi Shaul
  */
-public class ArtifactoryBuildInfoClient {
+public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
@@ -71,12 +71,7 @@ public class ArtifactoryBuildInfoClient {
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_BROWSE_URL = "/webapp/builds";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
-    private final Log log;
-    /**
-     * The http client used for deploying artifacts and build info. Created and cached on the first deploy request.
-     */
-    private ArtifactoryHttpClient httpClient;
-    private String artifactoryUrl;
+
     /**
      * Version of Artifactory we work with.
      */
@@ -99,49 +94,7 @@ public class ArtifactoryBuildInfoClient {
      * @param password       Authentication password
      */
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-        this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, log);
-        this.log = log;
-    }
-
-    /**
-     * Network timeout in seconds to use both for connection establishment and for unanswered requests.
-     *
-     * @param connectionTimeout Timeout in seconds.
-     */
-    public void setConnectionTimeout(int connectionTimeout) {
-        httpClient.setConnectionTimeout(connectionTimeout);
-    }
-
-    /**
-     * Sets the proxy host and port.
-     *
-     * @param host Proxy host
-     * @param port Proxy port
-     */
-    public void setProxyConfiguration(String host, int port) {
-        httpClient.setProxyConfiguration(host, port, null, null);
-    }
-
-    /**
-     * Sets the proxy details.
-     *
-     * @param host     Proxy host
-     * @param port     Proxy port
-     * @param username Username to authenticate with the proxy
-     * @param password Password to authenticate with the proxy
-     */
-    public void setProxyConfiguration(String host, int port, String username, String password) {
-        httpClient.setProxyConfiguration(host, port, username, password);
-    }
-
-    /**
-     * Sets full proxy details.
-     *
-     * @param proxy Proxy instance {@link org.jfrog.build.client.ProxyConfiguration}
-     */
-    public void setProxyConfiguration(ProxyConfiguration proxy) {
-        httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
+       super(artifactoryUrl, username, password, log);
     }
 
     /**

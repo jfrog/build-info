@@ -29,11 +29,11 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonParser;
+import org.codehaus.jackson.map.DeserializationConfig;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.TypeReference;
-import org.jfrog.build.api.dependency.BuildPatternArtifacts;
-import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
-import org.jfrog.build.api.dependency.PatternResultFileSet;
-import org.jfrog.build.api.dependency.PropertySearchResult;
+import org.jfrog.build.api.dependency.*;
+import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
@@ -49,35 +49,11 @@ import java.util.List;
  *
  * @author Noam Y. Tenne
  */
-public class ArtifactoryDependenciesClient {
-
-    private String artifactoryUrl;
-
-    private ArtifactoryHttpClient httpClient;
+public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
 
     public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, Log logger) {
-        this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, logger);
+        super(artifactoryUrl, username, password, logger);
     }
-
-    public void setConnectionTimeout(int connectionTimeout) {
-        httpClient.setConnectionTimeout(connectionTimeout);
-    }
-
-    public void setProxyConfiguration(String host, int port) {
-        httpClient.setProxyConfiguration(host, port, null, null);
-    }
-
-    public void setProxyConfiguration(String host, int port, String username, String password) {
-        httpClient.setProxyConfiguration(host, port, username, password);
-    }
-
-    public void shutdown() {
-        if (httpClient != null) {
-            httpClient.shutdown();
-        }
-    }
-
 
     /**
      * Retrieves list of {@link org.jfrog.build.api.dependency.BuildPatternArtifacts} for build dependencies specified.
@@ -98,10 +74,10 @@ public class ArtifactoryDependenciesClient {
         List<BuildPatternArtifacts> artifacts = readResponse(httpClient.getHttpClient().execute(post),
                 new TypeReference<List<BuildPatternArtifacts>>() {
                 },
-                "Failed to retrieve build artifacts report");
+                "Failed to retrieve build artifacts report",
+                false);
         return artifacts;
     }
-
 
     public PatternResultFileSet searchArtifactsByPattern(String pattern) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
@@ -110,7 +86,8 @@ public class ArtifactoryDependenciesClient {
         PatternResultFileSet result = readResponse(client.execute(new HttpGet(url)),
                 new TypeReference<PatternResultFileSet>() {
                 },
-                "Failed to search artifact by the pattern '" + pattern + "'");
+                "Failed to search artifact by the pattern '" + pattern + "'",
+                false);
         return result;
     }
 
@@ -121,10 +98,25 @@ public class ArtifactoryDependenciesClient {
         PropertySearchResult result = readResponse(client.execute(new HttpGet(url)),
                 new TypeReference<PropertySearchResult>() {
                 },
-                "Failed to search artifact by the properties '" + properties + "'");
+                "Failed to search artifact by the properties '" + properties + "'",
+                false);
         return result;
     }
 
+    public AqlSearchResult searchArtifactsByAql(String aql) throws IOException {
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+
+        String url = artifactoryUrl + "/api/search/aql";
+        HttpPost httpPost = new HttpPost(url);
+        StringEntity entity = new StringEntity(aql);
+        httpPost.setEntity(entity);
+        AqlSearchResult result = readResponse(client.execute(httpPost),
+                new TypeReference<AqlSearchResult>() {
+                },
+                "Failed to search artifact by the aql '" + aql + "'",
+                true);
+        return result;
+    }
 
     /**
      * Reads HTTP response and converts it to object of the type specified.
@@ -136,7 +128,7 @@ public class ArtifactoryDependenciesClient {
      * @return response object converted from HTTP Json reponse to the type specified.
      * @throws java.io.IOException if reading or converting response fails.
      */
-    private <T> T readResponse(HttpResponse response, TypeReference<T> valueType, String errorMessage)
+    private <T> T readResponse(HttpResponse response, TypeReference<T> valueType, String errorMessage, boolean ignorMissingFields)
             throws IOException {
 
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -150,6 +142,9 @@ public class ArtifactoryDependenciesClient {
             try {
                 content = entity.getContent();
                 JsonParser parser = httpClient.createJsonParser(content);
+                if (ignorMissingFields) {
+                    ((ObjectMapper) parser.getCodec()).configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                }
                 // http://wiki.fasterxml.com/JacksonDataBinding
                 return parser.readValueAs(valueType);
             } finally {
