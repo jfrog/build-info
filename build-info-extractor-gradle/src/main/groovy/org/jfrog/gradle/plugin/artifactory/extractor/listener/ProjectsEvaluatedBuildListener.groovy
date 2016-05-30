@@ -1,9 +1,9 @@
 package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
 import org.apache.commons.lang.StringUtils
-import org.gradle.BuildAdapter
 import org.gradle.api.Project
-import org.gradle.api.invocation.Gradle
+import org.gradle.api.ProjectEvaluationListener
+import org.gradle.api.ProjectState
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
@@ -24,20 +24,22 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
  * 2) Overriding gradle resolution repositories (Maven/Ivy)
  * 3) Prepare artifacts for deployment
  */
-public class ProjectsEvaluatedBuildListener extends BuildAdapter {
+public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
 
-    def void projectsEvaluated(Gradle gradle) {
+    @Override
+    void beforeEvaluate(Project project) {
+        //Do nothing
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
         ArtifactoryClientConfiguration configuration =
-                ArtifactoryPluginUtil.getArtifactoryConvention(gradle.rootProject).getClientConfig()
-        //Fill-in the client config for the global, then adjust children project
-        GradleArtifactoryClientConfigUpdater.update(configuration, gradle.rootProject)
-        gradle.rootProject.allprojects.each {
-            //pass in the resolver of the cc
-            defineResolvers(it, configuration.resolver)
-        }
-        //Configure the artifactoryPublish tasks. Deployment happens on task execution
-        gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, true).each { BuildInfoBaseTask bit ->
+                ArtifactoryPluginUtil.getArtifactoryConvention(project.gradle.rootProject).getClientConfig()
+        //Fill-in the client config for the global.
+        GradleArtifactoryClientConfigUpdater.update(configuration, project.gradle.rootProject)
+        defineResolvers(project, configuration.resolver)
+        project.getTasksByName(BUILD_INFO_TASK_NAME, false).each { BuildInfoBaseTask bit ->
             bit.projectsEvaluated()
         }
     }
