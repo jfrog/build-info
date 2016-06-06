@@ -77,7 +77,7 @@ public class GradleArtifactoryClientConfigUpdater {
         // from inside the gradle script, we do not want to override them by the values sent from
         // the CI server plugin.
         String prefix = BuildInfoProperties.BUILD_INFO_PREFIX;
-        Set<String> excludeIfExist = Sets.newHashSet(prefix + BuildInfoFields.BUILD_NAME, prefix + BuildInfoFields.BUILD_NUMBER);
+        Set<String> excludeIfExist = Sets.newHashSet(prefix + BuildInfoFields.BUILD_NUMBER, prefix + BuildInfoFields.BUILD_NAME, prefix + BuildInfoFields.BUILD_STARTED);
         config.fillFromProperties(mergedProps, excludeIfExist);
 
         // After props are set, apply missing project props (not set by CI-plugin generated props)
