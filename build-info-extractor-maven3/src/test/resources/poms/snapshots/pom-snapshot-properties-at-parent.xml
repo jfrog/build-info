@@ -5,11 +5,11 @@
     <parent>
         <groupId>org.jfrog.test</groupId>
         <artifactId>parent</artifactId>
-        <version>2.1</version>
-        <relativePath>../pom/bla/pom.xml</relativePath>
+        <version>${version.test}</version>
+        <relativePath>pom-parent.xml</relativePath>
     </parent>
 
     <artifactId>one</artifactId>
-    <version>2.1</version>
+    <version>${version.test}</version>
     <packaging>pom</packaging>
 </project>

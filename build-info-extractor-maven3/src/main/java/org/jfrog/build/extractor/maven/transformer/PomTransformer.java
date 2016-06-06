@@ -18,6 +18,8 @@ package org.jfrog.build.extractor.maven.transformer;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -28,14 +30,12 @@ import org.jdom.output.XMLOutputter;
 import org.jfrog.build.extractor.EolDetectingInputStream;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Rewrites the project versions in the pom.
@@ -51,6 +51,8 @@ public class PomTransformer {
 
     private boolean modified;
     private File pomFile;
+    private Map<String, String> pomProperties = new HashMap<String, String>();
+    private String nextPomToLoad = null;
 
     /**
      * Transforms single pom file.
@@ -108,7 +110,7 @@ public class PomTransformer {
 
         Element rootElement = document.getRootElement();
         Namespace ns = rootElement.getNamespace();
-
+        getProperties(rootElement, ns);
         changeParentVersion(rootElement, ns);
 
         changeCurrentModuleVersion(rootElement, ns);
@@ -144,12 +146,31 @@ public class PomTransformer {
         return modified;
     }
 
+    private void getProperties(Element root, Namespace ns) {
+        Element propertiesElement = root.getChild("properties", ns);
+        if (propertiesElement == null) {
+            return;
+        }
+
+        List<Element> children = propertiesElement.getChildren();
+        for(Element child : children) {
+            String key = child.getName();
+            if(pomProperties.get(key) == null) {
+                pomProperties.put(key, child.getText());
+            }
+        }
+    }
+
     private void changeParentVersion(Element root, Namespace ns) {
         Element parentElement = root.getChild("parent", ns);
         if (parentElement == null) {
             return;
         }
-
+        // We might need to use the parent pom for getting properties
+        // If the file has parent but relativePath is not set we use the default parent location
+        Element relativePath = parentElement.getChild("relativePath", ns);
+        String relativeParentPath = relativePath == null ? ".." + java.io.File.separator + "pom.xml" : relativePath.getText();
+        nextPomToLoad = StringUtils.substringBeforeLast(pomFile.getAbsolutePath(), java.io.File.separator) + java.io.File.separator + relativeParentPath;
         ModuleName parentName = extractModuleName(parentElement, ns);
         if (versionsByModule.containsKey(parentName)) {
             setVersion(parentElement, ns, versionsByModule.get(parentName));
@@ -236,11 +257,59 @@ public class PomTransformer {
         Element versionElement = element.getChild("version", ns);
         if (versionElement != null) {
             String currentVersion = versionElement.getText();
-            if (currentVersion.endsWith("-SNAPSHOT")) {
+            if (currentVersion.endsWith("-SNAPSHOT") ||
+                    (currentVersion.startsWith("${") && currentVersion.endsWith("}")) && evalExpression(currentVersion) != null && evalExpression(currentVersion).endsWith("-SNAPSHOT")) {
                 throw new SnapshotNotAllowedException(String.format("Snapshot detected in file '%s': %s:%s",
                         pomFile.getAbsolutePath(), moduleName, currentVersion));
             }
         }
+    }
+
+    // Search for expression value in the pom properties
+    // If not found, try to find the value up in the pom hierarchy, lazy loading
+    private String evalExpression(String expr) {
+        String expression = pomProperties.get(expr.substring(2, expr.lastIndexOf("}")));
+        if (expression != null) {
+            return expression;
+        }
+
+        if (loadNextProperties()) {
+            return evalExpression(expr);
+        }
+
+        return null;
+    }
+
+    // The nextPomToLoad point to the next pom hierarchy
+    // load the next pom in chain and his properties
+    private boolean loadNextProperties() {
+        if (nextPomToLoad == null) {
+            return false;
+        }
+
+        Model model;
+        FileReader reader;
+        MavenXpp3Reader mavenReader = new MavenXpp3Reader();
+        try {
+            reader = new FileReader(nextPomToLoad);
+            model = mavenReader.read(reader);
+            Properties properties = model.getProperties();
+            for (String key : properties.stringPropertyNames()) {
+                if (pomProperties.get(key) == null) {
+                    pomProperties.put(key, properties.getProperty(key));
+                }
+            }
+
+            if (model.getParent() != null) {
+                nextPomToLoad = StringUtils.substringBeforeLast(nextPomToLoad, java.io.File.separator) + java.io.File.separator + model.getParent().getRelativePath();
+            } else {
+                nextPomToLoad = null;
+            }
+        } catch (Exception e) {
+            Logger.getLogger(PomTransformer.class.getName()).info("couldn't load pom file at: " + nextPomToLoad);
+            return false;
+        }
+        return true;
     }
 
     private ModuleName extractModuleName(Element element, Namespace ns) {

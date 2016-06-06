@@ -106,15 +106,22 @@ public class PomTransformerTest {
     @Test
     public void snapshotsModule() throws Exception {
         File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshot.xml");
-        Map<ModuleName, String> modules = Maps.newHashMap();
-        modules.put(new ModuleName("org.jfrog.test", "one"), "2.2-SNAPSHOT");
-        try {
-            new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "", true).transform(pomFile);
-            fail("Pom contains module with snapshot version and should fail");
-        } catch (SnapshotNotAllowedException e) {
-            String message = e.getMessage();
-            assertTrue(message.contains("org.jfrog.test:one:2.2-SNAPSHOT"), "Unexpected error message: " + message);
-        }
+        String message = snapshotModule(pomFile, "2.2-SNAPSHOT");
+        assertTrue(message.contains("org.jfrog.test:one:2.2-SNAPSHOT"), "Unexpected error message: " + message);
+    }
+
+    @Test
+    public void snapshotsPropertiesModule() throws Exception {
+        File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshot-properties.xml");
+        String message = snapshotModule(pomFile, "2.2");
+        assertTrue(message.contains("org.jfrog.test:parent:${version.test}"), "Unexpected error message: " + message);
+    }
+
+    @Test
+    public void snapshotsPropertiesAtParentModule() throws Exception {
+        File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshot-properties-at-parent.xml");
+        String message = snapshotModule(pomFile, "2.1");
+        assertTrue(message.contains("org.jfrog.test:parent:${version.test}"), "Unexpected error message: " + message);
     }
 
     @Test
@@ -213,5 +220,17 @@ public class PomTransformerTest {
 
     private String getFileAsString(File file) throws IOException {
         return Files.toString(file, Charset.defaultCharset());
+    }
+
+    private String snapshotModule(File pomFile, String moduleVersion) throws Exception {
+        Map<ModuleName, String> modules = Maps.newHashMap();
+        modules.put(new ModuleName("org.jfrog.test", "one"), moduleVersion);
+        try {
+            new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "", true).transform(pomFile);
+            fail("Pom contains module with snapshot version and should fail");
+        } catch (SnapshotNotAllowedException e) {
+            return e.getMessage();
+        }
+        return "";
     }
 }
