@@ -156,3 +156,389 @@ and the gradle wrapper in Windows
   }
 }
 ```
+
+### Build Info json schema
+```groovy
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "build-info",
+  "description": "Artifactory build-info",
+  "type": "object",
+  "properties": {
+    "properties": {
+      "type": "object",
+      "description": "Environment variables and properties collected from the CI server",
+      "patternProperties": {
+        "^.+$": {
+          "type": "string"
+        }
+      }
+    },
+    "version": {
+      "description": "Build info schema version",
+      "type": "string"
+    },
+    "name": {
+      "description": "Build name",
+      "type": "string"
+    },
+    "number": {
+      "description": "Build number",
+      "type": "string"
+    },
+    "type": {
+      "description": "Build type",
+      "type": "string",
+      "enum": [ "MAVEN", "GRADLE", "ANT", "IVY", "GENERIC" ]
+    },
+    "buildAgent": {
+      "description": "Build tool information",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Build tool type",
+          "type": "string"
+        },
+        "version": {
+          "description": "Build tool version",
+          "type": "string"
+        }
+      },
+      "required": [ "name", "version" ],
+      "additionalProperties": false
+    },
+    "agent": {
+      "description": "CI server information",
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "CI server type",
+          "type": "string"
+        },
+        "version": {
+          "description": "CI server version",
+          "type": "string"
+        }
+      },
+      "required": [ "name", "version" ],
+      "additionalProperties": false
+    },
+    "started": {
+      "description": "Build start time",
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.\\d{3}(Z|[+-]\\d{4})$"
+    },
+    "durationMillis": {
+      "description": "Build duration in milliseconds",
+      "type": "integer"
+    },
+    "principal": {
+      "description": "",
+      "type": "string"
+    },
+    "artifactoryPrincipal": {
+      "description": "Artifactory user used for deployment",
+      "type": "string"
+    },
+    "url": {
+      "description": "CI server URL",
+      "type": "string"
+    },
+    "vcsRevision": {
+      "description": "VCS revision",
+      "type": "string"
+    },
+    "vcsUrl": {
+      "description": "VCS URL",
+      "type": "string"
+    },
+    "licenseControl": {
+      "description": "Artifactory License Control Information",
+      "type": "object",
+      "allOf": [
+        {
+          "properties": {
+            "runChecks": {
+              "description": "Run automatic license scanning after the build is complete",
+              "type": "boolean"
+            },
+            "includePublishedArtifacts": {
+              "description": "Run license checks on artifacts in addition to build dependencies",
+              "type": "boolean"
+            },
+            "autoDiscover": {
+              "description": "Artifactory should auto-discover license",
+              "type": "boolean"
+            },
+            "scopesList": {
+              "description": "Space-separated list of dependency scopes to run license violation checks",
+              "type": "string"
+            },
+            "licenseViolationRecipients": {},
+            "licenseViolationsRecipientsList": {}
+          },
+          "required": [ "runChecks", "includePublishedArtifacts", "autoDiscover", "scopesList" ],
+          "additionalProperties": false
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "licenseViolationRecipients": {
+                  "description": "List of email addresses to be notified of license violations",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [ "licenseViolationRecipients" ]
+            },
+            {
+              "properties": {
+                "licenseViolationsRecipientsList": {
+                  "description": "Space-separated list of email addresses to be notified of license violations",
+                  "type": "string"
+                }
+              },
+              "required": [ "licenseViolationsRecipientsList" ]
+            }
+          ]
+        }
+      ]
+    },
+    "buildRetention": {
+      "description": "Build Retention Information",
+      "type": "object",
+      "allOf": [
+        {
+          "properties": {
+            "deleteBuildArtifacts": {
+              "description": "Automatically remove build artifacts stored in Artifactory",
+              "type": "boolean"
+            },
+            "buildNumbersNotToBeDiscarded": {
+              "description": "List of build numbers that should not be removed from Artifactory",
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            "count": {},
+            "minimumBuildDate": {}
+          },
+          "additionalProperties": false
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "count": {
+                  "description": "Maximum number of builds to store in Artifactory",
+                  "type": "integer"
+                }
+              },
+              "required": [ "count" ]
+            },
+            {
+              "properties": {
+                "minimumBuildDate": {
+                  "description": "Earliest build date to store in Artifactory",
+                  "type": "integer"
+                }
+              },
+              "required": [ "minimumBuildDate" ]
+            }
+          ]
+        }
+      ]
+    },
+    "modules": {
+      "description": "Artifactory License Control Information",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "properties": {
+             "description": "Module properties",
+             "type": "object",
+             "patternProperties": {
+                "^.+$": {
+                  "type": "string"
+                }
+             }
+          },
+          "id": {
+            "description": "Module ID",
+            "type": "string"
+          },
+          "artifacts": {
+            "description": "List of module artifacts",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "sha1": {
+                  "$ref": "#/definitions/sha1"
+                },
+                "md5": {
+                  "$ref": "#/definitions/md5"
+                }
+              },
+              "required": [ "name", "sha1", "md5" ]
+            }
+          },
+          "dependencies": {
+            "description": "List of module dependencies",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "sha1": {
+                  "$ref": "#/definitions/sha1"
+                },
+                "md5": {
+                  "$ref": "#/definitions/md5"
+                },
+                "scopes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [ "id", "sha1", "md5" ]
+            }
+          }
+        },
+        "required": [ "id", "artifacts", "dependencies" ],
+        "additionalProperties": false
+      }
+    },
+    "issues": {
+      "description": "List of issues related to the build",
+      "type": "object",
+      "properties": {
+        "tracker": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          },
+          "required": [ "name", "version" ],
+          "additionalProperties": false
+        },
+        "aggregateBuildIssues": {
+          "description": "Whether issues have appeared in previous builds",
+          "type": "boolean"
+        },
+        "aggregationBuildStatus": {
+          "type": "string"
+        },
+        "affectedIssues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "summary": {
+                "type": "string"
+              },
+              "aggregated": {
+                "description": "Whether this specific issue already appeared in previous builds",
+                "type": "boolean"
+              }
+            },
+            "required": [ "key", "url", "summary", "aggregated" ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [ "tracker", "aggregateBuildIssues", "aggregationBuildStatus", "affectedIssues" ],
+      "additionalProperties": false
+    },
+    "governence": {
+      "description": "Black duck code center integration information",
+      "type": "object",
+      "properties": {
+        "blackDuckProperties": {
+          "type": "object",
+          "properties": {
+            "appName": {
+              "description": "The Black Duck Code Center application name",
+              "type": "string"
+            },
+            "appVersion": {
+              "description": "The Black Duck Code Center application version",
+              "type": "string"
+            },
+            "reportRecipients": {
+              "description": "Space-separated list of recipients that should receive an email report once the automatic Black Duck Code Center compliance checks are completed",
+              "type": "string"
+            },
+            "scopes": {
+              "description": "Space-separated list of dependency scopes/configurations to run Black Duck Code Center compliance checks on. If left empty all dependencies from all scopes will be checked",
+              "type": "string"
+            },
+            "runChecks": {
+              "description": "Should Black Duck Code Center run automatic compliance checks after the build is completed",
+              "type": "boolean"
+            },
+            "includePublishedArtifacts": {
+              "description": "Include the build's published module artifacts in the Black Duck Code Center compliance checks if they are also used as dependencies for other modules in this build",
+              "type": "boolean"
+            },
+            "autoCreateMissingComponentRequests": {
+              "description": "Auto create missing components in Black Duck Code Center application after the build is completed and deployed in Artifactory",
+              "type": "boolean"
+            },
+            "autoDiscardStaleComponentRequests": {
+              "description": "Auto discard stale components in Black Duck Code Center application after the build is completed and deployed in Artifactory",
+              "type": "boolean"
+            }
+          },
+          "required": [ "appName", "appVersion", "reportRecipients", "scopes", "runChecks", "includePublishedArtifacts", "autoCreateMissingComponentRequests", "autoDiscardStaleComponentRequests" ],
+          "additionalProperties": false
+        }
+      },
+      "required": [ "blackDuckProperties" ],
+      "additionalProperties": false
+    }
+  },
+  "required": [ "version", "name", "number", "type", "started", "durationMillis", "modules" ],
+  "additionalProperties": false,
+  "definitions": {
+    "sha1": {
+      "description": "sha1 hash",
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "md5": {
+      "description": "md5 hash",
+      "type": "string",
+      "pattern": "^[0-9a-f]{32}$"
+    }
+  }
+}
+```

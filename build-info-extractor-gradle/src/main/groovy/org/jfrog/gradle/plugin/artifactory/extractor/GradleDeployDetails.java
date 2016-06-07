@@ -50,27 +50,29 @@ public class GradleDeployDetails implements Comparable<GradleDeployDetails> {
     }
     
     public int compareTo(GradleDeployDetails that) {
-        int result = 0;
-        if (this.deployDetails == null) {
-            result = that.deployDetails == null ? 0 : -1;
-        } else {
-            result = this.deployDetails.compareTo(that.deployDetails);
+        if (this.publishArtifact == null) {
+            return -1;
         }
-        if (result == 0) {
-            if (this.publishArtifact == null) {
-                result = that.publishArtifact == null ? 0 : -1;
-            } else {
-                result = this.publishArtifact.compareTo(that.publishArtifact);
-            }
+        if (that.publishArtifact == null) {
+            return 1;
         }
-        if (result == 0) {
-            if (this.project == null) {
-                result = that.project == null ? 0 : -1;
-            } else {
-                result = this.project.compareTo(that.project);
-            }
+        String thisExtension = this.publishArtifact.getExtension();
+        String thatExtension = that.publishArtifact.getExtension();
+        if (thisExtension == null) {
+            return -1;
         }
-        return result;
+        if (thatExtension == null) {
+            return 1;
+        }
+        thisExtension = thisExtension.toLowerCase();
+        if ("xml".equals(thisExtension) || "pom".equals(thisExtension)) {
+            return 1;
+        }
+        thatExtension = thatExtension.toLowerCase();
+        if ("xml".equals(thatExtension) || "pom".equals(thatExtension)) {
+            return -1;
+        }
+        return this.deployDetails.compareTo(that.deployDetails);
     }
 
     @Override
@@ -85,7 +87,6 @@ public class GradleDeployDetails implements Comparable<GradleDeployDetails> {
         if (publishArtifact != null ? !publishArtifact.equals(that.publishArtifact) : that.publishArtifact != null)
             return false;
         return !(project != null ? !project.equals(that.project) : that.project != null);
-
     }
 
     @Override
