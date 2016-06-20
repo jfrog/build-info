@@ -29,17 +29,19 @@ public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener
 
     @Override
     void beforeEvaluate(Project project) {
-        //Do nothing
-    }
-
-    @Override
-    void afterEvaluate(Project project, ProjectState state) {
         ArtifactoryClientConfiguration configuration =
                 ArtifactoryPluginUtil.getArtifactoryConvention(project.gradle.rootProject).getClientConfig()
         //Fill-in the client config for the global.
         GradleArtifactoryClientConfigUpdater.update(configuration, project.gradle.rootProject)
         defineResolvers(project, configuration.resolver)
-        project.getTasksByName(BUILD_INFO_TASK_NAME, false).each { BuildInfoBaseTask bit ->
+        BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
+        bit.projectsEvaluated()
+    }
+
+    @Override
+    void afterEvaluate(Project project, ProjectState state) {
+        if (project == project.getRootProject()) {
+            BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
             bit.projectsEvaluated()
         }
     }
