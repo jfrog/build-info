@@ -58,7 +58,7 @@ public class TaskHelperConfigurations extends TaskHelper {
 
     public TaskHelperConfigurations(ArtifactoryTask artifactoryTask) {
         super(artifactoryTask);
-        publishConfigurations = artifactoryTask.publishConfigurations;
+        publishConfigurations = artifactoryTask.publishConfigs;
     }
 
     public void publishConfigs(Object... confs) {

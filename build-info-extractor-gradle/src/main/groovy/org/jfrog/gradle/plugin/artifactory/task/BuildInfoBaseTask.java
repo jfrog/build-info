@@ -39,7 +39,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,8 +67,12 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public abstract boolean hasModules();
 
+    private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
+
     @Input
-    public final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
+    public Multimap<String, CharSequence> getProperties() {
+        return properties;
+    }
 
     @Input
     public final ArtifactSpecs artifactSpecs = new ArtifactSpecs();
@@ -288,7 +291,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             }
         }
     }
-    
+
     protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
         if(clientConf.getTimeout() != null) {
             client.setConnectionTimeout(clientConf.getTimeout());

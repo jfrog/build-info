@@ -48,7 +48,7 @@ public class TaskHelper {
     protected Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, String publicationName) {
         if (defaultProps == null) {
             defaultProps = Maps.newHashMap();
-            addProps(defaultProps, artifactoryTask.properties);
+            addProps(defaultProps, artifactoryTask.getProperties());
             //Add the publisher properties
             ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
             defaultProps.putAll(clientConf.publisher.getMatrixParams());

@@ -2,6 +2,7 @@ package org.jfrog.gradle.plugin.artifactory.task;
 
 import com.google.common.collect.Sets;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Input;
@@ -13,6 +14,7 @@ import org.jfrog.gradle.plugin.artifactory.task.helper.TaskHelperPublications;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +31,7 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
 
     @InputFiles
     @Optional
-    public Set<Configuration> publishConfigurations = Sets.newHashSet();
+    public Set<Configuration> publishConfigs = Sets.newHashSet();
 
     @Input
     @Optional
@@ -42,6 +44,14 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
     private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);
+
+    @Input
+    Set<Publication> getPublications() {
+        Set<Publication> publications = new HashSet<Publication>();
+        publications.addAll(ivyPublications);
+        publications.addAll(mavenPublications);
+        return publications;
+    }
 
     @Override
     public void checkDependsOnArtifactsToPublish() {

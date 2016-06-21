@@ -101,7 +101,7 @@ public class ArtifactoryConfigurationsPluginTest extends PluginTestBase {
         projectEvaluated(project)
 
         expect:
-        !buildInfoTask.publishConfigurations.isEmpty()
+        !buildInfoTask.publishConfigs.isEmpty()
         '[ext]user1' == clientConfig.publisher.username
         'p33p' == clientConfig.publisher.password
         !clientConfig.resolver.maven
