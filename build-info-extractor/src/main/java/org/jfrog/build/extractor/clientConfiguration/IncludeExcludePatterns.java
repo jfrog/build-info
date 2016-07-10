@@ -3,20 +3,22 @@ package org.jfrog.build.extractor.clientConfiguration;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
+
 /**
  * Holds include and exclude patterns to be used by the build server and extractor deployers
  *
  * @author Noam Y. Tenne
  */
-public class IncludeExcludePatterns {
+public class IncludeExcludePatterns implements Serializable {
     //Empty array constant for the empty patterns
     private static final String[] EMPTY_PATTERN = new String[0];
 
     //Helper instance of empty patterns
     public static final IncludeExcludePatterns EMPTY = new IncludeExcludePatterns(EMPTY_PATTERN, EMPTY_PATTERN);
 
-    private final String[] includePatterns;
-    private final String[] excludePatterns;
+    private String[] includePatterns;
+    private String[] excludePatterns;
 
     /**
      * Splitter constructor
@@ -52,6 +54,24 @@ public class IncludeExcludePatterns {
         } else {
             return EMPTY_PATTERN;
         }
+    }
+
+    /**
+     * Add include pattern
+     *
+     * @param includePatterns
+     */
+    public void addIncludePatterns(String includePatterns) {
+        this.includePatterns = (String[]) ArrayUtils.addAll(this.includePatterns, splitPatterns(includePatterns));
+    }
+
+    /**
+     * Add exclude pattern
+     *
+     * @param excludePatterns
+     */
+    public void addExcludePatterns(String excludePatterns) {
+        this.excludePatterns = (String[]) ArrayUtils.addAll(this.excludePatterns, splitPatterns(excludePatterns));
     }
 
     public String[] getIncludePatterns() {
