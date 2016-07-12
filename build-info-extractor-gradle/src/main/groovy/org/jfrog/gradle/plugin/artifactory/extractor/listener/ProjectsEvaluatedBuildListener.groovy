@@ -5,6 +5,7 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
@@ -29,20 +30,24 @@ public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener
 
     @Override
     void beforeEvaluate(Project project) {
-        ArtifactoryClientConfiguration configuration =
-                ArtifactoryPluginUtil.getArtifactoryConvention(project.gradle.rootProject).getClientConfig()
-        //Fill-in the client config for the global.
-        GradleArtifactoryClientConfigUpdater.update(configuration, project.gradle.rootProject)
-        defineResolvers(project, configuration.resolver)
-        BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
-        bit.projectsEvaluated()
+        if (project.getPlugins().hasPlugin(ArtifactoryPlugin.class)) {
+            ArtifactoryClientConfiguration configuration =
+                    ArtifactoryPluginUtil.getArtifactoryConvention(project.gradle.rootProject).getClientConfig()
+            //Fill-in the client config for the global.
+            GradleArtifactoryClientConfigUpdater.update(configuration, project.gradle.rootProject)
+            defineResolvers(project, configuration.resolver)
+            BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
+            bit.projectsEvaluated()
+        }
     }
 
     @Override
     void afterEvaluate(Project project, ProjectState state) {
-        if (project == project.getRootProject()) {
-            BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
-            bit.projectsEvaluated()
+        if (project.getPlugins().hasPlugin(ArtifactoryPlugin.class)) {
+            if (project == project.getRootProject()) {
+                BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
+                bit.projectsEvaluated()
+            }
         }
     }
 
