@@ -77,7 +77,9 @@ public class TaskHelperPublications extends TaskHelper{
         for (Object publication : publications) {
             if (publication instanceof CharSequence) {
                 Publication publicationObj = getProject().getExtensions()
-                        .getByType(PublishingExtension.class).getPublications().findByName(publication.toString());
+                    .getByType(PublishingExtension.class)
+                    .getPublications().findByName(publication.toString());
+
                 if (publicationObj != null) {
                     addPublication(publicationObj);
                 } else {

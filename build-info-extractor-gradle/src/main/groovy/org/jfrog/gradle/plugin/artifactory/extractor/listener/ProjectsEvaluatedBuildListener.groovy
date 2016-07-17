@@ -1,21 +1,27 @@
 package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
+import com.google.common.collect.Sets
 import org.apache.commons.lang.StringUtils
+import org.gradle.BuildAdapter
 import org.gradle.api.Project
-import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
+import org.gradle.api.Task
+import org.gradle.api.invocation.Gradle
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
+import org.gradle.api.ProjectEvaluationListener
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import java.util.concurrent.ConcurrentHashMap
+
 import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 
 /**
- * @author Lior Hasson  
+ * @author Lior Hasson
  *
  *
  * A class that represents Build event listener to prepare data for "artifactoryPublish" Task
@@ -25,27 +31,32 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
  * 2) Overriding gradle resolution repositories (Maven/Ivy)
  * 3) Prepare artifacts for deployment
  */
-public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener {
+public class ProjectsEvaluatedBuildListener extends BuildAdapter implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
+    private static final Set<Task> artifactoryTasks = Sets.newConcurrentHashSet();
 
     @Override
     void beforeEvaluate(Project project) {
-        if (project.getPlugins().hasPlugin(ArtifactoryPlugin.class)) {
-            ArtifactoryClientConfiguration configuration =
-                    ArtifactoryPluginUtil.getArtifactoryConvention(project.gradle.rootProject).getClientConfig()
-            //Fill-in the client config for the global.
-            GradleArtifactoryClientConfigUpdater.update(configuration, project.gradle.rootProject)
-            defineResolvers(project, configuration.resolver)
-            BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
-            bit.projectsEvaluated()
-        }
     }
 
     @Override
     void afterEvaluate(Project project, ProjectState state) {
-        if (project.getPlugins().hasPlugin(ArtifactoryPlugin.class)) {
-            if (project == project.getRootProject()) {
-                BuildInfoBaseTask bit = project.getTasks().getByName(BUILD_INFO_TASK_NAME)
+        Set<Task> tasks = project.getTasksByName(BUILD_INFO_TASK_NAME, false)
+        artifactoryTasks.addAll(tasks)
+    }
+
+    def void projectsEvaluated(Gradle gradle) {
+        // Configure the artifactoryPublish tasks. Deployment happens on task execution
+        artifactoryTasks.each { BuildInfoBaseTask bit ->
+            ArtifactoryClientConfiguration configuration = null;
+            ArtifactoryPluginConvention convention =
+                ArtifactoryPluginUtil.getArtifactoryConvention(bit.project)
+
+            if (convention != null) {
+                ArtifactoryClientConfiguration clientConfig = convention.getClientConfig()
+                // Fill-in the client config for the global, then adjust children project
+                GradleArtifactoryClientConfigUpdater.update(clientConfig, gradle.rootProject)
+                defineResolvers(bit.project, clientConfig.resolver)
                 bit.projectsEvaluated()
             }
         }

@@ -48,7 +48,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         //Add build listener that responsible to override the resolve repositories
         if (!conv.clientConfig.isBuildListernerAdded()) {
             def gradle = project.getGradle()
-            gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
+            gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
             conv.clientConfig.setBuildListernerAdded(true)
         }
     }
