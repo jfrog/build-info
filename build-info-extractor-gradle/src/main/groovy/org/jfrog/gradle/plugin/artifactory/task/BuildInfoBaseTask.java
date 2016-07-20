@@ -165,9 +165,11 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public void projectsEvaluated() {
         Project project = getProject();
+        log.debug("Configuring artifactoryPublish task '{}' skipped for project '{}'.",
+            this.getPath(), project.getName());
         if (isSkip()) {
-            log.debug("Artifactory plugin artifactoryPublish task '{}' skipped for project '{}'.",
-                    this.getPath(), project.getName());
+            log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
+                this.getPath(), project.getName());
             return;
         }
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
