@@ -68,11 +68,15 @@ public abstract class DeploymentUrlUtils {
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
                 for (String propertyValue : matrixParams.get(propertyKey)) {
-                    matrix.append(";").append(URLEncoder.encode(propertyKey, "UTF-8"))
-                        .append("=").append(URLEncoder.encode(propertyValue, "UTF-8"));
+                    matrix.append(";").append(encode(propertyKey))
+                        .append("=").append(encode(propertyValue));
                 }
             }
         }
         return matrix.toString();
+    }
+
+    private static String encode(String s) throws UnsupportedEncodingException {
+        return URLEncoder.encode(s, "UTF-8").replace("%2F","/");
     }
 }
