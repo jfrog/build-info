@@ -165,7 +165,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public void projectsEvaluated() {
         Project project = getProject();
-        log.debug("Configuring artifactoryPublish task '{}' skipped for project '{}'.",
+        log.info("Configuring artifactoryPublish task '{}' for project '{}'.",
             this.getPath(), project.getName());
         if (isSkip()) {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",

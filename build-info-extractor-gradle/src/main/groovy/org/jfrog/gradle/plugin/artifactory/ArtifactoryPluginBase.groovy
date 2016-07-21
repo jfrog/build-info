@@ -23,12 +23,14 @@ import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedB
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.util.concurrent.atomic.AtomicBoolean
 
 import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
     static final String PUBLISH_TASK_GROUP = "publishing"
+    static AtomicBoolean buildListernerAdded = new AtomicBoolean(false);
 
     def void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -44,12 +46,9 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
-
-        //Add build listener that responsible to override the resolve repositories
-        if (!conv.clientConfig.isBuildListernerAdded()) {
+        if (!buildListernerAdded.getAndSet(true)) {
             def gradle = project.getGradle()
             gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
-            conv.clientConfig.setBuildListernerAdded(true)
         }
     }
 

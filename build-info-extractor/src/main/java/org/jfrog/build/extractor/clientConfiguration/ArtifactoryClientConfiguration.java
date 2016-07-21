@@ -228,14 +228,6 @@ public class ArtifactoryClientConfiguration {
         rootConfig.setStringValue(ENV_VARS_EXCLUDE_PATTERNS, patterns);
     }
 
-    public void setBuildListernerAdded(Boolean enabled) {
-        root.setBooleanValue("__ArtifactoryPlugin_buildListener__", enabled);
-    }
-
-    public Boolean isBuildListernerAdded() {
-        return root.getBooleanValue("__ArtifactoryPlugin_buildListener__", false);
-    }
-
     public void setActivateRecorder(Boolean activateRecorder) {
         root.setBooleanValue(ACTIVATE_RECORDER, activateRecorder);
     }
