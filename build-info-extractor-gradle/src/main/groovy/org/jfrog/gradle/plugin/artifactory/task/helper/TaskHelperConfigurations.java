@@ -37,6 +37,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
@@ -244,7 +245,8 @@ public class TaskHelperConfigurations extends TaskHelper {
     }
 
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+            ArtifactoryPluginUtil.getPublisherHandler(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.ivyDescriptor);
         try {
             Map<String, String> checksums =
@@ -255,13 +257,13 @@ public class TaskHelperConfigurations extends TaskHelper {
                     "Failed to calculate checksums for artifact: " + artifactoryTask.ivyDescriptor.getAbsolutePath(), e);
         }
         String gid = getProject().getGroup().toString();
-        if (clientConf.publisher.isM2Compatible()) {
+        if (publisher.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
         artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(clientConf.publisher.getIvyPattern(), gid, getModuleName(),
+                .substitute(publisher.getIvyPattern(), gid, getModuleName(),
                         getProject().getVersion().toString(), null, "ivy", "xml"));
-        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        artifactBuilder.targetRepository(publisher.getRepoKey());
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.ivyDescriptor.getName(), "xml", "ivy", null,
                         artifactoryTask.ivyDescriptor);
@@ -271,7 +273,8 @@ public class TaskHelperConfigurations extends TaskHelper {
     }
 
     private GradleDeployDetails getMavenDeployDetails() {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.mavenDescriptor);
         try {
             Map<String, String> checksums =
@@ -285,7 +288,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
                 getProject().getGroup().toString().replace(".", "/"), getModuleName(),
                 getProject().getVersion().toString(), null, "pom", "pom"));
-        artifactBuilder.targetRepository(clientConf.publisher.getRepoKey());
+        artifactBuilder.targetRepository(publisher.getRepoKey());
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.mavenDescriptor.getName(), "pom", "pom", null, artifactoryTask.mavenDescriptor);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
@@ -357,6 +360,12 @@ public class TaskHelperConfigurations extends TaskHelper {
     private GradleDeployDetails gradleDeployDetails(PublishArtifact artifact, String configuration,
             @Nullable String artifactPath, @Nullable Set<String> processedFiles) {
 
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
+        if (publisher == null) {
+            return null;
+        }
+
         File file = artifact.getFile();
         if (processedFiles != null && processedFiles.contains(file.getAbsolutePath())) {
             return null;
@@ -374,12 +383,9 @@ public class TaskHelperConfigurations extends TaskHelper {
         if (StringUtils.isNotBlank(artifact.getClassifier())) {
             extraTokens.put("classifier", artifact.getClassifier());
         }
-
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
-        String pattern = publisherConf.getIvyArtifactPattern();
+        String pattern = publisher.getIvyArtifactPattern();
         String gid = getProject().getGroup().toString();
-        if (publisherConf.isM2Compatible()) {
+        if (publisher.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
 
@@ -401,12 +407,11 @@ public class TaskHelperConfigurations extends TaskHelper {
                     artifact.getExtension(), configuration,
                     extraTokens, null));
         }
-        deployDetailsBuilder.targetRepository(publisherConf.getRepoKey());
+        deployDetailsBuilder.targetRepository(publisher.getRepoKey());
         PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration);
         deployDetailsBuilder.addProperties(propsToAdd);
         DeployDetails details = deployDetailsBuilder.build();
-        GradleDeployDetails gdd = new GradleDeployDetails(artifactInfo, details, getProject());
-        return gdd;
+        return new GradleDeployDetails(artifactInfo, details, getProject());
     }
 }

@@ -44,6 +44,7 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
@@ -292,16 +293,20 @@ public class TaskHelperPublications extends TaskHelper{
     private void addIvyArtifactToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
                                                IvyPublicationIdentity projectIdentity, DeployDetails.Builder builder,
                                                PublishArtifactInfo artifactInfo) {
-        ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-        ArtifactoryClientConfiguration.PublisherHandler publisherConf = clientConf.publisher;
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+        if (publisher == null) {
+            return;
+        }
+
         String pattern;
         if ("ivy".equals(artifactInfo.getType())) {
-            pattern = publisherConf.getIvyPattern();
+            pattern = publisher.getIvyPattern();
         } else {
-            pattern = publisherConf.getIvyArtifactPattern();
+            pattern = publisher.getIvyArtifactPattern();
         }
         String gid = projectIdentity.getOrganisation();
-        if (publisherConf.isM2Compatible()) {
+        if (publisher.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
 
@@ -331,10 +336,14 @@ public class TaskHelperPublications extends TaskHelper{
 
     private void addArtifactInfoToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
                                                 DeployDetails.Builder builder, PublishArtifactInfo artifactInfo) {
-        builder.targetRepository(getArtifactoryClientConfiguration().publisher.getRepoKey());
-        Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, publicationName);
-        builder.addProperties(propsToAdd);
-        DeployDetails details = builder.build();
-        deployDetails.add(new GradleDeployDetails(artifactInfo, details, getProject()));
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+        if (publisher != null) {
+            builder.targetRepository(publisher.getRepoKey());
+            Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, publicationName);
+            builder.addProperties(propsToAdd);
+            DeployDetails details = builder.build();
+            deployDetails.add(new GradleDeployDetails(artifactInfo, details, getProject()));
+        }
     }
 }

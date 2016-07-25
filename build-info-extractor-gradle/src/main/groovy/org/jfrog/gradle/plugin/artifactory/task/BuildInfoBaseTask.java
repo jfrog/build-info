@@ -59,7 +59,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
-    public final Set<GradleDeployDetails> deployDetails = Sets.newHashSet();
+    public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
     public abstract void checkDependsOnArtifactsToPublish();
 
@@ -274,10 +274,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         return result;
     }
 
-    private ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
-        return ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
-    }
-
     private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
@@ -347,73 +343,92 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
      * @throws java.io.IOException In case the deployment fails.
      */
     private void prepareAndDeploy() throws IOException {
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration accRoot =
+            ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
         // Reset the default properties, they may have changed
-        GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(acc, getProject().getRootProject());
+        GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
+            accRoot, getProject().getRootProject());
 
-        String contextUrl = acc.publisher.getContextUrl();
-        log.debug("Context URL for deployment '{}", contextUrl);
-        String username = acc.publisher.getUsername();
-        String password = acc.publisher.getPassword();
-        if (StringUtils.isBlank(username)) {
-            username = "";
-        }
-        if (StringUtils.isBlank(password)) {
-            password = "";
-        }
-
-        //Sort all the deploy artifacts by the natural ordering of GradleDeployDetails
         Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
-
-        // Update the artifacts for all project build info task
         List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
-                bit.collectDescriptorsAndArtifactsForUpload();
-                allDeployDetails.addAll(bit.deployDetails);
+                ArtifactoryClientConfiguration.PublisherHandler publisher =
+                    ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
+
+                if (publisher != null && publisher.getContextUrl() != null) {
+                    String contextUrl = publisher.getContextUrl();
+                    String username = publisher.getUsername();
+                    String password = publisher.getPassword();
+                    if (StringUtils.isBlank(username)) {
+                        username = "";
+                    }
+                    if (StringUtils.isBlank(password)) {
+                        password = "";
+                    }
+
+                    if (publisher.isPublishArtifacts()) {
+                        ArtifactoryBuildInfoClient client = null;
+                        try {
+                            client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
+                                new GradleClientLogger(log));
+                            bit.collectDescriptorsAndArtifactsForUpload();
+                            log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
+
+                            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                                publisher.getIncludePatterns(),
+                                publisher.getExcludePatterns());
+                            configureProxy(accRoot, client);
+                            configConnectionTimeout(accRoot, client);
+                            deployArtifacts(bit.deployDetails, client, patterns);
+                            allDeployDetails.addAll(bit.deployDetails);
+                        } finally {
+                            if (client != null) {
+                                client.shutdown();
+                            }
+                        }
+                    }
+                }
             }
         }
 
-        ArtifactoryBuildInfoClient client =
-                new ArtifactoryBuildInfoClient(contextUrl, username, password, new GradleClientLogger(log));
-        try {
-            if (isPublishArtifacts(acc)) {
-                log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
-
-                /**
-                 * if the {@link org.jfrog.build.extractor.clientConfiguration.ClientProperties#PROP_PUBLISH_ARTIFACT} is set to true,
-                 * The uploadArchives task will be triggered ONLY at the end, ensuring that the artifacts will be
-                 * published only after a successful build. This is done before the build-info is sent.
-                 */
-
-                IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                        acc.publisher.getIncludePatterns(),
-                        acc.publisher.getExcludePatterns());
-                configureProxy(acc, client);
-                configConnectionTimeout(acc, client);
-                deployArtifacts(allDeployDetails, client, patterns);
+        ArtifactoryBuildInfoClient client = null;
+        String contextUrl = accRoot.publisher.getContextUrl();
+        String username = accRoot.publisher.getUsername();
+        String password = accRoot.publisher.getPassword();
+        if (contextUrl != null) {
+            if (StringUtils.isBlank(username)) {
+                username = "";
             }
+            if (StringUtils.isBlank(password)) {
+                password = "";
+            }
+            try {
+                client = new ArtifactoryBuildInfoClient(
+                    accRoot.publisher.getContextUrl(),
+                    accRoot.publisher.getUsername(),
+                    accRoot.publisher.getPassword(),
+                    new GradleClientLogger(log));
 
-            //Extract build info and update the clientConf info accordingly (build name, num, etc.)
-            GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(acc, allDeployDetails);
-            Build build = gbie.extract(getProject().getRootProject());
-            /**
-             * The build-info will be always written to a file in its JSON form.
-             */
-            exportBuildInfo(build, getExportFile(acc));
-            if (isPublishBuildInfo(acc)) {
-                // If export property set always save the file before sending it to artifactory
-                exportBuildInfo(build, getExportFile(acc));
-                if (acc.info.isIncremental()) {
-                    log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
-                    client.sendModuleInfo(build);
-                } else {
-                    log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                    client.sendBuildInfo(build);
+                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails);
+                Build build = gbie.extract(getProject().getRootProject());
+                exportBuildInfo(build, getExportFile(accRoot));
+                if (isPublishBuildInfo(accRoot)) {
+                    // If export property set always save the file before sending it to artifactory
+                    exportBuildInfo(build, getExportFile(accRoot));
+                    if (accRoot.info.isIncremental()) {
+                        log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
+                        client.sendModuleInfo(build);
+                    } else {
+                        log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
+                        client.sendBuildInfo(build);
+                    }
+                }
+            } finally {
+                if (client != null) {
+                    client.shutdown();
                 }
             }
-        } finally {
-            client.shutdown();
         }
     }
 

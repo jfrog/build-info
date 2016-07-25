@@ -86,11 +86,8 @@ public class GradleArtifactoryClientConfigUpdater {
 
     public static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
         //Build name
-        String buildName = config.info.getBuildName();
-        if (StringUtils.isBlank(buildName)) {
-            buildName = project.getName();
-            config.info.setBuildName(buildName);
-        }
+        String buildName = project.getName();
+        config.info.setBuildName(buildName);
         config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
 
         //Build number

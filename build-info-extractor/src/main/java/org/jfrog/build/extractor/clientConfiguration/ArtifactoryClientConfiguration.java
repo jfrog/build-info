@@ -141,16 +141,8 @@ public class ArtifactoryClientConfiguration {
      */
     @Deprecated
     public String getContextUrl() {
-        String value = root.getStringValue(PROP_CONTEXT_URL);
-        if (StringUtils.isBlank(value)) {
-            throw new IllegalStateException("Context URL cannot be empty");
-        }
-        return value;
+        return root.getStringValue(PROP_CONTEXT_URL);
     }
-
-    /*public void setContextUrl(String contextUrl) {
-        root.setStringValue(PROP_CONTEXT_URL, contextUrl);
-    }*/
 
     public void setTimeoutSec(Integer timeout) {
         setTimeout(timeout);

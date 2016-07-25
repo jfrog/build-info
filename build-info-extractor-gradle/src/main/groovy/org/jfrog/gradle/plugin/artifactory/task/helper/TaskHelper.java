@@ -41,22 +41,21 @@ public class TaskHelper {
         return artifactoryTask.getPath();
     }
 
-    protected ArtifactoryClientConfiguration getArtifactoryClientConfiguration() {
-        return ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
-    }
-
     protected Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, String publicationName) {
+        Project project = getProject();
         if (defaultProps == null) {
             defaultProps = Maps.newHashMap();
             addProps(defaultProps, artifactoryTask.getProperties());
-            //Add the publisher properties
-            ArtifactoryClientConfiguration clientConf = getArtifactoryClientConfiguration();
-            defaultProps.putAll(clientConf.publisher.getMatrixParams());
+            // Add the publisher properties
+            ArtifactoryClientConfiguration.PublisherHandler publisher =
+                ArtifactoryPluginUtil.getPublisherHandler(project);
+            if (publisher != null) {
+                defaultProps.putAll(publisher.getMatrixParams());
+            }
         }
 
         Map<String, String> propsToAdd = Maps.newHashMap(defaultProps);
         //Apply artifact-specific props from the artifact specs
-        Project project = getProject();
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration(publicationName)
                         .group(project.getGroup().toString())
@@ -85,9 +84,13 @@ public class TaskHelper {
 
     @Nonnull
     protected Boolean isPublishMaven() {
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+        if (publisher == null) {
+            return false;
+        }
         // Get the value from the client publisher configuration (in case a CI plugin configuration is used):
-        Boolean publishPom = acc.publisher.isMaven();
+        Boolean publishPom = publisher.isMaven();
         // It the value is null, it means that there's no CI plugin configuration, so the value should be taken from the
         // artifactory DSL inside the gradle script:
         if (publishPom == null) {
@@ -98,9 +101,13 @@ public class TaskHelper {
 
     @Nonnull
     protected Boolean isPublishIvy() {
-        ArtifactoryClientConfiguration acc = getArtifactoryClientConfiguration();
+        ArtifactoryClientConfiguration.PublisherHandler publisher =
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
+        if (publisher == null) {
+            return false;
+        }
         // Get the value from the client publisher configuration (in case a CI plugin configuration is used):
-        Boolean publishIvy = acc.publisher.isIvy();
+        Boolean publishIvy = publisher.isIvy();
         // It the value is null, it means that there's no CI Server Artifactory plugin configuration,
         // so the value should be taken from the artifactory DSL inside the gradle script:
         if (publishIvy == null) {

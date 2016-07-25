@@ -287,23 +287,27 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                 .id(getModuleIdString(project.getGroup().toString(),
                         artifactName, project.getVersion().toString()));
         try {
-            ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getArtifactoryConvention(project).getClientConfig().publisher;
-            boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
-            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                    publisher.getIncludePatterns(),
-                    publisher.getExcludePatterns());
-            Iterable<GradleDeployDetails> deployExcludeDetails = null;
-            Iterable<GradleDeployDetails> deployIncludeDetails = null;
-            if (excludeArtifactsFromBuild) {
-                deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
-                deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
+            ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getPublisherHandler(project);
+            if (publisher != null) {
+                boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
+                IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                        publisher.getIncludePatterns(),
+                        publisher.getExcludePatterns());
+                Iterable<GradleDeployDetails> deployExcludeDetails = null;
+                Iterable<GradleDeployDetails> deployIncludeDetails = null;
+                if (excludeArtifactsFromBuild) {
+                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
+                    deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
+                } else {
+                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
+                    deployExcludeDetails = new ArrayList<GradleDeployDetails>();
+                }
+                builder.artifacts(calculateArtifacts(deployIncludeDetails))
+                        .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
+                        .dependencies(calculateDependencies(project));
             } else {
-                deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
-                deployExcludeDetails = new ArrayList<GradleDeployDetails>();
+                log.warn("No publisher config found for project: " + project.getName());
             }
-            builder.artifacts(calculateArtifacts(deployIncludeDetails))
-                    .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
-                    .dependencies(calculateDependencies(project));
         } catch (Exception e) {
             log.error("Error during extraction: ", e);
         }

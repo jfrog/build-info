@@ -55,8 +55,12 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (convention != null) {
                 ArtifactoryClientConfiguration clientConfig = convention.getClientConfig()
                 // Fill-in the client config for the global, then adjust children project
-                GradleArtifactoryClientConfigUpdater.update(clientConfig, gradle.rootProject)
-                defineResolvers(bit.project, clientConfig.resolver)
+                GradleArtifactoryClientConfigUpdater.update(clientConfig, bit.project)
+                ArtifactoryClientConfiguration.ResolverHandler resolver =
+                    ArtifactoryPluginUtil.getResolverHandler(bit.project)
+                if (resolver != null) {
+                    defineResolvers(bit.project, resolver)
+                }
                 bit.projectsEvaluated()
             }
         }
