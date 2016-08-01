@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
@@ -54,7 +55,7 @@ public class ArtifactoryClientConfiguration {
     private final PrefixPropertyHandler rootConfig;
 
     public ArtifactoryClientConfiguration(Log log) {
-        this.root = new PrefixPropertyHandler(log, new TreeMap<String, String>());
+        this.root = new PrefixPropertyHandler(log, new ConcurrentSkipListMap<String, String>());
         this.rootConfig = new PrefixPropertyHandler(root, BUILD_INFO_CONFIG_PREFIX);
         this.resolver = new ResolverHandler();
         this.publisher = new PublisherHandler();
