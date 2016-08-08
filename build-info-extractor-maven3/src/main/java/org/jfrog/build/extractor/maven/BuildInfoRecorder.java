@@ -48,8 +48,12 @@ import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
+import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
@@ -93,14 +97,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private ArtifactoryClientConfiguration conf;
     private Map<String, String> matrixParams;
     private Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
-    private final ThreadLocal<XPathExpression> xPathExpression
-            = new ThreadLocal<XPathExpression>() {
+    private DocumentBuilder documentBuilder = null;
+    private final ThreadLocal<XPathExpression> xPathExpression = new ThreadLocal<XPathExpression>() {
         @Override
         protected XPathExpression initialValue() {
             XPathExpression result = null;
             try {
-                result = XPathFactory.newInstance().newXPath().
-                        compile("/testsuite/@failures>0 or /testsuite/@errors>0");
+                result = XPathFactory.newInstance().newXPath()
+                    .compile("/testsuite/@failures>0 or /testsuite/@errors>0");
             } catch (XPathExpressionException ex) {
                 logger.error("Fail to create XPathExpression", ex);
             }
@@ -325,16 +329,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             FileInputStream stream = null;
             try {
                 stream = new FileInputStream(report);
-                Object evaluate = xPathExpression.get().evaluate(new InputSource(stream),
-                        XPathConstants.STRING);
+                Document doc = getDocumentBuilder().parse(new InputSource(stream));
+                Boolean evaluate =((Boolean)xPathExpression.get().evaluate(doc, XPathConstants.BOOLEAN));
 
-                if (evaluate != null && StringUtils.isNotBlank(evaluate.toString()) && evaluate.toString().equals("true")) {
+                if (evaluate != null && evaluate) {
                     return true;
                 }
             } catch (FileNotFoundException e) {
                 logger.error("File '" + report.getAbsolutePath() + "' does not exist.", e);
             } catch (XPathExpressionException e) {
                 logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.", e);
+            } catch (Exception e) {
+                logger.error("Expression caught while checking build tests result.", e);
             } finally {
                 IOUtils.closeQuietly(stream);
             }
@@ -710,5 +716,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     public ResolutionHelper getResolutionHelper() {
         return resolutionHelper;
+    }
+
+    private DocumentBuilder getDocumentBuilder() throws ParserConfigurationException {
+        if (documentBuilder == null) {
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            factory.setNamespaceAware(true);
+            factory.setValidating(false);
+            factory.setFeature("http://xml.org/sax/features/validation", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            documentBuilder = factory.newDocumentBuilder();
+        }
+        return documentBuilder;
     }
 }
