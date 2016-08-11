@@ -9,6 +9,7 @@ import org.gradle.api.Task
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
 import org.gradle.api.ProjectEvaluationListener
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
@@ -46,7 +47,10 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     }
 
     def void projectsEvaluated(Gradle gradle) {
-        // Configure the artifactoryPublish tasks. Deployment happens on task execution
+        // Make sure the plugin is applied to the root project.
+        gradle.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
+
+        // Configure the artifactoryPublish tasks. Deployment happens on task execution.
         artifactoryTasks.each { BuildInfoBaseTask bit ->
             ArtifactoryClientConfiguration configuration = null;
             ArtifactoryPluginConvention convention =

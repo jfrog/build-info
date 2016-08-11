@@ -172,18 +172,20 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 this.getPath(), project.getName());
             return;
         }
-        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getArtifactoryConvention(project);
-        ArtifactoryClientConfiguration acc = convention.getClientConfig();
-        artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
+        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
+        if (convention != null) {
+            ArtifactoryClientConfiguration acc = convention.getClientConfig();
+            artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
-        //Configure the task using the "defaults" closure (delegate to the task)
-        PublisherConfig config = convention.getPublisherConfig();
-        if (config != null) {
-            Closure defaultsClosure = config.getDefaultsClosure();
-            ConfigureUtil.configure(defaultsClosure, this);
+            // Configure the task using the "defaults" closure (delegate to the task)
+            PublisherConfig config = convention.getPublisherConfig();
+            if (config != null) {
+                Closure defaultsClosure = config.getDefaultsClosure();
+                ConfigureUtil.configure(defaultsClosure, this);
+            }
         }
 
-        //Depend on buildInfo task in sub-projects
+        // Depend on buildInfo task in sub-projects
         for (Project sub : project.getSubprojects()) {
             Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
             if (subBiTask != null) {
