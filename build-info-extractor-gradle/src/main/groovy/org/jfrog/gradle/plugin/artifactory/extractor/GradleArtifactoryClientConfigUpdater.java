@@ -85,12 +85,15 @@ public class GradleArtifactoryClientConfigUpdater {
     }
 
     public static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
-        //Build name
-        String buildName = project.getName();
-        config.info.setBuildName(buildName);
+        // Build name
+        String buildName = config.info.getBuildName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = project.getName();
+            config.info.setBuildName(buildName);
+        }
         config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
 
-        //Build number
+        // Build number
         String buildNumber = config.info.getBuildNumber();
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = new Date().getTime() + "";
@@ -98,7 +101,7 @@ public class GradleArtifactoryClientConfigUpdater {
         }
         config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
 
-        //Build start (was set by the plugin - no need to make up a fallback val)
+        // Build start (was set by the plugin - no need to make up a fallback val)
         String buildStartedIso = config.info.getBuildStarted();
         Date buildStartDate;
         try {
@@ -108,7 +111,7 @@ public class GradleArtifactoryClientConfigUpdater {
         }
         config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, String.valueOf(buildStartDate.getTime()));
 
-        //Build agent
+        // Build agent
         String buildAgentName = config.info.getBuildAgentName();
         String buildAgentVersion = config.info.getBuildAgentVersion();
         if (StringUtils.isBlank(buildAgentName) && StringUtils.isBlank(buildAgentVersion)) {
