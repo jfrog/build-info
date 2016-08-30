@@ -46,4 +46,6 @@ public interface BuildInfoFields {
     String BUILD_ROOT = "build.root";
     String RUN_PARAMETERS = "runParameters.";
     String INCREMENTAL = "incremental";
+    String GENERATED_BUILD_INFO = "generated.build.info";
+    String VCS = "vcs";
 }

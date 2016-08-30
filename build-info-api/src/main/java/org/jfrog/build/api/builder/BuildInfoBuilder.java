@@ -49,6 +49,7 @@ public class BuildInfoBuilder {
     protected String url;
     protected String parentName;
     protected String parentNumber;
+    protected List<Vcs> vcs = new ArrayList<Vcs>();
     protected String vcsRevision;
     protected String vcsUrl;
     protected List<MatrixParameter> runParameters;
@@ -101,8 +102,13 @@ public class BuildInfoBuilder {
         build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
         build.setStatuses(statuses);
         build.setProperties(properties);
-        build.setVcsRevision(vcsRevision);
-        build.setVcsUrl(vcsUrl);
+        if (!StringUtils.isEmpty(vcsRevision)) {
+            build.setVcsRevision(vcsRevision);
+        }
+        if (!StringUtils.isEmpty(vcsUrl)) {
+            build.setVcsUrl(vcsUrl);
+        }
+        build.setVcs(vcs);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
@@ -268,6 +274,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder parentNumber(String parentNumber) {
         this.parentNumber = parentNumber;
+        return this;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
+     * @param vcs The vcs data
+     * @return Builder instance
+     */
+    public BuildInfoBuilder vcs(List<Vcs> vcs) {
+        this.vcs = vcs;
         return this;
     }
 

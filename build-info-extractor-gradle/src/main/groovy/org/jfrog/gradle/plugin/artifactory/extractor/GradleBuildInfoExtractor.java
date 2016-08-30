@@ -146,13 +146,19 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
             bib.url(buildUrl);
         }
         String vcsRevision = clientConf.info.getVcsRevision();
+        Vcs vcs = new Vcs();
         if (StringUtils.isNotBlank(vcsRevision)) {
+            vcs.setRevision(vcsRevision);
             bib.vcsRevision(vcsRevision);
         }
 
         String vcsUrl = clientConf.info.getVcsUrl();
         if (StringUtils.isNotBlank(vcsUrl)) {
+            vcs.setUrl(vcsUrl);
             bib.vcsUrl(vcsUrl);
+        }
+        if (!vcs.isEmpty()) {
+            bib.vcs(Arrays.asList(vcs));
         }
 
         LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());

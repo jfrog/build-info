@@ -43,14 +43,22 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isNotBlank(buildUrl)) {
             builder.url(buildUrl);
         }
+
+        Vcs vcs = new Vcs();
         String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
+            vcs.setRevision(vcsRevision);
             builder.vcsRevision(vcsRevision);
         }
         String vcsUrl = clientConf.info.getVcsUrl();
         if (StringUtils.isNotBlank(vcsUrl)) {
+            vcs.setUrl(vcsUrl);
             builder.vcsUrl(vcsUrl);
         }
+        if (!vcs.isEmpty()) {
+            builder.vcs(Arrays.asList(vcs));
+        }
+
         BuildAgent buildAgent = new BuildAgent("Maven", getMavenVersion());
         builder.buildAgent(buildAgent);
 

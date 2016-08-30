@@ -112,4 +112,29 @@ public class Module extends BaseBuildBean {
     public void setExcludedArtifacts(List<Artifact> excludedArtifacts) {
         this.excludedArtifacts = excludedArtifacts;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Module module = (Module) o;
+
+        if (getId() != null ? !getId().equals(module.getId()) : module.getId() != null) return false;
+        if (getArtifacts() != null ? !getArtifacts().equals(module.getArtifacts()) : module.getArtifacts() != null)
+            return false;
+        if (getExcludedArtifacts() != null ? !getExcludedArtifacts().equals(module.getExcludedArtifacts()) : module.getExcludedArtifacts() != null)
+            return false;
+        return getDependencies() != null ? getDependencies().equals(module.getDependencies()) : module.getDependencies() == null;
+
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getId() != null ? getId().hashCode() : 0;
+        result = 31 * result + (getArtifacts() != null ? getArtifacts().hashCode() : 0);
+        result = 31 * result + (getExcludedArtifacts() != null ? getExcludedArtifacts().hashCode() : 0);
+        result = 31 * result + (getDependencies() != null ? getDependencies().hashCode() : 0);
+        return result;
+    }
 }

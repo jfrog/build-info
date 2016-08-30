@@ -51,7 +51,17 @@ public class Build extends BaseBuildBean {
     private String url;
     private String parentName;
     private String parentNumber;
+    private List<Vcs> vcs;
+
+    /**
+     * @deprecated since 2.6.1 use vcs instead.
+     */
+    @Deprecated
     private String vcsRevision;
+    /**
+     * @deprecated since 2.6.1 use vcs instead.
+     */
+    @Deprecated
     private String vcsUrl;
 
     @Deprecated
@@ -174,6 +184,14 @@ public class Build extends BaseBuildBean {
      */
     public void setParentNumber(String parentNumber) {
         this.parentNumber = parentNumber;
+    }
+
+    public List<Vcs> getVcs() {
+        return vcs;
+    }
+
+    public void setVcs(List<Vcs> vcs) {
+        this.vcs = vcs;
     }
 
     /**
@@ -549,6 +567,7 @@ public class Build extends BaseBuildBean {
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +
+                ", vcs='" + vcs + '\'' +
                 ", vcsRevision='" + vcsRevision + '\'' +
                 ", vcsUrl='" + vcsUrl + '\'' +
                 ", parentBuildId='" + parentBuildId + '\'' +

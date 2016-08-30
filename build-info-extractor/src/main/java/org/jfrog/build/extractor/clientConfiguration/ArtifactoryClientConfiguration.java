@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
@@ -1037,6 +1038,14 @@ public class ArtifactoryClientConfiguration {
             publisher.setBuildRoot(buildRoot);
             resolver.setBuildRoot(URLEncoder.encode(buildRoot, "UTF-8"));
             setStringValue(BUILD_ROOT, buildRoot);
+        }
+
+        public void setGeneratedBuildInfoFilePath(String generatedBuildInfo) {
+            setStringValue(GENERATED_BUILD_INFO, generatedBuildInfo);
+        }
+
+        public String getGeneratedBuildInfoFilePath() {
+            return getStringValue(GENERATED_BUILD_INFO);
         }
 
         public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {

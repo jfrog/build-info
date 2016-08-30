@@ -19,6 +19,7 @@ package org.jfrog.build.extractor.maven;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -112,6 +113,14 @@ public class BuildDeploymentHelper {
                         }
                     } catch ( Exception e ) {
                         throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
+                    }
+                }
+                if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.writeValue(new File(clientConf.info.getGeneratedBuildInfoFilePath()), build);
+                    } catch (Exception e) {
+                        logger.info("Failed writing build info to file ...");
                     }
                 }
             } finally {

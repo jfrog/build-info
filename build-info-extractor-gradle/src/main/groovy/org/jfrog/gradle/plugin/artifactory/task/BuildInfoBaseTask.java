@@ -6,6 +6,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -330,6 +331,11 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         return publishBuildInfo;
     }
 
+    @Nonnull
+    private Boolean isGenerateBuildInfoToFile(ArtifactoryClientConfiguration acc) {
+        return !StringUtils.isEmpty(acc.info.getGeneratedBuildInfoFilePath());
+    }
+
     @Nullable
     private Boolean getFlag(String flagName) {
         return flags.get(flagName);
@@ -424,6 +430,14 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                         client.sendBuildInfo(build);
+                    }
+                }
+                if (isGenerateBuildInfoToFile(accRoot)) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.writeValue(new File(accRoot.info.getGeneratedBuildInfoFilePath()), build);
+                    } catch (Exception e) {
+                        log.info("Failed writing build info to file ...");
                     }
                 }
             } finally {

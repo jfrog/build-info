@@ -217,6 +217,17 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     /**
      * Sets the vcs revision (format is vcs specific)
      *
+     * @param vcs The vcs data
+     * @return Builder instance
+     */
+    public BuildInfoMavenBuilder vcs(List<Vcs> vcs) {
+        super.vcs(vcs);
+        return this;
+    }
+
+    /**
+     * Sets the vcs revision (format is vcs specific)
+     *
      * @param vcsRevision The vcs revision
      * @return Builder instance
      */
