@@ -88,7 +88,7 @@ public class GradleArtifactoryClientConfigUpdater {
         // Build name
         String buildName = config.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
-            buildName = project.getName();
+            buildName = project.getRootProject().getName();
             config.info.setBuildName(buildName);
         }
         config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);

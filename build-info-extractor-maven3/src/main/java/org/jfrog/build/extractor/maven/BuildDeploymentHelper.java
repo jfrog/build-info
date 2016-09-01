@@ -120,7 +120,7 @@ public class BuildDeploymentHelper {
                         ObjectMapper mapper = new ObjectMapper();
                         mapper.writeValue(new File(clientConf.info.getGeneratedBuildInfoFilePath()), build);
                     } catch (Exception e) {
-                        logger.info("Failed writing build info to file ...");
+                        throw new RuntimeException("Failed writing build info to file", e);
                     }
                 }
             } finally {

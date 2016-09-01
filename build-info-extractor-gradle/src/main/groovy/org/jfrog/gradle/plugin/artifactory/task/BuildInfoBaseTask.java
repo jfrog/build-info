@@ -437,7 +437,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         ObjectMapper mapper = new ObjectMapper();
                         mapper.writeValue(new File(accRoot.info.getGeneratedBuildInfoFilePath()), build);
                     } catch (Exception e) {
-                        log.info("Failed writing build info to file ...");
+                        throw new IOException("Failed writing build info to file", e);
                     }
                 }
             } finally {
