@@ -164,7 +164,6 @@ public class TaskHelperPublications extends TaskHelper{
             return deployDetails;
         }
 
-        Set<String> processedFiles = Sets.newHashSet();
         for (IvyPublication ivyPublication : ivyPublications) {
             String publicationName = ivyPublication.getName();
             if (!(ivyPublication instanceof IvyPublicationInternal)) {
@@ -181,7 +180,7 @@ public class TaskHelperPublications extends TaskHelper{
             // First adding the Ivy descriptor (if the build is configured to add it):
             if (isPublishIvy()) {
                 File file = ivyNormalizedPublication.getDescriptorFile();
-                DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
+                DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
                             projectIdentity.getModule(), "xml", "ivy", null, extraInfo, file);
@@ -192,7 +191,7 @@ public class TaskHelperPublications extends TaskHelper{
             IvyArtifactSet artifacts = ivyPublication.getArtifacts();
             for (IvyArtifact artifact : artifacts) {
                 File file = artifact.getFile();
-                DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
+                DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
                         artifact.getName(), artifact.getExtension(), artifact.getType(), artifact.getClassifier(),
@@ -216,7 +215,7 @@ public class TaskHelperPublications extends TaskHelper{
             // First adding the Maven descriptor (if the build is configured to add it):
             if (isPublishMaven()) {
                 File file = mavenNormalizedPublication.getPomFile();
-                DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
+                DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
                             projectIdentity.getArtifactId(), "pom", "pom", null, file);
@@ -227,7 +226,7 @@ public class TaskHelperPublications extends TaskHelper{
             MavenArtifactSet artifacts = mavenPublication.getArtifacts();
             for (MavenArtifact artifact : artifacts) {
                 File file = artifact.getFile();
-                DeployDetails.Builder builder = createBuilder(processedFiles, file, publicationName);
+                DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
                         projectIdentity.getArtifactId(), artifact.getExtension(),
@@ -250,15 +249,11 @@ public class TaskHelperPublications extends TaskHelper{
         }
     }
 
-    private DeployDetails.Builder createBuilder(Set<String> processedFiles, File file, String publicationName) {
-        if (processedFiles.contains(file.getAbsolutePath())) {
-            return null;
-        }
+    private DeployDetails.Builder createBuilder(File file, String publicationName) {
         if (!file.exists()) {
             throw new GradleException("File '" + file.getAbsolutePath() + "'" +
                     " does not exist, and need to be published from publication " + publicationName);
         }
-        processedFiles.add(file.getAbsolutePath());
 
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
         try {
