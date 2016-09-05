@@ -32,7 +32,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
 
     @Override
     public List<Dependency> retrievePublishedDependencies(String resolvePattern)
-            throws IOException, InterruptedException {
+            throws IOException {
         if (StringUtils.isBlank(resolvePattern)) {
             return Collections.emptyList();
         }
@@ -52,20 +52,15 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         this.downloader.setFlatDownload(flat);
     }
 
-    public Set<DownloadableArtifact> collectArtifactsToDownload(String aql) {
+    public Set<DownloadableArtifact> collectArtifactsToDownload(String aql) throws IOException {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
-        try {
-            AqlSearchResult aqlSearchResult = downloader.getClient().searchArtifactsByAql(aql);
-            List<AqlSearchResult.SearchEntry> searchResults = aqlSearchResult.getResults();
-            for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
-                String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
-                downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" + searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
-            }
-        } catch (IOException e) {
-            log.info("Failed to execute aql search");
-        } finally {
-            return downloadableArtifacts;
+        AqlSearchResult aqlSearchResult = downloader.getClient().searchArtifactsByAql(aql);
+        List<AqlSearchResult.SearchEntry> searchResults = aqlSearchResult.getResults();
+        for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
+            String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
+            downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" + searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
         }
+        return downloadableArtifacts;
     }
 
     public void setArtifactoryUrl(String artifactoryUrl) {

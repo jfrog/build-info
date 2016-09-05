@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
@@ -10,8 +11,12 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
+
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +34,40 @@ public class DependenciesDownloaderHelper {
     public DependenciesDownloaderHelper(DependenciesDownloader downloader, Log log) {
         this.downloader = downloader;
         this.log = log;
+    }
+
+    /**
+     * Download dependencies by the provided spec from the given artifactory server.
+     * returns list of downloaded artifacts
+     *
+     * @param serverUrl the server url
+     * @param downloadSpec the download spec
+     * @return list of downloaded artifacts
+     * @throws IOException in case of IO error
+     */
+    public List<Dependency> downloadDependencies(String serverUrl, Spec downloadSpec) throws IOException {
+        AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, serverUrl, "", log);
+        WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, serverUrl, "", log);
+        List<Dependency> resolvedDependencies = Lists.newArrayList();
+
+        for (FileSpec file : downloadSpec.getFiles()) {
+            if (file.getPattern() != null && file.getAql() != null ) {
+                throw new InputMismatchException("Spec can't contain both AQL and pattern objects.");
+            }
+            if (file.getPattern() != null) {
+                wildcardHelper.setTarget(file.getTarget());
+                wildcardHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
+                wildcardHelper.setRecursive(BooleanUtils.toBoolean(file.getRecursive()));
+                wildcardHelper.setProps(file.getProps());
+                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern()));
+            }
+            if (file.getAql() != null) {
+                aqlHelper.setTarget(file.getTarget());
+                aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
+                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql()));
+            }
+        }
+        return resolvedDependencies;
     }
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
@@ -78,28 +117,23 @@ public class DependenciesDownloaderHelper {
 
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
             downloadableArtifact.getRelativeDirPath());
+        dependencyResult = getDependencyLocally(checksums, fileDestination);
+        if (dependencyResult == null) {
+            log.info("Downloading '" + uriWithParams + "' ...");
+            HttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
+            InputStream inputStream = httpResponse.getEntity().getContent();
+            Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
 
-        try {
-            dependencyResult = getDependencyLocally(checksums, fileDestination);
-            if (dependencyResult == null) {
-                log.info("Downloading '" + uriWithParams + "' ...");
-                HttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
-                InputStream inputStream = httpResponse.getEntity().getContent();
-                Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
-
-                // If the checksums map is null then something went wrong and we should fail the build
-                if (checksumsMap == null) {
-                    throw new IOException("Received null checksums map for downloaded file.");
-                }
-
-                String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
-                String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
-
-                log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
-                dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
+            // If the checksums map is null then something went wrong and we should fail the build
+            if (checksumsMap == null) {
+                throw new IOException("Received null checksums map for downloaded file.");
             }
-        } catch (IOException e) {
-            log.warn("Error occurred while resolving published dependency: " + uriWithParams + " "  + e.getMessage());
+
+            String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
+            String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
+
+            log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
+            dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
         }
 
         return dependencyResult;
@@ -114,7 +148,7 @@ public class DependenciesDownloaderHelper {
      */
     private Dependency getDependencyLocally(Checksums checksums, String filePath) throws IOException {
         if (downloader.isFileExistsLocally(filePath, checksums.getMd5(), checksums.getSha1())) {
-            log.debug("File '" + filePath + "' already exists locally, skipping remote download.");
+            log.info("File '" + filePath + "' already exists locally, skipping remote download.");
             return new DependencyBuilder().id(filePath).md5(checksums.getMd5()).sha1(checksums.getSha1()).build();
         }
         return null;

@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 /**
  * Created by Tamirh on 25/04/2016.
  */
-public class WildcardDependenciesHelper implements DependenciesHelper {
+public class WildcardsDependenciesHelper implements DependenciesHelper {
     private DependenciesDownloader downloader;
     private Log log;
     private String artifactoryUrl;
@@ -20,12 +20,11 @@ public class WildcardDependenciesHelper implements DependenciesHelper {
     private String props;
     private boolean recursive;
 
-    public WildcardDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
+    public WildcardsDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
         this.downloader = downloader;
         this.log = log;
         this.artifactoryUrl = artifactoryUrl;
         this.target = target;
-
         this.recursive = false;
         this.props = "";
     }
@@ -47,7 +46,7 @@ public class WildcardDependenciesHelper implements DependenciesHelper {
     }
 
     public void setProps(String props) {
-        this.props = props;
+        this.props = StringUtils.defaultIfEmpty(props , "");
     }
 
     public void setRecursive(boolean recursive) {
@@ -56,7 +55,7 @@ public class WildcardDependenciesHelper implements DependenciesHelper {
 
     @Override
     public List<Dependency> retrievePublishedDependencies(String searchPattern)
-            throws IOException, InterruptedException {
+            throws IOException {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
@@ -68,9 +67,10 @@ public class WildcardDependenciesHelper implements DependenciesHelper {
 
     private void replaceTargetPlaceholders(String searchPattern, Set<DownloadableArtifact> downloadableArtifacts) {
         Pattern pattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(searchPattern));
+        target = StringUtils.defaultIfEmpty(target , "");
         for (DownloadableArtifact artifact : downloadableArtifacts) {
             String repoName = StringUtils.substringAfterLast(artifact.getRepoUrl(), "/");
-            if (target.endsWith("/")) {
+            if (StringUtils.isEmpty(target) || target.endsWith("/")) {
                 artifact.setTargetDirPath(PlaceholderReplacementUtils.reformatRegexp(repoName + "/" + artifact.getFilePath(),
                         target, pattern));
             } else {

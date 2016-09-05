@@ -61,9 +61,4 @@ public interface DependenciesDownloader {
      *@param flat , flat download flag nva value
      */
     void setFlatDownload(boolean flat);
-
-    /**
-     * return the flat download flag
-     */
-    boolean getFlatDownload();
 }

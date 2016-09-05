@@ -24,12 +24,12 @@ import java.util.Set;
  *
  * @author Shay Yaakov
  */
-public class AntDependenciesHelper implements DependenciesHelper {
+public class AntPatternsDependenciesHelper implements DependenciesHelper {
 
     private DependenciesDownloader downloader;
     private Log log;
 
-    public AntDependenciesHelper(DependenciesDownloader downloader, Log log) {
+    public AntPatternsDependenciesHelper(DependenciesDownloader downloader, Log log) {
         this.downloader = downloader;
         this.log = log;
     }
