@@ -62,6 +62,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     private final Map<String, Boolean> flags = Maps.newHashMap();
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
+    List<BuildInfoBaseTask> artifactoryTasks = null;
+
     public abstract void checkDependsOnArtifactsToPublish();
 
     public abstract void collectDescriptorsAndArtifactsForUpload() throws IOException;
@@ -113,23 +115,16 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public void collectProjectBuildInfo() throws IOException {
         try {
             log.debug("Task '{}' activated", getPath());
-            // Only the last buildInfo execution activate the deployment
-            List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
+            // Only the last buildInfo execution performs the deployment
+            List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
             if (orderedTasks.indexOf(this) == -1) {
                 log.error("Could not find my own task {} in the task graph!", getPath());
                 return;
             }
 
-            List<BuildInfoBaseTask> remainingTasks = new ArrayList<BuildInfoBaseTask>();
-            for (BuildInfoBaseTask task : getAllBuildInfoTasks()) {
-                if (!isTaskExecuted(task)) {
-                    remainingTasks.add(task);
-                }
-            }
-
-            if (remainingTasks.size() <= 1) {
+            if (isLastTask()) {
                 log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
-                        new Object[]{getProject().getPath(), getPath()});
+                    new Object[]{getProject().getPath(), getPath()});
                 prepareAndDeploy();
             }
         } finally {
@@ -144,24 +139,41 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     /**
-     * Determines if the BuildInfoBaseTask has already been executed.
-     * This methods wraps Gradle's task.getState().getExecuted().
-     * @param task  The BuildInfoBaseTask
-     * @return      true if the task has already been executed in this build.
+     * Indicates whether this BintrayUploadTask is the last task to be executed.
+     * @return  true if this is the last BintrayUploadTask task.
      */
-    private boolean isTaskExecuted(BuildInfoBaseTask task) {
-        try {
-            return task.getState().getExecuted();
-        } catch (NoSuchMethodError error) {
-            // Compatibility with older versions of Gradle:
-            try {
-                Method m = task.getClass().getMethod("getState");
-                TaskState state = (TaskState)m.invoke(task);
-                return state.getExecuted();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+    private boolean isLastTask() {
+        return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
+    }
+
+    /**
+     * Return the index of this BintrayUploadTask in the list of all tasks of type BintrayUploadTask.
+     * @return  The task index.
+     */
+    private int getCurrentTaskIndex() {
+        List<BuildInfoBaseTask> tasks = getAllArtifactoryTasks();
+        int currentTaskIndex = tasks.indexOf(this);
+        if (currentTaskIndex == -1) {
+            throw new IllegalStateException(String.format("Could not find the current task %s in the task graph", getPath()));
         }
+        return currentTaskIndex;
+    }
+
+    /**
+     * Analyze the task graph ordered and extract a list of build info tasks
+     * @return An ordered list of build info tasks
+     */
+    private List<BuildInfoBaseTask> getAllArtifactoryTasks() {
+        if (artifactoryTasks == null) {
+            List<BuildInfoBaseTask> tasks = new ArrayList<BuildInfoBaseTask>();
+            for (Task task : getProject().getGradle().getTaskGraph().getAllTasks()) {
+                if (task instanceof BuildInfoBaseTask) {
+                    tasks.add(((BuildInfoBaseTask)task));
+                }
+            }
+            artifactoryTasks = tasks;
+        }
+        return artifactoryTasks;
     }
 
     public void projectsEvaluated() {
@@ -262,21 +274,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         setFlag(PUBLISH_ARTIFACTS, toBoolean(publishArtifacts));
     }
 
-    /**
-     * Analyze the task graph ordered and extract a list of build info tasks
-     *
-     * @return An ordered list of build info tasks
-     */
-    private List<BuildInfoBaseTask> getAllBuildInfoTasks() {
-        List<BuildInfoBaseTask> result = new ArrayList<BuildInfoBaseTask>();
-        for (Task task : getProject().getGradle().getTaskGraph().getAllTasks()) {
-            if (task instanceof BuildInfoBaseTask) {
-                result.add((BuildInfoBaseTask) task);
-            }
-        }
-        return result;
-    }
-
     private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
@@ -358,7 +355,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             accRoot, getProject().getRootProject());
 
         Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
-        List<BuildInfoBaseTask> orderedTasks = getAllBuildInfoTasks();
+        List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =

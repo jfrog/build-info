@@ -207,6 +207,8 @@ configure(extractorProjects()) {
     }
 
     task jarAll(type: Jar) {
+        inputs.files configurations.uberJar
+        inputs.files tasks.jar.outputs.files
         dependsOn jar
         //Add the directory of the archive as the input files for this task
         classifier = 'uber'
