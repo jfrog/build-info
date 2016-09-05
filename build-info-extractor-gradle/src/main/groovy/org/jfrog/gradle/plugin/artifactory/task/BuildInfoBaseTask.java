@@ -139,15 +139,15 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     /**
-     * Indicates whether this BintrayUploadTask is the last task to be executed.
-     * @return  true if this is the last BintrayUploadTask task.
+     * Indicates whether this ArtifactoryTask is the last task to be executed.
+     * @return  true if this is the last ArtifactoryTask task.
      */
     private boolean isLastTask() {
         return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
     }
 
     /**
-     * Return the index of this BintrayUploadTask in the list of all tasks of type BintrayUploadTask.
+     * Return the index of this ArtifactoryTask in the list of all tasks of type BuildInfoBaseTask.
      * @return  The task index.
      */
     private int getCurrentTaskIndex() {
