@@ -1,6 +1,6 @@
 package org.jfrog.build.client.bintrayResponse;
 
-import org.codehaus.jackson.JsonParser;
+import com.fasterxml.jackson.core.JsonParser;
 
 import java.io.IOException;
 
@@ -12,10 +12,8 @@ import java.io.IOException;
 public class BintrayResponseFactory {
 
     /**
-     *
      * @param status code from HttpResponse upon which we are deciding the outcome of the request
      * @param parser JsonParser that is initialized with the HttpResponse body content as an InputStream
-     *
      * @return BintrayResponse object which can be printed in a readable way on the screen
      * if any Json call will due to IOException and we will not be able to retrieve the information
      * we will create an Response with only the status code.

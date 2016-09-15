@@ -20,7 +20,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;

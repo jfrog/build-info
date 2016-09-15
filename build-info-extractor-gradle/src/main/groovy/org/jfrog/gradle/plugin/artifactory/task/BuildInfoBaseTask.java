@@ -1,12 +1,12 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -16,7 +16,6 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskState;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -40,7 +39,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -124,7 +122,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
             if (isLastTask()) {
                 log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
-                    new Object[]{getProject().getPath(), getPath()});
+                        new Object[]{getProject().getPath(), getPath()});
                 prepareAndDeploy();
             }
         } finally {
@@ -140,7 +138,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     /**
      * Indicates whether this ArtifactoryTask is the last task to be executed.
-     * @return  true if this is the last ArtifactoryTask task.
+     *
+     * @return true if this is the last ArtifactoryTask task.
      */
     private boolean isLastTask() {
         return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
@@ -148,7 +147,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     /**
      * Return the index of this ArtifactoryTask in the list of all tasks of type BuildInfoBaseTask.
-     * @return  The task index.
+     *
+     * @return The task index.
      */
     private int getCurrentTaskIndex() {
         List<BuildInfoBaseTask> tasks = getAllArtifactoryTasks();
@@ -161,6 +161,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     /**
      * Analyze the task graph ordered and extract a list of build info tasks
+     *
      * @return An ordered list of build info tasks
      */
     private List<BuildInfoBaseTask> getAllArtifactoryTasks() {
@@ -168,7 +169,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             List<BuildInfoBaseTask> tasks = new ArrayList<BuildInfoBaseTask>();
             for (Task task : getProject().getGradle().getTaskGraph().getAllTasks()) {
                 if (task instanceof BuildInfoBaseTask) {
-                    tasks.add(((BuildInfoBaseTask)task));
+                    tasks.add(((BuildInfoBaseTask) task));
                 }
             }
             artifactoryTasks = tasks;
@@ -179,10 +180,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public void projectsEvaluated() {
         Project project = getProject();
         log.info("Configuring artifactoryPublish task '{}' for project '{}'.",
-            this.getPath(), project.getName());
+                this.getPath(), project.getName());
         if (isSkip()) {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
-                this.getPath(), project.getName());
+                    this.getPath(), project.getName());
             return;
         }
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
@@ -290,8 +291,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         }
     }
 
-    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
-        if(clientConf.getTimeout() != null) {
+    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getTimeout() != null) {
             client.setConnectionTimeout(clientConf.getTimeout());
         }
     }
@@ -349,17 +350,17 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
      */
     private void prepareAndDeploy() throws IOException {
         ArtifactoryClientConfiguration accRoot =
-            ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
+                ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
         // Reset the default properties, they may have changed
         GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
-            accRoot, getProject().getRootProject());
+                accRoot, getProject().getRootProject());
 
         Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
         List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
         for (BuildInfoBaseTask bit : orderedTasks) {
             if (bit.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
-                    ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
+                        ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
 
                 if (publisher != null && publisher.getContextUrl() != null) {
                     String contextUrl = publisher.getContextUrl();
@@ -376,13 +377,13 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         ArtifactoryBuildInfoClient client = null;
                         try {
                             client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
-                                new GradleClientLogger(log));
+                                    new GradleClientLogger(log));
                             bit.collectDescriptorsAndArtifactsForUpload();
                             log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
 
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                                publisher.getIncludePatterns(),
-                                publisher.getExcludePatterns());
+                                    publisher.getIncludePatterns(),
+                                    publisher.getExcludePatterns());
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             deployArtifacts(bit.deployDetails, client, patterns);
@@ -410,10 +411,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             }
             try {
                 client = new ArtifactoryBuildInfoClient(
-                    accRoot.publisher.getContextUrl(),
-                    accRoot.publisher.getUsername(),
-                    accRoot.publisher.getPassword(),
-                    new GradleClientLogger(log));
+                        accRoot.publisher.getContextUrl(),
+                        accRoot.publisher.getUsername(),
+                        accRoot.publisher.getPassword(),
+                        new GradleClientLogger(log));
 
                 GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails);
                 Build build = gbie.extract(getProject().getRootProject());

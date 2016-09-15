@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.maven;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.File;
 import java.util.*;

@@ -16,6 +16,9 @@
 
 package org.jfrog.build.extractor.clientConfiguration.client;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -28,10 +31,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.type.TypeReference;
 import org.jfrog.build.api.dependency.*;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
@@ -43,6 +42,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Artifactory client to perform artifacts and build dependencies related tasks.
@@ -143,7 +144,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
                 content = entity.getContent();
                 JsonParser parser = httpClient.createJsonParser(content);
                 if (ignorMissingFields) {
-                    ((ObjectMapper) parser.getCodec()).configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                    ((ObjectMapper) parser.getCodec()).configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
                 }
                 // http://wiki.fasterxml.com/JacksonDataBinding
                 return parser.readValueAs(valueType);

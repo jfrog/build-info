@@ -16,19 +16,19 @@
 
 package org.jfrog.build.extractor;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.base.Charsets;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.DeserializationConfig;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
@@ -182,9 +182,9 @@ public abstract class BuildInfoExtractorUtils {
     private static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
-        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
-        mapper.getDeserializationConfig().disable(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES);
+        mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
     }

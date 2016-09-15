@@ -15,10 +15,12 @@ public class AqlSearchResult {
         this.results = results;
     }
 
-    public static class SearchEntry  {
+    public static class SearchEntry {
         private String repo;
         private String path;
         private String name;
+        private String actual_sha1;
+        private String actual_md5;
 
         public void setRepo(String repo) {
             this.repo = repo;
@@ -32,6 +34,14 @@ public class AqlSearchResult {
             this.name = name;
         }
 
+        public void setActual_sha1(String actual_sha1) {
+            this.actual_sha1 = actual_sha1;
+        }
+
+        public void setActual_md5(String actual_md5) {
+            this.actual_md5 = actual_md5;
+        }
+
         public String getRepo() {
             return repo;
         }
@@ -42,6 +52,14 @@ public class AqlSearchResult {
 
         public String getName() {
             return name;
+        }
+
+        public String getActual_sha1() {
+            return actual_sha1;
+        }
+
+        public String getActual_md5() {
+            return actual_md5;
         }
     }
 }

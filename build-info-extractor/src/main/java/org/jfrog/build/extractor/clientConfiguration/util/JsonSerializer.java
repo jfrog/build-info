@@ -16,11 +16,11 @@
 
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -34,8 +34,9 @@ public class JsonSerializer<T> {
     public String toJSON(T object) throws IOException {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
-        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+
+        mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         jsonFactory.setCodec(mapper);
         StringWriter writer = new StringWriter();
         JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);

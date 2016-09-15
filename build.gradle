@@ -263,7 +263,8 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.8.1"
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.1'
     }
 }
 
@@ -275,7 +276,7 @@ project('build-info-client') {
             exclude module: "commons-codec"
         }
         compile 'org.apache.httpcomponents:httpcore:4.2.5'
-        compile "org.codehaus.jackson:jackson-mapper-asl:1.9.12"
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.8.1'
         compile "commons-codec:commons-codec:1.8"
     }
     sourceSets {

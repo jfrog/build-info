@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.codehaus.jackson.annotate.JsonProperty;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;

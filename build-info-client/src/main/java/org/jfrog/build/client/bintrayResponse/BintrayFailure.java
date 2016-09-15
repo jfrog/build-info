@@ -1,6 +1,6 @@
 package org.jfrog.build.client.bintrayResponse;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.List;
 
@@ -15,11 +15,11 @@ public class BintrayFailure extends BintrayResponse {
 
     @Override
     @JsonIgnore
-    public String toString(){
+    public String toString() {
         StringBuilder sb = new StringBuilder("\nBintray push Failed with some Errors:\n\n");
-        for (BintrayError error : errors){
+        for (BintrayError error : errors) {
             sb.append("Status Code: ").append(error.getStatus()).append("\nMessage:").append(error.getMessage())
-            .append("\n\n");
+                    .append("\n\n");
         }
         sb.append("View Artifactory logs for more details.\n");
         return sb.toString();

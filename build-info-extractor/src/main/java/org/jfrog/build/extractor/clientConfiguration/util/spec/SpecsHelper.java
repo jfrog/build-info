@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.*;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PublishedItemsHelper;

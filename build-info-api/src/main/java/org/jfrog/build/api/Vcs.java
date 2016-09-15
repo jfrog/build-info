@@ -1,8 +1,8 @@
 package org.jfrog.build.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 import java.io.Serializable;
 

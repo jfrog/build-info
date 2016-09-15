@@ -16,6 +16,12 @@
 
 package org.jfrog.build.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -26,12 +32,6 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.introspect.JacksonAnnotationIntrospector;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.URI;
 
@@ -157,7 +157,7 @@ public class ArtifactoryHttpClient {
                 EntityUtils.consume(httpEntity);
                 JsonNode result = parser.readValueAsTree();
                 log.debug("Version result: " + result);
-                String version = result.get("version").getTextValue();
+                String version = result.get("version").asText();
                 JsonNode addonsNode = result.get("addons");
                 boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
                 return new ArtifactoryVersion(version, hasAddons);
@@ -184,8 +184,8 @@ public class ArtifactoryHttpClient {
     public JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(jsonFactory);
-        mapper.getSerializationConfig().setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        mapper.getSerializationConfig().setSerializationInclusion(JsonSerialize.Inclusion.NON_NULL);
+        mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
     }

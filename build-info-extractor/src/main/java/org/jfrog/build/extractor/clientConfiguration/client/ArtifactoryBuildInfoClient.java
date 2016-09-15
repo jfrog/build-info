@@ -16,6 +16,10 @@
 
 package org.jfrog.build.extractor.clientConfiguration.client;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -31,10 +35,6 @@ import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.BintrayUploadInfoOverride;
 import org.jfrog.build.api.release.Promotion;
@@ -163,7 +163,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
                     JsonNode result = parser.readValueAsTree();
                     log.debug("Repositories result = " + result);
                     for (JsonNode jsonNode : result) {
-                        String repositoryKey = jsonNode.get("key").getTextValue();
+                        String repositoryKey = jsonNode.get("key").asText();
                         repositories.add(repositoryKey);
                     }
                 } finally {
@@ -250,7 +250,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
                 try {
                     parser = httpClient.createJsonParser(content);
                     JsonNode result = parser.readValueAsTree();
-                    return result.get("lastModified").getTextValue();
+                    return result.get("lastModified").asText();
                 } finally {
                     if (content != null) {
                         content.close();
@@ -477,6 +477,14 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
                 .append(encodeUrl(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpPost postRequest = new HttpPost(urlBuilder.toString());
+        return httpClient.getHttpClient().execute(postRequest);
+    }
+
+    public HttpResponse executeUpdateFileProperty(String itemPath, String properties) throws IOException {
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/storage/")
+                .append(encodeUrl(itemPath)).append("?").append("properties=").append(encodeUrl(properties));
+
+        HttpPut postRequest = new HttpPut(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
     }
 
