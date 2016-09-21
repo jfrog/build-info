@@ -85,6 +85,15 @@ public class BuildDeploymentHelper {
             }
         }
 
+        if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                mapper.writeValue(new File(clientConf.info.getGeneratedBuildInfoFilePath()), build);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed writing build info to file", e);
+            }
+        }
+
         if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
             ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
             boolean isDeployArtifacts = clientConf.publisher.isPublishArtifacts() &&
@@ -113,14 +122,6 @@ public class BuildDeploymentHelper {
                         }
                     } catch ( Exception e ) {
                         throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
-                    }
-                }
-                if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.writeValue(new File(clientConf.info.getGeneratedBuildInfoFilePath()), build);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed writing build info to file", e);
                     }
                 }
             } finally {
