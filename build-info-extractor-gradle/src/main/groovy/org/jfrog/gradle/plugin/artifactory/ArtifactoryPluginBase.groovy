@@ -18,8 +18,10 @@ package org.jfrog.gradle.plugin.artifactory
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -29,8 +31,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
-    static final String PUBLISH_TASK_GROUP = "publishing"
-    static AtomicBoolean buildListernerAdded = new AtomicBoolean(false);
+    public static final String PUBLISH_TASK_GROUP = "publishing"
 
     def void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -46,9 +47,12 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
-        if (!buildListernerAdded.getAndSet(true)) {
-            def gradle = project.getGradle()
-            gradle.addBuildListener(new ProjectsEvaluatedBuildListener())
+        Set<Task> tasks = project.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, false);
+        if (tasks != null && !tasks.isEmpty()) {
+            ArtifactoryTask rootArtifactoryTask = (ArtifactoryTask)tasks.getAt(0)
+            if (!rootArtifactoryTask.buildListernerAdded.getAndSet(true)) {
+                project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
+            }
         }
     }
 

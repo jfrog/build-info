@@ -34,7 +34,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
  */
 public class ProjectsEvaluatedBuildListener extends BuildAdapter implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
-    private static final Set<Task> artifactoryTasks = Sets.newConcurrentHashSet();
+    private final Set<Task> artifactoryTasks = Sets.newConcurrentHashSet();
 
     @Override
     void beforeEvaluate(Project project) {
@@ -49,24 +49,27 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     def void projectsEvaluated(Gradle gradle) {
         // Make sure the plugin is applied to the root project.
         gradle.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
-
         // Configure the artifactoryPublish tasks. Deployment happens on task execution.
         artifactoryTasks.each { BuildInfoBaseTask bit ->
-            ArtifactoryClientConfiguration configuration = null;
-            ArtifactoryPluginConvention convention =
+            evaluate(bit)
+        }
+    }
+
+    private void evaluate(BuildInfoBaseTask bit) {
+        ArtifactoryClientConfiguration configuration = null;
+        ArtifactoryPluginConvention convention =
                 ArtifactoryPluginUtil.getArtifactoryConvention(bit.project)
 
-            if (convention != null) {
-                ArtifactoryClientConfiguration clientConfig = convention.getClientConfig()
-                // Fill-in the client config for the global, then adjust children project
-                GradleArtifactoryClientConfigUpdater.update(clientConfig, bit.project)
-                ArtifactoryClientConfiguration.ResolverHandler resolver =
+        if (convention != null) {
+            ArtifactoryClientConfiguration clientConfig = convention.getClientConfig()
+            // Fill-in the client config for the global, then adjust children project
+            GradleArtifactoryClientConfigUpdater.update(clientConfig, bit.project)
+            ArtifactoryClientConfiguration.ResolverHandler resolver =
                     ArtifactoryPluginUtil.getResolverHandler(bit.project)
-                if (resolver != null) {
-                    defineResolvers(bit.project, resolver)
-                }
-                bit.projectsEvaluated()
+            if (resolver != null) {
+                defineResolvers(bit.project, resolver)
             }
+            bit.projectsEvaluated()
         }
     }
 

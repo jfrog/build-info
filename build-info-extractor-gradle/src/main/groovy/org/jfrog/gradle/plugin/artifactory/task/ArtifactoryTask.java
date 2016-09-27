@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Lior Hasson
@@ -41,6 +42,7 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
     @Optional
     public Set<MavenPublication> mavenPublications = Sets.newHashSet();
 
+    public AtomicBoolean buildListernerAdded = new AtomicBoolean(false);
     private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);
