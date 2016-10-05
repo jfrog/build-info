@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
@@ -57,7 +58,7 @@ public class DependenciesDownloaderHelper {
             if (file.getPattern() != null) {
                 wildcardHelper.setTarget(file.getTarget());
                 wildcardHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
-                wildcardHelper.setRecursive(BooleanUtils.toBoolean(file.getRecursive()));
+                wildcardHelper.setRecursive(!"false".equalsIgnoreCase(file.getRecursive()));
                 wildcardHelper.setProps(file.getProps());
                 resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern()));
             }
@@ -133,7 +134,8 @@ public class DependenciesDownloaderHelper {
             String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
 
             log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
-            dependencyResult = new DependencyBuilder().id(filePath).md5(md5).sha1(sha1).build();
+            dependencyResult = new DependencyBuilder().md5(md5).sha1(sha1)
+                    .id(StringUtils.substringAfterLast(filePath, "/")).build();
         }
 
         return dependencyResult;
@@ -148,8 +150,9 @@ public class DependenciesDownloaderHelper {
      */
     private Dependency getDependencyLocally(Checksums checksums, String filePath) throws IOException {
         if (downloader.isFileExistsLocally(filePath, checksums.getMd5(), checksums.getSha1())) {
-            log.info("File '" + filePath + "' already exists locally, skipping remote download.");
-            return new DependencyBuilder().id(filePath).md5(checksums.getMd5()).sha1(checksums.getSha1()).build();
+            log.info("The file '" + filePath + "' exists locally.");
+            return new DependencyBuilder().md5(checksums.getMd5()).sha1(checksums.getSha1())
+                    .id(StringUtils.substringAfterLast(filePath, String.valueOf(IOUtils.DIR_SEPARATOR))).build();
         }
         return null;
     }

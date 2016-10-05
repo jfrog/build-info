@@ -40,6 +40,22 @@ public class SpecsHelper {
      */
     public Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace)
             throws IOException, NoSuchAlgorithmException {
+        return getDeployDetails(uploadJson, workspace, null);
+    }
+
+    /**
+     * Returns Set of deploy details that represents the given spec
+     *
+     * @param uploadJson The required spec represented as Spec object
+     * @param workspace File object that represents the workspace
+     * @param buildProperties properties to add to all the files
+     * @return Set of DeployDetails that was calculated from the given params
+     * @throws IOException Thrown if any error occurs while reading the file, calculating the
+     *                     checksums or in case of any file system exception
+     * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
+     */
+    public Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace, ArrayListMultimap<String, String> buildProperties)
+            throws IOException, NoSuchAlgorithmException {
         log.debug("Getting deploy details from spec.");
         Set<DeployDetails> artifactsToDeploy = Sets.newHashSet();
         for (FileSpec uploadFile : uploadJson.getFiles()) {
@@ -47,7 +63,7 @@ public class SpecsHelper {
             log.debug(String.format("Getting deploy details from the following json: \n %s ", uploadFile.toString()));
             Multimap<String, File> targetPathToFilesMap = buildTargetPathToFiles(workspace ,uploadFile);
             for (Map.Entry<String, File> entry : targetPathToFilesMap.entries()) {
-                artifactsToDeploy.addAll(buildDeployDetailsFromFileEntry(entry, uploadFile));
+                artifactsToDeploy.addAll(buildDeployDetailsFromFileEntry(entry, uploadFile, buildProperties));
             }
         }
         return artifactsToDeploy;
@@ -78,16 +94,18 @@ public class SpecsHelper {
     }
 
     /**
-     * Creates set of DeployDetails from provided map of String->File entries and FileSpec
+     * Creates set of DeployDetails from provided map of String->File entries, FileSpec and Properties
      *
-     * @param fileEntry the FileSpec that contains the needed params
-     * @param uploadFile a map of String->File entries that will be returned as a set of DeployDetails
+     * @param fileEntry the FileSpec that contains the needed params.
+     * @param uploadFile a map of String->File entries that will be returned as a set of DeployDetails.
+     * @param buildProperties a map of properties to add to all the DeployDetails objects.
      * @return Set of DeployDetails that represents the provided map of fileEntries aggregated with the ptops and the
-     *         target provided in the uploadFile.
-     * @throws IOException in case of IO problem
+     *         target provided in the uploadFile and buildProperties.
+     * @throws IOException in case of IO problem.
      * @throws NoSuchAlgorithmException if appropriate checksum algorithm was not found.
      */
-    private Set<DeployDetails> buildDeployDetailsFromFileEntry(Map.Entry<String, File> fileEntry, FileSpec uploadFile)
+    private Set<DeployDetails> buildDeployDetailsFromFileEntry(Map.Entry<String, File> fileEntry, FileSpec uploadFile,
+                                                               ArrayListMultimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         Set<DeployDetails> result = Sets.newHashSet();
         String targetPath = fileEntry.getKey();
@@ -96,7 +114,7 @@ public class SpecsHelper {
         path = StringUtils.replace(path, "//", "/");
 
         // calculate the sha1 checksum and add it to the deploy artifactsToDeploy
-        Map<String, String> checksums = Maps.newHashMap();
+        Map<String, String> checksums;
         try {
             checksums = FileChecksumCalculator.calculateChecksums(artifactFile, SHA1, MD5);
         } catch (NoSuchAlgorithmException e) {
@@ -109,14 +127,18 @@ public class SpecsHelper {
                 .targetRepository(getRepositoryKey(uploadFile.getTarget()))
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
                 .addProperties(getPropertiesMap(uploadFile.getProps()));
+        if (buildProperties != null && !buildProperties.isEmpty()) {
+            builder.addProperties(buildProperties);
+        }
         result.add(builder.build());
 
         return result;
     }
 
     private Multimap<String, File> buildTargetPathToFiles(File workspace, FileSpec uploadFile) throws IOException {
-        boolean isFlat = BooleanUtils.toBoolean(uploadFile.getFlat());
-        boolean isRecursive = BooleanUtils.toBoolean(uploadFile.getRecursive());
+        // The default value is true so it should be true in any case the string not matches "false"
+        boolean isFlat = !"false".equalsIgnoreCase(uploadFile.getFlat());
+        boolean isRecursive = !"false".equalsIgnoreCase(uploadFile.getRecursive());
         boolean isRegexp = BooleanUtils.toBoolean(uploadFile.getRegexp());
         String pattern = uploadFile.getPattern();
         String targetPath = getLocalPath(uploadFile.getTarget());

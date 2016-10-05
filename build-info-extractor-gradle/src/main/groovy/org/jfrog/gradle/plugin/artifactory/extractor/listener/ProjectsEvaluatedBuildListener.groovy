@@ -1,6 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
-import com.google.common.collect.Sets
 import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
 import org.gradle.api.Project
@@ -34,7 +33,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_I
  */
 public class ProjectsEvaluatedBuildListener extends BuildAdapter implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
-    private final Set<Task> artifactoryTasks = Sets.newConcurrentHashSet();
+    private final Set<Task> artifactoryTasks = Collections.newSetFromMap(new ConcurrentHashMap<Task, Boolean>());
 
     @Override
     void beforeEvaluate(Project project) {
