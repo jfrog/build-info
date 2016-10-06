@@ -135,7 +135,7 @@ public class DependenciesDownloaderHelper {
 
             log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
             dependencyResult = new DependencyBuilder().md5(md5).sha1(sha1)
-                    .id(StringUtils.substringAfterLast(filePath, "/")).build();
+                    .id(filePath.substring(filePath.lastIndexOf("/")+1)).build();
         }
 
         return dependencyResult;
@@ -152,7 +152,7 @@ public class DependenciesDownloaderHelper {
         if (downloader.isFileExistsLocally(filePath, checksums.getMd5(), checksums.getSha1())) {
             log.info("The file '" + filePath + "' exists locally.");
             return new DependencyBuilder().md5(checksums.getMd5()).sha1(checksums.getSha1())
-                    .id(StringUtils.substringAfterLast(filePath, String.valueOf(IOUtils.DIR_SEPARATOR))).build();
+                    .id(filePath.substring(filePath.lastIndexOf(String.valueOf(IOUtils.DIR_SEPARATOR))+1)).build();
         }
         return null;
     }
