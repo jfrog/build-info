@@ -14,7 +14,7 @@ public class PlaceholderReplacementUtils {
 
     public static String reformatRegexp(String sourceString, String destString, Pattern regexPattern) {
         String target = destString;
-        Matcher matcher = regexPattern.matcher(sourceString);
+        Matcher matcher = regexPattern.matcher(sourceString.replace("\\", "/"));
         if (matcher.find()) {
             int groupCount = matcher.groupCount();
             for (int i = 1; i <= groupCount; i++) {
