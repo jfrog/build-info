@@ -704,7 +704,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         throw new IOException(errorMessage);
     }
 
-    private ArtifactoryVersion getArtifactoryVersion() {
+    public ArtifactoryVersion getArtifactoryVersion() {
         if (artifactoryVersion == null) {
             try {
                 artifactoryVersion = httpClient.getVersion();

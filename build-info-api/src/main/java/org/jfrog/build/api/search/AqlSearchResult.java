@@ -1,5 +1,7 @@
 package org.jfrog.build.api.search;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -19,8 +21,10 @@ public class AqlSearchResult {
         private String repo;
         private String path;
         private String name;
-        private String actual_sha1;
-        private String actual_md5;
+        private String actualSha1;
+        private String actualMd5;
+        private String[] virtualRepos = new String[]{};
+
 
         public void setRepo(String repo) {
             this.repo = repo;
@@ -34,12 +38,19 @@ public class AqlSearchResult {
             this.name = name;
         }
 
-        public void setActual_sha1(String actual_sha1) {
-            this.actual_sha1 = actual_sha1;
+        @JsonProperty("actual_sha1")
+        public void setActualSha1(String actualSha1) {
+            this.actualSha1 = actualSha1;
         }
 
-        public void setActual_md5(String actual_md5) {
-            this.actual_md5 = actual_md5;
+        @JsonProperty("actual_md5")
+        public void setActualMd5(String actualMd5) {
+            this.actualMd5 = actualMd5;
+        }
+
+        @JsonProperty("virtual_repos")
+        public void setVirtualRepos(String[] virtualRepos) {
+            this.virtualRepos = virtualRepos;
         }
 
         public String getRepo() {
@@ -54,12 +65,20 @@ public class AqlSearchResult {
             return name;
         }
 
-        public String getActual_sha1() {
-            return actual_sha1;
+        @JsonProperty("actual_sha1")
+        public String getActualSha1() {
+            return actualSha1;
         }
 
-        public String getActual_md5() {
-            return actual_md5;
+        @JsonProperty("actual_md5")
+        public String getActualMd5() {
+            return actualMd5;
         }
+
+        @JsonProperty("virtual_repos")
+        public String[] getVirtualRepos() {
+            return virtualRepos;
+        }
+
     }
 }
