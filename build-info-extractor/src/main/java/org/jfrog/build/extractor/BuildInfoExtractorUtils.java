@@ -61,9 +61,6 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
-    private static String propertiesFilePath = null;
-    private static boolean propertiesFilePathInit = false;
-
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
         return mergePropertiesWithSystemAndPropertyFile(existingProps, null);
     }
@@ -237,9 +234,6 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
-        if (propertiesFilePathInit) {
-            return propertiesFilePath;
-        }
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String filePath = System.getProperty(key);
         String propFoundPath = "System.getProperty(" + key + ")";
@@ -276,9 +270,7 @@ public abstract class BuildInfoExtractorUtils {
                 log.debug("[buildinfo] Properties file '" + filePath + "' retrieved from '" + propFoundPath + "'");
             }
         }
-        propertiesFilePath = filePath;
-        propertiesFilePathInit = true;
-        return propertiesFilePath;
+        return filePath;
     }
 
     public static String getArtifactId(String moduleId, String artifactName) {
