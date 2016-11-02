@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.*;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -72,13 +73,14 @@ public class SpecsHelper {
     /**
      * Converts File to Spec object
      *
-     * @param downloadUploadSpec the File to convert
+     * @param downloadUploadSpecFile the File to convert
      * @return Spec object that represents the provided file
      * @throws IOException in case of IO problem
      */
-    public Spec getDownloadUploadSpec(File downloadUploadSpec) throws IOException {
+    public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(downloadUploadSpec, Spec.class);
+        String downloadUploadSpec = FileUtils.readFileToString(downloadUploadSpecFile);
+        return mapper.readValue(downloadUploadSpec.replace("\\", "/"), Spec.class);
     }
 
     /**
@@ -90,7 +92,7 @@ public class SpecsHelper {
      */
     public Spec getDownloadUploadSpec(String downloadUploadSpec) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(downloadUploadSpec, Spec.class);
+        return mapper.readValue(downloadUploadSpec.replace("\\", "/"), Spec.class);
     }
 
     /**
