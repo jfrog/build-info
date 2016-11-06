@@ -2,10 +2,12 @@ package org.jfrog.build.client;
 
 import org.apache.commons.lang.StringUtils;
 
+import java.io.Serializable;
+
 /**
  * @author Noam Y. Tenne
  */
-public class ArtifactoryVersion {
+public class ArtifactoryVersion implements Serializable {
     public static final ArtifactoryVersion NOT_FOUND = new ArtifactoryVersion("0.0.0");
     private static final String SNAPSHOT_SUFFIX = "SNAPSHOT";
 
