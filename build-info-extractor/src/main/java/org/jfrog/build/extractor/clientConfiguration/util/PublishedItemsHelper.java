@@ -225,11 +225,7 @@ public class PublishedItemsHelper {
         Pattern findFilesPattern = null;
         List<File> files = new ArrayList<File>();
 
-        if (regexp) {
-            findFilesPattern = Pattern.compile(simplePattern);
-        } else {
-            findFilesPattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(simplePattern));
-        }
+        findFilesPattern = Pattern.compile(simplePattern);
 
         collectMatchedFiles(checkoutDir, checkoutDir, findFilesPattern, files, isRecursive);
 
