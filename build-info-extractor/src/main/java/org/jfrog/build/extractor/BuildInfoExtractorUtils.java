@@ -264,9 +264,8 @@ public abstract class BuildInfoExtractorUtils {
         }
         if (log != null) {
             if (StringUtils.isBlank(filePath)) {
-                log.info("[buildinfo] Not using buildInfo properties file for this build.");
+                log.debug("[buildinfo] Not using buildInfo properties file for this build.");
             } else {
-                log.info("[buildinfo] Properties file found at '" + filePath + "'");
                 log.debug("[buildinfo] Properties file '" + filePath + "' retrieved from '" + propFoundPath + "'");
             }
         }
