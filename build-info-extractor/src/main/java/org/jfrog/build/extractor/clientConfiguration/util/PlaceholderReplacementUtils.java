@@ -28,7 +28,8 @@ public class PlaceholderReplacementUtils {
 
     public static String pathToRegExp(String path) {
         String wildcard = ".*";
-        String newPath = path.replaceAll("\\*", wildcard);
+        String newPath = path.replaceAll("\\.", "\\\\.")
+                .replaceAll("\\*", wildcard);
         if (newPath.endsWith("/")) {
             newPath += wildcard;
         } else {

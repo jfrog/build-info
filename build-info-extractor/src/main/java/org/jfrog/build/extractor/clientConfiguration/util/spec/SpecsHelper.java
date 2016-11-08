@@ -80,7 +80,7 @@ public class SpecsHelper {
     public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String downloadUploadSpec = FileUtils.readFileToString(downloadUploadSpecFile);
-        return mapper.readValue(downloadUploadSpec.replace("\\", "/"), Spec.class);
+        return mapper.readValue(downloadUploadSpec.replace("\\\\", "/"), Spec.class);
     }
 
     /**
@@ -92,7 +92,7 @@ public class SpecsHelper {
      */
     public Spec getDownloadUploadSpec(String downloadUploadSpec) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(downloadUploadSpec.replace("\\", "/"), Spec.class);
+        return mapper.readValue(downloadUploadSpec.replace("\\\\", "/"), Spec.class);
     }
 
     /**
