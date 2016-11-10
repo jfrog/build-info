@@ -80,7 +80,9 @@ public class SpecsHelper {
     public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String downloadUploadSpec = FileUtils.readFileToString(downloadUploadSpecFile);
-        return mapper.readValue(downloadUploadSpec.replace("\\\\", "/"), Spec.class);
+        Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
+        pathToUnixFormat(spec);
+        return spec;
     }
 
     /**
@@ -92,9 +94,19 @@ public class SpecsHelper {
      */
     public Spec getDownloadUploadSpec(String downloadUploadSpec) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(downloadUploadSpec.replace("\\\\", "/"), Spec.class);
+        Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
+        pathToUnixFormat(spec);
+        return spec;
     }
 
+    private void pathToUnixFormat(Spec spec) {
+        for (FileSpec fileSpec : spec.getFiles()) {
+            fileSpec.setTarget(fileSpec.getTarget().replaceAll("\\\\", "/"));
+            if (!StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), "true")) {
+                fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\", "/"));
+            }
+        }
+    }
     /**
      * Creates set of DeployDetails from provided map of String->File entries, FileSpec and Properties
      *
