@@ -101,4 +101,7 @@ public class PrefixPropertyHandler {
         }
     }
 
+    public Map<String, String> getProps() {
+        return props;
+    }
 }

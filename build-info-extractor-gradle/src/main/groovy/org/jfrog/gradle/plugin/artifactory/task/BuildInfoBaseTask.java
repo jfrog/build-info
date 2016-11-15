@@ -351,6 +351,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     private void prepareAndDeploy() throws IOException {
         ArtifactoryClientConfiguration accRoot =
                 ArtifactoryPluginUtil.getArtifactoryConvention(getProject()).getClientConfig();
+
+        Map<String, String> propsRoot = accRoot.publisher.getProps();
+
         // Reset the default properties, they may have changed
         GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
                 accRoot, getProject().getRootProject());
@@ -361,6 +364,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             if (bit.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
                         ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
+                publisher.getProps().putAll(propsRoot);
 
                 if (publisher != null && publisher.getContextUrl() != null) {
                     String contextUrl = publisher.getContextUrl();
