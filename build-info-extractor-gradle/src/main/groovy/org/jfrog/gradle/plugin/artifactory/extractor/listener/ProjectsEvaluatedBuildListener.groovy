@@ -49,6 +49,8 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
         // Make sure the plugin is applied to the root project.
         gradle.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
         // Configure the artifactoryPublish tasks. Deployment happens on task execution.
+        Set<Task> tasks = gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, false)
+        artifactoryTasks.addAll(tasks)
         artifactoryTasks.each { BuildInfoBaseTask bit ->
             evaluate(bit)
         }
