@@ -101,12 +101,17 @@ public class SpecsHelper {
 
     private void pathToUnixFormat(Spec spec) {
         for (FileSpec fileSpec : spec.getFiles()) {
-            fileSpec.setTarget(fileSpec.getTarget().replaceAll("\\\\", "/"));
-            if (!StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), "true")) {
-                fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\", "/"));
+            if (fileSpec.getTarget() != null) {
+                fileSpec.setTarget(fileSpec.getTarget().replaceAll("\\\\", "/"));
+            }
+            if (fileSpec.getPattern() != null) {
+                if (!StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), Boolean.TRUE.toString())) {
+                    fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\", "/"));
+                }
             }
         }
     }
+
     /**
      * Creates set of DeployDetails from provided map of String->File entries, FileSpec and Properties
      *
