@@ -24,6 +24,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
@@ -63,7 +64,7 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
  *
  * @author Yossi Shaul
  */
-public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
+public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
@@ -149,10 +150,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         StatusLine statusLine = response.getStatusLine();
         HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            if (entity != null) {
-                EntityUtils.consume(entity);
-            }
-            throwHttpIOException("Failed to obtain list of repositories:", statusLine);
+            throw new IOException("Failed to obtain list of repositories. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(entity));
         } else {
             if (entity != null) {
                 repositories = new ArrayList<String>();
@@ -221,12 +219,10 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         request.setEntity(stringEntity);
         log.info("Deploying build descriptor to: " + request.getURI().toString());
         HttpResponse response = httpClient.getHttpClient().execute(request);
-        if (response.getEntity() != null) {
-            EntityUtils.consume(response.getEntity());
-        }
         StatusLine statusLine = response.getStatusLine();
         if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            throwHttpIOException("Failed to send build descriptor :", statusLine);
+            HttpEntity responseEntity = response.getEntity();
+            throw new IOException("Failed to send build descriptor. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
         }
     }
 
@@ -238,10 +234,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         StatusLine statusLine = response.getStatusLine();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                EntityUtils.consume(entity);
-            }
-            throwHttpIOException("Failed to obtain item info:", statusLine);
+            throw new IOException("Failed to obtain item info. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(entity));
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -353,7 +346,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         if (StringUtils.isNotEmpty(passphrase)){
             urlBuilder.setParameter("gpgPassphrase", passphrase);
         }
-        if (!StringUtils.equals(signMethod, "descriptor")){
+        if (!StringUtils.equals(signMethod, "descriptor")) {
             urlBuilder.setParameter("gpgSign", signMethod);
         }
         return urlBuilder.toString();
@@ -409,10 +402,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         StatusLine statusLine = getResponse.getStatusLine();
         HttpEntity responseEntity = getResponse.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            if (responseEntity != null) {
-                EntityUtils.consume(responseEntity);
-            }
-            throwHttpIOException("Failed to obtain user plugin information:", statusLine);
+            throw new IOException("Failed to obtain user plugin information. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
         } else {
             if (responseEntity != null) {
                 InputStream content = responseEntity.getContent();
@@ -449,10 +439,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         StatusLine statusLine = response.getStatusLine();
         HttpEntity responseEntity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            if (responseEntity != null) {
-                EntityUtils.consume(responseEntity);
-            }
-            throwHttpIOException("Failed to obtain staging strategy:", statusLine);
+            throw new IOException("Failed to obtain staging strategy. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
         } else {
             if (responseEntity != null) {
                 InputStream content = responseEntity.getContent();
@@ -581,7 +568,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
 
         //Accept both 200, and 201 for backwards-compatibility reasons
         if ((statusCode != HttpStatus.SC_CREATED) && (statusCode != HttpStatus.SC_OK)) {
-            throwHttpIOException("Failed to deploy file:", response.getStatusLine());
+            throw new IOException("Failed to deploy file. Status code: " + statusCode + getMessage(response));
         }
 
         return response;
@@ -649,7 +636,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
 
             //Accept both 200, and 201 for backwards-compatibility reasons
             if ((sha1StatusCode != HttpStatus.SC_CREATED) && (sha1StatusCode != HttpStatus.SC_OK)) {
-                throwHttpIOException("Failed to deploy SHA1 checksum:", sha1StatusLine);
+                throw new IOException("Failed to deploy SHA1 checksum. Status code: " + sha1StatusCode + getMessage(response));
             }
         }
         String md5 = checksums.get("MD5");
@@ -664,7 +651,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
 
             //Accept both 200, and 201 for backwards-compatibility reasons
             if ((md5StatusCode != HttpStatus.SC_CREATED) && (md5StatusCode != HttpStatus.SC_OK)) {
-                throwHttpIOException("Failed to deploy MD5 checksum:", md5StatusLine);
+                throw new IOException("Failed to deploy MD5 checksum. Status code: " + md5StatusCode + getMessage(response));
             }
         }
     }
@@ -714,4 +701,74 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient{
         }
         return artifactoryVersion;
     }
+
+    /**
+     * Returns the response message
+     *
+     * @param response from Artifactory
+     * @return the response message String.
+     */
+
+    private String getMessage(ArtifactoryUploadResponse response) {
+        String responseMessage = "";
+        if (response.getErrors() != null) {
+            responseMessage = getResponseMessage(response.getErrors());
+            if (StringUtils.isNotBlank(responseMessage)) {
+                responseMessage = " Response message: " + responseMessage;
+            }
+        }
+        return responseMessage;
+    }
+
+    /**
+     * @param errorList errors list returned from Artifactory.
+     * @return response message string.
+     */
+    private String getResponseMessage(List<ArtifactoryUploadResponse.Error> errorList) {
+        if (errorList == null || errorList.isEmpty()) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder("Artifactory returned the following errors: ");
+        for (ArtifactoryUploadResponse.Error error : errorList) {
+            builder.append("\n").
+                    append(error.getMessage()).
+                    append(" Status code: ").
+                    append(error.getStatus());
+        }
+        return builder.toString();
+    }
+
+    /**
+     * @param entity the entity to retrive the message from.
+     * @return response entity content.
+     * @throws IOException
+     */
+
+    private String getMessageFromEntity(HttpEntity entity) throws IOException {
+        String responseMessage = "";
+        if (entity != null) {
+            responseMessage = getResponseEntityContent(entity);
+            EntityUtils.consume(entity);
+            if (StringUtils.isNotBlank(responseMessage)) {
+                responseMessage = " Response message: " + responseMessage;
+            }
+        }
+        return responseMessage;
+    }
+
+    /**
+     * Returns the response entity content
+     *
+     * @param responseEntity the response entity
+     * @return response entity content
+     * @throws IOException
+     */
+    private String getResponseEntityContent(HttpEntity responseEntity) throws IOException {
+        InputStream in = responseEntity.getContent();
+        if (in != null) {
+            return IOUtils.toString(in, "UTF-8");
+        }
+        return "";
+    }
 }
+
