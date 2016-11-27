@@ -708,7 +708,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      * @param response from Artifactory
      * @return the response message String.
      */
-
     private String getMessage(ArtifactoryUploadResponse response) {
         String responseMessage = "";
         if (response.getErrors() != null) {
