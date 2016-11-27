@@ -135,4 +135,9 @@ public class PromotionBuilder {
         return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, sourceRepo, copy, artifacts, dependencies,
                 scopes, properties, failFast);
     }
+
+    public boolean isFailFast() {
+        return failFast;
+    }
+
 }
