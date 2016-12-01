@@ -16,7 +16,6 @@
 
 package org.jfrog.build.extractor.maven;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
@@ -28,7 +27,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -87,9 +86,9 @@ public class BuildDeploymentHelper {
 
         if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
             try {
-                ObjectMapper mapper = new ObjectMapper();
-                mapper.writeValue(new File(clientConf.info.getGeneratedBuildInfoFilePath()), build);
+                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
             } catch (Exception e) {
+                logger.error("Failed writing build info to file: " , e);
                 throw new RuntimeException("Failed writing build info to file", e);
             }
         }

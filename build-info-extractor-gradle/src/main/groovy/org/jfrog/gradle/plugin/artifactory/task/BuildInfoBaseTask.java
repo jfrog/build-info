@@ -1,6 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -436,9 +435,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 }
                 if (isGenerateBuildInfoToFile(accRoot)) {
                     try {
-                        ObjectMapper mapper = new ObjectMapper();
-                        mapper.writeValue(new File(accRoot.info.getGeneratedBuildInfoFilePath()), build);
+                        exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
                     } catch (Exception e) {
+                        log.error("Failed writing build info to file: " , e);
                         throw new IOException("Failed writing build info to file", e);
                     }
                 }
