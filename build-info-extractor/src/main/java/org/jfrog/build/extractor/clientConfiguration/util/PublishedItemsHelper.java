@@ -220,14 +220,8 @@ public class PublishedItemsHelper {
         }
 
         Pattern regexPattern = Pattern.compile(pattern);
-        String simplePattern = pattern.replaceAll("[()]", "");
-
-        Pattern findFilesPattern = null;
         List<File> files = new ArrayList<File>();
-
-        findFilesPattern = Pattern.compile(simplePattern);
-
-        collectMatchedFiles(checkoutDir, checkoutDir, findFilesPattern, files, isRecursive);
+        collectMatchedFiles(checkoutDir, checkoutDir, regexPattern, files, isRecursive);
 
         for (File file : files) {
             String fileTargetPath = targetPath;
