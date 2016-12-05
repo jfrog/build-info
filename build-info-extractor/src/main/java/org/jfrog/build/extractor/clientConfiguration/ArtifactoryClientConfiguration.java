@@ -113,15 +113,9 @@ public class ArtifactoryClientConfiguration {
         if (StringUtils.isEmpty(getPropertiesFile())) {
             return;
         }
-        Predicate<String> nonNullPredicate = new Predicate<String>() {
-            @Override
-            public boolean apply(String input) {
-                return StringUtils.isNotBlank(input);
-            }
-        };
         Properties props = new Properties();
-        props.putAll(Maps.filterValues(root.props, nonNullPredicate));
-        props.putAll(Maps.filterValues(rootConfig.props, nonNullPredicate));
+        props.putAll(filterMapNullValues(root.props));
+        props.putAll(filterMapNullValues(rootConfig.props));
         FileOutputStream fos = null;
         try {
             fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile());
@@ -131,6 +125,16 @@ public class ArtifactoryClientConfiguration {
         } finally {
             IOUtils.closeQuietly(fos);
         }
+    }
+
+    public static Map<String, String> filterMapNullValues(Map<String, String> map) {
+        Map<String, String> result = new HashMap<String, String>();
+        for (Map.Entry<String, String> entry: map.entrySet()) {
+            if(StringUtils.isNotBlank(entry.getValue())) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
     }
 
     /**
