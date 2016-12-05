@@ -42,7 +42,6 @@ public class ArtifactoryTask extends BuildInfoBaseTask{
     @Optional
     public Set<MavenPublication> mavenPublications = Sets.newHashSet();
 
-    public AtomicBoolean buildListernerAdded = new AtomicBoolean(false);
     private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);

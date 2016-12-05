@@ -47,13 +47,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         }
         log.debug("Using Artifactory Plugin for ${project.path}")
 
-        Set<Task> tasks = project.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, false);
-        if (tasks != null && !tasks.isEmpty()) {
-            ArtifactoryTask rootArtifactoryTask = (ArtifactoryTask)tasks.getAt(0)
-            if (!rootArtifactoryTask.buildListernerAdded.getAndSet(true)) {
-                project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
-            }
-        }
+        project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
     }
 
     protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project)
