@@ -363,9 +363,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
             if (bit.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
                         ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
-                publisher.getProps().putAll(propsRoot);
 
                 if (publisher != null && publisher.getContextUrl() != null) {
+                    publisher.getProps().putAll(propsRoot);
                     String contextUrl = publisher.getContextUrl();
                     String username = publisher.getUsername();
                     String password = publisher.getPassword();
