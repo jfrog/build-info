@@ -15,7 +15,7 @@ public class Aql {
 
     public String getFind() throws IOException {
         if (find != null) {
-            return "items.find(" + new ObjectMapper().writeValueAsString(find) + ")";
+            return new ObjectMapper().writeValueAsString(find);
         }
         return null;
     }

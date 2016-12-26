@@ -22,6 +22,8 @@ public class AqlDependenciesHelper implements DependenciesHelper {
     private Log log;
     private String artifactoryUrl;
     private String target;
+    private String buildName;
+    private String buildNumber;
 
     public AqlDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
         this.downloader = downloader;
@@ -54,6 +56,10 @@ public class AqlDependenciesHelper implements DependenciesHelper {
 
     public Set<DownloadableArtifact> collectArtifactsToDownload(String aql) throws IOException {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        if (StringUtils.isNotBlank(buildName)) {
+            aql = addBuildToQuery(aql);
+        }
+        aql = "items.find(" + aql + ")";
         AqlSearchResult aqlSearchResult = downloader.getClient().searchArtifactsByAql(aql);
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearchResult.getResults();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
@@ -61,6 +67,24 @@ public class AqlDependenciesHelper implements DependenciesHelper {
             downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" + searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
         }
         return downloadableArtifacts;
+    }
+
+    private String addBuildToQuery(String aql) {
+        return "{" +
+                "\"$and\": [" +
+                    aql + "," +
+                    "{" +
+                        "\"artifact.module.build.name\": {" +
+                            "\"$eq\": \"" + buildName + "\"" +
+                        "}" +
+                "}," +
+                "{" +
+                        "\"artifact.module.build.number\": {" +
+                            "\"$eq\": \"" + buildNumber + "\"" +
+                        "}" +
+                    "}" +
+                    "]" +
+                "}";
     }
 
     public void setArtifactoryUrl(String artifactoryUrl) {
@@ -73,5 +97,21 @@ public class AqlDependenciesHelper implements DependenciesHelper {
 
     public String getArtifactoryUrl() {
         return artifactoryUrl;
+    }
+
+    public String getBuildName() {
+        return buildName;
+    }
+
+    public void setBuildName(String buildName) {
+        this.buildName = buildName;
+    }
+
+    public String getBuildNumber() {
+        return buildNumber;
+    }
+
+    public void setBuildNumber(String buildNumber) {
+        this.buildNumber = buildNumber;
     }
 }

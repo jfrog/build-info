@@ -13,6 +13,7 @@ public class FileSpec {
     private String recursive;
     private String flat;
     private String regexp;
+    private String build;
 
     public String getAql() throws IOException {
         if (aql != null) {
@@ -73,6 +74,14 @@ public class FileSpec {
         this.flat = flat;
     }
 
+    public String getBuild() {
+        return build;
+    }
+
+    public void setBuild(String build) {
+        this.build = build;
+    }
+
     @Override
     public String toString() {
         return "FileSpec{" +
@@ -83,6 +92,7 @@ public class FileSpec {
                 ", recursive='" + recursive + '\'' +
                 ", flat='" + flat + '\'' +
                 ", regexp='" + regexp + '\'' +
+                ", build='" + build + '\'' +
                 '}';
     }
 }

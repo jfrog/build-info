@@ -9,6 +9,8 @@ import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.dependency.BuildPatternArtifacts;
+import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
@@ -17,10 +19,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class for downloading dependencies
@@ -52,23 +51,47 @@ public class DependenciesDownloaderHelper {
         List<Dependency> resolvedDependencies = Lists.newArrayList();
 
         for (FileSpec file : downloadSpec.getFiles()) {
-            if (file.getPattern() != null && file.getAql() != null ) {
-                throw new InputMismatchException("Spec can't contain both AQL and pattern objects.");
+            validateFileSpec(file);
+            String buildName = getBuildName(file.getBuild());
+            String buildNumber = getBuildNumber(buildName, file.getBuild());
+            if (StringUtils.isNotBlank(buildName) && StringUtils.isBlank(buildNumber)) {
+                return resolvedDependencies;
             }
             if (file.getPattern() != null) {
                 wildcardHelper.setTarget(file.getTarget());
                 wildcardHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
                 wildcardHelper.setRecursive(!"false".equalsIgnoreCase(file.getRecursive()));
                 wildcardHelper.setProps(file.getProps());
+                wildcardHelper.setBuildName(buildName);
+                wildcardHelper.setBuildNumber(buildNumber);
                 resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern()));
-            }
-            if (file.getAql() != null) {
+            } else if (file.getAql() != null) {
                 aqlHelper.setTarget(file.getTarget());
                 aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
+                aqlHelper.setBuildName(buildName);
+                aqlHelper.setBuildNumber(buildNumber);
                 resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql()));
             }
         }
         return resolvedDependencies;
+    }
+
+    private String getBuildName(String build) {
+        final String delimiter = "/";
+        final String escapeChar = "\\";
+        if (StringUtils.isBlank(build)) {
+            return build;
+        }
+        // The delimiter must not be prefixed with escapeChar (if it is, it should be part of the build number)
+        // the code below gets substring from before the last delimiter.
+        // If the new string ends with escape char it means the last delimiter was part of the build number and we need
+        // to go back to the previous delimiter.
+        // If no proper delimiter was found the full string will be the build name.
+        String buildName = StringUtils.substringBeforeLast(build, delimiter);
+        while (StringUtils.isNotBlank(buildName) && buildName.contains(delimiter) && buildName.endsWith(escapeChar)) {
+            buildName = StringUtils.substringBeforeLast(buildName, delimiter);
+        }
+        return buildName.endsWith(escapeChar) ? build : buildName;
     }
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
@@ -84,6 +107,58 @@ public class DependenciesDownloaderHelper {
 
         removeUnusedArtifactsFromLocal(downloadedArtifacts);
         return dependencies;
+    }
+
+    private String getBuildNumber(String buildName, String build) throws IOException {
+        final String latest = "LATEST";
+        final String lastRelease = "LAST_RELEASE";
+        final String delimiter = "/";
+        final String escapeChar = "\\";
+        String buildNumber = "";
+        if (StringUtils.isNotBlank(buildName)) {
+            // Case build number was not provided, the build name and the build are the same. build number will be latest
+            if (build.equals(buildName)) {
+                buildNumber = latest;
+            } else {
+                // Get build name by removing build name and the delimiter
+                buildNumber = build.substring(buildName.length() + delimiter.length());
+                // Remove the escape chars before the delimiters
+                buildNumber = buildNumber.replace(escapeChar + delimiter, delimiter);
+            }
+            if (latest.equals(buildNumber.trim()) || lastRelease.equals(buildNumber.trim())) {
+                if (downloader.getClient().isArtifactoryOSS()) {
+                    throw new IllegalArgumentException(buildNumber + " is not supported in Artifactory OSS.");
+                }
+                List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
+                artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
+                List<BuildPatternArtifacts> artifactsResponses =
+                        downloader.getClient().retrievePatternArtifacts(artifactsRequest);
+                // Artifactory returns null if no build was found
+                if (artifactsResponses.get(0) != null) {
+                    buildNumber = artifactsResponses.get(0).getBuildNumber();
+                } else {
+                    logBuildNotFound(buildName, buildNumber);
+                    return null;
+                }
+            }
+        }
+        return buildNumber;
+    }
+
+    private void logBuildNotFound(String buildName, String buildNumber) {
+        final String lastRelease = "LAST_RELEASE";
+        StringBuilder sb = new StringBuilder("The build name ").append(buildName);
+        if (lastRelease.equals(buildNumber.trim())) {
+            sb.append(" with the status RELEASED");
+        }
+        sb.append(" could not be found.");
+        log.warn(sb.toString());
+    }
+
+    private void validateFileSpec(FileSpec file) throws IOException {
+        if (file.getPattern() != null && file.getAql() != null ) {
+            throw new InputMismatchException("Spec can include either the 'aql' or 'pattern' properties, but not both.");
+        }
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {

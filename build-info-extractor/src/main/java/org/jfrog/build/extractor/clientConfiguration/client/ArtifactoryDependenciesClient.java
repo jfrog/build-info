@@ -170,6 +170,10 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         return execute(artifactUrl, true);
     }
 
+    public boolean isArtifactoryOSS() throws IOException {
+        return !httpClient.getVersion().hasAddons();
+    }
+
     private HttpResponse execute(String artifactUrl, boolean isHead) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 

@@ -18,6 +18,8 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     private String artifactoryUrl;
     private String target;
     private String props;
+    private String buildName;
+    private String buildNumber;
     private boolean recursive;
 
     public WildcardsDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
@@ -27,6 +29,8 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         this.target = target;
         this.recursive = false;
         this.props = "";
+        this.buildName = "";
+        this.buildNumber = "";
     }
 
     public String getArtifactoryUrl() {
@@ -53,6 +57,22 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         this.recursive = recursive;
     }
 
+    public String getBuildName() {
+        return buildName;
+    }
+
+    public void setBuildName(String buildName) {
+        this.buildName = StringUtils.defaultIfEmpty(buildName , "");
+    }
+
+    public String getBuildNumber() {
+        return buildNumber;
+    }
+
+    public void setBuildNumber(String buildNumber) {
+        this.buildNumber = StringUtils.defaultIfEmpty(buildNumber , "");
+    }
+
     @Override
     public List<Dependency> retrievePublishedDependencies(String searchPattern)
             throws IOException {
@@ -60,6 +80,10 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             return Collections.emptyList();
         }
         AqlDependenciesHelper dependenciesHelper = new AqlDependenciesHelper(downloader, artifactoryUrl, target, log);
+        if (StringUtils.isNotBlank(buildName)) {
+            dependenciesHelper.setBuildName(buildName);
+            dependenciesHelper.setBuildNumber(buildNumber);
+        }
         Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, this.recursive, this.props));
         replaceTargetPlaceholders(searchPattern, downloadableArtifacts);
         return dependenciesHelper.downloadDependencies(downloadableArtifacts);
@@ -122,11 +146,9 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             }
         }
 
-        json +=
+        return json +
                 "]" +
                         "}";
-
-        return "items.find(" + json + ")";
     }
 
     private String prepareSearchPattern(String pattern) {
