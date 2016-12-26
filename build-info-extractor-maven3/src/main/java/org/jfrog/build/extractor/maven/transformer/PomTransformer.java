@@ -48,6 +48,7 @@ public class PomTransformer {
     private final ModuleName currentModule;
     private final Map<ModuleName, String> versionsByModule;
     private final boolean failOnSnapshot;
+    private final boolean dryRun;
 
     private boolean modified;
     private File pomFile;
@@ -62,7 +63,7 @@ public class PomTransformer {
      * @param scmUrl           Scm url to use if scm element exists in the pom file
      */
     public PomTransformer(ModuleName currentModule, Map<ModuleName, String> versionsByModule, String scmUrl) {
-        this(currentModule, versionsByModule, scmUrl, false);
+        this(currentModule, versionsByModule, scmUrl, false, false);
     }
 
     /**
@@ -76,10 +77,27 @@ public class PomTransformer {
      */
     public PomTransformer(ModuleName currentModule, Map<ModuleName, String> versionsByModule, String scmUrl,
             boolean failOnSnapshot) {
+        this(currentModule, versionsByModule, scmUrl, failOnSnapshot, false);
+    }
+
+    /**
+     * Transforms single pom file.
+     *
+     * @param currentModule    The current module we work on
+     * @param versionsByModule Map of module names to module version
+     * @param scmUrl           Scm url to use if scm element exists in the pom file
+     * @param failOnSnapshot   If true, fail with IllegalStateException if the pom contains snapshot version after the
+     *                         version changes
+     * @param dryRun           If true, changes will not take effect.
+     *
+     */
+    public PomTransformer(ModuleName currentModule, Map<ModuleName, String> versionsByModule, String scmUrl,
+            boolean failOnSnapshot, boolean dryRun) {
         this.currentModule = currentModule;
         this.versionsByModule = versionsByModule;
         this.scmUrl = scmUrl;
         this.failOnSnapshot = failOnSnapshot;
+        this.dryRun = dryRun;
     }
 
     /**
@@ -125,7 +143,7 @@ public class PomTransformer {
             changeScm(rootElement, ns);
         }
 
-        if (modified) {
+        if (modified && !dryRun) {
             FileOutputStream fileOutputStream = new FileOutputStream(pomFile);
             OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, "UTF-8");
             try {
