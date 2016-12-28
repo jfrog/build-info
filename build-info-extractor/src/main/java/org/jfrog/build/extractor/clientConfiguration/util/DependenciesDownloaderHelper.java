@@ -30,6 +30,10 @@ public class DependenciesDownloaderHelper {
 
     private DependenciesDownloader downloader;
     private Log log;
+    private final String LATEST = "LATEST";
+    private final String LAST_RELEASE = "LAST_RELEASE";
+    private static final String DELIMITER = "/";
+    private static final String ESCAPE_CHAR = "\\";
 
     public DependenciesDownloaderHelper(DependenciesDownloader downloader, Log log) {
         this.downloader = downloader;
@@ -77,8 +81,6 @@ public class DependenciesDownloaderHelper {
     }
 
     private String getBuildName(String build) {
-        final String delimiter = "/";
-        final String escapeChar = "\\";
         if (StringUtils.isBlank(build)) {
             return build;
         }
@@ -87,11 +89,11 @@ public class DependenciesDownloaderHelper {
         // If the new string ends with escape char it means the last delimiter was part of the build number and we need
         // to go back to the previous delimiter.
         // If no proper delimiter was found the full string will be the build name.
-        String buildName = StringUtils.substringBeforeLast(build, delimiter);
-        while (StringUtils.isNotBlank(buildName) && buildName.contains(delimiter) && buildName.endsWith(escapeChar)) {
-            buildName = StringUtils.substringBeforeLast(buildName, delimiter);
+        String buildName = StringUtils.substringBeforeLast(build, DELIMITER);
+        while (StringUtils.isNotBlank(buildName) && buildName.contains(DELIMITER) && buildName.endsWith(ESCAPE_CHAR)) {
+            buildName = StringUtils.substringBeforeLast(buildName, DELIMITER);
         }
-        return buildName.endsWith(escapeChar) ? build : buildName;
+        return buildName.endsWith(ESCAPE_CHAR) ? build : buildName;
     }
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
@@ -110,22 +112,21 @@ public class DependenciesDownloaderHelper {
     }
 
     private String getBuildNumber(String buildName, String build) throws IOException {
-        final String latest = "LATEST";
-        final String lastRelease = "LAST_RELEASE";
-        final String delimiter = "/";
-        final String escapeChar = "\\";
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
+            if (!build.startsWith(buildName)) {
+                throw new IllegalStateException("build '" + build + "' does not start with build name '" + buildName + "'.");
+            }
             // Case build number was not provided, the build name and the build are the same. build number will be latest
             if (build.equals(buildName)) {
-                buildNumber = latest;
+                buildNumber = LATEST;
             } else {
                 // Get build name by removing build name and the delimiter
-                buildNumber = build.substring(buildName.length() + delimiter.length());
+                buildNumber = build.substring(buildName.length() + DELIMITER.length());
                 // Remove the escape chars before the delimiters
-                buildNumber = buildNumber.replace(escapeChar + delimiter, delimiter);
+                buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            if (latest.equals(buildNumber.trim()) || lastRelease.equals(buildNumber.trim())) {
+            if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
                 if (downloader.getClient().isArtifactoryOSS()) {
                     throw new IllegalArgumentException(buildNumber + " is not supported in Artifactory OSS.");
                 }
@@ -146,9 +147,8 @@ public class DependenciesDownloaderHelper {
     }
 
     private void logBuildNotFound(String buildName, String buildNumber) {
-        final String lastRelease = "LAST_RELEASE";
         StringBuilder sb = new StringBuilder("The build name ").append(buildName);
-        if (lastRelease.equals(buildNumber.trim())) {
+        if (LAST_RELEASE.equals(buildNumber.trim())) {
             sb.append(" with the status RELEASED");
         }
         sb.append(" could not be found.");
