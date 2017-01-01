@@ -117,6 +117,10 @@ public class ArtifactoryHttpClient {
     }
 
     public PreemptiveHttpClient getHttpClient() {
+        return getHttpClient(connectionTimeout);
+    }
+
+    public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
             PreemptiveHttpClient client = new PreemptiveHttpClient(username, password, connectionTimeout);
             if (proxyConfiguration != null) {
