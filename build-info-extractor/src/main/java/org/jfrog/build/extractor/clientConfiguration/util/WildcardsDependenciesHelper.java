@@ -90,17 +90,17 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     }
 
     private void replaceTargetPlaceholders(String searchPattern, Set<DownloadableArtifact> downloadableArtifacts) {
-        Pattern pattern = Pattern.compile(PlaceholderReplacementUtils.pathToRegExp(searchPattern));
+        Pattern pattern = Pattern.compile(PathsUtils.pathToRegExp(searchPattern));
         target = StringUtils.defaultIfEmpty(target , "");
         for (DownloadableArtifact artifact : downloadableArtifacts) {
             String repoName = StringUtils.substringAfterLast(artifact.getRepoUrl(), "/");
             if (StringUtils.isEmpty(target) || target.endsWith("/")) {
-                artifact.setTargetDirPath(PlaceholderReplacementUtils.reformatRegexp(repoName + "/" + artifact.getFilePath(),
+                artifact.setTargetDirPath(PathsUtils.reformatRegexp(repoName + "/" + artifact.getFilePath(),
                         target, pattern));
             } else {
-                String targetAfterReplacement = PlaceholderReplacementUtils.reformatRegexp(repoName + "/" + artifact.getFilePath(),
+                String targetAfterReplacement = PathsUtils.reformatRegexp(repoName + "/" + artifact.getFilePath(),
                         target, pattern);
-                Map<String, String> targetFileName = PlaceholderReplacementUtils.replaceFilesName(targetAfterReplacement, artifact.getRelativeDirPath());
+                Map<String, String> targetFileName = PathsUtils.replaceFilesName(targetAfterReplacement, artifact.getRelativeDirPath());
                 artifact.setRelativeDirPath(targetFileName.get("srcPath"));
                 artifact.setTargetDirPath(targetFileName.get("targetPath"));
             }

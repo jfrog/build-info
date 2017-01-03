@@ -80,6 +80,8 @@ public class SpecsHelper {
     public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String downloadUploadSpec = FileUtils.readFileToString(downloadUploadSpecFile);
+        // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
+        downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
         Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
         pathToUnixFormat(spec);
         return spec;
@@ -94,6 +96,8 @@ public class SpecsHelper {
      */
     public Spec getDownloadUploadSpec(String downloadUploadSpec) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
+        // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
+        downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
         Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
         pathToUnixFormat(spec);
         return spec;
@@ -107,6 +111,9 @@ public class SpecsHelper {
             if (fileSpec.getPattern() != null) {
                 if (!StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), Boolean.TRUE.toString())) {
                     fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\", "/"));
+                } else {
+                    // In case of regex double backslashes are separator
+                    fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\\\\\", "/"));
                 }
             }
         }
@@ -163,8 +170,8 @@ public class SpecsHelper {
         String targetPath = getLocalPath(uploadFile.getTarget());
         Multimap<String, File> result;
 
-        result = PublishedItemsHelper.wildCardBuildPublishingData(
-                        workspace, pattern, targetPath, isFlat, isRecursive, isRegexp);
+        result = PublishedItemsHelper.buildPublishingData(
+                workspace, pattern, targetPath, isFlat, isRecursive, isRegexp);
         if (result != null) {
             log.info(String.format("For pattern: %s %d artifacts were found.", pattern, result.size()));
         } else {

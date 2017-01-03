@@ -23,6 +23,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -147,6 +148,7 @@ public class PublishedItemsHelper {
      * @return a Multimap containing the targets as keys and the files as values
      * @throws IOException in case of any file system exception
      */
+    @Deprecated
     public static Multimap<String, File> buildPublishingData(File checkoutDir, String pattern, String targetPath)
             throws IOException {
         final Multimap<String, File> filePathsMap = HashMultimap.create();
@@ -201,7 +203,6 @@ public class PublishedItemsHelper {
         return filePathsMap;
     }
 
-
     /**
      * Building a multi map of target paths mapped to their files using wildcard pattern.
      *
@@ -211,17 +212,90 @@ public class PublishedItemsHelper {
      * @return a Multimap containing the targets as keys and the files as values
      * @throws IOException in case of any file system exception
      */
+    @Deprecated
     public static Multimap<String, File> wildCardBuildPublishingData(File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp)
             throws IOException {
-        Multimap<String, File> filePathsMap = HashMultimap.create();
-
         if (!regexp) {
-            pattern = PlaceholderReplacementUtils.pathToRegExp(pattern);
+            pattern = PathsUtils.pathToRegExp(pattern);
         }
 
         Pattern regexPattern = Pattern.compile(pattern);
         List<File> files = new ArrayList<File>();
         collectMatchedFiles(checkoutDir, checkoutDir, regexPattern, files, isRecursive);
+        return getUploadPathsMap(files, checkoutDir, targetPath, flat, regexPattern);
+    }
+
+    /**
+     * Building a multi map of target paths mapped to their files using wildcard pattern.
+     * The pattern should contain slashes instead of backslashes in case of windows.
+     *
+     * @param checkoutDir the base directory of which to calculate the given source ant pattern
+     * @param pattern     the Ant pattern to calculate the files from
+     * @param targetPath  the target path for deployment of a file
+     * @return a Multimap containing the targets as keys and the files as values
+     * @throws IOException in case of any file system exception
+     */
+    public static Multimap<String, File> buildPublishingData(
+            File checkoutDir, String pattern, String targetPath, boolean flat, boolean recursive, boolean regexp)
+            throws IOException {
+        // This method determines the base directory - the directory where the files scan will be done
+        String baseDir = getBaseDir(checkoutDir, pattern, regexp);
+        // Part of the pattern might move to the base directory, this will remove this part from the pattern
+        String newPattern = removeBaseDirFromPattern(checkoutDir, pattern, baseDir, regexp);
+        // Collects candidate files to execute the regex
+        List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, regexp);
+        if (!regexp) {
+            // Convert wildcard to regexp
+            newPattern = PathsUtils.pathToRegExp(newPattern);
+        }
+
+        List<File> matchedFiles = new ArrayList<File>();
+        Pattern regexPattern = Pattern.compile(newPattern);
+        File baseDirFile = new File(baseDir);
+        for (String path : candidatePaths) {
+            File file = new File(path);
+            String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
+            if (regexPattern.matcher(relativePath).matches()) {
+                matchedFiles.add(file);
+            }
+        }
+
+        return getUploadPathsMap(matchedFiles, baseDirFile, targetPath, flat, regexPattern);
+    }
+
+    /**
+     * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
+     * this method removes the part of the pattern that exists in the base directory.
+     * @param checkoutDir the checkout directory
+     * @param pattern the provided by the user pattern
+     * @param baseDir the calculated base directory
+     * @return new calculated pattern based on the provided patern and base directory
+     */
+    private static String removeBaseDirFromPattern(File checkoutDir, String pattern, String baseDir, boolean regexp) {
+        String absolutePattern = getAbsolutePattern(checkoutDir, pattern, regexp);
+        // In case of absolute regexp pattern the pattern may contain escape chars. For correct new pattern extracting we need to make the base dir look the same.
+        if (regexp && !absolutePattern.contains(baseDir)) {
+            baseDir = PathsUtils.escapeRegexChars(baseDir);
+        }
+        // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used
+        String newPattern = StringUtils.substringAfter(absolutePattern, baseDir);
+        if (newPattern.startsWith("/")) {
+            // Remove the leading separator
+            newPattern = newPattern.substring(1);
+        }
+        if (pattern.endsWith("/")) {
+            if (regexp) {
+                newPattern = newPattern + ".*";
+            } else {
+                newPattern = newPattern + "*";
+            }
+        }
+        return newPattern;
+    }
+
+    private static Multimap<String, File> getUploadPathsMap(
+            List<File> files, File checkoutDir, String targetPath, boolean flat, Pattern regexPattern) {
+        Multimap<String, File> filePathsMap = HashMultimap.create();
 
         for (File file : files) {
             String fileTargetPath = targetPath;
@@ -239,11 +313,77 @@ public class PublishedItemsHelper {
                 fileTargetPath = fileTargetPath.replace('\\', '/');
             }
 
-            fileTargetPath = PlaceholderReplacementUtils.reformatRegexp(getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
+            fileTargetPath = PathsUtils.reformatRegexp(
+                    getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
             filePathsMap.put(fileTargetPath, file);
         }
         return filePathsMap;
+    }
 
+    /**
+     * Returns base directory path with slash in the end.
+     * The base directory is the path where the file collection starts from.
+     *
+     * Base directory is the last directory that not contains wildcards in case of regexp=false.
+     * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
+     * @param checkoutDir the checkout directory
+     * @param pattern the pattern provided by the user
+     * @param regexp the regexp value
+     * @return String that represents the base directory
+     */
+    private static String getBaseDir(File checkoutDir, String pattern, boolean regexp) throws FileNotFoundException {
+        String baseDir = getAbsolutePattern(checkoutDir, pattern, regexp);
+
+        if (regexp) {
+            baseDir = getExistingPath(baseDir);
+            if (StringUtils.isEmpty(baseDir)) {
+                throw new FileNotFoundException("Could not find any base path in the pattern: " + pattern);
+            }
+            if (!baseDir.endsWith("/")) {
+                baseDir = baseDir + "/";
+            }
+        } else {
+            baseDir = StringUtils.substringBefore(baseDir, "*");
+            baseDir = StringUtils.substringBefore(baseDir, "?");
+            baseDir = baseDir.substring(0, baseDir.lastIndexOf("/") + 1);
+        }
+        return baseDir;
+    }
+
+    /**
+     * Returns the absolute path of pattern.
+     * If the provided by the user pattern is absolute same pattern will be returned.
+     * If the pattern is relative the checkout directory will be prepend.
+     * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
+     * @param checkoutDir the checkout directory
+     * @param pattern the provided by the user patter, can be absolute or relative
+     * @param regexp whether the pattern is regex or not
+     * @return the absolute path of pattern
+     */
+    private static String getAbsolutePattern(File checkoutDir, String pattern, boolean regexp) {
+        File patternFile = new File(pattern);
+        if (patternFile.isAbsolute()) {
+            return pattern;
+        } else {
+            if (regexp) {
+                String escapedCheckoutDir = PathsUtils.escapeRegexChars(checkoutDir.getAbsolutePath().replace("\\", "/"));
+                return escapedCheckoutDir + "/" + pattern;
+            }
+            return checkoutDir.getAbsolutePath().replace("\\", "/") + "/" + pattern;
+        }
+    }
+
+    /**
+     * Returns the last existing directory of the provided baseDire that not contains a regex characters.
+     * @param baseDir the path to search in
+     * @return the last existing directory of the provided baseDire that not contains a regex characters
+     */
+    private static String getExistingPath(String baseDir) {
+        baseDir = PathsUtils.substringBeforeFirstRegex(baseDir);
+        while (!new File(baseDir).isDirectory() && baseDir.contains("/")) {
+            baseDir = StringUtils.substringBeforeLast(baseDir, "/");
+        }
+        return baseDir;
     }
 
     private static String calculateFileTargetPath(File patternDir, File file, String targetPath) {
