@@ -22,6 +22,9 @@ public class PathsUtils {
             int groupCount = matcher.groupCount();
             for (int i = 1; i <= groupCount; i++) {
                 String currentGroup = matcher.group(i);
+                if (currentGroup == null) {
+                    continue;
+                }
                 currentGroup.replace("\\", "/");
                 target = target.replace("{" + i + "}", currentGroup);
             }
