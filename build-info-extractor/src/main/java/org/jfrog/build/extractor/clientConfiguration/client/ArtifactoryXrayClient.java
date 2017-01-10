@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.PreemptiveHttpClient;
@@ -22,7 +22,6 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
     private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;  // Expecting \r\n every 30 seconds
     private static final int XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS = 15000; // 15 seconds sleep between retry
     private static final String XRAY_FATAL_FAIL_STATUS = "-1"; //Fatal error code from Xray
-
 
     public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
         super(artifactoryUrl, username, password, logger);
@@ -71,9 +70,8 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         return result;
     }
 
-    private JsonNode execute(HttpUriRequest httpRequest) throws InterruptedException, IOException {
+    private JsonNode execute(HttpRequestBase httpRequest) throws InterruptedException, IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
-
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
         while (true) {
@@ -93,6 +91,8 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
                 log.warn("Xray scan connection lost: " + e.getMessage() + ", attempting to reconnect...");
                 // Sleeping before trying to reconnect.
                 Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
+            } finally {
+                httpRequest.releaseConnection();
             }
         }
     }
