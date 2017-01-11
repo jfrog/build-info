@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
 
 import java.io.IOException;
 
@@ -27,7 +28,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         super(artifactoryUrl, username, password, logger);
     }
 
-    public JsonNode xrayScanBuild(String buildName, String buildNumber, String context) throws IOException, InterruptedException {
+    public ArtifactoryXrayResponse xrayScanBuild(String buildName, String buildNumber, String context) throws IOException, InterruptedException {
         StringEntity entity = new StringEntity("{\"buildName\":\"" + buildName + "\",\"buildNumber\":\"" + buildNumber +
                 "\",\"context\":\"" + context + "\"}");
         entity.setContentType("application/json");
@@ -49,14 +50,13 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         return lastConnectionAttemptMillis + stableConnectionMillis < System.currentTimeMillis();
     }
 
-    private JsonNode parseXrayScanResponse(HttpResponse response) throws IOException {
+    private ArtifactoryXrayResponse parseXrayScanResponse(HttpResponse response) throws IOException {
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
             response.getEntity().getContent().close();
             throw new IOException("Artifactory response: " + response.getStatusLine().getReasonPhrase());
         }
 
         ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         JsonNode result = mapper.readTree(response.getEntity().getContent());
         if (result.get("errors") != null) {
             String resultStr = result.get("errors").toString();
@@ -67,10 +67,11 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
             }
             throw new IOException("Artifactory response: " + resultStr);
         }
-        return result;
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return mapper.treeToValue(result, ArtifactoryXrayResponse.class);
     }
 
-    private JsonNode execute(HttpRequestBase httpRequest) throws InterruptedException, IOException {
+    private ArtifactoryXrayResponse execute(HttpRequestBase httpRequest) throws InterruptedException, IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
