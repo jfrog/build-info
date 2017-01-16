@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Used for serialization of Xray scanning results
@@ -19,12 +20,10 @@ public class ImpactedArtifact implements Serializable {
     private String pkgType;
     @JsonProperty("parent_sha")
     private String parentSha;
-    @JsonProperty("impact_path")
-    private String impactPath;
     @JsonProperty("display_name")
     private String displayName;
-    @JsonProperty("infected_file")
-    private InfectedFile infectedFile;
+    @JsonProperty("infected_files")
+    private List<InfectedFile> infectedFiles;
 
     /**
      * No args constructor for use in serialization
@@ -32,7 +31,7 @@ public class ImpactedArtifact implements Serializable {
     public ImpactedArtifact() {
     }
 
-    public ImpactedArtifact(String name, String displayName, String path, String pkgType, String sha256, String sha1, int depth, String parentSha, String impactPath, InfectedFile infectedFile) {
+    public ImpactedArtifact(String name, String displayName, String path, String pkgType, String sha256, String sha1, int depth, String parentSha, List<InfectedFile> infectedFiles) {
         this.name = name;
         this.displayName = displayName;
         this.path = path;
@@ -41,8 +40,7 @@ public class ImpactedArtifact implements Serializable {
         this.sha1 = sha1;
         this.depth = depth;
         this.parentSha = parentSha;
-        this.impactPath = impactPath;
-        this.infectedFile = infectedFile;
+        this.infectedFiles = infectedFiles;
     }
 
     public String getName() {
@@ -115,24 +113,14 @@ public class ImpactedArtifact implements Serializable {
         this.parentSha = parentSha;
     }
 
-    @JsonProperty("impact_path")
-    public String getImpactPath() {
-        return impactPath;
+    @JsonProperty("infected_files")
+    public List<InfectedFile> getInfectedFiles() {
+        return infectedFiles;
     }
 
-    @JsonProperty("impact_path")
-    public void setImpactPath(String impactPath) {
-        this.impactPath = impactPath;
-    }
-
-    @JsonProperty("infected_file")
-    public InfectedFile getInfectedFile() {
-        return infectedFile;
-    }
-
-    @JsonProperty("infected_file")
-    public void setInfectedFile(InfectedFile infectedFile) {
-        this.infectedFile = infectedFile;
+    @JsonProperty("infected_files")
+    public void setInfectedFiles(List<InfectedFile> infectedFiles) {
+        this.infectedFiles = infectedFiles;
     }
 
     @Override

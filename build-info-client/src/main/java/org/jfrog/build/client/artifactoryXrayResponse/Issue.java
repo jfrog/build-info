@@ -18,8 +18,6 @@ public class Issue implements Serializable {
     private String summary;
     private String description;
     private String cve;
-    @JsonProperty("component_ids")
-    private List<String> componentIds = null;
     @JsonProperty("impacted_artifacts")
     private List<ImpactedArtifact> impactedArtifacts = null;
 
@@ -29,13 +27,12 @@ public class Issue implements Serializable {
     public Issue() {
     }
 
-    public Issue(String severity, String type, String provider, String created, String summary, List<String> componentIds, String description, List<ImpactedArtifact> impactedArtifacts, String cve) {
+    public Issue(String severity, String type, String provider, String created, String summary, String description, List<ImpactedArtifact> impactedArtifacts, String cve) {
         this.severity = severity;
         this.type = type;
         this.provider = provider;
         this.created = created;
         this.summary = summary;
-        this.componentIds = componentIds;
         this.description = description;
         this.impactedArtifacts = impactedArtifacts;
         this.cve = cve;
@@ -79,16 +76,6 @@ public class Issue implements Serializable {
 
     public void setSummary(String summary) {
         this.summary = summary;
-    }
-
-    @JsonProperty("component_ids")
-    public List<String> getComponentIds() {
-        return componentIds;
-    }
-
-    @JsonProperty("component_ids")
-    public void setComponentIds(List<String> componentIds) {
-        this.componentIds = componentIds;
     }
 
     public String getDescription() {
