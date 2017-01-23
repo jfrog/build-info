@@ -393,7 +393,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                             allDeployDetails.addAll(bit.deployDetails);
                         } finally {
                             if (client != null) {
-                                client.shutdown();
+                                client.close();
                             }
                         }
                     }
@@ -443,7 +443,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 }
             } finally {
                 if (client != null) {
-                    client.shutdown();
+                    client.close();
                 }
             }
         }

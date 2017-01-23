@@ -26,7 +26,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.*;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -95,7 +98,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      * @param password       Authentication password
      */
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-       super(artifactoryUrl, username, password, log);
+        super(artifactoryUrl, username, password, log);
     }
 
     /**
@@ -343,7 +346,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         URIBuilder urlBuilder = new URIBuilder();
         urlBuilder.setPath(artifactoryUrl + PUSH_TO_BINTRAY_REST_URL + buildName + "/" + buildNumber);
 
-        if (StringUtils.isNotEmpty(passphrase)){
+        if (StringUtils.isNotEmpty(passphrase)) {
             urlBuilder.setParameter("gpgPassphrase", passphrase);
         }
         if (!StringUtils.equals(signMethod, "descriptor")) {
@@ -473,15 +476,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
 
         HttpPut postRequest = new HttpPut(urlBuilder.toString());
         return httpClient.getHttpClient().execute(postRequest);
-    }
-
-    /**
-     * Release all connection and cleanup resources.
-     */
-    public void shutdown() {
-        if (httpClient != null) {
-            httpClient.shutdown();
-        }
     }
 
     private void appendParamsToUrl(Map<String, String> requestParams, StringBuilder urlBuilder)

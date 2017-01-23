@@ -110,9 +110,9 @@ public class ArtifactoryHttpClient {
     /**
      * Release all connection and cleanup resources.
      */
-    public void shutdown() {
+    public void close() throws IOException {
         if (deployClient != null) {
-            deployClient.shutdown();
+            deployClient.close();
         }
     }
 
@@ -122,12 +122,7 @@ public class ArtifactoryHttpClient {
 
     public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
-            PreemptiveHttpClient client = new PreemptiveHttpClient(username, password, connectionTimeout);
-            if (proxyConfiguration != null) {
-                client.setProxyConfiguration(proxyConfiguration.host, proxyConfiguration.port,
-                        proxyConfiguration.username, proxyConfiguration.password);
-            }
-            deployClient = client;
+            deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration);
         }
 
         return deployClient;

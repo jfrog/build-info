@@ -5,6 +5,8 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;
 
+import java.io.IOException;
+
 /**
  * Created by Tamirh on 21/04/2016.
  */
@@ -20,9 +22,9 @@ public abstract class ArtifactoryBaseClient {
         this.log = logger;
     }
 
-    public void shutdown() {
+    public void close() throws IOException {
         if (httpClient != null) {
-            httpClient.shutdown();
+            httpClient.close();
         }
     }
 

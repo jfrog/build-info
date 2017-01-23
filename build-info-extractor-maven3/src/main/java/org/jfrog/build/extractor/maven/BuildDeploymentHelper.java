@@ -58,8 +58,7 @@ public class BuildDeploymentHelper {
                         ArtifactoryClientConfiguration clientConf,
                         Map<String, DeployDetails>     deployableArtifactBuilders,
                         boolean                        wereThereTestFailures,
-                        File                           basedir )
-    {
+                        File                           basedir ) throws IOException {
 
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
 
@@ -124,7 +123,7 @@ public class BuildDeploymentHelper {
                     }
                 }
             } finally {
-                client.shutdown();
+                client.close();
             }
         }
     }

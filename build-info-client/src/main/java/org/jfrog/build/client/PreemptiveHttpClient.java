@@ -19,20 +19,16 @@ package org.jfrog.build.client;
 import org.apache.http.*;
 import org.apache.http.auth.*;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.params.ClientPNames;
-import org.apache.http.client.protocol.ClientContext;
-import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpConnectionParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.ExecutionContext;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -46,8 +42,7 @@ import java.util.Properties;
 public class PreemptiveHttpClient {
 
     private final static String CLIENT_VERSION;
-
-    private DefaultHttpClient httpClient;
+    private CloseableHttpClient httpClient;
     private BasicHttpContext localContext;
 
     static {
@@ -66,21 +61,30 @@ public class PreemptiveHttpClient {
     }
 
     public PreemptiveHttpClient(int timeout) {
-        this(null, null, timeout);
+        this(null, null, timeout, null);
     }
 
     public PreemptiveHttpClient(String userName, String password, int timeout) {
-        httpClient = createHttpClient(userName, password, timeout);
+        this(userName, password, timeout, null);
     }
 
-    public void setProxyConfiguration(String host, int port, String username, String password) {
-        HttpHost proxy = new HttpHost(host, port);
-        httpClient.getParams().setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
-        if (username != null) {
-            httpClient.getCredentialsProvider().setCredentials(
-                    new AuthScope(host, port),
-                    new UsernamePasswordCredentials(username, password)
-            );
+    public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration) {
+        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout);
+        if (proxyConfiguration != null) {
+            setProxyConfiguration(httpClientBuilder, proxyConfiguration);
+        }
+        httpClient = httpClientBuilder.build();
+    }
+
+    private void setProxyConfiguration(HttpClientBuilder httpClientBuilder, ProxyConfiguration proxyConfiguration) {
+        HttpHost proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
+        httpClientBuilder.setProxy(proxy);
+
+        if (proxyConfiguration.username != null) {
+            BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
+            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                    new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
+            httpClientBuilder.setDefaultCredentialsProvider(basicCredentialsProvider);
         }
     }
 
@@ -92,20 +96,25 @@ public class PreemptiveHttpClient {
         }
     }
 
-    private DefaultHttpClient createHttpClient(String userName, String password, int timeout) {
-        BasicHttpParams params = new BasicHttpParams();
+    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout) {
         int timeoutMilliSeconds = timeout * 1000;
-        HttpConnectionParams.setConnectionTimeout(params, timeoutMilliSeconds);
-        HttpConnectionParams.setSoTimeout(params, timeoutMilliSeconds);
-        DefaultHttpClient client = new DefaultHttpClient(params);
+        RequestConfig requestConfig = RequestConfig
+                .custom()
+                .setSocketTimeout(timeoutMilliSeconds)
+                .setConnectTimeout(timeoutMilliSeconds)
+                .setCircularRedirectsAllowed(true)
+                .build();
 
-        client.getParams().setParameter(ClientPNames.ALLOW_CIRCULAR_REDIRECTS, true);
+        HttpClientBuilder builder = HttpClientBuilder
+                .create()
+                .setDefaultRequestConfig(requestConfig);
 
         if (userName != null && !"".equals(userName)) {
-            client.getCredentialsProvider().setCredentials(
-                    new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                    new UsernamePasswordCredentials(userName, password)
-            );
+            BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
+            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                    new UsernamePasswordCredentials(userName, password));
+
+            builder.setDefaultCredentialsProvider(basicCredentialsProvider);
             localContext = new BasicHttpContext();
 
             // Generate BASIC scheme object and stick it to the local execution context
@@ -113,45 +122,37 @@ public class PreemptiveHttpClient {
             localContext.setAttribute("preemptive-auth", basicAuth);
 
             // Add as the first request interceptor
-            client.addRequestInterceptor(new PreemptiveAuth(), 0);
+            builder.addInterceptorFirst(new PreemptiveAuth());
         }
-        boolean requestSentRetryEnabled = Boolean.parseBoolean(System.getProperty("requestSentRetryEnabled"));
-        if (requestSentRetryEnabled) {
-            client.setHttpRequestRetryHandler(new DefaultHttpRequestRetryHandler(3, requestSentRetryEnabled));
-        }
+
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
-        HttpProtocolParams.setUserAgent(client.getParams(), userAgent);
-        return client;
+        builder.setUserAgent(userAgent);
+        return builder;
     }
 
-    public void shutdown() {
-        httpClient.getConnectionManager().shutdown();
-    }
-
-    public void setHttpParams(HttpParams httpParams) {
-        httpClient.setParams(httpParams);
+    public void close() throws IOException {
+        httpClient.close();
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
         public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
 
-            AuthState authState = (AuthState) context.getAttribute(ClientContext.TARGET_AUTH_STATE);
+            AuthState authState = (AuthState) context.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
 
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
                 AuthScheme authScheme = (AuthScheme) context.getAttribute("preemptive-auth");
                 CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(
-                        ClientContext.CREDS_PROVIDER);
-                HttpHost targetHost = (HttpHost) context.getAttribute(ExecutionContext.HTTP_TARGET_HOST);
+                        HttpClientContext.CREDS_PROVIDER);
+                HttpHost targetHost = (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
                 if (authScheme != null) {
                     Credentials creds = credsProvider.getCredentials(
                             new AuthScope(targetHost.getHostName(), targetHost.getPort()));
                     if (creds == null) {
                         throw new HttpException("No credentials for preemptive authentication");
                     }
-                    authState.setAuthScheme(authScheme);
-                    authState.setCredentials(creds);
+                    authState.update(authScheme, creds);
                 }
             }
         }
