@@ -131,8 +131,12 @@ public class PreemptiveHttpClient {
         return builder;
     }
 
-    public void close() throws IOException {
-        httpClient.close();
+    public void close() {
+        try {
+            httpClient.close();
+        } catch (IOException e) {
+            // Do nothing
+        }
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {

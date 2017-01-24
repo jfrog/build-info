@@ -110,7 +110,7 @@ public class ArtifactoryHttpClient {
     /**
      * Release all connection and cleanup resources.
      */
-    public void close() throws IOException {
+    public void close() {
         if (deployClient != null) {
             deployClient.close();
         }

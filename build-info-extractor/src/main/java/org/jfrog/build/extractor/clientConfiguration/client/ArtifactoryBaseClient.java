@@ -22,7 +22,7 @@ public abstract class ArtifactoryBaseClient {
         this.log = logger;
     }
 
-    public void close() throws IOException {
+    public void close() {
         if (httpClient != null) {
             httpClient.close();
         }
