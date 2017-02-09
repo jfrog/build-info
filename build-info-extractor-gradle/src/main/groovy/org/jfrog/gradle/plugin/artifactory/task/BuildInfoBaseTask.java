@@ -296,6 +296,13 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         }
     }
 
+    protected void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getMaxRetries() != null) {
+            client.setMaxRetries(clientConf.getMaxRetries());
+            client.setRetryRequestsAlreadySent(clientConf.isRetryRequestsAlreadySent());
+        }
+    }
+
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
         String fileExportPath = clientConf.getExportFile();
         if (StringUtils.isNotBlank(fileExportPath)) {
@@ -389,6 +396,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                                     publisher.getExcludePatterns());
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
+                            configRetriesParams(accRoot, client);
                             deployArtifacts(bit.deployDetails, client, patterns);
                             allDeployDetails.addAll(bit.deployDetails);
                         } finally {
@@ -418,7 +426,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         accRoot.publisher.getUsername(),
                         accRoot.publisher.getPassword(),
                         new GradleClientLogger(log));
-
+                configureProxy(accRoot, client);
+                configConnectionTimeout(accRoot, client);
+                configRetriesParams(accRoot, client);
                 GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));

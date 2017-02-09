@@ -8,6 +8,8 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_RETRIES;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RETRY_REQUESTS_ALREADY_SENT;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
 
 /**
@@ -25,6 +27,7 @@ public class BuildInfoClientBuilder {
         ArtifactoryBuildInfoClient client = resolveClientProps(clientConf);
         resolveTimeout(clientConf, client);
         resolveProxy(clientConf.proxy, client);
+        resolveRetriesParams(clientConf, client);
         return client;
     }
 
@@ -51,15 +54,21 @@ public class BuildInfoClientBuilder {
         if (clientConf.getTimeout() == null) {
             return;
         }
-        String timeout = clientConf.getTimeout().toString();
-        if (StringUtils.isNotBlank(timeout)) {
-            logResolvedProperty(PROP_TIMEOUT, timeout);
-            if (!StringUtils.isNumeric(timeout)) {
-                logger.debug("Unable to resolve Artifactory Build Info Client timeout: value is non-numeric.");
-                return;
-            }
-            client.setConnectionTimeout(Integer.valueOf(timeout));
+        int timeout = clientConf.getTimeout();
+        logResolvedProperty(PROP_TIMEOUT, String.valueOf(timeout));
+        client.setConnectionTimeout(timeout);
+    }
+
+    private void resolveRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getMaxRetries() == null) {
+            return;
         }
+        int maxRetries = clientConf.getMaxRetries();
+        boolean retryRequestsAlreadySent = clientConf.isRetryRequestsAlreadySent();
+        logResolvedProperty(PROP_MAX_RETRIES, String.valueOf(maxRetries));
+        logResolvedProperty(PROP_RETRY_REQUESTS_ALREADY_SENT,String.valueOf(retryRequestsAlreadySent));
+        client.setMaxRetries(maxRetries);
+        client.setRetryRequestsAlreadySent(clientConf.isRetryRequestsAlreadySent());
     }
 
     private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,

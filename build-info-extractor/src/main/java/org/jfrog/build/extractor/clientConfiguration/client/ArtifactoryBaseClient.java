@@ -5,8 +5,6 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;
 
-import java.io.IOException;
-
 /**
  * Created by Tamirh on 21/04/2016.
  */
@@ -38,6 +36,24 @@ public abstract class ArtifactoryBaseClient {
     }
 
     /**
+     * Max Retries to perform
+     *
+     * @param maxRetries The number of max retries.
+     */
+    public void setMaxRetries(int maxRetries) {
+        httpClient.setMaxRetries(maxRetries);
+    }
+
+    /**
+     * Request Sent Retry value
+     *
+     * @param retryRequestsAlreadySent true/false for performing retries.
+     */
+    public void setRetryRequestsAlreadySent(boolean retryRequestsAlreadySent) {
+        httpClient.setRetryRequestsAlreadySent(retryRequestsAlreadySent);
+    }
+
+    /**
      * Sets the proxy host and port.
      *
      * @param host Proxy host
@@ -66,5 +82,13 @@ public abstract class ArtifactoryBaseClient {
      */
     public void setProxyConfiguration(ProxyConfiguration proxy) {
         httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
+    }
+
+    /**
+     * Log setter for the PreemptiveHttpClient for jobs like the Jenkins Generic job that uses NullLog by default.
+     * @param log Log instance
+     */
+    public void setLog(Log log) {
+        httpClient.getHttpClient().setLog(log);
     }
 }
