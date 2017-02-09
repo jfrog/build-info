@@ -390,6 +390,7 @@ public class ArtifactoryBuildListener implements BuildListener {
 
             configureProxy(clientConf, client);
             configConnectionTimeout(clientConf, client);
+            configMaxRetries(clientConf, client);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
@@ -434,8 +435,15 @@ public class ArtifactoryBuildListener implements BuildListener {
         }
     }
 
-    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client){
-        if(clientConf.getTimeout() != null)
+    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getTimeout() != null)
             client.setConnectionTimeout(clientConf.getTimeout());
+    }
+
+    protected void configMaxRetries(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        if (clientConf.getMaxRetries() != null) {
+            client.setMaxRetries(clientConf.getMaxRetries());
+            client.setRetryRequestsAlreadySent(clientConf.isRetryRequestsAlreadySent());
+        }
     }
 }

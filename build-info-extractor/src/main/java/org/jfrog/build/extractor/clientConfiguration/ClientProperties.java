@@ -30,6 +30,9 @@ public interface ClientProperties {
     @Deprecated
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
 
+    String PROP_MAX_RETRIES = ARTIFACTORY_PREFIX + "maxRetries";
+
+    String PROP_RETRY_REQUESTS_ALREADY_SENT = ARTIFACTORY_PREFIX + "retryRequestsAlreadySent";
 
     String PROP_TIMEOUT = ARTIFACTORY_PREFIX + "timeout";
 

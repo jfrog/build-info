@@ -50,12 +50,15 @@ public class ArtifactoryHttpClient {
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
+    public static final int DEFAULT_MAX_RETRY = 3;
     private final Log log;
     private final String artifactoryUrl;
     private final String username;
     private final String password;
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
+    private int maxRetries = DEFAULT_MAX_RETRY;
     private ProxyConfiguration proxyConfiguration;
+    private boolean retryRequestsAlreadySent = false;
 
     private PreemptiveHttpClient deployClient;
 
@@ -108,6 +111,18 @@ public class ArtifactoryHttpClient {
     }
 
     /**
+     * Max Retries to perform
+     *
+     * @param maxRetries The number of max retries.
+     */
+    public void setMaxRetries(int maxRetries){
+        this.maxRetries = maxRetries;
+    }
+
+    public void setRetryRequestsAlreadySent(boolean retryRequestsAlreadySent) {
+        this.retryRequestsAlreadySent = retryRequestsAlreadySent;
+    }
+    /**
      * Release all connection and cleanup resources.
      */
     public void close() {
@@ -122,7 +137,8 @@ public class ArtifactoryHttpClient {
 
     public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
-            deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration);
+            deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration, maxRetries, retryRequestsAlreadySent);
+            deployClient.setLog(log);
         }
 
         return deployClient;
