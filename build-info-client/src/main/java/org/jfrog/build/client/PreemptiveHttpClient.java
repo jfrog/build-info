@@ -16,18 +16,16 @@
 
 package org.jfrog.build.client;
 
+import com.google.common.collect.Sets;
 import org.apache.http.*;
 import org.apache.http.auth.*;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
-import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.*;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
@@ -36,6 +34,7 @@ import org.jfrog.build.api.util.Log;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -149,6 +148,7 @@ public class PreemptiveHttpClient {
         int retryCount = maxRetries < 1 ? ArtifactoryHttpClient.DEFAULT_MAX_RETRY : maxRetries;
         builder.setRetryHandler(new PreemptiveRetryHandler(retryCount, retryRequestsAlreadySent));
         builder.setServiceUnavailableRetryStrategy(new PreemptiveRetryStrategy());
+        builder.setRedirectStrategy(new PreemptiveRedirectStrategy());
 
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
@@ -265,6 +265,43 @@ public class PreemptiveHttpClient {
             retryCounter = 0;
             return false;
         }
+    }
+
+    /**
+     * Class for performing redirection for the following status codes:
+     * SC_MOVED_PERMANENTLY (301)
+     * SC_MOVED_TEMPORARILY (302)
+     * SC_SEE_OTHER (303)
+     * SC_TEMPORARY_REDIRECT (307)
+     */
+
+    private class PreemptiveRedirectStrategy extends DefaultRedirectStrategy {
+
+        private Set<String> redirectableMethods = Sets.newHashSet(
+                HttpGet.METHOD_NAME.toLowerCase(),
+                HttpPost.METHOD_NAME.toLowerCase(),
+                HttpHead.METHOD_NAME.toLowerCase(),
+                HttpDelete.METHOD_NAME.toLowerCase(),
+                HttpPut.METHOD_NAME.toLowerCase());
+
+        @Override
+        public HttpUriRequest getRedirect(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
+            URI uri = getLocationURI(request, response, context);
+            log.debug("Redirecting to " + uri);
+            return RequestBuilder.copy(request).setUri(uri).build();
+        }
+
+        @Override
+        protected boolean isRedirectable(String method) {
+            String message = "The method " + method;
+            if (redirectableMethods.contains(method.toLowerCase())) {
+                log.debug(message + " can be redirected.");
+                return true;
+            }
+            log.error(message + " cannot be redirected.");
+            return false;
+        }
+
     }
 }
 
