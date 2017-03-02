@@ -3,16 +3,21 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.util.PublishedItemsHelper;
 import org.jfrog.build.api.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,6 +35,32 @@ public class SpecsHelper {
     }
 
     /**
+     * Uploads and returns List of artifacts according to a provided by the user upload fileSpec
+     *
+     * @param uploadSpec The required spec represented as String
+     * @param workspace File object that represents the workspace
+     * @param buildProperties Upload properties
+     * @param client ArtifactoryBuildInfoClient which will do the actual upload
+     * @return Set of DeployDetails that was calculated from the given params
+     * @throws IOException Thrown if any error occurs while reading the file, calculating the
+     *                     checksums or in case of any file system exception
+     * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
+     */
+    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
+                                                ArrayListMultimap<String, String> buildProperties,
+                                                ArtifactoryBuildInfoClient client)
+            throws IOException, NoSuchAlgorithmException {
+        Spec spec = this.getDownloadUploadSpec(uploadSpec);
+        Set<DeployDetails> artifactsToDeploy = getDeployDetails(spec, workspace, buildProperties);
+        try {
+            deploy(client, artifactsToDeploy);
+            return convertDeployDetailsToArtifacts(artifactsToDeploy);
+        } finally {
+            client.close();
+        }
+    }
+
+    /**
      * Returns Set of deploy details that represents the given spec
      *
      * @param uploadJson The required spec represented as Spec object
@@ -39,7 +70,7 @@ public class SpecsHelper {
      *                     checksums or in case of any file system exception
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      */
-    public Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace)
+    private Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace)
             throws IOException, NoSuchAlgorithmException {
         return getDeployDetails(uploadJson, workspace, null);
     }
@@ -55,7 +86,7 @@ public class SpecsHelper {
      *                     checksums or in case of any file system exception
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      */
-    public Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace, ArrayListMultimap<String, String> buildProperties)
+    private Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace, ArrayListMultimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         log.debug("Getting deploy details from spec.");
         Set<DeployDetails> artifactsToDeploy = Sets.newHashSet();
@@ -209,6 +240,30 @@ public class SpecsHelper {
         }
         if (StringUtils.isEmpty(uploadFile.getPattern())) {
             throw new IllegalArgumentException("The argument 'pattern' is missing from the upload spec.");
+        }
+    }
+
+    private List<Artifact> convertDeployDetailsToArtifacts(Set<DeployDetails> details) {
+        List<Artifact> result = Lists.newArrayList();
+        for (DeployDetails detail : details) {
+            String ext = FilenameUtils.getExtension(detail.getFile().getName());
+            Artifact artifact = new ArtifactBuilder(detail.getFile().getName()).md5(detail.getMd5())
+                    .sha1(detail.getSha1()).type(ext).build();
+            result.add(artifact);
+        }
+        return result;
+    }
+
+    private void deploy(ArtifactoryBuildInfoClient client, Set<DeployDetails> artifactsToDeploy) throws IOException {
+        for (DeployDetails deployDetail : artifactsToDeploy) {
+            StringBuilder deploymentPathBuilder = new StringBuilder(client.getArtifactoryUrl());
+            deploymentPathBuilder.append("/").append(deployDetail.getTargetRepository());
+            if (!deployDetail.getArtifactPath().startsWith("/")) {
+                deploymentPathBuilder.append("/");
+            }
+            deploymentPathBuilder.append(deployDetail.getArtifactPath());
+            log.info("Deploying artifact: " + deploymentPathBuilder.toString());
+            client.deployArtifact(deployDetail);
         }
     }
 }

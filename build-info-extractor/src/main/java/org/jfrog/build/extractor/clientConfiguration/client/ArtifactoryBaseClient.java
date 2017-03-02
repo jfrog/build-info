@@ -67,4 +67,8 @@ public abstract class ArtifactoryBaseClient {
     public void setProxyConfiguration(ProxyConfiguration proxy) {
         httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
     }
+
+    public String getArtifactoryUrl() {
+        return artifactoryUrl;
+    }
 }

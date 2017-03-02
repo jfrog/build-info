@@ -78,7 +78,7 @@ public class BuildDeploymentHelper {
             deployableArtifacts                  = aggregateArtifacts( aggregateDirectory, buildInfoFile, buildInfoAggregated, deployableArtifacts,
                                                                        isCopyAggregatedArtifacts, isPublishAggregatedArtifacts );
 
-            if ( ! isPublishAggregatedArtifacts ) {
+            if (!isPublishAggregatedArtifacts) {
                 return;
             }
         }
