@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
  */
 public class PathsUtils {
 
-    private static final String REGEXP_CHARS = "*?[]$^.{}|()";
+    private static final String REGEXP_CHARS = "*+?[]$^.{}|()";
     private static final char ESCAPE_CHARACTER = "\\".charAt(0);
 
     public static String reformatRegexp(String sourceString, String destString, Pattern regexPattern) {

@@ -238,10 +238,21 @@ public class PublishedItemsHelper {
     public static Multimap<String, File> buildPublishingData(
             File checkoutDir, String pattern, String targetPath, boolean flat, boolean recursive, boolean regexp)
             throws IOException {
+        List<File> matchedFiles = collectMatchedFiles(checkoutDir, pattern, recursive, regexp);
+        if (!regexp) {
+            // Convert wildcard to regexp
+            pattern = PathsUtils.pathToRegExp(pattern);
+        }
+        return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern));
+    }
+
+    private static List<File> collectMatchedFiles(
+            File checkoutDir, String pattern, boolean recursive, boolean regexp)
+            throws FileNotFoundException {
         // This method determines the base directory - the directory where the files scan will be done
         String baseDir = getBaseDir(checkoutDir, pattern, regexp);
         // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = removeBaseDirFromPattern(checkoutDir, pattern, baseDir, regexp);
+        String newPattern = preparePattern(checkoutDir, pattern, baseDir, regexp);
         // Collects candidate files to execute the regex
         List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, regexp);
         if (!regexp) {
@@ -259,8 +270,7 @@ public class PublishedItemsHelper {
                 matchedFiles.add(file);
             }
         }
-
-        return getUploadPathsMap(matchedFiles, baseDirFile, targetPath, flat, regexPattern);
+        return matchedFiles;
     }
 
     /**
@@ -271,14 +281,15 @@ public class PublishedItemsHelper {
      * @param baseDir the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
-    private static String removeBaseDirFromPattern(File checkoutDir, String pattern, String baseDir, boolean regexp) {
+    private static String preparePattern(File checkoutDir, String pattern, String baseDir, boolean regexp) {
         String absolutePattern = getAbsolutePattern(checkoutDir, pattern, regexp);
-        // In case of absolute regexp pattern the pattern may contain escape chars. For correct new pattern extracting we need to make the base dir look the same.
-        if (regexp && !absolutePattern.contains(baseDir)) {
-            baseDir = PathsUtils.escapeRegexChars(baseDir);
-        }
         // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used
-        String newPattern = StringUtils.substringAfter(absolutePattern, baseDir);
+        String newPattern;
+        if (regexp) {
+            newPattern = cleanRegexpPattern(absolutePattern, baseDir);
+        } else {
+            newPattern = StringUtils.substringAfter(removeParenthesis(absolutePattern), baseDir);
+        }
         if (newPattern.startsWith("/")) {
             // Remove the leading separator
             newPattern = newPattern.substring(1);
@@ -293,26 +304,53 @@ public class PublishedItemsHelper {
         return newPattern;
     }
 
+    private static String cleanRegexpPattern(String absolutePattern, String baseDir) {
+        String separator = "/";
+        while (baseDir.contains(separator)) {
+            baseDir = StringUtils.substringAfter(baseDir, separator);
+            absolutePattern = StringUtils.substringAfter(absolutePattern, separator);
+        }
+        // Placeholder parenthesis may be opened in the basedir as part of placeholder so the closing bracket should be removed.
+        return cleanUnopenedParenthesis(absolutePattern);
+    }
+
+    /**
+     * This method removes parenthesis that was not opened in the string
+     * @param pattern the string to remove from
+     * @return string without unopened parenthesis
+     */
+    private static String cleanUnopenedParenthesis(String pattern) {
+        int length = pattern.length();
+        int numberOfUnclosedParenthesis = 0;
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < length; i++) {
+            char c = pattern.charAt(i);
+            if (c == ")".charAt(0)) {
+               if (numberOfUnclosedParenthesis > 0) {
+                   numberOfUnclosedParenthesis--;
+                   stringBuilder.append(c);
+               }
+            } else {
+                stringBuilder.append(c);
+                if (c == "(".charAt(0)) {
+                    numberOfUnclosedParenthesis++;
+                }
+            }
+        }
+        return stringBuilder.toString();
+    }
+
     private static Multimap<String, File> getUploadPathsMap(
             List<File> files, File checkoutDir, String targetPath, boolean flat, Pattern regexPattern) {
         Multimap<String, File> filePathsMap = HashMultimap.create();
 
         for (File file : files) {
             String fileTargetPath = targetPath;
-            String path;
-
-            if (!StringUtils.endsWith(fileTargetPath, "/")) {
-                path = StringUtils.substringBeforeLast(fileTargetPath, "/");
-            } else {
-                path = targetPath;
-            }
-
-            if (!flat) {
-                fileTargetPath = calculateFileTargetPath(checkoutDir, file, path);
+            if (StringUtils.endsWith(fileTargetPath, "/") && !flat) {
+                fileTargetPath = calculateFileTargetPath(checkoutDir, file, targetPath);
                 // handle win file system
                 fileTargetPath = fileTargetPath.replace('\\', '/');
             }
-
             fileTargetPath = PathsUtils.reformatRegexp(
                     getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
             filePathsMap.put(fileTargetPath, file);
@@ -346,8 +384,28 @@ public class PublishedItemsHelper {
             baseDir = StringUtils.substringBefore(baseDir, "*");
             baseDir = StringUtils.substringBefore(baseDir, "?");
             baseDir = baseDir.substring(0, baseDir.lastIndexOf("/") + 1);
+            baseDir = removeParenthesis(baseDir);
         }
         return baseDir;
+    }
+
+    private static String removeParenthesis(String baseDir) {
+        baseDir = removeUnescapedChar(baseDir ,"\\(");
+        baseDir = removeUnescapedChar(baseDir ,"\\)");
+        return baseDir;
+    }
+
+    private static String removeUnescapedChar(String stringToSplit, String separator) {
+        String[] strings = stringToSplit.split(separator);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String string : strings) {
+            if (string.endsWith("\\")) {
+                stringBuilder.append(string).append(separator);
+            } else {
+                stringBuilder.append(string);
+            }
+        }
+        return stringBuilder.toString();
     }
 
     /**
@@ -379,7 +437,7 @@ public class PublishedItemsHelper {
      * @return the last existing directory of the provided baseDire that not contains a regex characters
      */
     private static String getExistingPath(String baseDir) {
-        baseDir = PathsUtils.substringBeforeFirstRegex(baseDir);
+        baseDir = PathsUtils.substringBeforeFirstRegex(removeParenthesis(baseDir));
         while (!new File(baseDir).isDirectory() && baseDir.contains("/")) {
             baseDir = StringUtils.substringBeforeLast(baseDir, "/");
         }

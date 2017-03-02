@@ -5,6 +5,8 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;
 
+import java.io.IOException;
+
 /**
  * Created by Tamirh on 21/04/2016.
  */
@@ -90,5 +92,9 @@ public abstract class ArtifactoryBaseClient {
      */
     public void setLog(Log log) {
         httpClient.getHttpClient().setLog(log);
+    }
+
+    public String getArtifactoryUrl() {
+        return artifactoryUrl;
     }
 }
