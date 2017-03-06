@@ -40,6 +40,7 @@ public interface ClientConfigurationFields {
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
     String RECORD_ALL_DEPENDENCIES = "record.all.dependencies";
+    String RECORD_IMMEDIATE_DEPENDENCIES = "record.immediate.dependencies";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";
     String MATRIX = "matrix";
     String ARTIFACT_SPECS = "artifactSpecs";

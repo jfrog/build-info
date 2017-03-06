@@ -429,7 +429,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
 
-        mergeProjectDependencies(project.getArtifacts());
+        mergeProjectDependencies(conf.publisher.isRecordImmediateDependencies() ? project.getDependencyArtifacts() : project.getArtifacts());
     }
 
     /**
