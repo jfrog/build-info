@@ -297,9 +297,8 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     protected void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getMaxRetries() != null) {
-            client.setMaxRetries(clientConf.getMaxRetries());
-            client.setRetryRequestsAlreadySent(clientConf.isRetryRequestsAlreadySent());
+        if (clientConf.getConnectionRetries() != null) {
+            client.setConnectionRetries(clientConf.getConnectionRetries());
         }
     }
 

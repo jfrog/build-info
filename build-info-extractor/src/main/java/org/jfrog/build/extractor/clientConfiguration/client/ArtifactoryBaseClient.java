@@ -5,8 +5,6 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;
 
-import java.io.IOException;
-
 /**
  * Created by Tamirh on 21/04/2016.
  */
@@ -38,21 +36,12 @@ public abstract class ArtifactoryBaseClient {
     }
 
     /**
-     * Max Retries to perform
+     * Connection Retries to perform
      *
-     * @param maxRetries The number of max retries.
+     * @param connectionRetries The number of max retries.
      */
-    public void setMaxRetries(int maxRetries) {
-        httpClient.setMaxRetries(maxRetries);
-    }
-
-    /**
-     * Request Sent Retry value
-     *
-     * @param retryRequestsAlreadySent true/false for performing retries.
-     */
-    public void setRetryRequestsAlreadySent(boolean retryRequestsAlreadySent) {
-        httpClient.setRetryRequestsAlreadySent(retryRequestsAlreadySent);
+    public void setConnectionRetries(int connectionRetries) {
+        httpClient.setConnectionRetries(connectionRetries);
     }
 
     /**

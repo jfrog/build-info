@@ -161,20 +161,12 @@ public class ArtifactoryClientConfiguration {
         root.setIntegerValue(PROP_TIMEOUT, timeout);
     }
 
-    public void setMaxRetries(Integer maxRetries) {
-        root.setIntegerValue(PROP_MAX_RETRIES, maxRetries);
+    public void setConnectionRetries(Integer connectionRetries) {
+        root.setIntegerValue(PROP_CONNECTION_RETRIES, connectionRetries);
     }
 
-    public Integer getMaxRetries() {
-        return root.getIntegerValue(PROP_MAX_RETRIES);
-    }
-
-    public void setRetryRequestsAlreadySent(boolean retryRequestsAlreadySent) {
-        root.setBooleanValue(PROP_RETRY_REQUESTS_ALREADY_SENT, retryRequestsAlreadySent);
-    }
-
-    public Boolean isRetryRequestsAlreadySent() {
-        return root.getBooleanValue(PROP_RETRY_REQUESTS_ALREADY_SENT, false);
+    public Integer getConnectionRetries() {
+        return root.getIntegerValue(PROP_CONNECTION_RETRIES);
     }
 
     public Integer getSocketTimeout() {
