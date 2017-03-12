@@ -47,11 +47,10 @@ import java.util.Set;
 public class PreemptiveHttpClient {
 
     private final static String CLIENT_VERSION;
-    private final static String REQUEST_SENT_RETRY_ENABLED = "requestSentRetryEnabled";
+    private final boolean requestSentRetryEnabled = true;
     private CloseableHttpClient httpClient;
     private BasicHttpContext localContext;
-    private boolean retryRequestsAlreadySent = false;
-    private int maxRetries;
+    private int connectionRetries;
     private int retryCounter;
     private Log log;
 
@@ -71,16 +70,15 @@ public class PreemptiveHttpClient {
     }
 
     public PreemptiveHttpClient(int timeout) {
-        this(null, null, timeout, null, ArtifactoryHttpClient.DEFAULT_MAX_RETRY, false);
+        this(null, null, timeout, null, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
     }
 
     public PreemptiveHttpClient(String userName, String password, int timeout) {
-        this(userName, password, timeout, null, ArtifactoryHttpClient.DEFAULT_MAX_RETRY, false);
+        this(userName, password, timeout, null, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
     }
 
-    public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int maxRetries, boolean retryRequestsAlreadySent) {
-        this.retryRequestsAlreadySent = retryRequestsAlreadySent;
-        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, maxRetries);
+    public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
+        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, connectionRetries);
         if (proxyConfiguration != null) {
             setProxyConfiguration(httpClientBuilder, proxyConfiguration);
         }
@@ -108,11 +106,11 @@ public class PreemptiveHttpClient {
     }
 
     private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout) {
-        return createHttpClientBuilder(userName, password, timeout, ArtifactoryHttpClient.DEFAULT_MAX_RETRY);
+        return createHttpClientBuilder(userName, password, timeout, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
     }
 
-    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int maxRetries) {
-        this.maxRetries = maxRetries;
+    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int connectionRetries) {
+        this.connectionRetries = connectionRetries;
         int timeoutMilliSeconds = timeout * 1000;
         RequestConfig requestConfig = RequestConfig
                 .custom()
@@ -140,13 +138,9 @@ public class PreemptiveHttpClient {
             // Add as the first request interceptor
             builder.addInterceptorFirst(new PreemptiveAuth());
         }
-        boolean retryRequestsAlreadySent = Boolean.parseBoolean(System.getProperty(REQUEST_SENT_RETRY_ENABLED));
-        if (retryRequestsAlreadySent || this.retryRequestsAlreadySent) {
-            retryRequestsAlreadySent = true;
-        }
 
-        int retryCount = maxRetries < 1 ? ArtifactoryHttpClient.DEFAULT_MAX_RETRY : maxRetries;
-        builder.setRetryHandler(new PreemptiveRetryHandler(retryCount, retryRequestsAlreadySent));
+        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
+        builder.setRetryHandler(new PreemptiveRetryHandler(retryCount));
         builder.setServiceUnavailableRetryStrategy(new PreemptiveRetryStrategy());
         builder.setRedirectStrategy(new PreemptiveRedirectStrategy());
 
@@ -214,11 +208,11 @@ public class PreemptiveHttpClient {
             retryCounter++;
             if (response.getStatusLine().getStatusCode() > 500) {
                 HttpClientContext clientContext = HttpClientContext.adapt(context);
-                log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString());
-                log.warn("Received status code " + response.getStatusLine().getStatusCode() +
+                log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString() +
+                        ". Received status code " + response.getStatusLine().getStatusCode() +
                         " and message: " + response.getStatusLine().getReasonPhrase() + ".");
-                if (retryCounter <= maxRetries) {
-                    log.warn("Trying retry #" + retryCounter);
+                if (retryCounter <= connectionRetries) {
+                    log.warn("Attempting retry #" + retryCounter);
                     return true;
                 }
             }
@@ -239,8 +233,8 @@ public class PreemptiveHttpClient {
 
     private class PreemptiveRetryHandler extends DefaultHttpRequestRetryHandler {
 
-        PreemptiveRetryHandler(int maxRetries, boolean retryRequestsAlreadySent) {
-            super(maxRetries, retryRequestsAlreadySent, getNonRetriableClasses());
+        PreemptiveRetryHandler(int connectionRetries) {
+            super(connectionRetries, requestSentRetryEnabled, getNonRetriableClasses());
         }
 
         @Override
@@ -249,19 +243,16 @@ public class PreemptiveHttpClient {
             retryCounter++;
             HttpClientContext clientContext = HttpClientContext.adapt(context);
             log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString() + ": " + exception.getMessage() + ".");
-            if (retryCounter > maxRetries) {
+            if (retryCounter > connectionRetries) {
                 retryCounter = 0;
                 return false;
             }
             boolean shouldRetry = super.retryRequest(exception, retryCounter, context);
             if (shouldRetry) {
-                log.warn("Trying retry #" + retryCounter);
+                log.warn("Attempting retry #" + retryCounter);
                 return true;
             }
-            if (clientContext.isRequestSent()) {
-                log.info("Request previously was send. Retry is not allowed for requests that already been send.\n" +
-                        "This can be modified by setting a system property: requestSentRetryEnabled to true.");
-            }
+
             retryCounter = 0;
             return false;
         }

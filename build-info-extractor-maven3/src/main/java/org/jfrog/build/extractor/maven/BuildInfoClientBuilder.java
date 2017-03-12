@@ -8,8 +8,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_RETRIES;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RETRY_REQUESTS_ALREADY_SENT;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONNECTION_RETRIES;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
 
 /**
@@ -60,15 +59,12 @@ public class BuildInfoClientBuilder {
     }
 
     private void resolveRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        if (clientConf.getMaxRetries() == null) {
+        if (clientConf.getConnectionRetries() == null) {
             return;
         }
-        int maxRetries = clientConf.getMaxRetries();
-        boolean retryRequestsAlreadySent = clientConf.isRetryRequestsAlreadySent();
-        logResolvedProperty(PROP_MAX_RETRIES, String.valueOf(maxRetries));
-        logResolvedProperty(PROP_RETRY_REQUESTS_ALREADY_SENT,String.valueOf(retryRequestsAlreadySent));
-        client.setMaxRetries(maxRetries);
-        client.setRetryRequestsAlreadySent(clientConf.isRetryRequestsAlreadySent());
+        int configMaxRetries = clientConf.getConnectionRetries();
+        logResolvedProperty(PROP_CONNECTION_RETRIES, String.valueOf(configMaxRetries));
+        client.setConnectionRetries(configMaxRetries);
     }
 
     private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,
