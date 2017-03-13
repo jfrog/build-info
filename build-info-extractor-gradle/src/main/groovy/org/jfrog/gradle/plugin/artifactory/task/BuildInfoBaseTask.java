@@ -38,10 +38,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Date: 3/20/13 Time: 10:32 AM
@@ -371,7 +368,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         ArtifactoryPluginUtil.getPublisherHandler(bit.getProject());
 
                 if (publisher != null && publisher.getContextUrl() != null) {
-                    publisher.getProps().putAll(propsRoot);
+                    Map<String, String> moduleProps = new HashMap<String, String>(propsRoot);
+                    moduleProps.putAll(publisher.getProps());
+                    publisher.getProps().putAll(moduleProps);
                     String contextUrl = publisher.getContextUrl();
                     String username = publisher.getUsername();
                     String password = publisher.getPassword();
