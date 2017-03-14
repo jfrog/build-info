@@ -17,13 +17,18 @@
 package org.jfrog.build.client;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.*;
 import org.apache.http.auth.*;
 import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
 import org.apache.http.protocol.BasicHttpContext;
@@ -35,6 +40,7 @@ import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -50,6 +56,7 @@ public class PreemptiveHttpClient {
     private final boolean requestSentRetryEnabled = true;
     private CloseableHttpClient httpClient;
     private BasicHttpContext localContext;
+    private ResponseHandler<HttpResponse> responseHandler = new PreemptiveHttpClientHandler();
     private int connectionRetries;
     private int retryCounter;
     private Log log;
@@ -99,9 +106,9 @@ public class PreemptiveHttpClient {
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
         if (localContext != null) {
-            return httpClient.execute(request, localContext);
+            return httpClient.execute(request, responseHandler, localContext);
         } else {
-            return httpClient.execute(request);
+            return httpClient.execute(request, responseHandler);
         }
     }
 
@@ -292,7 +299,37 @@ public class PreemptiveHttpClient {
             log.error(message + " cannot be redirected.");
             return false;
         }
+    }
 
+    /**
+     * gets responses from the underlying HttpClient and closes them (so you don't have to) the response body is
+     * buffered in an intermediary byte array.
+     * Will throw a {@link IOException} if the request failed.
+     */
+    private class PreemptiveHttpClientHandler implements ResponseHandler<HttpResponse> {
+        @Override
+        public HttpResponse handleResponse(HttpResponse response) throws IOException {
+            int statusCode = response.getStatusLine().getStatusCode();
+            //Response entity might be null, 500 and 405 also give the html itself so skip it
+            String entity = "";
+            if (response.getEntity() != null && statusCode != 500 && statusCode != 405) {
+                try {
+                    entity = IOUtils.toString(response.getEntity().getContent());
+                } catch (IOException e) {
+                    //Ignore
+                } catch (NullPointerException e) {
+                    //Null entity - Ignore
+                } finally {
+                    HttpClientUtils.closeQuietly((CloseableHttpResponse) response);
+                }
+            }
+
+            HttpResponse newResponse = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(response.getStatusLine(),
+                    new HttpClientContext());
+            newResponse.setEntity(new StringEntity(entity, Charset.forName("UTF-8")));
+            newResponse.setHeaders(response.getAllHeaders());
+            return newResponse;
+        }
     }
 }
 
