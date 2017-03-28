@@ -175,8 +175,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public void projectsEvaluated() {
         Project project = getProject();
-        log.info("Configuring artifactoryPublish task '{}' for project '{}'.",
-                this.getPath(), project.getName());
         if (isSkip()) {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
                     this.getPath(), project.getName());
@@ -214,6 +212,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         if (props == null || props.isEmpty()) {
             return;
         }
+        properties.clear();
         for (Map.Entry<String, CharSequence> entry : props.entrySet()) {
             // The key cannot be lazy eval, but we keep the value as GString as long as possible
             String key = entry.getKey();
