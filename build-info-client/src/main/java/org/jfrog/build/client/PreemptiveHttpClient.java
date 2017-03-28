@@ -27,7 +27,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.entity.StringEntity;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
@@ -40,7 +40,6 @@ import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -309,12 +308,14 @@ public class PreemptiveHttpClient {
     private class PreemptiveHttpClientHandler implements ResponseHandler<HttpResponse> {
         @Override
         public HttpResponse handleResponse(HttpResponse response) throws IOException {
+            HttpResponse newResponse = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(response.getStatusLine(), new HttpClientContext());
+            newResponse.setHeaders(response.getAllHeaders());
             int statusCode = response.getStatusLine().getStatusCode();
             //Response entity might be null, 500 and 405 also give the html itself so skip it
-            String entity = "";
             if (response.getEntity() != null && statusCode != 500 && statusCode != 405) {
                 try {
-                    entity = IOUtils.toString(response.getEntity().getContent());
+                    InputStream entityInputStream = IOUtils.toBufferedInputStream(response.getEntity().getContent());
+                    newResponse.setEntity(new InputStreamEntity(entityInputStream));
                 } catch (IOException e) {
                     //Ignore
                 } catch (NullPointerException e) {
@@ -324,10 +325,6 @@ public class PreemptiveHttpClient {
                 }
             }
 
-            HttpResponse newResponse = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(response.getStatusLine(),
-                    new HttpClientContext());
-            newResponse.setEntity(new StringEntity(entity, Charset.forName("UTF-8")));
-            newResponse.setHeaders(response.getAllHeaders());
             return newResponse;
         }
     }
