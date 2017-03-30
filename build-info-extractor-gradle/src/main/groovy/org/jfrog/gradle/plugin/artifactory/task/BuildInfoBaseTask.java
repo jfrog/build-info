@@ -245,6 +245,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         Project project = getProject();
         PropertiesConfig propertiesConfig = new PropertiesConfig(project);
         ConfigureUtil.configure(closure, propertiesConfig);
+        artifactSpecs.clear();
         artifactSpecs.addAll(propertiesConfig.getArtifactSpecs());
     }
 
