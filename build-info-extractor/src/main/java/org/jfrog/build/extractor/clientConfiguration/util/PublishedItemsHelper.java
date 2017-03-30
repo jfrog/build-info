@@ -213,7 +213,8 @@ public class PublishedItemsHelper {
      * @throws IOException in case of any file system exception
      */
     @Deprecated
-    public static Multimap<String, File> wildCardBuildPublishingData(File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp)
+    public static Multimap<String, File> wildCardBuildPublishingData(
+            File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp)
             throws IOException {
         if (!regexp) {
             pattern = PathsUtils.pathToRegExp(pattern);
@@ -222,7 +223,7 @@ public class PublishedItemsHelper {
         Pattern regexPattern = Pattern.compile(pattern);
         List<File> files = new ArrayList<File>();
         collectMatchedFiles(checkoutDir, checkoutDir, regexPattern, files, isRecursive);
-        return getUploadPathsMap(files, checkoutDir, targetPath, flat, regexPattern);
+        return getUploadPathsMap(files, checkoutDir, targetPath, flat, regexPattern, false);
     }
 
     /**
@@ -238,12 +239,13 @@ public class PublishedItemsHelper {
     public static Multimap<String, File> buildPublishingData(
             File checkoutDir, String pattern, String targetPath, boolean flat, boolean recursive, boolean regexp)
             throws IOException {
+        boolean isAbsolutePath = (new File(pattern)).isAbsolute();
         List<File> matchedFiles = collectMatchedFiles(checkoutDir, pattern, recursive, regexp);
         if (!regexp) {
             // Convert wildcard to regexp
             pattern = PathsUtils.pathToRegExp(pattern);
         }
-        return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern));
+        return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
     }
 
     private static List<File> collectMatchedFiles(
@@ -340,8 +342,8 @@ public class PublishedItemsHelper {
         return stringBuilder.toString();
     }
 
-    private static Multimap<String, File> getUploadPathsMap(
-            List<File> files, File checkoutDir, String targetPath, boolean flat, Pattern regexPattern) {
+    private static Multimap<String, File> getUploadPathsMap(List<File> files, File checkoutDir, String targetPath,
+            boolean flat, Pattern regexPattern, boolean absolutePath) {
         Multimap<String, File> filePathsMap = HashMultimap.create();
 
         for (File file : files) {
@@ -351,8 +353,12 @@ public class PublishedItemsHelper {
                 // handle win file system
                 fileTargetPath = fileTargetPath.replace('\\', '/');
             }
-            fileTargetPath = PathsUtils.reformatRegexp(
-                    getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
+            if (absolutePath) {
+                fileTargetPath = PathsUtils.reformatRegexp(file.getPath(), fileTargetPath, regexPattern);
+            } else {
+                fileTargetPath = PathsUtils.reformatRegexp(
+                        getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
+            }
             filePathsMap.put(fileTargetPath, file);
         }
         return filePathsMap;
