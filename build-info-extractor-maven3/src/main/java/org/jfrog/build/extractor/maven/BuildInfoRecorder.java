@@ -446,8 +446,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         for (Artifact artifact : projectDependencies) {
             String classifier = artifact.getClassifier();
             classifier = classifier == null ? "" : classifier;
+            String scope = artifact.getScope();
+            scope = StringUtils.isBlank(scope) ? Artifact.SCOPE_COMPILE : scope;  // HAP-909
             DefaultArtifact art = new DefaultArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
-                    artifact.getScope(), artifact.getType(), classifier, artifact.getArtifactHandler());
+                    scope, artifact.getType(), classifier, artifact.getArtifactHandler());
 
             art.setFile(artifact.getFile());
             dependecies.add(art);
