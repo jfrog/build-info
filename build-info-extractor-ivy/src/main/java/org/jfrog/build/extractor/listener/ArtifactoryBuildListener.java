@@ -13,13 +13,14 @@ import org.apache.tools.ant.*;
 import org.apache.tools.ant.taskdefs.Ant;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.client.*;
+import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
 
@@ -335,25 +336,6 @@ public class ArtifactoryBuildListener implements BuildListener {
         governance.setBlackDuckProperties(blackDuckProperties);
         builder.governance(governance);
 
-        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-        if (clientConf.info.getBuildRetentionCount() != null) {
-            buildRetention.setCount(clientConf.info.getBuildRetentionCount());
-        }
-        String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
-        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
-            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
-            if (minimumDays > -1) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.add(Calendar.DAY_OF_YEAR, -minimumDays);
-                buildRetention.setMinimumBuildDate(calendar.getTime());
-            }
-        }
-        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
-        for (String notToDel : notToDelete) {
-            buildRetention.addBuildNotToBeDiscarded(notToDel);
-        }
-        builder.buildRetention(buildRetention);
-
         String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {
             Issues issues = new Issues();
@@ -398,7 +380,7 @@ public class ArtifactoryBuildListener implements BuildListener {
                 deployArtifacts(project, client, deployDetails, patterns);
             }
             if (clientConf.publisher.isPublishBuildInfo()) {
-                client.sendBuildInfo(build);
+                Utils.sendBuildAndBuildRetention(client, build, clientConf);
             }
             isDidDeploy = true;
         } catch (IOException e) {

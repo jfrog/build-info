@@ -185,25 +185,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         governance.setBlackDuckProperties(blackDuckProperties);
         bib.governance(governance);
 
-        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-        Integer count = clientConf.info.getBuildRetentionCount();
-        if (count != null) {
-            buildRetention.setCount(count);
-        }
-        String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
-        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
-            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
-            if (minimumDays > -1) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.add(Calendar.DAY_OF_YEAR, -minimumDays);
-                buildRetention.setMinimumBuildDate(calendar.getTime());
-            }
-        }
-        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
-        for (String notToDel : notToDelete) {
-            buildRetention.addBuildNotToBeDiscarded(notToDel);
-        }
-        bib.buildRetention(buildRetention);
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
             String comment = clientConf.info.getReleaseComment();

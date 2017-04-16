@@ -91,26 +91,7 @@ public class BuildInfoModelPropertyResolver {
         Governance governance = new Governance();
         governance.setBlackDuckProperties(blackDuckProperties);
         builder.governance(governance);
-
-        BuildRetention buildRetention = new BuildRetention(clientConf.info.isDeleteBuildArtifacts());
-        if (clientConf.info.getBuildRetentionCount() != null) {
-            buildRetention.setCount(clientConf.info.getBuildRetentionCount());
-        }
-        String buildRetentionMinimumDays = clientConf.info.getBuildRetentionMinimumDate();
-        if (StringUtils.isNotBlank(buildRetentionMinimumDays)) {
-            int minimumDays = Integer.parseInt(buildRetentionMinimumDays);
-            if (minimumDays > -1) {
-                Calendar calendar = Calendar.getInstance();
-                calendar.add(Calendar.DAY_OF_YEAR, -minimumDays);
-                buildRetention.setMinimumBuildDate(calendar.getTime());
-            }
-        }
-        String[] notToDelete = clientConf.info.getBuildNumbersNotToDelete();
-        for (String notToDel : notToDelete) {
-            buildRetention.addBuildNotToBeDiscarded(notToDel);
-        }
         attachStagingIfNeeded(clientConf, builder);
-        builder.buildRetention(buildRetention);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
 
         builder.artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion());

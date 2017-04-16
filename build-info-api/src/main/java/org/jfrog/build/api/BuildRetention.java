@@ -1,5 +1,6 @@
 package org.jfrog.build.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
@@ -63,5 +64,10 @@ public class BuildRetention implements Serializable {
 
     public List<String> getBuildNumbersNotToBeDiscarded() {
         return buildNumbersNotToBeDiscarded;
+    }
+
+    @JsonIgnore
+    public boolean isEmpty() {
+        return count == -1 && minimumBuildDate == null;
     }
 }

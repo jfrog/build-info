@@ -33,6 +33,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,10 +117,10 @@ public class BuildDeploymentHelper {
                             client.sendBuildInfo( buildInfoMerged );
                         }
                         else {
-                            client.sendBuildInfo( build );
+                            Utils.sendBuildAndBuildRetention(client, build, clientConf);
                         }
                     } catch ( Exception e ) {
-                        throw new RuntimeException("Error occurred while publishing Build Info to Artifactory.", e);
+                        throw new RuntimeException(e);
                     }
                 }
             } finally {

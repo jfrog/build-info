@@ -25,6 +25,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.PropertiesConfig;
@@ -438,7 +439,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         client.sendModuleInfo(build);
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                        client.sendBuildInfo(build);
+                        Utils.sendBuildAndBuildRetention(client, build, accRoot);
                     }
                 }
                 if (isGenerateBuildInfoToFile(accRoot)) {

@@ -40,6 +40,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.release.BintrayUploadInfoOverride;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -73,8 +74,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
     private static final String PUSH_TO_BINTRAY_REST_URL = "/api/build/pushToBintray/";
     private static final String BUILD_REST_URL = "/api/build";
+    private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
+    public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
+    public static final String APPLICATION_JSON = "application/json";
 
     /**
      * Version of Artifactory we work with.
@@ -180,7 +184,25 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     public void sendBuildInfo(String buildInfoJson) throws IOException {
         String url = artifactoryUrl + BUILD_REST_URL;
         HttpPut httpPut = new HttpPut(url);
-        sendDescriptor(httpPut, buildInfoJson);
+        try {
+            sendDescriptor(httpPut, buildInfoJson, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
+        } catch (IOException e) {
+            throw new IOException("Failed to send build descriptor. " + e.getMessage(), e);
+        }
+    }
+
+    public void sendBuildRetetion(BuildRetention buildRetantion, String buildName) throws IOException {
+        String buildRetantionJson = toJsonString(buildRetantion);
+        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName;
+        HttpPost httpPost = new HttpPost(url);
+        try {
+            log.info("Executing build retention");
+            log.debug(buildRetantionJson);
+            sendRequest(httpPost, buildRetantionJson, APPLICATION_JSON, true);
+        } catch (IOException e) {
+            log.error("Failed to execute build retention.", e);
+            throw new IOException("Failed to execute build retention: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -209,23 +231,36 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
                     encodeUrl(build.getNumber());
             HttpPost httpPost = new HttpPost(url);
             String modulesAsJsonString = toJsonString(build.getModules());
-            sendDescriptor(httpPost, modulesAsJsonString);
+            sendDescriptor(httpPost, modulesAsJsonString, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         } catch (Exception e) {
             log.error("Could not build the build-info modules object.", e);
-            throw new IOException("Could not publish build-info modules: " + e.getMessage());
+            throw new IOException("Could not publish build-info modules: " + e.getMessage(), e);
         }
     }
 
-    private void sendDescriptor(HttpEntityEnclosingRequestBase request, String content) throws IOException {
-        StringEntity stringEntity = new StringEntity(content, "UTF-8");
-        stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
-        request.setEntity(stringEntity);
+    private void sendDescriptor(HttpEntityEnclosingRequestBase request, String content, String contentType) throws IOException {
         log.info("Deploying build descriptor to: " + request.getURI().toString());
-        HttpResponse response = httpClient.getHttpClient().execute(request);
-        StatusLine statusLine = response.getStatusLine();
-        if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            HttpEntity responseEntity = response.getEntity();
-            throw new IOException("Failed to send build descriptor. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+        sendRequest(request, content, contentType, true);
+    }
+
+    private void sendRequest(HttpEntityEnclosingRequestBase request, String content, String contentType, boolean retry) throws IOException {
+        StringEntity stringEntity = new StringEntity(content, "UTF-8");
+        stringEntity.setContentType(contentType);
+        request.setEntity(stringEntity);
+        int connectionRetries = httpClient.getConnectionRetries();
+        try {
+            if (!retry) {
+                httpClient.setConnectionRetries(0);
+            }
+            HttpResponse response = httpClient.getHttpClient().execute(request);
+            StatusLine statusLine = response.getStatusLine();
+            if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+                HttpEntity responseEntity = response.getEntity();
+                throw new IOException(statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+            }
+        } finally {
+            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
+            httpClient.setConnectionRetries(connectionRetries);
         }
     }
 

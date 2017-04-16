@@ -47,6 +47,8 @@ public class ArtifactoryHttpClient {
             new ArtifactoryVersion("2.2.3");
     public static final ArtifactoryVersion NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION =
             new ArtifactoryVersion("2.2.4");
+    public static final ArtifactoryVersion STANDALONE_BUILD_RETENTION_SUPPORTED_ARTIFACTORY_VERSION =
+            new ArtifactoryVersion("5.2.1");
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
@@ -116,6 +118,10 @@ public class ArtifactoryHttpClient {
      */
     public void setConnectionRetries(int connectionRetries){
         this.connectionRetries = connectionRetries;
+    }
+
+    public int getConnectionRetries() {
+        return connectionRetries;
     }
 
     /**
