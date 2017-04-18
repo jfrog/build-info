@@ -184,6 +184,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
         if (convention != null) {
             ArtifactoryClientConfiguration acc = convention.getClientConfig();
+            artifactSpecs.clear();
             artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
             // Configure the task using the "defaults" closure (delegate to the task)
