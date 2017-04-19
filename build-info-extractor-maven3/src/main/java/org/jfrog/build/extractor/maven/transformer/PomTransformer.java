@@ -114,16 +114,16 @@ public class PomTransformer {
         SAXBuilder saxBuilder = createSaxBuilder();
         Document document;
         EolDetectingInputStream eolDetectingStream = null;
+        InputStreamReader inputStreamReader = null;
         try {
             eolDetectingStream = new EolDetectingInputStream(new FileInputStream(pomFile));
-            InputStreamReader inputStreamReader = new InputStreamReader(eolDetectingStream, "UTF-8");
+            inputStreamReader = new InputStreamReader(eolDetectingStream, "UTF-8");
             document = saxBuilder.build(inputStreamReader);
         } catch (JDOMException e) {
             throw new IOException("Failed to parse pom: " + pomFile.getAbsolutePath(), e);
         } finally {
-            if (eolDetectingStream != null) {
-                eolDetectingStream.close();
-            }
+            IOUtils.closeQuietly(inputStreamReader);
+            IOUtils.closeQuietly(eolDetectingStream);
         }
 
         Element rootElement = document.getRootElement();
@@ -158,6 +158,7 @@ public class PomTransformer {
                 outputter.output(document, outputStreamWriter);
             } finally {
                 IOUtils.closeQuietly(outputStreamWriter);
+                IOUtils.closeQuietly(fileOutputStream);
             }
         }
 
@@ -306,7 +307,7 @@ public class PomTransformer {
         }
 
         Model model;
-        FileReader reader;
+        FileReader reader = null;
         MavenXpp3Reader mavenReader = new MavenXpp3Reader();
         try {
             reader = new FileReader(nextPomToLoad);
@@ -326,6 +327,8 @@ public class PomTransformer {
         } catch (Exception e) {
             Logger.getLogger(PomTransformer.class.getName()).info("couldn't load pom file at: " + nextPomToLoad);
             return false;
+        } finally {
+            IOUtils.closeQuietly(reader);
         }
         return true;
     }
