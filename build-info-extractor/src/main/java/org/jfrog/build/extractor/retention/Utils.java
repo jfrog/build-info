@@ -59,7 +59,7 @@ public class Utils {
     }
 
     public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention) throws IOException {
-        if (retention.isEmpty()) {
+        if (retention == null || retention.isEmpty()) {
             client.sendBuildInfo(build);
             return;
         }
