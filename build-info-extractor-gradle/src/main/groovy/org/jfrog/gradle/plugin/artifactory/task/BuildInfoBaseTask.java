@@ -108,22 +108,22 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     @TaskAction
     public void collectProjectBuildInfo() throws IOException {
-        try {
-            log.debug("Task '{}' activated", getPath());
-            // Only the last buildInfo execution performs the deployment
-            List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
-            if (orderedTasks.indexOf(this) == -1) {
-                log.error("Could not find my own task {} in the task graph!", getPath());
-                return;
-            }
+        log.debug("Task '{}' activated", getPath());
+        // Only the last buildInfo execution performs the deployment
+        List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
+        if (orderedTasks.indexOf(this) == -1) {
+            log.error("Could not find my own task {} in the task graph!", getPath());
+            return;
+        }
 
-            if (isLastTask()) {
-                log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
-                        new Object[]{getProject().getPath(), getPath()});
-                prepareAndDeploy();
-            }
-        } finally {
+        if (isLastTask()) {
+            log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
+                    new Object[]{getProject().getPath(), getPath()});
+            prepareAndDeploy();
             String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            if (StringUtils.isBlank(propertyFilePath)) {
+                propertyFilePath = System.getenv(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE);
+            }
             if (StringUtils.isNotBlank(propertyFilePath)) {
                 File file = new File(propertyFilePath);
                 if (file.exists()) {
