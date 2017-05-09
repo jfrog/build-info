@@ -42,6 +42,7 @@ import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.release.BintrayUploadInfoOverride;
+import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
@@ -430,6 +431,29 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         httpPost.setEntity(stringEntity);
 
         log.info("Promoting build " + buildName + ", #" + buildNumber);
+        return httpClient.getHttpClient().execute(httpPost);
+    }
+
+    public HttpResponse distributeBuild(String buildName, String buildNumber, Distribution promotion) throws IOException {
+        if (StringUtils.isBlank(buildName)) {
+            throw new IllegalArgumentException("Build name is required for distribution.");
+        }
+        if (StringUtils.isBlank(buildNumber)) {
+            throw new IllegalArgumentException("Build number is required for distribution.");
+        }
+
+        StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append(BUILD_REST_URL).append("/distribute/").
+                append(encodeUrl(buildName)).append("/").append(encodeUrl(buildNumber));
+
+        String distributionJson = toJsonString(promotion);
+
+        HttpPost httpPost = new HttpPost(urlBuilder.toString());
+
+        StringEntity stringEntity = new StringEntity(distributionJson);
+        stringEntity.setContentType("application/json");
+        httpPost.setEntity(stringEntity);
+
+        log.info("Distributing build " + buildName + ", #" + buildNumber);
         return httpClient.getHttpClient().execute(httpPost);
     }
 
