@@ -55,6 +55,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
+    private boolean evaluated = false;
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
     List<BuildInfoBaseTask> artifactoryTasks = null;
@@ -179,31 +180,36 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         if (isSkip()) {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
                     this.getPath(), project.getName());
-            return;
-        }
-        ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
-        if (convention != null) {
-            ArtifactoryClientConfiguration acc = convention.getClientConfig();
-            artifactSpecs.clear();
-            artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
+        } else {
+            ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
+            if (convention != null) {
+                ArtifactoryClientConfiguration acc = convention.getClientConfig();
+                artifactSpecs.clear();
+                artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
-            // Configure the task using the "defaults" closure (delegate to the task)
-            PublisherConfig config = convention.getPublisherConfig();
-            if (config != null) {
-                Closure defaultsClosure = config.getDefaultsClosure();
-                ConfigureUtil.configure(defaultsClosure, this);
+                // Configure the task using the "defaults" closure (delegate to the task)
+                PublisherConfig config = convention.getPublisherConfig();
+                if (config != null) {
+                    Closure defaultsClosure = config.getDefaultsClosure();
+                    ConfigureUtil.configure(defaultsClosure, this);
+                }
             }
-        }
 
-        // Depend on buildInfo task in sub-projects
-        for (Project sub : project.getSubprojects()) {
-            Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
-            if (subBiTask != null) {
-                dependsOn(subBiTask);
+            // Depend on buildInfo task in sub-projects
+            for (Project sub : project.getSubprojects()) {
+                Task subBiTask = sub.getTasks().findByName(BUILD_INFO_TASK_NAME);
+                if (subBiTask != null) {
+                    dependsOn(subBiTask);
+                }
             }
-        }
 
-        checkDependsOnArtifactsToPublish();
+            checkDependsOnArtifactsToPublish();
+        }
+        evaluated = true;
+    }
+
+    public boolean isEvaluated() {
+        return evaluated;
     }
 
     public boolean isSkip() {

@@ -52,7 +52,9 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
         Set<Task> tasks = gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, false)
         artifactoryTasks.addAll(tasks)
         artifactoryTasks.each { BuildInfoBaseTask bit ->
-            evaluate(bit)
+            if (!bit.isEvaluated()) {
+                evaluate(bit)
+            }
         }
     }
 
