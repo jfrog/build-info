@@ -18,6 +18,7 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthState;
@@ -137,7 +138,7 @@ public class PreemptiveHttpClient {
                 .create()
                 .setDefaultRequestConfig(requestConfig);
 
-        if (userName == null || "".equals(userName)) {
+        if (StringUtils.isEmpty(userName)) {
             userName = "anonymous";
             password = "";
         }
