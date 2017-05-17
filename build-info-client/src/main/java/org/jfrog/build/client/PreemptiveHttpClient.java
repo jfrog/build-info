@@ -18,8 +18,13 @@ package org.jfrog.build.client;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;
-import org.apache.http.auth.*;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.AuthState;
+import org.apache.http.auth.Credentials;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
@@ -31,9 +36,7 @@ import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
 import org.jfrog.build.api.util.Log;
 
 import javax.net.ssl.SSLException;
@@ -54,7 +57,8 @@ public class PreemptiveHttpClient {
     private final static String CLIENT_VERSION;
     private final boolean requestSentRetryEnabled = true;
     private CloseableHttpClient httpClient;
-    private BasicHttpContext localContext;
+    private HttpClientContext localContext = HttpClientContext.create();
+    private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
     private ResponseHandler<HttpResponse> responseHandler = new PreemptiveHttpClientHandler();
     private int connectionRetries;
     private int retryCounter;
@@ -96,10 +100,15 @@ public class PreemptiveHttpClient {
         httpClientBuilder.setProxy(proxy);
 
         if (proxyConfiguration.username != null) {
-            BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
-            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+            basicCredentialsProvider.setCredentials(new AuthScope(proxyConfiguration.host, proxyConfiguration.port),
                     new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
-            httpClientBuilder.setDefaultCredentialsProvider(basicCredentialsProvider);
+            localContext.setCredentialsProvider(basicCredentialsProvider);
+            // Create AuthCache instance
+            AuthCache authCache = new BasicAuthCache();
+            // Generate BASIC scheme object and add it to the local auth cache
+            BasicScheme basicAuth = new BasicScheme();
+            authCache.put(proxy, basicAuth);
+            localContext.setAuthCache(authCache);
         }
     }
 
@@ -129,21 +138,17 @@ public class PreemptiveHttpClient {
                 .create()
                 .setDefaultRequestConfig(requestConfig);
 
-        if (userName != null && !"".equals(userName)) {
-            BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
-            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                    new UsernamePasswordCredentials(userName, password));
-
-            builder.setDefaultCredentialsProvider(basicCredentialsProvider);
-            localContext = new BasicHttpContext();
-
-            // Generate BASIC scheme object and stick it to the local execution context
-            BasicScheme basicAuth = new BasicScheme();
-            localContext.setAttribute("preemptive-auth", basicAuth);
-
-            // Add as the first request interceptor
-            builder.addInterceptorFirst(new PreemptiveAuth());
+        if (StringUtils.isEmpty(userName)) {
+            userName = "anonymous";
+            password = "";
         }
+
+        basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                new UsernamePasswordCredentials(userName, password));
+        localContext.setCredentialsProvider(basicCredentialsProvider);
+
+        // Add as the first request interceptor
+        builder.addInterceptorFirst(new PreemptiveAuth());
 
         int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
         builder.setRetryHandler(new PreemptiveRetryHandler(retryCount));
@@ -181,23 +186,19 @@ public class PreemptiveHttpClient {
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
         public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
-
-            AuthState authState = (AuthState) context.getAttribute(HttpClientContext.TARGET_AUTH_STATE);
-
+            HttpClientContext finalContext = (HttpClientContext) context;
+            AuthState authState = finalContext.getTargetAuthState();
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
-                AuthScheme authScheme = (AuthScheme) context.getAttribute("preemptive-auth");
-                CredentialsProvider credsProvider = (CredentialsProvider) context.getAttribute(
-                        HttpClientContext.CREDS_PROVIDER);
-                HttpHost targetHost = (HttpHost) context.getAttribute(HttpCoreContext.HTTP_TARGET_HOST);
-                if (authScheme != null) {
-                    Credentials creds = credsProvider.getCredentials(
-                            new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-                    if (creds == null) {
-                        throw new HttpException("No credentials for preemptive authentication");
-                    }
-                    authState.update(authScheme, creds);
+                CredentialsProvider credsProvider = finalContext.getCredentialsProvider();
+                HttpHost targetHost = finalContext.getTargetHost();
+                Credentials creds = credsProvider.getCredentials(
+                        new AuthScope(targetHost.getHostName(), targetHost.getPort()));
+                if (creds == null) {
+                    throw new HttpException("No credentials for preemptive authentication");
                 }
+                BasicScheme authScheme = new BasicScheme();
+                authState.update(authScheme, creds);
             }
         }
     }
