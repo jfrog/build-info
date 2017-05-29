@@ -537,10 +537,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             } else {
                 module.addArtifact(artifact);
             }
-            if (isPublishArtifacts(artifactFile)) {
-                addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(),
-                    artifactId, artifactVersion, artifactClassifier, artifactExtension);
-            }
+            addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(), artifactId, artifactVersion, artifactClassifier, artifactExtension);
         }
         /*
          * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
@@ -570,28 +567,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 } else {
                     module.addArtifact(pomArtifact);
                 }
-                if (isPublishArtifacts(pomFile)) {
-                    addDeployableArtifact(
-                        pomArtifact,
-                        pomFile,
-                        nonPomArtifact.getGroupId(),
-                        nonPomArtifact.getArtifactId(),
-                        nonPomArtifact.getVersion(),
-                        nonPomArtifact.getClassifier(), "pom");
-                }
+                addDeployableArtifact(pomArtifact, pomFile, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
                 break;
             }
         }
-    }
-
-    private boolean isPublishArtifacts(File fileToDeploy) {
-        if (fileToDeploy == null || !fileToDeploy.isFile()) {
-            return false;
-        }
-        if (!conf.publisher.isPublishArtifacts()) {
-            return false;
-        }
-        return conf.publisher.isEvenUnstable() || !projectHasTestFailures;
     }
 
     private String getArtifactName(String artifactId, String version, String classifier, String fileExtension) {

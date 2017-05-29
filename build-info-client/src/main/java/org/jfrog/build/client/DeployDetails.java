@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
 
 import java.io.File;
+import java.io.Serializable;
 import java.lang.Comparable;
 import java.util.Map;
 import java.util.Properties;
@@ -30,7 +31,7 @@ import java.util.Properties;
  *
  * @author Yossi Shaul
  */
-public class DeployDetails implements Comparable<DeployDetails> {
+public class DeployDetails implements Comparable<DeployDetails>, Serializable {
     /**
      * Artifact deployment path.
      */
@@ -82,7 +83,7 @@ public class DeployDetails implements Comparable<DeployDetails> {
     public String getMd5() {
         return md5;
     }
-    
+
     public int compareTo(DeployDetails that) {
         return this.artifactPath.compareTo(that.artifactPath);
     }

@@ -29,7 +29,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
@@ -1057,6 +1060,14 @@ public class ArtifactoryClientConfiguration {
 
         public String getGeneratedBuildInfoFilePath() {
             return getStringValue(GENERATED_BUILD_INFO);
+        }
+
+        public void setDeployableArtifactsFilePath(String deployableArtifacts) {
+            setStringValue(DEPLOYABLE_ARTIFACTS, deployableArtifacts);
+        }
+
+        public String getDeployableArtifactsFilePath() {
+            return getStringValue(DEPLOYABLE_ARTIFACTS);
         }
 
         public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {

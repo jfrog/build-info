@@ -48,4 +48,5 @@ public interface BuildInfoFields {
     String INCREMENTAL = "incremental";
     String GENERATED_BUILD_INFO = "generated.build.info";
     String VCS = "vcs";
+    String DEPLOYABLE_ARTIFACTS = "deployable.artifacts";
 }

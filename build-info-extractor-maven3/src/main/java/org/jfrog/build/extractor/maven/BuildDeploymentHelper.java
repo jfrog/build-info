@@ -29,6 +29,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.util.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
@@ -90,6 +91,15 @@ public class BuildDeploymentHelper {
             } catch (Exception e) {
                 logger.error("Failed writing build info to file: " , e);
                 throw new RuntimeException("Failed writing build info to file", e);
+            }
+        }
+
+        if (!StringUtils.isEmpty(clientConf.info.getDeployableArtifactsFilePath())) {
+            try {
+                DeployableArtifactsUtils.saveDeployableArtifactsToFile(deployableArtifacts, new File(clientConf.info.getDeployableArtifactsFilePath()));
+            } catch (Exception e) {
+                logger.error("Failed writing deployable artifacts to file: ", e);
+                throw new RuntimeException("Failed writing deployable artifacts to file", e);
             }
         }
 

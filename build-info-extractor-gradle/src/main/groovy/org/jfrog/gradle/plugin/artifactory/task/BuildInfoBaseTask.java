@@ -20,6 +20,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.util.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -321,6 +322,15 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 
+    private void exportDeployableArtifacts(Set<GradleDeployDetails> allDeployDetails, File toFile) throws IOException {
+        log.debug("Exporting deployable artifacts to '{}'", toFile.getAbsolutePath());
+        Set<DeployDetails> deploySet = Sets.newLinkedHashSet();
+        for (GradleDeployDetails details : allDeployDetails) {
+            deploySet.add(details.getDeployDetails());
+        }
+        DeployableArtifactsUtils.saveDeployableArtifactsToFile(deploySet, toFile);
+    }
+
     @Nonnull
     private Boolean isPublishArtifacts(ArtifactoryClientConfiguration acc) {
         Boolean publishArtifacts = getPublishArtifacts();
@@ -342,6 +352,11 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     @Nonnull
     private Boolean isGenerateBuildInfoToFile(ArtifactoryClientConfiguration acc) {
         return !StringUtils.isEmpty(acc.info.getGeneratedBuildInfoFilePath());
+    }
+
+    @Nonnull
+    private Boolean isGenerateDeployableArtifactsToFile(ArtifactoryClientConfiguration acc) {
+        return !StringUtils.isEmpty(acc.info.getDeployableArtifactsFilePath());
     }
 
     @Nullable
@@ -389,14 +404,14 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                         password = "";
                     }
 
+                    bit.collectDescriptorsAndArtifactsForUpload();
                     if (publisher.isPublishArtifacts()) {
                         ArtifactoryBuildInfoClient client = null;
                         try {
                             client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
                                     new GradleClientLogger(log));
-                            bit.collectDescriptorsAndArtifactsForUpload();
-                            log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
 
+                            log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                                     publisher.getIncludePatterns(),
                                     publisher.getExcludePatterns());
@@ -404,13 +419,13 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
                             deployArtifacts(bit.deployDetails, client, patterns);
-                            allDeployDetails.addAll(bit.deployDetails);
                         } finally {
                             if (client != null) {
                                 client.close();
                             }
                         }
                     }
+                    allDeployDetails.addAll(bit.deployDetails);
                 }
             }
         }
@@ -453,8 +468,16 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                     try {
                         exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
                     } catch (Exception e) {
-                        log.error("Failed writing build info to file: " , e);
+                        log.error("Failed writing build info to file: ", e);
                         throw new IOException("Failed writing build info to file", e);
+                    }
+                }
+                if (isGenerateDeployableArtifactsToFile(accRoot)) {
+                    try {
+                        exportDeployableArtifacts(allDeployDetails, new File(accRoot.info.getDeployableArtifactsFilePath()));
+                    } catch (Exception e) {
+                        log.error("Failed writing deployable artifacts to file: ", e);
+                        throw new RuntimeException("Failed writing deployable artifacts to file", e);
                     }
                 }
             } finally {
