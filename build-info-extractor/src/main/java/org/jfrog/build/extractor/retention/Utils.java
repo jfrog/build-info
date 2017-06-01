@@ -55,7 +55,6 @@ public class Utils {
 
     public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, ArtifactoryClientConfiguration clientConf) throws IOException {
         BuildRetention retention = getBuildRetention(clientConf);
-        client.sendBuildInfo(build);
         sendBuildAndBuildRetention(client, build, retention, clientConf.info.isAsyncBuildRetention());
     }
 
@@ -71,6 +70,7 @@ public class Utils {
             throw new RuntimeException(e);
         }
         addRetentionIfNeeded(build, retention, version);
+        client.sendBuildInfo(build);
         sendRetentionIfNeeded(client, retention, build.getName(), version, asyncBuildRetention);
     }
 }
