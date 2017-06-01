@@ -988,6 +988,14 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(DELETE_BUILD_ARTIFACTS, true);
         }
 
+        public void setAsyncBuildRetention(Boolean asyncBuildRetention) {
+            setBooleanValue(BUILD_RETENTION_ASYNC, asyncBuildRetention);
+        }
+
+        public Boolean isAsyncBuildRetention() {
+            return getBooleanValue(BUILD_RETENTION_ASYNC, false);
+        }
+
         public void setBuildRetentionMaxDays(Integer daysToKeep) {
             setBuildRetentionDays(daysToKeep);
         }

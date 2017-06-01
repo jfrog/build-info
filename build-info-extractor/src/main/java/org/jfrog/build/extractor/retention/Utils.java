@@ -47,18 +47,19 @@ public class Utils {
         }
     }
 
-    private static void sendRetentionIfNeeded(ArtifactoryBuildInfoClient client, BuildRetention retention, String buildName, ArtifactoryVersion version) throws IOException {
+    private static void sendRetentionIfNeeded(ArtifactoryBuildInfoClient client, BuildRetention retention, String buildName, ArtifactoryVersion version, boolean async) throws IOException {
         if (version.isAtLeast(ArtifactoryHttpClient.STANDALONE_BUILD_RETENTION_SUPPORTED_ARTIFACTORY_VERSION)) {
-            client.sendBuildRetetion(retention, encodeUrl(buildName));
+            client.sendBuildRetetion(retention, encodeUrl(buildName), async);
         }
     }
 
     public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, ArtifactoryClientConfiguration clientConf) throws IOException {
         BuildRetention retention = getBuildRetention(clientConf);
-        sendBuildAndBuildRetention(client, build, retention);
+        client.sendBuildInfo(build);
+        sendBuildAndBuildRetention(client, build, retention, clientConf.info.isAsyncBuildRetention());
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention) throws IOException {
+    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention, boolean asyncBuildRetention) throws IOException {
         if (retention == null || retention.isEmpty()) {
             client.sendBuildInfo(build);
             return;
@@ -70,7 +71,6 @@ public class Utils {
             throw new RuntimeException(e);
         }
         addRetentionIfNeeded(build, retention, version);
-        client.sendBuildInfo(build);
-        sendRetentionIfNeeded(client, retention, build.getName(), version);
+        sendRetentionIfNeeded(client, retention, build.getName(), version, asyncBuildRetention);
     }
 }

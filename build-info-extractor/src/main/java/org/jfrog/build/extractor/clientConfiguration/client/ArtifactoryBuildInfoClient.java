@@ -76,6 +76,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     private static final String PUSH_TO_BINTRAY_REST_URL = "/api/build/pushToBintray/";
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
+    private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
@@ -192,9 +193,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         }
     }
 
-    public void sendBuildRetetion(BuildRetention buildRetantion, String buildName) throws IOException {
-        String buildRetantionJson = toJsonString(buildRetantion);
-        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName;
+    public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
+        String buildRetantionJson = toJsonString(buildRetention);
+        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
         HttpPost httpPost = new HttpPost(url);
         try {
             log.info("Executing build retention");
