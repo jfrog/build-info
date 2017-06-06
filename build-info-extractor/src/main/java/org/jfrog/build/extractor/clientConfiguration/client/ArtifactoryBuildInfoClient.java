@@ -197,8 +197,33 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         String buildRetantionJson = toJsonString(buildRetention);
         String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
         HttpPost httpPost = new HttpPost(url);
+        StringBuilder strBuilder = new StringBuilder().append("Sending");
+
+        if (async) {
+            strBuilder.append(" async");
+        }
+
+        strBuilder.append(" request for build retention");
+
+        if (buildRetention.isDeleteBuildArtifacts()) {
+            strBuilder.append(", deleting build artifacts");
+        }
+
+        if (buildRetention.getCount() != -1) {
+            strBuilder.append(", max number of builds to store: ").append(buildRetention.getCount());
+        }
+
+        if (buildRetention.getMinimumBuildDate() != null) {
+            strBuilder.append(", min build date: ").append(buildRetention.getMinimumBuildDate());
+        }
+
+        if (buildRetention.getBuildNumbersNotToBeDiscarded().size() > 0) {
+            strBuilder.append(", build numbers not to be discarded: ").append(buildRetention.getBuildNumbersNotToBeDiscarded());
+        }
+        strBuilder.append(".");
+
         try {
-            log.info("Executing build retention");
+            log.info(strBuilder.toString());
             log.debug(buildRetantionJson);
             sendRequest(httpPost, buildRetantionJson, APPLICATION_JSON, true);
         } catch (IOException e) {
