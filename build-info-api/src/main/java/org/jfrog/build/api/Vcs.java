@@ -28,7 +28,7 @@ public class Vcs implements Serializable {
     }
 
     public String getUrl() {
-        return revision;
+        return this.url;
     }
 
     public void setUrl(String url) {
