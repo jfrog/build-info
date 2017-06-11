@@ -217,7 +217,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
             strBuilder.append(", min build date: ").append(buildRetention.getMinimumBuildDate());
         }
 
-        if (buildRetention.getBuildNumbersNotToBeDiscarded().size() > 0) {
+        if (!buildRetention.getBuildNumbersNotToBeDiscarded().isEmpty()) {
             strBuilder.append(", build numbers not to be discarded: ").append(buildRetention.getBuildNumbersNotToBeDiscarded());
         }
         strBuilder.append(".");
