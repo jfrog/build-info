@@ -194,9 +194,20 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     }
 
     public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
-        String buildRetantionJson = toJsonString(buildRetention);
+        String buildRetentionJson = toJsonString(buildRetention);
         String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
         HttpPost httpPost = new HttpPost(url);
+        try {
+            log.info(createBuildRetentionLogMsg(buildRetention, async));
+            log.debug(buildRetentionJson);
+            sendRequest(httpPost, buildRetentionJson, APPLICATION_JSON, true);
+        } catch (IOException e) {
+            log.error("Failed to execute build retention.", e);
+            throw new IOException("Failed to execute build retention: " + e.getMessage(), e);
+        }
+    }
+
+    private String createBuildRetentionLogMsg(BuildRetention buildRetention, boolean async) {
         StringBuilder strBuilder = new StringBuilder().append("Sending");
 
         if (async) {
@@ -222,14 +233,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         }
         strBuilder.append(".");
 
-        try {
-            log.info(strBuilder.toString());
-            log.debug(buildRetantionJson);
-            sendRequest(httpPost, buildRetantionJson, APPLICATION_JSON, true);
-        } catch (IOException e) {
-            log.error("Failed to execute build retention.", e);
-            throw new IOException("Failed to execute build retention: " + e.getMessage(), e);
-        }
+        return strBuilder.toString();
     }
 
     /**
