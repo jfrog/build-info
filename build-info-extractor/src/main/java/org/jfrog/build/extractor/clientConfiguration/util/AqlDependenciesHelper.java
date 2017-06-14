@@ -25,20 +25,20 @@ public class AqlDependenciesHelper implements DependenciesHelper {
     private String buildName;
     private String buildNumber;
 
-    public AqlDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
+    public AqlDependenciesHelper(DependenciesDownloader downloader, String target, Log log) {
         this.downloader = downloader;
         this.log = log;
-        this.artifactoryUrl = artifactoryUrl;
+        this.artifactoryUrl = downloader.getClient().getArtifactoryUrl();
         this.target = target;
     }
 
     @Override
-    public List<Dependency> retrievePublishedDependencies(String resolvePattern)
+    public List<Dependency> retrievePublishedDependencies(String aql)
             throws IOException {
-        if (StringUtils.isBlank(resolvePattern)) {
+        if (StringUtils.isBlank(aql)) {
             return Collections.emptyList();
         }
-        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownload(resolvePattern);
+        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownload(aql);
         return downloadDependencies(downloadableArtifacts);
     }
 
@@ -64,7 +64,8 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearchResult.getResults();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
             String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
-            downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" + searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
+            downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" +
+                    searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
         }
         return downloadableArtifacts;
     }

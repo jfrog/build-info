@@ -22,10 +22,10 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     private String buildNumber;
     private boolean recursive;
 
-    public WildcardsDependenciesHelper(DependenciesDownloader downloader, String artifactoryUrl, String target, Log log) {
+    public WildcardsDependenciesHelper(DependenciesDownloader downloader, String target, Log log) {
         this.downloader = downloader;
         this.log = log;
-        this.artifactoryUrl = artifactoryUrl;
+        this.artifactoryUrl = downloader.getClient().getArtifactoryUrl();
         this.target = target;
         this.recursive = false;
         this.props = "";
@@ -79,7 +79,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
-        AqlDependenciesHelper dependenciesHelper = new AqlDependenciesHelper(downloader, artifactoryUrl, target, log);
+        AqlDependenciesHelper dependenciesHelper = new AqlDependenciesHelper(downloader, target, log);
         if (StringUtils.isNotBlank(buildName)) {
             dependenciesHelper.setBuildName(buildName);
             dependenciesHelper.setBuildNumber(buildNumber);

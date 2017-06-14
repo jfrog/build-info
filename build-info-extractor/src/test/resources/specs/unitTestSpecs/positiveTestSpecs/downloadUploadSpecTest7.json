@@ -1,0 +1,8 @@
+{
+  "files": [
+    {
+      "pattern": "c:\some\windows\path",
+      "target": "simple_target"
+    }
+  ]
+}

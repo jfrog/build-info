@@ -10,12 +10,14 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.util.PublishedItemsHelper;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,6 +64,23 @@ public class SpecsHelper {
         } finally {
             client.close();
         }
+    }
+
+    /**
+     * Downloads Artifacts by spec and returns a list of the downloaded dependencies.
+     * The artifacts will be downloaded using the provided client.
+     * In case of relative path the artifacts will be downloaded to the targetDirectory.
+     *
+     * @param spec the spec to use for download.
+     * @param client the client to use for download.
+     * @param targetDirectory the target directory in case of relative path in the spec
+     * @return A list of the downloaded dependencies.
+     * @throws IOException in case of IOException
+     */
+    public List<Dependency> downloadArtifactsBySpec(
+            String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
+        DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
+        return helper.downloadDependencies(getDownloadUploadSpec(spec));
     }
 
     /**
@@ -113,13 +132,7 @@ public class SpecsHelper {
      * @throws IOException in case of IO problem
      */
     public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        String downloadUploadSpec = FileUtils.readFileToString(downloadUploadSpecFile);
-        // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
-        downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
-        Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
-        pathToUnixFormat(spec);
-        return spec;
+        return getDownloadUploadSpec(FileUtils.readFileToString(downloadUploadSpecFile));
     }
 
     /**
@@ -134,8 +147,26 @@ public class SpecsHelper {
         // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
         downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
         Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
+        validateUploadDownloadSpec(spec);
         pathToUnixFormat(spec);
         return spec;
+    }
+
+    private void validateUploadDownloadSpec(Spec spec) throws IOException {
+        if (spec.getFiles() == null || spec.getFiles().length == 0) {
+            throw new IllegalArgumentException("Spec must contain at least one fileSpec.");
+        }
+        for (FileSpec fileSpec : spec.getFiles()) {
+            if (StringUtils.isBlank(fileSpec.getTarget())){
+                throw new IllegalArgumentException("Target key can not be blank.");
+            }
+            if (StringUtils.isBlank(fileSpec.getAql()) && StringUtils.isBlank(fileSpec.getPattern())){
+                throw new IllegalArgumentException("Spec must contain AQL or Pattern key");
+            }
+            if (StringUtils.isNotBlank(fileSpec.getAql()) && StringUtils.isNotBlank(fileSpec.getPattern())){
+                throw new IllegalArgumentException("Spec can't contain both AQL and Pattern keys");
+            }
+        }
     }
 
     private void pathToUnixFormat(Spec spec) {
@@ -171,7 +202,7 @@ public class SpecsHelper {
         Set<DeployDetails> result = Sets.newHashSet();
         String targetPath = fileEntry.getKey();
         File artifactFile = fileEntry.getValue();
-        String path = PublishedItemsHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
+        String path = UploadSpecHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
         path = StringUtils.replace(path, "//", "/");
 
         // calculate the sha1 checksum and add it to the deploy artifactsToDeploy
@@ -205,7 +236,7 @@ public class SpecsHelper {
         String targetPath = getLocalPath(uploadFile.getTarget());
         Multimap<String, File> result;
 
-        result = PublishedItemsHelper.buildPublishingData(
+        result = UploadSpecHelper.buildPublishingData(
                 workspace, pattern, targetPath, isFlat, isRecursive, isRegexp);
         if (result != null) {
             log.info(String.format("For pattern: %s %d artifacts were found.", pattern, result.size()));
@@ -233,7 +264,12 @@ public class SpecsHelper {
     }
 
     private String getLocalPath(String path) {
-        return StringUtils.substringAfter(path, "/");
+        path = StringUtils.substringAfter(path, "/");
+        // When the path is the root of the repo substringAfter will return empty string. in such case slash need to be added
+        if ("".equals(path)) {
+            return "/";
+        }
+        return path;
     }
 
     private String getRepositoryKey(String path) {

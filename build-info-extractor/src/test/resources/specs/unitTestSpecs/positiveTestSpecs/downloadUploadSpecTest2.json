@@ -1,0 +1,13 @@
+{
+  "files": [
+    {
+      "aql": {"items.find": {"foo": "bar","key": "val"}},
+      "target": "simple_target",
+      "props": "props_val",
+      "recursive": "recursive_val",
+      "flat": "flat_val",
+      "regexp": "regexp_val",
+      "build": "build_val"
+    }
+  ]
+}

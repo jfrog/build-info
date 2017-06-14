@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "aql": {
+        "items.find": {
+          "repo": "tests",
+          "@*": {"$nmatch" : "*"},
+          "$or": [{
+            "$and": [{
+              "path": {
+                "$match":"bi_test_space/upload-test"
+              },
+              "name": {
+                "$match": "*"
+              }
+            }
+            ]
+          },
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "bi_test_space/upload-test/*"
+                  },
+                  "name": {
+                    "$match":"*"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "target": "${TEMP_FOLDER}",
+      "recursive": "true",
+      "flat": "false"
+    },
+    {
+      "pattern": "${REPO}/(${TEST_SPACE}/*)",
+      "target": "${TEMP_FOLDER}/{1}",
+      "recursive": "true",
+      "flat": "true",
+      "props": "p1=v1;p2=v2"
+    }
+  ]
+}

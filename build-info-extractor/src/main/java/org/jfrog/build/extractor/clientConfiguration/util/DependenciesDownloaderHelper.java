@@ -14,6 +14,7 @@ import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
@@ -40,21 +41,26 @@ public class DependenciesDownloaderHelper {
         this.log = log;
     }
 
+    public DependenciesDownloaderHelper(ArtifactoryDependenciesClient client, String workingDirectory, Log log) {
+        this.downloader = new DependenciesDownloaderImpl(client, workingDirectory, log);
+        this.log = log;
+    }
+
     /**
-     * Download dependencies by the provided spec from the given artifactory server.
+     * Download dependencies by the provided spec using the provided in the constructor client.
      * returns list of downloaded artifacts
      *
-     * @param serverUrl the server url
      * @param downloadSpec the download spec
      * @return list of downloaded artifacts
      * @throws IOException in case of IO error
      */
-    public List<Dependency> downloadDependencies(String serverUrl, Spec downloadSpec) throws IOException {
-        AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, serverUrl, "", log);
-        WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, serverUrl, "", log);
+    public List<Dependency> downloadDependencies(Spec downloadSpec) throws IOException {
+        AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, "", log);
+        WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, "", log);
         List<Dependency> resolvedDependencies = Lists.newArrayList();
 
         for (FileSpec file : downloadSpec.getFiles()) {
+            log.debug("Downloading dependencies using spec: \n" + file.toString());
             validateFileSpec(file);
             String buildName = getBuildName(file.getBuild());
             String buildNumber = getBuildNumber(buildName, file.getBuild());

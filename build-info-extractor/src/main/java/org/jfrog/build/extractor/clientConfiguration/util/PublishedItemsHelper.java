@@ -21,9 +21,9 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.UploadSpecHelper;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -181,7 +181,7 @@ public class PublishedItemsHelper {
                 String patternAbsolutePathUrl = patternAbsolutePath.getAbsolutePath();
                 if (!StringUtils.isBlank(patternAbsolutePathUrl) && patternAbsolutePathUrl.startsWith(
                         patternDir.getAbsolutePath())) {
-                    pattern = getRelativePath(patternDir, patternAbsolutePath);
+                    pattern = UploadSpecHelper.getRelativePath(patternDir, patternAbsolutePath);
                 }
 
                 // All done, we can now convert and compile from Ant pattern to regular expression
@@ -194,7 +194,7 @@ public class PublishedItemsHelper {
                 List<File> files = new ArrayList<File>();
                 collectMatchedFiles(patternDir, patternDir, filePattern, files);
                 for (File file : files) {
-                    String fileTargetPath = calculateFileTargetPath(patternDir, file, targetPath);
+                    String fileTargetPath = UploadSpecHelper.calculateFileTargetPath(patternDir, file, targetPath);
                     filePathsMap.put(fileTargetPath, file);
                 }
             }
@@ -223,249 +223,7 @@ public class PublishedItemsHelper {
         Pattern regexPattern = Pattern.compile(pattern);
         List<File> files = new ArrayList<File>();
         collectMatchedFiles(checkoutDir, checkoutDir, regexPattern, files, isRecursive);
-        return getUploadPathsMap(files, checkoutDir, targetPath, flat, regexPattern, false);
-    }
-
-    /**
-     * Building a multi map of target paths mapped to their files using wildcard pattern.
-     * The pattern should contain slashes instead of backslashes in case of windows.
-     *
-     * @param checkoutDir the base directory of which to calculate the given source ant pattern
-     * @param pattern     the Ant pattern to calculate the files from
-     * @param targetPath  the target path for deployment of a file
-     * @return a Multimap containing the targets as keys and the files as values
-     * @throws IOException in case of any file system exception
-     */
-    public static Multimap<String, File> buildPublishingData(
-            File checkoutDir, String pattern, String targetPath, boolean flat, boolean recursive, boolean regexp)
-            throws IOException {
-        boolean isAbsolutePath = (new File(pattern)).isAbsolute();
-        List<File> matchedFiles = collectMatchedFiles(checkoutDir, pattern, recursive, regexp);
-        if (!regexp) {
-            // Convert wildcard to regexp
-            pattern = PathsUtils.pathToRegExp(pattern);
-        }
-        return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
-    }
-
-    private static List<File> collectMatchedFiles(
-            File checkoutDir, String pattern, boolean recursive, boolean regexp)
-            throws FileNotFoundException {
-        // This method determines the base directory - the directory where the files scan will be done
-        String baseDir = getBaseDir(checkoutDir, pattern, regexp);
-        // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = preparePattern(checkoutDir, pattern, baseDir, regexp);
-        // Collects candidate files to execute the regex
-        List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, regexp);
-        if (!regexp) {
-            // Convert wildcard to regexp
-            newPattern = PathsUtils.pathToRegExp(newPattern);
-        }
-
-        List<File> matchedFiles = new ArrayList<File>();
-        Pattern regexPattern = Pattern.compile(newPattern);
-        File baseDirFile = new File(baseDir);
-        for (String path : candidatePaths) {
-            File file = new File(path);
-            String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
-            if (regexPattern.matcher(relativePath).matches()) {
-                matchedFiles.add(file);
-            }
-        }
-        return matchedFiles;
-    }
-
-    /**
-     * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
-     * this method removes the part of the pattern that exists in the base directory.
-     * @param checkoutDir the checkout directory
-     * @param pattern the provided by the user pattern
-     * @param baseDir the calculated base directory
-     * @return new calculated pattern based on the provided patern and base directory
-     */
-    private static String preparePattern(File checkoutDir, String pattern, String baseDir, boolean regexp) {
-        String absolutePattern = getAbsolutePattern(checkoutDir, pattern, regexp);
-        // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used
-        String newPattern;
-        if (regexp) {
-            newPattern = cleanRegexpPattern(absolutePattern, baseDir);
-        } else {
-            newPattern = StringUtils.substringAfter(removeParenthesis(absolutePattern), baseDir);
-        }
-        if (newPattern.startsWith("/")) {
-            // Remove the leading separator
-            newPattern = newPattern.substring(1);
-        }
-        if (pattern.endsWith("/")) {
-            if (regexp) {
-                newPattern = newPattern + ".*";
-            } else {
-                newPattern = newPattern + "*";
-            }
-        }
-        return newPattern;
-    }
-
-    private static String cleanRegexpPattern(String absolutePattern, String baseDir) {
-        String separator = "/";
-        while (baseDir.contains(separator)) {
-            baseDir = StringUtils.substringAfter(baseDir, separator);
-            absolutePattern = StringUtils.substringAfter(absolutePattern, separator);
-        }
-        // Placeholder parenthesis may be opened in the basedir as part of placeholder so the closing bracket should be removed.
-        return cleanUnopenedParenthesis(absolutePattern);
-    }
-
-    /**
-     * This method removes parenthesis that was not opened in the string
-     * @param pattern the string to remove from
-     * @return string without unopened parenthesis
-     */
-    private static String cleanUnopenedParenthesis(String pattern) {
-        int length = pattern.length();
-        int numberOfUnclosedParenthesis = 0;
-        StringBuilder stringBuilder = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            char c = pattern.charAt(i);
-            if (c == ")".charAt(0)) {
-               if (numberOfUnclosedParenthesis > 0) {
-                   numberOfUnclosedParenthesis--;
-                   stringBuilder.append(c);
-               }
-            } else {
-                stringBuilder.append(c);
-                if (c == "(".charAt(0)) {
-                    numberOfUnclosedParenthesis++;
-                }
-            }
-        }
-        return stringBuilder.toString();
-    }
-
-    private static Multimap<String, File> getUploadPathsMap(List<File> files, File checkoutDir, String targetPath,
-            boolean flat, Pattern regexPattern, boolean absolutePath) {
-        Multimap<String, File> filePathsMap = HashMultimap.create();
-
-        for (File file : files) {
-            String fileTargetPath = targetPath;
-            if (StringUtils.endsWith(fileTargetPath, "/") && !flat) {
-                fileTargetPath = calculateFileTargetPath(checkoutDir, file, targetPath);
-                // handle win file system
-                fileTargetPath = fileTargetPath.replace('\\', '/');
-            }
-            if (absolutePath) {
-                fileTargetPath = PathsUtils.reformatRegexp(file.getPath(), fileTargetPath, regexPattern);
-            } else {
-                fileTargetPath = PathsUtils.reformatRegexp(
-                        getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
-            }
-            filePathsMap.put(fileTargetPath, file);
-        }
-        return filePathsMap;
-    }
-
-    /**
-     * Returns base directory path with slash in the end.
-     * The base directory is the path where the file collection starts from.
-     *
-     * Base directory is the last directory that not contains wildcards in case of regexp=false.
-     * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
-     * @param checkoutDir the checkout directory
-     * @param pattern the pattern provided by the user
-     * @param regexp the regexp value
-     * @return String that represents the base directory
-     */
-    private static String getBaseDir(File checkoutDir, String pattern, boolean regexp) throws FileNotFoundException {
-        String baseDir = getAbsolutePattern(checkoutDir, pattern, regexp);
-
-        if (regexp) {
-            baseDir = getExistingPath(baseDir);
-            if (StringUtils.isEmpty(baseDir)) {
-                throw new FileNotFoundException("Could not find any base path in the pattern: " + pattern);
-            }
-            if (!baseDir.endsWith("/")) {
-                baseDir = baseDir + "/";
-            }
-        } else {
-            baseDir = StringUtils.substringBefore(baseDir, "*");
-            baseDir = StringUtils.substringBefore(baseDir, "?");
-            baseDir = baseDir.substring(0, baseDir.lastIndexOf("/") + 1);
-            baseDir = removeParenthesis(baseDir);
-        }
-        return baseDir;
-    }
-
-    private static String removeParenthesis(String baseDir) {
-        baseDir = removeUnescapedChar(baseDir ,"\\(");
-        baseDir = removeUnescapedChar(baseDir ,"\\)");
-        return baseDir;
-    }
-
-    private static String removeUnescapedChar(String stringToSplit, String separator) {
-        String[] strings = stringToSplit.split(separator);
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String string : strings) {
-            if (string.endsWith("\\")) {
-                stringBuilder.append(string).append(separator);
-            } else {
-                stringBuilder.append(string);
-            }
-        }
-        return stringBuilder.toString();
-    }
-
-    /**
-     * Returns the absolute path of pattern.
-     * If the provided by the user pattern is absolute same pattern will be returned.
-     * If the pattern is relative the checkout directory will be prepend.
-     * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
-     * @param checkoutDir the checkout directory
-     * @param pattern the provided by the user patter, can be absolute or relative
-     * @param regexp whether the pattern is regex or not
-     * @return the absolute path of pattern
-     */
-    private static String getAbsolutePattern(File checkoutDir, String pattern, boolean regexp) {
-        File patternFile = new File(pattern);
-        if (patternFile.isAbsolute()) {
-            return pattern;
-        } else {
-            if (regexp) {
-                String escapedCheckoutDir = PathsUtils.escapeRegexChars(checkoutDir.getAbsolutePath().replace("\\", "/"));
-                return escapedCheckoutDir + "/" + pattern;
-            }
-            return checkoutDir.getAbsolutePath().replace("\\", "/") + "/" + pattern;
-        }
-    }
-
-    /**
-     * Returns the last existing directory of the provided baseDire that not contains a regex characters.
-     * @param baseDir the path to search in
-     * @return the last existing directory of the provided baseDire that not contains a regex characters
-     */
-    private static String getExistingPath(String baseDir) {
-        baseDir = PathsUtils.substringBeforeFirstRegex(removeParenthesis(baseDir));
-        while (!new File(baseDir).isDirectory() && baseDir.contains("/")) {
-            baseDir = StringUtils.substringBeforeLast(baseDir, "/");
-        }
-        return baseDir;
-    }
-
-    private static String calculateFileTargetPath(File patternDir, File file, String targetPath) {
-        String relativePath = getRelativePath(patternDir, file);
-        relativePath = stripFileNameFromPath(relativePath);
-        if (targetPath.length() == 0) {
-            return relativePath;
-        }
-        if (relativePath.length() == 0) {
-            return targetPath;
-        } else {
-            return (new StringBuilder()).append(targetPath).append('/').append(relativePath).toString();
-        }
-    }
-
-    private static String stripFileNameFromPath(String relativePath) {
-        File file = new File(relativePath);
-        return file.getPath().substring(0, file.getPath().length() - file.getName().length());
+        return UploadSpecHelper.getUploadPathsMap(files, checkoutDir, targetPath, flat, regexPattern, false);
     }
 
     /**
@@ -636,7 +394,7 @@ public class PublishedItemsHelper {
         for (int i = 0; i < len; i++) {
             File dir = arr[i];
             if (dir.isFile()) {
-                String path = getRelativePath(absoluteRoot, dir).replace("\\", "/");
+                String path = UploadSpecHelper.getRelativePath(absoluteRoot, dir).replace("\\", "/");
                 //String path = absoluteRoot.getAbsolutePath();
                 if (pattern.matcher(path).matches()) {
                     files.add(dir);
@@ -658,7 +416,7 @@ public class PublishedItemsHelper {
         for (int i = 0; i < len; i++) {
             File dir = arr[i];
             if (dir.isFile()) {
-                String path = getRelativePath(absoluteRoot, dir).replace("\\", "/");
+                String path = UploadSpecHelper.getRelativePath(absoluteRoot, dir).replace("\\", "/");
                 //String path = absoluteRoot.getAbsolutePath();
                 if (pattern.matcher(path).matches() || (recursive && pattern.matcher(StringUtils.substringAfterLast(path, "/")).matches())) {
                     files.add(dir);
@@ -683,84 +441,9 @@ public class PublishedItemsHelper {
             return true;
         }
 
-        int relativePathDepth = StringUtils.countMatches(getRelativePath(absoluteRoot, dir).replace("\\", "/"), "/");
+        int relativePathDepth = StringUtils.countMatches(UploadSpecHelper.getRelativePath(absoluteRoot, dir).replace("\\", "/"), "/");
         int patternPathDepth = StringUtils.countMatches(pattern.toString(), "/");
         return relativePathDepth < patternPathDepth;
-    }
-
-    /**
-     * Gets the relative path of a given file to the base
-     *
-     * @param base the base path to calculate the relative path
-     * @param file the file itself
-     * @return the calculated relative path
-     */
-    private static String getRelativePath(File base, File file) {
-        if (base == null || file == null) {
-            return null;
-        }
-        if (!base.isDirectory()) {
-            base = base.getParentFile();
-            if (base == null) {
-                return null;
-            }
-        }
-        if (base.equals(file)) {
-            return ".";
-        } else {
-            String filePath = file.getAbsolutePath();
-            String basePath = base.getAbsolutePath();
-            return getRelativePath(basePath, filePath, File.separatorChar);
-        }
-    }
-
-    private static String getRelativePath(String basePath, String filePath, char separator) {
-        basePath = ensureEnds(basePath, separator);
-        int len = 0;
-        int lastSeparatorIndex = 0;
-        String basePathToCompare = basePath.toLowerCase();
-        String filePathToCompare = filePath.toLowerCase();
-        if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) {
-            return ".";
-        }
-        for (; len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(
-                len) == basePathToCompare.charAt(len); len++) {
-            if (basePath.charAt(len) == separator) {
-                lastSeparatorIndex = len;
-            }
-        }
-
-        if (len == 0) {
-            return null;
-        }
-        StringBuilder relativePath = new StringBuilder();
-        for (int i = len; i < basePath.length(); i++) {
-            if (basePath.charAt(i) == separator) {
-                relativePath.append("..");
-                relativePath.append(separator);
-            }
-        }
-
-        relativePath.append(filePath.substring(lastSeparatorIndex + 1));
-        return relativePath.toString();
-    }
-
-    private static String ensureEnds(String s, char endsWith) {
-        return StringUtils.endsWith(s, "/") ? s : (new StringBuilder()).append(s).append(endsWith).toString();
-    }
-
-    /**
-     * Calculates the target deployment path of an artifact by it's name
-     *
-     * @param targetPattern a wildcard pattern of the target path
-     * @param artifactFile  the artifact file to calculate target deployment path for
-     * @return the calculated target path (supports file renaming).
-     */
-    public static String wildcardCalculateTargetPath(String targetPattern, File artifactFile) {
-        if (targetPattern.endsWith("/") || targetPattern.equals("")) {
-            return targetPattern + calculateTargetRelativePath(artifactFile);
-        }
-        return targetPattern;
     }
 
     /**
@@ -771,7 +454,7 @@ public class PublishedItemsHelper {
      * @return the calculated target path
      */
     public static String calculateTargetPath(String targetPattern, File artifactFile) {
-        String relativePath = calculateTargetRelativePath(artifactFile);
+        String relativePath = UploadSpecHelper.calculateTargetRelativePath(artifactFile);
         if (relativePath == null) {
             throw new IllegalArgumentException("Cannot calculate a target path given a null relative path.");
         }
@@ -835,16 +518,5 @@ public class PublishedItemsHelper {
             }
         }
         return itemPathBuilder.toString();
-    }
-
-    private static String calculateTargetRelativePath(File artifactFile) {
-        String relativePath = artifactFile.getAbsolutePath();
-        String parentDir = artifactFile.getParent();
-        if (!StringUtils.isBlank(parentDir)) {
-            relativePath = StringUtils.removeStart(artifactFile.getAbsolutePath(), parentDir);
-        }
-        relativePath = FilenameUtils.separatorsToUnix(relativePath);
-        relativePath = StringUtils.removeStart(relativePath, "/");
-        return relativePath;
     }
 }

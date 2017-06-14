@@ -133,4 +133,37 @@ public class PathsUtils {
                 targetFileName);
         return result;
     }
+
+    /**
+     * The method removes all unescaped instances of the provided Char from the provided String.
+     * An unescaped char is a char with no leading backslash before it.
+     * For example removeUnescapedChar(A$A\$A, "$".charAt(0)) will return "AA\$A"
+     * @param stringToRemoveFrom the string to apply the method on
+     * @param characterToRemove the character to remove from the string
+     * @return stringToRemoveFrom without unescaped characterToRemove
+     */
+    public static String removeUnescapedChar(String stringToRemoveFrom, Character characterToRemove) {
+        String separator = String.valueOf(characterToRemove);
+        if (REGEXP_CHARS.contains(separator)) {
+            separator = "\\" + characterToRemove;
+        }
+        String[] strings = stringToRemoveFrom.split(separator);
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String string : strings) {
+            if (string.endsWith("\\")) {
+                stringBuilder.append(string).append(characterToRemove);
+            } else {
+                stringBuilder.append(string);
+            }
+        }
+        return stringBuilder.toString();
+    }
+
+    public static String escapeSpecialChars(String str) {
+        String specialChars = "\\" + REGEXP_CHARS;
+        for (char c : specialChars.toCharArray()){
+            str = str.replace(String.valueOf(c), "\\" + c);
+        }
+        return str;
+    }
 }

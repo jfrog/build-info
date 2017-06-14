@@ -1,0 +1,119 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/*",
+      "target": "${REPO}/${TEST_SPACE}/1_flat_recursive_wildcard/",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/a/*",
+      "target": "${REPO}/${TEST_SPACE}/3_defaults_flat_recursive/"
+    },
+    {
+      "pattern": "files/*3*",
+      "target": "${REPO}/${TEST_SPACE}/4_3-only_wildcard_recursive/",
+      "recursive": "true",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/*",
+      "target": "${REPO}/${TEST_SPACE}/6_flat_nonrecursive_wildcard/",
+      "flat": "true",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/a/*",
+      "target": "${REPO}/${TEST_SPACE}/8_nonflat_recursive_wildcard/",
+      "flat": "false",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/a/*",
+      "target": "${REPO}/${TEST_SPACE}/10_nonflat_nonrecursive_wildcard/",
+      "flat": "false",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/a/a1.in",
+      "target": "${REPO}/${TEST_SPACE}/12_simple_flat/",
+      "flat": "true",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/a/a1.in",
+      "target": "${REPO}/${TEST_SPACE}/13_simple_nonflat/",
+      "flat": "false",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/a/a1.in",
+      "target": "${REPO}/${TEST_SPACE}/14_rename_wildcard_flat/a1.out",
+      "flat": "true",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/(*)/(*).in",
+      "target": "${REPO}/${TEST_SPACE}/16_pattern_placeholder_flat_nonrecursive/{1}/{2}.in",
+      "flat": "true",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/(*)/(*).in",
+      "target": "${REPO}/${TEST_SPACE}/17_pattern_placeholder_nonflat_nonrecursive_wildcard/{1}/{2}.in",
+      "flat": "false",
+      "recursive": "false"
+    },
+    {
+      "pattern": "files/a/*2*",
+      "target": "${REPO}/${TEST_SPACE}/18_props_wildcard/",
+      "props": "p1=v1;p2=v2"
+    },
+    {
+      "pattern": "files/*",
+      "target": "${REPO}/${TEST_SPACE}/21_upload-to-existing/",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/*",
+      "target": "${REPO}/${TEST_SPACE}/21_upload-to-existing/",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "${WORKSPACE}/files/a/*1*",
+      "target": "${REPO}/${TEST_SPACE}/25_wildcard_all-1_nonrecursive_full-path/",
+      "recursive": "false",
+      "flat": "true",
+      "regexp": "flase"
+    },
+    {
+      "pattern": "files/*.in",
+      "target": "${REPO}/${TEST_SPACE}/shouldNotBeCreated_pattern_placeholder_nonflat_nonrecursive_regexp/{1}/{2}.in",
+      "flat": "false",
+      "recursive": "false",
+      "regexp": "false"
+    },
+    {
+      "pattern": "${WORKSPACE}/files/a/a1.in",
+      "target": "${REPO}/${TEST_SPACE}/28_simple_flat_full-path/",
+      "flat": "true",
+      "recursive": "false"
+    },
+    {
+      "pattern": "(files/a/*).in",
+      "target": "${REPO}/${TEST_SPACE}/30_pattern_bigPlaceholder_flat_nonrecursive_wildcard/{1}.in",
+      "flat": "true",
+      "recursive": "false",
+      "regexp": "false"
+    },
+    {
+      "pattern": "${WORKSPACE}/files/a/(*).in",
+      "target": "${REPO}/${TEST_SPACE}/31_nonflat_nonrecursive_wildcard_full-path_placeholder/{1}.in",
+      "flat": "false",
+      "recursive": "false",
+      "regexp": "false"
+    }
+  ]
+}

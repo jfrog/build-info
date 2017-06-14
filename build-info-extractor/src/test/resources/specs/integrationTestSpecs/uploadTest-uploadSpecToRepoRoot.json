@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "pattern": "files/*/a1.*",
+      "target": "${REPO}/",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/*/a1.*",
+      "target": "${REPO}/",
+      "flat": "false",
+      "recursive": "true"
+    }
+  ]
+}

@@ -3,17 +3,32 @@
 Build Info is Artifactory's open integration layer for the CI servers and build tools.
 The build information is sent to Artifactory in json format.
 
-## To build the project (with gradle 0.9.2 or above)
-```console
-> gradle -S build
+## Building and Testing the Sources
 
-or with the gradle wrapper in Unix
-
-> ./gradlew -S build
-
-and the gradle wrapper in Windows
-
-> gradlew.bat -S build
+The code is built using Gradle and includes integration tests.<br/>
+It must run using JDK 7 and Gradle 2.4. If you are using different gradle version you can use the provided gradle wrapper.<br/>
+In order to run tests the following environment variable must be provide:
+```
+export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
+export BITESTS_ARTIFACTORY_USERNAME=admin
+export BITESTS_ARTIFACTORY_PASSWORD=password
+export BITESTS_ARTIFACTORY_REPO=tests
+```
+To build the code using the gradle wrapper in Unix run:  
+```
+> ./gradlew clean build
+```
+To build the code using the gradle wrapper in Windows run:  
+```
+> gradlew clean build
+```
+To build the code using the environment gradle run:  
+```
+> gradle clean build
+```
+To build the code without tests, add to the "clean build" command the flag "-x test", for example:
+```
+> ./gradlew clean build -x test
 ```
 ## Build Info json format
 

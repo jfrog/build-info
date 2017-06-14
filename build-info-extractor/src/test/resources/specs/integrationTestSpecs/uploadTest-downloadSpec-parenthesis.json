@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "${REPO}/(${TEST_SPACE}/*)",
+      "target": "${TEMP_FOLDER}/{1}",
+      "recursive": "true",
+      "flat": "true"
+    }
+  ]
+}

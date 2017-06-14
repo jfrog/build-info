@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/.*",
+      "target": "${REPO}/${TEST_SPACE}/34_flat_recursive_regexp_parenthesis/",
+      "flat": "true",
+      "recursive": "true",
+      "regexp": "true"
+    },
+    {
+      "pattern": "${WORKSPACE}/files/a/.*",
+      "target": "${REPO}/${TEST_SPACE}/35_flat_recursive_regexp_parenthesisFullPath/",
+      "flat": "false",
+      "recursive": "true",
+      "regexp": "true"
+    },
+    {
+      "pattern": "\.\./dir\(with\)parenthesis/files/a/.*",
+      "target": "${REPO}/${TEST_SPACE}/36_flat_recursive_regexp_pattern_parenthesis/",
+      "flat": "true",
+      "recursive": "true",
+      "regexp": "true"
+    }
+  ]
+}
