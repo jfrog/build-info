@@ -31,8 +31,8 @@ import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.esca
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
     private static final String TEST_SPACE = "bi_test_space";
-    private static final String TEST_WORKSPACE = System.getProperty("java.io.tmpdir") + TEST_SPACE;
     private static final String SEPARATOR = File.separator;
+    private static final String TEST_WORKSPACE = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE;
     private SpecsHelper specsHelper = new SpecsHelper(log);
 
 
