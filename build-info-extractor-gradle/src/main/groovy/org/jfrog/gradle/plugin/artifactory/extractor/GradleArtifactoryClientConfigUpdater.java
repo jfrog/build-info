@@ -23,8 +23,8 @@ import org.gradle.api.Project;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.api.BuildInfoProperties;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -90,26 +90,28 @@ public class GradleArtifactoryClientConfigUpdater {
         if (StringUtils.isBlank(buildName)) {
             buildName = project.getRootProject().getName();
             config.info.setBuildName(buildName);
+            config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
         }
-        config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
 
         // Build number
         String buildNumber = config.info.getBuildNumber();
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = new Date().getTime() + "";
             config.info.setBuildNumber(buildNumber);
+            config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
         }
-        config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
 
         // Build start (was set by the plugin - no need to make up a fallback val)
         String buildStartedIso = config.info.getBuildStarted();
-        Date buildStartDate;
-        try {
-            buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
-        } catch (ParseException e) {
-            throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
+        if (StringUtils.isBlank(buildStartedIso)) {
+            Date buildStartDate;
+            try {
+                buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+            } catch (ParseException e) {
+                throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
+            }
+            config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, String.valueOf(buildStartDate.getTime()));
         }
-        config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, String.valueOf(buildStartDate.getTime()));
 
         // Build agent
         String buildAgentName = config.info.getBuildAgentName();

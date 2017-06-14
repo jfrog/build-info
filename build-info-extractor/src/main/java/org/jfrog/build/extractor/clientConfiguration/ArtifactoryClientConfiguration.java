@@ -16,6 +16,7 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
 import com.google.common.base.Predicate;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
@@ -618,17 +619,26 @@ public class ArtifactoryClientConfiguration {
                 return;
             }
             String matrixParamPrefix = getMatrixParamPrefix();
-            if (key.startsWith(matrixParamPrefix)) {
-                props.put(key, value);
-            } else {
-                props.put(matrixParamPrefix + key, value);
+            if (!key.startsWith(matrixParamPrefix)) {
+                key = matrixParamPrefix + key;
             }
+            if (props.get(key) != null) {
+                value = props.get(key) + "," + value;
+            }
+            props.put(key, value);
         }
 
         // INTERNAL METHOD
         public void addMatrixParams(Map<String, String> vars) {
             ensureImmutableMatrixParams();
             for (Map.Entry<String, String> entry : vars.entrySet()) {
+                addMatrixParam(entry.getKey(), entry.getValue());
+            }
+        }
+
+        public void addMatrixParams(ArrayListMultimap<String, String> vars) {
+            ensureImmutableMatrixParams();
+            for (Map.Entry<String, String> entry : vars.entries()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
         }

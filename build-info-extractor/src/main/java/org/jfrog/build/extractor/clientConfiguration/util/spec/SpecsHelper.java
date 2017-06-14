@@ -1,7 +1,10 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -9,14 +12,15 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.util.PublishedItemsHelper;
-import org.jfrog.build.api.util.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -212,18 +216,20 @@ public class SpecsHelper {
     }
 
     private ArrayListMultimap<String, String> getPropertiesMap(String props) {
-        ArrayListMultimap<String, String> properties = ArrayListMultimap.create();
-        if (props == null) {
-            return properties;
+        ArrayListMultimap<String, String> propertiesMap = ArrayListMultimap.create();
+        fillPropertiesMap(props, propertiesMap);
+        return propertiesMap;
+    }
+
+    public static void fillPropertiesMap(String props, ArrayListMultimap<String, String> propertiesMap) {
+        if (StringUtils.isBlank(props)) {
+            return;
         }
         for (String prop : props.trim().split(";")) {
             String key = StringUtils.substringBefore(prop, "=");
-            String values = StringUtils.substringAfter(prop, "=");
-            for (String value : values.split(",")) {
-                properties.put(key, value);
-            }
+            String[] values = StringUtils.substringAfter(prop, "=").split(",");
+            propertiesMap.putAll(key, Arrays.asList(values));
         }
-        return properties;
     }
 
     private String getLocalPath(String path) {
