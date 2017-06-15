@@ -437,7 +437,9 @@ if (!excludeMavenPluginBuild) {
             task pluginDescriptor(type: Exec) {
                 // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
 
-                final mvn = project.hasProperty('mvn') ? project.mvn : System.getProperty('os.name')?.toLowerCase()?.contains('win') ? 'mvn.cmd' : 'mvn'
+                final mvn = project.hasProperty('mvn') ? project.mvn :
+                        !System.getProperty('os.name')?.toLowerCase()?.contains('win') ? 'mvn' :
+                                new File('mvn.cmd').exists() ? 'mvn.cmd' : 'mvn.bat'
                 final mvnArgs = project.hasProperty('mvnArgs') ? project.mvnArgs : ''
                 final File pom = project.file("$buildDir/pom.xml")
                 final allArgs = ['-e', '-B', '-f', pom.canonicalPath, mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.2:descriptor'].grep()
