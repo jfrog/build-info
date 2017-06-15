@@ -181,7 +181,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable {
             return this;
         }
 
-        public Builder addProperties(ArrayListMultimap<String, String> propertiesToAdd) {
+        public Builder addProperties(Multimap<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
                 deployDetails.properties = ArrayListMultimap.create();
             }

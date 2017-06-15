@@ -53,7 +53,7 @@ public class SpecsHelper {
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
-                                                ArrayListMultimap<String, String> buildProperties,
+                                                Multimap<String, String> buildProperties,
                                                 ArtifactoryBuildInfoClient client)
             throws IOException, NoSuchAlgorithmException {
         Spec spec = this.getDownloadUploadSpec(uploadSpec);
@@ -64,6 +64,21 @@ public class SpecsHelper {
         } finally {
             client.close();
         }
+    }
+
+    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
+                                                Map<String, String> buildProperties,
+                                                ArtifactoryBuildInfoClient client)
+            throws IOException, NoSuchAlgorithmException {
+        return uploadArtifactsBySpec(uploadSpec, workspace, createMultiMap(buildProperties), client);
+    }
+
+    public static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {
+        Multimap<K, V> multimap = ArrayListMultimap.create();
+        for (Map.Entry<K, V> entry : input.entrySet()) {
+            multimap.put(entry.getKey(), entry.getValue());
+        }
+        return multimap;
     }
 
     /**
@@ -77,8 +92,7 @@ public class SpecsHelper {
      * @return A list of the downloaded dependencies.
      * @throws IOException in case of IOException
      */
-    public List<Dependency> downloadArtifactsBySpec(
-            String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
+    public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
         return helper.downloadDependencies(getDownloadUploadSpec(spec));
     }
@@ -109,7 +123,7 @@ public class SpecsHelper {
      *                     checksums or in case of any file system exception
      * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
      */
-    private Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace, ArrayListMultimap<String, String> buildProperties)
+    private Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace, Multimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         log.debug("Getting deploy details from spec.");
         Set<DeployDetails> artifactsToDeploy = Sets.newHashSet();
@@ -197,7 +211,7 @@ public class SpecsHelper {
      * @throws NoSuchAlgorithmException if appropriate checksum algorithm was not found.
      */
     private Set<DeployDetails> buildDeployDetailsFromFileEntry(Map.Entry<String, File> fileEntry, FileSpec uploadFile,
-                                                               ArrayListMultimap<String, String> buildProperties)
+                                                               Multimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         Set<DeployDetails> result = Sets.newHashSet();
         String targetPath = fileEntry.getKey();
