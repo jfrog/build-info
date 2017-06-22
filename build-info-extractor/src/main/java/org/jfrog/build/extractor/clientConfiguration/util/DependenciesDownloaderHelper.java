@@ -135,7 +135,7 @@ public class DependenciesDownloaderHelper {
         File parentFile = FileUtils.getFile(fileDestination).getParentFile();
         ZipUtils.extract(sourceArchive, parentFile);
         log.info("Finished extracting archive to " + parentFile);
-        log.info("Deleting archive.");
+        log.debug("Deleting archive...");
         org.apache.commons.io.FileUtils.deleteQuietly(sourceArchive);
     }
 

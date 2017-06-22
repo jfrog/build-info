@@ -59,7 +59,7 @@ public abstract class ZipUtils {
         }
     }
 
-    public static void extractFiles(ArchiveInputStream archiveInputStream, File destinationDirectory) throws IOException {
+    private static void extractFiles(ArchiveInputStream archiveInputStream, File destinationDirectory) throws IOException {
         ArchiveEntry entry;
         while ((entry = archiveInputStream.getNextEntry()) != null) {
             //Validate entry name before extracting
@@ -69,7 +69,7 @@ public abstract class ZipUtils {
                 // ZipArchiveEntry does not carry relevant info
                 // for symlink identification, thus it not supported
                 // at this stage
-                extractFile("", destinationDirectory, archiveInputStream, validatedEntryName,
+                extractFile(destinationDirectory, archiveInputStream, validatedEntryName,
                         entry.getLastModifiedDate(), entry.isDirectory());
             }
         }
@@ -181,7 +181,7 @@ public abstract class ZipUtils {
      * @param isEntryDirectory     Indication if the entry is a directory or not
      * @throws IOException
      */
-    private static void extractFile(String sourcePath, File destinationDirectory, InputStream zipInputStream,
+    private static void extractFile(File destinationDirectory, InputStream zipInputStream,
                                     String entryName, Date entryDate, boolean isEntryDirectory) throws IOException {
 
         File resolvedEntryFile = new File(destinationDirectory, entryName);
@@ -215,7 +215,7 @@ public abstract class ZipUtils {
             //Preserve last modified date
             resolvedEntryFile.setLastModified(entryDate.getTime());
         } catch (FileNotFoundException ex) {
-            throw new RuntimeException("Can't extract file " + sourcePath, ex);
+            throw new RuntimeException("Can't extract file. ", ex);
         }
     }
 
@@ -304,6 +304,7 @@ public abstract class ZipUtils {
 
         return result.toString();
     }
+
     private static class PathUtils {
 
         /**
