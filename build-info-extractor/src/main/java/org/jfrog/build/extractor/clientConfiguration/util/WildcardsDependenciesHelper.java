@@ -74,8 +74,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     }
 
     @Override
-    public List<Dependency> retrievePublishedDependencies(String searchPattern)
-            throws IOException {
+    public List<Dependency> retrievePublishedDependencies(String searchPattern, boolean explode) throws IOException {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
@@ -84,7 +83,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             dependenciesHelper.setBuildName(buildName);
             dependenciesHelper.setBuildNumber(buildNumber);
         }
-        Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, this.recursive, this.props));
+        Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, this.recursive, this.props), explode);
         replaceTargetPlaceholders(searchPattern, downloadableArtifacts);
         return dependenciesHelper.downloadDependencies(downloadableArtifacts);
     }

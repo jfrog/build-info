@@ -14,6 +14,7 @@ public class FileSpec {
     private String flat;
     private String regexp;
     private String build;
+    private String explode;
 
     public String getAql() throws IOException {
         if (aql != null) {
@@ -82,6 +83,14 @@ public class FileSpec {
         this.build = build;
     }
 
+    public String getExplode() {
+        return explode;
+    }
+
+    public void setExplode(String explode) {
+        this.explode = explode;
+    }
+
     @Override
     public String toString() {
         return "FileSpec{" +
@@ -93,6 +102,7 @@ public class FileSpec {
                 ", flat='" + flat + '\'' +
                 ", regexp='" + regexp + '\'' +
                 ", build='" + build + '\'' +
+                ", explode='" + explode + '\'' +
                 '}';
     }
 }

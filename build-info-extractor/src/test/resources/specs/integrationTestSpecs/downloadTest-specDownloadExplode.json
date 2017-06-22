@@ -1,0 +1,41 @@
+{
+  "files": [
+    {
+      "explode": "true",
+      "aql": {
+        "items.find": {
+          "repo": "tests",
+          "@*": {
+            "$nmatch": "*"
+          },
+          "$or": [
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "bi_test_space/download-explode-test"
+                  },
+                  "name": {
+                    "$match": "*.zip"
+                  }
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "bi_test_space/download-explode-test/*"
+                  },
+                  "name": {
+                    "$match": "*.zip"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

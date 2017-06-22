@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
@@ -14,13 +15,18 @@ import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.api.util.ZipUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.InputMismatchException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Helper class for downloading dependencies
@@ -74,13 +80,13 @@ public class DependenciesDownloaderHelper {
                 wildcardHelper.setProps(file.getProps());
                 wildcardHelper.setBuildName(buildName);
                 wildcardHelper.setBuildNumber(buildNumber);
-                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern()));
+                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), Boolean.valueOf(file.getExplode())));
             } else if (file.getAql() != null) {
                 aqlHelper.setTarget(file.getTarget());
                 aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
                 aqlHelper.setBuildName(buildName);
                 aqlHelper.setBuildNumber(buildNumber);
-                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql()));
+                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), Boolean.valueOf(file.getExplode())));
             }
         }
         return resolvedDependencies;
@@ -110,11 +116,27 @@ public class DependenciesDownloaderHelper {
             if (dependency != null) {
                 dependencies.add(dependency);
                 downloadedArtifacts.add(downloadableArtifact);
+                explodeDependencies(downloadableArtifact);
             }
         }
 
         removeUnusedArtifactsFromLocal(downloadedArtifacts);
         return dependencies;
+    }
+
+    private void explodeDependencies(DownloadableArtifact downloadableArtifact) throws IOException {
+        if (!downloadableArtifact.isExplode()) {
+            return;
+        }
+        String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
+                downloadableArtifact.getRelativeDirPath());
+        log.info("Extracting Archive: " + fileDestination);
+        File sourceArchive = new File(fileDestination);
+        File parentFile = FileUtils.getFile(fileDestination).getParentFile();
+        ZipUtils.extract(sourceArchive, parentFile);
+        log.info("Finished extracting archive to " + parentFile);
+        log.info("Deleting archive.");
+        org.apache.commons.io.FileUtils.deleteQuietly(sourceArchive);
     }
 
     private String getBuildNumber(String buildName, String build) throws IOException {

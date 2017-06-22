@@ -34,8 +34,8 @@ import org.gradle.api.plugins.MavenPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
@@ -112,7 +112,6 @@ public class TaskHelperConfigurations extends TaskHelper {
 
     /**
      * Check all files to publish, depends on it (to generate Gradle task graph to create them).
-     *
      */
     public void checkDependsOnArtifactsToPublish() {
         // The task depends on the produced artifacts of all configurations "to publish"
@@ -149,7 +148,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
         if (archiveConfig == null) {
             log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                    "and no '{}' configuration exists in project '{}'.", Dependency.ARCHIVES_CONFIGURATION,
+                            "and no '{}' configuration exists in project '{}'.", Dependency.ARCHIVES_CONFIGURATION,
                     project.getPath());
         } else {
             // Flag to publish the Ivy XML file, but no ivy descriptor file inputted, activate default upload${configuration}.
@@ -157,16 +156,16 @@ public class TaskHelperConfigurations extends TaskHelper {
             Task candidateUploadTask = tasks.findByName(archiveConfig.getUploadTaskName());
             if (candidateUploadTask == null) {
                 log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                        "and task '{}' does not exist." +
-                        "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin" +
-                        "will solve this issue.",
+                                "and task '{}' does not exist." +
+                                "\nAdding \"apply plugin: 'java'\" or any other plugin extending the 'base' plugin" +
+                                "will solve this issue.",
                         new Object[]{getPath(), archiveConfig.getUploadTaskName()});
             } else {
                 if (!(candidateUploadTask instanceof Upload)) {
                     log.warn("Cannot publish Ivy descriptor if ivyDescriptor not set in task '{}' " +
-                            "and task '{}' is not an Upload task." +
-                            "\nYou'll need to set publishIvy=false or provide a path to the ivy file to " +
-                            "publish to solve this issue.",
+                                    "and task '{}' is not an Upload task." +
+                                    "\nYou'll need to set publishIvy=false or provide a path to the ivy file to " +
+                                    "publish to solve this issue.",
                             new Object[]{getPath(), archiveConfig.getUploadTaskName()});
                 } else {
                     Upload uploadTask = (Upload) candidateUploadTask;
@@ -190,7 +189,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         Upload installTask = tasks.withType(Upload.class).findByName("install");
         if (installTask == null) {
             log.warn("Cannot publish pom for project '{}' since it does not contain the Maven " +
-                    "plugin install task and task '{}' does not specify a custom pom path.",
+                            "plugin install task and task '{}' does not specify a custom pom path.",
                     new Object[]{project.getPath(), getPath()});
             artifactoryTask.mavenDescriptor = null;
         } else {
@@ -246,7 +245,7 @@ public class TaskHelperConfigurations extends TaskHelper {
 
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.ivyDescriptor);
         try {
             Map<String, String> checksums =
@@ -358,7 +357,7 @@ public class TaskHelperConfigurations extends TaskHelper {
     }
 
     private GradleDeployDetails gradleDeployDetails(PublishArtifact artifact, String configuration,
-            @Nullable String artifactPath, @Nullable Set<String> processedFiles) {
+                                                    @Nullable String artifactPath, @Nullable Set<String> processedFiles) {
 
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
@@ -391,12 +390,10 @@ public class TaskHelperConfigurations extends TaskHelper {
 
         DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder().file(file);
         try {
-            Map<String, String> checksums =
-                    FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
             deployDetailsBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
         } catch (Exception e) {
-            throw new GradleException(
-                    "Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
+            throw new GradleException("Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
         }
 
         if (artifactPath != null) {

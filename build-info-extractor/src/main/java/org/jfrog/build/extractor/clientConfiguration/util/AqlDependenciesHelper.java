@@ -33,12 +33,11 @@ public class AqlDependenciesHelper implements DependenciesHelper {
     }
 
     @Override
-    public List<Dependency> retrievePublishedDependencies(String aql)
-            throws IOException {
+    public List<Dependency> retrievePublishedDependencies(String aql, boolean explode) throws IOException {
         if (StringUtils.isBlank(aql)) {
             return Collections.emptyList();
         }
-        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownload(aql);
+        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownload(aql, explode);
         return downloadDependencies(downloadableArtifacts);
     }
 
@@ -54,7 +53,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         this.downloader.setFlatDownload(flat);
     }
 
-    public Set<DownloadableArtifact> collectArtifactsToDownload(String aql) throws IOException {
+    public Set<DownloadableArtifact> collectArtifactsToDownload(String aql, boolean explode) throws IOException {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
         if (StringUtils.isNotBlank(buildName)) {
             aql = addBuildToQuery(aql);
@@ -64,8 +63,10 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearchResult.getResults();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
             String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
-            downloadableArtifacts.add(new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" +
-                    searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL));
+            DownloadableArtifact downloadableArtifact = new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" +
+                    searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL);
+            downloadableArtifact.setExplode(explode);
+            downloadableArtifacts.add(downloadableArtifact);
         }
         return downloadableArtifacts;
     }

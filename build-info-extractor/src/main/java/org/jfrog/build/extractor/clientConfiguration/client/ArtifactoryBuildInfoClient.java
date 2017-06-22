@@ -634,6 +634,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     }
 
     private ArtifactoryUploadResponse uploadFile(DeployDetails details, String uploadUrl) throws IOException {
+
         ArtifactoryUploadResponse response = tryChecksumDeploy(details, uploadUrl);
         if (response != null) {
             // Checksum deploy was performed:
@@ -643,6 +644,10 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
         // add the 100 continue directive
         httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+
+        if (details.isExplode()) {
+            httpPut.addHeader("X-Explode-Archive", "true");
+        }
 
         FileEntity fileEntity = new FileEntity(details.getFile(), "binary/octet-stream");
 
@@ -662,6 +667,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         long fileLength = details.getFile().length();
         if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
             log.debug("Skipping checksum deploy of file size " + fileLength + " , falling back to regular deployment.");
+            return null;
+        }
+
+        if (details.isExplode()) {
+            log.debug("Skipping checksum deploy due to explode file request.");
             return null;
         }
 
@@ -700,7 +710,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         httpPut.addHeader("X-Checksum-Sha1", details.getSha1());
         httpPut.addHeader("X-Checksum-Md5", details.getMd5());
         log.debug("Full Artifact Http path: " + httpPut.toString() + "\n@Http Headers: " + Arrays.toString(httpPut.getAllHeaders()));
-
         return httpPut;
     }
 

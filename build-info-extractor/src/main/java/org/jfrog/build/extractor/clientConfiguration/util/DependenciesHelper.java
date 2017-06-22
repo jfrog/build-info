@@ -9,6 +9,8 @@ import java.util.List;
  * Created by Tamirh on 25/04/2016.
  */
 public interface DependenciesHelper {
-    List<Dependency> retrievePublishedDependencies(String resolvePattern) throws IOException, InterruptedException;
+
+    List<Dependency> retrievePublishedDependencies(String resolvePattern, boolean explode) throws IOException, InterruptedException;
+
     void setFlatDownload(boolean flat);
 }
