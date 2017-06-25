@@ -537,7 +537,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             } else {
                 module.addArtifact(artifact);
             }
-            addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(), artifactId, artifactVersion, artifactClassifier, artifactExtension);
+            if (artifactFile.isFile()) {
+                addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(), artifactId, artifactVersion, artifactClassifier, artifactExtension);
+            }
         }
         /*
          * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
