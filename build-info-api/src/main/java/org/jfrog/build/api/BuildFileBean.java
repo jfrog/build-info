@@ -38,6 +38,20 @@ public interface BuildFileBean extends BuildBean {
     void setSha1(String sha1);
 
     /**
+     * Returns the SHA256 checksum of the file
+     *
+     * @return File SHA256 checksum
+     */
+    String getSha2();
+
+    /**
+     * Sets the SHA256 checksum of the file
+     *
+     * @param sha2 File SHA256 checksum
+     */
+    void setSha2(String sha2);
+
+    /**
      * Returns the MD5 checksum of the file
      *
      * @return File MD5 checksum

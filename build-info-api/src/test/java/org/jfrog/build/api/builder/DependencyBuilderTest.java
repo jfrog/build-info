@@ -45,6 +45,7 @@ public class DependencyBuilderTest {
         assertNull(dependency.getType(), "Unexpected default dependency type.");
         assertNull(dependency.getScopes(), "Default dependency scopes should not have been initialized.");
         assertNull(dependency.getSha1(), "Default dependency SHA1 checksum should be null.");
+        assertNull(dependency.getSha2(), "Default dependency SHA2 checksum should be null.");
         assertNull(dependency.getMd5(), "Default dependency MD5 checksum should be null.");
         assertNull(dependency.getRequiredBy(), "Default dependency required by should not have been initialized.");
         assertNull(dependency.getProperties(), "Default dependency properties should be null.");
@@ -58,17 +59,19 @@ public class DependencyBuilderTest {
         String type = "bob";
         Set<String> scopes = Sets.newHashSet("mitzi");
         String sha1 = "pop";
+        String sha2 = "lol";
         String md5 = "shmop";
         List<String> requiredBy = Lists.newArrayList("pitzi");
         Properties properties = new Properties();
 
-        Dependency dependency = new DependencyBuilder().id(id).type(type).scopes(scopes).sha1(sha1).md5(md5).
-                requiredBy(requiredBy).properties(properties).build();
+        Dependency dependency = new DependencyBuilder().id(id).type(type).scopes(scopes).sha1(sha1).md5(md5).sha2(sha2)
+                .requiredBy(requiredBy).properties(properties).build();
 
         assertEquals(dependency.getId(), id, "Unexpected dependency ID.");
         assertEquals(dependency.getType(), type, "Unexpected dependency type.");
         assertEquals(dependency.getScopes(), scopes, "Unexpected dependency scopes.");
         assertEquals(dependency.getSha1(), sha1, "Unexpected dependency SHA1 checksum.");
+        assertEquals(dependency.getSha2(), sha2, "Unexpected dependency SHA2 checksum.");
         assertEquals(dependency.getMd5(), md5, "Unexpected dependency SHA1 checksum.");
         assertEquals(dependency.getRequiredBy(), requiredBy, "Unexpected dependency required by.");
         assertEquals(dependency.getProperties(), properties, "Unexpected dependency properties.");
