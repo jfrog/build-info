@@ -31,7 +31,7 @@ public class ArtifactBuilder {
     private String name;
     private String type;
     private String sha1;
-    private String sha2;
+    private String sha256;
     private String md5;
     private Properties properties;
 
@@ -52,7 +52,7 @@ public class ArtifactBuilder {
         artifact.setName(name);
         artifact.setType(type);
         artifact.setSha1(sha1);
-        artifact.setSha2(sha2);
+        artifact.setSha256(sha256);
         artifact.setMd5(md5);
         artifact.setProperties(properties);
         return artifact;
@@ -94,11 +94,11 @@ public class ArtifactBuilder {
     /**
      * Sets the SHA256 checksum of the artifact
      *
-     * @param sha2 Artifact SHA256 checksum
+     * @param sha256 Artifact SHA256 checksum
      * @return Builder instance
      */
-    public ArtifactBuilder sha2(String sha2) {
-        this.sha2 = sha2;
+    public ArtifactBuilder sha256(String sha256) {
+        this.sha256 = sha256;
         return this;
     }
 

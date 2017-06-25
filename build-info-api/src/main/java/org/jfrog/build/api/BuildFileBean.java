@@ -42,14 +42,14 @@ public interface BuildFileBean extends BuildBean {
      *
      * @return File SHA256 checksum
      */
-    String getSha2();
+    String getSha256();
 
     /**
      * Sets the SHA256 checksum of the file
      *
-     * @param sha2 File SHA256 checksum
+     * @param sha256 File SHA256 checksum
      */
-    void setSha2(String sha2);
+    void setSha256(String sha256);
 
     /**
      * Returns the MD5 checksum of the file

@@ -34,7 +34,7 @@ public class DependencyBuilder {
     private String type;
     private Set<String> scopes;
     private String sha1;
-    private String sha2;
+    private String sha256;
     private String md5;
     private List<String> requiredBy;
     private Properties properties;
@@ -50,7 +50,7 @@ public class DependencyBuilder {
         dependency.setType(type);
         dependency.setScopes(scopes);
         dependency.setSha1(sha1);
-        dependency.setSha2(sha2);
+        dependency.setSha256(sha256);
         dependency.setMd5(md5);
         dependency.setRequiredBy(requiredBy);
         dependency.setProperties(properties);
@@ -104,11 +104,11 @@ public class DependencyBuilder {
     /**
      * Sets the SHA256 checksum of the dependency
      *
-     * @param sha2 Dependency SHA256 checksum
+     * @param sha256 Dependency SHA256 checksum
      * @return Builder instance
      */
-    public DependencyBuilder sha2(String sha2) {
-        this.sha2 = sha2;
+    public DependencyBuilder sha256(String sha256) {
+        this.sha256 = sha256;
         return this;
     }
 
