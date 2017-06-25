@@ -18,6 +18,7 @@ public class DownloadableArtifact implements Serializable {
     String matrixParameters;
     private PatternType patternType;
     private String sourcePattern;
+    private boolean explode;
 
     public DownloadableArtifact() {
     }
@@ -25,7 +26,7 @@ public class DownloadableArtifact implements Serializable {
     public DownloadableArtifact(String repoUrl, String targetDirPath, String filePath, String matrixParameters,
             String sourcePattern, PatternType patternType) {
         this.repoUrl = repoUrl;
-        this.targetDirPath = targetDirPath;
+        this.targetDirPath = targetDirPath == null ? "" : targetDirPath;
         this.filePath = filePath;
         this.matrixParameters = matrixParameters;
         this.patternType = patternType;
@@ -91,5 +92,13 @@ public class DownloadableArtifact implements Serializable {
 
     public String getSourcePattern() {
         return sourcePattern;
+    }
+
+    public boolean isExplode() {
+        return explode;
+    }
+
+    public void setExplode(boolean explode) {
+        this.explode = explode;
     }
 }

@@ -9,6 +9,7 @@ class ConstData {
     static final String[] UPLOAD_PARENTHESIS_RESULTS;
     static final String[] UPLOAD_REPO_ROOT_RESULTS;
     static final String[] DOWNLOAD_RESULTS;
+    static final String[] DOWNLOAD_EXPLODE_RESULTS;
     static final String[] POSITIVE_TEST_FILE_SPEC;
     static final String[] NEGATIVE_TEST_FILE_SPEC;
 
@@ -17,9 +18,9 @@ class ConstData {
         UPLOAD_PARENTHESIS_RESULTS = getUploadParenthesisResults();
         UPLOAD_REPO_ROOT_RESULTS = getUploadRepoRootResults();
         DOWNLOAD_RESULTS = getExpectedDownloadResults();
+        DOWNLOAD_EXPLODE_RESULTS = getExpectedExplodeDownloadResults();
         POSITIVE_TEST_FILE_SPEC = getPositiveTestFileSpecs();
         NEGATIVE_TEST_FILE_SPEC = getNegativeTestFileSpecs();
-
     }
 
     private static String[] getExpectedUploadResults() {
@@ -33,7 +34,7 @@ class ConstData {
                 "1_flat_recursive_wildcard/c1.in",
                 "1_flat_recursive_wildcard/c2.in",
                 "1_flat_recursive_wildcard/c3.in",
-                "1_flat_recursive_wildcard/ant-antlr-1.6.5.jar",
+                "1_flat_recursive_wildcard/ant-antlr-1.6.5.zip",
 
                 "2_flat_recursive_regexp/a1.in",
                 "2_flat_recursive_regexp/a2.in",
@@ -44,7 +45,7 @@ class ConstData {
                 "2_flat_recursive_regexp/c1.in",
                 "2_flat_recursive_regexp/c2.in",
                 "2_flat_recursive_regexp/c3.in",
-                "2_flat_recursive_regexp/ant-antlr-1.6.5.jar",
+                "2_flat_recursive_regexp/ant-antlr-1.6.5.zip",
 
                 "3_defaults_flat_recursive/a1.in",
                 "3_defaults_flat_recursive/a2.in",
@@ -55,7 +56,7 @@ class ConstData {
                 "3_defaults_flat_recursive/c1.in",
                 "3_defaults_flat_recursive/c2.in",
                 "3_defaults_flat_recursive/c3.in",
-                "3_defaults_flat_recursive/ant-antlr-1.6.5.jar",
+                "3_defaults_flat_recursive/ant-antlr-1.6.5.zip",
 
                 "4_3-only_wildcard_recursive/a3.in",
                 "4_3-only_wildcard_recursive/b3.in",
@@ -82,7 +83,7 @@ class ConstData {
                 "8_nonflat_recursive_wildcard/files/a/b/c/c1.in",
                 "8_nonflat_recursive_wildcard/files/a/b/c/c2.in",
                 "8_nonflat_recursive_wildcard/files/a/b/c/c3.in",
-                "8_nonflat_recursive_wildcard/files/a/b/c/ant-antlr-1.6.5.jar",
+                "8_nonflat_recursive_wildcard/files/a/b/c/ant-antlr-1.6.5.zip",
 
                 "9_nonflat_recursive_regexp/files/a/a1.in",
                 "9_nonflat_recursive_regexp/files/a/a2.in",
@@ -93,7 +94,7 @@ class ConstData {
                 "9_nonflat_recursive_regexp/files/a/b/c/c1.in",
                 "9_nonflat_recursive_regexp/files/a/b/c/c2.in",
                 "9_nonflat_recursive_regexp/files/a/b/c/c3.in",
-                "9_nonflat_recursive_regexp/files/a/b/c/ant-antlr-1.6.5.jar",
+                "9_nonflat_recursive_regexp/files/a/b/c/ant-antlr-1.6.5.zip",
 
                 "10_nonflat_nonrecursive_wildcard/files/a/a1.in",
                 "10_nonflat_nonrecursive_wildcard/files/a/a2.in",
@@ -136,7 +137,7 @@ class ConstData {
                 "20_defaults_recursive_flat_regexp/c1.in",
                 "20_defaults_recursive_flat_regexp/c2.in",
                 "20_defaults_recursive_flat_regexp/c3.in",
-                "20_defaults_recursive_flat_regexp/ant-antlr-1.6.5.jar",
+                "20_defaults_recursive_flat_regexp/ant-antlr-1.6.5.zip",
 
                 "21_upload-to-existing/a1.in",
                 "21_upload-to-existing/a2.in",
@@ -147,14 +148,14 @@ class ConstData {
                 "21_upload-to-existing/c1.in",
                 "21_upload-to-existing/c2.in",
                 "21_upload-to-existing/c3.in",
-                "21_upload-to-existing/ant-antlr-1.6.5.jar",
+                "21_upload-to-existing/ant-antlr-1.6.5.zip",
 
                 "22_regexp-a1-only/a1.in",
 
                 "23_nonflat-regex-all-1-recursive/files/a/a1.in",
                 "23_nonflat-regex-all-1-recursive/files/a/b/b1.in",
                 "23_nonflat-regex-all-1-recursive/files/a/b/c/c1.in",
-                "23_nonflat-regex-all-1-recursive/files/a/b/c/ant-antlr-1.6.5.jar",
+                "23_nonflat-regex-all-1-recursive/files/a/b/c/ant-antlr-1.6.5.zip",
 
                 "24_regex_all-1_nonrecursive_full-path/a1.in",
 
@@ -196,7 +197,7 @@ class ConstData {
                 "1_pattern_flat_recursive/a1.in",
                 "1_pattern_flat_recursive/a2.in",
                 "1_pattern_flat_recursive/a3.in",
-                "1_pattern_flat_recursive/ant-antlr-1.6.5.jar",
+                "1_pattern_flat_recursive/ant-antlr-1.6.5.zip",
                 "1_pattern_flat_recursive/b1.in",
                 "1_pattern_flat_recursive/b2.in",
                 "1_pattern_flat_recursive/b3.in",
@@ -216,7 +217,7 @@ class ConstData {
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.jar",
+                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
                 "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
@@ -273,7 +274,7 @@ class ConstData {
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b1.in",
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b2.in",
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b3.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.jar",
+                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c1.in",
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c2.in",
                 "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c3.in",
@@ -281,7 +282,7 @@ class ConstData {
                 "18_aql_flat_recursive/a1.in",
                 "18_aql_flat_recursive/a2.in",
                 "18_aql_flat_recursive/a3.in",
-                "18_aql_flat_recursive/ant-antlr-1.6.5.jar",
+                "18_aql_flat_recursive/ant-antlr-1.6.5.zip",
                 "18_aql_flat_recursive/b1.in",
                 "18_aql_flat_recursive/b2.in",
                 "18_aql_flat_recursive/b3.in",
@@ -295,7 +296,7 @@ class ConstData {
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.jar",
+                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
                 "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
@@ -303,7 +304,7 @@ class ConstData {
                 "20_aql_flat_nonrecursive/a1.in",
                 "20_aql_flat_nonrecursive/a2.in",
                 "20_aql_flat_nonrecursive/a3.in",
-                "20_aql_flat_nonrecursive/ant-antlr-1.6.5.jar",
+                "20_aql_flat_nonrecursive/ant-antlr-1.6.5.zip",
                 "20_aql_flat_nonrecursive/b1.in",
                 "20_aql_flat_nonrecursive/b2.in",
                 "20_aql_flat_nonrecursive/b3.in",
@@ -317,7 +318,7 @@ class ConstData {
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.jar",
+                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
                 "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in",
@@ -328,12 +329,24 @@ class ConstData {
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.jar",
+                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
                 "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in"
         };
+    }
 
+    private static String[] getExpectedExplodeDownloadResults() {
+        return new String[]{
+                "1_flat_recursive_wildcard/ant-antlr-1.6.5.jar",
+                "20_defaults_recursive_flat_regexp/ant-antlr-1.6.5.jar",
+                "21_upload-to-existing/ant-antlr-1.6.5.jar",
+                "23_nonflat-regex-all-1-recursive/files/a/b/c/ant-antlr-1.6.5.jar",
+                "2_flat_recursive_regexp/ant-antlr-1.6.5.jar",
+                "3_defaults_flat_recursive/ant-antlr-1.6.5.jar",
+                "8_nonflat_recursive_wildcard/files/a/b/c/ant-antlr-1.6.5.jar",
+                "9_nonflat_recursive_regexp/files/a/b/c/ant-antlr-1.6.5.jar"
+        };
     }
 
     private static String[] getPositiveTestFileSpecs() {
@@ -367,7 +380,7 @@ class ConstData {
                 "33_flat_recursive_wildcard_parenthesis/a1.in",
                 "33_flat_recursive_wildcard_parenthesis/a2.in",
                 "33_flat_recursive_wildcard_parenthesis/a3.in",
-                "33_flat_recursive_wildcard_parenthesis/ant-antlr-1.6.5.jar",
+                "33_flat_recursive_wildcard_parenthesis/ant-antlr-1.6.5.zip",
                 "33_flat_recursive_wildcard_parenthesis/b1.in",
                 "33_flat_recursive_wildcard_parenthesis/b2.in",
                 "33_flat_recursive_wildcard_parenthesis/b3.in",
@@ -378,7 +391,7 @@ class ConstData {
                 "34_flat_recursive_regexp_parenthesis/a1.in",
                 "34_flat_recursive_regexp_parenthesis/a2.in",
                 "34_flat_recursive_regexp_parenthesis/a3.in",
-                "34_flat_recursive_regexp_parenthesis/ant-antlr-1.6.5.jar",
+                "34_flat_recursive_regexp_parenthesis/ant-antlr-1.6.5.zip",
                 "34_flat_recursive_regexp_parenthesis/b1.in",
                 "34_flat_recursive_regexp_parenthesis/b2.in",
                 "34_flat_recursive_regexp_parenthesis/b3.in",
@@ -392,7 +405,7 @@ class ConstData {
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/b1.in",
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/b2.in",
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/b3.in",
-                "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/c/ant-antlr-1.6.5.jar",
+                "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/c/ant-antlr-1.6.5.zip",
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/c/c1.in",
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/c/c2.in",
                 "35_flat_recursive_regexp_parenthesisFullPath/files/a/b/c/c3.in",
@@ -400,7 +413,7 @@ class ConstData {
                 "36_flat_recursive_regexp_pattern_parenthesis/a1.in",
                 "36_flat_recursive_regexp_pattern_parenthesis/a2.in",
                 "36_flat_recursive_regexp_pattern_parenthesis/a3.in",
-                "36_flat_recursive_regexp_pattern_parenthesis/ant-antlr-1.6.5.jar",
+                "36_flat_recursive_regexp_pattern_parenthesis/ant-antlr-1.6.5.zip",
                 "36_flat_recursive_regexp_pattern_parenthesis/b1.in",
                 "36_flat_recursive_regexp_pattern_parenthesis/b2.in",
                 "36_flat_recursive_regexp_pattern_parenthesis/b3.in",

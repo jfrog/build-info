@@ -22,12 +22,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
-import org.jfrog.build.api.dependency.BuildDependency;
-import org.jfrog.build.api.dependency.BuildPatternArtifacts;
-import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
-import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.api.dependency.PatternArtifact;
-import org.jfrog.build.api.dependency.PatternResult;
+import org.jfrog.build.api.dependency.*;
 import org.jfrog.build.api.dependency.pattern.BuildDependencyPattern;
 import org.jfrog.build.api.dependency.pattern.DependencyPattern;
 import org.jfrog.build.api.util.Log;
@@ -54,8 +49,7 @@ public class BuildDependenciesHelper {
         this.log = log;
     }
 
-    public List<BuildDependency> retrieveBuildDependencies(String resolvePattern)
-            throws IOException, InterruptedException {
+    public List<BuildDependency> retrieveBuildDependencies(String resolvePattern) throws IOException, InterruptedException {
         if (StringUtils.isBlank(resolvePattern)) {
             return Collections.emptyList();
         }
@@ -73,8 +67,7 @@ public class BuildDependenciesHelper {
         List<BuildPatternArtifacts> artifactsResponses = downloader.getClient().retrievePatternArtifacts(
                 artifactsRequests);
         Set<BuildDependency> result = Sets.newHashSet();
-        downloader.download(
-                collectArtifactsToDownload(buildDependencies, artifactsRequests, artifactsResponses, result));
+        downloader.download(collectArtifactsToDownload(buildDependencies, artifactsRequests, artifactsResponses, result));
         log.info("Finished resolving Build Info build dependencies.");
 
         return Lists.newArrayList(result);

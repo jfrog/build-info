@@ -18,6 +18,9 @@ import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.UploadSpecValidator;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +59,7 @@ public class SpecsHelper {
                                                 Multimap<String, String> buildProperties,
                                                 ArtifactoryBuildInfoClient client)
             throws IOException, NoSuchAlgorithmException {
-        Spec spec = this.getDownloadUploadSpec(uploadSpec);
+        Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
         Set<DeployDetails> artifactsToDeploy = getDeployDetails(spec, workspace, buildProperties);
         try {
             deploy(client, artifactsToDeploy);
@@ -94,7 +97,7 @@ public class SpecsHelper {
      */
     public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
-        return helper.downloadDependencies(getDownloadUploadSpec(spec));
+        return helper.downloadDependencies(getDownloadUploadSpec(spec, new DownloadSpecValidator()));
     }
 
     /**
@@ -145,8 +148,8 @@ public class SpecsHelper {
      * @return Spec object that represents the provided file
      * @throws IOException in case of IO problem
      */
-    public Spec getDownloadUploadSpec(File downloadUploadSpecFile) throws IOException {
-        return getDownloadUploadSpec(FileUtils.readFileToString(downloadUploadSpecFile));
+    public Spec getDownloadUploadSpec(File downloadUploadSpecFile, SpecsValidator specsValidator) throws IOException {
+        return getDownloadUploadSpec(FileUtils.readFileToString(downloadUploadSpecFile), specsValidator);
     }
 
     /**
@@ -156,31 +159,14 @@ public class SpecsHelper {
      * @return Spec object that represents the string
      * @throws IOException in case of IO problem
      */
-    public Spec getDownloadUploadSpec(String downloadUploadSpec) throws IOException {
+    public Spec getDownloadUploadSpec(String downloadUploadSpec, SpecsValidator specsValidator) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
         downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
         Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
-        validateUploadDownloadSpec(spec);
+        specsValidator.validate(spec);
         pathToUnixFormat(spec);
         return spec;
-    }
-
-    private void validateUploadDownloadSpec(Spec spec) throws IOException {
-        if (spec.getFiles() == null || spec.getFiles().length == 0) {
-            throw new IllegalArgumentException("Spec must contain at least one fileSpec.");
-        }
-        for (FileSpec fileSpec : spec.getFiles()) {
-            if (StringUtils.isBlank(fileSpec.getTarget())){
-                throw new IllegalArgumentException("Target key can not be blank.");
-            }
-            if (StringUtils.isBlank(fileSpec.getAql()) && StringUtils.isBlank(fileSpec.getPattern())){
-                throw new IllegalArgumentException("Spec must contain AQL or Pattern key");
-            }
-            if (StringUtils.isNotBlank(fileSpec.getAql()) && StringUtils.isNotBlank(fileSpec.getPattern())){
-                throw new IllegalArgumentException("Spec can't contain both AQL and Pattern keys");
-            }
-        }
     }
 
     private void pathToUnixFormat(Spec spec) {
@@ -232,6 +218,7 @@ public class SpecsHelper {
                 .artifactPath(path)
                 .targetRepository(getRepositoryKey(uploadFile.getTarget()))
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                .explode(BooleanUtils.toBoolean(uploadFile.getExplode()))
                 .addProperties(getPropertiesMap(uploadFile.getProps()));
         if (buildProperties != null && !buildProperties.isEmpty()) {
             builder.addProperties(buildProperties);

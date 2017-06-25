@@ -16,13 +16,15 @@
 
 package org.jfrog.build.client;
 
-import com.google.common.collect.*;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.Multimaps;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
 
 import java.io.File;
 import java.io.Serializable;
-import java.lang.Comparable;
 import java.util.Map;
 import java.util.Properties;
 
@@ -56,7 +58,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable {
      * Target deploy repository.
      */
     private String targetRepository;
-
+    /**
+     * Explode archive
+     */
+    private boolean explode;
     /**
      * @return Return the target deployment repository.
      */
@@ -82,6 +87,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable {
 
     public String getMd5() {
         return md5;
+    }
+
+    public boolean isExplode() {
+        return explode;
     }
 
     public int compareTo(DeployDetails that) {
@@ -161,6 +170,11 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable {
 
         public Builder md5(String md5) {
             deployDetails.md5 = md5;
+            return this;
+        }
+
+        public Builder explode(boolean isExplodeArchive) {
+            deployDetails.explode = isExplodeArchive;
             return this;
         }
 

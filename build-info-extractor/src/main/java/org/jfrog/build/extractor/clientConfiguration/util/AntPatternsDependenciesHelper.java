@@ -24,7 +24,7 @@ import java.util.Set;
  *
  * @author Shay Yaakov
  */
-public class AntPatternsDependenciesHelper implements DependenciesHelper {
+public class AntPatternsDependenciesHelper {
 
     private DependenciesDownloader downloader;
     private Log log;
@@ -34,8 +34,7 @@ public class AntPatternsDependenciesHelper implements DependenciesHelper {
         this.log = log;
     }
 
-    public List<Dependency> retrievePublishedDependencies(String resolvePattern)
-            throws IOException, InterruptedException {
+    public List<Dependency> retrievePublishedDependencies(String resolvePattern) throws IOException, InterruptedException {
         if (StringUtils.isBlank(resolvePattern)) {
             return Collections.emptyList();
         }
@@ -52,11 +51,6 @@ public class AntPatternsDependenciesHelper implements DependenciesHelper {
         dependencies = downloader.download(collectArtifactsToDownload(patternLines));
         log.info("Finished resolving Build Info dependencies.");
         return dependencies;
-    }
-
-    // We don't have flat download option for Ant pattern
-    public void setFlatDownload(boolean flat) {
-
     }
 
     private Set<DownloadableArtifact> collectArtifactsToDownload(List<String> patternLines)

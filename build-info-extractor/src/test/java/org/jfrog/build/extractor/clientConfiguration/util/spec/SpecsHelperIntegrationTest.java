@@ -3,9 +3,9 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.extractor.clientConfiguration.util.AqlDependenciesHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderImpl;
@@ -45,19 +45,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
      */
     public void testUploadSpec() throws URISyntaxException, IOException, NoSuchAlgorithmException {
         String innerDir = "upload-test";
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, null, getBuildInfoClient());
-
-        // Execute simple regexp upload
-        uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, null, getBuildInfoClient()));
+        List<Artifact> uploadedArtifacts = uploadTestFiles(innerDir);
 
         // Download the uploaded files
         String downloadDestinationDir = System.getProperty("java.io.tmpdir");
@@ -88,6 +76,37 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
                         ConstData.UPLOAD_RESULTS.length, downloadedFiles.size());
     }
 
+    public void testSpecUploadExpload() throws URISyntaxException, IOException, NoSuchAlgorithmException {
+        String innerDir = "upload-explode-test";
+        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
+        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
+        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
+        // Execute simple wildcard upload
+        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-explode.json", workspace, false);
+        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
+        String aql = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-parenthesisAql.json", "", false);
+        Set<DownloadableArtifact> foundArtifacts = performAql(aql);
+        List<String> foundPaths = getFoundPaths(foundArtifacts);
+        assert foundPaths.size() == 1 : "Was expected to find only one ant-antlr-1.6.5.jar file.";
+        assert foundPaths.get(0).contains("ant-antlr-1.6.5.jar")  : "Was expected to ant-antlr-1.6.5.jar file.";
+    }
+
+    public List<Artifact> uploadTestFiles(String innerDir) throws IOException, URISyntaxException, NoSuchAlgorithmException {
+        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
+
+        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
+        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
+
+        // Execute simple wildcard upload
+        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard.json", workspace, false);
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
+
+        // Execute simple regexp upload
+        uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp.json", workspace, true);
+        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient()));
+        return uploadedArtifacts;
+    }
+
     /**
      * Testing upload spec that contains parenthesis in the path or in the pattern.
      * Only regexp upload supports parenthesis in the pattern (as part of the path).
@@ -95,7 +114,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     public void testParenthesisUploadSpec() throws URISyntaxException, IOException, NoSuchAlgorithmException {
         String parenthesisDirName = "dir(with)parenthesis";
         String testDirName = "upload-parenthesis-test";
-        String innerDir = testDirName + SEPARATOR + parenthesisDirName;
+        String innerDir = testDirName + "/" + parenthesisDirName;
         File artifactsSourceDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
         File artifactsUploadDir = new File(System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir).getCanonicalFile();
         String workspace = artifactsUploadDir.getCanonicalPath();
@@ -104,12 +123,12 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         // Execute the wildcard upload
         String uploadSpec = injectVariables(innerDir,
                 "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard-parenthesis.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, null, getBuildInfoClient());
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), getBuildInfoClient());
 
         // Execute the regexp upload
         uploadSpec = injectVariables(innerDir,
                 "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp-parenthesis.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, null, getBuildInfoClient()));
+        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), getBuildInfoClient()));
 
 
         // Do AQL query to get the uploaded files
@@ -150,7 +169,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         // Prepare Artifactory for the download test
         File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
         String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-uploadSpec.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, null, getBuildInfoClient());
+        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
 
         // Execute the download
         String downloadDestinationDir = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir;
@@ -180,6 +199,34 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
                         ConstData.DOWNLOAD_RESULTS.length, downloadedFiles.size());
     }
 
+    public void testSpecDownloadExplode() throws URISyntaxException, IOException, NoSuchAlgorithmException {
+        final int EXPECTED_NUM_OF_DOWNLOADED_FILES = 8;
+        String innerDir = "download-explode-test";
+        uploadTestFiles(innerDir);
+
+        // Download the uploaded files
+        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
+        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-specDownloadExplode.json", "", false);
+        List<Dependency> downloadedArtifacts =
+                specsHelper.downloadArtifactsBySpec(downloadSpec, getDependenciesClient(), downloadDestinationDir);
+
+        // Asserting returned results length
+        assert downloadedArtifacts.size() == EXPECTED_NUM_OF_DOWNLOADED_FILES :
+                String.format("Expected %d to be downloaded, " +
+                                "but downloaded - %d artifacts.",
+                        EXPECTED_NUM_OF_DOWNLOADED_FILES, downloadedArtifacts.size());
+
+        // Assert all expected files are exists
+        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
+        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
+        for (String path : ConstData.DOWNLOAD_EXPLODE_RESULTS) {
+            assert downloadedFiles.contains(
+                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
+                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
+                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
+        }
+    }
+
     /**
      * Tests upload specs that has no inner path in the repo. (uploads to the root of the repo)
      */
@@ -191,7 +238,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Execute upload to repos root
         String uploadSpec = injectVariables("", "/specs/integrationTestSpecs/uploadTest-uploadSpecToRepoRoot.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, null, getBuildInfoClient());
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
 
         // Do AQL query to get the uploaded files
         String aql = injectVariables("", "/specs/integrationTestSpecs/uploadTest-repoRootAql.json", "", false);
@@ -228,7 +275,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
                 new DependenciesDownloaderImpl(getDependenciesClient(), "", log);
         AqlDependenciesHelper aqlDependenciesHelper =
                 new AqlDependenciesHelper(dependenciesDownloader, "", log);
-        return aqlDependenciesHelper.collectArtifactsToDownload(aql);
+        return aqlDependenciesHelper.collectArtifactsToDownload(aql, false);
     }
 
     private List<String> getExpectedResults(String[] uploadParenthesisResults, String innerDir) {
@@ -262,7 +309,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         }
         return StringUtils.replace(spec, "${TEST_SPACE}", TEST_SPACE + "/" + innerFolder);
     }
-
 
     @BeforeTest
     @AfterTest
