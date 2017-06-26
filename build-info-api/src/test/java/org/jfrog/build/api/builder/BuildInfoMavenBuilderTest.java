@@ -24,6 +24,7 @@ import static org.testng.Assert.*;
 public class BuildInfoMavenBuilderTest {
 
     public static final String SHA1 = "e4e264c711ae7ab54f26542f0dd09a43b93fa12c";
+    public static final String SHA2 = "yyyy23029162f3b2dc51f512cb64bce8cb6913ed6e540f23ec567d898f60yyyy";
     public static final String MD5 = "d9303a42c66c2824fd6ba0f75e335294";
 
     /**
@@ -156,12 +157,12 @@ public class BuildInfoMavenBuilderTest {
      */
     public void testDuplicateModuleArtifacts() {
         ModuleBuilder module1 = new ModuleBuilder().id("id");
-        module1.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).build());
-        module1.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).build());
+        module1.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
+        module1.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
 
         ModuleBuilder module2 = new ModuleBuilder().id("id");
-        module2.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).build());
-        module2.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).build());
+        module2.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
+        module2.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
 
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());
@@ -178,9 +179,11 @@ public class BuildInfoMavenBuilderTest {
         assertEquals(artifacts.get(0).getName(), "artifact1", "Unexpected artifact name.");
         assertEquals(artifacts.get(0).getMd5(), MD5, "Unexpected MD5 checksum.");
         assertEquals(artifacts.get(0).getSha1(), SHA1, "Unexpected SHA-1 checksum.");
+        assertEquals(artifacts.get(0).getSha256(), SHA2, "Unexpected SHA-256 checksum.");
         assertEquals(artifacts.get(1).getName(), "artifact2", "Unexpected artifact name.");
         assertEquals(artifacts.get(1).getMd5(), MD5, "Unexpected MD5 checksum.");
         assertEquals(artifacts.get(1).getSha1(), SHA1, "Unexpected SHA-1 checksum.");
+        assertEquals(artifacts.get(1).getSha256(), SHA2, "Unexpected SHA-256 checksum.");
     }
 
     /**

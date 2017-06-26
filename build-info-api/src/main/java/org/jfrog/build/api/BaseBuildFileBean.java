@@ -25,6 +25,7 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
 
     protected String type;
     protected String sha1;
+    protected String sha256;
     protected String md5;
 
     public String getType() {
@@ -41,6 +42,14 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
 
     public void setSha1(String sha1) {
         this.sha1 = sha1;
+    }
+
+    public String getSha256() {
+        return sha256;
+    }
+
+    public void setSha256(String sha256) {
+        this.sha256 = sha256;
     }
 
     public String getMd5() {
@@ -66,6 +75,9 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
         if (sha1 != null ? !sha1.equals(that.sha1) : that.sha1 != null) {
             return false;
         }
+        if (sha256 != null ? !sha256.equals(that.sha256) : that.sha256 != null) {
+            return false;
+        }
         if (type != null ? !type.equals(that.type) : that.type != null) {
             return false;
         }
@@ -76,6 +88,7 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
     public int hashCode() {
         int result = type != null ? type.hashCode() : 0;
         result = 31 * result + (sha1 != null ? sha1.hashCode() : 0);
+        result = 31 * result + (sha256 != null ? sha256.hashCode() : 0);
         result = 31 * result + (md5 != null ? md5.hashCode() : 0);
         return result;
     }

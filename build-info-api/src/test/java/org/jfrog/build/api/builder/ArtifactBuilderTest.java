@@ -40,6 +40,7 @@ public class ArtifactBuilderTest {
         assertEquals(artifact.getName(), "name", "Unexpected artifact name.");
         assertNull(artifact.getType(), "Default artifact type.");
         assertNull(artifact.getSha1(), "Default artifact SHA1 checksum should be null.");
+        assertNull(artifact.getSha256(), "Default artifact SHA256 checksum should be null.");
         assertNull(artifact.getMd5(), "Default artifact MD5 checksum should be null.");
         assertNull(artifact.getProperties(), "Default artifact properties should be null.");
     }
@@ -51,15 +52,17 @@ public class ArtifactBuilderTest {
         String name = "moo";
         String type = "bob";
         String sha1 = "pop";
+        String sha256 = "lol";
         String md5 = "shmop";
         Properties properties = new Properties();
 
-        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).md5(md5).properties(properties).
-                build();
+        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).sha256(sha256).md5(md5).properties(properties)
+                .build();
 
         assertEquals(artifact.getName(), name, "Unexpected artifact ID.");
         assertEquals(artifact.getType(), type, "Unexpected artifact type.");
         assertEquals(artifact.getSha1(), sha1, "Unexpected artifact SHA1 checksum.");
+        assertEquals(artifact.getSha256(), sha256, "Unexpected artifact SHA256 checksum.");
         assertEquals(artifact.getMd5(), md5, "Unexpected artifact SHA1 checksum.");
         assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
         assertTrue(artifact.getProperties().isEmpty(), "Artifact properties list should not have been populated.");

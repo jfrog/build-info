@@ -48,6 +48,7 @@ public class DependencyTest {
         assertNull(dependency.getType(), "Dependency type should have not been initialized.");
         assertNull(dependency.getScopes(), "Dependency scopes should have not been initialized.");
         assertNull(dependency.getSha1(), "Dependency SHA1 checksum should have not been initialized.");
+        assertNull(dependency.getSha256(), "Dependency SHA256 checksum should have not been initialized.");
         assertNull(dependency.getMd5(), "Dependency MD5 checksum should have not been initialized.");
         assertNull(dependency.getRequiredBy(), "Dependency required by should have not been initialized.");
     }
@@ -60,6 +61,7 @@ public class DependencyTest {
         String type = "bob";
         Set<String> scopes = Sets.newHashSet("mitzi");
         String sha1 = "pop";
+        String sha256 = "lol";
         String md5 = "shmop";
         List<String> requiredBy = Lists.newArrayList("pitzi");
 
@@ -68,12 +70,14 @@ public class DependencyTest {
         dependency.setType(type);
         dependency.setScopes(scopes);
         dependency.setSha1(sha1);
+        dependency.setSha256(sha256);
         dependency.setMd5(md5);
         dependency.setRequiredBy(requiredBy);
 
         assertEquals(dependency.getId(), id, "Unexpected dependency ID.");
         assertEquals(dependency.getType(), type, "Unexpected dependency type.");
         assertEquals(dependency.getSha1(), sha1, "Unexpected dependency SHA1 checksum.");
+        assertEquals(dependency.getSha256(), sha256, "Unexpected dependency SHA256 checksum.");
         assertEquals(dependency.getMd5(), md5, "Unexpected dependency MD5 checksum.");
         assertEquals(dependency.getScopes(), scopes, "Unexpected dependency scopes.");
         assertEquals(dependency.getRequiredBy(), requiredBy, "Unexpected dependency required by.");
@@ -87,6 +91,7 @@ public class DependencyTest {
         dependency1.setId("1");
         dependency1.setType("11");
         dependency1.setSha1("111");
+        dependency1.setSha256("11111");
         dependency1.setMd5("1111");
         dependency1.setRequiredBy(Lists.newArrayList("11111"));
         dependency1.setScopes(Sets.newHashSet("1", "11"));
@@ -96,6 +101,7 @@ public class DependencyTest {
         dependency2.setId("1");
         dependency2.setType("11");
         dependency2.setSha1("111");
+        dependency2.setSha256("11111");
         dependency2.setMd5("1111");
         dependency2.setRequiredBy(Lists.newArrayList("11111"));
         dependency2.setScopes(Sets.newHashSet("1", "11"));
@@ -105,6 +111,7 @@ public class DependencyTest {
         dependency3.setId("3");
         dependency3.setType("33");
         dependency3.setSha1("333");
+        dependency3.setSha256("33333");
         dependency3.setMd5("3333");
         dependency3.setRequiredBy(Lists.newArrayList("33333"));
         dependency3.setScopes(Sets.newHashSet("333333", "3333333"));
