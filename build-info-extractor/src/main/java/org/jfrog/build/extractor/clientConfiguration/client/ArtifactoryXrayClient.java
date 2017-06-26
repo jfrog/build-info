@@ -52,7 +52,9 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
 
     private ArtifactoryXrayResponse parseXrayScanResponse(HttpResponse response) throws IOException {
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            response.getEntity().getContent().close();
+            if (response.getEntity() != null && response.getEntity().getContent() != null) {
+                response.getEntity().getContent().close();
+            }
             throw new IOException("Artifactory response: " + response.getStatusLine().getReasonPhrase());
         }
 
