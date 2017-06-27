@@ -4,7 +4,7 @@
       "explode": "true",
       "aql": {
         "items.find": {
-          "repo": "tests",
+          "repo": "${REPO}",
           "@*": {
             "$nmatch": "*"
           },

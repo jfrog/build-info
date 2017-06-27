@@ -14,6 +14,8 @@ export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
 export BITESTS_ARTIFACTORY_REPO=tests
 ```
+Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
+
 To build the code using the gradle wrapper in Unix run:  
 ```
 > ./gradlew clean build
@@ -26,7 +28,7 @@ To build the code using the environment gradle run:
 ```
 > gradle clean build
 ```
-To build the code without tests, add to the "clean build" command the flag "-x test", for example:
+To build the code without running the tests, add to the "clean build" command the "-x test" option, for example:
 ```
 > ./gradlew clean build -x test
 ```

@@ -3,7 +3,7 @@
     {
       "aql": {
         "items.find": {
-          "repo": "tests",
+          "repo": "${REPO}",
           "@*": {"$nmatch" : "*"},
           "$or": [{
             "$and": [{
