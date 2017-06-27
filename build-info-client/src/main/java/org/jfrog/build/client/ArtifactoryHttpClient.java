@@ -116,7 +116,7 @@ public class ArtifactoryHttpClient {
      *
      * @param connectionRetries The number of max retries.
      */
-    public void setConnectionRetries(int connectionRetries){
+    public void setConnectionRetries(int connectionRetries) {
         this.connectionRetries = connectionRetries;
     }
 
@@ -214,13 +214,12 @@ public class ArtifactoryHttpClient {
 
     public ArtifactoryUploadResponse execute(HttpPut httpPut) throws IOException {
         HttpResponse response = getHttpClient().execute(httpPut);
+
         ArtifactoryUploadResponse artifactoryResponse = null;
-        StatusLine statusLine = response.getStatusLine();
-        HttpEntity entity = response.getEntity();
-        if (entity != null) {
-            InputStream in = entity.getContent();
-            if (in != null) {
-                String content = IOUtils.toString(in, "UTF-8");
+        if (response.getEntity() != null && response.getEntity().getContent() != null) {
+            InputStream in = response.getEntity().getContent();
+            String content = IOUtils.toString(in, "UTF-8");
+            if (StringUtils.isNotEmpty(content)) {
                 try {
                     JsonParser parser = createJsonParser(content);
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
@@ -233,9 +232,11 @@ public class ArtifactoryHttpClient {
                 }
             }
         }
+
         if (artifactoryResponse == null) {
             artifactoryResponse = new ArtifactoryUploadResponse();
         }
+        StatusLine statusLine = response.getStatusLine();
         artifactoryResponse.setStatusLine(statusLine);
         return artifactoryResponse;
     }
