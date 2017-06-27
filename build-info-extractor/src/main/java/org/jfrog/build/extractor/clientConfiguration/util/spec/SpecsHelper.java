@@ -299,13 +299,6 @@ public class SpecsHelper {
 
     private void deploy(ArtifactoryBuildInfoClient client, Set<DeployDetails> artifactsToDeploy) throws IOException {
         for (DeployDetails deployDetail : artifactsToDeploy) {
-            StringBuilder deploymentPathBuilder = new StringBuilder(client.getArtifactoryUrl());
-            deploymentPathBuilder.append("/").append(deployDetail.getTargetRepository());
-            if (!deployDetail.getArtifactPath().startsWith("/")) {
-                deploymentPathBuilder.append("/");
-            }
-            deploymentPathBuilder.append(deployDetail.getArtifactPath());
-            log.info("Deploying artifact: " + deploymentPathBuilder.toString());
             client.deployArtifact(deployDetail);
         }
     }

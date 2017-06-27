@@ -26,6 +26,9 @@ public class DeployableArtifactsUtils {
     }
 
     public static List<DeployableArtifactDetail> loadDeployableArtifactsFromFile(File fromFile) throws IOException, ClassNotFoundException {
+        if (fromFile == null || fromFile.length() == 0) {
+            return new ArrayList<DeployableArtifactDetail>();
+        }
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
     }
