@@ -116,7 +116,7 @@ public class DependenciesDownloaderHelper {
             if (dependency != null) {
                 dependencies.add(dependency);
                 downloadedArtifacts.add(downloadableArtifact);
-                explodeDependencies(downloadableArtifact);
+                explodeDependenciesIfNeeded(downloadableArtifact);
             }
         }
 
@@ -124,7 +124,7 @@ public class DependenciesDownloaderHelper {
         return dependencies;
     }
 
-    private void explodeDependencies(DownloadableArtifact downloadableArtifact) throws IOException {
+    private void explodeDependenciesIfNeeded(DownloadableArtifact downloadableArtifact) throws IOException {
         if (!downloadableArtifact.isExplode()) {
             return;
         }
