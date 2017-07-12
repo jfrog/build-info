@@ -537,7 +537,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             } else {
                 module.addArtifact(artifact);
             }
-            if (artifactFile.isFile()) {
+            if (artifactFile != null && artifactFile.isFile()) {
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(), artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
         }
@@ -569,7 +569,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 } else {
                     module.addArtifact(pomArtifact);
                 }
-                addDeployableArtifact(pomArtifact, pomFile, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
+                if (pomFile != null) {
+                    addDeployableArtifact(pomArtifact, pomFile, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
+                }
                 break;
             }
         }
