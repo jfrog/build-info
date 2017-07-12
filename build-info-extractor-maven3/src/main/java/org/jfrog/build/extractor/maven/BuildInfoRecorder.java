@@ -531,13 +531,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
             String groupId = moduleArtifact.getGroupId();
             String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
-            // If excludeArtifactsFromBuild and the PatternMatcher found conflict, add the excluded artifact to the excluded artifact set.
-            if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
-                module.addExcludedArtifact(artifact);
-            } else {
-                module.addArtifact(artifact);
-            }
             if (artifactFile != null && artifactFile.isFile()) {
+                // If excludeArtifactsFromBuild and the PatternMatcher found conflict, add the excluded artifact to the excluded artifact set.
+                if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
+                    module.addExcludedArtifact(artifact);
+                } else {
+                    module.addArtifact(artifact);
+                }
                 addDeployableArtifact(artifact, artifactFile, moduleArtifact.getGroupId(), artifactId, artifactVersion, artifactClassifier, artifactExtension);
             }
         }
@@ -564,12 +564,12 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
                 org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
 
-                if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
-                    module.addExcludedArtifact(pomArtifact);
-                } else {
-                    module.addArtifact(pomArtifact);
-                }
-                if (pomFile != null) {
+                if (pomFile != null && pomFile.isFile()) {
+                    if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(deploymentPath, patterns)) {
+                        module.addExcludedArtifact(pomArtifact);
+                    } else {
+                        module.addArtifact(pomArtifact);
+                    }
                     addDeployableArtifact(pomArtifact, pomFile, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
                 }
                 break;
