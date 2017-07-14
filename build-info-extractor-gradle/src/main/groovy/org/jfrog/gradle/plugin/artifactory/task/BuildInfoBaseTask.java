@@ -60,6 +60,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
     List<BuildInfoBaseTask> artifactoryTasks = null;
+	List<BuildInfoBaseTask> remainingTasks = null;
 
     public abstract void checkDependsOnArtifactsToPublish();
 
@@ -141,7 +142,9 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
      * @return true if this is the last ArtifactoryTask task.
      */
     private boolean isLastTask() {
-        return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
+		//        return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
+		updateRemainingTasks();
+		return remainingTasks.size() <= 1;
     }
 
     /**
@@ -176,6 +179,24 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         return artifactoryTasks;
     }
 
+	/**
+     * Analyze the task graph ordered and extract a list of build info tasks
+     *
+     * @return An ordered list of build info tasks
+     */
+    private void updateRemainingTasks() {
+		if(remainingTasks==null) {
+			remainingTasks = new ArrayList<BuildInfoBaseTask>(artifactoryTasks);
+		}
+		List<Task> toRemove = new ArrayList<Task>();
+		for (Task task : remainingTasks) {
+			if(task.getState().getExecuted()) {
+				toRemove.add(task);
+			}
+		}
+		remainingTasks.removeAll(toRemove);
+    }
+	
     public void projectsEvaluated() {
         Project project = getProject();
         if (isSkip()) {
