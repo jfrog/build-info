@@ -61,12 +61,8 @@ public class SpecsHelper {
             throws IOException, NoSuchAlgorithmException {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
         Set<DeployDetails> artifactsToDeploy = getDeployDetails(spec, workspace, buildProperties);
-        try {
-            deploy(client, artifactsToDeploy);
-            return convertDeployDetailsToArtifacts(artifactsToDeploy);
-        } finally {
-            client.close();
-        }
+        deploy(client, artifactsToDeploy);
+        return convertDeployDetailsToArtifacts(artifactsToDeploy);
     }
 
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,

@@ -11,6 +11,7 @@ import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 
 import java.io.FileNotFoundException;
@@ -30,6 +31,7 @@ public abstract class IntegrationTestsBase {
     private String url;
     protected String repo;
     protected NullLog log = new NullLog();
+    private PreemptiveHttpClient client;
 
     protected static final String BITESTS_ARTIFACTORY_REPOSITORY_PLACEHOLDER = "${REPO}";
     protected static final String BITESTS_ARTIFACTORY_TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
@@ -53,6 +55,12 @@ public abstract class IntegrationTestsBase {
         username = readParam(props, "username");
         password = readParam(props, "password");
         repo = readParam(props, "repo");
+        client = createHttpClient().getHttpClient();
+    }
+
+    @AfterTest
+    protected void closePreemptiveHttpClient() {
+        client.close();
     }
 
     private String readParam(Properties props, String paramName) {
@@ -100,7 +108,6 @@ public abstract class IntegrationTestsBase {
      * @throws IOException in case of IO exception
      */
     protected HttpResponse deleteItemFromArtifactory(String itemUrl) throws IOException {
-        PreemptiveHttpClient client = getHttpClient().getHttpClient();
         String fullItemUrl = url + repo + "/" + itemUrl;
         itemUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpDelete(itemUrl);
@@ -123,15 +130,15 @@ public abstract class IntegrationTestsBase {
         return response;
     }
 
-    protected ArtifactoryBuildInfoClient getBuildInfoClient() {
+    protected ArtifactoryBuildInfoClient createBuildInfoClient() {
         return new ArtifactoryBuildInfoClient(url, username, password, log);
     }
 
-    protected ArtifactoryDependenciesClient getDependenciesClient() {
+    protected ArtifactoryDependenciesClient createDependenciesClient() {
         return new ArtifactoryDependenciesClient(url, username, password, log);
     }
 
-    private ArtifactoryHttpClient getHttpClient() {
+    private ArtifactoryHttpClient createHttpClient() {
         return new ArtifactoryHttpClient(url, username, password, log);
     }
 }

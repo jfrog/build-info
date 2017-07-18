@@ -7,6 +7,8 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.AqlDependenciesHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderImpl;
 import org.testng.ITestContext;
@@ -34,6 +36,8 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String SEPARATOR = File.separator;
     private static final String TEST_WORKSPACE = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE;
     private SpecsHelper specsHelper = new SpecsHelper(log);
+    private ArtifactoryBuildInfoClient buildInfoClient;
+    private ArtifactoryDependenciesClient dependenciesClient;
 
 
     /**
@@ -51,12 +55,12 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         String downloadDestinationDir = System.getProperty("java.io.tmpdir");
         String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-downloadSpec.json", "", false);
         List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, getDependenciesClient(), downloadDestinationDir);
+                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
 
         // Asserting returned results length
         assert downloadedArtifacts.size() == uploadedArtifacts.size() :
                 String.format("Number of downloaded and uploaded by the test artifacts should be equal, " +
-                        "but uploaded - %d artifacts and downloaded - %d",
+                                "but uploaded - %d artifacts and downloaded - %d",
                         uploadedArtifacts.size(), downloadedArtifacts.size());
 
         // Assert all expected files are exists
@@ -83,7 +87,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
         // Execute simple wildcard upload
         String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-explode.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
+        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
         String aql = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-parenthesisAql.json", "", false);
         Set<DownloadableArtifact> foundArtifacts = performAql(aql);
         List<String> foundPaths = getFoundPaths(foundArtifacts);
@@ -99,11 +103,11 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Execute simple wildcard upload
         String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
 
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
         // Execute simple regexp upload
         uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient()));
+        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient));
         return uploadedArtifacts;
     }
 
@@ -123,14 +127,12 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         // Execute the wildcard upload
         String uploadSpec = injectVariables(innerDir,
                 "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard-parenthesis.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), getBuildInfoClient());
 
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), buildInfoClient);
         // Execute the regexp upload
         uploadSpec = injectVariables(innerDir,
                 "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp-parenthesis.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), getBuildInfoClient()));
-
-
+        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), buildInfoClient));
         // Do AQL query to get the uploaded files
         String aql = injectVariables(innerDir,
                 "/specs/integrationTestSpecs/uploadTest-parenthesisAql.json", "", false);
@@ -169,13 +171,13 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         // Prepare Artifactory for the download test
         File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
         String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-uploadSpec.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
+        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
 
         // Execute the download
         String downloadDestinationDir = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir;
         String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-downloadSpec.json", "", false);
         List<Dependency> downloadArtifactsBySpec =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, getDependenciesClient(), downloadDestinationDir);
+                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
 
         // Asserting returned results length
         assert downloadArtifactsBySpec.size() == ConstData.DOWNLOAD_RESULTS.length :
@@ -208,7 +210,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         String downloadDestinationDir = System.getProperty("java.io.tmpdir");
         String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-specDownloadExplode.json", "", false);
         List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, getDependenciesClient(), downloadDestinationDir);
+                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
 
         // Asserting returned results length
         assert downloadedArtifacts.size() == EXPECTED_NUM_OF_DOWNLOADED_FILES :
@@ -238,8 +240,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Execute upload to repos root
         String uploadSpec = injectVariables("", "/specs/integrationTestSpecs/uploadTest-uploadSpecToRepoRoot.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), getBuildInfoClient());
-
+        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
         // Do AQL query to get the uploaded files
         String aql = injectVariables("", "/specs/integrationTestSpecs/uploadTest-repoRootAql.json", "", false);
         Set<DownloadableArtifact> foundArtifacts = performAql(aql);
@@ -272,7 +273,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
     private Set<DownloadableArtifact> performAql(String aql) throws IOException {
         DependenciesDownloaderImpl dependenciesDownloader =
-                new DependenciesDownloaderImpl(getDependenciesClient(), "", log);
+                new DependenciesDownloaderImpl(dependenciesClient, "", log);
         AqlDependenciesHelper aqlDependenciesHelper =
                 new AqlDependenciesHelper(dependenciesDownloader, "", log);
         return aqlDependenciesHelper.collectArtifactsToDownload(aql, false);
@@ -308,6 +309,18 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
             spec = StringUtils.replace(spec, "${WORKSPACE}", workspace);
         }
         return StringUtils.replace(spec, "${TEST_SPACE}", TEST_SPACE + "/" + innerFolder);
+    }
+
+    @BeforeTest
+    private void openArtifactoryClients() {
+        buildInfoClient = createBuildInfoClient();
+        dependenciesClient = createDependenciesClient();
+    }
+
+    @AfterTest
+    private void closeArtifactoryClients() {
+        buildInfoClient.close();
+        dependenciesClient.close();
     }
 
     @BeforeTest

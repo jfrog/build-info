@@ -366,10 +366,8 @@ public class ArtifactoryBuildListener implements BuildListener {
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
         try {
-            ArtifactoryBuildInfoClient client =
-                    new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
-
             configureProxy(clientConf, client);
             configConnectionTimeout(clientConf, client);
             configRetriesParams(clientConf, client);
@@ -385,6 +383,8 @@ public class ArtifactoryBuildListener implements BuildListener {
             isDidDeploy = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            client.close();
         }
     }
 
