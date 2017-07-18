@@ -57,9 +57,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(BuildInfoBaseTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
     private boolean evaluated = false;
+    private boolean finished = false;
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
-    List<BuildInfoBaseTask> artifactoryTasks = null;
+    private List<BuildInfoBaseTask> artifactoryTasks = null;
 
     public abstract void checkDependsOnArtifactsToPublish();
 
@@ -109,15 +110,19 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     }
 
     @TaskAction
-    public void collectProjectBuildInfo() throws IOException {
-        log.debug("Task '{}' activated", getPath());
-        // Only the last buildInfo execution performs the deployment
-        List<BuildInfoBaseTask> orderedTasks = getAllArtifactoryTasks();
-        if (orderedTasks.indexOf(this) == -1) {
-            log.error("Could not find my own task {} in the task graph!", getPath());
-            return;
+    public void taskAction() throws IOException {
+        try {
+            log.debug("Task '{}' activated", getPath());
+            collectProjectBuildInfo();
+        } finally {
+            synchronized (this) {
+                finished = true;
+                notify();
+            }
         }
+    }
 
+    private void collectProjectBuildInfo() throws IOException {
         if (isLastTask()) {
             log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                     new Object[]{getProject().getPath(), getPath()});
@@ -140,8 +145,31 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
      *
      * @return true if this is the last ArtifactoryTask task.
      */
-    private boolean isLastTask() {
-        return getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
+    private boolean isLastTask() throws IOException {
+        boolean last = getCurrentTaskIndex() == (getAllArtifactoryTasks().size() - 1);
+        if (!last) {
+            return false;
+        }
+
+        // This task has the last index in the tasks graph, but it is not necessarily
+        // the last running tasks (in case this gradle build is running in parallel mode).
+        // We should make sure there are no other running tasks.
+        // In case there are, we'll wait for them to finish:
+        for (BuildInfoBaseTask t : getAllArtifactoryTasks()) {
+            if (t == this || t.isFinished()) {
+                continue;
+            }
+            synchronized (t) {
+                if (!t.isFinished()) {
+                    try {
+                        t.wait();
+                    } catch (InterruptedException e) {
+                        throw new IOException(e);
+                    }
+                }
+            }
+        }
+        return true;
     }
 
     /**
@@ -215,6 +243,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public boolean isSkip() {
         return skip;
+    }
+
+    public boolean isFinished() {
+        return finished;
     }
 
     public void setProperties(Map<String, CharSequence> props) {
