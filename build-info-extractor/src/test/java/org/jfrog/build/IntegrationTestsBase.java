@@ -11,6 +11,7 @@ import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.testng.ITestContext;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 
@@ -31,7 +32,9 @@ public abstract class IntegrationTestsBase {
     private String url;
     protected String repo;
     protected NullLog log = new NullLog();
-    private PreemptiveHttpClient client;
+    protected ArtifactoryBuildInfoClient buildInfoClient;
+    protected ArtifactoryDependenciesClient dependenciesClient;
+    private PreemptiveHttpClient preemptiveHttpClient;
 
     protected static final String BITESTS_ARTIFACTORY_REPOSITORY_PLACEHOLDER = "${REPO}";
     protected static final String BITESTS_ARTIFACTORY_TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
@@ -39,13 +42,14 @@ public abstract class IntegrationTestsBase {
     private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
 
     @BeforeTest
-    public void init() throws IOException {
+    public void init(ITestContext context) throws IOException {
         Properties props = new Properties();
         // This file is not in GitHub. Create your own in src/test/resources or use environment variables.
         InputStream inputStream = this.getClass().getResourceAsStream("/artifactory-bi.properties");
 
         if (inputStream != null) {
             props.load(inputStream);
+            inputStream.close();
         }
 
         url = readParam(props, "url");
@@ -55,12 +59,18 @@ public abstract class IntegrationTestsBase {
         username = readParam(props, "username");
         password = readParam(props, "password");
         repo = readParam(props, "repo");
-        client = createHttpClient().getHttpClient();
+        preemptiveHttpClient = createHttpClient().getHttpClient();
+        buildInfoClient = createBuildInfoClient();
+        dependenciesClient = createDependenciesClient();
+        cleanup(context);
     }
 
     @AfterTest
-    protected void closePreemptiveHttpClient() {
-        client.close();
+    protected void terminate(ITestContext context) {
+        cleanup(context);
+        preemptiveHttpClient.close();
+        buildInfoClient.close();
+        dependenciesClient.close();
     }
 
     private String readParam(Properties props, String paramName) {
@@ -114,7 +124,7 @@ public abstract class IntegrationTestsBase {
 
         //Explicitly force keep alive
         httpRequest.setHeader("Connection", "Keep-Alive");
-        HttpResponse response = client.execute(httpRequest);
+        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
         StatusLine statusLine = response.getStatusLine();
         int statusCode = statusLine.getStatusCode();
         if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
@@ -130,15 +140,17 @@ public abstract class IntegrationTestsBase {
         return response;
     }
 
-    protected ArtifactoryBuildInfoClient createBuildInfoClient() {
+    private ArtifactoryBuildInfoClient createBuildInfoClient() {
         return new ArtifactoryBuildInfoClient(url, username, password, log);
     }
 
-    protected ArtifactoryDependenciesClient createDependenciesClient() {
+    private ArtifactoryDependenciesClient createDependenciesClient() {
         return new ArtifactoryDependenciesClient(url, username, password, log);
     }
 
     private ArtifactoryHttpClient createHttpClient() {
         return new ArtifactoryHttpClient(url, username, password, log);
     }
+
+    abstract protected void cleanup(ITestContext context);
 }

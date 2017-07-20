@@ -7,13 +7,9 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.AqlDependenciesHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderImpl;
 import org.testng.ITestContext;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -36,9 +32,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String SEPARATOR = File.separator;
     private static final String TEST_WORKSPACE = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE;
     private SpecsHelper specsHelper = new SpecsHelper(log);
-    private ArtifactoryBuildInfoClient buildInfoClient;
-    private ArtifactoryDependenciesClient dependenciesClient;
-
 
     /**
      * Performing a massive upload to multiple different patterns with multiple flags combinations.
@@ -311,21 +304,14 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         return StringUtils.replace(spec, "${TEST_SPACE}", TEST_SPACE + "/" + innerFolder);
     }
 
-    @BeforeTest
-    private void openArtifactoryClients() {
-        buildInfoClient = createBuildInfoClient();
-        dependenciesClient = createDependenciesClient();
+    private void deletePathsFromArtifactory(List<String> paths) throws IOException {
+        for (String path : paths) {
+            deleteItemFromArtifactory(path);
+        }
     }
 
-    @AfterTest
-    private void closeArtifactoryClients() {
-        buildInfoClient.close();
-        dependenciesClient.close();
-    }
-
-    @BeforeTest
-    @AfterTest
-    private void cleanup(ITestContext context) {
+    @Override
+    protected void cleanup(ITestContext context) {
         boolean testFailed = false;
         for (Object failedTest : context.getFailedTests().getAllResults().toArray()){
             if (failedTest.toString().contains(this.getClass().getSimpleName())) {
@@ -341,16 +327,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
                 // Clean working Artifactory repository
                 deleteItemFromArtifactory(TEST_SPACE);
             } catch (IOException ignored) {
-            }
-        }
-    }
-
-    private void deletePathsFromArtifactory(List<String> paths) {
-        for (String path : paths) {
-            try {
-                deleteItemFromArtifactory(path);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
