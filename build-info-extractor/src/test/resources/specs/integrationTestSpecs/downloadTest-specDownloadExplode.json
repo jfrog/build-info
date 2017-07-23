@@ -5,9 +5,6 @@
       "aql": {
         "items.find": {
           "repo": "${REPO}",
-          "@*": {
-            "$nmatch": "*"
-          },
           "$or": [
             {
               "$and": [

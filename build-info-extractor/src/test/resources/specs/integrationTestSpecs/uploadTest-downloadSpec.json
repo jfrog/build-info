@@ -4,27 +4,40 @@
       "aql": {
         "items.find": {
           "repo": "${REPO}",
-          "@*": {"$nmatch" : "*"},
-          "$or": [{
-            "$and": [{
-              "path": {
-                "$match":"bi_test_space/upload-test"
-              },
-              "name": {
-                "$match": "*"
-              }
-            }
-            ]
-          },
+          "$and": [
             {
-              "$and": [
+              "@p1": {
+                "$nmatch": "v1"
+              },
+              "@p2": {
+                "$nmatch": "v2"
+              }
+            },
+            {
+              "$or": [
                 {
-                  "path": {
-                    "$match": "bi_test_space/upload-test/*"
-                  },
-                  "name": {
-                    "$match":"*"
-                  }
+                  "$and": [
+                    {
+                      "path": {
+                        "$match": "bi_test_space/upload-test"
+                      },
+                      "name": {
+                        "$match": "*"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "$and": [
+                    {
+                      "path": {
+                        "$match": "bi_test_space/upload-test/*"
+                      },
+                      "name": {
+                        "$match": "*"
+                      }
+                    }
+                  ]
                 }
               ]
             }
