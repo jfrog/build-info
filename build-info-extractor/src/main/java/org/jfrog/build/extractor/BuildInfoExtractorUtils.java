@@ -86,6 +86,7 @@ public abstract class BuildInfoExtractorUtils {
 
         props.putAll(existingProps);
         props.putAll(System.getProperties());
+        props.putAll(getArtifactoryPasswords());
 
         return props;
     }
@@ -297,6 +298,20 @@ public abstract class BuildInfoExtractorUtils {
 
     public static String getModuleIdString(String organisation, String name, String version) {
         return organisation + ':' + name + ':' + version;
+    }
+
+    private static Map<String, String> getArtifactoryPasswords() {
+        String resolverPasswordKey = "artifactory.resolve.password";
+        String publishPasswordKey = "artifactory.publish.password";
+        Map<String, String> artifactoryPasswords = new HashMap<String, String>();
+
+        if (System.getenv(resolverPasswordKey) != null) {
+           artifactoryPasswords.put(resolverPasswordKey, System.getenv(resolverPasswordKey));
+        }
+        if (System.getenv(publishPasswordKey) != null) {
+            artifactoryPasswords.put(publishPasswordKey, System.getenv(publishPasswordKey));
+        }
+        return artifactoryPasswords;
     }
 
     private static class PrefixPredicate implements Predicate<Object> {

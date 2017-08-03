@@ -170,7 +170,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             Build build = extract(event);
             if (build != null) {
                 File basedir = event.getSession().getTopLevelProject().getBasedir();
-                conf.persistToPropertiesFile();
                 buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
             }
             deployableArtifactBuilderMap.clear();
@@ -182,11 +181,17 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.error(message, t);
             throw new RuntimeException(message, t);
         } finally {
-            String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+            String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE); // This is used in Jenkins jobs
+            if (StringUtils.isBlank(propertyFilePath)) {
+                propertyFilePath = conf.getPropertiesFile(); // This is used in the Artifactory maven plugin and Bamboo
+            }
             if (StringUtils.isNotBlank(propertyFilePath)) {
                 File file = new File(propertyFilePath);
                 if (file.exists()) {
-                    file.delete();
+                    boolean deleteFailed = !file.delete();
+                    if (deleteFailed) {
+                        logger.warn("Failed to delete properties file with sensitive data: " + propertyFilePath);
+                    }
                 }
             }
         }
