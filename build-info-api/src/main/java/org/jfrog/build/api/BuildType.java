@@ -22,7 +22,6 @@ package org.jfrog.build.api;
  * @author Noam Y. Tenne
  * @deprecated Use {@link org.jfrog.build.api.BuildAgent} instead.
  */
-@Deprecated
 public enum BuildType {
     GENERIC("Generic"), MAVEN("Maven"), ANT("Ant"), IVY("Ivy"), GRADLE("Gradle");
 
