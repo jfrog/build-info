@@ -84,8 +84,7 @@ public class TaskHelperPublications extends TaskHelper{
                 if (publicationObj != null) {
                     addPublication(publicationObj);
                 } else {
-                    log.error("Publication named '{}' does not exist for project '{}' in task '{}'.",
-                            publication, getProject().getPath(), getPath());
+                    logPublicationNotFound(publication);
                 }
             } else if (publication instanceof Publication) {
                 addPublication((Publication) publication);
@@ -95,6 +94,11 @@ public class TaskHelperPublications extends TaskHelper{
             }
         }
         publishPublicationsSpecified = true;
+    }
+
+    private void logPublicationNotFound(Object publication) {
+        log.debug("Publication named '{}' does not exist for project '{}' in task '{}'.",
+                publication, getProject().getPath(), getPath());
     }
 
     public Set<IvyPublication> getIvyPublications() {

@@ -72,8 +72,7 @@ public class TaskHelperConfigurations extends TaskHelper {
                 if (projectConfig != null) {
                     publishConfigurations.add(projectConfig);
                 } else {
-                    log.error("Configuration named '{}' does not exist for project '{}' in task '{}'.",
-                            conf.toString(), getProject().getPath(), getPath());
+                    logConfigurationNotFound(conf.toString());
                 }
             } else if (conf instanceof Configuration) {
                 publishConfigurations.add((Configuration) conf);
@@ -83,6 +82,11 @@ public class TaskHelperConfigurations extends TaskHelper {
             }
         }
         publishConfigsSpecified = true;
+    }
+
+    private void logConfigurationNotFound(String configName) {
+        log.debug("Configuration named '{}' does not exist for project '{}' in task '{}'.",
+                configName, getProject().getPath(), getPath());
     }
 
     public Set<Configuration> getPublishConfigurations() {
