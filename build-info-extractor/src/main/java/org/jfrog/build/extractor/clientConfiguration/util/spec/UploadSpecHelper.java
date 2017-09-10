@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.FileCollectionUtil;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
@@ -57,21 +58,21 @@ public class UploadSpecHelper {
      * @throws IOException in case of any file system exception
      */
     public static Multimap<String, File> buildPublishingData(
-            File checkoutDir, String pattern, String targetPath, boolean flat, boolean recursive, boolean regexp)
+            File checkoutDir, String pattern, String[] excludePatterns, String targetPath, boolean flat, boolean recursive, boolean regexp)
             throws IOException {
         boolean isAbsolutePath = (new File(pattern)).isAbsolute();
         List<File> matchedFiles;
         if (regexp) {
-            matchedFiles = collectMatchedFilesByRegexp(checkoutDir, pattern, recursive);
+            matchedFiles = collectMatchedFilesByRegexp(checkoutDir, pattern, excludePatterns, recursive);
         } else {
-            matchedFiles = collectMatchedFilesByWildcard(checkoutDir, pattern, recursive);
+            matchedFiles = collectMatchedFilesByWildcard(checkoutDir, pattern, excludePatterns, recursive);
             // Convert wildcard to regexp
             pattern = PathsUtils.pathToRegExp(pattern);
         }
         return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
     }
 
-    private static List<File> collectMatchedFilesByRegexp(File checkoutDir, String pattern, boolean recursive)
+    private static List<File> collectMatchedFilesByRegexp(File checkoutDir, String pattern, String[] excludePatterns, boolean recursive)
             throws IOException {
         // This method determines the base directory - the directory where the files scan will be done
         String baseDir = getRegexBaseDir(checkoutDir, pattern);
@@ -79,10 +80,10 @@ public class UploadSpecHelper {
         String newPattern = prepareRegexPattern(checkoutDir, pattern, baseDir);
         // Collects candidate files to execute the regex
         List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, true);
-        return getMatchedFiles(baseDir, newPattern, candidatePaths);
+        return getMatchedFiles(baseDir, newPattern, prepareExcludePattern(excludePatterns, false), candidatePaths);
     }
 
-    private static List<File> collectMatchedFilesByWildcard(File checkoutDir, String pattern, boolean recursive)
+    private static List<File> collectMatchedFilesByWildcard(File checkoutDir, String pattern, String[] excludePatterns, boolean recursive)
             throws IOException {
         // This method determines the base directory - the directory where the files scan will be done
         String baseDir = getWildcardBaseDir(checkoutDir, pattern);
@@ -92,21 +93,42 @@ public class UploadSpecHelper {
         List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, false);
         // Convert wildcard to regexp
         newPattern = PathsUtils.pathToRegExp(newPattern);
-        return getMatchedFiles(baseDir, newPattern, candidatePaths);
+        return getMatchedFiles(baseDir, newPattern, prepareExcludePattern(excludePatterns, true), candidatePaths);
     }
 
-    private static List<File> getMatchedFiles(String baseDir, String newPattern, List<String> candidatePaths) throws IOException {
+    private static List<File> getMatchedFiles(String baseDir, String newPattern, String excludePattern, List<String> candidatePaths) throws IOException {
         List<File> matchedFiles = new ArrayList<File>();
         Pattern regexPattern = Pattern.compile(newPattern);
+        Pattern regexExcludePattern = StringUtils.isBlank(excludePattern) ? null : Pattern.compile(excludePattern);
         File baseDirFile = new File(baseDir);
         for (String path : candidatePaths) {
             File file = new File(path);
             String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
             if (regexPattern.matcher(relativePath).matches()) {
-                matchedFiles.add(file.getCanonicalFile());
+                if (regexExcludePattern == null || !regexExcludePattern.matcher(relativePath).matches()) {
+                    matchedFiles.add(file.getCanonicalFile());
+                }
             }
         }
         return matchedFiles;
+    }
+
+    private static String prepareExcludePattern(String[] excludePatterns, boolean isWildcard) {
+        StringBuilder patternSb = new StringBuilder();
+        if (!ArrayUtils.isEmpty(excludePatterns)) {
+            for (String pattern : excludePatterns) {
+                if (StringUtils.isBlank(pattern)) {
+                    pattern = "";
+                }
+                if (isWildcard) {
+                    pattern = PathsUtils.pathToRegExp(pattern);
+                }
+                patternSb.append("(").append(pattern).append(")|");
+            }
+            patternSb.deleteCharAt(patternSb.length() - 1);
+        }
+
+        return patternSb.toString();
     }
 
     public static Multimap<String, File> getUploadPathsMap(List<File> files, File checkoutDir, String targetPath,

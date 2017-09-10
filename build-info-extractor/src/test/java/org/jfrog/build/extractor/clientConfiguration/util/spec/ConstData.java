@@ -8,8 +8,10 @@ class ConstData {
     static final String[] UPLOAD_RESULTS;
     static final String[] UPLOAD_PARENTHESIS_RESULTS;
     static final String[] UPLOAD_REPO_ROOT_RESULTS;
+    static final String[] UPLOAD_EXCLUDE_RESULTS;
     static final String[] DOWNLOAD_RESULTS;
     static final String[] DOWNLOAD_EXPLODE_RESULTS;
+    static final String[] DOWNLOAD_EXCLUDE_RESULTS;
     static final String[] POSITIVE_TEST_FILE_SPEC;
     static final String[] NEGATIVE_TEST_FILE_SPEC;
 
@@ -17,8 +19,10 @@ class ConstData {
         UPLOAD_RESULTS = getExpectedUploadResults();
         UPLOAD_PARENTHESIS_RESULTS = getUploadParenthesisResults();
         UPLOAD_REPO_ROOT_RESULTS = getUploadRepoRootResults();
+        UPLOAD_EXCLUDE_RESULTS = getExpectedUploadExcludeResults();
         DOWNLOAD_RESULTS = getExpectedDownloadResults();
         DOWNLOAD_EXPLODE_RESULTS = getExpectedExplodeDownloadResults();
+        DOWNLOAD_EXCLUDE_RESULTS = getExpectedExcludeDownloadResults();
         POSITIVE_TEST_FILE_SPEC = getPositiveTestFileSpecs();
         NEGATIVE_TEST_FILE_SPEC = getNegativeTestFileSpecs();
     }
@@ -192,6 +196,18 @@ class ConstData {
         };
     }
 
+    private static String[] getExpectedUploadExcludeResults() {
+        return new String[]{
+                "4_pattern_exclude_abc/a1.in",
+                "4_pattern_exclude_abc/a2.in",
+                "4_pattern_exclude_abc/a3.in",
+                "4_pattern_exclude_abc/b2.in",
+                "4_pattern_exclude_abc/b3.in",
+                "4_pattern_exclude_abc/c2.in",
+                "4_pattern_exclude_abc/c3.in",
+        };
+    }
+
     private static String[] getExpectedDownloadResults() {
         return new String[]{
                 "1_pattern_flat_recursive/a1.in",
@@ -346,6 +362,14 @@ class ConstData {
                 "3_defaults_flat_recursive/ant-antlr-1.6.5.jar",
                 "8_nonflat_recursive_wildcard/files/a/b/c/ant-antlr-1.6.5.jar",
                 "9_nonflat_recursive_regexp/files/a/b/c/ant-antlr-1.6.5.jar"
+        };
+    }
+
+    private static String[] getExpectedExcludeDownloadResults() {
+        return new String[]{
+                "1_pattern_exclude_a/a2.in",
+                "1_pattern_exclude_a/a3.in",
+                "3_pattern_exclude_c/c3.in"
         };
     }
 

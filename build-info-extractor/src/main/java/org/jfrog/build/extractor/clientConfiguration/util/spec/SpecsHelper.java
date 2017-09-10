@@ -7,6 +7,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
@@ -167,15 +168,19 @@ public class SpecsHelper {
 
     private void pathToUnixFormat(Spec spec) {
         for (FileSpec fileSpec : spec.getFiles()) {
+            // In case of regex double backslashes are separator
+            String separator = StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), Boolean.TRUE.toString()) ? "\\\\\\\\" : "\\\\";
             if (fileSpec.getTarget() != null) {
                 fileSpec.setTarget(fileSpec.getTarget().replaceAll("\\\\", "/"));
             }
             if (fileSpec.getPattern() != null) {
-                if (!StringUtils.equalsIgnoreCase(fileSpec.getRegexp(), Boolean.TRUE.toString())) {
-                    fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\", "/"));
-                } else {
-                    // In case of regex double backslashes are separator
-                    fileSpec.setPattern(fileSpec.getPattern().replaceAll("\\\\\\\\", "/"));
+                fileSpec.setPattern(fileSpec.getPattern().replaceAll(separator, "/"));
+            }
+            if (fileSpec.getExcludePatterns() != null) {
+                for (int i = 0 ; i < fileSpec.getExcludePatterns().length ; i ++) {
+                    if (StringUtils.isNotBlank(fileSpec.getExcludePattern(i))) {
+                        fileSpec.setExcludePattern(fileSpec.getExcludePattern(i).replaceAll(separator, "/"), i);
+                    }
                 }
             }
         }
@@ -230,17 +235,22 @@ public class SpecsHelper {
         boolean isRecursive = !"false".equalsIgnoreCase(uploadFile.getRecursive());
         boolean isRegexp = BooleanUtils.toBoolean(uploadFile.getRegexp());
         String pattern = uploadFile.getPattern();
+        String[] excludePatterns = uploadFile.getExcludePatterns();
         String targetPath = getLocalPath(uploadFile.getTarget());
         Multimap<String, File> result;
 
         result = UploadSpecHelper.buildPublishingData(
-                workspace, pattern, targetPath, isFlat, isRecursive, isRegexp);
+                workspace, pattern, excludePatterns, targetPath, isFlat, isRecursive, isRegexp);
         if (result != null) {
-            log.info(String.format("For pattern: %s %d artifacts were found.", pattern, result.size()));
+            log.info(String.format("For pattern: %s%s %d artifacts were found.", pattern, getExcludePatternsLogStr(excludePatterns), result.size()));
         } else {
-            log.info(String.format("For pattern: %s no artifacts were found", pattern));
+            log.info(String.format("For pattern: %s%s no artifacts were found", pattern, getExcludePatternsLogStr(excludePatterns)));
         }
         return result;
+    }
+
+    public static String getExcludePatternsLogStr(String[] excludePatterns) {
+        return !ArrayUtils.isEmpty(excludePatterns) ? " with exclude patterns: " + Arrays.toString(excludePatterns) : "";
     }
 
     private ArrayListMultimap<String, String> getPropertiesMap(String props) {

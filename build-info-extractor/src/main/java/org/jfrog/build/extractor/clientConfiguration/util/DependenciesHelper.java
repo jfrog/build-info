@@ -10,7 +10,7 @@ import java.util.List;
  */
 public interface DependenciesHelper {
 
-    List<Dependency> retrievePublishedDependencies(String resolvePattern, boolean explode) throws IOException, InterruptedException;
+    List<Dependency> retrievePublishedDependencies(String resolvePattern, String[] excludePatterns, boolean explode) throws IOException, InterruptedException;
 
     void setFlatDownload(boolean flat);
 }

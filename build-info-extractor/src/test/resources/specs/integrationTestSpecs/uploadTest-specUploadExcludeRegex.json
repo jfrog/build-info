@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/a.*",
+      "target": "${REPO}/${TEST_SPACE}/",
+      "flat": "true",
+      "recursive": "false",
+      "regexp": "true",
+      "excludePatterns": [""]
+    },
+    {
+      "pattern": "files/a/b/.*",
+      "target": "${REPO}/${TEST_SPACE}/",
+      "flat": "true",
+      "recursive": "false",
+      "regexp": "true",
+      "excludePatterns": [".*b1.*"]
+    },
+    {
+      "pattern": "files/a/b/c/.*",
+      "target": "${REPO}/${TEST_SPACE}/",
+      "flat": "true",
+      "recursive": "false",
+      "regexp": "true",
+      "excludePatterns": [".*ant.*", ".*c1.i.?", ".*c2"]
+    }
+  ]
+}

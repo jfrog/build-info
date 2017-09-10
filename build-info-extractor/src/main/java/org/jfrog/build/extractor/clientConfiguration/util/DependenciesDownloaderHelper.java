@@ -19,6 +19,7 @@ import org.jfrog.build.api.util.ZipUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,13 +81,14 @@ public class DependenciesDownloaderHelper {
                 wildcardHelper.setProps(file.getProps());
                 wildcardHelper.setBuildName(buildName);
                 wildcardHelper.setBuildNumber(buildNumber);
-                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), Boolean.valueOf(file.getExplode())));
+                log.info(String.format("Downloading artifacts using pattern: %s%s", file.getPattern(), SpecsHelper.getExcludePatternsLogStr(file.getExcludePatterns())));
+                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), file.getExcludePatterns(), Boolean.valueOf(file.getExplode())));
             } else if (file.getAql() != null) {
                 aqlHelper.setTarget(file.getTarget());
                 aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
                 aqlHelper.setBuildName(buildName);
                 aqlHelper.setBuildNumber(buildNumber);
-                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), Boolean.valueOf(file.getExplode())));
+                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), null, Boolean.valueOf(file.getExplode())));
             }
         }
         return resolvedDependencies;

@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -74,7 +75,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     }
 
     @Override
-    public List<Dependency> retrievePublishedDependencies(String searchPattern, boolean explode) throws IOException {
+    public List<Dependency> retrievePublishedDependencies(String searchPattern, String[] excludePatterns, boolean explode) throws IOException {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
@@ -83,7 +84,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             dependenciesHelper.setBuildName(buildName);
             dependenciesHelper.setBuildNumber(buildNumber);
         }
-        Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, this.recursive, this.props), explode);
+        Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props), explode);
         replaceTargetPlaceholders(searchPattern, downloadableArtifacts);
         return dependenciesHelper.downloadDependencies(downloadableArtifacts);
     }
@@ -111,7 +112,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         this.downloader.setFlatDownload(flat);
     }
 
-    public String buildAqlSearchQuery(String searchPattern, boolean recursive, String props) {
+    public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
         searchPattern = prepareSearchPattern(searchPattern);
         int index = searchPattern.indexOf("/");
 
@@ -130,13 +131,13 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         if (size == 0) {
             json +=
                     "{" +
-                            buildInnerQuery(".", searchPattern) +
+                            buildInnerQuery(".", searchPattern, excludePatterns) +
                             "}";
         } else {
             for (int i = 0; i < size; i++) {
                 json +=
                         "{" +
-                                buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile()) +
+                                buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), excludePatterns) +
                                 "}";
 
                 if (i + 1 < size) {
@@ -179,15 +180,23 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         return query;
     }
 
-    private String buildInnerQuery(String path, String name) {
-        return "\"$and\": [{" +
-                "\"path\": {" +
-                "\"$match\":" + "\"" + path + "\"" +
-                "}," +
-                "\"name\":{" +
-                "\"$match\":" + "\"" + name + "\"" +
-                "}" +
-                "}]";
+    private String buildInnerQuery(String path, String name, String[] excludePatterns) {
+        StringBuilder excludePathPattern = new StringBuilder();
+        StringBuilder excludeNamePattern = new StringBuilder();
+
+        if (excludePatterns != null) {
+            for (String singleExcludePattern : excludePatterns) {
+                excludePathPattern.append(String.format(", {\"path\": {\"$nmatch\": \"%s\"}}", singleExcludePattern));
+                excludeNamePattern.append(String.format(", {\"name\": {\"$nmatch\": \"%s\"}}", singleExcludePattern));
+            }
+        }
+        return String.format(
+                "\"$and\": [{" +
+                    "\"$and\": [" +
+                        "{\"path\": { \"$match\":" + "\"%s\"}}%s]," +
+                    "\"$and\": [" +
+                        "{\"name\": { \"$match\":" + "\"%s\"}}%s]" +
+                "}]", path, excludePathPattern, name, excludeNamePattern);
     }
 
     // We need to translate the provided download pattern to an AQL query.

@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Created by romang on 4/20/16.
@@ -15,6 +16,7 @@ public class FileSpec {
     private String regexp;
     private String build;
     private String explode;
+    private String[] excludePatterns;
 
     public String getAql() throws IOException {
         if (aql != null) {
@@ -91,6 +93,22 @@ public class FileSpec {
         this.explode = explode;
     }
 
+    public String[] getExcludePatterns() {
+        return excludePatterns;
+    }
+
+    public void setExcludePatterns(String[] excludePatterns) {
+        this.excludePatterns = excludePatterns;
+    }
+
+    public String getExcludePattern(int index) {
+        return excludePatterns[index];
+    }
+
+    public void setExcludePattern(String excludePattern, int index) {
+        this.excludePatterns[index] = excludePattern;
+    }
+
     @Override
     public String toString() {
         return "FileSpec{" +
@@ -103,6 +121,7 @@ public class FileSpec {
                 ", regexp='" + regexp + '\'' +
                 ", build='" + build + '\'' +
                 ", explode='" + explode + '\'' +
+                ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
                 '}';
     }
 }

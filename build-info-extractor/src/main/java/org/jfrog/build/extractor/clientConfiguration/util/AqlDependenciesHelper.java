@@ -33,7 +33,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
     }
 
     @Override
-    public List<Dependency> retrievePublishedDependencies(String aql, boolean explode) throws IOException {
+    public List<Dependency> retrievePublishedDependencies(String aql, String[] excludePattern, boolean explode) throws IOException {
         if (StringUtils.isBlank(aql)) {
             return Collections.emptyList();
         }
