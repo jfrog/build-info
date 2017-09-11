@@ -106,7 +106,7 @@ public class UploadSpecHelper {
             String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
             if (regexPattern.matcher(relativePath).matches()) {
                 if (regexExcludePattern == null || !regexExcludePattern.matcher(relativePath).matches()) {
-                    matchedFiles.add(file.getCanonicalFile());
+                    matchedFiles.add(file.getAbsoluteFile());
                 }
             }
         }
