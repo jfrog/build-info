@@ -46,7 +46,7 @@ public abstract class PatternMatcher {
      */
     private static boolean pathMatchesPattern(String path, String[] patterns) {
         for (String pattern : patterns) {
-            if (StringUtils.isNotBlank(pattern) && match(pattern, path, true)) {
+            if (StringUtils.isNotBlank(pattern) && match(pattern, path, false)) {
                 return true;
             }
         }
