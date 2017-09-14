@@ -186,7 +186,6 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         StatusLine statusLine = response.getStatusLine();
         int statusCode = statusLine.getStatusCode();
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            EntityUtils.consume(response.getEntity());
             throw new FileNotFoundException("Unable to find " + artifactUrl);
         }
 

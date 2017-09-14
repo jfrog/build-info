@@ -8,6 +8,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
@@ -52,9 +53,6 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
 
     private ArtifactoryXrayResponse parseXrayScanResponse(HttpResponse response) throws IOException {
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            if (response.getEntity() != null && response.getEntity().getContent() != null) {
-                response.getEntity().getContent().close();
-            }
             throw new IOException("Artifactory response: " + response.getStatusLine().getReasonPhrase());
         }
 
@@ -77,11 +75,12 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         PreemptiveHttpClient client = httpClient.getHttpClient(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
+        HttpResponse response = null;
         while (true) {
             try {
                 lastConnectionAttemptMillis = System.currentTimeMillis();
                 retryNum++;
-                HttpResponse response = client.execute(httpRequest);
+                response = client.execute(httpRequest);
                 return parseXrayScanResponse(response);
             } catch (IOException e) {
                 if (isStableConnection(lastConnectionAttemptMillis)) {
@@ -95,6 +94,13 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
                 // Sleeping before trying to reconnect.
                 Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
             } finally {
+                if (response != null) {
+                    try {
+                        EntityUtils.consume(response.getEntity());
+                    } catch (IOException e) {
+                        // Ignore
+                    }
+                }
                 httpRequest.releaseConnection();
             }
         }

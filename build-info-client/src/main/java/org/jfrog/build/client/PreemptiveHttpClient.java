@@ -17,7 +17,6 @@
 package org.jfrog.build.client;
 
 import com.google.common.collect.Sets;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
@@ -26,14 +25,10 @@ import org.apache.http.auth.Credentials;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
 import org.apache.http.protocol.HttpContext;
@@ -59,7 +54,6 @@ public class PreemptiveHttpClient {
     private CloseableHttpClient httpClient;
     private HttpClientContext localContext = HttpClientContext.create();
     private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
-    private ResponseHandler<HttpResponse> responseHandler = new PreemptiveHttpClientHandler();
     private int connectionRetries;
     private int retryCounter;
     private Log log;
@@ -77,14 +71,6 @@ public class PreemptiveHttpClient {
             }
         }
         CLIENT_VERSION = properties.getProperty("client.version", "unknown");
-    }
-
-    public PreemptiveHttpClient(int timeout) {
-        this(null, null, timeout, null, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
-    }
-
-    public PreemptiveHttpClient(String userName, String password, int timeout) {
-        this(userName, password, timeout, null, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
     }
 
     public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
@@ -114,14 +100,10 @@ public class PreemptiveHttpClient {
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
         if (localContext != null) {
-            return httpClient.execute(request, responseHandler, localContext);
+            return httpClient.execute(request, localContext);
         } else {
-            return httpClient.execute(request, responseHandler);
+            return httpClient.execute(request);
         }
-    }
-
-    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout) {
-        return createHttpClientBuilder(userName, password, timeout, ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY);
     }
 
     private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int connectionRetries) {
@@ -298,35 +280,6 @@ public class PreemptiveHttpClient {
             }
             log.error(message + " cannot be redirected.");
             return false;
-        }
-    }
-
-    /**
-     * gets responses from the underlying HttpClient and closes them (so you don't have to) the response body is
-     * buffered in an intermediary byte array.
-     * Will throw a {@link IOException} if the request failed.
-     */
-    private class PreemptiveHttpClientHandler implements ResponseHandler<HttpResponse> {
-        @Override
-        public HttpResponse handleResponse(HttpResponse response) throws IOException {
-            HttpResponse newResponse = DefaultHttpResponseFactory.INSTANCE.newHttpResponse(response.getStatusLine(), new HttpClientContext());
-            newResponse.setHeaders(response.getAllHeaders());
-            int statusCode = response.getStatusLine().getStatusCode();
-            //Response entity might be null, 500 and 405 also give the html itself so skip it
-            if (response.getEntity() != null && statusCode != 500 && statusCode != 405) {
-                try {
-                    InputStream entityInputStream = IOUtils.toBufferedInputStream(response.getEntity().getContent());
-                    newResponse.setEntity(new InputStreamEntity(entityInputStream));
-                } catch (IOException e) {
-                    //Ignore
-                } catch (NullPointerException e) {
-                    //Null entity - Ignore
-                } finally {
-                    HttpClientUtils.closeQuietly((CloseableHttpResponse) response);
-                }
-            }
-
-            return newResponse;
         }
     }
 }

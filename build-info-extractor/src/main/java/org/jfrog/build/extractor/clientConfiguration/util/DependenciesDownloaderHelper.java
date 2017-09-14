@@ -8,6 +8,7 @@ import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
@@ -226,21 +227,26 @@ public class DependenciesDownloaderHelper {
         dependencyResult = getDependencyLocally(checksums, fileDestination);
         if (dependencyResult == null) {
             log.info("Downloading '" + uriWithParams + "' ...");
-            HttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
-            InputStream inputStream = httpResponse.getEntity().getContent();
-            Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
+            HttpResponse httpResponse = null;
+            try {
+                httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
+                InputStream inputStream = httpResponse.getEntity().getContent();
+                Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
 
-            // If the checksums map is null then something went wrong and we should fail the build
-            if (checksumsMap == null) {
-                throw new IOException("Received null checksums map for downloaded file.");
+                // If the checksums map is null then something went wrong and we should fail the build
+                if (checksumsMap == null) {
+                    throw new IOException("Received null checksums map for downloaded file.");
+                }
+
+                String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
+                String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
+
+                log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
+                dependencyResult = new DependencyBuilder().md5(md5).sha1(sha1)
+                        .id(filePath.substring(filePath.lastIndexOf("/")+1)).build();
+            } finally {
+                consumeEntity(httpResponse);
             }
-
-            String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
-            String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
-
-            log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
-            dependencyResult = new DependencyBuilder().md5(md5).sha1(sha1)
-                    .id(filePath.substring(filePath.lastIndexOf("/")+1)).build();
         }
 
         return dependencyResult;
@@ -263,13 +269,26 @@ public class DependenciesDownloaderHelper {
     }
 
     private Checksums downloadArtifactCheckSums(String url) throws IOException {
-        HttpResponse response = downloader.getClient().getArtifactChecksums(url);
+        HttpResponse response = null;
+        try {
+            response = downloader.getClient().getArtifactChecksums(url);
+            Checksums checksums = new Checksums();
+            checksums.setMd5(getMD5ChecksumFromResponse(response));
+            checksums.setSha1(getSHA1ChecksumFromResponse(response));
+            return checksums;
+        } finally {
+            consumeEntity(response);
+        }
+    }
 
-        Checksums checksums = new Checksums();
-        checksums.setMd5(getMD5ChecksumFromResponse(response));
-        checksums.setSha1(getSHA1ChecksumFromResponse(response));
-
-        return checksums;
+    private void consumeEntity(HttpResponse response) {
+        if (response != null) {
+            try {
+                EntityUtils.consume(response.getEntity());
+            } catch (IOException e) {
+                // Ignore
+            }
+        }
     }
 
     private String validateMd5Checksum(HttpResponse httpResponse, String calculatedMd5) throws IOException {
