@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.apache.commons.lang.ArrayUtils;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -114,31 +114,30 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
 
     public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
         searchPattern = prepareSearchPattern(searchPattern);
-        int index = searchPattern.indexOf("/");
-
-        String repo = searchPattern.substring(0, index);
-        searchPattern = searchPattern.substring(index + 1);
+        int repoIndex = searchPattern.indexOf("/");
+        String repo = searchPattern.substring(0, repoIndex);
+        searchPattern = searchPattern.substring(repoIndex + 1);
 
         List<PathFilePair> pairs = createPathFilePairs(searchPattern, recursive);
+        List<PathFilePair> excludePairs = Lists.newArrayList();
+        if (excludePatterns != null) {
+            for (String excludePattern : excludePatterns) {
+                String excludePatternSearch = prepareSearchPattern(excludePattern);
+                if (excludePatternSearch.startsWith(repo)) {
+                    excludePatternSearch = excludePatternSearch.substring(repoIndex + 1);
+                    excludePairs.addAll(createPathFilePairs(excludePatternSearch, recursive));
+                }
+            }
+        }
         int size = pairs.size();
 
-        String json =
-                "{" +
-                        "\"repo\": \"" + repo + "\"," +
-                        buildPropsQuery(props) +
-                        "\"$or\": [";
+        String json = "{" + "\"repo\": \"" + repo + "\"," + buildPropsQuery(props) + "\"$or\": [";
 
         if (size == 0) {
-            json +=
-                    "{" +
-                            buildInnerQuery(".", searchPattern, excludePatterns) +
-                            "}";
+            json += "{" + buildInnerQuery(".", searchPattern, true, excludePairs) + "}";
         } else {
             for (int i = 0; i < size; i++) {
-                json +=
-                        "{" +
-                                buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), excludePatterns) +
-                                "}";
+                json += "{" + buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), !searchPattern.contains("/"), excludePairs) + "}";
 
                 if (i + 1 < size) {
                     json += ",";
@@ -146,9 +145,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             }
         }
 
-        return json +
-                "]" +
-                        "}";
+        return json + "]}";
     }
 
     private String prepareSearchPattern(String pattern) {
@@ -180,23 +177,26 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         return query;
     }
 
-    private String buildInnerQuery(String path, String name, String[] excludePatterns) {
-        StringBuilder excludePathPattern = new StringBuilder();
-        StringBuilder excludeNamePattern = new StringBuilder();
+    private String buildInnerQuery(String path, String name, boolean includeRoot, List<PathFilePair> excludePairs) {
+        StringBuilder excludePattern = new StringBuilder();
 
-        if (excludePatterns != null) {
-            for (String singleExcludePattern : excludePatterns) {
-                excludePathPattern.append(String.format(", {\"path\": {\"$nmatch\": \"%s\"}}", singleExcludePattern));
-                excludeNamePattern.append(String.format(", {\"name\": {\"$nmatch\": \"%s\"}}", singleExcludePattern));
+        String nePath = "";
+        if (!includeRoot) {
+            nePath = ", {\"path\": {\"$ne\": \".\"}}";
+        }
+
+        if (excludePairs != null) {
+            for (PathFilePair singleExcludePattern : excludePairs) {
+                excludePattern.append(String.format(", {\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}}, {\"name\": {\"$nmatch\": \"%s\"}}]}", singleExcludePattern.getPath(), singleExcludePattern.getFile()));
             }
         }
         return String.format(
                 "\"$and\": [{" +
                     "\"$and\": [" +
-                        "{\"path\": { \"$match\":" + "\"%s\"}}%s]," +
+                        "{\"path\": { \"$match\":" + "\"%s\"}}%s%s]," +
                     "\"$and\": [" +
-                        "{\"name\": { \"$match\":" + "\"%s\"}}%s]" +
-                "}]", path, excludePathPattern, name, excludeNamePattern);
+                        "{\"name\": { \"$match\":" + "\"%s\"}}]" +
+                "}]", path, nePath, excludePattern, name);
     }
 
     // We need to translate the provided download pattern to an AQL query.
@@ -223,18 +223,16 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         }
 
         int slashIndex = pattern.lastIndexOf("/");
-        String path = "";
-        String name = "";
+        String path;
+        String name;
         if (slashIndex < 0) {
             pairs.add(new PathFilePair(".", pattern));
             path = "";
             name = pattern;
         } else {
-            if (slashIndex >= 0) {
-                path = pattern.substring(0, slashIndex);
-                name = pattern.substring(slashIndex + 1);
-                pairs.add(new PathFilePair(path, name));
-            }
+            path = pattern.substring(0, slashIndex);
+            name = pattern.substring(slashIndex + 1);
+            pairs.add(new PathFilePair(path, name));
         }
         if (!recursive) {
             return pairs;
@@ -246,7 +244,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         }
         pattern = name;
 
-        String[] sections = pattern.split("\\*");
+        String[] sections = pattern.split("\\*", -1);
         int size = sections.length;
         for (int i = 0; i < size; i++) {
             List<String> options = new ArrayList<String>();
@@ -265,13 +263,13 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
                         str += sections[j];
                     }
                 }
-                String[] split = str.split("/");
+                String[] split = str.split("/", -1);
                 String filePath = split[0];
                 String fileName = split[1];
                 if (fileName.equals("")) {
                     fileName = "*";
                 }
-                if (!path.equals("")) {
+                if (!path.equals("") && !path.endsWith("/")) {
                     path += "/";
                 }
                 pairs.add(new PathFilePair(path + filePath, fileName));

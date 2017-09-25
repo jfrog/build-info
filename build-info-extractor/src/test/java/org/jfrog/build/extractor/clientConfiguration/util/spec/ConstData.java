@@ -9,9 +9,11 @@ class ConstData {
     static final String[] UPLOAD_PARENTHESIS_RESULTS;
     static final String[] UPLOAD_REPO_ROOT_RESULTS;
     static final String[] UPLOAD_EXCLUDE_RESULTS;
+    static final String[] UPLOAD_EXCLUDE_FROM_PATH_RESULTS;
     static final String[] DOWNLOAD_RESULTS;
     static final String[] DOWNLOAD_EXPLODE_RESULTS;
     static final String[] DOWNLOAD_EXCLUDE_RESULTS;
+    static final String[] DOWNLOAD_EXCLUDE_FROM_PATH;
     static final String[] POSITIVE_TEST_FILE_SPEC;
     static final String[] NEGATIVE_TEST_FILE_SPEC;
 
@@ -20,9 +22,11 @@ class ConstData {
         UPLOAD_PARENTHESIS_RESULTS = getUploadParenthesisResults();
         UPLOAD_REPO_ROOT_RESULTS = getUploadRepoRootResults();
         UPLOAD_EXCLUDE_RESULTS = getExpectedUploadExcludeResults();
+        UPLOAD_EXCLUDE_FROM_PATH_RESULTS = getExpectedUploadExcludeFromPathResults();
         DOWNLOAD_RESULTS = getExpectedDownloadResults();
         DOWNLOAD_EXPLODE_RESULTS = getExpectedExplodeDownloadResults();
         DOWNLOAD_EXCLUDE_RESULTS = getExpectedExcludeDownloadResults();
+        DOWNLOAD_EXCLUDE_FROM_PATH = getExpectedExcludeFromPathDownloadResults();
         POSITIVE_TEST_FILE_SPEC = getPositiveTestFileSpecs();
         NEGATIVE_TEST_FILE_SPEC = getNegativeTestFileSpecs();
     }
@@ -208,147 +212,156 @@ class ConstData {
         };
     }
 
+    private static String[] getExpectedUploadExcludeFromPathResults() {
+        return new String[]{
+                "4_pattern_exclude_abc/b1.in",
+                "4_pattern_exclude_abc/c1.in",
+        };
+    }
+
     private static String[] getExpectedDownloadResults() {
         return new String[]{
-                "1_pattern_flat_recursive/a1.in",
-                "1_pattern_flat_recursive/a2.in",
-                "1_pattern_flat_recursive/a3.in",
-                "1_pattern_flat_recursive/ant-antlr-1.6.5.zip",
-                "1_pattern_flat_recursive/b1.in",
-                "1_pattern_flat_recursive/b2.in",
-                "1_pattern_flat_recursive/b3.in",
-                "1_pattern_flat_recursive/c1.in",
-                "1_pattern_flat_recursive/c2.in",
-                "1_pattern_flat_recursive/c3.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/a1.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/a2.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/a3.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/b1.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/b2.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/b3.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/c1.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/c2.in",
+                "/tmp/bi_test_space/download-test/1_pattern_flat_recursive/c3.in",
 
-                "2_pattern_3_only_flat_recursive/a3.in", // TODO Bug https://www.jfrog.com/jira/browse/BI-379
+                "/tmp/bi_test_space/download-test/2_pattern_3_only_flat_recursive/a3.in",
+                "/tmp/bi_test_space/download-test/2_pattern_3_only_flat_recursive/c3.in",
+                "/tmp/bi_test_space/download-test/2_pattern_3_only_flat_recursive/b3.in",
 
-                "3_pattern_flat_nonrecursive/a1.in",
-                "3_pattern_flat_nonrecursive/a2.in",
-                "3_pattern_flat_nonrecursive/a3.in",
+                "/tmp/bi_test_space/download-test/3_pattern_flat_nonrecursive/a1.in",
+                "/tmp/bi_test_space/download-test/3_pattern_flat_nonrecursive/a2.in",
+                "/tmp/bi_test_space/download-test/3_pattern_flat_nonrecursive/a3.in",
 
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/a1.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/a2.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/a3.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
-                "4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/4_pattern_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
 
-                "5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
-                "5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
-                "5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/5_pattern_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
 
-                "6_pattern_flat_nonrecursive/a1.in",
-                "6_pattern_flat_nonrecursive/a2.in",
-                "6_pattern_flat_nonrecursive/a3.in",
+                "/tmp/bi_test_space/download-test/6_pattern_flat_nonrecursive/a1.in",
+                "/tmp/bi_test_space/download-test/6_pattern_flat_nonrecursive/a2.in",
+                "/tmp/bi_test_space/download-test/6_pattern_flat_nonrecursive/a3.in",
 
-                "7_pattern_simple_flat_nonrecursive/a1.in",
+                "/tmp/bi_test_space/download-test/7_pattern_simple_flat_nonrecursive/a1.in",
 
-                "8_pattern_simple_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/8_pattern_simple_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
 
-                "9_pattern_simple_nonflat_recursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/9_pattern_simple_nonflat_recursive/bi_test_space/download-test/a/a1.in",
 
-                "10_pattern_rename_flat_nonrecursive/a1.out",
+                "/tmp/bi_test_space/download-test/10_pattern_rename_flat_nonrecursive/a1.out",
 
-                "11_pattern_rename_nonflat_nonrecursive/bi_test_space/download-test/a/a1.out",
+                "/tmp/bi_test_space/download-test/11_pattern_rename_nonflat_nonrecursive/bi_test_space/download-test/a/a1.out",
 
-                "12_pattern_rename_nonflat_recursive/bi_test_space/download-test/a/a1.out",
+                "/tmp/bi_test_space/download-test/12_pattern_rename_nonflat_recursive/bi_test_space/download-test/a/a1.out",
 
-                "13_pattern_simple_placeholder_flat_nonrecursive/a/a1.in",
+                "/tmp/bi_test_space/download-test/13_pattern_simple_placeholder_flat_nonrecursive/a/a1.in",
 
-                "14_pattern_placeholder_flat_recursive/a/a1.in",
-                "14_pattern_placeholder_flat_recursive/a/a2.in",
-                "14_pattern_placeholder_flat_recursive/a/a3.in",
-                "14_pattern_placeholder_flat_recursive/a/b/b1.in",
-                "14_pattern_placeholder_flat_recursive/a/b/b2.in",
-                "14_pattern_placeholder_flat_recursive/a/b/b3.in",
-                "14_pattern_placeholder_flat_recursive/a/b/c/c1.in",
-                "14_pattern_placeholder_flat_recursive/a/b/c/c2.in",
-                "14_pattern_placeholder_flat_recursive/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/a1.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/a2.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/a3.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/14_pattern_placeholder_flat_recursive/a/b/c/c3.in",
 
-                "15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b1.in",
-                "15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b2.in",
-                "15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b3.in",
-                "15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c1.in",
-                "15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c2.in",
-                "15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c3.in",
-                "15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a1.in",
-                "15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a2.in",
-                "15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/b/c/bi_test_space/download-test/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/15_pattern_placeholder_nonflat_recursive/a/bi_test_space/download-test/a/a3.in",
 
-                "16_pattern_properties/bi_test_space/download-test/a/a2.in",
-                "16_pattern_properties/bi_test_space/download-test/a/b/b2.in",
-                "16_pattern_properties/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/16_pattern_properties/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/16_pattern_properties/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/16_pattern_properties/bi_test_space/download-test/a/b/c/c2.in",
 
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a1.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a2.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a3.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b1.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b2.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b3.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c1.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c2.in",
-                "17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/17_pattern_defaults_recursive_nonFlat/bi_test_space/download-test/a/b/c/c3.in",
 
-                "18_aql_flat_recursive/a1.in",
-                "18_aql_flat_recursive/a2.in",
-                "18_aql_flat_recursive/a3.in",
-                "18_aql_flat_recursive/ant-antlr-1.6.5.zip",
-                "18_aql_flat_recursive/b1.in",
-                "18_aql_flat_recursive/b2.in",
-                "18_aql_flat_recursive/b3.in",
-                "18_aql_flat_recursive/c1.in",
-                "18_aql_flat_recursive/c2.in",
-                "18_aql_flat_recursive/c3.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/a1.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/a2.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/a3.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/b1.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/b2.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/b3.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/c1.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/c2.in",
+                "/tmp/bi_test_space/download-test/18_aql_flat_recursive/c3.in",
 
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/a1.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/a2.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/a3.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
-                "19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/19_aql_nonflat_recursive/bi_test_space/download-test/a/b/c/c3.in",
 
-                "20_aql_flat_nonrecursive/a1.in",
-                "20_aql_flat_nonrecursive/a2.in",
-                "20_aql_flat_nonrecursive/a3.in",
-                "20_aql_flat_nonrecursive/ant-antlr-1.6.5.zip",
-                "20_aql_flat_nonrecursive/b1.in",
-                "20_aql_flat_nonrecursive/b2.in",
-                "20_aql_flat_nonrecursive/b3.in",
-                "20_aql_flat_nonrecursive/c1.in",
-                "20_aql_flat_nonrecursive/c2.in",
-                "20_aql_flat_nonrecursive/c3.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/a1.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/a2.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/a3.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/b1.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/b2.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/b3.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/c1.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/c2.in",
+                "/tmp/bi_test_space/download-test/20_aql_flat_nonrecursive/c3.in",
 
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
-                "21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/21_aql_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in",
 
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in", // TODO Bug https://www.jfrog.com/jira/browse/BI-404
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
-                "22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in"
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a1.in", // TODO Bug https://www.jfrog.com/jira/browse/BI-404
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a2.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/a3.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b1.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b2.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/b3.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/ant-antlr-1.6.5.zip",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c1.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c2.in",
+                "/tmp/bi_test_space/download-test/22_aql_properties_nonflat_nonrecursive/bi_test_space/download-test/a/b/c/c3.in"
         };
     }
 
@@ -370,6 +383,18 @@ class ConstData {
                 "1_pattern_exclude_a/a2.in",
                 "1_pattern_exclude_a/a3.in",
                 "3_pattern_exclude_c/c3.in"
+        };
+    }
+
+    private static String[] getExpectedExcludeFromPathDownloadResults() {
+        return new String[]{
+                "1_pattern_exclude_a/a2.in",
+                "1_pattern_exclude_a/a3.in",
+                "1_pattern_exclude_a/b2.in",
+                "1_pattern_exclude_a/b3.in",
+                "1_pattern_exclude_a/c1.in",
+                "1_pattern_exclude_a/c2.in",
+                "1_pattern_exclude_a/c3.in"
         };
     }
 

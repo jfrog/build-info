@@ -51,52 +51,51 @@ public class UploadSpecHelper {
      * Building a multi map of target paths mapped to their files using wildcard pattern.
      * The pattern should contain slashes instead of backslashes in case of windows.
      *
-     * @param checkoutDir the base directory of which to calculate the given source ant pattern
+     * @param workspaceDir the base directory of which to calculate the given source ant pattern
      * @param pattern     the Ant pattern to calculate the files from
      * @param targetPath  the target path for deployment of a file
      * @return a Multimap containing the targets as keys and the files as values
      * @throws IOException in case of any file system exception
      */
     public static Multimap<String, File> buildPublishingData(
-            File checkoutDir, String pattern, String[] excludePatterns, String targetPath, boolean flat, boolean recursive, boolean regexp)
+            File workspaceDir, String pattern, String[] excludePatterns, String targetPath, boolean flat, boolean recursive, boolean regexp)
             throws IOException {
         boolean isAbsolutePath = (new File(pattern)).isAbsolute();
         List<File> matchedFiles;
         if (regexp) {
-            matchedFiles = collectMatchedFilesByRegexp(checkoutDir, pattern, excludePatterns, recursive);
+            matchedFiles = collectMatchedFilesByRegexp(workspaceDir, pattern, excludePatterns, recursive);
         } else {
-            matchedFiles = collectMatchedFilesByWildcard(checkoutDir, pattern, excludePatterns, recursive);
+            matchedFiles = collectMatchedFilesByWildcard(workspaceDir, pattern, excludePatterns, recursive);
             // Convert wildcard to regexp
             pattern = PathsUtils.pathToRegExp(pattern);
         }
-        return getUploadPathsMap(matchedFiles, checkoutDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
+        return getUploadPathsMap(matchedFiles, workspaceDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
     }
 
-    private static List<File> collectMatchedFilesByRegexp(File checkoutDir, String pattern, String[] excludePatterns, boolean recursive)
+    private static List<File> collectMatchedFilesByRegexp(File workspaceDir, String pattern, String[] excludePatterns, boolean recursive)
             throws IOException {
         // This method determines the base directory - the directory where the files scan will be done
-        String baseDir = getRegexBaseDir(checkoutDir, pattern);
+        String baseDir = getRegexBaseDir(workspaceDir, pattern);
         // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = prepareRegexPattern(checkoutDir, pattern, baseDir);
+        String newPattern = prepareRegexPattern(workspaceDir, pattern, baseDir);
         // Collects candidate files to execute the regex
         List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, true);
-        return getMatchedFiles(baseDir, newPattern, prepareExcludePattern(excludePatterns, false), candidatePaths);
+        return getMatchedFiles(baseDir, newPattern, workspaceDir.getAbsolutePath(), prepareExcludePattern(excludePatterns, false, recursive), candidatePaths);
     }
 
-    private static List<File> collectMatchedFilesByWildcard(File checkoutDir, String pattern, String[] excludePatterns, boolean recursive)
-            throws IOException {
+    private static List<File> collectMatchedFilesByWildcard(File workspaceDir, String pattern, String[] excludePatterns, boolean recursive) {
         // This method determines the base directory - the directory where the files scan will be done
-        String baseDir = getWildcardBaseDir(checkoutDir, pattern);
+        String baseDir = getWildcardBaseDir(workspaceDir, pattern);
         // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = prepareWildcardPattern(checkoutDir, pattern, baseDir);
+        String newPattern = prepareWildcardPattern(workspaceDir, pattern, baseDir);
         // Collects candidate files to execute the regex
         List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, false);
         // Convert wildcard to regexp
         newPattern = PathsUtils.pathToRegExp(newPattern);
-        return getMatchedFiles(baseDir, newPattern, prepareExcludePattern(excludePatterns, true), candidatePaths);
+        return getMatchedFiles(baseDir, newPattern, workspaceDir.getAbsolutePath(), prepareExcludePattern(excludePatterns, true, recursive), candidatePaths);
     }
 
-    private static List<File> getMatchedFiles(String baseDir, String newPattern, String excludePattern, List<String> candidatePaths) throws IOException {
+    private static List<File> getMatchedFiles(String baseDir, String newPattern, String workspacePath, String excludePattern, List<String> candidatePaths) {
         List<File> matchedFiles = new ArrayList<File>();
         Pattern regexPattern = Pattern.compile(newPattern);
         Pattern regexExcludePattern = StringUtils.isBlank(excludePattern) ? null : Pattern.compile(excludePattern);
@@ -105,40 +104,61 @@ public class UploadSpecHelper {
             File file = new File(path);
             String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
             if (regexPattern.matcher(relativePath).matches()) {
-                if (regexExcludePattern == null || !regexExcludePattern.matcher(relativePath).matches()) {
-                    matchedFiles.add(file.getAbsoluteFile());
+                if (regexExcludePattern != null) {
+                    String relativeToWsPath = getRelativeToWsPath(file.getAbsolutePath(), workspacePath);
+                    if (regexExcludePattern.matcher(relativeToWsPath).matches()) {
+                        continue;
+                    }
                 }
+                matchedFiles.add(file.getAbsoluteFile());
             }
         }
         return matchedFiles;
     }
 
-    private static String prepareExcludePattern(String[] excludePatterns, boolean isWildcard) {
+    /**
+     * Gets the relative path of a given file to the workspace path.
+     * @param absolutePath the file's absolute path
+     * @param workspacePath path to the job's workspace
+     * @return the relative path of a given file to the workspace path
+     */
+    private static String getRelativeToWsPath(String absolutePath, String workspacePath) {
+        String absoluteFilePath = absolutePath.replace("\\", "/");
+        workspacePath = workspacePath.replace("\\", "/");
+        return absoluteFilePath.substring(workspacePath.length() + 1);
+    }
+
+    private static String prepareExcludePattern(String[] excludePatterns, boolean isWildcard, boolean recursive) {
         StringBuilder patternSb = new StringBuilder();
         if (!ArrayUtils.isEmpty(excludePatterns)) {
             for (String pattern : excludePatterns) {
                 if (StringUtils.isBlank(pattern)) {
-                    pattern = "";
+                    continue;
                 }
                 if (isWildcard) {
                     pattern = PathsUtils.pathToRegExp(pattern);
                 }
+                if (recursive && pattern.endsWith(File.pathSeparator)) {
+                    pattern += ".*";
+                }
                 patternSb.append("(").append(pattern).append(")|");
             }
-            patternSb.deleteCharAt(patternSb.length() - 1);
-        }
+            if (patternSb.length() > 0) {
+                patternSb.deleteCharAt(patternSb.length() - 1);
 
+            }
+        }
         return patternSb.toString();
     }
 
-    public static Multimap<String, File> getUploadPathsMap(List<File> files, File checkoutDir, String targetPath,
+    public static Multimap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
                                                            boolean flat, Pattern regexPattern, boolean absolutePath) {
         Multimap<String, File> filePathsMap = HashMultimap.create();
 
         for (File file : files) {
             String fileTargetPath = targetPath;
             if (StringUtils.endsWith(fileTargetPath, "/") && !flat) {
-                fileTargetPath = calculateFileTargetPath(checkoutDir, file, targetPath);
+                fileTargetPath = calculateFileTargetPath(workspaceDir, file, targetPath);
                 // handle win file system
                 fileTargetPath = fileTargetPath.replace('\\', '/');
             }
@@ -146,7 +166,7 @@ public class UploadSpecHelper {
                 fileTargetPath = PathsUtils.reformatRegexp(file.getPath(), fileTargetPath, regexPattern);
             } else {
                 fileTargetPath = PathsUtils.reformatRegexp(
-                        getRelativePath(checkoutDir, file), fileTargetPath, regexPattern);
+                        getRelativePath(workspaceDir, file), fileTargetPath, regexPattern);
             }
             filePathsMap.put(fileTargetPath, file);
         }
@@ -159,12 +179,12 @@ public class UploadSpecHelper {
      *
      * Base directory is the last directory that not contains wildcards in case of regexp=false.
      * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the pattern provided by the user
      * @return String that represents the base directory
      */
-    private static String getWildcardBaseDir(File checkoutDir, String pattern) throws FileNotFoundException {
-        String baseDir = getWildcardAbsolutePattern(checkoutDir, pattern);
+    private static String getWildcardBaseDir(File workspaceDir, String pattern) {
+        String baseDir = getWildcardAbsolutePattern(workspaceDir, pattern);
         baseDir = StringUtils.substringBefore(baseDir, "*");
         baseDir = StringUtils.substringBefore(baseDir, "?");
         baseDir = baseDir.substring(0, baseDir.lastIndexOf("/") + 1);
@@ -182,12 +202,12 @@ public class UploadSpecHelper {
      *
      * Base directory is the last directory that not contains wildcards in case of regexp=false.
      * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the pattern provided by the user
      * @return String that represents the base directory
      */
-    private static String getRegexBaseDir(File checkoutDir, String pattern) throws FileNotFoundException {
-        String baseDir = getRegexpAbsolutePattern(checkoutDir, pattern);
+    private static String getRegexBaseDir(File workspaceDir, String pattern) throws FileNotFoundException {
+        String baseDir = getRegexpAbsolutePattern(workspaceDir, pattern);
 
         baseDir = getExistingPath(baseDir);
         if (StringUtils.isEmpty(baseDir)) {
@@ -202,13 +222,13 @@ public class UploadSpecHelper {
     /**
      * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
      * this method removes the part of the pattern that exists in the base directory.
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the provided by the user pattern
      * @param baseDir the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
-    private static String prepareRegexPattern(File checkoutDir, String pattern, String baseDir) {
-        String absolutePattern = getRegexpAbsolutePattern(checkoutDir, pattern);
+    private static String prepareRegexPattern(File workspaceDir, String pattern, String baseDir) {
+        String absolutePattern = getRegexpAbsolutePattern(workspaceDir, pattern);
         // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used
         String newPattern = cleanRegexpPattern(absolutePattern, baseDir);
         newPattern = removeLeadingSeparator(newPattern);
@@ -221,13 +241,13 @@ public class UploadSpecHelper {
     /**
      * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
      * this method removes the part of the pattern that exists in the base directory.
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the provided by the user pattern
      * @param baseDir the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
-    private static String prepareWildcardPattern(File checkoutDir, String pattern, String baseDir) {
-        String absolutePattern = getWildcardAbsolutePattern(checkoutDir, pattern);
+    private static String prepareWildcardPattern(File workspaceDir, String pattern, String baseDir) {
+        String absolutePattern = getWildcardAbsolutePattern(workspaceDir, pattern);
         // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used.
         // absolutePattern may contain escaped parenthesis (which are part of the path) and not escaped parenthesis
         // (which are part of the capture groups). The not escaped parenthesis and the the escape char of the
@@ -292,16 +312,16 @@ public class UploadSpecHelper {
      * If the pattern is relative the checkout directory will be prepend and all the parentheses of the checkout path will be escaped.
      * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
      *
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the provided by the user patter, can be absolute or relative
      * @return the absolute path of pattern
      */
-    private static String getRegexpAbsolutePattern(File checkoutDir, String pattern) {
+    private static String getRegexpAbsolutePattern(File workspaceDir, String pattern) {
         if (new File(pattern).isAbsolute()) {
             return pattern;
         }
-        String escapedCheckoutDir = PathsUtils.escapeRegexChars(checkoutDir.getAbsolutePath().replace("\\", "/"));
-        return escapedCheckoutDir + "/" + pattern;
+        String escapedWorkspaceDir = PathsUtils.escapeRegexChars(workspaceDir.getAbsolutePath().replace("\\", "/"));
+        return escapedWorkspaceDir + "/" + pattern;
     }
 
     /**
@@ -310,16 +330,16 @@ public class UploadSpecHelper {
      * If the pattern is relative the checkout directory will be prepend and all the parentheses of the checkout path will be escaped.
      * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
      *
-     * @param checkoutDir the checkout directory
+     * @param workspaceDir the workspaceDir directory
      * @param pattern the provided by the user patter, can be absolute or relative
      * @return the absolute path of pattern
      */
-    private static String getWildcardAbsolutePattern(File checkoutDir, String pattern) {
+    private static String getWildcardAbsolutePattern(File workspaceDir, String pattern) {
         if (new File(pattern).isAbsolute()) {
             return pattern;
         }
         // In case of wildcard when collecting files not escaped parentheses will be removed in the next steps so we need to escape them
-        return escapeParentheses(checkoutDir.getAbsolutePath().replace("\\", "/")) + "/" + pattern;
+        return escapeParentheses(workspaceDir.getAbsolutePath().replace("\\", "/")) + "/" + pattern;
     }
 
     /**

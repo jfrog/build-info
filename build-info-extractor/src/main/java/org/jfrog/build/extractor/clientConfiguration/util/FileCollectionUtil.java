@@ -62,8 +62,9 @@ public class FileCollectionUtil {
             if (depth == -1 || StringUtils.countMatches(folderString, File.separator) <= depth) {
                 File file = new File(folderString);
                 List<File> folderContent = new ArrayList<File>();
-                if (file.listFiles() != null) {
-                    folderContent.addAll(Arrays.asList(file.listFiles()));
+                File[] fileList = file.listFiles();
+                if (fileList != null) {
+                    folderContent.addAll(Arrays.asList(fileList));
                 }
                 if (!folderContent.isEmpty()) {
                     for (File entry : folderContent) {
