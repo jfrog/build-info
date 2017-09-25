@@ -345,13 +345,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
                         existingScopes.add(configuration.getName());
                         existingDependency.setScopes(existingScopes);
                     } else {
-                        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
                         DependencyBuilder dependencyBuilder = new DependencyBuilder()
                                 .type(getTypeString(artifact.getType(),
                                         artifact.getClassifier(), artifact.getExtension()))
                                 .id(depId)
-                                .scopes(Sets.newHashSet(configuration.getName())).
-                                        md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                                .scopes(Sets.newHashSet(configuration.getName()));
+                        if (file.isFile()) {
+                            // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
+                            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+                            dependencyBuilder.md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                        }
                         dependencies.add(dependencyBuilder.build());
                     }
                 }
