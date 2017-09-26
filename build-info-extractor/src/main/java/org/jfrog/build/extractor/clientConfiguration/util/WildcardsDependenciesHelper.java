@@ -122,11 +122,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         List<PathFilePair> excludePairs = Lists.newArrayList();
         if (excludePatterns != null) {
             for (String excludePattern : excludePatterns) {
-                String excludePatternSearch = prepareSearchPattern(excludePattern);
-                if (excludePatternSearch.startsWith(repo)) {
-                    excludePatternSearch = excludePatternSearch.substring(repoIndex + 1);
-                    excludePairs.addAll(createPathFilePairs(excludePatternSearch, recursive));
-                }
+                excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern), recursive));
             }
         }
         int size = pairs.size();

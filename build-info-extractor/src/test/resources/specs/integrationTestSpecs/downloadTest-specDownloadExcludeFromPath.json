@@ -5,14 +5,14 @@
       "target": "${TEMP_FOLDER}/${TEST_SPACE}/1_pattern_exclude_a/",
       "flat": "true",
       "recursive": "true",
-      "excludePatterns": ["${REPO}/${TEST_SPACE}/*/b/b1.in" ,"${REPO}/${TEST_SPACE}/a/b/c/*ant*"]
+      "excludePatterns": ["${TEST_SPACE}/*/b/b1.in" ,"${TEST_SPACE}/a/b/c/*ant*"]
     },
     {
       "pattern": "${REPO}/${TEST_SPACE}/a/*",
       "target": "${TEMP_FOLDER}/${TEST_SPACE}/1_pattern_exclude_a/",
       "flat": "true",
       "recursive": "false",
-      "excludePatterns": ["${REPO}/*/a1.i*"]
+      "excludePatterns": ["*/a1.i*"]
     }
   ]
 }

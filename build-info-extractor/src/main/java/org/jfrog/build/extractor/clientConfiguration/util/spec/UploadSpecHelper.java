@@ -105,7 +105,8 @@ public class UploadSpecHelper {
             String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
             if (regexPattern.matcher(relativePath).matches()) {
                 if (regexExcludePattern != null) {
-                    String relativeToWsPath = getRelativeToWsPath(file.getAbsolutePath(), workspacePath);
+                    boolean fileInWs = file.getAbsolutePath().startsWith(workspacePath);
+                    String relativeToWsPath = fileInWs ? getRelativeToWsPath(file.getAbsolutePath(), workspacePath) : file.getAbsolutePath();
                     if (regexExcludePattern.matcher(relativeToWsPath).matches()) {
                         continue;
                     }
