@@ -289,25 +289,30 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         List<Dependency> downloadArtifactsBySpec =
                 specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
 
+        List<String> expectedPaths = new ArrayList<String>();
+        for (String path : ConstData.DOWNLOAD_RESULTS) {
+            expectedPaths.add(new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalPath());
+        }
+
         // Assert all expected files are exists
         File workingDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir).getCanonicalFile();
         Collection<File> downloadedFiles = FileUtils.listFiles(workingDir, null, true);
         List<String> missingPaths = new ArrayList<String>();
-        for (String path : ConstData.DOWNLOAD_RESULTS) {
+        for (String path : expectedPaths) {
             if (!downloadedFiles.contains(new File(path).getCanonicalFile())) {
                 missingPaths.add(path);
             }
         }
+
         if (!missingPaths.isEmpty()) {
             System.out.println("Missing files:");
             System.out.println(missingPaths.toString());
         }
 
         // Assert all downloaded are expected
-        List<String> expected = Arrays.asList(ConstData.DOWNLOAD_RESULTS);
         List<String> unexpectedPaths = new ArrayList<String>();
         for (File file : downloadedFiles) {
-            if (!expected.contains(file.getCanonicalPath())) {
+            if (!expectedPaths.contains(file.getCanonicalPath())) {
                 unexpectedPaths.add(file.getCanonicalPath());
             }
         }
@@ -322,6 +327,12 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
                 String.format("Number of downloaded and expected by the test artifacts should be equal, " +
                                 "but downloaded - %d artifacts and expected - %d",
                         downloadArtifactsBySpec.size(), ConstData.DOWNLOAD_RESULTS.length);
+
+        assert missingPaths.isEmpty() :
+                "Not all expected files were downloaded.";
+
+        assert unexpectedPaths.isEmpty() :
+                "Unexpected files were downloaded.";
     }
 
     public void testSpecDownloadExplode() throws URISyntaxException, IOException, NoSuchAlgorithmException {
