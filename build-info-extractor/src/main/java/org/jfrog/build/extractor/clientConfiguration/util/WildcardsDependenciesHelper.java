@@ -113,7 +113,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     }
 
     public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
-        searchPattern = prepareSearchPattern(searchPattern);
+        searchPattern = prepareSearchPattern(searchPattern, true);
         int repoIndex = searchPattern.indexOf("/");
         String repo = searchPattern.substring(0, repoIndex);
         searchPattern = searchPattern.substring(repoIndex + 1);
@@ -122,7 +122,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         List<PathFilePair> excludePairs = Lists.newArrayList();
         if (excludePatterns != null) {
             for (String excludePattern : excludePatterns) {
-                excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern), recursive));
+                excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
             }
         }
         int size = pairs.size();
@@ -130,10 +130,10 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         String json = "{" + "\"repo\": \"" + repo + "\"," + buildPropsQuery(props) + "\"$or\": [";
 
         if (size == 0) {
-            json += "{" + buildInnerQuery(".", searchPattern, true, excludePairs) + "}";
+            json += "{" + buildInnerQuery(".", searchPattern, true, excludePairs, recursive) + "}";
         } else {
             for (int i = 0; i < size; i++) {
-                json += "{" + buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), !searchPattern.contains("/"), excludePairs) + "}";
+                json += "{" + buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), !searchPattern.contains("/"), excludePairs, recursive) + "}";
 
                 if (i + 1 < size) {
                     json += ",";
@@ -144,9 +144,8 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         return json + "]}";
     }
 
-    private String prepareSearchPattern(String pattern) {
-        int index = pattern.indexOf("/");
-        if (index < 0) {
+    private String prepareSearchPattern(String pattern, boolean startsWithRepo) {
+        if (startsWithRepo && !pattern.contains("/")) {
             pattern += "/";
         }
         if (pattern.endsWith("/")) {
@@ -173,7 +172,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         return query;
     }
 
-    private String buildInnerQuery(String path, String name, boolean includeRoot, List<PathFilePair> excludePairs) {
+    private String buildInnerQuery(String path, String name, boolean includeRoot, List<PathFilePair> excludePairs, boolean recursive) {
         StringBuilder excludePattern = new StringBuilder();
 
         String nePath = "";
@@ -183,7 +182,11 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
 
         if (excludePairs != null) {
             for (PathFilePair singleExcludePattern : excludePairs) {
-                excludePattern.append(String.format(", {\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}}, {\"name\": {\"$nmatch\": \"%s\"}}]}", singleExcludePattern.getPath(), singleExcludePattern.getFile()));
+                String excludePath = singleExcludePattern.getPath();
+                if (!recursive && ".".equals(excludePath)) {
+                    excludePath = path;
+                }
+                excludePattern.append(String.format(", {\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}}, {\"name\": {\"$nmatch\": \"%s\"}}]}", excludePath, singleExcludePattern.getFile()));
             }
         }
         return String.format(

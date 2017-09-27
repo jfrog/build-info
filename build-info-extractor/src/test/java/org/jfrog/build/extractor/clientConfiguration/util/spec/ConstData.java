@@ -388,7 +388,6 @@ class ConstData {
 
     private static String[] getExpectedExcludeFromPathDownloadResults() {
         return new String[]{
-                "1_pattern_exclude_a/a2.in",
                 "1_pattern_exclude_a/a3.in",
                 "1_pattern_exclude_a/b2.in",
                 "1_pattern_exclude_a/b3.in",
