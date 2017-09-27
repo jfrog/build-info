@@ -113,35 +113,27 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
     }
 
     public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
+        StringBuilder aqlQuery = new StringBuilder();
         searchPattern = prepareSearchPattern(searchPattern, true);
         int repoIndex = searchPattern.indexOf("/");
         String repo = searchPattern.substring(0, repoIndex);
         searchPattern = searchPattern.substring(repoIndex + 1);
 
-        List<PathFilePair> pairs = createPathFilePairs(searchPattern, recursive);
-        List<PathFilePair> excludePairs = Lists.newArrayList();
-        if (excludePatterns != null) {
-            for (String excludePattern : excludePatterns) {
-                excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
-            }
-        }
-        int size = pairs.size();
+        List<PathFilePair> pathFilePairs = createPathFilePairs(searchPattern, recursive);
+        int pathFilePairsSize = pathFilePairs.size();
 
-        String json = "{" + "\"repo\": \"" + repo + "\"," + buildPropsQuery(props) + "\"$or\": [";
-
-        if (size == 0) {
-            json += "{" + buildInnerQuery(".", searchPattern, true, excludePairs, recursive) + "}";
+        String excludeQuery = buildExcludeQuery(excludePatterns, pathFilePairsSize == 0 || recursive);
+        String nePath = buildNePathQuery(pathFilePairsSize == 0 || !searchPattern.contains("/"));
+        aqlQuery.append("{\"repo\": \"").append(repo).append("\",").append(buildPropsQuery(props)).append(nePath).append(excludeQuery).append("\"$or\": [");
+        if (pathFilePairsSize == 0) {
+            aqlQuery.append(buildInnerQuery(".", searchPattern));
         } else {
-            for (int i = 0; i < size; i++) {
-                json += "{" + buildInnerQuery(pairs.get(i).getPath(), pairs.get(i).getFile(), !searchPattern.contains("/"), excludePairs, recursive) + "}";
-
-                if (i + 1 < size) {
-                    json += ",";
-                }
+            for (PathFilePair pair : pathFilePairs) {
+                aqlQuery.append(buildInnerQuery(pair.getPath(), pair.getFile())).append(",");
             }
+            aqlQuery.deleteCharAt(aqlQuery.length() - 1);
         }
-
-        return json + "]}";
+        return aqlQuery.append("]}").toString();
     }
 
     private String prepareSearchPattern(String pattern, boolean startsWithRepo) {
@@ -159,43 +151,48 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
             return "";
         }
         String[] propList = props.split(";");
-        String query = "";
-        for (int i = 0; i < propList.length; i++) {
-            String[] keyVal = propList[i].split("=");
+        StringBuilder query = new StringBuilder();
+        for (String prop : propList) {
+            String[] keyVal = prop.split("=");
             if (keyVal.length != 2) {
-                System.out.print("Invalid props pattern: " + propList[i]);
+                System.out.print("Invalid props pattern: " + prop);
             }
             String key = keyVal[0];
             String value = keyVal[1];
-            query += "\"@" + key + "\": {\"$match\" : \"" + value + "\"},";
+            query.append("\"@").append(key).append("\": {\"$match\" : \"").append(value).append("\"},");
         }
-        return query;
+        return query.toString();
     }
 
-    private String buildInnerQuery(String path, String name, boolean includeRoot, List<PathFilePair> excludePairs, boolean recursive) {
-        StringBuilder excludePattern = new StringBuilder();
-
-        String nePath = "";
-        if (!includeRoot) {
-            nePath = ", {\"path\": {\"$ne\": \".\"}}";
+    private String buildExcludeQuery(String[] excludePatterns, boolean useLocalPath) {
+        if (excludePatterns == null) {
+            return "";
         }
-
-        if (excludePairs != null) {
-            for (PathFilePair singleExcludePattern : excludePairs) {
-                String excludePath = singleExcludePattern.getPath();
-                if (!recursive && ".".equals(excludePath)) {
-                    excludePath = path;
-                }
-                excludePattern.append(String.format(", {\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}}, {\"name\": {\"$nmatch\": \"%s\"}}]}", excludePath, singleExcludePattern.getFile()));
+        List<PathFilePair> excludePairs = Lists.newArrayList();
+        for (String excludePattern : excludePatterns) {
+            excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
+        }
+        StringBuilder excludeQuery = new StringBuilder();
+        for (PathFilePair singleExcludePattern : excludePairs) {
+            String excludePath = singleExcludePattern.getPath();
+            if (!useLocalPath && ".".equals(excludePath)) {
+                excludePath = "*";
             }
+            excludeQuery.append(String.format("\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}, \"name\": {\"$nmatch\": \"%s\"}}],", excludePath, singleExcludePattern.getFile()));
         }
-        return String.format(
-                "\"$and\": [{" +
-                    "\"$and\": [" +
-                        "{\"path\": { \"$match\":" + "\"%s\"}}%s%s]," +
-                    "\"$and\": [" +
-                        "{\"name\": { \"$match\":" + "\"%s\"}}]" +
-                "}]", path, nePath, excludePattern, name);
+        return excludeQuery.toString();
+    }
+
+    private String buildNePathQuery(boolean includeRoot) {
+        return includeRoot ? "" : "\"path\": {\"$ne\": \".\"}, ";
+    }
+
+    private String buildInnerQuery(String path, String name) {
+         return String.format(
+                "{\"$and\": [{" +
+                    "\"path\": { \"$match\": \"%s\"}," +
+                    "\"name\": { \"$match\": \"%s\"}" +
+                "}]}", path, name);
     }
 
     // We need to translate the provided download pattern to an AQL query.
