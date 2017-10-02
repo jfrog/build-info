@@ -58,6 +58,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     private final Map<String, Boolean> flags = Maps.newHashMap();
     private boolean evaluated = false;
     private boolean finished = false;
+	private boolean started = false;
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
 
     private List<BuildInfoBaseTask> artifactoryTasks = null;
@@ -113,6 +114,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public void taskAction() throws IOException {
         try {
             log.debug("Task '{}' activated", getPath());
+			started = true;
             collectProjectBuildInfo();
         } finally {
             synchronized (this) {
@@ -160,7 +162,7 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
                 continue;
             }
             synchronized (t) {
-                if (!t.isFinished()) {
+                if (!t.isFinished() && t.isStarted()) {
                     try {
                         t.wait();
                     } catch (InterruptedException e) {
@@ -249,6 +251,10 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
         return finished;
     }
 
+	public boolean isStarted() {
+		return started;
+	}
+	
     public void setProperties(Map<String, CharSequence> props) {
         if (props == null || props.isEmpty()) {
             return;
