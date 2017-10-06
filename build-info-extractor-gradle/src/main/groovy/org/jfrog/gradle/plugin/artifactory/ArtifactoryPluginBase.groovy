@@ -18,16 +18,15 @@ package org.jfrog.gradle.plugin.artifactory
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
-import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
+import org.jfrog.gradle.plugin.artifactory.task.DeployTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import java.util.concurrent.atomic.AtomicBoolean
 
 import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.DEPLOY_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
@@ -42,6 +41,9 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
         // Then add the build info task
         addArtifactoryPublishTask(project)
+        if(isRootProject(project)) {
+            addDeployTask(project)
+        }
         if (!conv.clientConfig.info.buildStarted) {
             conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
@@ -52,6 +54,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
     protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project)
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
+    protected abstract DeployTask createArtifactoryDeployTask(Project project);
 
     /**
     *  Set the plugin convention closure object
@@ -66,6 +69,10 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         return project.convention.plugins.artifactory
     }
 
+    private static boolean isRootProject(Project prj) {
+        prj.equals(prj.getRootProject());
+    }
+
     /**
      * Add the "ArtifactoryPublish" gradle task (under "publishing" task group)
      */
@@ -78,6 +85,16 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             buildInfo.setGroup(PUBLISH_TASK_GROUP)
         }
         buildInfo
+    }
+
+    private DeployTask addDeployTask(Project project) {
+        DeployTask deployTask = project.tasks.findByName(DEPLOY_TASK_NAME)
+        if (deployTask == null) {
+            log.debug("Configuring deployTask task for project ${project.path}")
+            deployTask = createArtifactoryDeployTask(project)
+            deployTask.setGroup(PUBLISH_TASK_GROUP)
+        }
+        deployTask
     }
 }
 
