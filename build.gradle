@@ -45,6 +45,14 @@ allprojects {
     }
 }
 
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
+
 artifactory {
     contextUrl = 'https://localhost:8080/artifactory'
     //contextUrl = 'https://oss.jfrog.org'
