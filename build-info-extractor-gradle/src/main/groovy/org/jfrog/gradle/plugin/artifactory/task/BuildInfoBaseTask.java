@@ -38,7 +38,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
     public static final String DEPLOY_TASK_NAME = "artifactoryDeploy";
     public static final String BUILD_INFO_TASK_NAME = "artifactoryPublish";
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
-    public static final String PUBLISH_BUILD_INFO = "publishBuildInfo";
     public static final String PUBLISH_IVY = "publishIvy";
     public static final String PUBLISH_POM = "publishPom";
 
@@ -66,13 +65,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     @Input
     public boolean skip = false;
-
-    @Input
-    @Optional
-    @Nullable
-    public Boolean getPublishBuildInfo() {
-        return getFlag(PUBLISH_BUILD_INFO);
-    }
 
     @Input
     @Optional
@@ -192,11 +184,6 @@ public abstract class BuildInfoBaseTask extends DefaultTask {
 
     public void setPublishPom(Object publishPom) {
         setFlag(PUBLISH_POM, toBoolean(publishPom));
-    }
-
-    //Publish build-info to Artifactory (true by default)
-    public void setPublishBuildInfo(Object publishBuildInfo) {
-        setFlag(PUBLISH_BUILD_INFO, toBoolean(publishBuildInfo));
     }
 
     //Publish artifacts to Artifactory (true by default)
