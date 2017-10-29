@@ -352,7 +352,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
 
     /**
      * @return Artifactory version if working against a compatible version of Artifactory
-     * @throws IOException If server not found or it doesn't answer to the version query or it is too old
      */
     public ArtifactoryVersion verifyCompatibleArtifactoryVersion() throws VersionException {
         ArtifactoryVersion version;
@@ -386,7 +385,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      * @param bintrayUploadInfo request body which contains the upload info
      * @return http Response with the response outcome
      * @throws IOException On any connection error
-     * @see org.jfrog.build.api.release.BintrayUploadInfoOverride;
      */
     public BintrayResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
                                          BintrayUploadInfoOverride bintrayUploadInfo) throws IOException, URISyntaxException {

@@ -45,13 +45,13 @@ public class ArtifactSpec {
 
     /**
      * Create a full artifact spec from string notation in the format of:
-     * <p/>
-     * <tt>[configName] artifactNotation key1:val1, key2:val2, key3:val3</tt>
-     * <p/>
-     * artifactNotation is in the format of group:artifact:version:classifier@ext every<br/> Any element in
+     *
+     * [configName] artifactNotation key1:val1, key2:val2, key3:val3
+     *
+     * artifactNotation is in the format of group:artifact:version:classifier@ext every<br> Any element in
      * artifactNotation can contain the * and ? wildcards, for example:
-     * <p/>
-     * <tt></tt>org.acme:*:1.0.?_*:*@tgz</tt>
+     *
+     * org.acme:*:1.0.?_*:*@tgz
      *
      * @param notation
      */

@@ -45,11 +45,12 @@ public class GradleArtifactoryClientConfigUpdater {
 
     /**
      * Returns a configuration handler object out of a Gradle project. This method will aggregate the properties in our
-     * defined hierarchy.<br/> <ol><li>First search for the property as a system property, if found return it.</li>
-     * <li>Second search for the property in the Gradle {@link org.gradle.StartParameter#getProjectProperties} container
-     * and if found there, then return it.</li> <li>Third search for the property in {@link
-     * org.gradle.api.Project#property(String)}</li> <li>if not found, search upwards in the project hierarchy until
-     * reach the root project.</li> <li> if not found at all in this hierarchy return null</li></ol>
+     * defined hierarchy. First search for the property as a system property, if found return it.
+     * Second search for the property in the Gradle {@link org.gradle.StartParameter#getProjectProperties} container
+     * and if found there, then return it. Third search for the property in {@link
+     * org.gradle.api.Project#property(String)}
+     * if not found, search upwards in the project hierarchy until
+     * reach the root project. if not found at all in this hierarchy return null
      *
      * @param project the gradle project with properties for build info client configuration (Usually in start parameter
      *                from CI Server)

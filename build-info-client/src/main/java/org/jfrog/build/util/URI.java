@@ -38,41 +38,32 @@ import java.util.BitSet;
  * This class has the purpose of supportting of parsing a URI reference to
  * extend any specific protocols, the character encoding of the protocol to
  * be transported and the charset of the document.
- * <p/>
+ *
  * A URI is always in an "escaped" form, since escaping or unescaping a
  * completed URI might change its semantics.
- * <p/>
+ *
  * Implementers should be careful not to escape or unescape the same string
  * more than once, since unescaping an already unescaped string might lead to
  * misinterpreting a percent data character as another escaped character,
  * or vice versa in the case of escaping an already escaped string.
- * <p/>
+ *
  * In order to avoid these problems, data types used as follows:
- * <p><blockquote><pre>
+ *
  *   URI character sequence: char
  *   octet sequence: byte
  *   original character sequence: String
- * </pre></blockquote><p>
- * <p/>
+ *
  * So, a URI is a sequence of characters as an array of a char type, which
  * is not always represented as a sequence of octets as an array of byte.
- * <p/>
- * <p/>
  * URI Syntactic Components
- * <p><blockquote><pre>
- * - In general, written as follows:
- *   Absolute URI = &lt;scheme&gt:&lt;scheme-specific-part&gt;
- *   Generic URI = &lt;scheme&gt;://&lt;authority&gt;&lt;path&gt;?&lt;query&gt;
- * <p/>
+ *
  * - Syntax
  *   absoluteURI   = scheme ":" ( hier_part | opaque_part )
  *   hier_part     = ( net_path | abs_path ) [ "?" query ]
  *   net_path      = "//" authority [ abs_path ]
  *   abs_path      = "/"  path_segments
- * </pre></blockquote><p>
- * <p/>
+ *
  * The following examples illustrate URI that are in common use.
- * <pre>
  * ftp://ftp.is.co.za/rfc/rfc1808.txt
  *    -- ftp scheme for File Transfer Protocol services
  * gopher://spinaltap.micro.umn.edu/00/Weather/California/Los%20Angeles
@@ -85,22 +76,17 @@ import java.util.BitSet;
  *    -- news scheme for USENET news groups and articles
  * telnet://melvyl.ucop.edu/
  *    -- telnet scheme for interactive services via the TELNET Protocol
- * </pre>
  * Please, notice that there are many modifications from URL(RFC 1738) and
  * relative URL(RFC 1808).
- * <p/>
  * <b>The expressions for a URI</b>
- * <p><pre>
  * For escaped URI forms
  *  - URI(char[]) // constructor
  *  - char[] getRawXxx() // method
  *  - String getEscapedXxx() // method
  *  - String toString() // method
- * <p/>
  * For unescaped URI forms
  *  - URI(String) // constructor
  *  - String getXXX() // method
- * </pre><p>
  *
  * @author <a href="mailto:jericho@apache.org">Sung-Gu</a>
  * @author <a href="mailto:mbowler@GargoyleSoftware.com">Mike Bowler</a>
@@ -118,7 +104,6 @@ public class URI {
     static {
         percent.set('%');
     }
-
 
     /**
      * BitSet for digit.

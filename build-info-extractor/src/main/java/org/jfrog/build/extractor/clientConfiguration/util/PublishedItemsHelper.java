@@ -37,12 +37,12 @@ import java.util.regex.Pattern;
 public class PublishedItemsHelper {
 
     /**
-     * Splits a given property value to pairs of source and target strings (the splitter is '=>'
+     * Splits a given property value to pairs of source and target strings
      * the source represents the Ant Pattern to search for
      * the target represents the target path to deploy the found artifacts
      * Multi values as acceptable by new lined or comma separated.
      *
-     * @param publishedItemsPropertyValue the string value to split, if the splitter '=>' was not found
+     * @param publishedItemsPropertyValue the string value to split, if the splitter was not found
      *                                    then the value is treated as a source only (target will be "").
      * @return a Map containing the sources as keys and targets as values
      */

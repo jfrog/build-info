@@ -47,12 +47,12 @@ public interface DependenciesDownloader {
 
     /**
      * Receives a set of the resolved files (Those who got downloaded from Artifactory and those who were already existed
-     * locally with the same checksums) And a set of resolved files from patterns with mark for deletion (=!>)
+     * locally with the same checksums) And a set of resolved files from patterns with mark for deletion.
      * For each file, lists the files in the same directory and removes the old ones
      * (meaning those who did not participate in the build resolution and doesn't exist in all resolved files set).
      *
      * @param allResolvesFiles A set of all resolved files (to search in)
-     * @param forDeletionFiles A set of resolved files from patterns with mark for deletion (=!>)
+     * @param forDeletionFiles A set of resolved files from patterns with mark for deletion.
      */
     void removeUnusedArtifactsFromLocal(Set<String> allResolvesFiles, Set<String> forDeletionFiles) throws IOException;
 

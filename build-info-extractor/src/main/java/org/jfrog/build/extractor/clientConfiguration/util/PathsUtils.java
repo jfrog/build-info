@@ -120,8 +120,6 @@ public class PathsUtils {
      * @param targetPath the path which the file name will be taken targetDir/targetPath/targetFileName
      * @param srcPath    the path which the file name will be replace srcDir/srcPath/srcFileName
      * @return map with the new targetPath and srcPath as values.
-     * @pre targetPath and srcPath are not empty.
-     * @pre targetPath Contains "/"
      */
     public static Map<String, String> replaceFilesName(String targetPath, String srcPath) {
         String targetDirPath = StringUtils.substringBeforeLast(targetPath, "/");

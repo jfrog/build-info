@@ -13,9 +13,9 @@ public abstract class PatternMatcher {
     }
 
     /**
-     * Indicates whether the given path conflicts with the given patterns.<br/> A path will conflict if: <ul> <li> The
-     * include patterns list is not empty, and the path does not match any contained pattern. </li> <li> -Or- </li> <li>
-     * The exclude patterns list is not empty, and the path does matches at-least one contained pattern. </li> </ul>
+     * Indicates whether the given path conflicts with the given patterns.<br> A path will conflict if: The
+     * include patterns list is not empty, and the path does not match any contained pattern. -Or-
+     * The exclude patterns list is not empty, and the path does matches at-least one contained pattern.
      *
      * @param path     Path to check
      * @param patterns Patterns to match
@@ -55,8 +55,8 @@ public abstract class PatternMatcher {
     }
 
     /**
-     * <p><b>THIS CODE WAS BORROWED FROM {@link org.apache.tools.ant.types.selectors.SelectorUtils}</b></p>
-     * <p/>
+     * THIS CODE WAS BORROWED FROM org.apache.tools.ant.types.selectors.SelectorUtils
+     *
      * Tests whether or not a string matches against a pattern. The pattern may contain two special characters:<br> '*'
      * means zero or more characters<br> '?' means one and only one character
      *

@@ -1,14 +1,9 @@
 package org.jfrog.build.api.dependency.pattern;
 
-
-/**
- * Build dependency, as converted from user input like
- * "libs-release-local:com/goldin/plugins/gradle/0.1.1/*.jar;status+=prod@gradle-plugins :: Build :: Gradle#LATEST => many-jars-build"
- */
 public class BuildDependencyPattern extends DependencyPattern {
 
-    private String buildName;                 // "gradle-plugins :: Build :: Gradle"
-    private String buildNumber;               // "LATEST"
+    private String buildName;
+    private String buildNumber;
 
     public BuildDependencyPattern(String pattern, String matrixParams, String targetPattern, PatternType patternType,
             String buildName, String buildNumber) {
