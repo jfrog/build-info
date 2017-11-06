@@ -103,15 +103,18 @@ public class GradleArtifactoryClientConfigUpdater {
         }
 
         // Build start (was set by the plugin - no need to make up a fallback val)
-        String buildStartedIso = config.info.getBuildStarted();
-        if (StringUtils.isBlank(buildStartedIso)) {
+        String buildTimestamp = config.info.getBuildTimestamp();
+        if (StringUtils.isBlank(buildTimestamp)) {
+            String buildStartedIso = config.info.getBuildStarted();
             Date buildStartDate;
             try {
                 buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
             } catch (ParseException e) {
                 throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
             }
-            config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, String.valueOf(buildStartDate.getTime()));
+            buildTimestamp = String.valueOf(buildStartDate.getTime());
+            config.info.setBuildTimestamp(buildTimestamp);
+            config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
         }
 
         // Build agent
