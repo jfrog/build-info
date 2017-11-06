@@ -10,7 +10,7 @@
     {
       "pattern": "${WORKSPACE}/files/a/.*",
       "target": "${REPO}/${TEST_SPACE}/35_flat_recursive_regexp_parenthesisFullPath/",
-      "flat": "false",
+      "flat": "true",
       "recursive": "true",
       "regexp": "true"
     },

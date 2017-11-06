@@ -214,8 +214,7 @@ public class PublishedItemsHelper {
      */
     @Deprecated
     public static Multimap<String, File> wildCardBuildPublishingData(
-            File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp)
-            throws IOException {
+            File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp) {
         if (!regexp) {
             pattern = PathsUtils.pathToRegExp(pattern);
         }

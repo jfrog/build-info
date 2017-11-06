@@ -155,20 +155,27 @@ public class UploadSpecHelper {
     public static Multimap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
                                                            boolean flat, Pattern regexPattern, boolean absolutePath) {
         Multimap<String, File> filePathsMap = HashMultimap.create();
+        boolean isTargetDirectory = StringUtils.endsWith(targetPath, "/");
 
         for (File file : files) {
+            String sourcePath;
             String fileTargetPath = targetPath;
-            if (StringUtils.endsWith(fileTargetPath, "/") && !flat) {
+            if (isTargetDirectory && !flat) {
                 fileTargetPath = calculateFileTargetPath(workspaceDir, file, targetPath);
-                // handle win file system
-                fileTargetPath = fileTargetPath.replace('\\', '/');
             }
             if (absolutePath) {
-                fileTargetPath = PathsUtils.reformatRegexp(file.getPath(), fileTargetPath, regexPattern);
+                if (!flat) {
+                    if (isTargetDirectory) {
+                        fileTargetPath = targetPath + file.getPath();
+                    } else {
+                        fileTargetPath = targetPath;
+                    }
+                }
+                sourcePath = file.getPath();
             } else {
-                fileTargetPath = PathsUtils.reformatRegexp(
-                        getRelativePath(workspaceDir, file), fileTargetPath, regexPattern);
+                sourcePath = getRelativePath(workspaceDir, file);
             }
+            fileTargetPath = PathsUtils.reformatRegexp(sourcePath, fileTargetPath.replace('\\', '/'), regexPattern);
             filePathsMap.put(fileTargetPath, file);
         }
         return filePathsMap;

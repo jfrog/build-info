@@ -102,21 +102,6 @@ public class SpecsHelper {
      *
      * @param uploadJson The required spec represented as Spec object
      * @param workspace File object that represents the workspace
-     * @return Set of DeployDetails that was calculated from the given params
-     * @throws IOException Thrown if any error occurs while reading the file, calculating the
-     *                     checksums or in case of any file system exception
-     * @throws NoSuchAlgorithmException Thrown if any of the given algorithms aren't supported
-     */
-    private Set<DeployDetails> getDeployDetails(Spec uploadJson, File workspace)
-            throws IOException, NoSuchAlgorithmException {
-        return getDeployDetails(uploadJson, workspace, null);
-    }
-
-    /**
-     * Returns Set of deploy details that represents the given spec
-     *
-     * @param uploadJson The required spec represented as Spec object
-     * @param workspace File object that represents the workspace
      * @param buildProperties properties to add to all the files
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
@@ -132,7 +117,7 @@ public class SpecsHelper {
             log.debug(String.format("Getting deploy details from the following json: \n %s ", uploadFile.toString()));
             Multimap<String, File> targetPathToFilesMap = buildTargetPathToFiles(workspace ,uploadFile);
             for (Map.Entry<String, File> entry : targetPathToFilesMap.entries()) {
-                artifactsToDeploy.addAll(buildDeployDetailsFromFileEntry(entry, uploadFile, buildProperties));
+                artifactsToDeploy.add(buildDeployDetailsFromFileEntry(entry, uploadFile, buildProperties));
             }
         }
         return artifactsToDeploy;
@@ -197,10 +182,9 @@ public class SpecsHelper {
      * @throws IOException in case of IO problem.
      * @throws NoSuchAlgorithmException if appropriate checksum algorithm was not found.
      */
-    private Set<DeployDetails> buildDeployDetailsFromFileEntry(Map.Entry<String, File> fileEntry, FileSpec uploadFile,
+    private DeployDetails buildDeployDetailsFromFileEntry(Map.Entry<String, File> fileEntry, FileSpec uploadFile,
                                                                Multimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
-        Set<DeployDetails> result = Sets.newHashSet();
         String targetPath = fileEntry.getKey();
         File artifactFile = fileEntry.getValue();
         String path = UploadSpecHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
@@ -224,9 +208,8 @@ public class SpecsHelper {
         if (buildProperties != null && !buildProperties.isEmpty()) {
             builder.addProperties(buildProperties);
         }
-        result.add(builder.build());
 
-        return result;
+        return builder.build();
     }
 
     private Multimap<String, File> buildTargetPathToFiles(File workspace, FileSpec uploadFile) throws IOException {

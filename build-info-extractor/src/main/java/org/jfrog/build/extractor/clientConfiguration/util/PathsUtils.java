@@ -19,13 +19,11 @@ public class PathsUtils {
         String target = destString;
         Matcher matcher = regexPattern.matcher(sourceString.replace("\\", "/"));
         if (matcher.find()) {
-            int groupCount = matcher.groupCount();
-            for (int i = 1; i <= groupCount; i++) {
+            for (int i = 1; i <= matcher.groupCount(); i++) {
                 String currentGroup = matcher.group(i);
                 if (currentGroup == null) {
                     continue;
                 }
-                currentGroup.replace("\\", "/");
                 target = target.replace("{" + i + "}", currentGroup);
             }
         }
