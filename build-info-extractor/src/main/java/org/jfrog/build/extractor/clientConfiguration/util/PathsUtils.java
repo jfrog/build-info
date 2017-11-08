@@ -97,7 +97,7 @@ public class PathsUtils {
                 // Escape special regexp-characters
                 case '[': case ']': case '$': case '^':
                 case '.': case '{': case '}': case '|':
-                case '\\':
+                case '\\': case '+':
                     sb.append("\\");
                     sb.append(c);
                     break;
