@@ -91,6 +91,8 @@ public class GradleArtifactoryClientConfigUpdater {
         if (StringUtils.isBlank(buildName)) {
             buildName = project.getRootProject().getName();
             config.info.setBuildName(buildName);
+        }
+        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_NAME))) {
             config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
         }
 
@@ -99,6 +101,8 @@ public class GradleArtifactoryClientConfigUpdater {
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = new Date().getTime() + "";
             config.info.setBuildNumber(buildNumber);
+        }
+        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_NUMBER))) {
             config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
         }
 
@@ -114,6 +118,8 @@ public class GradleArtifactoryClientConfigUpdater {
             }
             buildTimestamp = String.valueOf(buildStartDate.getTime());
             config.info.setBuildTimestamp(buildTimestamp);
+        }
+        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_TIMESTAMP))) {
             config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
         }
 

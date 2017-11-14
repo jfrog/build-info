@@ -614,7 +614,6 @@ public class ArtifactoryClientConfiguration {
         public abstract String getContextUrl();
 
         public void addMatrixParam(String key, String value) {
-            ensureImmutableMatrixParams();
             if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
                 return;
             }
@@ -628,16 +627,25 @@ public class ArtifactoryClientConfiguration {
             props.put(key, value);
         }
 
+        public String getMatrixParam(String key) {
+            if (StringUtils.isBlank(key)) {
+                return null;
+            }
+            String matrixParamPrefix = getMatrixParamPrefix();
+            if (!key.startsWith(matrixParamPrefix)) {
+                key = matrixParamPrefix + key;
+            }
+            return props.get(key);
+        }
+
         // INTERNAL METHOD
         public void addMatrixParams(Map<String, String> vars) {
-            ensureImmutableMatrixParams();
             for (Map.Entry<String, String> entry : vars.entrySet()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
         }
 
         public void addMatrixParams(ArrayListMultimap<String, String> vars) {
-            ensureImmutableMatrixParams();
             for (Map.Entry<String, String> entry : vars.entries()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
@@ -657,13 +665,6 @@ public class ArtifactoryClientConfiguration {
             this.calculatedMatrixParams = ImmutableMap.copyOf(result);
             return calculatedMatrixParams;
         }
-
-        private void ensureImmutableMatrixParams() {
-            if (calculatedMatrixParams != null) {
-                log.debug("Matrix params already set and cannot be modified");
-            }
-        }
-
     }
 
     public class LicenseControlHandler extends PrefixPropertyHandler {
