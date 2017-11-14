@@ -41,7 +41,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask;
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import javax.annotation.Nullable;
 import java.io.File;
@@ -113,7 +113,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
-            BuildInfoBaseTask buildInfoTask = getBuildInfoTask(project);
+            ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
             if (buildInfoTask != null && buildInfoTask.hasModules()) {
                 bib.addModule(extractModule(project));
             }
@@ -231,14 +231,14 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
         return build;
     }
 
-    private BuildInfoBaseTask getBuildInfoTask(Project project) {
-        Set<Task> tasks = project.getTasksByName(BuildInfoBaseTask.BUILD_INFO_TASK_NAME, false);
+    private ArtifactoryTask getBuildInfoTask(Project project) {
+        Set<Task> tasks = project.getTasksByName(ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME, false);
         if (tasks.isEmpty()) {
             return null;
         }
-        BuildInfoBaseTask buildInfoTask = (BuildInfoBaseTask) tasks.iterator().next();
-        if (taskDidWork(buildInfoTask)) {
-            return buildInfoTask;
+        ArtifactoryTask artifactoryTask = (ArtifactoryTask)tasks.iterator().next();
+        if (taskDidWork(artifactoryTask)) {
+            return artifactoryTask;
         }
         return null;
     }
@@ -246,10 +246,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
     /**
      * Determines if the task actually did any work.
      * This methods wraps Gradle's task.getState().getDidWork().
-     * @param task  The BuildInfoBaseTask
+     * @param task  The ArtifactoryTask
      * @return      true if the task actually did any work.
      */
-    private boolean taskDidWork(BuildInfoBaseTask task) {
+    private boolean taskDidWork(ArtifactoryTask task) {
         try {
             return task.getState().getDidWork();
         } catch (NoSuchMethodError error) {
@@ -266,7 +266,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
     public Module extractModule(Project project) {
         String artifactName = project.getName();
-        BuildInfoBaseTask task = getBuildInfoTask(project);
+        ArtifactoryTask task = getBuildInfoTask(project);
         if (task != null) {
             artifactName = project.getName();
         }

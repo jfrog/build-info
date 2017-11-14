@@ -12,13 +12,12 @@ import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-
 import java.util.concurrent.ConcurrentHashMap
 
-import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
 
 /**
  * @author Lior Hasson
@@ -41,7 +40,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     @Override
     void afterEvaluate(Project project, ProjectState state) {
-        Set<Task> tasks = project.getTasksByName(BUILD_INFO_TASK_NAME, false)
+        Set<Task> tasks = project.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
         artifactoryTasks.addAll(tasks)
     }
 
@@ -49,30 +48,29 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
         // Make sure the plugin is applied to the root project.
         gradle.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
         // Configure the artifactoryPublish tasks. Deployment happens on task execution.
-        Set<Task> tasks = gradle.rootProject.getTasksByName(BUILD_INFO_TASK_NAME, false)
+        Set<Task> tasks = gradle.rootProject.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
         artifactoryTasks.addAll(tasks)
-        artifactoryTasks.each { BuildInfoBaseTask bit ->
-            if (!bit.isEvaluated()) {
-                evaluate(bit)
+        artifactoryTasks.each { ArtifactoryTask artifactoryTask ->
+            if (!artifactoryTask.isEvaluated()) {
+                evaluate(artifactoryTask)
             }
         }
     }
 
-    private void evaluate(BuildInfoBaseTask bit) {
-        ArtifactoryClientConfiguration configuration = null;
+    private void evaluate(ArtifactoryTask artifactoryTask) {
         ArtifactoryPluginConvention convention =
-                ArtifactoryPluginUtil.getArtifactoryConvention(bit.project)
+                ArtifactoryPluginUtil.getArtifactoryConvention(artifactoryTask.project)
 
         if (convention != null) {
             ArtifactoryClientConfiguration clientConfig = convention.getClientConfig()
             // Fill-in the client config for the global, then adjust children project
-            GradleArtifactoryClientConfigUpdater.update(clientConfig, bit.project)
+            GradleArtifactoryClientConfigUpdater.update(clientConfig, artifactoryTask.project)
             ArtifactoryClientConfiguration.ResolverHandler resolver =
-                    ArtifactoryPluginUtil.getResolverHandler(bit.project)
+                    ArtifactoryPluginUtil.getResolverHandler(artifactoryTask.project)
             if (resolver != null) {
-                defineResolvers(bit.project, resolver)
+                defineResolvers(artifactoryTask.project, resolver)
             }
-            bit.projectsEvaluated()
+            artifactoryTask.projectsEvaluated()
         }
     }
 

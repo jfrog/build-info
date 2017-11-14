@@ -20,13 +20,13 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
-import org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.BUILD_INFO_TASK_NAME
-import static org.jfrog.gradle.plugin.artifactory.task.BuildInfoBaseTask.DEPLOY_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.DEPLOY_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
@@ -41,7 +41,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
         // Then add the build info task
         addArtifactoryPublishTask(project)
-        if(isRootProject(project)) {
+        if (isRootProject(project)) {
             addDeployTask(project)
         }
         if (!conv.clientConfig.info.buildStarted) {
@@ -52,16 +52,16 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
     }
 
-    protected abstract BuildInfoBaseTask createArtifactoryPublishTask(Project project)
+    protected abstract ArtifactoryTask createArtifactoryPublishTask(Project project)
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
     protected abstract DeployTask createArtifactoryDeployTask(Project project);
 
     /**
-    *  Set the plugin convention closure object
-    *  artifactory {
-    *      ...
-    *  }
-    */
+     *  Set the plugin convention closure object
+     *  artifactory {
+     *      ...
+     *  }
+     */
     private ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
         if (project.convention.plugins.artifactory == null) {
             project.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
@@ -69,22 +69,21 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         return project.convention.plugins.artifactory
     }
 
-    private static boolean isRootProject(Project prj) {
-        prj.equals(prj.getRootProject());
+    private static boolean isRootProject(Project project) {
+        project.equals(project.getRootProject())
     }
 
     /**
      * Add the "ArtifactoryPublish" gradle task (under "publishing" task group)
      */
-    private BuildInfoBaseTask addArtifactoryPublishTask(Project project) {
-        BuildInfoBaseTask buildInfo = project.tasks.findByName(BUILD_INFO_TASK_NAME)
-        if (buildInfo == null) {
-            def isRoot = project.equals(project.getRootProject())
-            log.debug("Configuring buildInfo task for project ${project.path}: is root? ${isRoot}")
-            buildInfo = createArtifactoryPublishTask(project)
-            buildInfo.setGroup(PUBLISH_TASK_GROUP)
+    private ArtifactoryTask addArtifactoryPublishTask(Project project) {
+        ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
+        if (artifactoryTask == null) {
+            log.debug("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            artifactoryTask = createArtifactoryPublishTask(project)
+            artifactoryTask.setGroup(PUBLISH_TASK_GROUP)
         }
-        buildInfo
+        artifactoryTask
     }
 
     private DeployTask addDeployTask(Project project) {
@@ -97,4 +96,3 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         deployTask
     }
 }
-
