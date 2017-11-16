@@ -84,9 +84,9 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
 
+        props.putAll(getArtifactoryPasswords());
         props.putAll(existingProps);
         props.putAll(System.getProperties());
-        props.putAll(getArtifactoryPasswords());
 
         return props;
     }
