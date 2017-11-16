@@ -15,10 +15,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.maven.MavenPublication;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Optional;
+import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -81,6 +78,11 @@ public class ArtifactoryTask extends DefaultTask {
         publications.addAll(ivyPublications);
         publications.addAll(mavenPublications);
         return publications;
+    }
+
+    @TaskAction
+    public void taskAction() throws IOException {
+        log.debug("Task '{}' activated", getPath());
     }
 
     public void checkDependsOnArtifactsToPublish() {
