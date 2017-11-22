@@ -119,6 +119,8 @@ public class DeployTask extends DefaultTask {
                     }
                     allDeployDetails.addAll(artifactoryTask.deployDetails);
                 }
+            } else {
+                log.debug("task '{}' did no work", artifactoryTask.getPath());
             }
         }
 
