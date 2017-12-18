@@ -210,7 +210,6 @@ public class PublishedItemsHelper {
      * @param pattern     the Ant pattern to calculate the files from
      * @param targetPath  the target path for deployment of a file
      * @return a Multimap containing the targets as keys and the files as values
-     * @throws IOException in case of any file system exception
      */
     @Deprecated
     public static Multimap<String, File> wildCardBuildPublishingData(
