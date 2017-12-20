@@ -67,6 +67,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties props = new Properties();
+        addPropsFromCommandSystemProp(existingProps, log);
         String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
         if (StringUtils.isNotBlank(propsFilePath)) {
             File propertiesFile = new File(propsFilePath);
@@ -156,12 +157,10 @@ public abstract class BuildInfoExtractorUtils {
             File propertiesFile = new File(propsFilePath);
             InputStream inputStream = null;
             try {
-                if (propertiesFile.exists()) {
-                    inputStream = new FileInputStream(propertiesFile);
-                    Properties propertiesFromFile = new Properties();
-                    propertiesFromFile.load(inputStream);
-                    props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
-                }
+                inputStream = new FileInputStream(propertiesFile);
+                Properties propertiesFromFile = new Properties();
+                propertiesFromFile.load(inputStream);
+                props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
             } catch (IOException e) {
                 throw new RuntimeException(
                         "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
@@ -309,6 +308,24 @@ public abstract class BuildInfoExtractorUtils {
 
         public boolean apply(Object o) {
             return o != null && ((String) o).startsWith(prefix);
+        }
+    }
+
+    private static void addPropsFromCommandSystemProp(Properties additionalProps, Log log) {
+        // Bamboo ivy should read password and props file location from system property named "sun.java.command"
+        String commandKey = "sun.java.command";
+        String[] keys = {BuildInfoConfigProperties.PROP_PROPS_FILE, "artifactory.publish.password"};
+        String command = System.getProperty(commandKey);
+        if (StringUtils.isNotBlank(command)) {
+            String[] commandParts = StringUtils.split(command, " ");
+            for (String commandPart : commandParts) {
+                for (String key : keys) {
+                    if (commandPart.startsWith("-D" + key)) {
+                        additionalProps.put(key, StringUtils.split(commandPart, "=")[1].trim());
+                        log.debug(String.format("Adding property %s from the command property: %s", key, commandKey) );
+                    }
+                }
+            }
         }
     }
 }
