@@ -62,6 +62,7 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
 
+import static org.jfrog.build.client.ArtifactoryHttpClient.encodePath;
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
 
 /**
@@ -332,15 +333,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      * @throws IOException On any connection error
      */
     public ArtifactoryUploadResponse deployArtifact(DeployDetails details) throws IOException {
-        StringBuilder deploymentPathBuilder = new StringBuilder(artifactoryUrl);
-        deploymentPathBuilder.append("/").append(details.getTargetRepository());
-        if (!details.getArtifactPath().startsWith("/")) {
-            deploymentPathBuilder.append("/");
-        }
-        deploymentPathBuilder.append(details.getArtifactPath());
-        String deploymentPath = deploymentPathBuilder.toString();
+        List<String> pathComponents = new ArrayList<String>();
+        pathComponents.add(encodeUrl(artifactoryUrl));
+        pathComponents.add(encodePath(details.getTargetRepository()));
+        pathComponents.add(encodePath(details.getArtifactPath()));
+        String deploymentPath = StringUtils.join(pathComponents, "/");
+
         log.info("Deploying artifact: " + deploymentPath);
-        deploymentPath = encodeUrl(deploymentPath);
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {

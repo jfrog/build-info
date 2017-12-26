@@ -38,6 +38,9 @@ import org.jfrog.build.util.URI;
 import java.io.IOException;
 import java.io.InputStream;
 
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
+import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
+
 /**
  * @author Noam Y. Tenne
  */
@@ -71,9 +74,17 @@ public class ArtifactoryHttpClient {
     }
 
     public static String encodeUrl(String unescaped) {
-        byte[] rawdata = URLCodec.encodeUrl(URI.allowed_query,
-                org.apache.commons.codec.binary.StringUtils.getBytesUtf8(unescaped));
-        return org.apache.commons.codec.binary.StringUtils.newStringUsAscii(rawdata);
+        byte[] rawData = URLCodec.encodeUrl(URI.allowed_query, getBytesUtf8(unescaped));
+        return newStringUsAscii(rawData);
+    }
+
+    public static String encodePath(String unescaped) {
+        URLCodec codec = new URLCodec();
+        String[] split = StringUtils.split(unescaped, "/");
+        for (int i = 0; i < split.length; i++) {
+            split[i] = newStringUsAscii(codec.encode(getBytesUtf8(split[i])));
+        }
+        return StringUtils.join(split, "/");
     }
 
     /**
