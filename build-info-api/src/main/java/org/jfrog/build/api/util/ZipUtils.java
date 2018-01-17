@@ -1,7 +1,5 @@
 package org.jfrog.build.api.util;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
@@ -148,24 +146,8 @@ public abstract class ZipUtils {
     }
 
     private static void verifySupportedExtension(String extension) {
-        Set<String> supportedExtensions = Sets.newHashSet();
-        try {
-            String supportedExtensionsNames = "zip,tar,tar.gz,tgz";
-            supportedExtensions = Sets.newHashSet(
-                    Iterables.transform(Sets.newHashSet(StringUtils.split(supportedExtensionsNames, ",")),
-                            new Function<String, String>() {
-                                @Override
-                                public String apply(String input) {
-                                    String result = StringUtils.isBlank(input) ? input : StringUtils.trim(input);
-                                    return StringUtils.equals(result, "tar.gz") ? "gz" : result;
-                                }
-                            }
-                    )
-            );
-        } catch (Exception e) {
-        }
-
-        if (StringUtils.isBlank(extension) || !supportedExtensions.contains(extension)) {
+        Set<String> supportedExtensions = Sets.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
+        if (!supportedExtensions.contains(StringUtils.trim(extension))) {
             throw new IllegalArgumentException("Unsupported archive extension: '" + extension + "'");
         }
     }
@@ -173,7 +155,6 @@ public abstract class ZipUtils {
     /**
      * Extracts the given zip entry
      *
-     * @param sourcePath           Path of archive that is being extracted
      * @param destinationDirectory Extracted file destination
      * @param zipInputStream       Input stream of archive
      * @param entryName            Entry to extract
