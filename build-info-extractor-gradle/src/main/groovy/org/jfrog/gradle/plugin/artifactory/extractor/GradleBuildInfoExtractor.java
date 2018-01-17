@@ -113,9 +113,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Bui
 
         Set<Project> allProjects = rootProject.getAllprojects();
         for (Project project : allProjects) {
-            ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
-            if (buildInfoTask != null && buildInfoTask.hasModules()) {
-                bib.addModule(extractModule(project));
+            if(project.getState().getExecuted()) {
+                ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
+                if (buildInfoTask != null && buildInfoTask.hasModules()) {
+                    bib.addModule(extractModule(project));
+                }
             }
         }
         String parentName = clientConf.info.getParentBuildName();
