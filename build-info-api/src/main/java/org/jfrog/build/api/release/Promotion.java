@@ -5,10 +5,7 @@ import org.jfrog.build.api.Build;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Noam Y. Tenne
@@ -32,6 +29,7 @@ public class Promotion implements Serializable {
     private Set<String> scopes;
     private Map<String, Collection<String>> properties;
     private boolean failFast = true;
+    private List<BuildArtifactsMapping> mappings;
 
     public Promotion() {
     }
@@ -160,6 +158,14 @@ public class Promotion implements Serializable {
 
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
+    }
+
+    public List<BuildArtifactsMapping> getMappings() {
+        return mappings;
+    }
+
+    public void setMappings(List<BuildArtifactsMapping> mappings) {
+        this.mappings = mappings;
     }
 
     private Date getTimestampAsDate(String timestamp) {
