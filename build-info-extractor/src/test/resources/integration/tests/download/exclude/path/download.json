@@ -1,0 +1,18 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/a/b/*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true",
+      "excludePatterns": ["*/b/b1.in" ,"*ant*"]
+    },
+    {
+      "pattern": "${LOCAL_REPO}/a/*a*",
+      "target": "",
+      "flat": "true",
+      "recursive": "false",
+      "excludePatterns": ["*/a1.i*", "*a2.i*"]
+    }
+  ]
+}

@@ -1,6 +1,0 @@
-{"repo": "${REPO}",
-  "$or": [
-    {"$and": [{"path": {"$match":"${TEST_SPACE}"},"name":{"$match":"*"}}]},
-    {"$and": [{"path": {"$match":"${TEST_SPACE}/*"},"name":{"$match":"*"}}]}
-  ]
-}

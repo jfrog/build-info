@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/*",
+      "target": "${LOCAL_REPO}/pare(nth)esis/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

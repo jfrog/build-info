@@ -1,6 +1,0 @@
-{"repo": "${REPO}",
-  "$or": [
-    {"$and": [{"path": {"$match":"."},"name":{"$match":"a1.in"}}]},
-    {"$and": [{"path": {"$match":"files/a"},"name":{"$match":"a1.in"}}]}
-  ]
-}

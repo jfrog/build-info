@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/.*2.*",
+      "target": "${LOCAL_REPO}/",
+      "props": "p1=v1;p2=v2",
+      "regexp": "true"
+    }
+  ]
+}

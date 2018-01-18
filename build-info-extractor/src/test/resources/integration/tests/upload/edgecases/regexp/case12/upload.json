@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/./((?!.*c/).*)",
+      "target": "${LOCAL_REPO}/",
+      "regexp": "true",
+      "flat": "false"
+    }
+  ]
+}

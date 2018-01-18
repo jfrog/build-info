@@ -1,550 +1,180 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import com.google.common.collect.Lists;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.extractor.clientConfiguration.util.AqlDependenciesHelper;
-import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderImpl;
-import org.testng.ITestContext;
+import org.testng.Assert;
+import org.testng.Reporter;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.escapeSpecialChars;
-
 /**
  * Integration tests for the SpecHelper.
- * Performs tests using the provided by IntegrationTestsBase resources (such as Artifactory, repo, and credentials).
- * The tests will clean the environment except in case of failure. In case of failure the Artifacts will remain to make investigation simpler.
+ * Performs tests using the resources provided by IntegrationTestsBase (such as Artifactory, localRepo, and credentials).
  */
 @Test
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
-
     private static final String TEST_SPACE = "bi_test_space";
-    private static final String SEPARATOR = File.separator;
-    private static final String TEST_WORKSPACE = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE;
+    private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
     private SpecsHelper specsHelper = new SpecsHelper(log);
 
-    /**
-     * Performing a massive upload to multiple different patterns with multiple flags combinations.
-     * Every spec in "uploadTest-uploadSpec-wildcard.json" and "uploadTest-uploadSpec-regexp.json" represents a test case and should have a running serial number.
-     * The test numeration is done to make investigation simpler.
-     * The test uploads the files by the provided upload specs and then downloads all the content of the TEST_SPACE folder to a temp directory.
-     * In the end it compares the expected paths with the created in the temp directory paths .
-     */
-    public void testUploadSpec() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "upload-test";
-        List<Artifact> uploadedArtifacts = uploadTestFiles(innerDir);
-
-        // Download the uploaded files
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-downloadSpec.json", "", false);
-        List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadedArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of downloaded and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d artifacts and downloaded - %d",
-                        uploadedArtifacts.size(), downloadedArtifacts.size());
-
-        // Assert all expected files exists
-        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
-        for (String path : ConstData.UPLOAD_RESULTS) {
-            assert downloadedFiles.contains(
-                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded
-        assert ConstData.UPLOAD_RESULTS.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.UPLOAD_RESULTS.length, downloadedFiles.size());
-    }
-
-    public void testSpecUploadExplode() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "upload-explode-test";
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-explode.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-        String aql = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-parenthesisAql.json", "", false);
-        Set<DownloadableArtifact> foundArtifacts = performAql(aql);
-        List<String> foundPaths = getFoundPaths(foundArtifacts);
-        assert foundPaths.size() == 1 : "Was expected to find only one ant-antlr-1.6.5.jar file.";
-        assert foundPaths.get(0).contains("ant-antlr-1.6.5.jar")  : "Was expected to ant-antlr-1.6.5.jar file.";
-    }
-
-    public void testSpecUploadExcludeWildcard() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "upload-exclude-wildcard-test";
-
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specUploadExcludeWildcard.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Download the uploaded files
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specDownloadExclude.json", "", false);
-        List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadedArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of downloaded and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d artifacts and downloaded - %d",
-                        uploadedArtifacts.size(), downloadedArtifacts.size());
-
-        // Assert all expected files are exists
-        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
-        for (String path : ConstData.UPLOAD_EXCLUDE_RESULTS) {
-            assert downloadedFiles.contains(
-                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded
-        assert ConstData.UPLOAD_EXCLUDE_RESULTS.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.UPLOAD_EXCLUDE_RESULTS.length, downloadedFiles.size());
-    }
-
-    public void testSpecUploadExcludeRegex() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "upload-exclude-regex-test";
-
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specUploadExcludeRegex.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Download the uploaded files
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specDownloadExclude.json", "", false);
-        List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadedArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of downloaded and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d artifacts and downloaded - %d",
-                        uploadedArtifacts.size(), downloadedArtifacts.size());
-
-        // Assert all expected files are exists
-        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
-        for (String path : ConstData.UPLOAD_EXCLUDE_RESULTS) {
-            assert downloadedFiles.contains(
-                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded
-        assert ConstData.UPLOAD_EXCLUDE_RESULTS.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.UPLOAD_EXCLUDE_RESULTS.length, downloadedFiles.size());
-    }
-
-    public void testSpecUploadExcludeFromPath() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "upload-exclude-from-path-test";
-
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specUploadExcludeFromPath.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Download the uploaded files
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-specDownloadExclude.json", "", false);
-        List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadedArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of downloaded and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d artifacts and downloaded - %d",
-                        uploadedArtifacts.size(), downloadedArtifacts.size());
-
-        // Assert all expected files are exists
-        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
-        for (String path : ConstData.UPLOAD_EXCLUDE_FROM_PATH_RESULTS) {
-            assert downloadedFiles.contains(
-                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded
-        assert ConstData.UPLOAD_EXCLUDE_FROM_PATH_RESULTS.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.UPLOAD_EXCLUDE_FROM_PATH_RESULTS.length, downloadedFiles.size());
-    }
-
-    public List<Artifact> uploadTestFiles(String innerDir) throws IOException, URISyntaxException, NoSuchAlgorithmException {
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-        // Execute simple wildcard upload
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard.json", workspace, false);
-
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-        // Execute simple regexp upload
-        uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient));
-        return uploadedArtifacts;
-    }
-
-    /**
-     * Testing upload spec that contains parenthesis in the path or in the pattern.
-     * Only regexp upload supports parenthesis in the pattern (as part of the path).
-     */
-    public void testParenthesisUploadSpec() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String parenthesisDirName = "dir(with)parenthesis";
-        String testDirName = "upload-parenthesis-test";
-        String innerDir = testDirName + "/" + parenthesisDirName;
-        File artifactsSourceDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        File artifactsUploadDir = new File(System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir).getCanonicalFile();
-        String workspace = artifactsUploadDir.getCanonicalPath();
-
-        FileUtils.copyDirectory(artifactsSourceDir, artifactsUploadDir);
-        // Execute the wildcard upload
-        String uploadSpec = injectVariables(innerDir,
-                "/specs/integrationTestSpecs/uploadTest-uploadSpec-wildcard-parenthesis.json", workspace, false);
-
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), buildInfoClient);
-        // Execute the regexp upload
-        uploadSpec = injectVariables(innerDir,
-                "/specs/integrationTestSpecs/uploadTest-uploadSpec-regexp-parenthesis.json", workspace, true);
-        uploadedArtifacts.addAll(specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsUploadDir, new HashMap<String, String>(), buildInfoClient));
-        // Do AQL query to get the uploaded files
-        String aql = injectVariables(innerDir,
-                "/specs/integrationTestSpecs/uploadTest-parenthesisAql.json", "", false);
-        Set<DownloadableArtifact> foundArtifacts = performAql(aql);
-
-
-        // Asserting returned results length
-        assert foundArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of found in Artifactory and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d found in Artifactory - %d",
-                        uploadedArtifacts.size(), foundArtifacts.size());
-
-        // Assert all expected files are exists
-        List<String> expectedResults = getExpectedResults(ConstData.UPLOAD_PARENTHESIS_RESULTS, innerDir);
-        List<String> foundPaths = getFoundPaths(foundArtifacts);
-        for (String expectedResult : expectedResults) {
-            assert foundPaths.contains(expectedResult) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            expectedResult);
-        }
-    }
-
-    /**
-     * Performing a massive download with multiple flags combinations.
-     * Every spec in "downloadTest-downloadSpec.json" represents a test case and should have a running serial number.
-     * The test numeration is done to make investigation simpler.
-     * As preparation the test uploads files by "downloadTest-uploadSpec.json" and then performs the download tests using
-     * "downloadTest-downloadSpec.json".
-     * In the end it compares the expected paths with the created in the temp directory paths.
-     */
-    public void testDownloadSpec() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "download-test";
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-        // Prepare Artifactory for the download test
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-uploadSpec.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Execute the download
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir;
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-downloadSpec.json", "", false);
-        List<Dependency> downloadArtifactsBySpec =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        List<String> expectedPaths = new ArrayList<String>();
-        for (String path : ConstData.DOWNLOAD_RESULTS) {
-            expectedPaths.add(new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalPath());
-        }
-
-        // Assert all expected files are exists
-        File workingDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(workingDir, null, true);
-        List<String> missingPaths = new ArrayList<String>();
-        for (String path : expectedPaths) {
-            if (!downloadedFiles.contains(new File(path).getCanonicalFile())) {
-                missingPaths.add(path);
-            }
-        }
-
-        if (!missingPaths.isEmpty()) {
-            System.out.println("Missing files:");
-            System.out.println(missingPaths.toString());
-        }
-
-        // Assert all downloaded are expected
-        List<String> unexpectedPaths = new ArrayList<String>();
-        for (File file : downloadedFiles) {
-            if (!expectedPaths.contains(file.getCanonicalPath())) {
-                unexpectedPaths.add(file.getCanonicalPath());
-            }
-        }
-
-        if (!unexpectedPaths.isEmpty()) {
-            System.out.println("Unexpected files:");
-            System.out.println(unexpectedPaths.toString());
-        }
-
-        // Asserting returned results length
-        assert downloadArtifactsBySpec.size() == ConstData.DOWNLOAD_RESULTS.length :
-                String.format("Number of downloaded and expected by the test artifacts should be equal, " +
-                                "but downloaded - %d artifacts and expected - %d",
-                        downloadArtifactsBySpec.size(), ConstData.DOWNLOAD_RESULTS.length);
-
-        assert missingPaths.isEmpty() :
-                "Not all expected files were downloaded.";
-
-        assert unexpectedPaths.isEmpty() :
-                "Unexpected files were downloaded.";
-    }
-
-    public void testSpecDownloadExplode() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        final int EXPECTED_NUM_OF_DOWNLOADED_FILES = 8;
-        String innerDir = "download-explode-test";
-        uploadTestFiles(innerDir);
-
-        // Download the uploaded files
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir");
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-specDownloadExplode.json", "", false);
-        List<Dependency> downloadedArtifacts =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadedArtifacts.size() == EXPECTED_NUM_OF_DOWNLOADED_FILES :
-                String.format("Expected %d to be downloaded, " +
-                                "but downloaded - %d artifacts.",
-                        EXPECTED_NUM_OF_DOWNLOADED_FILES, downloadedArtifacts.size());
-
-        // Assert all expected files are exists
-        File downloadedFilesDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(downloadedFilesDir, null, true);
-        for (String path : ConstData.DOWNLOAD_EXPLODE_RESULTS) {
-            assert downloadedFiles.contains(
-                    new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-    }
-
-    public void testDownloadSpecExclude() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "download-exclude-test";
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-        // Prepare Artifactory for the download test
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-uploadSpec.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Execute the download
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir;
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-specDownloadExclude.json", "", false);
-        List<Dependency> downloadArtifactsBySpec =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadArtifactsBySpec.size() == ConstData.DOWNLOAD_EXCLUDE_RESULTS.length :
-                String.format("Number of downloaded and expected by the test artifacts should be equal, " +
-                                "but downloaded - %d artifacts and expected - %d",
-                        downloadArtifactsBySpec.size(), ConstData.DOWNLOAD_EXCLUDE_RESULTS.length);
-
-        // Assert all expected files are exists
-        File workingDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(workingDir, null, true);
-        for (String path : ConstData.DOWNLOAD_EXCLUDE_RESULTS) {
-            assert downloadedFiles.contains(new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded to the filesystem
-        assert ConstData.DOWNLOAD_EXCLUDE_RESULTS.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.DOWNLOAD_EXCLUDE_RESULTS.length, downloadedFiles.size());
-    }
-
-    public void testDownloadSpecExcludeFromPath() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        String innerDir = "download-exclude-from-path-test";
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-        // Prepare Artifactory for the download test
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        String uploadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-uploadSpec.json", workspace, false);
-        specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-
-        // Execute the download
-        String downloadDestinationDir = System.getProperty("java.io.tmpdir") + SEPARATOR + TEST_SPACE + SEPARATOR + innerDir;
-        String downloadSpec = injectVariables(innerDir, "/specs/integrationTestSpecs/downloadTest-specDownloadExcludeFromPath.json", "", false);
-        List<Dependency> downloadArtifactsBySpec =
-                specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, downloadDestinationDir);
-
-        // Asserting returned results length
-        assert downloadArtifactsBySpec.size() == ConstData.DOWNLOAD_EXCLUDE_FROM_PATH.length :
-                String.format("Number of downloaded and expected by the test artifacts should be equal, " +
-                                "but downloaded - %d artifacts and expected - %d",
-                        downloadArtifactsBySpec.size(), ConstData.DOWNLOAD_EXCLUDE_FROM_PATH.length);
-
-        // Assert all expected files are exists
-        File workingDir = new File(TEST_WORKSPACE + SEPARATOR + innerDir).getCanonicalFile();
-        Collection<File> downloadedFiles = FileUtils.listFiles(workingDir, null, true);
-        for (String path : ConstData.DOWNLOAD_EXCLUDE_FROM_PATH) {
-            assert downloadedFiles.contains(new File(TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path).getCanonicalFile()) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!",
-                            TEST_WORKSPACE + SEPARATOR + innerDir + SEPARATOR + path);
-        }
-
-        // Assert no other files where downloaded to the filesystem
-        assert ConstData.DOWNLOAD_EXCLUDE_FROM_PATH.length == downloadedFiles.size() :
-                String.format("Number of downloaded files from the upload test and the expected results should be equal, " +
-                                "but expected - %d artifacts and downloaded - %d",
-                        ConstData.DOWNLOAD_EXCLUDE_FROM_PATH.length, downloadedFiles.size());
-    }
-
-    /**
-     * Tests upload specs that has no inner path in the repo. (uploads to the root of the repo)
-     */
-    public void testUploadSpecToRepoRoot() throws URISyntaxException, IOException, NoSuchAlgorithmException {
-        File artifactsDir = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-
-        // Class.getResource() returns windows path with slash prefix which brakes the upload. therefor the file creation and then the get path
-        String workspace = new File(this.getClass().getResource("/workspace").getPath()).getCanonicalFile().getPath();
-
-        // Execute upload to repos root
-        String uploadSpec = injectVariables("", "/specs/integrationTestSpecs/uploadTest-uploadSpecToRepoRoot.json", workspace, false);
-        List<Artifact> uploadedArtifacts = specsHelper.uploadArtifactsBySpec(uploadSpec, artifactsDir, new HashMap<String, String>(), buildInfoClient);
-        // Do AQL query to get the uploaded files
-        String aql = injectVariables("", "/specs/integrationTestSpecs/uploadTest-repoRootAql.json", "", false);
-        Set<DownloadableArtifact> foundArtifacts = performAql(aql);
-
-        // Asserting returned results length
-        assert foundArtifacts.size() == uploadedArtifacts.size() :
-                String.format("Number of found in Artifactory and uploaded by the test artifacts should be equal, " +
-                                "but uploaded - %d found in Artifactory - %d",
-                        uploadedArtifacts.size(), foundArtifacts.size());
-
-        // Assert all expected files are exists
-        List<String> expectedResults = Lists.newArrayList(ConstData.UPLOAD_REPO_ROOT_RESULTS);
-        List<String> foundPaths = getFoundPaths(foundArtifacts);
-        for (String expectedResult : expectedResults) {
-            assert foundPaths.contains(expectedResult) :
-                    String.format("Missing file! \nFile %s expected to be downloaded but it is not!", expectedResult);
-        }
-
-        // Cleanup
-        deletePathsFromArtifactory(getRootObjects(foundPaths));
-    }
-
-    private List<String> getRootObjects(List<String> foundPaths) {
-        List<String> result = new ArrayList<String>();
-        for (String path : foundPaths) {
-            result.add(StringUtils.substringBefore(path, "/"));
-        }
-        return result;
-    }
-
-    private Set<DownloadableArtifact> performAql(String aql) throws IOException {
-        DependenciesDownloaderImpl dependenciesDownloader =
-                new DependenciesDownloaderImpl(dependenciesClient, "", log);
-        AqlDependenciesHelper aqlDependenciesHelper =
-                new AqlDependenciesHelper(dependenciesDownloader, "", log);
-        return aqlDependenciesHelper.collectArtifactsToDownload(aql, false);
-    }
-
-    private List<String> getExpectedResults(String[] uploadParenthesisResults, String innerDir) {
-        List<String> result = new ArrayList<String>();
-        for (String path : uploadParenthesisResults) {
-            result.add(TEST_SPACE + "/" + innerDir + "/" + path);
-        }
-        return result;
-    }
-
-    private List<String> getFoundPaths(Set<DownloadableArtifact> foundArtifacts) {
-        List<String> result = new ArrayList<String>();
-        for (DownloadableArtifact foundArtifact : foundArtifacts) {
-            result.add(foundArtifact.getFilePath());
-        }
-        return result;
-    }
-
-    private String injectVariables(String innerFolder, String pathToBaseSpecFile, String workspace, boolean isRegexp)
-            throws URISyntaxException, IOException {
-        File specFile = new File(this.getClass().getResource(pathToBaseSpecFile).toURI()).getCanonicalFile();
-
-        String spec = FileUtils.readFileToString(specFile);
-        spec = StringUtils.replace(spec, BITESTS_ARTIFACTORY_REPOSITORY_PLACEHOLDER, repo);
-        spec = StringUtils.replace(spec, BITESTS_ARTIFACTORY_TEMP_FOLDER_PLACEHOLDER, System.getProperty("java.io.tmpdir"));
-        // In case of windows regexp upload paths backslashes should be escaped
-        if (isRegexp) {
-            spec = StringUtils.replace(spec, "${WORKSPACE}", escapeSpecialChars(workspace));
-        } else {
-            spec = StringUtils.replace(spec, "${WORKSPACE}", workspace);
-        }
-        return StringUtils.replace(spec, "${TEST_SPACE}", TEST_SPACE + "/" + innerFolder);
-    }
-
-    private void deletePathsFromArtifactory(List<String> paths) throws IOException {
-        for (String path : paths) {
-            deleteItemFromArtifactory(path);
-        }
-    }
+    private static final String INTEGRATION_TESTS = "/integration/tests";
+    private static final String DEFAULT_SPEC_PATH = "/integration/default";
+    private static final String UPLOAD_SPEC = "upload.json";
+    private static final String DOWNLOAD_SPEC = "download.json";
+    private static final String EXPECTED = "expected.json";
 
     @Override
-    protected void cleanup(ITestContext context) {
-        boolean testFailed = false;
-        for (Object failedTest : context.getFailedTests().getAllResults().toArray()){
-            if (failedTest.toString().contains(this.getClass().getSimpleName())) {
-                testFailed = true;
-                break;
-            }
+    @BeforeMethod
+    @AfterMethod
+    protected void cleanup() throws IOException {
+        FileUtils.deleteDirectory(tempWorkspace);
+        deleteContentFromRepo(localRepo);
+    }
+
+    @Test(dataProvider = "testCases")
+    public void integrationTests(String testName, String uploadSpec, String downloadSpec, Expected expected) throws IOException, NoSuchAlgorithmException, URISyntaxException {
+        Reporter.log("Running test: " + testName, true);
+
+        // Upload artifacts.
+        File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClient);
+        Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
+
+        // Download artifacts to compare against the expected result.
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
+
+        // Verify expected results
+        verifyExpected(expected);
+    }
+
+    private void verifyExpected(Expected expected) {
+        // Verify tempWorkspace exists
+        Assert.assertTrue(tempWorkspace.exists(), "The path: '" + tempWorkspace.getPath() + "' does not exist");
+        // Verify expected results
+        Collection<File> downloadedFiles = FileUtils.listFiles(tempWorkspace, null, true);
+        for (String path : expected.getFiles()) {
+            File f = new File(tempWorkspace, path);
+            Assert.assertTrue(downloadedFiles.contains(f), "Missing file: '" + path + "'.");
+            downloadedFiles.remove(f);
         }
-        // Cleanup will be run only if all tests passes
-        if (!testFailed) {
-            try {
-                // Clean working directory
-                FileUtils.deleteDirectory(new File(TEST_WORKSPACE));
-                // Clean working Artifactory repository
-                deleteItemFromArtifactory(TEST_SPACE);
-            } catch (IOException ignored) {
+
+        for (File f : downloadedFiles) {
+            Assert.fail("Unexpected file: '" + f.getPath() + "'.");
+        }
+    }
+
+    @DataProvider
+    private Object[][] testCases() throws IOException, URISyntaxException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        // Get default upload, download specs.
+        File defaultSpecPath = new File(this.getClass().getResource(DEFAULT_SPEC_PATH).toURI()).getCanonicalFile();
+        String defaultUpload = readSpec(new File(defaultSpecPath, UPLOAD_SPEC));
+        String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC));
+
+        File searchPath = new File(this.getClass().getResource(INTEGRATION_TESTS).toURI()).getCanonicalFile();
+        Set<String> testPaths = new HashSet<String>();
+        listTestPaths(searchPath, testPaths);
+
+        Object[][] tests = new Object[testPaths.size()][4];
+        int i = 0;
+        for (String testPath : testPaths) {
+            String uploadSpec = defaultUpload;
+            File uploadSpecFile = new File(testPath, UPLOAD_SPEC);
+            if (uploadSpecFile.exists()) {
+                uploadSpec = readSpec(uploadSpecFile);
             }
+
+            String downloadSpec = defaultDownload;
+            File downloadSpecFile = new File(testPath, DOWNLOAD_SPEC);
+            if (downloadSpecFile.exists()) {
+                downloadSpec = readSpec(downloadSpecFile);
+            }
+            try {
+                Expected expected = mapper.readValue(new File(testPath, EXPECTED), Expected.class);
+                tests[i] = new Object[]{testPath, uploadSpec, downloadSpec, expected};
+            } catch (IOException e) {
+                throw new IOException("Caught error during parsing expected results at path: " + testPath, e);
+            }
+            i++;
+        }
+        return tests;
+    }
+
+    /**
+     * Add all paths containing tests to testPaths from the provided path
+     *
+     * @param path
+     * @param testPaths
+     * @throws IOException
+     */
+    private void listTestPaths(File path, Set<String> testPaths) throws IOException {
+        if (path == null) {
+            return;
+        }
+        File[] files = path.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.isDirectory();
+            }
+        });
+
+        if (files == null) {
+            return;
+        }
+        // Test directory is a directory that does not contain other directories.
+        if (files.length == 0) {
+            testPaths.add(path.getPath());
+        }
+        for (File f : files) {
+            listTestPaths(f, testPaths);
+        }
+    }
+
+    /**
+     * Read spec file and replace the placeholder test data.
+     *
+     * @param specFile
+     * @return
+     * @throws IOException
+     */
+    private String readSpec(File specFile) throws IOException {
+        String spec = FileUtils.readFileToString(specFile);
+        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
+        spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
+        spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, tempWorkspace.getPath());
+        return StringUtils.replace(spec, "${WORKSPACE}", tempWorkspace.getPath());
+    }
+
+    /**
+     * Expected inner class for testing proposes.
+     * Contains the local files expected to be found after successful download.
+     */
+    private static class Expected {
+        private List<String> files;
+
+        public List<String> getFiles() {
+            return files;
+        }
+
+        public void setFiles(List<String> files) {
+            this.files = files;
         }
     }
 }

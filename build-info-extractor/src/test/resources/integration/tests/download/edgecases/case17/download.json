@@ -1,0 +1,8 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/*",
+      "target": ""
+    }
+  ]
+}

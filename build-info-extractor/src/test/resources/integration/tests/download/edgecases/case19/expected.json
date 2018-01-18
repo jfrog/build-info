@@ -1,0 +1,14 @@
+{
+  "files": [
+    "a/a1.in",
+    "a/a2.in",
+    "a/a3.in",
+    "a/b/b1.in",
+    "a/b/b2.in",
+    "a/b/b3.in",
+    "a/b/c/c1.in",
+    "a/b/c/c2.in",
+    "a/b/c/c3.in",
+    "a/b/c/ant-antlr-1.6.5.zip"
+  ]
+}

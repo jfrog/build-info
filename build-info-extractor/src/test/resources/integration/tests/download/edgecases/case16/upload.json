@@ -1,0 +1,15 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/*",
+      "target": "${LOCAL_REPO}/no_props/",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/a/*1.in",
+      "target": "${LOCAL_REPO}/props/",
+      "recursive": "true",
+      "props": "searchMe=true"
+    }
+  ]
+}

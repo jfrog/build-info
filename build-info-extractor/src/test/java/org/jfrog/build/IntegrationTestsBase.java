@@ -1,16 +1,23 @@
 package org.jfrog.build;
 
+import com.google.common.io.Closeables;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.util.EntityUtils;
-import org.jfrog.build.api.util.NullLog;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.util.TestingLog;
 import org.testng.ITestContext;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
@@ -30,16 +37,21 @@ public abstract class IntegrationTestsBase {
     private String username;
     private String password;
     private String url;
-    protected String repo;
-    protected NullLog log = new NullLog();
+    protected String localRepo = "build-info-tests-local";
+    protected String virtualRepo = "build-info-tests-virtual";
     protected ArtifactoryBuildInfoClient buildInfoClient;
     protected ArtifactoryDependenciesClient dependenciesClient;
+    protected static final Log log = new TestingLog();
+
     private PreemptiveHttpClient preemptiveHttpClient;
 
-    protected static final String BITESTS_ARTIFACTORY_REPOSITORY_PLACEHOLDER = "${REPO}";
-    protected static final String BITESTS_ARTIFACTORY_TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
+    protected static final String LOCAL_REPO_PLACEHOLDER = "${LOCAL_REPO}";
+    protected static final String VIRTUAL_REPO_PLACEHOLDER = "${VIRTUAL_REPO}";
+    protected static final String TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
+
     private static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
     private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
+    private static final String API_REPOSITORIES = "api/repositories";
 
     @BeforeTest
     public void init(ITestContext context) throws IOException {
@@ -58,16 +70,21 @@ public abstract class IntegrationTestsBase {
         }
         username = readParam(props, "username");
         password = readParam(props, "password");
-        repo = readParam(props, "repo");
         preemptiveHttpClient = createHttpClient().getHttpClient();
         buildInfoClient = createBuildInfoClient();
         dependenciesClient = createDependenciesClient();
-        cleanup(context);
+
+        createTestRepo(localRepo);
+        createTestRepo(virtualRepo);
+        cleanup();
     }
 
     @AfterTest
-    protected void terminate(ITestContext context) {
-        cleanup(context);
+    protected void terminate(ITestContext context) throws IOException {
+        cleanup();
+        // Delete the virtual first.
+        deleteTestRepo(virtualRepo);
+        deleteTestRepo(localRepo);
         preemptiveHttpClient.close();
         buildInfoClient.close();
         dependenciesClient.close();
@@ -94,12 +111,10 @@ public abstract class IntegrationTestsBase {
         String message =
                 "Failed to load test Artifactory instance credentials. Looking for System properties:\n'" +
                         BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "url', \n'" +
-                        BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "repo', \n'" +
                         BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "username' and \n'" +
                         BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "password'. \n" +
                         "Or a properties file with those properties in classpath or Environment variables:\n'" +
                         BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "URL', \n'" +
-                        BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "REPO', \n'" +
                         BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "USERNAME' and \n'" +
                         BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PASSWORD'.";
 
@@ -107,37 +122,94 @@ public abstract class IntegrationTestsBase {
     }
 
     /**
-     * The method deletes the provided in the url item (folder or artifact).
-     * It uses the credentials, Artifactory url and repo that was provided by the environment.
-     * for example, if the provided itemUrl was bar/foo.jar and the url was http://art1/art, the method will delete
-     * http://art1/art/bar/foo.jar.
-     * This method is created for Artifactory cleanup after successful run.
-     *
-     * @param itemUrl the inner url, without artifactory url and repo
-     * @return the response from artifactory
-     * @throws IOException in case of IO exception
+     * Delete all content from the given repository.
+     * @param repo - repository name
+     * @throws IOException
      */
-    protected HttpResponse deleteItemFromArtifactory(String itemUrl) throws IOException {
-        String fullItemUrl = url + repo + "/" + itemUrl;
-        itemUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
+    protected void deleteContentFromRepo(String repo) throws IOException {
+        String fullItemUrl = url + repo + "/";
+        String itemUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpDelete(itemUrl);
 
-        //Explicitly force keep alive
-        httpRequest.setHeader("Connection", "Keep-Alive");
         HttpResponse response = preemptiveHttpClient.execute(httpRequest);
         StatusLine statusLine = response.getStatusLine();
+        EntityUtils.consumeQuietly(response.getEntity());
         int statusCode = statusLine.getStatusCode();
         if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-            EntityUtils.consume(response.getEntity());
             throw new FileNotFoundException("Bad credentials for username: " + username);
         }
 
         if (!(200 <= statusCode && statusCode < 300)) {
-            EntityUtils.consume(response.getEntity());
-            throw new IOException("Error Deleting " + itemUrl + ". Code: " + statusCode + " Message: " +
+            throw new IOException("Error deleting " + localRepo + ". Code: " + statusCode + " Message: " +
                     statusLine.getReasonPhrase());
         }
-        return response;
+    }
+
+    /**
+     * Check if repository exists.
+     *
+     * @param repo - repository name
+     * @return
+     * @throws IOException
+     */
+    private boolean isRepoExists(String repo) throws IOException {
+        HttpRequestBase httpRequest = new HttpGet(getRepoApiUrl(repo));
+        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
+        EntityUtils.consumeQuietly(response.getEntity());
+        return response.getStatusLine().getStatusCode() == HttpStatus.SC_OK;
+    }
+
+    /**
+     * Create new repository according to the settings.
+     *
+     * @param repo - repository name
+     * @throws IOException
+     */
+    private void createTestRepo(String repo) throws IOException {
+        if (isRepoExists(repo)) {
+            return;
+        }
+        HttpPut httpRequest = new HttpPut(getRepoApiUrl(repo));
+        InputStream repoConfigInputStream = this.getClass().getResourceAsStream("/integration/settings/" + repo + ".json");
+        InputStreamEntity repoConfigEntity = new InputStreamEntity(repoConfigInputStream, ContentType.create("application/json"));
+        httpRequest.setEntity(repoConfigEntity);
+
+        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
+        try {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
+                throw new IOException("Error creating repository" + repo + ". Code: " + statusCode + " Message: " +
+                        response.getStatusLine().getReasonPhrase());
+            }
+        } finally {
+            EntityUtils.consumeQuietly(response.getEntity());
+            Closeables.closeQuietly(repoConfigInputStream);
+        }
+    }
+
+    /**
+     * Delete repository.
+     *
+     * @param repo - repository name
+     * @throws IOException
+     */
+    private void deleteTestRepo(String repo) throws IOException {
+        HttpRequestBase httpRequest = new HttpDelete(getRepoApiUrl(repo));
+        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
+        try {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                throw new IOException("Error deleting repository" + repo + ". Code: " + statusCode + " Message: " +
+                        response.getStatusLine().getReasonPhrase());
+            }
+        } finally {
+            EntityUtils.consumeQuietly(response.getEntity());
+        }
+    }
+
+    private String getRepoApiUrl(String repo) {
+        String fullItemUrl = url + StringUtils.join(new String[]{API_REPOSITORIES, repo}, "/");
+        return ArtifactoryHttpClient.encodeUrl(fullItemUrl);
     }
 
     private ArtifactoryBuildInfoClient createBuildInfoClient() {
@@ -152,5 +224,5 @@ public abstract class IntegrationTestsBase {
         return new ArtifactoryHttpClient(url, username, password, log);
     }
 
-    abstract protected void cleanup(ITestContext context);
+    abstract protected void cleanup() throws IOException;
 }

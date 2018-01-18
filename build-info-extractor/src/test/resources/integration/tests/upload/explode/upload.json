@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/*.zip",
+      "target": "${LOCAL_REPO}/",
+      "recursive": "true",
+      "explode": "true"
+    }
+  ]
+}

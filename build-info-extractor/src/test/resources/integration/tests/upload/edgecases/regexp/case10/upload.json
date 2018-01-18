@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/.*1\..*",
+      "target": "${LOCAL_REPO}/",
+      "recursive": "false",
+      "flat": "true",
+      "regexp": "true"
+    }
+  ]
+}

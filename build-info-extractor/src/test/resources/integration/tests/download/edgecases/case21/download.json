@@ -1,0 +1,28 @@
+{
+  "files": [
+    {
+      "aql": {
+        "items.find": {
+          "repo": "${LOCAL_REPO}",
+          "$or": [
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "*"
+                  },
+                  "name": {
+                    "$match": "*"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "target": "",
+      "flat": "false",
+      "recursive": "false"
+    }
+  ]
+}

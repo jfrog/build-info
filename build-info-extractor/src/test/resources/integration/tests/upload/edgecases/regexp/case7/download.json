@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/*",
+      "target": "",
+      "flat": "false",
+      "recursive": "true",
+      "props": "p1=v1;p2=v2"
+    }
+  ]
+}
