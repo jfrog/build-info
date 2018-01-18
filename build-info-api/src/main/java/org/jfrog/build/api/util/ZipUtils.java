@@ -21,6 +21,7 @@ import java.util.Set;
  */
 public abstract class ZipUtils {
 
+    private static final Set<String> SUPPORTED_EXTENSIONS = Sets.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
     /**
      * Extracts the given archive file into the given directory
      *
@@ -146,8 +147,7 @@ public abstract class ZipUtils {
     }
 
     private static void verifySupportedExtension(String extension) {
-        Set<String> supportedExtensions = Sets.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
-        if (!supportedExtensions.contains(StringUtils.trim(extension))) {
+        if (!SUPPORTED_EXTENSIONS.contains(StringUtils.trim(extension))) {
             throw new IllegalArgumentException("Unsupported archive extension: '" + extension + "'");
         }
     }
