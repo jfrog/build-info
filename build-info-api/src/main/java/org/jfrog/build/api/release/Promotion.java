@@ -36,7 +36,7 @@ public class Promotion implements Serializable {
 
     public Promotion(String status, String comment, String ciUser, String timestamp, boolean dryRun, String targetRepo,
                      String sourceRepo, boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
-            Map<String, Collection<String>> properties, boolean failFast) {
+            Map<String, Collection<String>> properties, boolean failFast, List<BuildArtifactsMapping> mappings) {
         this.status = status;
         this.comment = comment;
         this.ciUser = ciUser;
@@ -50,6 +50,7 @@ public class Promotion implements Serializable {
         this.scopes = scopes;
         this.properties = properties;
         this.failFast = failFast;
+        this.mappings = mappings;
     }
 
     public String getStatus() {
