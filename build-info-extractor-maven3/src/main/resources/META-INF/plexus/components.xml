@@ -463,5 +463,10 @@
                 </requirement>
             </requirements>
         </component>
+        <component>
+            <role>org.apache.maven.project.DefaultProjectBuilder</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.ArtifactoryProjectBuilder</implementation>
+        </component>
     </components>
 </component-set>

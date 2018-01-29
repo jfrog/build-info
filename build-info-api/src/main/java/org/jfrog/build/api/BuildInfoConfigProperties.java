@@ -46,4 +46,11 @@ public interface BuildInfoConfigProperties {
      * Secondary environment variable to hold the properties file name
      */
     String ENV_BUILDINFO_PROPFILE = "BUILDINFO_PROPFILE";
+
+    /**
+     * Maven property which indicates whether to resolve dependencies from Artifactory.
+     */
+    String ARTIFACTORY_RESOLUTION_ENABLED = "artifactoryResolutionEnabled";
+
+    String PROP_ARTIFACTORY_RESOLUTION_ENABLED = BUILD_INFO_CONFIG_PREFIX + ARTIFACTORY_RESOLUTION_ENABLED;
 }
