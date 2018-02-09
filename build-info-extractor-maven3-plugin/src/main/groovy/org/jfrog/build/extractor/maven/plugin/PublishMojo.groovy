@@ -12,6 +12,7 @@ import org.apache.maven.plugins.annotations.LifecyclePhase
 import org.apache.maven.plugins.annotations.Mojo
 import org.apache.maven.plugins.annotations.Parameter
 import org.apache.maven.project.MavenProject
+import org.apache.maven.settings.Settings
 import org.codehaus.gmaven.mojo.GroovyMojo
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.api.BuildInfoProperties
@@ -135,9 +136,20 @@ class PublishMojo extends GroovyMojo
      * Completes various configuration settings.
      */
     @SuppressWarnings([ 'GroovyAccessibility' ])
-    @Requires({ buildInfo && artifactory && session && project })
+    @Requires({ publisher && buildInfo && artifactory && session && project })
     private void completeConfig ()
     {
+        String serverId = publisher.serverId;
+        Settings settings = session.settings;
+        if (serverId != null && settings.getServer(serverId) != null) {
+            if (publisher.getUsername() == null) {
+                publisher.setUsername(settings.getServer(serverId).getUsername())
+            }
+            if (publisher.getPassword() == null) {
+                publisher.setPassword(settings.getServer(serverId).getPassword())
+            }
+        }
+        
         final format                = { Date d  -> new SimpleDateFormat( 'yyyy-MM-dd\'T\'HH:mm:ss.SSSZ' ).format( d ) } // 2013-06-23T18\:38\:37.597+0200
         buildInfo.buildTimestamp    = session.startTime.time as String
         buildInfo.buildStarted      = format( session.startTime )

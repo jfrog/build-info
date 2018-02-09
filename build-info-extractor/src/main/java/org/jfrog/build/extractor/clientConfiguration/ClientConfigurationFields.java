@@ -48,4 +48,5 @@ public interface ClientConfigurationFields {
     String FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD = "filterExcludedArtifactsFromBuild";
     String EVEN_UNSTABLE = "unstable";
     String CONTEXT_URL = "contextUrl";
+    String SERVER_ID = "serverId";
 }

@@ -319,6 +319,14 @@ public class ArtifactoryClientConfiguration {
             setStringValue(CONTEXT_URL, contextUrl);
         }
 
+        public String getServerId() {
+            return getStringValue(SERVER_ID);
+        }
+
+        public void setServerId(String serverId) {
+            setStringValue(SERVER_ID, serverId);
+        }
+
         public String getSnapshotRepoKey() {
             return getStringValue(SNAPSHOT_REPO_KEY);
         }
