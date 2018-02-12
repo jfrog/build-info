@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/dollar/*",
+      "target": "${LOCAL_REPO}/dollar/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

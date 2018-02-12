@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/hash/*",
+      "target": "${LOCAL_REPO}/hash/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

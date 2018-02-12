@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/tilde/*",
+      "target": "${LOCAL_REPO}/tilde/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

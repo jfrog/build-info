@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/ampersand/*",
+      "target": "${LOCAL_REPO}/ampersand/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

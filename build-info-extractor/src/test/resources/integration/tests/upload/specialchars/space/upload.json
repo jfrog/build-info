@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "files/specialchars/space/*",
+      "target": "${LOCAL_REPO}/space/",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

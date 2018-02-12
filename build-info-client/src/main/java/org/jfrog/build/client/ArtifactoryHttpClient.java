@@ -83,6 +83,8 @@ public class ArtifactoryHttpClient {
         String[] split = StringUtils.split(unescaped, "/");
         for (int i = 0; i < split.length; i++) {
             split[i] = newStringUsAscii(codec.encode(getBytesUtf8(split[i])));
+            // codec.encode replaces spaces with '+', but we want to escape them to %20.
+            split[i] = split[i].replaceAll("\\+", "%20");
         }
         return StringUtils.join(split, "/");
     }

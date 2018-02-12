@@ -10,6 +10,13 @@
     "c1.in",
     "c2.in",
     "c3.in",
-    "special.in"
+    "special.in",
+    "$.in",
+    "+.in",
+    "a~.in",
+    "a a.in",
+    "&.in",
+    "^.in",
+    "#.in"
    ]
 }
