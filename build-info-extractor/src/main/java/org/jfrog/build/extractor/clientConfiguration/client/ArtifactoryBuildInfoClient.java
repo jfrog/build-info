@@ -245,10 +245,16 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      */
     public void sendBuildInfo(Build buildInfo) throws IOException {
         log.debug("Sending build info: " + buildInfo);
-        try {
-            sendBuildInfo(buildInfoToJsonString(buildInfo));
+		try {
+            String buildInfoJsonString = buildInfoToJsonString(buildInfo);
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
+            throw new IOException("Could not build the build-info object: " + e.getMessage());
+        }
+        try {
+            sendBuildInfo(buildInfoJsonString);
+        } catch (Exception e) {
+            log.error("Could not publish the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
         String url = artifactoryUrl +
