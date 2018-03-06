@@ -187,7 +187,6 @@ public class ArtifactoryTask extends DefaultTask {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
                     this.getPath(), project.getName());
         } else {
-            log.debug("adding artifactory specs for task {}", this.getPath());
             ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
             if (convention != null) {
                 ArtifactoryClientConfiguration acc = convention.getClientConfig();
@@ -203,8 +202,9 @@ public class ArtifactoryTask extends DefaultTask {
             }
 
             Task deployTask = project.getRootProject().getTasks().findByName(DEPLOY_TASK_NAME);
-            if(deployTask==null)
-                throw new IllegalStateException("could not find " + DEPLOY_TASK_NAME + " in the root project");
+            if (deployTask == null) {
+                throw new IllegalStateException(String.format("Could not find %s in the root project", DEPLOY_TASK_NAME));
+            }
 
             finalizedBy(deployTask);
 

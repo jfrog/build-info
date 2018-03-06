@@ -44,7 +44,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         if (isRootProject(project)) {
             addDeployTask(project)
         } else {
-            //makes sure the plugin is applied in the root project
+            // Makes sure the plugin is applied in the root project
             project.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
         }
 
