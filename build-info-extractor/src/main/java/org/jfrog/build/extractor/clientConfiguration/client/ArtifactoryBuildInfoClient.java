@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -30,10 +31,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
@@ -185,12 +183,25 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
     }
 
     public void sendBuildInfo(String buildInfoJson) throws IOException {
-        String url = artifactoryUrl + BUILD_REST_URL;
+        String url = String.format("%s%s", artifactoryUrl, BUILD_REST_URL);
         HttpPut httpPut = new HttpPut(url);
         try {
-            sendDescriptor(httpPut, buildInfoJson, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
+            log.info("Deploying build descriptor to: " + httpPut.getURI().toString());
+            sendHttpEntityRequest(httpPut, buildInfoJson, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         } catch (IOException e) {
             throw new IOException("Failed to send build descriptor. " + e.getMessage(), e);
+        }
+    }
+
+    public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
+        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, buildName, buildNumber);
+        HttpGet httpGet = new HttpGet(url);
+        try {
+            HttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK);
+            String buildInfoJson = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+            return getBuildFromJson(buildInfoJson);
+        } catch (IOException e) {
+            throw new IOException("Failed to get build info. " + e.getMessage(), e);
         }
     }
 
@@ -201,7 +212,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         try {
             log.info(createBuildRetentionLogMsg(buildRetention, async));
             log.debug(buildRetentionJson);
-            sendRequest(httpPost, buildRetentionJson, APPLICATION_JSON, true);
+            sendHttpEntityRequest(httpPost, buildRetentionJson, APPLICATION_JSON);
         } catch (IOException e) {
             log.error("Failed to execute build retention.", e);
             throw new IOException("Failed to execute build retention: " + e.getMessage(), e);
@@ -263,37 +274,36 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
                     encodeUrl(build.getNumber());
             HttpPost httpPost = new HttpPost(url);
             String modulesAsJsonString = toJsonString(build.getModules());
-            sendDescriptor(httpPost, modulesAsJsonString, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
+            log.info("Deploying build descriptor to: " + httpPost.getURI().toString());
+            sendHttpEntityRequest(httpPost, modulesAsJsonString, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         } catch (Exception e) {
             log.error("Could not build the build-info modules object.", e);
             throw new IOException("Could not publish build-info modules: " + e.getMessage(), e);
         }
     }
 
-    private void sendDescriptor(HttpEntityEnclosingRequestBase request, String content, String contentType) throws IOException {
-        log.info("Deploying build descriptor to: " + request.getURI().toString());
-        sendRequest(request, content, contentType, true);
-    }
-
-    private void sendRequest(HttpEntityEnclosingRequestBase request, String content, String contentType, boolean retry) throws IOException {
+    private void sendHttpEntityRequest(HttpEntityEnclosingRequestBase request, String content, String contentType) throws IOException {
         StringEntity stringEntity = new StringEntity(content, "UTF-8");
         stringEntity.setContentType(contentType);
         request.setEntity(stringEntity);
+        sendHttpRequest(request, HttpStatus.SC_NO_CONTENT);
+    }
+
+    private HttpResponse sendHttpRequest(HttpUriRequest request, int expectedStatusCode) throws IOException {
+        HttpResponse httpResponse;
         int connectionRetries = httpClient.getConnectionRetries();
         try {
-            if (!retry) {
-                httpClient.setConnectionRetries(0);
-            }
-            HttpResponse response = httpClient.getHttpClient().execute(request);
-            StatusLine statusLine = response.getStatusLine();
-            if (statusLine.getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-                HttpEntity responseEntity = response.getEntity();
+            httpResponse = httpClient.getHttpClient().execute(request);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (statusLine.getStatusCode() != expectedStatusCode) {
+                HttpEntity responseEntity = httpResponse.getEntity();
                 throw new IOException(statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
             }
         } finally {
             // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
             httpClient.setConnectionRetries(connectionRetries);
         }
+        return httpResponse;
     }
 
     public String getItemLastModified(String path) throws IOException, ParseException {
@@ -614,6 +624,12 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         jsonGenerator.writeObject(object);
         String result = writer.getBuffer().toString();
         return result;
+    }
+
+    private Build getBuildFromJson(String buildInfoJson) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode actualObj = mapper.readTree(buildInfoJson);
+        return mapper.readValue(actualObj.get("buildInfo").toString(), Build.class);
     }
 
     private void verifyNonNumericBuildNumber(String buildNumber) {

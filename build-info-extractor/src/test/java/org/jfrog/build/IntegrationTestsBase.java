@@ -18,9 +18,8 @@ import org.jfrog.build.client.PreemptiveHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.util.TestingLog;
-import org.testng.ITestContext;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -53,8 +52,8 @@ public abstract class IntegrationTestsBase {
     private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
     private static final String API_REPOSITORIES = "api/repositories";
 
-    @BeforeTest
-    public void init(ITestContext context) throws IOException {
+    @BeforeClass
+    public void init() throws IOException {
         Properties props = new Properties();
         // This file is not in GitHub. Create your own in src/test/resources or use environment variables.
         InputStream inputStream = this.getClass().getResourceAsStream("/artifactory-bi.properties");
@@ -76,12 +75,10 @@ public abstract class IntegrationTestsBase {
 
         createTestRepo(localRepo);
         createTestRepo(virtualRepo);
-        cleanup();
     }
 
-    @AfterTest
-    protected void terminate(ITestContext context) throws IOException {
-        cleanup();
+    @AfterClass
+    protected void terminate() throws IOException {
         // Delete the virtual first.
         deleteTestRepo(virtualRepo);
         deleteTestRepo(localRepo);
@@ -212,6 +209,14 @@ public abstract class IntegrationTestsBase {
         return ArtifactoryHttpClient.encodeUrl(fullItemUrl);
     }
 
+    protected String getUsername() {
+        return this.username;
+    }
+
+    protected String getUrl() {
+        return this.url;
+    }
+
     private ArtifactoryBuildInfoClient createBuildInfoClient() {
         return new ArtifactoryBuildInfoClient(url, username, password, log);
     }
@@ -224,5 +229,4 @@ public abstract class IntegrationTestsBase {
         return new ArtifactoryHttpClient(url, username, password, log);
     }
 
-    abstract protected void cleanup() throws IOException;
 }

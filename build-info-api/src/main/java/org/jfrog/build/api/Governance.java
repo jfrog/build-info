@@ -7,6 +7,7 @@ import java.io.Serializable;
 /**
  * @author mamo
  */
+@Deprecated
 @XStreamAlias("governance")
 public class Governance implements Serializable {
 

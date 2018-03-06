@@ -27,7 +27,7 @@ import java.util.*;
  */
 @Test
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
-    private static final String TEST_SPACE = "bi_test_space";
+    private static final String TEST_SPACE = "bi_specs_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
     private SpecsHelper specsHelper = new SpecsHelper(log);
 
@@ -37,7 +37,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String DOWNLOAD_SPEC = "download.json";
     private static final String EXPECTED = "expected.json";
 
-    @Override
     @BeforeMethod
     @AfterMethod
     protected void cleanup() throws IOException {

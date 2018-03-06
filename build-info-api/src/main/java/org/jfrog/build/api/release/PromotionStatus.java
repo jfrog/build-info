@@ -62,6 +62,7 @@ public class PromotionStatus implements Serializable {
         return timestamp;
     }
 
+    // For Serialization/Deserialization
     public Date getTimestampDate() {
         if (timestamp == null) {
             throw new IllegalArgumentException("Cannot parse a null timestamp as a date");
@@ -72,6 +73,12 @@ public class PromotionStatus implements Serializable {
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    // For Serialization/Deserialization
+    public void setTimestampDate(Date timestampDate) {
+        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
+        setTimestamp(format.format(timestampDate));
     }
 
     public void setTimestamp(String timestamp) {
