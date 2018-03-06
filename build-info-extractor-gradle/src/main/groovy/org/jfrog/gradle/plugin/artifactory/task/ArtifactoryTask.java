@@ -46,7 +46,6 @@ public class ArtifactoryTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(ArtifactoryTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
-    private boolean evaluated = false;
 
     @InputFile
     @Optional
@@ -182,12 +181,13 @@ public class ArtifactoryTask extends DefaultTask {
         return getFlag(PUBLISH_POM);
     }
 
-    public void projectsEvaluated() {
+    public void projectEvaluated() {
         Project project = getProject();
         if (isSkip()) {
             log.debug("artifactoryPublish task '{}' skipped for project '{}'.",
                     this.getPath(), project.getName());
         } else {
+            log.debug("adding artifactory specs for task {}", this.getPath());
             ArtifactoryPluginConvention convention = ArtifactoryPluginUtil.getPublisherConvention(project);
             if (convention != null) {
                 ArtifactoryClientConfiguration acc = convention.getClientConfig();
@@ -203,6 +203,9 @@ public class ArtifactoryTask extends DefaultTask {
             }
 
             Task deployTask = project.getRootProject().getTasks().findByName(DEPLOY_TASK_NAME);
+            if(deployTask==null)
+                throw new IllegalStateException("could not find " + DEPLOY_TASK_NAME + " in the root project");
+
             finalizedBy(deployTask);
 
             // Depend on buildInfo task in sub-projects
@@ -215,11 +218,6 @@ public class ArtifactoryTask extends DefaultTask {
 
             checkDependsOnArtifactsToPublish();
         }
-        evaluated = true;
-    }
-
-    public boolean isEvaluated() {
-        return evaluated;
     }
 
     public boolean isSkip() {

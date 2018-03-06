@@ -30,9 +30,8 @@ import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTO
  * 2) Overriding gradle resolution repositories (Maven/Ivy)
  * 3) Prepare artifacts for deployment
  */
-public class ProjectsEvaluatedBuildListener extends BuildAdapter implements ProjectEvaluationListener {
+public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
-    private final Set<Task> artifactoryTasks = Collections.newSetFromMap(new ConcurrentHashMap<Task, Boolean>());
 
     @Override
     void beforeEvaluate(Project project) {
@@ -41,23 +40,13 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     @Override
     void afterEvaluate(Project project, ProjectState state) {
         Set<Task> tasks = project.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
-        artifactoryTasks.addAll(tasks)
-    }
-
-    def void projectsEvaluated(Gradle gradle) {
-        // Make sure the plugin is applied to the root project.
-        gradle.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
-        // Configure the artifactoryPublish tasks. Deployment happens on task execution.
-        Set<Task> tasks = gradle.rootProject.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
-        artifactoryTasks.addAll(tasks)
-        artifactoryTasks.each { ArtifactoryTask artifactoryTask ->
-            if (!artifactoryTask.isEvaluated()) {
-                evaluate(artifactoryTask)
-            }
+        tasks.each { ArtifactoryTask artifactoryTask ->
+            evaluate(artifactoryTask)
         }
     }
 
     private void evaluate(ArtifactoryTask artifactoryTask) {
+        log.debug("evaluating buildBaseTask {}", artifactoryTask)
         ArtifactoryPluginConvention convention =
                 ArtifactoryPluginUtil.getArtifactoryConvention(artifactoryTask.project)
 
@@ -70,7 +59,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (resolver != null) {
                 defineResolvers(artifactoryTask.project, resolver)
             }
-            artifactoryTask.projectsEvaluated()
+            artifactoryTask.projectEvaluated()
         }
     }
 
