@@ -31,7 +31,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
-import org.jfrog.build.api.dependency.*;
+import org.jfrog.build.api.dependency.BuildPatternArtifacts;
+import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
+import org.jfrog.build.api.dependency.PatternResultFileSet;
+import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
@@ -42,6 +45,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -163,25 +167,36 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     }
 
     public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
-        return execute(downloadUrl, false);
+        return execute(downloadUrl, false, null);
     }
 
-    public HttpResponse getArtifactChecksums(String artifactUrl) throws IOException {
-        return execute(artifactUrl, true);
+    public HttpResponse downloadArtifact(String downloadUrl, Map<String, String> headers) throws IOException {
+        return execute(downloadUrl, false, headers);
+    }
+
+    public HttpResponse getArtifactMetadata(String artifactUrl) throws IOException {
+        return execute(artifactUrl, true, null);
     }
 
     public boolean isArtifactoryOSS() throws IOException {
         return !httpClient.getVersion().hasAddons();
     }
 
-    private HttpResponse execute(String artifactUrl, boolean isHead) throws IOException {
+    private HttpResponse execute(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);
         HttpRequestBase httpRequest = isHead ? new HttpHead(artifactUrl) : new HttpGet(artifactUrl);
 
-        //Explicitly force keep alive
+        // Explicitly force keep alive
         httpRequest.setHeader("Connection", "Keep-Alive");
+        // Add all required headers to the request
+        if (headers != null) {
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                httpRequest.setHeader(entry.getKey(), entry.getValue());
+            }
+        }
+
         HttpResponse response = client.execute(httpRequest);
         StatusLine statusLine = response.getStatusLine();
         int statusCode = statusLine.getStatusCode();
@@ -189,7 +204,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
             throw new FileNotFoundException("Unable to find " + artifactUrl);
         }
 
-        if (statusCode != HttpStatus.SC_OK) {
+        if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_PARTIAL_CONTENT) {
             EntityUtils.consume(response.getEntity());
             throw new IOException("Error downloading " + artifactUrl + ". Code: " + statusCode + " Message: " +
                     statusLine.getReasonPhrase());

@@ -55,7 +55,6 @@ public class PreemptiveHttpClient {
     private HttpClientContext localContext = HttpClientContext.create();
     private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
     private int connectionRetries;
-    private int retryCounter;
     private Log log;
 
     static {
@@ -193,20 +192,18 @@ public class PreemptiveHttpClient {
 
         @Override
         public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
-
-            retryCounter++;
+            // Code 500 means an unexpected behavior of Artifactory, thus we should not retry.
             if (response.getStatusLine().getStatusCode() > 500) {
                 HttpClientContext clientContext = HttpClientContext.adapt(context);
                 log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString() +
                         ". Received status code " + response.getStatusLine().getStatusCode() +
                         " and message: " + response.getStatusLine().getReasonPhrase() + ".");
-                if (retryCounter <= connectionRetries) {
-                    log.warn("Attempting retry #" + retryCounter);
+                if (executionCount <= connectionRetries) {
+                    log.warn("Attempting retry #" + executionCount);
                     return true;
                 }
             }
 
-            retryCounter = 0;
             return false;
         }
 
@@ -228,21 +225,17 @@ public class PreemptiveHttpClient {
 
         @Override
         public boolean retryRequest(IOException exception, int executionCount, HttpContext context) {
-
-            retryCounter++;
             HttpClientContext clientContext = HttpClientContext.adapt(context);
             log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString() + ": " + exception.getMessage() + ".");
-            if (retryCounter > connectionRetries) {
-                retryCounter = 0;
+            if (executionCount > connectionRetries) {
                 return false;
             }
-            boolean shouldRetry = super.retryRequest(exception, retryCounter, context);
+            boolean shouldRetry = super.retryRequest(exception, executionCount, context);
             if (shouldRetry) {
-                log.warn("Attempting retry #" + retryCounter);
+                log.warn("Attempting retry #" + executionCount);
                 return true;
             }
 
-            retryCounter = 0;
             return false;
         }
     }

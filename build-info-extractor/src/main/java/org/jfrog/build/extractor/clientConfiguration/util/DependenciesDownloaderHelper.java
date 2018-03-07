@@ -2,11 +2,13 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Dependency;
@@ -22,13 +24,8 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.InputMismatchException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.io.*;
+import java.util.*;
 
 /**
  * Helper class for downloading dependencies
@@ -43,6 +40,18 @@ public class DependenciesDownloaderHelper {
     private final String LAST_RELEASE = "LAST_RELEASE";
     private static final String DELIMITER = "/";
     private static final String ESCAPE_CHAR = "\\";
+    private static final String MD5_HEADER_NAME = "X-Checksum-Md5";
+    private static final String SHA1_HEADER_NAME = "X-Checksum-Sha1";
+    public static final String MD5_ALGORITHM_NAME = "md5";
+    public static final String SHA1_ALGORITHM_NAME = "sha1";
+    /**
+     * Number of threads to use when downloading an artifact concurrently
+     */
+    private static final int CONCURRENT_DOWNLOAD_THREADS = 3;
+    /**
+     * Minimum file size for concurrent download
+     */
+    public static final int MIN_SIZE_FOR_CONCURRENT_DOWNLOAD = 5120000;
 
     public DependenciesDownloaderHelper(DependenciesDownloader downloader, Log log) {
         this.downloader = downloader;
@@ -146,7 +155,7 @@ public class DependenciesDownloaderHelper {
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
             if (!build.startsWith(buildName)) {
-                throw new IllegalStateException("build '" + build + "' does not start with build name '" + buildName + "'.");
+                throw new IllegalStateException(String.format("build '%s' does not start with build name '%s'.", build, buildName));
             }
             // Case build number was not provided, the build name and the build are the same. build number will be latest
             if (build.equals(buildName)) {
@@ -159,7 +168,7 @@ public class DependenciesDownloaderHelper {
             }
             if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
                 if (downloader.getClient().isArtifactoryOSS()) {
-                    throw new IllegalArgumentException(buildNumber + " is not supported in Artifactory OSS.");
+                    throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
                 }
                 List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
                 artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
@@ -207,81 +216,236 @@ public class DependenciesDownloaderHelper {
         downloader.removeUnusedArtifactsFromLocal(allResolvesFiles, forDeletionFiles);
     }
 
-
     private Dependency downloadArtifact(DownloadableArtifact downloadableArtifact) throws IOException {
-        Dependency dependencyResult = null;
+        Dependency dependencyResult;
         String filePath = downloadableArtifact.getFilePath();
         String matrixParams = downloadableArtifact.getMatrixParameters();
-        final String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
+        String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
         final String uriWithParams = (StringUtils.isBlank(matrixParams) ? uri : uri + ';' + matrixParams);
 
-        Checksums checksums = downloadArtifactCheckSums(uriWithParams);
-        // If Artifactory returned no checksums, this is probably because the URL points to a folder,
+        ArtifactMetaData artifactMetaData = downloadArtifactMetaData(uriWithParams);
+        // If Artifactory returned no fileMetaData, this is probably because the URL points to a folder,
         // so there's no need to download it.
-        if (StringUtils.isBlank(checksums.getMd5()) && StringUtils.isBlank(checksums.getSha1())) {
+        if (StringUtils.isBlank(artifactMetaData.getMd5()) && StringUtils.isBlank(artifactMetaData.getSha1())) {
             return null;
         }
 
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
             downloadableArtifact.getRelativeDirPath());
-        dependencyResult = getDependencyLocally(checksums, fileDestination);
-        if (dependencyResult == null) {
-            log.info("Downloading '" + uriWithParams + "' ...");
-            HttpResponse httpResponse = null;
-            try {
-                httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
-                InputStream inputStream = httpResponse.getEntity().getContent();
-                Map<String, String> checksumsMap = downloader.saveDownloadedFile(inputStream, fileDestination);
+        dependencyResult = getDependencyLocally(artifactMetaData, fileDestination);
 
-                // If the checksums map is null then something went wrong and we should fail the build
-                if (checksumsMap == null) {
-                    throw new IOException("Received null checksums map for downloaded file.");
-                }
-
-                String md5 = validateMd5Checksum(httpResponse, checksumsMap.get("md5"));
-                String sha1 = validateSha1Checksum(httpResponse, checksumsMap.get("sha1"));
-
-                log.info("Successfully downloaded '" + uriWithParams + "' to '" + fileDestination + "'");
-                dependencyResult = new DependencyBuilder().md5(md5).sha1(sha1)
-                        .id(filePath.substring(filePath.lastIndexOf("/")+1)).build();
-            } finally {
-                consumeEntity(httpResponse);
-            }
+        if (dependencyResult != null) {
+            return dependencyResult;
         }
 
-        return dependencyResult;
+        try {
+            log.info(String.format("Downloading '%s'...", uriWithParams));
+            Map<String, String> checksumsMap = artifactMetaData.getSize() >= MIN_SIZE_FOR_CONCURRENT_DOWNLOAD && artifactMetaData.isAcceptRange()
+                    ? downloadFileConcurrently(uriWithParams, artifactMetaData.getSize(), fileDestination, filePath)
+                    : downloadFile(uriWithParams, fileDestination);
+
+            // If the checksums map is null then something went wrong and we should fail the build
+            if (checksumsMap == null) {
+                throw new IOException("Received null checksums map for downloaded file.");
+            }
+
+            dependencyResult = validateChecksumsAndBuildDependency(checksumsMap, artifactMetaData, filePath);
+            log.info(String.format("Successfully downloaded '%s' to '%s'", uriWithParams, fileDestination));
+
+            return dependencyResult;
+        } catch (InterruptedException e) {
+            throw new IOException(e);
+        }
+    }
+
+    protected Map<String, String> downloadFile(String uriWithParams, String fileDestination)
+            throws IOException {
+        HttpResponse httpResponse = null;
+        try {
+            httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
+            InputStream inputStream = httpResponse.getEntity().getContent();
+            return downloader.saveDownloadedFile(inputStream, fileDestination);
+        } finally {
+            consumeEntity(httpResponse);
+        }
     }
 
     /**
-     * Returns the dependency if it exists locally and has the sent checksums.
+     * Download an artifact using {@link #CONCURRENT_DOWNLOAD_THREADS} multiple threads.
+     * This method will be used for artifacts of size larger than {@link #MIN_SIZE_FOR_CONCURRENT_DOWNLOAD}.
+     * @param uriWithParams the request uri
+     * @param fileSize in bytes, used for setting the download ranges
+     * @param fileDestination location of saving the downloaded file in the file system
+     * @param filePath path of the downloaded file
+     * @return checksums map of the downloaded artifact
+     */
+    protected Map<String, String> downloadFileConcurrently(final String uriWithParams, long fileSize, final String fileDestination, String filePath)
+            throws InterruptedException, IOException {
+        String[] downloadedFilesPaths;
+        File tempDir = Files.createTempDir();
+        InputStream inputStream = null;
+        try {
+            String tempPath = tempDir.getPath() + File.separatorChar + filePath;
+            downloadedFilesPaths = doConcurrentDownload(fileSize, uriWithParams, tempPath);
+            inputStream = concatenateFilesToSingleStream(downloadedFilesPaths);
+
+            return downloader.saveDownloadedFile(inputStream, fileDestination);
+
+        } catch (RuntimeException e) {
+            throw new IOException(e);
+        } finally {
+            FileUtils.deleteDirectory(tempDir);
+            IOUtils.closeQuietly(inputStream);
+        }
+    }
+
+    private String[] doConcurrentDownload(long fileSize, final String uriWithParams, String tempPath)
+            throws InterruptedException {
+        String[] downloadedFilesPaths = new String[CONCURRENT_DOWNLOAD_THREADS];
+        long chunkSize = fileSize / CONCURRENT_DOWNLOAD_THREADS;
+        Thread[] workers = new Thread[CONCURRENT_DOWNLOAD_THREADS];
+
+        long start = 0;
+        long end = chunkSize + fileSize % CONCURRENT_DOWNLOAD_THREADS - 1;
+        for (int i = 0; i < CONCURRENT_DOWNLOAD_THREADS; i++) {
+            final Map<String, String> headers = new HashMap<>();
+            headers.put(HttpHeaders.RANGE, "bytes=" + start + "-" + end);
+
+            final String downloadPath = tempPath + String.valueOf(i);
+            downloadedFilesPaths[i] = downloadPath;
+            workers[i] = new Thread(new Runnable() {
+                public void run() {
+                    try {
+                        saveRequestToFile(uriWithParams, downloadPath, headers);
+                    } catch (IOException e) {
+                        throw new RuntimeException(String.format("Thread downloading %s as part of file %s threw an exception.", downloadPath, uriWithParams), e);
+                    }
+                }
+            });
+            workers[i].start();
+
+            start = end + 1;
+            end += chunkSize;
+        }
+
+        for (Thread worker : workers) {
+            worker.join();
+        }
+
+        return downloadedFilesPaths;
+    }
+
+    /**
+     * Executes a GET request to download files and saves the result to the file system.
+     * Used by the downloading threads of concurrentDownloadedArtifact.
+     * @param uriWithParams the request uri
+     * @param fileDestination location to save the downloaded file to
+     * @param headers additional headers for the request
+     */
+    private void saveRequestToFile(String uriWithParams, String fileDestination, Map<String, String> headers) throws IOException {
+        HttpResponse httpResponse = null;
+        try {
+            httpResponse = downloader.getClient().downloadArtifact(uriWithParams, headers);
+            InputStream inputStream = httpResponse.getEntity().getContent();
+            saveInputStreamToFile(inputStream, fileDestination);
+        } finally {
+            consumeEntity(httpResponse);
+        }
+    }
+
+    /**
+     * Create a single InputStream.
+     * The stream is constructed from the multiple provided file paths.
+     * @param downloadedFilesPaths String array containing paths to the downloaded files
+     * @return single InputStream of the downloaded file
+     */
+    private InputStream concatenateFilesToSingleStream(String[] downloadedFilesPaths) throws FileNotFoundException {
+        InputStream inputStream = new FileInputStream(new File(downloadedFilesPaths[0]));
+        if (downloadedFilesPaths.length < 2) {
+            return inputStream;
+        }
+
+        for (int i = 1; i < downloadedFilesPaths.length; i++) {
+            inputStream = new SequenceInputStream(
+                    inputStream,
+                    new FileInputStream(new File(downloadedFilesPaths[i]))
+            );
+        }
+        return inputStream;
+    }
+
+    /**
+     * Returns the dependency if it exists locally and has the sent fileMetaData.
      * Otherwise return null.
      *
-     * @param checksums     The artifact checksums returned from Artifactory.
+     * @param fileMetaData     The artifact fileMetaData returned from Artifactory.
      * @param filePath      The locally file path
      */
-    private Dependency getDependencyLocally(Checksums checksums, String filePath) throws IOException {
-        if (downloader.isFileExistsLocally(filePath, checksums.getMd5(), checksums.getSha1())) {
-            log.info("The file '" + filePath + "' exists locally.");
-            return new DependencyBuilder().md5(checksums.getMd5()).sha1(checksums.getSha1())
+    private Dependency getDependencyLocally(ArtifactMetaData fileMetaData, String filePath) throws IOException {
+        if (downloader.isFileExistsLocally(filePath, fileMetaData.getMd5(), fileMetaData.getSha1())) {
+            log.info(String.format("The file '%s' exists locally.", filePath));
+            return new DependencyBuilder().md5(fileMetaData.getMd5()).sha1(fileMetaData.getSha1())
                     .id(filePath.substring(filePath.lastIndexOf(String.valueOf(IOUtils.DIR_SEPARATOR))+1)).build();
         }
         return null;
     }
 
-    private Checksums downloadArtifactCheckSums(String url) throws IOException {
+    protected ArtifactMetaData downloadArtifactMetaData(String url) throws IOException {
         HttpResponse response = null;
         try {
-            response = downloader.getClient().getArtifactChecksums(url);
-            Checksums checksums = new Checksums();
-            checksums.setMd5(getMD5ChecksumFromResponse(response));
-            checksums.setSha1(getSHA1ChecksumFromResponse(response));
-            return checksums;
+            response = downloader.getClient().getArtifactMetadata(url);
+            ArtifactMetaData artifactMetaData = new ArtifactMetaData();
+            artifactMetaData.setMd5(getHeaderContentFromResponse(response, MD5_HEADER_NAME));
+            artifactMetaData.setSha1(getHeaderContentFromResponse(response, SHA1_HEADER_NAME));
+            artifactMetaData.setSize(Long.valueOf(getHeaderContentFromResponse(response, HttpHeaders.CONTENT_LENGTH)));
+            artifactMetaData.setAcceptRange("bytes".equals(getHeaderContentFromResponse(response, HttpHeaders.ACCEPT_RANGES)));
+            return artifactMetaData;
+        } catch (NumberFormatException e) {
+            throw new IOException(e);
         } finally {
             consumeEntity(response);
         }
     }
 
-    private void consumeEntity(HttpResponse response) {
+    private String validateMd5Checksum(String metadataMd5, String calculatedMd5) throws IOException {
+        if (!StringUtils.equals(metadataMd5, calculatedMd5)) {
+            String errorMessage = String.format(
+                    "Calculated MD5 checksum is different from original, Original: '%s' Calculated: '%s'",
+                    metadataMd5, calculatedMd5);
+            throw new IOException(errorMessage);
+        }
+        return metadataMd5 == null ? "" : metadataMd5;
+    }
+
+    private String validateSha1Checksum(String metadataSha1, String calculatedSha1) throws IOException {
+        if (!StringUtils.equals(metadataSha1, calculatedSha1)) {
+            String errorMessage = String.format(
+                    "Calculated SHA-1 checksum is different from original, Original: '%s' Calculated: '%s'",
+                    metadataSha1, calculatedSha1);
+            throw new IOException(errorMessage);
+        }
+        return metadataSha1 == null ? "" : metadataSha1;
+    }
+
+    private String getHeaderContentFromResponse(HttpResponse response, String headerName) {
+        String headerContent = null;
+        Header header = response.getFirstHeader(headerName);
+        if (header != null) {
+            headerContent = header.getValue();
+        }
+        return headerContent;
+    }
+
+    private Dependency validateChecksumsAndBuildDependency(Map<String, String> checksumsMap, ArtifactMetaData artifactMetaData, String filePath)
+            throws IOException {
+        String md5 = validateMd5Checksum(artifactMetaData.getMd5(), checksumsMap.get(MD5_ALGORITHM_NAME));
+        String sha1 = validateSha1Checksum(artifactMetaData.getSha1(), checksumsMap.get(SHA1_ALGORITHM_NAME));
+
+        return new DependencyBuilder().md5(md5).sha1(sha1)
+                .id(filePath.substring(filePath.lastIndexOf(File.separatorChar)+1)).build();
+    }
+
+    private static void consumeEntity(HttpResponse response) {
         if (response != null) {
             try {
                 EntityUtils.consume(response.getEntity());
@@ -291,47 +455,43 @@ public class DependenciesDownloaderHelper {
         }
     }
 
-    private String validateMd5Checksum(HttpResponse httpResponse, String calculatedMd5) throws IOException {
-        String md5ChecksumFromResponse = getMD5ChecksumFromResponse(httpResponse);
-        if (!StringUtils.equals(getMD5ChecksumFromResponse(httpResponse), calculatedMd5)) {
-            String errorMessage = "Calculated MD5 checksum is different from original, "
-                    + "Original: '" + md5ChecksumFromResponse + "' Calculated: '" + calculatedMd5 + "'";
-            throw new IOException(errorMessage);
+    public static File saveInputStreamToFile(InputStream inputStream, String filePath) throws IOException {
+        // Create file
+        File dest = new File(filePath);
+        if (dest.exists()) {
+            dest.delete();
+        } else {
+            dest.getParentFile().mkdirs();
         }
-        return md5ChecksumFromResponse == null ? "" : md5ChecksumFromResponse;
+
+        // Save InputStream to file
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileOutputStream = new FileOutputStream(dest);
+            IOUtils.copyLarge(inputStream, fileOutputStream);
+
+            return dest;
+        } catch (IOException e) {
+            throw new IOException(String.format("Could not create or write to file: %s", dest.getCanonicalPath()), e);
+        } finally {
+            IOUtils.closeQuietly(inputStream);
+            IOUtils.closeQuietly(fileOutputStream);
+        }
     }
 
-    private String validateSha1Checksum(HttpResponse httpResponse, String calculatedSha1) throws IOException {
-        String sha1ChecksumFromResponse = getSHA1ChecksumFromResponse(httpResponse);
-        if (!StringUtils.equals(sha1ChecksumFromResponse, calculatedSha1)) {
-            String errorMessage = "Calculated SHA-1 checksum is different from original, "
-                    + "Original: '" + sha1ChecksumFromResponse + "' Calculated: '" + calculatedSha1 + "'";
-            throw new IOException(errorMessage);
-        }
-        return sha1ChecksumFromResponse == null ? "" : sha1ChecksumFromResponse;
-    }
-
-    private String getSHA1ChecksumFromResponse(HttpResponse artifactChecksums) {
-        String sha1 = null;
-        Header sha1Header = artifactChecksums.getFirstHeader("X-Checksum-Sha1");
-        if (sha1Header != null) {
-            sha1 = sha1Header.getValue();
-        }
-        return sha1;
-    }
-
-    private String getMD5ChecksumFromResponse(HttpResponse artifactChecksums) {
-        String md5 = null;
-        Header md5Header = artifactChecksums.getFirstHeader("X-Checksum-Md5");
-        if (md5Header != null) {
-            md5 = md5Header.getValue();
-        }
-        return md5;
-    }
-
-    private static class Checksums {
+    protected static class ArtifactMetaData {
         private String sha1;
         private String md5;
+        private long size;
+        private boolean acceptRange;
+
+        public long getSize() {
+            return size;
+        }
+
+        public void setSize(long size) {
+            this.size = size;
+        }
 
         public String getSha1() {
             return sha1;
@@ -347,6 +507,14 @@ public class DependenciesDownloaderHelper {
 
         public void setMd5(String md5) {
             this.md5 = md5;
+        }
+
+        public boolean isAcceptRange() {
+            return acceptRange;
+        }
+
+        public void setAcceptRange(boolean acceptRange) {
+            this.acceptRange = acceptRange;
         }
     }
 }

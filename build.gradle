@@ -76,8 +76,8 @@ subprojects {
         mavenLocal()
     }
 
-    sourceCompatibility = 1.6
-    targetCompatibility = 1.6
+    sourceCompatibility = 1.7
+    targetCompatibility = 1.7
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {
@@ -510,8 +510,8 @@ if (!excludeMavenPluginBuild) {
 
 idea {
     project {
-        jdkName = '1.6'
-        languageLevel = '1.6'
+        jdkName = '1.7'
+        languageLevel = '1.7'
         wildcards += '?*.gradle'
         idea.project.ipr {
             withXml { provider ->

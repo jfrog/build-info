@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -12,13 +11,15 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MD5_ALGORITHM_NAME;
+import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.SHA1_ALGORITHM_NAME;
 
 /**
  * Created by diman on 12/03/2017.
@@ -57,30 +58,11 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
 
     @Override
     public Map<String, String> saveDownloadedFile(InputStream is, String filePath) throws IOException {
-        File dest = new File(filePath);
-        if (dest.exists()) {
-            dest.delete();
-        } else {
-            dest.getParentFile().mkdirs();
-        }
-
-        FileOutputStream fileOutputStream = null;
+        File dest = DependenciesDownloaderHelper.saveInputStreamToFile(is, filePath);
         try {
-            dest.createNewFile();
-            fileOutputStream = new FileOutputStream(dest);
-            IOUtils.copyLarge(is, fileOutputStream);
-        } catch (IOException e) {
-            throw new IOException("Could not create or write to file: " + dest.getCanonicalPath() + ". " +
-                    e.getMessage());
-        } finally {
-            IOUtils.closeQuietly(is);
-            IOUtils.closeQuietly(fileOutputStream);
-        }
-
-        try {
-            return FileChecksumCalculator.calculateChecksums(dest, "md5", "sha1");
+            return FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Could not find checksum algorithm: " + e.getLocalizedMessage());
+            throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
     }
 
@@ -96,18 +78,18 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
         }
 
         try {
-            Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(dest, "md5", "sha1");
+            Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
             boolean isExists = checksumsMap != null &&
-                    StringUtils.isNotBlank(md5) && StringUtils.equals(md5, checksumsMap.get("md5")) &&
-                    StringUtils.isNotBlank(sha1) && StringUtils.equals(sha1, checksumsMap.get("sha1"));
+                    StringUtils.isNotBlank(md5) && StringUtils.equals(md5, checksumsMap.get(MD5_ALGORITHM_NAME)) &&
+                    StringUtils.isNotBlank(sha1) && StringUtils.equals(sha1, checksumsMap.get(SHA1_ALGORITHM_NAME));
             if (isExists) {
                 return true;
-            } else {
-                log.info(String.format("Overriding existing in destination file: %s", dest.toString()));
-                return false;
             }
+
+            log.info(String.format("Overriding existing file: %s", dest.toString()));
+            return false;
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Could not find checksum algorithm: " + e.getLocalizedMessage());
+            throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
     }
 
