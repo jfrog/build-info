@@ -22,7 +22,6 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.api.GradleException;
-import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
@@ -30,7 +29,6 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
-import org.gradle.api.publish.ivy.internal.publication.IvyModuleDescriptorSpecInternal;
 import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
@@ -51,6 +49,7 @@ import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 import javax.xml.namespace.QName;
@@ -183,7 +182,7 @@ public class TaskHelperPublications extends TaskHelper{
 
             // First adding the Ivy descriptor (if the build is configured to add it):
             if (isPublishIvy()) {
-                File file = ivyNormalizedPublication.getDescriptorFile();
+                File file = getIvyDescriptorFile(ivyNormalizedPublication);
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
@@ -240,6 +239,20 @@ public class TaskHelperPublications extends TaskHelper{
             }
         }
         return deployDetails;
+    }
+
+    private File getIvyDescriptorFile(IvyNormalizedPublication ivy) {
+        try {
+            return ivy.getIvyDescriptorFile();
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            try {
+                Method m = ivy.getClass().getMethod("getDescriptorFile");
+                return (File)m.invoke(ivy);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void addPublication(Publication publicationObj) {
