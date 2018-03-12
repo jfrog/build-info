@@ -29,12 +29,12 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.util.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.retention.Utils;
+import org.jfrog.build.util.DeployableArtifactsUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +64,8 @@ public class BuildDeploymentHelper {
 
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
 
-        logger.debug("Build Info Recorder: " + clientConf.publisher.isPublishBuildInfo());
+        logger.debug("Build Info Recorder: deploy artifacts: " + clientConf.publisher.isPublishArtifacts());
+        logger.debug("Build Info Recorder: publish build info: " + clientConf.publisher.isPublishBuildInfo());
 
         File aggregateDirectory;
         File buildInfoAggregated = null;
@@ -103,40 +104,59 @@ public class BuildDeploymentHelper {
             }
         }
 
-        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.isPublishArtifacts()) {
-            ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
-            boolean isDeployArtifacts = clientConf.publisher.isPublishArtifacts() &&
-                                        ( deployableArtifacts != null )           &&
-                                        ( ! deployableArtifacts.isEmpty())        &&
-                                        ( clientConf.publisher.isEvenUnstable() || ( ! wereThereTestFailures ));
-            boolean isSendBuildInfo   = clientConf.publisher.isPublishBuildInfo() &&
-                                        ( clientConf.publisher.isEvenUnstable() || ( ! wereThereTestFailures ));
-
-            try {
-                if ( isDeployArtifacts ) {
-                    deployArtifacts(clientConf.publisher, deployableArtifacts, client);
-                }
-
-                if ( isSendBuildInfo ) {
-                    logger.info("Artifactory Build Info Recorder: Deploying build info ...");
-                    try {
-                        if ( buildInfoAggregated != null ) {
-                            String buildInfoJson           = client.buildInfoToJsonString( build );
-                            String buildInfoAggregatedJson = FileUtils.readFileToString( buildInfoAggregated, "UTF-8" );
-                            String buildInfoMerged         = buildInfoMergeHelper.mergeJsons( buildInfoAggregatedJson, buildInfoJson );
-                            client.sendBuildInfo( buildInfoMerged );
-                        }
-                        else {
-                            Utils.sendBuildAndBuildRetention(client, build, clientConf);
-                        }
-                    } catch ( Exception e ) {
-                        throw new RuntimeException(e);
-                    }
-                }
-            } finally {
-                client.close();
-            }
+        if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifacts)) {
+            deployArtifacts(clientConf, deployableArtifacts);
         }
+        if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
+            publishBuildInfo(clientConf, build, buildInfoAggregated);
+        }
+    }
+
+    private void publishBuildInfo(ArtifactoryClientConfiguration clientConf, Build build, File buildInfoAggregated) {
+        ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
+        logger.info("Artifactory Build Info Recorder: Deploying build info ...");
+        try {
+            if (buildInfoAggregated != null) {
+                String buildInfoJson = client.buildInfoToJsonString(build);
+                String buildInfoAggregatedJson = FileUtils.readFileToString(buildInfoAggregated, "UTF-8");
+                String buildInfoMerged = buildInfoMergeHelper.mergeJsons(buildInfoAggregatedJson, buildInfoJson);
+                client.sendBuildInfo(buildInfoMerged);
+            } else {
+                Utils.sendBuildAndBuildRetention(client, build, clientConf);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            client.close();
+        }
+    }
+
+    private boolean isDeployArtifacts(ArtifactoryClientConfiguration clientConf, boolean wereThereTestFailures, Set<DeployDetails> deployableArtifacts) {
+        if (!clientConf.publisher.isPublishArtifacts()) {
+            logger.info("Artifactory Build Info Recorder: deploy artifacts set to false, artifacts will not be deployed...");
+            return false;
+        }
+        if (deployableArtifacts == null || deployableArtifacts.isEmpty()) {
+            logger.info("Artifactory Build Info Recorder: no artifacts to deploy...");
+            return false;
+        }
+        if (wereThereTestFailures && !clientConf.publisher.isEvenUnstable()) {
+            logger.warn("Artifactory Build Info Recorder: unstable build, artifacts will not be deployed...");
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isPublishBuildInfo(ArtifactoryClientConfiguration clientConf, boolean wereThereTestFailures) {
+        if (!clientConf.publisher.isPublishBuildInfo()) {
+            logger.info("Artifactory Build Info Recorder: publish build info set to false, build info will not be published...");
+            return false;
+        }
+        if (wereThereTestFailures && !clientConf.publisher.isEvenUnstable()) {
+            logger.warn("Artifactory Build Info Recorder: unstable build, build info will not be published...");
+            return false;
+        }
+        return true;
     }
 
     private File saveBuildInfoToFile(Build build, ArtifactoryClientConfiguration clientConf, File basedir) {
@@ -278,25 +298,28 @@ public class BuildDeploymentHelper {
         return deployableArtifacts;
     }
 
-    private void deployArtifacts(ArtifactoryClientConfiguration.PublisherHandler publishConf,
-            Set<DeployDetails> deployableArtifacts,
-            ArtifactoryBuildInfoClient client) {
-        IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(publishConf);
-        for (DeployDetails artifact : deployableArtifacts) {
-            String artifactPath = artifact.getArtifactPath();
-            if (PatternMatcher.pathConflicts(artifactPath, includeExcludePatterns)) {
-                logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" +
-                        artifactPath + "' due to the defined include-exclude patterns.");
-                continue;
-            }
+    private void deployArtifacts(ArtifactoryClientConfiguration clientConf, Set<DeployDetails> deployableArtifacts) {
+        ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
+        try {
+            IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(clientConf.publisher);
+            for (DeployDetails artifact : deployableArtifacts) {
+                String artifactPath = artifact.getArtifactPath();
+                if (PatternMatcher.pathConflicts(artifactPath, includeExcludePatterns)) {
+                    logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" +
+                            artifactPath + "' due to the defined include-exclude patterns.");
+                    continue;
+                }
 
-            try {
-                client.deployArtifact(artifact);
-            } catch (IOException e) {
-                throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
-                        artifact.getFile() +
-                        ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
+                try {
+                    client.deployArtifact(artifact);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
+                            artifact.getFile() +
+                            ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
+                }
             }
+        } finally {
+            client.close();
         }
     }
 
