@@ -452,6 +452,6 @@ public class UploadSpecHelper {
     }
 
     private static String ensureEnds(String s, char endsWith) {
-        return StringUtils.endsWith(s, "/") ? s : (new StringBuilder()).append(s).append(endsWith).toString();
+        return StringUtils.endsWith(s, String.valueOf(endsWith)) ? s : (new StringBuilder()).append(s).append(endsWith).toString();
     }
 }
