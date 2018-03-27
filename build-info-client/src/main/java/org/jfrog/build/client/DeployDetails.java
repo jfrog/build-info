@@ -26,6 +26,7 @@ import org.jfrog.build.api.BuildFileBean;
 import java.io.File;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -106,12 +107,14 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable {
             return false;
         }
         DeployDetails details = (DeployDetails) o;
-        return artifactPath.equals(details.artifactPath);
+        return artifactPath.equals(details.artifactPath) &&
+                targetRepository.equals(details.targetRepository);
     }
 
     @Override
     public int hashCode() {
-        return artifactPath.hashCode();
+        int result = Objects.hashCode(artifactPath);
+        return 31 * result + Objects.hashCode(targetRepository);
     }
 
     public static class Builder {
