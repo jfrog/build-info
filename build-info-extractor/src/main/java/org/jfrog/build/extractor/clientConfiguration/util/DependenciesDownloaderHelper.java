@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -253,7 +254,7 @@ public class DependenciesDownloaderHelper {
             log.info(String.format("Successfully downloaded '%s' to '%s'", uriWithParams, fileDestination));
 
             return dependencyResult;
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             throw new IOException(e);
         }
     }
@@ -280,7 +281,7 @@ public class DependenciesDownloaderHelper {
      * @return checksums map of the downloaded artifact
      */
     protected Map<String, String> downloadFileConcurrently(final String uriWithParams, long fileSize, final String fileDestination, String filePath)
-            throws InterruptedException, IOException {
+            throws Exception {
         String[] downloadedFilesPaths;
         File tempDir = Files.createTempDir();
         InputStream inputStream = null;
@@ -290,9 +291,6 @@ public class DependenciesDownloaderHelper {
             inputStream = concatenateFilesToSingleStream(downloadedFilesPaths);
 
             return downloader.saveDownloadedFile(inputStream, fileDestination);
-
-        } catch (RuntimeException e) {
-            throw new IOException(e);
         } finally {
             FileUtils.deleteDirectory(tempDir);
             IOUtils.closeQuietly(inputStream);
@@ -300,7 +298,8 @@ public class DependenciesDownloaderHelper {
     }
 
     private String[] doConcurrentDownload(long fileSize, final String uriWithParams, String tempPath)
-            throws InterruptedException {
+            throws Exception {
+        final MutableBoolean errorOccurred = new MutableBoolean(false);
         String[] downloadedFilesPaths = new String[CONCURRENT_DOWNLOAD_THREADS];
         long chunkSize = fileSize / CONCURRENT_DOWNLOAD_THREADS;
         Thread[] workers = new Thread[CONCURRENT_DOWNLOAD_THREADS];
@@ -317,11 +316,13 @@ public class DependenciesDownloaderHelper {
                 public void run() {
                     try {
                         saveRequestToFile(uriWithParams, downloadPath, headers);
-                    } catch (IOException e) {
-                        throw new RuntimeException(String.format("Thread downloading %s as part of file %s threw an exception.", downloadPath, uriWithParams), e);
+                    } catch (Exception e) {
+                        errorOccurred.setValue(true);
+                        printErrorToLog(e, downloadPath, uriWithParams);
                     }
                 }
             });
+            workers[i].setName("downloader_" + i);
             workers[i].start();
 
             start = end + 1;
@@ -330,6 +331,11 @@ public class DependenciesDownloaderHelper {
 
         for (Thread worker : workers) {
             worker.join();
+        }
+
+        // Check if error occurred while downloading
+        if (errorOccurred.booleanValue()) {
+            throw new Exception(String.format("Error occurred while downloading %s, please refer to logs for more information", uriWithParams));
         }
 
         return downloadedFilesPaths;
@@ -477,6 +483,12 @@ public class DependenciesDownloaderHelper {
             IOUtils.closeQuietly(inputStream);
             IOUtils.closeQuietly(fileOutputStream);
         }
+    }
+
+    private void printErrorToLog(Exception e, String downloadPath, String uriWithParams) {
+        StringWriter sw = new StringWriter();
+        e.printStackTrace(new PrintWriter(sw));
+        log.error(String.format("[Thread %s] downloading %s as part of file %s threw an exception: %s", Thread.currentThread().getName(), downloadPath, uriWithParams, sw.toString()));
     }
 
     protected static class ArtifactMetaData {

@@ -32,7 +32,7 @@ public class DownloadTest extends IntegrationTestsBase {
      */
     @Test(dataProvider = "testDownloadFilesProvider")
     public void testDownloadFiles(Map<String, String> uploadedChecksum, String fileName, long fileSize)
-            throws IOException, InterruptedException {
+            throws Exception {
         String uriWithParams = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH + "/" + fileName;
         String fileDestination =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar + fileName;
 
