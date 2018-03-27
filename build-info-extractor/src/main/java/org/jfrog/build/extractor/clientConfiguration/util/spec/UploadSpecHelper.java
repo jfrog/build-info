@@ -294,11 +294,37 @@ public class UploadSpecHelper {
         }
         if (base.equals(file)) {
             return ".";
-        } else {
-            String filePath = file.getAbsolutePath();
-            String basePath = base.getAbsolutePath();
-            return getRelativePath(basePath, filePath, File.separatorChar);
         }
+
+        String filePath = file.getAbsolutePath();
+        String basePath = base.getAbsolutePath();
+
+        basePath = ensureEndsWithSeparator(basePath);
+        int len = 0;
+        int lastSeparatorIndex = 0;
+        String basePathToCompare = basePath.toLowerCase();
+        String filePathToCompare = filePath.toLowerCase();
+        if (basePathToCompare.equals(ensureEndsWithSeparator(filePathToCompare))) {
+            return ".";
+        }
+        for (; len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(
+                len) == basePathToCompare.charAt(len); len++) {
+            if (basePath.charAt(len) == File.separatorChar) {
+                lastSeparatorIndex = len;
+            }
+        }
+        if (len == 0) {
+            return null;
+        }
+        StringBuilder relativePath = new StringBuilder();
+        for (int i = len; i < basePath.length(); i++) {
+            if (basePath.charAt(i) == File.separatorChar) {
+                relativePath.append("..");
+                relativePath.append(File.separator);
+            }
+        }
+        relativePath.append(filePath.substring(lastSeparatorIndex + 1));
+        return relativePath.toString();
     }
 
     public static String calculateFileTargetPath(File patternDir, File file, String targetPath) {
@@ -387,37 +413,6 @@ public class UploadSpecHelper {
         return cleanUnopenedParenthesis(absolutePattern);
     }
 
-    private static String getRelativePath(String basePath, String filePath, char separator) {
-        basePath = ensureEnds(basePath, separator);
-        int len = 0;
-        int lastSeparatorIndex = 0;
-        String basePathToCompare = basePath.toLowerCase();
-        String filePathToCompare = filePath.toLowerCase();
-        if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) {
-            return ".";
-        }
-        for (; len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(
-                len) == basePathToCompare.charAt(len); len++) {
-            if (basePath.charAt(len) == separator) {
-                lastSeparatorIndex = len;
-            }
-        }
-
-        if (len == 0) {
-            return null;
-        }
-        StringBuilder relativePath = new StringBuilder();
-        for (int i = len; i < basePath.length(); i++) {
-            if (basePath.charAt(i) == separator) {
-                relativePath.append("..");
-                relativePath.append(separator);
-            }
-        }
-
-        relativePath.append(filePath.substring(lastSeparatorIndex + 1));
-        return relativePath.toString();
-    }
-
     private static String stripFileNameFromPath(String relativePath) {
         File file = new File(relativePath);
         return file.getPath().substring(0, file.getPath().length() - file.getName().length());
@@ -451,7 +446,7 @@ public class UploadSpecHelper {
         return stringBuilder.toString();
     }
 
-    private static String ensureEnds(String s, char endsWith) {
-        return StringUtils.endsWith(s, String.valueOf(endsWith)) ? s : (new StringBuilder()).append(s).append(endsWith).toString();
+    private static String ensureEndsWithSeparator(String s) {
+        return StringUtils.endsWith(s, File.separator) ? s : s + File.separator;
     }
 }
