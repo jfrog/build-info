@@ -2,10 +2,16 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.dependency.DownloadableArtifact;
+import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.client.DeployDetails;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +37,7 @@ public class DownloadTest extends IntegrationTestsBase {
      * @param fileSize
      */
     @Test(dataProvider = "testDownloadFilesProvider")
-    public void testDownloadFiles(Map<String, String> uploadedChecksum, String fileName, long fileSize)
+    public void testBulkAndConcurrentDownload(Map<String, String> uploadedChecksum, String fileName, long fileSize)
             throws Exception {
         String uriWithParams = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH + "/" + fileName;
         String fileDestination =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar + fileName;
@@ -58,6 +64,51 @@ public class DownloadTest extends IntegrationTestsBase {
         // Verify the downloaded file.
         Assert.assertEquals(uploadedChecksum.get(MD5_ALGORITHM_NAME), downloadedChecksum.get(MD5_ALGORITHM_NAME));
         Assert.assertEquals(uploadedChecksum.get(SHA1_ALGORITHM_NAME), downloadedChecksum.get(SHA1_ALGORITHM_NAME));
+    }
+
+    @Test(dataProvider = "testDownloadFilesProvider")
+    public void testDownloadArtifact(Map<String, String> uploadedChecksum, String fileName, long fileSize)
+            throws Exception {
+        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+
+        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH;
+        String targetDirPath =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
+        String url = repoUrl + "/" + fileName;
+
+        ArtifactMetaData artifactMetaData = dependenciesDownloaderHelper.downloadArtifactMetaData(url);
+        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getSize(), fileSize);
+
+        DownloadableArtifact downloadableArtifact = new DownloadableArtifact(repoUrl, targetDirPath, fileName, "", fileName, PatternType.NORMAL);
+        Dependency dependency = dependenciesDownloaderHelper.downloadArtifact(downloadableArtifact, artifactMetaData, url, fileName);
+        Assert.assertEquals(dependency.getId(), fileName);
+        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
+        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals((new File(targetDirPath + fileName)).length(), fileSize);
+    }
+
+    @Test(dataProvider = "testDownloadFilesProvider")
+    public void testDownloadArtifactWithoutContentLength(Map<String, String> uploadedChecksum, String fileName, long fileSize)
+            throws Exception {
+        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+
+        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH;
+        String targetDirPath =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
+        String url = repoUrl + "/" + fileName;
+
+        ArtifactMetaData artifactMetaData = dependenciesDownloaderHelper.downloadArtifactMetaData(url);
+        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getSize(), fileSize);
+        artifactMetaData.setSize(0); // When content-length is missing
+
+        DownloadableArtifact downloadableArtifact = new DownloadableArtifact(repoUrl, targetDirPath, fileName, "", fileName, PatternType.NORMAL);
+        Dependency dependency = dependenciesDownloaderHelper.downloadArtifact(downloadableArtifact, artifactMetaData, url, fileName);
+        Assert.assertEquals(dependency.getId(), fileName);
+        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
+        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals((new File(targetDirPath + fileName)).length(), fileSize);
     }
 
     /**

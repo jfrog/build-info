@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -217,8 +218,13 @@ public class DependenciesDownloaderHelper {
         downloader.removeUnusedArtifactsFromLocal(allResolvesFiles, forDeletionFiles);
     }
 
+    /**
+     * Get artifact metadata and download the artifact if it's not a directory.
+     * @param downloadableArtifact download recipe
+     * @return artifact dependency
+     * @throws IOException
+     */
     private Dependency downloadArtifact(DownloadableArtifact downloadableArtifact) throws IOException {
-        Dependency dependencyResult;
         String filePath = downloadableArtifact.getFilePath();
         String matrixParams = downloadableArtifact.getMatrixParameters();
         String uri = downloadableArtifact.getRepoUrl() + '/' + filePath;
@@ -230,10 +236,22 @@ public class DependenciesDownloaderHelper {
         if (StringUtils.isBlank(artifactMetaData.getMd5()) && StringUtils.isBlank(artifactMetaData.getSha1())) {
             return null;
         }
+        return downloadArtifact(downloadableArtifact, artifactMetaData, uriWithParams, filePath);
+    }
 
+    /**
+     * Download artifact.
+     * @param downloadableArtifact download recipe
+     * @param artifactMetaData the artifact metadata
+     * @param uriWithParams full artifact uri with matrix params
+     * @param filePath the path to file in file system
+     * @return artifact dependency
+     * @throws IOException
+     */
+    Dependency downloadArtifact(DownloadableArtifact downloadableArtifact, ArtifactMetaData artifactMetaData, String uriWithParams, String filePath) throws IOException {
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
             downloadableArtifact.getRelativeDirPath());
-        dependencyResult = getDependencyLocally(artifactMetaData, fileDestination);
+        Dependency dependencyResult = getDependencyLocally(artifactMetaData, fileDestination);
 
         if (dependencyResult != null) {
             return dependencyResult;
@@ -403,7 +421,7 @@ public class DependenciesDownloaderHelper {
             ArtifactMetaData artifactMetaData = new ArtifactMetaData();
             artifactMetaData.setMd5(getHeaderContentFromResponse(response, MD5_HEADER_NAME));
             artifactMetaData.setSha1(getHeaderContentFromResponse(response, SHA1_HEADER_NAME));
-            artifactMetaData.setSize(Long.valueOf(getHeaderContentFromResponse(response, HttpHeaders.CONTENT_LENGTH)));
+            artifactMetaData.setSize(NumberUtils.toLong(getHeaderContentFromResponse(response, HttpHeaders.CONTENT_LENGTH)));
             artifactMetaData.setAcceptRange("bytes".equals(getHeaderContentFromResponse(response, HttpHeaders.ACCEPT_RANGES)));
             return artifactMetaData;
         } catch (NumberFormatException e) {
