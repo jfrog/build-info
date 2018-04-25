@@ -1,5 +1,8 @@
 {
   "files": [
-    "ant-antlr-1.6.5.jar"
+    "tar-test.in",
+    "tgz-test.in",
+    "targz-test.in",
+    "zip-test.in"
   ]
 }

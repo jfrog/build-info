@@ -5,7 +5,7 @@
       "target": "",
       "flat": "true",
       "recursive": "true",
-      "excludePatterns": ["*/b/b1.in" ,"*ant*"]
+      "excludePatterns": ["*/b/b1.in"]
     },
     {
       "pattern": "${LOCAL_REPO}/a/*a*",

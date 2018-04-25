@@ -19,7 +19,7 @@
       "target": "",
       "flat": "true",
       "recursive": "true",
-      "excludePatterns": ["a/*c1.in", "a/*c2.i?", "a/*ant-antlr-1.6.5.z*"]
+      "excludePatterns": ["a/*c1.in", "a/*c2.i?"]
     }
   ]
 }

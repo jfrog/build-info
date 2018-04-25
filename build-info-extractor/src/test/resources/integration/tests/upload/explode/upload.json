@@ -1,7 +1,25 @@
 {
   "files": [
     {
-      "pattern": "files/a/*.zip",
+      "pattern": "explode/*.zip",
+      "target": "${LOCAL_REPO}/",
+      "recursive": "true",
+      "explode": "true"
+    },
+    {
+      "pattern": "explode/*.tar",
+      "target": "${LOCAL_REPO}/",
+      "recursive": "true",
+      "explode": "true"
+    },
+    {
+      "pattern": "explode/*.tgz",
+      "target": "${LOCAL_REPO}/",
+      "recursive": "true",
+      "explode": "true"
+    },
+    {
+      "pattern": "explode/*.tar.gz",
       "target": "${LOCAL_REPO}/",
       "recursive": "true",
       "explode": "true"

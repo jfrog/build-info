@@ -18,6 +18,42 @@
                   }
                 }
               ]
+            },
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "*"
+                  },
+                  "name": {
+                    "$match": "*.tgz"
+                  }
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "*"
+                  },
+                  "name": {
+                    "$match": "*.tar"
+                  }
+                }
+              ]
+            },
+            {
+              "$and": [
+                {
+                  "path": {
+                    "$match": "*"
+                  },
+                  "name": {
+                    "$match": "*.tar.gz"
+                  }
+                }
+              ]
             }
           ]
         }
