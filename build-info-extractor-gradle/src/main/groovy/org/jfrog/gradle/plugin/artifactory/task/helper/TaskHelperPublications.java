@@ -40,19 +40,19 @@ import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublicatio
 import org.gradle.api.publish.maven.internal.publisher.MavenProjectIdentity;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.client.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
+import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.namespace.QName;
 
 
 /**

@@ -1,9 +1,8 @@
-package org.jfrog.build.util;
+package org.jfrog.build.extractor.clientConfiguration.deploy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jfrog.build.client.DeployableArtifactDetail;
-import org.jfrog.build.client.DeployDetails;
 
 import java.io.*;
 import java.util.ArrayList;

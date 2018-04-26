@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.client;
+package org.jfrog.build.extractor.clientConfiguration.deploy;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;

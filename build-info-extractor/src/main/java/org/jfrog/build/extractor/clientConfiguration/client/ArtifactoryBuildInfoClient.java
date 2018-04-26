@@ -47,6 +47,7 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.*;
 import org.jfrog.build.client.bintrayResponse.BintrayResponse;
 import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;

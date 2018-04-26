@@ -18,7 +18,7 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.PublishArtifact;
-import org.jfrog.build.client.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 
 /**
  * Container class that associates a Gradle {@link PublishArtifact} to its corresponding {@link DeployDetails}
