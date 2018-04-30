@@ -22,6 +22,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
+import org.jfrog.build.extractor.producerConsumer.ProducerConsumerItem;
 
 import java.io.File;
 import java.io.Serializable;
@@ -34,7 +35,7 @@ import java.util.Properties;
  *
  * @author Yossi Shaul
  */
-public class DeployDetails implements Comparable<DeployDetails>, Serializable {
+public class DeployDetails implements Comparable<DeployDetails>, Serializable, ProducerConsumerItem {
     /**
      * Artifact deployment path.
      */

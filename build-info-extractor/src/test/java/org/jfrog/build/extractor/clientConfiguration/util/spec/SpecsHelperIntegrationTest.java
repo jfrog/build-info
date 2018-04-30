@@ -18,7 +18,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -45,7 +44,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "testCases")
-    public void integrationTests(String testName, String uploadSpec, String downloadSpec, Expected expected) throws IOException, NoSuchAlgorithmException, URISyntaxException {
+    public void integrationTests(String testName, String uploadSpec, String downloadSpec, Expected expected) throws Exception {
         Reporter.log("Running test: " + testName, true);
 
         // Upload artifacts.
@@ -88,7 +87,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC));
 
         File searchPath = new File(this.getClass().getResource(INTEGRATION_TESTS).toURI()).getCanonicalFile();
-        Set<String> testPaths = new HashSet<String>();
+        Set<String> testPaths = new HashSet<>();
         listTestPaths(searchPath, testPaths);
 
         Object[][] tests = new Object[testPaths.size()][4];

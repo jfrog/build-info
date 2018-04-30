@@ -4,15 +4,18 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.extractor.clientConfiguration.util.FileCollectionUtil;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.removeUnescapedChar;
@@ -21,6 +24,48 @@ import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.remo
  * Created by diman on 15/05/2017.
  */
 public class UploadSpecHelper {
+
+    private static final String SHA1 = "SHA1";
+    private static final String MD5 = "MD5";
+
+    /**
+     * Create a DeployDetails from the given properties
+     *
+     * @param targetPath target of the created artifact in Artifactory
+     * @param artifactFile the artifact to deploy
+     * @param uploadTarget target repository in Artifactory
+     * @param explode explode archive
+     * @param props properties to attach to the deployed file
+     * @param buildProperties a map of properties to add to the DeployDetails objects
+     */
+    public static DeployDetails buildDeployDetails(String targetPath, File artifactFile,
+                                                   String uploadTarget, String explode, String props,
+                                                   Multimap<String, String> buildProperties)
+            throws IOException, NoSuchAlgorithmException {
+        String path = UploadSpecHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
+        path = StringUtils.replace(path, "//", "/");
+
+        // calculate the sha1 checksum and add it to the deploy artifactsToDeploy
+        Map<String, String> checksums;
+        try {
+            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, SHA1, MD5);
+        } catch (NoSuchAlgorithmException e) {
+            throw new NoSuchAlgorithmException(
+                    String.format("Could not find checksum algorithm for %s or %s.", SHA1, MD5), e);
+        }
+        DeployDetails.Builder builder = new DeployDetails.Builder()
+                .file(artifactFile)
+                .artifactPath(path)
+                .targetRepository(getRepositoryKey(uploadTarget))
+                .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                .explode(BooleanUtils.toBoolean(explode))
+                .addProperties(SpecsHelper.getPropertiesMap(props));
+        if (buildProperties != null && !buildProperties.isEmpty()) {
+            builder.addProperties(buildProperties);
+        }
+
+        return builder.build();
+    }
 
     /**
      * Calculates the target deployment path of an artifact by it's name
@@ -48,88 +93,18 @@ public class UploadSpecHelper {
     }
 
     /**
-     * Building a multi map of target paths mapped to their files using wildcard pattern.
-     * The pattern should contain slashes instead of backslashes in case of windows.
-     *
-     * @param workspaceDir the base directory of which to calculate the given source ant pattern
-     * @param pattern     the Ant pattern to calculate the files from
-     * @param targetPath  the target path for deployment of a file
-     * @return a Multimap containing the targets as keys and the files as values
-     * @throws IOException in case of any file system exception
-     */
-    public static Multimap<String, File> buildPublishingData(
-            File workspaceDir, String pattern, String[] excludePatterns, String targetPath, boolean flat, boolean recursive, boolean regexp)
-            throws IOException {
-        boolean isAbsolutePath = (new File(pattern)).isAbsolute();
-        List<File> matchedFiles;
-        if (regexp) {
-            matchedFiles = collectMatchedFilesByRegexp(workspaceDir, pattern, excludePatterns, recursive);
-        } else {
-            matchedFiles = collectMatchedFilesByWildcard(workspaceDir, pattern, excludePatterns, recursive);
-            // Convert wildcard to regexp
-            pattern = PathsUtils.pathToRegExp(pattern);
-        }
-        return getUploadPathsMap(matchedFiles, workspaceDir, targetPath, flat, Pattern.compile(pattern), isAbsolutePath);
-    }
-
-    private static List<File> collectMatchedFilesByRegexp(File workspaceDir, String pattern, String[] excludePatterns, boolean recursive)
-            throws IOException {
-        // This method determines the base directory - the directory where the files scan will be done
-        String baseDir = getRegexBaseDir(workspaceDir, pattern);
-        // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = prepareRegexPattern(workspaceDir, pattern, baseDir);
-        // Collects candidate files to execute the regex
-        List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, true);
-        return getMatchedFiles(baseDir, newPattern, workspaceDir.getAbsolutePath(), prepareExcludePattern(excludePatterns, false, recursive), candidatePaths);
-    }
-
-    private static List<File> collectMatchedFilesByWildcard(File workspaceDir, String pattern, String[] excludePatterns, boolean recursive) {
-        // This method determines the base directory - the directory where the files scan will be done
-        String baseDir = getWildcardBaseDir(workspaceDir, pattern);
-        // Part of the pattern might move to the base directory, this will remove this part from the pattern
-        String newPattern = prepareWildcardPattern(workspaceDir, pattern, baseDir);
-        // Collects candidate files to execute the regex
-        List<String> candidatePaths = FileCollectionUtil.collectFiles(baseDir, newPattern, recursive, false);
-        // Convert wildcard to regexp
-        newPattern = PathsUtils.pathToRegExp(newPattern);
-        return getMatchedFiles(baseDir, newPattern, workspaceDir.getAbsolutePath(), prepareExcludePattern(excludePatterns, true, recursive), candidatePaths);
-    }
-
-    private static List<File> getMatchedFiles(String baseDir, String newPattern, String workspacePath, String excludePattern, List<String> candidatePaths) {
-        List<File> matchedFiles = new ArrayList<File>();
-        Pattern regexPattern = Pattern.compile(newPattern);
-        Pattern regexExcludePattern = StringUtils.isBlank(excludePattern) ? null : Pattern.compile(excludePattern);
-        File baseDirFile = new File(baseDir);
-        for (String path : candidatePaths) {
-            File file = new File(path);
-            String relativePath = getRelativePath(baseDirFile, file).replace("\\", "/");
-            if (regexPattern.matcher(relativePath).matches()) {
-                if (regexExcludePattern != null) {
-                    boolean fileInWs = file.getAbsolutePath().startsWith(workspacePath);
-                    String relativeToWsPath = fileInWs ? getRelativeToWsPath(file.getAbsolutePath(), workspacePath) : file.getAbsolutePath();
-                    if (regexExcludePattern.matcher(relativeToWsPath).matches()) {
-                        continue;
-                    }
-                }
-                matchedFiles.add(file.getAbsoluteFile());
-            }
-        }
-        return matchedFiles;
-    }
-
-    /**
      * Gets the relative path of a given file to the workspace path.
      * @param absolutePath the file's absolute path
      * @param workspacePath path to the job's workspace
      * @return the relative path of a given file to the workspace path
      */
-    private static String getRelativeToWsPath(String absolutePath, String workspacePath) {
+    public static String getRelativeToWsPath(String absolutePath, String workspacePath) {
         String absoluteFilePath = absolutePath.replace("\\", "/");
         workspacePath = workspacePath.replace("\\", "/");
         return absoluteFilePath.substring(workspacePath.length() + 1);
     }
 
-    private static String prepareExcludePattern(String[] excludePatterns, boolean isWildcard, boolean recursive) {
+    public static String prepareExcludePattern(String[] excludePatterns, boolean isWildcard, boolean recursive) {
         StringBuilder patternSb = new StringBuilder();
         if (!ArrayUtils.isEmpty(excludePatterns)) {
             for (String pattern : excludePatterns) {
@@ -152,32 +127,40 @@ public class UploadSpecHelper {
         return patternSb.toString();
     }
 
+    protected static String getUploadPath(File file, Pattern pathPattern, String targetPath, boolean isFlat,
+                                        boolean isAbsolutePath, File workspaceDir, boolean isTargetDirectory) {
+        String sourcePath;
+        String fileTargetPath = targetPath;
+        if (isTargetDirectory && !isFlat) {
+            fileTargetPath = UploadSpecHelper.calculateFileTargetPath(workspaceDir, file, targetPath);
+        }
+
+        if (isAbsolutePath) {
+            if (!isFlat) {
+                if (isTargetDirectory) {
+                    fileTargetPath = targetPath + file.getPath();
+                } else {
+                    fileTargetPath = targetPath;
+                }
+            }
+            sourcePath = file.getPath();
+        } else {
+            sourcePath = UploadSpecHelper.getRelativePath(workspaceDir, file);
+        }
+
+        return PathsUtils.reformatRegexp(sourcePath, fileTargetPath.replace('\\', '/'), pathPattern);
+    }
+
     public static Multimap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
-                                                           boolean flat, Pattern regexPattern, boolean absolutePath) {
+                                                           boolean isFlat, Pattern regexPattern, boolean isAbsolutePath) {
         Multimap<String, File> filePathsMap = HashMultimap.create();
         boolean isTargetDirectory = StringUtils.endsWith(targetPath, "/");
 
         for (File file : files) {
-            String sourcePath;
-            String fileTargetPath = targetPath;
-            if (isTargetDirectory && !flat) {
-                fileTargetPath = calculateFileTargetPath(workspaceDir, file, targetPath);
-            }
-            if (absolutePath) {
-                if (!flat) {
-                    if (isTargetDirectory) {
-                        fileTargetPath = targetPath + file.getPath();
-                    } else {
-                        fileTargetPath = targetPath;
-                    }
-                }
-                sourcePath = file.getPath();
-            } else {
-                sourcePath = getRelativePath(workspaceDir, file);
-            }
-            fileTargetPath = PathsUtils.reformatRegexp(sourcePath, fileTargetPath.replace('\\', '/'), regexPattern);
+            String fileTargetPath = getUploadPath(file, regexPattern, targetPath, isFlat, isAbsolutePath, workspaceDir, isTargetDirectory);
             filePathsMap.put(fileTargetPath, file);
         }
+
         return filePathsMap;
     }
 
@@ -191,7 +174,7 @@ public class UploadSpecHelper {
      * @param pattern the pattern provided by the user
      * @return String that represents the base directory
      */
-    private static String getWildcardBaseDir(File workspaceDir, String pattern) {
+    public static String getWildcardBaseDir(File workspaceDir, String pattern) {
         String baseDir = getWildcardAbsolutePattern(workspaceDir, pattern);
         baseDir = StringUtils.substringBefore(baseDir, "*");
         baseDir = StringUtils.substringBefore(baseDir, "?");
@@ -214,7 +197,7 @@ public class UploadSpecHelper {
      * @param pattern the pattern provided by the user
      * @return String that represents the base directory
      */
-    private static String getRegexBaseDir(File workspaceDir, String pattern) throws FileNotFoundException {
+    public static String getRegexBaseDir(File workspaceDir, String pattern) throws FileNotFoundException {
         String baseDir = getRegexpAbsolutePattern(workspaceDir, pattern);
 
         baseDir = getExistingPath(baseDir);
@@ -235,7 +218,7 @@ public class UploadSpecHelper {
      * @param baseDir the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
-    private static String prepareRegexPattern(File workspaceDir, String pattern, String baseDir) {
+    public static String prepareRegexPattern(File workspaceDir, String pattern, String baseDir) {
         String absolutePattern = getRegexpAbsolutePattern(workspaceDir, pattern);
         // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used
         String newPattern = cleanRegexpPattern(absolutePattern, baseDir);
@@ -254,7 +237,7 @@ public class UploadSpecHelper {
      * @param baseDir the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
-    private static String prepareWildcardPattern(File workspaceDir, String pattern, String baseDir) {
+    public static String prepareWildcardPattern(File workspaceDir, String pattern, String baseDir) {
         String absolutePattern = getWildcardAbsolutePattern(workspaceDir, pattern);
         // String.replaceFirst fails to find some strings with regexp therefore StringUtils.substringAfter is used.
         // absolutePattern may contain escaped parenthesis (which are part of the path) and not escaped parenthesis
@@ -338,6 +321,20 @@ public class UploadSpecHelper {
         } else {
             return (new StringBuilder()).append(targetPath).append('/').append(relativePath).toString();
         }
+    }
+
+    /**
+     * Remove repository's name from a given Spec's target
+     * @param path target path in Artifactory
+     * @return the local path inside the repository
+     */
+    public static String getLocalPath(String path) {
+        path = StringUtils.substringAfter(path, "/");
+        // When the path is the root of the repo substringAfter will return empty string. in such case slash need to be added
+        if ("".equals(path)) {
+            return "/";
+        }
+        return path;
     }
 
     /**
@@ -448,5 +445,9 @@ public class UploadSpecHelper {
 
     private static String ensureEndsWithSeparator(String s) {
         return StringUtils.endsWith(s, File.separator) ? s : s + File.separator;
+    }
+
+    private static String getRepositoryKey(String path) {
+        return StringUtils.substringBefore(path, "/");
     }
 }

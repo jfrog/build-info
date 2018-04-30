@@ -1,0 +1,7 @@
+{
+  "files": [
+    {
+      "aql": {"items.find": {"foo": "bar","key": "val"}}
+    }
+  ]
+}

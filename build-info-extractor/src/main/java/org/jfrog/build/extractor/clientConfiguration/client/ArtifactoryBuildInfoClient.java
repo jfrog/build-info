@@ -344,19 +344,38 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
      * @throws IOException On any connection error
      */
     public ArtifactoryUploadResponse deployArtifact(DeployDetails details) throws IOException {
+        return deployArtifact(details, null);
+    }
+
+    /**
+     * Deploys the artifact to the destination repository, with addition of prefix to the printed log.
+     *
+     * @param details Details about the deployed artifact
+     * @param logPrefix Will be printed as a log-prefix
+     * @return
+     * @throws IOException On any connection error
+     */
+    public ArtifactoryUploadResponse deployArtifact(DeployDetails details, String logPrefix) throws IOException {
+        String deploymentPath = buildDeploymentPath(details);
+        logPrefix = logPrefix == null ? "" : logPrefix + " ";
+        log.info(logPrefix + "Deploying artifact: " + deploymentPath);
+        return doDeployArtifact(details, deploymentPath);
+    }
+
+    private String buildDeploymentPath(DeployDetails details) {
         List<String> pathComponents = new ArrayList<String>();
         pathComponents.add(encodeUrl(artifactoryUrl));
         pathComponents.add(encodePath(details.getTargetRepository()));
         pathComponents.add(encodePath(details.getArtifactPath()));
-        String deploymentPath = StringUtils.join(pathComponents, "/");
+        return StringUtils.join(pathComponents, "/");
+    }
 
-        log.info("Deploying artifact: " + deploymentPath);
+    private ArtifactoryUploadResponse doDeployArtifact(DeployDetails details, String deploymentPath) throws IOException{
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
             uploadChecksums(details, deploymentPath);
         }
-
         return response;
     }
 

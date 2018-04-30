@@ -19,7 +19,10 @@ public class UploadSpecValidator extends SpecsValidator {
         }
         for (FileSpec fileSpec : spec.getFiles()) {
             if (StringUtils.isBlank(fileSpec.getTarget())) {
-                throw new IllegalArgumentException("Target key can not be blank.");
+                throw new IllegalArgumentException("The argument 'target' is missing from the upload spec.");
+            }
+            if (StringUtils.isBlank(fileSpec.getPattern())) {
+                throw new IllegalArgumentException("The argument 'pattern' is missing from the upload spec.");
             }
             validateQueryInputs(fileSpec);
         }
