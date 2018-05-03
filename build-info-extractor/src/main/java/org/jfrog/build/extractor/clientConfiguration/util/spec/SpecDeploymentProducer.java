@@ -31,7 +31,7 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
     }
 
     @Override
-    public void producerRun() {
+    public void producerRun() throws InterruptedException {
         log.debug(String.format("[Thread %s] starting run()", Thread.currentThread().getName()));
         try {
             // Iterate over FileSpecs
@@ -46,6 +46,8 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
                 SingleSpecDeploymentProducer fileSpecProducer = new SingleSpecDeploymentProducer(uploadFile, workspace, buildProperties);
                 fileSpecProducer.executeSpec(deployDetailsSet, executor);
             }
+        } catch (InterruptedException e) {
+            throw e;
         } catch (Exception e) {
             // Throw unchecked exception for the UncaughtExceptionHandler
             throw new RuntimeException(e);

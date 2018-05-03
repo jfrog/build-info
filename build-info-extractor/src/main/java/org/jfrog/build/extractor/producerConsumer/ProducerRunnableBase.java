@@ -21,7 +21,7 @@ public abstract class ProducerRunnableBase implements ProducerConsumerRunnableIn
         }
     }
 
-    public abstract void producerRun();
+    public abstract void producerRun() throws InterruptedException;
 
     @Override
     public void setExecutor(ProducerConsumerExecutor executor) {
