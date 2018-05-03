@@ -1,5 +1,7 @@
 package org.jfrog.build.extractor.producerConsumer;
 
+import org.jfrog.build.api.util.Log;
+
 /**
  * Base class for Producers used in the ProducerConsumerExecutor.
  *
@@ -8,10 +10,11 @@ package org.jfrog.build.extractor.producerConsumer;
 public abstract class ProducerRunnableBase implements ProducerConsumerRunnableInt {
 
     protected ProducerConsumerExecutor executor;
+    protected Log log;
 
     public final void run() {
-        producerRun();
         try {
+            producerRun();
             executor.producerFinished();
         } catch (InterruptedException e) {
             return;
@@ -23,5 +26,10 @@ public abstract class ProducerRunnableBase implements ProducerConsumerRunnableIn
     @Override
     public void setExecutor(ProducerConsumerExecutor executor) {
         this.executor = executor;
+    }
+
+    @Override
+    public void setLog(Log log) {
+        this.log = log;
     }
 }

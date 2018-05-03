@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -29,7 +30,7 @@ public class ProducerConsumerExecutor {
     private Thread[] consumerThreads;
     private int producersNumber;
     private int consumersNumber;
-    private boolean errorOccurred = false;
+    private AtomicBoolean errorOccurred = new AtomicBoolean(false);
     private AtomicInteger producersFinished = new AtomicInteger(0);
 
     public ProducerConsumerExecutor(Log log, ProducerRunnableBase[] producerRunnables, ConsumerRunnableBase[] consumerRunnables, int queueSize) {
@@ -79,7 +80,7 @@ public class ProducerConsumerExecutor {
             throw e;
         }
         // Check if error occurred during deployment
-        if (errorOccurred) {
+        if (errorOccurred.get()) {
             throw new Exception("Error occurred during operation, please refer to logs for more information.");
         }
     }
@@ -104,8 +105,7 @@ public class ProducerConsumerExecutor {
     /**
      * This method will run when an error occurred during execution
      */
-    private synchronized void stopWithException() {
-        errorOccurred = true;
+    private void stopWithException() {
         // Interrupt all threads
         for (Thread thread : producerThreads) {
             thread.interrupt();
@@ -126,12 +126,15 @@ public class ProducerConsumerExecutor {
     private class ProducerConsumerExceptionHandler implements Thread.UncaughtExceptionHandler {
         @Override
         public void uncaughtException(Thread t, Throwable e) {
-            // Stop all deployment operation
-            stopWithException();
             // Log the exception
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
             log.error(String.format("[Thread %s] An exception occurred during execution:\n%s", t.getName(), sw.toString()));
+
+            // Stop all deployment operation if this is the first exception
+            if (!errorOccurred.getAndSet(true)) {
+                stopWithException();
+            }
         }
     }
 

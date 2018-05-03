@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.google.common.collect.Multimap;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 
@@ -16,7 +15,6 @@ import java.util.Set;
  */
 public class SpecDeploymentProducer extends ProducerRunnableBase {
 
-    private Log log;
     /**
      * Set containing all created DeployDetails, used to later create deployed Artifact objects
      */
@@ -48,11 +46,6 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
                 SingleSpecDeploymentProducer fileSpecProducer = new SingleSpecDeploymentProducer(uploadFile, workspace, buildProperties);
                 fileSpecProducer.executeSpec(deployDetailsSet, executor);
             }
-
-            // Finish producer run
-            executor.producerFinished();
-        } catch (InterruptedException e) {
-            return;
         } catch (Exception e) {
             // Throw unchecked exception for the UncaughtExceptionHandler
             throw new RuntimeException(e);
@@ -64,10 +57,5 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
      */
     public Set<DeployDetails> getDeployedArtifacts() {
         return deployDetailsSet;
-    }
-
-    @Override
-    public void setLog(Log log) {
-        this.log = log;
     }
 }
