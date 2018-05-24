@@ -43,6 +43,7 @@ public class ArtifactoryTask extends DefaultTask {
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
     public static final String PUBLISH_IVY = "publishIvy";
     public static final String PUBLISH_POM = "publishPom";
+    private boolean evaluated = false;
 
     private static final Logger log = Logging.getLogger(ArtifactoryTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
@@ -84,23 +85,20 @@ public class ArtifactoryTask extends DefaultTask {
         log.debug("Task '{}' activated", getPath());
     }
 
-    public void checkDependsOnArtifactsToPublish() {
+    private void checkDependsOnArtifactsToPublish() {
         if (addArchivesConfigToTask) {
             helperConfigurations.AddDefaultArchiveConfiguration(getProject());
         }
-        if (helperConfigurations.hasConfigurations()) {
-            helperConfigurations.checkDependsOnArtifactsToPublish();
-        }
-        if (helperPublications.hasPublications()) {
-            helperPublications.checkDependsOnArtifactsToPublish();
-        }
+
+        helperConfigurations.checkDependsOnArtifactsToPublish();
+        helperPublications.checkDependsOnArtifactsToPublish();
     }
 
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
-        if(helperConfigurations.hasConfigurations()){
+        if (helperConfigurations.hasConfigurations()) {
             helperConfigurations.collectDescriptorsAndArtifactsForUpload();
         }
-        if(helperPublications.hasPublications()){
+        if (helperPublications.hasPublications()) {
             helperPublications.collectDescriptorsAndArtifactsForUpload();
         }
     }
@@ -120,11 +118,17 @@ public class ArtifactoryTask extends DefaultTask {
     /** DSL **/
 
     public void publishConfigs(Object... confs) {
-        helperConfigurations.publishConfigs(confs);
+        if (confs != null) {
+            helperConfigurations.addCollection(confs);
+            checkDependsOnArtifactsToPublish();
+        }
     }
 
     public void publications(Object... publications) {
-        helperPublications.publications(publications);
+        if (publications != null) {
+            helperPublications.addCollection(publications);
+            checkDependsOnArtifactsToPublish();
+        }
     }
 
     /** Getters **/
@@ -201,13 +205,6 @@ public class ArtifactoryTask extends DefaultTask {
                 }
             }
 
-            Task deployTask = project.getRootProject().getTasks().findByName(DEPLOY_TASK_NAME);
-            if (deployTask == null) {
-                throw new IllegalStateException(String.format("Could not find %s in the root project", DEPLOY_TASK_NAME));
-            }
-
-            finalizedBy(deployTask);
-
             // Depend on buildInfo task in sub-projects
             for (Project sub : project.getSubprojects()) {
                 Task subArtifactoryTask = sub.getTasks().findByName(ARTIFACTORY_PUBLISH_TASK_NAME);
@@ -215,9 +212,25 @@ public class ArtifactoryTask extends DefaultTask {
                     dependsOn(subArtifactoryTask);
                 }
             }
-
-            checkDependsOnArtifactsToPublish();
         }
+        evaluated = true;
+    }
+
+    /**
+     * Sets the deploy task as a final task for this artifactoryPublish task
+     *
+     * @param project - The project itself
+     */
+    public void finalizeByDeployTask(Project project) {
+        Task deployTask = project.getRootProject().getTasks().findByName(DEPLOY_TASK_NAME);
+        if (deployTask == null) {
+            throw new IllegalStateException(String.format("Could not find %s in the root project", DEPLOY_TASK_NAME));
+        }
+        finalizedBy(deployTask);
+    }
+
+    public boolean isEvaluated() {
+        return evaluated;
     }
 
     public boolean isSkip() {

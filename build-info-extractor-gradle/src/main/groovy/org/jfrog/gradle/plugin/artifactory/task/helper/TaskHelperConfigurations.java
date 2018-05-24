@@ -45,6 +45,8 @@ import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -56,17 +58,22 @@ public class TaskHelperConfigurations extends TaskHelper {
     public static final String ARCHIVES_BASE_NAME = "archivesBaseName";
     private Set<Configuration> publishConfigurations;
     private boolean publishConfigsSpecified;
+    private Set<Object> configurations = new HashSet<>();
 
     public TaskHelperConfigurations(ArtifactoryTask artifactoryTask) {
         super(artifactoryTask);
         publishConfigurations = artifactoryTask.publishConfigs;
     }
 
-    public void publishConfigs(Object... confs) {
-        if (confs == null) {
+    public void addCollection(Object... objects) {
+        Collections.addAll(this.configurations, objects);
+    }
+
+    private void publishConfigs() {
+        if (configurations == null || configurations.size() == 0) {
             return;
         }
-        for (Object conf : confs) {
+        for (Object conf : configurations) {
             if (conf instanceof CharSequence) {
                 Configuration projectConfig = getProject().getConfigurations().findByName(conf.toString());
                 if (projectConfig != null) {
@@ -118,6 +125,10 @@ public class TaskHelperConfigurations extends TaskHelper {
      * Check all files to publish, depends on it (to generate Gradle task graph to create them).
      */
     public void checkDependsOnArtifactsToPublish() {
+        publishConfigs();
+        if (!hasConfigurations()) {
+            return;
+        }
         // The task depends on the produced artifacts of all configurations "to publish"
         for (Configuration publishConfiguration : publishConfigurations) {
             dependsOn(publishConfiguration.getArtifacts());

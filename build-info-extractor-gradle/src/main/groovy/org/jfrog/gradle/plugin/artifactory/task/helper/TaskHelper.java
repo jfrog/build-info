@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author Lior Hasson
  */
-public class TaskHelper {
+public abstract class TaskHelper {
     private static final Logger log = Logging.getLogger(TaskHelper.class);
 
     protected ArtifactoryTask artifactoryTask;
@@ -40,6 +40,12 @@ public class TaskHelper {
     public String getPath() {
         return artifactoryTask.getPath();
     }
+
+    /**
+     * Collects the list of publications and configurations.
+     * @param objects - The publication/configuration
+     */
+    public abstract void addCollection(Object... objects);
 
     protected Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, String publicationName) {
         Project project = getProject();

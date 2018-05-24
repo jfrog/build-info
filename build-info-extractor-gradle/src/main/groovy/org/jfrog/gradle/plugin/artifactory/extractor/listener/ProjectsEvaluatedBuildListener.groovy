@@ -2,13 +2,13 @@ package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
 import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
+import org.gradle.StartParameter
 import org.gradle.api.Project
 import org.gradle.api.ProjectState
 import org.gradle.api.Task
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
 import org.gradle.api.ProjectEvaluationListener
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
@@ -30,18 +30,27 @@ import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTO
  * 2) Overriding gradle resolution repositories (Maven/Ivy)
  * 3) Prepare artifacts for deployment
  */
-public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener {
+public class ProjectsEvaluatedBuildListener extends BuildAdapter implements ProjectEvaluationListener {
     private static final Logger log = LoggerFactory.getLogger(ProjectsEvaluatedBuildListener.class)
+    private final Set<Task> artifactoryTasks = Collections.newSetFromMap(new ConcurrentHashMap<Task, Boolean>());
 
     @Override
     void beforeEvaluate(Project project) {
     }
 
+    /**
+     * This method is invoked after evaluation of every project
+     */
     @Override
     void afterEvaluate(Project project, ProjectState state) {
         Set<Task> tasks = project.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
+        StartParameter startParameter = project.getGradle().getStartParameter();
         tasks.each { ArtifactoryTask artifactoryTask ->
-            evaluate(artifactoryTask)
+            artifactoryTasks.add(artifactoryTask)
+            artifactoryTask.finalizeByDeployTask(project)
+            if (startParameter.isConfigureOnDemand()) {
+                evaluate(artifactoryTask)
+            }
         }
     }
 
@@ -101,6 +110,21 @@ public class ProjectsEvaluatedBuildListener implements ProjectEvaluationListener
                     username = resolverConf.username
                     password = resolverConf.password
                 }
+            }
+        }
+    }
+
+    /**
+     * This method is invoked after all projects are evaluated
+     */
+    @Override
+    void projectsEvaluated(Gradle gradle) {
+        Set<Task> tasks = gradle.rootProject.getTasksByName(ARTIFACTORY_PUBLISH_TASK_NAME, false)
+        artifactoryTasks.addAll(tasks)
+        artifactoryTasks.each { ArtifactoryTask artifactoryTask ->
+            if (!artifactoryTask.isEvaluated()) {
+                evaluate(artifactoryTask)
+                artifactoryTask.finalizeByDeployTask(artifactoryTask.getProject())
             }
         }
     }

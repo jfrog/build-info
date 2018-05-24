@@ -37,7 +37,6 @@ import org.gradle.api.publish.maven.MavenArtifactSet;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.MavenPublicationInternal;
 import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublication;
-import org.gradle.api.publish.maven.internal.publisher.MavenProjectIdentity;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.LayoutPatterns;
@@ -51,6 +50,8 @@ import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -58,10 +59,11 @@ import java.util.Set;
 /**
  * @author Fred Simon
  */
-public class TaskHelperPublications extends TaskHelper{
+public class TaskHelperPublications extends TaskHelper {
     private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
-    private Set<IvyPublication> ivyPublications = Sets.newHashSet();
-    private Set<MavenPublication> mavenPublications = Sets.newHashSet();
+    private Set<IvyPublication> ivyPublications = new HashSet<>();
+    private Set<MavenPublication> mavenPublications = new HashSet<>();
+    private Set<Object> publications = new HashSet<>();
     private boolean publishPublicationsSpecified;
 
     public TaskHelperPublications(ArtifactoryTask artifactoryTask) {
@@ -70,8 +72,8 @@ public class TaskHelperPublications extends TaskHelper{
         this.mavenPublications = artifactoryTask.mavenPublications;
     }
 
-    public void publications(Object... publications) {
-        if (publications == null) {
+    public void publications() {
+        if (publications == null || publications.size() == 0) {
             return;
         }
         for (Object publication : publications) {
@@ -95,6 +97,10 @@ public class TaskHelperPublications extends TaskHelper{
         publishPublicationsSpecified = true;
     }
 
+    public void addCollection(Object... publications) {
+        Collections.addAll(this.publications, publications);
+    }
+
     private void logPublicationNotFound(Object publication) {
         log.debug("Publication named '{}' does not exist for project '{}' in task '{}'.",
                 publication, getProject().getPath(), getPath());
@@ -113,6 +119,10 @@ public class TaskHelperPublications extends TaskHelper{
     }
 
     public void checkDependsOnArtifactsToPublish() {
+        publications();
+        if (!hasPublications()) {
+            return;
+        }
         // If no publications in the list
         if (!hasPublications()) {
             // If some were declared => Warning
@@ -136,6 +146,8 @@ public class TaskHelperPublications extends TaskHelper{
             dependsOn(String.format("%s:generateDescriptorFileFor%sPublication",
                 getProject().getPath(), capitalizedPublicationName));
         }
+        // This makes the artifactoryPublish task to be depended on
+        // the 'generate Pom file' task
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
                 // TODO: Check how the output files can be extracted without using getPublishableFiles
@@ -213,7 +225,6 @@ public class TaskHelperPublications extends TaskHelper{
             }
             MavenPublicationInternal mavenPublicationInternal = (MavenPublicationInternal) mavenPublication;
             MavenNormalizedPublication mavenNormalizedPublication = mavenPublicationInternal.asNormalisedPublication();
-            MavenProjectIdentity projectIdentity = mavenNormalizedPublication.getProjectIdentity();
 
             // First adding the Maven descriptor (if the build is configured to add it):
             if (isPublishMaven()) {
@@ -221,8 +232,8 @@ public class TaskHelperPublications extends TaskHelper{
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            projectIdentity.getArtifactId(), "pom", "pom", null, file);
-                    addMavenArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
+                            mavenPublication.getArtifactId(), "pom", "pom", null, file);
+                    addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
 
@@ -232,10 +243,10 @@ public class TaskHelperPublications extends TaskHelper{
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        projectIdentity.getArtifactId(), artifact.getExtension(),
+                        mavenPublication.getArtifactId(), artifact.getExtension(),
                         artifact.getExtension(), artifact.getClassifier(),
                         file);
-                addMavenArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
+                addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
             }
         }
         return deployDetails;
@@ -333,13 +344,13 @@ public class TaskHelperPublications extends TaskHelper{
     }
 
     private void addMavenArtifactToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
-                                                 MavenProjectIdentity projectIdentity, DeployDetails.Builder builder,
-                                                 PublishArtifactInfo artifactInfo) {
+                                                 DeployDetails.Builder builder,
+                                                 PublishArtifactInfo artifactInfo, MavenPublication mavenPublication) {
         Map<String, String> extraTokens = getExtraTokens(artifactInfo);
         builder.artifactPath(IvyPatternHelper.substitute(
-                LayoutPatterns.M2_PATTERN, projectIdentity.getGroupId().replace(".", "/"),
-                projectIdentity.getArtifactId(),
-                projectIdentity.getVersion(),
+                LayoutPatterns.M2_PATTERN, mavenPublication.getGroupId().replace(".", "/"),
+                mavenPublication.getArtifactId(),
+                mavenPublication.getVersion(),
                 artifactInfo.getName(), artifactInfo.getType(),
                 artifactInfo.getExtension(), publicationName,
                 extraTokens, null));
