@@ -138,7 +138,7 @@ public class GradleArtifactoryClientConfigUpdater {
             // Parent first than me
             fillProperties(parent, props);
         }
-        Map<String, ?> projectProperties = project.getProperties();
+        Map<String, ?> projectProperties = project.getExtensions().getExtraProperties().getProperties();
         props.putAll(BuildInfoExtractorUtils.filterStringEntries(projectProperties));
     }
 }
