@@ -20,13 +20,30 @@ import java.io.IOException;
  */
 public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
     private static final String SCAN_BUILD_URL = "/api/xray/scanBuild";
-    private static final int XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES = 10; // Retrying to resume the scan 10 times after a stable connection
-    private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;  // Expecting \r\n every 30 seconds
-    private static final int XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS = 15000; // 15 seconds sleep between retry
-    private static final String XRAY_FATAL_FAIL_STATUS = "-1"; //Fatal error code from Xray
+    /**
+     * Retrying to resume the scan 5 times after a stable connection
+     */
+    private static final int XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES = 5;
+    /**
+     * Expecting \r\n every 30 seconds
+     */
+    private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;
+    /**
+     * 30 seconds sleep between retry
+     */
+    private static final int XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS = 30000;
+    /**
+     * Fatal error code from Xray
+     */
+    private static final String XRAY_FATAL_FAIL_STATUS = "-1";
+    /**
+     * ArtifactoryXrayClient manages retry mechanism, http-client's mechanism is not required
+     */
+    private static final int HTTP_CLIENT_RETRIES = 0;
 
     public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
         super(artifactoryUrl, username, password, logger);
+        setConnectionRetries(HTTP_CLIENT_RETRIES);
     }
 
     public ArtifactoryXrayResponse xrayScanBuild(String buildName, String buildNumber, String context) throws IOException, InterruptedException {
@@ -65,7 +82,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
                     throw new RuntimeException("Artifactory response: " + resultStr);
                 }
             }
-            throw new IOException("Artifactory response: " + resultStr);
+            throw new XrayErrorException("Artifactory response: " + resultStr);
         }
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return mapper.treeToValue(result, ArtifactoryXrayResponse.class);
@@ -82,27 +99,50 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
                 retryNum++;
                 response = client.execute(httpRequest);
                 return parseXrayScanResponse(response);
+            } catch (XrayErrorException e) {
+                handleException(retryNum, e);
             } catch (IOException e) {
                 if (isStableConnection(lastConnectionAttemptMillis)) {
+                    // Interruption may happen when build is aborted in the CI Server.
+                    if (Thread.currentThread().isInterrupted()) {
+                        throw new InterruptedException("Operation interrupted.");
+                    }
                     retryNum = 0;
                     continue;
                 }
-                if (XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES <= retryNum) {
-                    throw e;
-                }
-                log.warn("Xray scan connection lost: " + e.getMessage() + ", attempting to reconnect...");
-                // Sleeping before trying to reconnect.
-                Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
+                handleException(retryNum, e);
             } finally {
-                if (response != null) {
-                    try {
-                        EntityUtils.consume(response.getEntity());
-                    } catch (IOException e) {
-                        // Ignore
-                    }
-                }
-                httpRequest.releaseConnection();
+                releaseResponse(httpRequest, response);
             }
+        }
+    }
+
+    private void releaseResponse(HttpRequestBase httpRequest, HttpResponse response) {
+        if (response != null) {
+            try {
+                EntityUtils.consume(response.getEntity());
+            } catch (IOException e) {
+                // Ignore
+            }
+        }
+        httpRequest.releaseConnection();
+    }
+
+    private void handleException(int retryNum, IOException e) throws InterruptedException, IOException {
+        if (XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES <= retryNum) {
+            throw e;
+        }
+        log.warn("Xray scan connection lost: " + e.getMessage() + ", attempting to reconnect...");
+        // Sleeping before trying to reconnect.
+        Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
+    }
+
+    /**
+     * Private exception class, signals that Xray-response returned from Artifactory contained an error.
+     */
+    private class XrayErrorException extends IOException {
+        private XrayErrorException(String message) {
+            super(message);
         }
     }
 }
