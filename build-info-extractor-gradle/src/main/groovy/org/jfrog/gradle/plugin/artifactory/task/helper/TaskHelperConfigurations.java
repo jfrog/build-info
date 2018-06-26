@@ -248,6 +248,7 @@ public class TaskHelperConfigurations extends TaskHelper {
                     log.info("No publish configurations specified for project '{}' - using the default '{}' " +
                             "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
                     publishConfigurations.add(archiveConfig);
+                    checkDependsOnArtifactsToPublish();
                 } else {
                     log.warn("No publish configurations specified for project '{}' and the default '{}' " +
                             "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
