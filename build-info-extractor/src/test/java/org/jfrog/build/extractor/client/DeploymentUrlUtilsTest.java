@@ -61,4 +61,13 @@ public class DeploymentUrlUtilsTest {
         Assert.assertEquals(matrixParamString, ";keyA=valueA;key=valueA;key=valueB",
                 "Unexpected matrix param with multi values: " + matrixParamString);
     }
+
+    public void testEncodePath() throws UnsupportedEncodingException {
+        Assert.assertEquals(DeploymentUrlUtils.encodePath("a/b/c"), "a/b/c");
+        Assert.assertEquals(DeploymentUrlUtils.encodePath("a+/b+/c"), "a%2B/b%2B/c");
+        Assert.assertEquals(DeploymentUrlUtils.encodePath("a /b /c"), "a%20/b%20/c");
+        Assert.assertEquals(DeploymentUrlUtils.encodePath("a/b/c;a=1"), "a/b/c;a=1");
+        Assert.assertEquals(DeploymentUrlUtils.encodePath("a/b/c;a=1;b=2"), "a/b/c;a=1;b=2");
+    }
+
 }

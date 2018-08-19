@@ -19,8 +19,8 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 
 import java.io.UnsupportedEncodingException;
@@ -28,6 +28,9 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
+import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 
 /**
  * @author Tomer C.
@@ -60,6 +63,34 @@ public abstract class DeploymentUrlUtils {
                     append(URLEncoder.encode(((String) propertyEntry.getValue()), "UTF-8"));
         }
         return deploymentUrl.toString();
+    }
+
+    public static String encodePath(String unescaped) {
+        int index = unescaped.indexOf(";");
+
+        String path = unescaped;
+        String matrixParams = null;
+        if (index != -1) {
+            path = unescaped.substring(0, index);
+            if (index == unescaped.length()-1) {
+                matrixParams = "";
+            } else {
+                matrixParams = unescaped.substring(index+1);
+            }
+        }
+
+        URLCodec codec = new URLCodec();
+        String[] split = StringUtils.split(path, "/");
+        for (int i = 0; i < split.length; i++) {
+            split[i] = newStringUsAscii(codec.encode(getBytesUtf8(split[i])));
+            // codec.encode replaces spaces with '+', but we want to escape them to %20.
+            split[i] = split[i].replaceAll("\\+", "%20");
+        }
+        String escaped = StringUtils.join(split, "/");
+        if (StringUtils.isNotBlank(matrixParams)) {
+            escaped += ";" + matrixParams;
+        }
+        return escaped;
     }
 
     public static String buildMatrixParamsString(ArrayListMultimap<String, String> matrixParams)

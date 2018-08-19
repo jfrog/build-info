@@ -61,7 +61,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.util.*;
 
-import static org.jfrog.build.client.ArtifactoryHttpClient.encodePath;
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
 
 /**
@@ -362,11 +361,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
         return doDeployArtifact(details, deploymentPath);
     }
 
-    private String buildDeploymentPath(DeployDetails details) {
+    private String buildDeploymentPath(DeployDetails details) throws IOException {
         List<String> pathComponents = new ArrayList<String>();
         pathComponents.add(encodeUrl(artifactoryUrl));
-        pathComponents.add(encodePath(details.getTargetRepository()));
-        pathComponents.add(encodePath(details.getArtifactPath()));
+        pathComponents.add(DeploymentUrlUtils.encodePath(details.getTargetRepository()));
+        pathComponents.add(DeploymentUrlUtils.encodePath(details.getArtifactPath()));
         return StringUtils.join(pathComponents, "/");
     }
 
