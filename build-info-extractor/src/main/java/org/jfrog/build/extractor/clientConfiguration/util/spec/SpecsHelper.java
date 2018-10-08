@@ -60,7 +60,12 @@ public class SpecsHelper {
 
         try (ArtifactoryBuildInfoClient client1 = clientBuilder.build();
              ArtifactoryBuildInfoClient client2 = clientBuilder.build();
-             ArtifactoryBuildInfoClient client3 = clientBuilder.build()
+             ArtifactoryBuildInfoClient client3 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client4 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client5 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client6 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client7 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client8 = clientBuilder.build()
         ) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
@@ -68,7 +73,12 @@ public class SpecsHelper {
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
                     new SpecDeploymentConsumer(client1),
                     new SpecDeploymentConsumer(client2),
-                    new SpecDeploymentConsumer(client3)
+                    new SpecDeploymentConsumer(client3),
+                    new SpecDeploymentConsumer(client4),
+                    new SpecDeploymentConsumer(client5),
+                    new SpecDeploymentConsumer(client6),
+                    new SpecDeploymentConsumer(client7),
+                    new SpecDeploymentConsumer(client8)
             };
             // Create the deployment executor
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
