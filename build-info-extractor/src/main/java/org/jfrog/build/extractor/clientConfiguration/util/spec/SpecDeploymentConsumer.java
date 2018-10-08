@@ -19,6 +19,7 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
     private ProducerConsumerExecutor executor;
     private Log log;
     private ArtifactoryBuildInfoClient client;
+    private static final int MAX_TRIES = 75;
 
     public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client){
         this.client = client;
@@ -26,6 +27,7 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
 
     @Override
     public void consumerRun() {
+        int tries;
         while (!Thread.interrupted()) {
             try {
                 ProducerConsumerItem item = executor.take();
@@ -35,8 +37,26 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
                     executor.put(item);
                     break;
                 }
-                // Perform artifact deploy
-                client.deployArtifact((DeployDetails) item, "[" + Thread.currentThread().getName() + "]");
+                tries = 0;
+                while (true && !Thread.interrupted()) {
+                    ++tries;
+                    try {
+                        String extra = "";
+
+                        if (tries > 1)
+                            extra = " (try #" + Integer.toString (tries) + ")";
+                        // Perform artifact deploy
+                        client.deployArtifact((DeployDetails) item,
+                                              "[" + Thread.currentThread().getName()
+                                              + extra + "]");
+                        if (tries > 1)
+                            log.info("[" + Thread.currentThread().getName() + "] Upload succeeded on attempt # " + Integer.toString (tries));
+                        break;
+                    } catch (IOException e) {
+                        if (tries == MAX_TRIES)
+                            throw e;
+                    }
+                }
             } catch (InterruptedException e) {
                 return;
             } catch (IOException e) {
