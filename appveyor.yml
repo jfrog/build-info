@@ -15,6 +15,6 @@ environment:
     secure: 9SOPPlF7Tv6TY7k+ZxgRDA==
 
 test_script:
-- sh: ./gradlew clean test
+- sh: ./gradlew clean test --refresh-dependencies
 
 build: off
