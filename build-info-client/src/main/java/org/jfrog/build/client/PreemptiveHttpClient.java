@@ -131,8 +131,7 @@ public class PreemptiveHttpClient {
         // Add as the first request interceptor
         builder.addInterceptorFirst(new PreemptiveAuth());
 
-        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
-        builder.setRetryHandler(new PreemptiveRetryHandler(retryCount));
+        builder.disableAutomaticRetries();
         builder.setServiceUnavailableRetryStrategy(new PreemptiveRetryStrategy());
         builder.setRedirectStrategy(new PreemptiveRedirectStrategy());
 
