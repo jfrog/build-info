@@ -1,5 +1,5 @@
 image:
-- Ubuntu
+- ubuntu1804
 
 stack: jdk 8
 environment:
