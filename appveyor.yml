@@ -1,5 +1,6 @@
 image:
-- ubuntu1804
+- Ubuntu
+- Visual Studio 2017
 
 stack: jdk 8
 environment:
@@ -15,6 +16,7 @@ environment:
     secure: 9SOPPlF7Tv6TY7k+ZxgRDA==
 
 test_script:
-- sh: ./gradlew clean test --refresh-dependencies
+- sh: ./gradlew clean test
+- cmd: gradlew.bat clean test
 
 build: off
