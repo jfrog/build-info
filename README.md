@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/omscno1vb7g11qu2?svg=true)](https://ci.appveyor.com/project/jfrog-ecosystem/build-info)
+
 ## Overview
 
 Build Info is Artifactory's open integration layer for the CI servers and build tools.
@@ -6,7 +8,7 @@ The build information is sent to Artifactory in json format.
 ## Building and Testing the Sources
 
 The code is built using Gradle and includes integration tests.<br/>
-It must run using JDK 7 and Gradle 4.6. If you are using different gradle version you can use the provided gradle wrapper.<br/>
+It must run using JDK 8 and Gradle 4.6. If you are using different gradle version you can use the provided gradle wrapper.<br/>
 In order to run tests the following environment variable must be provide:
 ```
 export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
