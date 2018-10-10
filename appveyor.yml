@@ -1,11 +1,10 @@
-image:
-- Ubuntu
-- Visual Studio 2017
-
 stack: jdk 8
 environment:
   matrix:
-  - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+    - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+    - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
+
   BITESTS_ARTIFACTORY_URL:
     secure: LzTBwdfXRqjkYMtbOoW8z5Mk5uWCcyyUkg6uYON3mXNCXhz9BbaYuWBypriCHbHy
   BITESTS_ARTIFACTORY_USERNAME:
