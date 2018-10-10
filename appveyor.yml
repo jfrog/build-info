@@ -6,13 +6,13 @@ environment:
     - APPVEYOR_BUILD_WORKER_IMAGE: Ubuntu
 
   BITESTS_ARTIFACTORY_URL:
-    secure: LzTBwdfXRqjkYMtbOoW8z5Mk5uWCcyyUkg6uYON3mXNCXhz9BbaYuWBypriCHbHy
+    secure: RIh0gGFDn2JAnLUEEqLsQnZ5H3XFWg1s+Qq8Z4i+Xu+FtQf6Tsu2AnfY4/6AaXJ8
   BITESTS_ARTIFACTORY_USERNAME:
-    secure: LSyETgk50Lwkg7eGUXlgQA==
+    secure: YEB5Wiv9a2vNpUhy+MfL+A==
   BITESTS_ARTIFACTORY_PASSWORD:
-    secure: mziQvsWujgLfKsB6m5BH6Q==
+    secure: Um8o75MQIieSavIemF4ySA==
   BITESTS_ARTIFACTORY_REPO:
-    secure: 9SOPPlF7Tv6TY7k+ZxgRDA==
+    secure: Xf371RQAxCTMn/S7NdmV8g==
 
 test_script:
 - sh: ./gradlew clean test
