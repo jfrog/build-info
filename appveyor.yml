@@ -1,4 +1,5 @@
 stack: jdk 8
+skip_tags: true
 environment:
   matrix:
     - APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
