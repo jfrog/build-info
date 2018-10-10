@@ -129,7 +129,7 @@ public class ProducerConsumerExecutor {
             // Log the exception
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            log.error(String.format("[Thread %s] An exception occurred during execution:\n%s", t.getName(), sw.toString()));
+            log.error(String.format("[%s] An exception occurred during execution:\n%s", t.getName(), sw.toString()));
 
             // Stop all deployment operation if this is the first exception
             if (!errorOccurred.getAndSet(true)) {

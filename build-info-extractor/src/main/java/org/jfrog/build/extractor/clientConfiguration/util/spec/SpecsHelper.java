@@ -12,9 +12,10 @@ import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
@@ -47,36 +48,41 @@ public class SpecsHelper {
      * @param uploadSpec The required spec represented as String
      * @param workspace File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param client ArtifactoryBuildInfoClient which will do the actual upload
+     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the clients to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Multimap<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClient client) throws Exception {
+                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        // Create producer Runnable
-        ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[] { new SpecDeploymentProducer(spec, workspace, buildProperties) };
-        // Create consumer Runnables
-        ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[] {
-                new SpecDeploymentConsumer(client),
-                new SpecDeploymentConsumer(client),
-                new SpecDeploymentConsumer(client)
-        };
-        // Create the deployment executor
-        ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
+        try (ArtifactoryBuildInfoClient client1 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client2 = clientBuilder.build();
+             ArtifactoryBuildInfoClient client3 = clientBuilder.build()
+        ) {
+            // Create producer Runnable
+            ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
+            // Create consumer Runnables
+            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
+                    new SpecDeploymentConsumer(client1),
+                    new SpecDeploymentConsumer(client2),
+                    new SpecDeploymentConsumer(client3)
+            };
+            // Create the deployment executor
+            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
 
-        deploymentExecutor.start();
-        Set<DeployDetails> deployedArtifacts = ((SpecDeploymentProducer)producerRunnable[0]).getDeployedArtifacts();
-        return convertDeployDetailsToArtifacts(deployedArtifacts);
+            deploymentExecutor.start();
+            Set<DeployDetails> deployedArtifacts = ((SpecDeploymentProducer) producerRunnable[0]).getDeployedArtifacts();
+            return convertDeployDetailsToArtifacts(deployedArtifacts);
+        }
     }
 
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Map<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClient client) throws Exception {
-        return uploadArtifactsBySpec(uploadSpec, workspace, createMultiMap(buildProperties), client);
+                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
+        return uploadArtifactsBySpec(uploadSpec, workspace, createMultiMap(buildProperties), clientBuilder);
     }
 
     public static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {

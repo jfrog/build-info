@@ -15,6 +15,7 @@ import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.util.TestingLog;
@@ -39,6 +40,7 @@ public abstract class IntegrationTestsBase {
     protected String localRepo = "build-info-tests-local";
     protected String virtualRepo = "build-info-tests-virtual";
     protected ArtifactoryBuildInfoClient buildInfoClient;
+    protected ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     protected ArtifactoryDependenciesClient dependenciesClient;
     protected static final Log log = new TestingLog();
 
@@ -71,6 +73,7 @@ public abstract class IntegrationTestsBase {
         password = readParam(props, "password");
         preemptiveHttpClient = createHttpClient().getHttpClient();
         buildInfoClient = createBuildInfoClient();
+        buildInfoClientBuilder = createBuildInfoClientBuilder();
         dependenciesClient = createDependenciesClient();
 
         createTestRepo(localRepo);
@@ -219,6 +222,11 @@ public abstract class IntegrationTestsBase {
 
     private ArtifactoryBuildInfoClient createBuildInfoClient() {
         return new ArtifactoryBuildInfoClient(url, username, password, log);
+    }
+
+    private ArtifactoryBuildInfoClientBuilder createBuildInfoClientBuilder() {
+        ArtifactoryBuildInfoClientBuilder builder = new ArtifactoryBuildInfoClientBuilder();
+        return builder.setArtifactoryUrl(url).setUsername(username).setPassword(password).setLog(log);
     }
 
     private ArtifactoryDependenciesClient createDependenciesClient() {
