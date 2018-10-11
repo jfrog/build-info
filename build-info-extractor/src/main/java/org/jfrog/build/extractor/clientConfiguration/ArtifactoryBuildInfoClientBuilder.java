@@ -17,9 +17,6 @@ public class ArtifactoryBuildInfoClientBuilder {
     private int connectionTimeout = -1;
     private int connectionRetry = -1;
 
-    public ArtifactoryBuildInfoClientBuilder() {
-    }
-
     public ArtifactoryBuildInfoClientBuilder setUsername(String username) {
         this.username = username;
         return this;
