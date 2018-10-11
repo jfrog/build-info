@@ -49,7 +49,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Upload artifacts.
         File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClient);
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClientBuilder);
         Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
 
         // Download artifacts to compare against the expected result.

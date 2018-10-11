@@ -68,7 +68,7 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
  *
  * @author Yossi Shaul
  */
-public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient {
+public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements AutoCloseable {
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
