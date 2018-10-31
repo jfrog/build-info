@@ -20,6 +20,12 @@ public class IncludeExcludePatterns implements Serializable {
     private String[] includePatterns;
     private String[] excludePatterns;
 
+    // Default constructor to allow serialization
+    @SuppressWarnings("unused")
+    public IncludeExcludePatterns() {
+        this((String[]) null, null);
+    }
+
     /**
      * Splitter constructor
      *
