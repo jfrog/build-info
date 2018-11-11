@@ -15,7 +15,6 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
-import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
@@ -48,7 +47,7 @@ public class SpecsHelper {
      * @param uploadSpec The required spec represented as String
      * @param workspace File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the clients to perform the actual upload
+     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
@@ -58,18 +57,17 @@ public class SpecsHelper {
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        try (ArtifactoryBuildInfoClient client1 = clientBuilder.build();
-             ArtifactoryBuildInfoClient client2 = clientBuilder.build();
-             ArtifactoryBuildInfoClient client3 = clientBuilder.build()
-        ) {
+        try ( buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder) )
+        {
+            // Build the build info buildInfoClients
+            clients.buildBuildInfoClients();
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
             // Create consumer Runnables
-            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new SpecDeploymentConsumer(client1),
-                    new SpecDeploymentConsumer(client2),
-                    new SpecDeploymentConsumer(client3)
-            };
+            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[numberOfThreads];
+            for (int i = 0; i < clients.buildInfoClients.length; i++) {
+                consumerRunnables[i] = new SpecDeploymentConsumer(clients.buildInfoClients[i]);
+            }
             // Create the deployment executor
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
 
@@ -77,12 +75,6 @@ public class SpecsHelper {
             Set<DeployDetails> deployedArtifacts = ((SpecDeploymentProducer) producerRunnable[0]).getDeployedArtifacts();
             return convertDeployDetailsToArtifacts(deployedArtifacts);
         }
-    }
-
-    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
-                                                Map<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
-        return uploadArtifactsBySpec(uploadSpec, workspace, createMultiMap(buildProperties), clientBuilder);
     }
 
     public static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {
@@ -192,5 +184,30 @@ public class SpecsHelper {
             result.add(artifact);
         }
         return result;
+    }
+
+    private class buildInfoClientsArray implements AutoCloseable {
+        private ArtifactoryBuildInfoClientBuilder clientBuilder;
+        private ArtifactoryBuildInfoClient[] buildInfoClients;
+
+
+        public buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder)
+        {
+            this.clientBuilder = clientBuilder;
+            buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
+        }
+
+        public void buildBuildInfoClients() {
+            for (int i = 0; i < buildInfoClients.length; i++) {
+                buildInfoClients[i] = clientBuilder.build();
+            }
+        }
+
+        @Override
+        public void close() throws Exception {
+            for (ArtifactoryBuildInfoClient client : buildInfoClients) {
+                client.close();
+            }
+        }
     }
 }
