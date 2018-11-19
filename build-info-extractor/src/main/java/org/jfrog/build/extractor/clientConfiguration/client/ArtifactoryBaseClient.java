@@ -1,18 +1,32 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
+import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.ProxyConfiguration;
+
+import java.io.IOException;
 
 /**
  * Created by Tamirh on 21/04/2016.
  */
-public abstract class ArtifactoryBaseClient {
+public abstract class ArtifactoryBaseClient implements AutoCloseable {
+    private static final String API_REPOSITORIES = "/api/repositories";
 
     protected String artifactoryUrl;
     protected ArtifactoryHttpClient httpClient;
     protected final Log log;
+    /**
+     * Version of Artifactory we work with.
+     */
+    private ArtifactoryVersion artifactoryVersion;
 
     public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, Log logger) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
@@ -20,6 +34,7 @@ public abstract class ArtifactoryBaseClient {
         this.log = logger;
     }
 
+    @Override
     public void close() {
         if (httpClient != null) {
             httpClient.close();
@@ -77,6 +92,7 @@ public abstract class ArtifactoryBaseClient {
 
     /**
      * Log setter for the PreemptiveHttpClient for jobs like the Jenkins Generic job that uses NullLog by default.
+     *
      * @param log Log instance
      */
     public void setLog(Log log) {
@@ -85,5 +101,38 @@ public abstract class ArtifactoryBaseClient {
 
     public String getArtifactoryUrl() {
         return artifactoryUrl;
+    }
+
+    public ArtifactoryVersion getArtifactoryVersion() {
+        if (artifactoryVersion == null) {
+            try {
+                artifactoryVersion = httpClient.getVersion();
+            } catch (IOException e) {
+                artifactoryVersion = ArtifactoryVersion.NOT_FOUND;
+            }
+        }
+        return artifactoryVersion;
+    }
+
+    public boolean isRepoExist(String repo) throws IOException {
+        String fullItemUrl = artifactoryUrl + API_REPOSITORIES + "/" + repo;
+        String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
+        HttpRequestBase httpRequest = new HttpGet(encodedUrl);
+        HttpResponse httpResponse = null;
+        int connectionRetries = httpClient.getConnectionRetries();
+        try {
+            httpResponse = httpClient.getHttpClient().execute(httpRequest);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+                return false;
+            }
+        } finally {
+            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
+            httpClient.setConnectionRetries(connectionRetries);
+            if (httpResponse != null) {
+                EntityUtils.consumeQuietly(httpResponse.getEntity());
+            }
+        }
+        return true;
     }
 }

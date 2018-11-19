@@ -73,7 +73,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
-public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent, Build> {
+public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent> {
 
     @Requirement
     private Logger logger;
