@@ -23,7 +23,7 @@ package org.jfrog.build.api;
  * @deprecated Use {@link org.jfrog.build.api.BuildAgent} instead.
  */
 public enum BuildType {
-    GENERIC("Generic"), MAVEN("Maven"), ANT("Ant"), IVY("Ivy"), GRADLE("Gradle");
+    GENERIC("Generic"), MAVEN("Maven"), ANT("Ant"), IVY("Ivy"), GRADLE("Gradle"), NPM("Npm");
 
     private String name;
 

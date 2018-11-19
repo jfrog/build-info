@@ -76,8 +76,8 @@ subprojects {
         mavenLocal()
     }
 
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     configurations {
@@ -204,7 +204,7 @@ configure(extractorProjects()) {
         } else {
             uberJar project(':build-info-extractor')
         }
-        tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+        tools group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
     }
 
     task jarAll(type: Jar) {
@@ -411,6 +411,10 @@ project('build-info-extractor-maven3') {
     }
 }
 
+project('build-info-extractor-npm') {
+    description = 'JFrog Build-Info npm Extractor'
+}
+
 if (!excludeMavenPluginBuild) {
     project('artifactory-maven-plugin') {
         Project p ->
@@ -510,8 +514,8 @@ if (!excludeMavenPluginBuild) {
 
 idea {
     project {
-        jdkName = '1.7'
-        languageLevel = '1.7'
+        jdkName = '1.8'
+        languageLevel = '1.8'
         wildcards += '?*.gradle'
         idea.project.ipr {
             withXml { provider ->

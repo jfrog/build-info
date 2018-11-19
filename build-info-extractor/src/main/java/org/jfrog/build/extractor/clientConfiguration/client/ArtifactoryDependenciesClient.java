@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -65,104 +66,105 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
      *
      * @param requests build dependencies to retrieve outputs for.
      * @return build outputs for dependencies specified.
-     * @throws java.io.IOException
      */
     public List<BuildPatternArtifacts> retrievePatternArtifacts(List<BuildPatternArtifactsRequest> requests)
             throws IOException {
         final String json = new JsonSerializer<List<BuildPatternArtifactsRequest>>().toJSON(requests);
         final HttpPost post = new HttpPost(artifactoryUrl + "/api/build/patternArtifacts");
-
         StringEntity stringEntity = new StringEntity(json);
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         post.setEntity(stringEntity);
-
-        List<BuildPatternArtifacts> artifacts = readResponse(httpClient.getHttpClient().execute(post),
-                new TypeReference<List<BuildPatternArtifacts>>() {
-                },
-                "Failed to retrieve build artifacts report",
+        InputStream responseStream = getResponseStream(httpClient.getHttpClient().execute(post), "Failed to retrieve build artifacts report");
+        return readJsonResponse(responseStream,
+                new TypeReference<List<BuildPatternArtifacts>>() {},
                 false);
-        return artifacts;
     }
 
     public PatternResultFileSet searchArtifactsByPattern(String pattern) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
-
         String url = artifactoryUrl + "/api/search/pattern?pattern=" + pattern;
-        PatternResultFileSet result = readResponse(client.execute(new HttpGet(url)),
-                new TypeReference<PatternResultFileSet>() {
-                },
-                "Failed to search artifact by the pattern '" + pattern + "'",
+        InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the pattern '" + pattern + "'");
+        return readJsonResponse(responseStream,
+                new TypeReference<PatternResultFileSet>() {},
                 false);
-        return result;
     }
 
     public PropertySearchResult searchArtifactsByProperties(String properties) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
         String replacedProperties = StringUtils.replaceEach(properties, new String[]{";", "+"}, new String[]{"&", ""});
         String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
-        PropertySearchResult result = readResponse(client.execute(new HttpGet(url)),
-                new TypeReference<PropertySearchResult>() {
-                },
-                "Failed to search artifact by the properties '" + properties + "'",
+        InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the properties '" + properties + "'");
+        return readJsonResponse(responseStream,
+                new TypeReference<PropertySearchResult>() {},
                 false);
-        return result;
     }
 
     public AqlSearchResult searchArtifactsByAql(String aql) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
-
         String url = artifactoryUrl + "/api/search/aql";
         HttpPost httpPost = new HttpPost(url);
         StringEntity entity = new StringEntity(aql);
         httpPost.setEntity(entity);
-        AqlSearchResult result = readResponse(client.execute(httpPost),
-                new TypeReference<AqlSearchResult>() {
-                },
-                "Failed to search artifact by the aql '" + aql + "'",
+        InputStream responseStream = getResponseStream(client.execute(httpPost), "Failed to search artifact by the aql '" + aql + "'");
+        return readJsonResponse(responseStream,
+                new TypeReference<AqlSearchResult>() {},
                 true);
-        return result;
     }
 
-    /**
-     * Reads HTTP response and converts it to object of the type specified.
-     *
-     * @param response     response to read
-     * @param valueType    response object type
-     * @param errorMessage error message to throw in case of error
-     * @param <T>          response object type
-     * @return response object converted from HTTP Json reponse to the type specified.
-     * @throws java.io.IOException if reading or converting response fails.
-     */
-    private <T> T readResponse(HttpResponse response, TypeReference<T> valueType, String errorMessage, boolean ignorMissingFields)
-            throws IOException {
+    public Properties getNpmAuth() throws IOException {
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+        String url = artifactoryUrl + "/api/npm/auth";
+        HttpGet httpGet = new HttpGet(url);
+        InputStream responseStream = getResponseStream(client.execute(httpGet), "npm Auth request failed");
+        return readPropertiesResponse(responseStream);
+    }
 
+    private InputStream getResponseStream(HttpResponse response, String errorMessage) throws IOException {
         if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
             HttpEntity entity = response.getEntity();
             if (entity == null) {
                 return null;
             }
-
-            InputStream content = null;
-
-            try {
-                content = entity.getContent();
-                JsonParser parser = httpClient.createJsonParser(content);
-                if (ignorMissingFields) {
-                    ((ObjectMapper) parser.getCodec()).configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-                }
-                // http://wiki.fasterxml.com/JacksonDataBinding
-                return parser.readValueAs(valueType);
-            } finally {
-                if (content != null) {
-                    IOUtils.closeQuietly(content);
-                }
-            }
+            return entity.getContent();
         } else {
             HttpEntity httpEntity = response.getEntity();
             if (httpEntity != null) {
                 IOUtils.closeQuietly(httpEntity.getContent());
             }
             throw new IOException(errorMessage + ": " + response.getStatusLine());
+        }
+    }
+
+    /**
+     * Reads HTTP response and converts it to object of the type specified.
+     *
+     * @param responseStream     response to read
+     * @param valueType    response object type
+     * @param <T>          response object type
+     * @return response object converted from HTTP Json reponse to the type specified.
+     * @throws java.io.IOException if reading or converting response fails.
+     */
+    private <T> T readJsonResponse(InputStream responseStream, TypeReference<T> valueType, boolean ignoreMissingFields)
+            throws IOException {
+        try {
+            JsonParser parser = httpClient.createJsonParser(responseStream);
+            if (ignoreMissingFields) {
+                ((ObjectMapper) parser.getCodec()).configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
+            }
+            // http://wiki.fasterxml.com/JacksonDataBinding
+            return parser.readValueAs(valueType);
+        } finally {
+            IOUtils.closeQuietly(responseStream);
+        }
+    }
+
+    private Properties readPropertiesResponse(InputStream responseStream) throws IOException {
+        try {
+            Properties properties = new Properties();
+            properties.load(responseStream);
+            return properties;
+        } finally {
+            IOUtils.closeQuietly(responseStream);
         }
     }
 
