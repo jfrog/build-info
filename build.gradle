@@ -413,6 +413,10 @@ project('build-info-extractor-maven3') {
 
 project('build-info-extractor-npm') {
     description = 'JFrog Build-Info npm Extractor'
+
+    dependencies {
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
 }
 
 if (!excludeMavenPluginBuild) {

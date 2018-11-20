@@ -1,12 +1,12 @@
-package org.jfrog.build.extractor.npm.utils;
+package org.jfrog.build.extractor.npm.types;
 
-public enum Scope {
+public enum NpmScope {
     PRODUCTION("production"),
     DEVELOPMENT("development");
 
     String scope;
 
-    Scope(String scope) {
+    NpmScope(String scope) {
         this.scope = scope;
     }
 
