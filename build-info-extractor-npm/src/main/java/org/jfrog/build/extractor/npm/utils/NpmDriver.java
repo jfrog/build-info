@@ -74,12 +74,11 @@ public class NpmDriver {
         }
     }
 
-    public void install(String appDir, List<String> extraArgs) throws IOException {
+    public void install(File workingDirectory, List<String> extraArgs) throws IOException {
         try {
-            File execDir = new File(appDir);
             List<String> args = Lists.newArrayList(extraArgs);
             args.add(0, "i");
-            NpmCommandRes npmCommandRes = exeNpmCommand(execDir, args);
+            NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
             if (!npmCommandRes.isOk()) {
                 throw new IOException(npmCommandRes.err);
             }
@@ -88,17 +87,37 @@ public class NpmDriver {
         }
     }
 
-    public JsonNode list(String appDir) throws IOException {
-        File execDir = new File(appDir);
+    public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
         List<String> args = Lists.newArrayList("ls", "--json");
+        args.addAll(extraArgs);
         try {
-            NpmCommandRes npmCommandRes = exeNpmCommand(execDir, args);
+            NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
             String res = StringUtils.isBlank(npmCommandRes.res) ? "{}" : npmCommandRes.res;
             return jsonReader.readTree(res);
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm ls failed", e);
         }
     }
+
+    public String version(File workingDirectory) throws IOException, InterruptedException {
+        List<String> args = Lists.newArrayList("-version");
+        NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
+        if (!npmCommandRes.isOk()) {
+            throw new IOException(npmCommandRes.err);
+        }
+        return npmCommandRes.res;
+    }
+
+    public String configList(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
+        List<String> args = Lists.newArrayList("c", "ls", "--json");
+        args.addAll(extraArgs);
+        NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
+        if (!npmCommandRes.isOk()) {
+            throw new IOException(npmCommandRes.err);
+        }
+        return npmCommandRes.res;
+    }
+
 
     private static class NpmCommandRes {
         String res;
@@ -109,7 +128,6 @@ public class NpmDriver {
             return exitValue == 0;
         }
     }
-
 
     private static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
