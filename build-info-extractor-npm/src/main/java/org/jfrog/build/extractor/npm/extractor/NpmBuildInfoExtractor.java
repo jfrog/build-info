@@ -32,8 +32,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
         this.npmProject = npmProject;
         npmProject.getDependencies().forEach(this::populateDependencies);
         if (!badPackages.isEmpty()) {
-            npmProject.getLogger().println(Arrays.toString(badPackages.toArray()));
-            npmProject.getLogger().println("The npm dependencies above could not be found in Artifactory and therefore are not included in the build-info. " +
+            npmProject.getLogger().info((Arrays.toString(badPackages.toArray())));
+            npmProject.getLogger().info("The npm dependencies above could not be found in Artifactory and therefore are not included in the build-info. " +
                     "Make sure the dependencies are available in Artifactory for this build.");
         }
         return new ArrayList<>(dependencies.values());
@@ -50,7 +50,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
                 continue;
             }
             if (StringUtils.isBlank(packageInfo.getVersion())) {
-                npmProject.getLogger().println("npm dependencies list contains the package " + packageInfo.getName() + " without version information. The dependency will not be added to build-info");
+                npmProject.getLogger().warn("npm dependencies list contains the package " + packageInfo.getName() + " without version information. The dependency will not be added to build-info");
                 continue;
             }
 
@@ -92,7 +92,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
                     sha1(searchEntry.getActualSha1()).
                     build();
         } catch (IOException e) {
-            e.printStackTrace(npmProject.getLogger());
+            npmProject.getLogger().error(e.getMessage(), e);
             return null;
         }
     }

@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,9 +18,15 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by Yahav Itzhak on 15 Nov 2018.
  */
-public class NpmDriver {
+public class NpmDriver implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private static ObjectReader jsonReader = new ObjectMapper().reader();
+    private String executablePath;
+
+    public NpmDriver(String executablePath) {
+        this.executablePath = StringUtils.defaultIfEmpty(executablePath, "npm");
+    }
 
     /**
      * Execute a npm command.
@@ -28,8 +35,8 @@ public class NpmDriver {
      * @param args    - Command arguments.
      * @return NpmCommandRes
      */
-    private static NpmCommandRes exeNpmCommand(File execDir, List<String> args) throws InterruptedException, IOException {
-        args.add(0, "npm");
+    private NpmCommandRes exeNpmCommand(File execDir, List<String> args) throws InterruptedException, IOException {
+        args.add(0, executablePath);
         Process process = null;
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
@@ -64,7 +71,7 @@ public class NpmDriver {
         }
     }
 
-    public static boolean isNpmInstalled() {
+    public boolean isNpmInstalled() {
         List<String> args = Lists.newArrayList("version");
         try {
             NpmCommandRes npmCommandRes = exeNpmCommand(null, args);

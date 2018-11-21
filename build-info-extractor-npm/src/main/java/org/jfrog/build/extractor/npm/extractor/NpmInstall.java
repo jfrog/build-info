@@ -2,10 +2,11 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.types.NpmProject;
@@ -29,50 +30,45 @@ public class NpmInstall implements Serializable {
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
 
     private transient ArtifactoryDependenciesClient dependenciesClient;
-    private transient NpmDriver npmDriver = new NpmDriver();
+    private transient NpmDriver npmDriver;
     private transient ObjectMapper mapper = new ObjectMapper();
 
     private List<String> installArgs;
     private String resolutionRepository;
     private File ws;
-    private PrintStream logger;
+    private Log logger;
 
-    private String executablePath;
     private String npmRegistry;
     private Properties npmAuth;
     private boolean collectBuildInfo;
     private List<Dependency> dependencies;
     private NpmScope scope;
-    private PackageInfo npmPackageInfo;
 
-    public NpmInstall(List<String> installArgs, ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository, File ws, PrintStream logger) {
-        this.installArgs = installArgs;
+    public NpmInstall(String installArgs, String executablePath, ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository, File ws, Log logger) {
+        this.installArgs = Lists.newArrayList(installArgs.split("\\s+"));
+        this.npmDriver = new NpmDriver(executablePath);
         this.dependenciesClient = dependenciesClient;
         this.resolutionRepository = resolutionRepository;
         this.ws = ws;
         this.logger = logger;
     }
 
-    public void execute() throws InterruptedException, VersionException, IOException {
+    public List<Dependency> execute() throws InterruptedException, VersionException, IOException {
         preparePrerequisites();
         createTempNpmrc();
         runInstall();
         restoreNpmrc();
         setDependencies();
+        return dependencies;
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
-        setNpmExecutable();
         validateNpmVersion();
         setNpmAuth();
         setRegistryUrl();
 //        readPackageInfoFromPackageJson(); // TODO
         backupProjectNpmrc();
 
-    }
-
-    private void setNpmExecutable() {
-        executablePath = "npm";
     }
 
     private void validateNpmVersion() throws IOException, InterruptedException, VersionException {
@@ -118,7 +114,7 @@ public class NpmInstall implements Serializable {
 
     private void createTempNpmrc() throws IOException, InterruptedException {
         Path npmrcPath = ws.toPath().resolve(NPMRC_FILE_NAME);
-        Files.delete(npmrcPath); // Delete old npmrc file
+        Files.deleteIfExists(npmrcPath); // Delete old npmrc file
         final String configList = npmDriver.configList(ws, installArgs);
 
         Properties npmrcProperties = new Properties();
@@ -135,11 +131,10 @@ public class NpmInstall implements Serializable {
         npmrcProperties.remove("metrics-registry");
 
         // Write npmrc file
-        File npmrcFile = npmrcPath.resolve(NPMRC_FILE_NAME).toFile();
         StringBuilder stringBuffer = new StringBuilder();
         npmrcProperties.forEach((key, value) -> stringBuffer.append(key).append("=").append(value).append("\n"));
         setScope(npmrcProperties);
-        try (FileWriter fileWriter = new FileWriter(npmrcFile);
+        try (FileWriter fileWriter = new FileWriter(npmrcPath.toFile());
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             bufferedWriter.write(stringBuffer.toString());
             bufferedWriter.flush();

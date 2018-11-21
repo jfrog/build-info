@@ -2,18 +2,18 @@ package org.jfrog.build.extractor.npm.types;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class NpmProject {
     private ArtifactoryDependenciesClient dependenciesClient;
     private List<Pair<NpmScope, JsonNode>> dependencies;
-    private PrintStream logger;
+    private Log logger;
 
-    public NpmProject(ArtifactoryDependenciesClient dependenciesClient, PrintStream logger) {
+    public NpmProject(ArtifactoryDependenciesClient dependenciesClient, Log logger) {
         this.dependenciesClient = dependenciesClient;
         this.logger = logger;
         dependencies = new ArrayList<>();
@@ -23,7 +23,7 @@ public class NpmProject {
         return dependenciesClient;
     }
 
-    public PrintStream getLogger() {
+    public Log getLogger() {
         return logger;
     }
 
