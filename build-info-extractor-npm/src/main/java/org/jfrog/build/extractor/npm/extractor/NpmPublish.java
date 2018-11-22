@@ -1,10 +1,15 @@
 package org.jfrog.build.extractor.npm.extractor;
 
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.util.VersionException;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -12,7 +17,7 @@ public class NpmPublish extends NpmCommand {
     private static final long serialVersionUID = 1L;
 
     private transient ArtifactoryBuildInfoClient client;
-    private String publishPath;
+    private Path publishPath;
 
     public NpmPublish(ArtifactoryBuildInfoClient client, String executablePath, File ws, String deploymentRepository, String publishArgs) {
         super(executablePath, publishArgs, deploymentRepository, ws);
@@ -27,19 +32,20 @@ public class NpmPublish extends NpmCommand {
         validateNpmVersion();
         setPublishPath();
         validateRepoExists();
+        setPackageInfo();
     }
 
     private void setPublishPath() {
         // Look for the publish path in the arguments
-        publishPath = args.stream()
+        String publishPathStr = args.stream()
                 .filter(arg -> !arg.startsWith("-")) // Filter flags
                 .findAny()
                 .orElseThrow(() -> new IllegalArgumentException("Target repo must be specified"))
                 .replaceFirst("^~", System.getProperty("user.home")); // Replace tilde with user home
 
-        Path path = Paths.get(publishPath);
-        if (!path.isAbsolute()) {
-            publishPath = ws.toPath().resolve(path).toAbsolutePath().toString();
+        publishPath = Paths.get(publishPathStr);
+        if (!publishPath.isAbsolute()) {
+            publishPath = ws.toPath().resolve(publishPath);
         }
     }
 
@@ -47,6 +53,32 @@ public class NpmPublish extends NpmCommand {
         if (!client.isRepoExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");
         }
+    }
+
+    private void setPackageInfo() throws IOException {
+        if (Files.isDirectory(publishPath)) {
+            npmPackageInfo.readPackageInfo(publishPath.toFile());
+            return;
+        }
+        readPackageInfoFromTarball();
+        // The provided path is not a directory, we assume this is a compressed npm package
+
+    }
+
+    private void readPackageInfoFromTarball() throws IOException {
+        if (!StringUtils.endsWith(publishPath.toString(), ".tgz")) {
+            throw new IOException("Publish path must be a '.tgz' file or a directory containing package.json");
+        }
+
+        try (TarArchiveInputStream inputStream = new TarArchiveInputStream(Files.newInputStream(publishPath))) {
+            TarArchiveEntry entry;
+            while ((entry = inputStream.getNextTarEntry()) != null) {
+                if (StringUtils.equals(entry.getName(), "package.json")) { // TODO - Check with debugger!!!
+                    npmPackageInfo.readPackageInfo(entry.getFile());
+                }
+            }
+        }
+        throw new IOException("Couldn't find package.json in " + publishPath.toString());
     }
 
 }

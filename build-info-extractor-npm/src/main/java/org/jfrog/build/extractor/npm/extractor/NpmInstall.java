@@ -6,7 +6,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.PackageInfo;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
