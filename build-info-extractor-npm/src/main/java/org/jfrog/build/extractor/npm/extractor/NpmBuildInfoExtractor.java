@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.PackageInfo;
@@ -71,13 +72,12 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
             }
             dependencies.put(id, createDependency(packageInfo));
         } else {
-            dependencies.get(id).getScopes().addAll(packageInfo.getScopes());
+            dependencies.get(id).getScopes().add(packageInfo.getScope());
         }
         return true;
     }
 
     private Dependency createDependency(PackageInfo packageInfo) {
-        DependencyBuilder builder = new DependencyBuilder().scopes(packageInfo.getScopes());
         String aql = String.format(NPM_AQL_FORMAT, packageInfo.getName(), packageInfo.getVersion());
         AqlSearchResult searchResult;
         try {
@@ -85,14 +85,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
             if (searchResult.getResults().isEmpty()) {
                 return null;
             }
+            DependencyBuilder builder = new DependencyBuilder();
             AqlSearchResult.SearchEntry searchEntry = searchResult.getResults().get(0);
             return builder.id(searchEntry.getName()).
-                    scopes(packageInfo.getScopes()).
+                    addScope(packageInfo.getScope()).
                     md5(searchEntry.getActualMd5()).
                     sha1(searchEntry.getActualSha1()).
                     build();
         } catch (IOException e) {
-            npmProject.getLogger().error(e.getMessage(), e);
+            npmProject.getLogger().error(ExceptionUtils.getStackTrace(e), e);
             return null;
         }
     }

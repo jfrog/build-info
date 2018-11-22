@@ -6,6 +6,9 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
+import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -23,50 +26,50 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+@SuppressWarnings("unused")
 public class NpmInstall implements Serializable {
     private static final long serialVersionUID = 1L;
-    private static final String NPMRC_FILE_NAME = ".npmrc";
-    private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
+    private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
+    private static final String NPMRC_FILE_NAME = ".npmrc";
 
     private transient ArtifactoryDependenciesClient dependenciesClient;
-    private transient NpmDriver npmDriver;
-    private transient ObjectMapper mapper = new ObjectMapper();
-
-    private List<String> installArgs;
     private String resolutionRepository;
-    private File ws;
+    private List<String> installArgs;
+    private NpmDriver npmDriver;
     private Log logger;
+    private File ws;
 
-    private String npmRegistry;
+    private PackageInfo npmPackageInfo = new PackageInfo();
     private Properties npmAuth;
-    private boolean collectBuildInfo;
-    private List<Dependency> dependencies;
-    private NpmScope scope;
+    private String npmRegistry;
 
-    public NpmInstall(String installArgs, String executablePath, ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository, File ws, Log logger) {
+    public NpmInstall(ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository, String installArgs, String executablePath, Log logger, File ws) {
+        this.resolutionRepository = resolutionRepository;
+        this.dependenciesClient = dependenciesClient;
         this.installArgs = Lists.newArrayList(installArgs.split("\\s+"));
         this.npmDriver = new NpmDriver(executablePath);
-        this.dependenciesClient = dependenciesClient;
-        this.resolutionRepository = resolutionRepository;
-        this.ws = ws;
         this.logger = logger;
+        this.ws = ws;
     }
 
-    public List<Dependency> execute() throws InterruptedException, VersionException, IOException {
+    public Module execute() throws InterruptedException, VersionException, IOException {
         preparePrerequisites();
         createTempNpmrc();
         runInstall();
         restoreNpmrc();
-        setDependencies();
-        return dependencies;
+
+        ModuleBuilder builder = new ModuleBuilder();
+        builder.id(npmPackageInfo.toString());
+        builder.dependencies(getBuildDependencies());
+        return builder.build();
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateNpmVersion();
         setNpmAuth();
         setRegistryUrl();
-//        readPackageInfoFromPackageJson(); // TODO
+        readPackageInfoFromPackageJson();
         backupProjectNpmrc();
 
     }
@@ -93,11 +96,9 @@ public class NpmInstall implements Serializable {
         }
     }
 
-//    private void readPackageInfoFromPackageJson() throws IOException, InterruptedException {
-//        NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
-//        npmPackageInfo.readPackageInfo(listener, ws);
-//        npmInstall.setNpmPackageInfo(npmPackageInfo);
-//    }
+    private void readPackageInfoFromPackageJson() throws IOException {
+        npmPackageInfo.readPackageInfo(ws);
+    }
 
     /**
      * To make npm do the resolution from Artifactory we are creating .npmrc file in the project dir.
@@ -120,6 +121,7 @@ public class NpmInstall implements Serializable {
         Properties npmrcProperties = new Properties();
 
         // Save npm config list results
+        ObjectMapper mapper = new ObjectMapper();
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
 
@@ -148,9 +150,9 @@ public class NpmInstall implements Serializable {
     private void setScope(Properties npmrcProperties) {
         String only = npmrcProperties.getProperty("only");
         if (StringUtils.equals(only, "prod") || Boolean.parseBoolean(npmrcProperties.getProperty("production"))) {
-            scope = NpmScope.PRODUCTION;
+            npmPackageInfo.setScope(NpmScope.PRODUCTION.toString());
         } else if (StringUtils.equals(only, "dev")) {
-            scope = NpmScope.DEVELOPMENT;
+            npmPackageInfo.setScope(NpmScope.DEVELOPMENT.toString());
         }
     }
 
@@ -168,23 +170,23 @@ public class NpmInstall implements Serializable {
         Files.move(npmrcBackupPath, npmrcPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    private void setDependencies() throws IOException {
+    private List<Dependency> getBuildDependencies() throws IOException {
         List<NpmScope> scopes = new ArrayList<>();
-        if (scope == null) {
+        if (StringUtils.isBlank(npmPackageInfo.getScope())) {
             scopes.add(NpmScope.DEVELOPMENT);
             scopes.add(NpmScope.PRODUCTION);
         } else {
-            scopes.add(scope);
+            scopes.add(NpmScope.valueOf(npmPackageInfo.getScope()));
         }
         NpmProject npmProject = new NpmProject(dependenciesClient, logger);
         for (NpmScope scope : scopes) {
-            List<String> listArgs = new ArrayList<>();
-            listArgs.add("--only=" + scope);
-            JsonNode jsonNode = npmDriver.list(ws, listArgs);
+            List<String> extraListArgs = new ArrayList<>();
+            extraListArgs.add("--only=" + scope);
+            JsonNode jsonNode = npmDriver.list(ws, extraListArgs);
             npmProject.addDependencies(Pair.of(scope, jsonNode));
         }
 
         NpmBuildInfoExtractor buildInfoExtractor = new NpmBuildInfoExtractor();
-        dependencies = buildInfoExtractor.extract(npmProject);
+        return buildInfoExtractor.extract(npmProject);
     }
 }
