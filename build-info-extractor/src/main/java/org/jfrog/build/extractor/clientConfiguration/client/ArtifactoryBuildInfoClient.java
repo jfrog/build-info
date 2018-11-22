@@ -69,9 +69,10 @@ import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
  * @author Yossi Shaul
  */
 public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements AutoCloseable {
-    private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
-    private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
-    private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
+    private static final String API_REPOSITORIES = "/api/repositories";
+    private static final String LOCAL_REPOS_REST_URL = API_REPOSITORIES + "?type=local";
+    private static final String REMOTE_REPOS_REST_URL = API_REPOSITORIES + "?type=remote";
+    private static final String VIRTUAL_REPOS_REST_URL = API_REPOSITORIES + "?type=virtual";
     private static final String PUSH_TO_BINTRAY_REST_URL = "/api/build/pushToBintray/";
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
@@ -824,6 +825,28 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             }
         }
         return artifactoryVersion;
+    }
+
+    public boolean isRepoExist(String repo) {
+        String fullItemUrl = artifactoryUrl + API_REPOSITORIES + "/" + repo;
+        String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
+        HttpRequestBase httpRequest = new HttpGet(encodedUrl);
+        HttpResponse httpResponse;
+        int connectionRetries = httpClient.getConnectionRetries();
+        try {
+            httpResponse = httpClient.getHttpClient().execute(httpRequest);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+                return false;
+            }
+        } catch (IOException e) {
+            return false;
+        } finally {
+            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
+            httpClient.setConnectionRetries(connectionRetries);
+        }
+        EntityUtils.consumeQuietly(httpResponse.getEntity());
+        return true;
     }
 
     /**

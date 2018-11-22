@@ -8,7 +8,7 @@ import org.jfrog.build.client.ProxyConfiguration;
 /**
  * Created by Tamirh on 21/04/2016.
  */
-public abstract class ArtifactoryBaseClient {
+public abstract class ArtifactoryBaseClient implements AutoCloseable {
 
     protected String artifactoryUrl;
     protected ArtifactoryHttpClient httpClient;
@@ -20,6 +20,7 @@ public abstract class ArtifactoryBaseClient {
         this.log = logger;
     }
 
+    @Override
     public void close() {
         if (httpClient != null) {
             httpClient.close();

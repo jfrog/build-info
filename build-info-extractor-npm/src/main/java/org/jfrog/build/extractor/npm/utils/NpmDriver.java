@@ -72,10 +72,9 @@ public class NpmDriver implements Serializable {
     }
 
     public boolean isNpmInstalled() {
-        List<String> args = Lists.newArrayList("version");
         try {
-            NpmCommandRes npmCommandRes = exeNpmCommand(null, args);
-            return npmCommandRes.isOk();
+            version(new File(""));
+            return true;
         } catch (IOException | InterruptedException e) {
             return false;
         }
@@ -107,7 +106,7 @@ public class NpmDriver implements Serializable {
     }
 
     public String version(File workingDirectory) throws IOException, InterruptedException {
-        List<String> args = Lists.newArrayList("-version");
+        List<String> args = Lists.newArrayList("--version");
         NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.err);

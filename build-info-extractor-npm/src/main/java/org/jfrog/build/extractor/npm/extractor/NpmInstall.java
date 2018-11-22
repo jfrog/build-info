@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
@@ -10,15 +9,15 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.PackageInfo;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
-import org.jfrog.build.extractor.npm.utils.NpmDriver;
-import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -27,30 +26,20 @@ import java.util.List;
 import java.util.Properties;
 
 @SuppressWarnings("unused")
-public class NpmInstall implements Serializable {
-    private static final long serialVersionUID = 1L;
-    private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
+public class NpmInstall extends NpmCommand {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
-    private transient ArtifactoryDependenciesClient dependenciesClient;
-    private String resolutionRepository;
-    private List<String> installArgs;
-    private NpmDriver npmDriver;
+    private transient ArtifactoryDependenciesClient client;
     private Log logger;
-    private File ws;
 
-    private PackageInfo npmPackageInfo = new PackageInfo();
     private Properties npmAuth;
     private String npmRegistry;
 
-    public NpmInstall(ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository, String installArgs, String executablePath, Log logger, File ws) {
-        this.resolutionRepository = resolutionRepository;
-        this.dependenciesClient = dependenciesClient;
-        this.installArgs = Lists.newArrayList(installArgs.split("\\s+"));
-        this.npmDriver = new NpmDriver(executablePath);
+    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String installArgs, String executablePath, Log logger, File ws) {
+        super(executablePath, installArgs, resolutionRepository, ws);
+        this.client = client;
         this.logger = logger;
-        this.ws = ws;
     }
 
     public Module execute() throws InterruptedException, VersionException, IOException {
@@ -74,25 +63,17 @@ public class NpmInstall implements Serializable {
 
     }
 
-    private void validateNpmVersion() throws IOException, InterruptedException, VersionException {
-        String npmVersionStr = npmDriver.version(ws);
-        ArtifactoryVersion npmVersion = new ArtifactoryVersion(npmVersionStr);
-        if (!npmVersion.isAtLeast(MIN_SUPPORTED_NPM_VERSION)) {
-            throw new VersionException("Couldn't execute npm task. Version must be at least " + MIN_SUPPORTED_NPM_VERSION.toString() + ".", VersionCompatibilityType.INCOMPATIBLE);
-        }
-    }
-
     private void setNpmAuth() throws IOException {
-        npmAuth = dependenciesClient.getNpmAuth();
+        npmAuth = client.getNpmAuth();
     }
 
     private void setRegistryUrl() {
-        if (StringUtils.isNoneBlank(resolutionRepository)) {
-            npmRegistry = dependenciesClient.getArtifactoryUrl();
+        if (StringUtils.isNoneBlank(repo)) {
+            npmRegistry = client.getArtifactoryUrl();
             if (!StringUtils.endsWith(npmRegistry, "/")) {
                 npmRegistry += "/";
             }
-            npmRegistry += "api/npm" + resolutionRepository;
+            npmRegistry += "api/npm" + repo;
         }
     }
 
@@ -116,7 +97,7 @@ public class NpmInstall implements Serializable {
     private void createTempNpmrc() throws IOException, InterruptedException {
         Path npmrcPath = ws.toPath().resolve(NPMRC_FILE_NAME);
         Files.deleteIfExists(npmrcPath); // Delete old npmrc file
-        final String configList = npmDriver.configList(ws, installArgs);
+        final String configList = npmDriver.configList(ws, args);
 
         Properties npmrcProperties = new Properties();
 
@@ -157,7 +138,7 @@ public class NpmInstall implements Serializable {
     }
 
     private void runInstall() throws IOException {
-        npmDriver.install(ws, installArgs);
+        npmDriver.install(ws, args);
     }
 
     private void restoreNpmrc() throws IOException {
@@ -178,7 +159,7 @@ public class NpmInstall implements Serializable {
         } else {
             scopes.add(NpmScope.valueOf(npmPackageInfo.getScope()));
         }
-        NpmProject npmProject = new NpmProject(dependenciesClient, logger);
+        NpmProject npmProject = new NpmProject(client, logger);
         for (NpmScope scope : scopes) {
             List<String> extraListArgs = new ArrayList<>();
             extraListArgs.add("--only=" + scope);
