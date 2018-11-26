@@ -13,17 +13,18 @@ import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
 import org.jfrog.build.util.VersionException;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 @SuppressWarnings("unused")
 public class NpmInstall extends NpmCommand {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
@@ -48,7 +49,7 @@ public class NpmInstall extends NpmCommand {
         restoreNpmrc();
 
         ModuleBuilder builder = new ModuleBuilder();
-        builder.id(npmPackageInfo.toString());
+        builder.id(npmPackageInfo.getModuleId());
         builder.dependencies(getBuildDependencies());
         return builder.build();
     }
@@ -77,7 +78,9 @@ public class NpmInstall extends NpmCommand {
     }
 
     private void readPackageInfoFromPackageJson() throws IOException {
-        npmPackageInfo.readPackageInfo(ws);
+        try (FileInputStream fis = new FileInputStream(Paths.get(ws.getPath(), "package.json").toFile())) {
+            npmPackageInfo.readPackageInfo(fis);
+        }
     }
 
     /**

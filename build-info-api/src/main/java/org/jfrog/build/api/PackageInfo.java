@@ -4,10 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.Serializable;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.Objects;
 
@@ -65,20 +62,42 @@ public class PackageInfo implements Serializable {
         }
     }
 
-    public void readPackageInfo(File ws) throws IOException {
+    public void readPackageInfo(InputStream inputStream) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        Path packageJsonPath = ws.toPath().resolve("package.json");
-        try (FileInputStream fis = new FileInputStream(packageJsonPath.toFile())) {
-            PackageInfo packageInfo = mapper.readValue(fis, PackageInfo.class);
+        PackageInfo packageInfo = mapper.readValue(inputStream, PackageInfo.class);
 
-            setVersion(packageInfo.getVersion());
-            removeVersionPrefixes();
+        setVersion(packageInfo.getVersion());
+        removeVersionPrefixes();
 
-            setName(packageInfo.getName());
-            splitScopeFromName();
+        setName(packageInfo.getName());
+        splitScopeFromName();
+
+    }
+
+    public String getModuleId() {
+        String nameBase = String.format("%s:%s", name ,version);
+        if (StringUtils.isBlank(scope)) {
+            return nameBase;
         }
+        return String.format("%s:%s", scope.replaceFirst("^@", ""), nameBase);
+    }
+
+    public String getExpectedPackedFileName() {
+        String nameBase = String.format("%s-%s.tgz", name ,version);
+        if (StringUtils.isBlank(scope)) {
+            return nameBase;
+        }
+        return String.format("%s-%s", scope.replaceFirst("^@", ""), nameBase);
+    }
+
+    public String getDeployPath() {
+        String deployPath = String.format("%s/-/%s-%s.tgz", name, name, version);
+        if (StringUtils.isBlank(scope)) {
+            return deployPath;
+        }
+        return String.format("%s/%s", scope, deployPath);
     }
 
     @Override
@@ -97,10 +116,6 @@ public class PackageInfo implements Serializable {
 
     @Override
     public String toString() {
-        String nameBase = name + ":" + version;
-        if (StringUtils.isBlank(scope)) {
-            return nameBase;
-        }
-        return nameBase + scope.replaceFirst("^@", "");
+        return getModuleId();
     }
 }

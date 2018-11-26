@@ -55,7 +55,6 @@ public class NpmDriver implements Serializable {
                 npmCommandRes.err = String.format("Process execution %s timed out.", String.join(" ", args));
             }
             npmCommandRes.exitValue = process.exitValue();
-
             return npmCommandRes;
         } finally {
             closeStreams(process);
@@ -93,6 +92,20 @@ public class NpmDriver implements Serializable {
         }
     }
 
+
+    public void pack(File workingDirectory, List<String> extraArgs) throws IOException {
+        try {
+            List<String> args = Lists.newArrayList(extraArgs);
+            args.add(0, "pack");
+            NpmCommandRes npmCommandRes = exeNpmCommand(workingDirectory, args);
+            if (!npmCommandRes.isOk()) {
+                throw new IOException(npmCommandRes.err);
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new IOException("npm pack failed: " + e.getMessage(), e);
+        }
+    }
+
     public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
         List<String> args = Lists.newArrayList("ls", "--json");
         args.addAll(extraArgs);
@@ -123,7 +136,6 @@ public class NpmDriver implements Serializable {
         }
         return npmCommandRes.res;
     }
-
 
     private static class NpmCommandRes {
         String res;

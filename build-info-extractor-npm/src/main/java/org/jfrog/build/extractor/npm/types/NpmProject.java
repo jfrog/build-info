@@ -8,6 +8,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 public class NpmProject {
     private ArtifactoryDependenciesClient dependenciesClient;
     private List<Pair<NpmScope, JsonNode>> dependencies;

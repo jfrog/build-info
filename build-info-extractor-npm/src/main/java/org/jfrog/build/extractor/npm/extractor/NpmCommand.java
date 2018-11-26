@@ -13,6 +13,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 abstract class NpmCommand implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");

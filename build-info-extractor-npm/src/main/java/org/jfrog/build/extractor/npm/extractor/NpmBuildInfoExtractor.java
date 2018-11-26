@@ -16,6 +16,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.io.IOException;
 import java.util.*;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 @SuppressWarnings("unused")
 public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, List<Dependency>> {
     private static final String NPM_AQL_FORMAT =

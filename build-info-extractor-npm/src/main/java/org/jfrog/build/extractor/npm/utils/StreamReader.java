@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.npm.utils;
 import java.io.*;
 
 /**
- * Created by Yahav Itzhak on 15 Nov 2018.
+ * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class StreamReader implements Runnable {
     private String output;

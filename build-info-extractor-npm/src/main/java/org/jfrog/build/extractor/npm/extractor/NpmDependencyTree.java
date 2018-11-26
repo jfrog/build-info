@@ -7,6 +7,9 @@ import org.jfrog.build.extractor.npm.types.NpmScope;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Map;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 @SuppressWarnings({"WeakerAccess"})
 public class NpmDependencyTree {
 
