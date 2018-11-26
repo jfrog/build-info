@@ -30,14 +30,13 @@ public class NpmInstall extends NpmCommand {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
-    private transient ArtifactoryDependenciesClient client;
     private Log logger;
 
     private Properties npmAuth;
     private String npmRegistry;
 
     public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String installArgs, String executablePath, Log logger, File ws) {
-        super(executablePath, installArgs, resolutionRepository, ws);
+        super(client, executablePath, installArgs, resolutionRepository, ws);
         this.client = client;
         this.logger = logger;
     }
@@ -56,15 +55,15 @@ public class NpmInstall extends NpmCommand {
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateNpmVersion();
+        validateRepoExists();
         setNpmAuth();
         setRegistryUrl();
         readPackageInfoFromPackageJson();
         backupProjectNpmrc();
-
     }
 
     private void setNpmAuth() throws IOException {
-        npmAuth = client.getNpmAuth();
+        npmAuth = ((ArtifactoryDependenciesClient) client).getNpmAuth();
     }
 
     private void setRegistryUrl() {
@@ -161,7 +160,7 @@ public class NpmInstall extends NpmCommand {
         } else {
             scopes.add(NpmScope.valueOf(npmPackageInfo.getScope()));
         }
-        NpmProject npmProject = new NpmProject(client, logger);
+        NpmProject npmProject = new NpmProject((ArtifactoryDependenciesClient) client, logger);
         for (NpmScope scope : scopes) {
             List<String> extraListArgs = new ArrayList<>();
             extraListArgs.add("--only=" + scope);

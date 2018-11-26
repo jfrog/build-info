@@ -827,28 +827,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return artifactoryVersion;
     }
 
-    public boolean isRepoExist(String repo) {
-        String fullItemUrl = artifactoryUrl + API_REPOSITORIES + "/" + repo;
-        String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
-        HttpRequestBase httpRequest = new HttpGet(encodedUrl);
-        HttpResponse httpResponse;
-        int connectionRetries = httpClient.getConnectionRetries();
-        try {
-            httpResponse = httpClient.getHttpClient().execute(httpRequest);
-            StatusLine statusLine = httpResponse.getStatusLine();
-            if (statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-                return false;
-            }
-        } catch (IOException e) {
-            return false;
-        } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
-        }
-        EntityUtils.consumeQuietly(httpResponse.getEntity());
-        return true;
-    }
-
     /**
      * Returns the response message
      *

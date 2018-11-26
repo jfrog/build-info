@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.npm.extractor;
 
+import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -26,18 +27,18 @@ import java.util.List;
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
+@SuppressWarnings("unused")
 public class NpmPublish extends NpmCommand {
     private static final long serialVersionUID = 1L;
 
-    private transient ArtifactoryBuildInfoClient client;
-    private Path publishPath;
+    private ArrayListMultimap<String, String> properties;
     private Path packedFilePath;
     private boolean tarballProvided;
     private Artifact deployedArtifact;
 
-    public NpmPublish(ArtifactoryBuildInfoClient client, String executablePath, File ws, String deploymentRepository, String publishArgs) {
-        super(executablePath, publishArgs, deploymentRepository, ws);
-        this.client = client;
+    public NpmPublish(ArtifactoryBuildInfoClient client, ArrayListMultimap<String, String> properties, String executablePath, File ws, String deploymentRepository, String publishArgs) {
+        super(client, executablePath, publishArgs, deploymentRepository, ws);
+        this.properties = properties;
     }
 
     public Module execute() throws InterruptedException, VersionException, IOException {
@@ -61,8 +62,8 @@ public class NpmPublish extends NpmCommand {
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateNpmVersion();
-        setPublishPath();
         validateRepoExists();
+        setPublishPath();
         setPackageInfo();
     }
 
@@ -74,16 +75,9 @@ public class NpmPublish extends NpmCommand {
                 .orElseThrow(() -> new IllegalArgumentException("Target repo must be specified"))
                 .replaceFirst("^~", System.getProperty("user.home")); // Replace tilde with user home
 
-        publishPath = Paths.get(publishPathStr);
-        if (!publishPath.isAbsolute()) {
-            publishPath = ws.toPath().resolve(publishPath);
-        }
-        packedFilePath = publishPath;
-    }
-
-    private void validateRepoExists() throws IOException {
-        if (!client.isRepoExist(repo)) {
-            throw new IOException("Repo " + repo + " doesn't exist");
+        packedFilePath = Paths.get(publishPathStr);
+        if (!packedFilePath.isAbsolute()) {
+            packedFilePath = ws.toPath().resolve(packedFilePath);
         }
     }
 
@@ -105,7 +99,7 @@ public class NpmPublish extends NpmCommand {
                 new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(packedFilePath.toFile()))))) {
             TarArchiveEntry entry;
             while ((entry = inputStream.getNextTarEntry()) != null) {
-                if (StringUtils.endsWith(entry.getName(), "package.json")) { // TODO - Check with debugger!!!
+                if (StringUtils.endsWith(entry.getName(), "package.json")) {
                     npmPackageInfo.readPackageInfo(inputStream);
                     tarballProvided = true;
                     return;
@@ -126,12 +120,19 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void doDeploy() throws IOException {
-        DeployDetails deployDetails = new DeployDetails.Builder().file(packedFilePath.toFile()).targetRepository(repo).artifactPath(npmPackageInfo.getDeployPath()).build();
-        ArtifactoryUploadResponse response = client.deployArtifact(deployDetails);
-        ArtifactBuilder artifactBuilder = new ArtifactBuilder(npmPackageInfo.getModuleId()).
-                md5(response.getChecksums().getMd5()).
-                sha1(response.getChecksums().getSha1());
-        deployedArtifact = artifactBuilder.build();
+        DeployDetails deployDetails = new DeployDetails.Builder()
+                .file(packedFilePath.toFile())
+                .targetRepository(repo)
+                .addProperties(properties)
+                .artifactPath(npmPackageInfo.getDeployPath())
+                .build();
+
+        ArtifactoryUploadResponse response = ((ArtifactoryBuildInfoClient) client).deployArtifact(deployDetails);
+
+        deployedArtifact = new ArtifactBuilder(npmPackageInfo.getModuleId())
+                .md5(response.getChecksums().getMd5())
+                .sha1(response.getChecksums().getSha1())
+                .build();
     }
 
     private void deleteCreatedTarball() throws IOException {

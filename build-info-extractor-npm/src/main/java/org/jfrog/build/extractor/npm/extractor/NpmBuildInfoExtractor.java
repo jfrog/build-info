@@ -26,11 +26,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
                     "\"@npm.name\": \"%s\"," +
                     "\"@npm.version\": \"%s\"" +
                     "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
-
     private Map<String, Dependency> dependencies = new HashMap<>();
     private Set<PackageInfo> badPackages = new HashSet<>();
     private NpmProject npmProject;
 
+    /**
+     * Extract a list of dependencies using the results of 'npm ls' commands.
+     * @param npmProject - The npm project contains the results of the 'npm ls' commands.
+     * @return list of dependencies
+     */
     @Override
     public List<Dependency> extract(NpmProject npmProject) {
         this.npmProject = npmProject;
@@ -90,11 +94,11 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
             }
             DependencyBuilder builder = new DependencyBuilder();
             AqlSearchResult.SearchEntry searchEntry = searchResult.getResults().get(0);
-            return builder.id(searchEntry.getName()).
-                    addScope(packageInfo.getScope()).
-                    md5(searchEntry.getActualMd5()).
-                    sha1(searchEntry.getActualSha1()).
-                    build();
+            return builder.id(searchEntry.getName())
+                    .addScope(packageInfo.getScope())
+                    .md5(searchEntry.getActualMd5())
+                    .sha1(searchEntry.getActualSha1())
+                    .build();
         } catch (IOException e) {
             npmProject.getLogger().error(ExceptionUtils.getStackTrace(e), e);
             return null;
