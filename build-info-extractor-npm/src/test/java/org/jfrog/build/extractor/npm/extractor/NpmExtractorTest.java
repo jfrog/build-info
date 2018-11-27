@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -42,7 +42,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final String PACKAGE_C_NAME = "package-name3";
     private static final String PACKAGE_C_VERSION = "0.0.3";
     private static final List<String> PROJECT_A_DEPENDENCIES = Lists.newArrayList("debug-3.1.0.tgz", "ms-2.0.0.tgz");
-    private static final List<String> PROJECT_B_DEPENDENCIES = Lists.newArrayList("debug-3.1.0.tgz", "ms-2.0.0.tgz", "fresh-0.1.0.tgz", "mime-1.2.6.tgz", "range-parser-0.0.4.tgz",  "send-0.1.0.tgz");
+    private static final List<String> PROJECT_B_DEPENDENCIES = Lists.newArrayList("debug-3.1.0.tgz", "ms-2.0.0.tgz", "fresh-0.1.0.tgz", "mime-1.2.6.tgz", "range-parser-0.0.4.tgz", "send-0.1.0.tgz");
     private static final Set<String> PROJECT_C_DEPENDENCIES = Stream.concat(PROJECT_A_DEPENDENCIES.stream(), PROJECT_B_DEPENDENCIES.stream()).collect(Collectors.toSet());
 
     public NpmExtractorTest() {
@@ -81,10 +81,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), PACKAGE_A_NAME + ":" + PACKAGE_A_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_A_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_A_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_A_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_A_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -96,7 +94,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "development:" + PACKAGE_A_NAME + ":" + PACKAGE_A_VERSION);
-            assertEquals(module.getDependencies().size(), 0);
+            assertTrue(module.getDependencies().isEmpty());
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -108,10 +106,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "production:" + PACKAGE_A_NAME + ":" + PACKAGE_A_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_A_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_A_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_A_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_A_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -123,10 +119,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), PACKAGE_B_NAME + ":" + PACKAGE_B_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_B_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_B_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_B_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_B_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -138,10 +132,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "development:" + PACKAGE_B_NAME + ":" + PACKAGE_B_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_B_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_B_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_B_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_B_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -153,7 +145,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "production:" + PACKAGE_B_NAME + ":" + PACKAGE_B_VERSION);
-            assertEquals(module.getDependencies().size(), 0);
+            assertTrue(module.getDependencies().isEmpty());
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -165,10 +157,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), PACKAGE_C_NAME + ":" + PACKAGE_C_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_C_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_C_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_C_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_C_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -180,10 +170,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "development:" + PACKAGE_C_NAME + ":" + PACKAGE_C_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_B_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_B_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_B_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_B_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -195,12 +183,20 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         try {
             Module module = npmInstall.execute();
             assertEquals(module.getId(), "production:" + PACKAGE_C_NAME + ":" + PACKAGE_C_VERSION);
-            module.getDependencies().forEach(dependency ->
-                    assertTrue(PROJECT_A_DEPENDENCIES.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
-            PROJECT_A_DEPENDENCIES.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
-                    dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
+            assertModuleContained(module, PROJECT_A_DEPENDENCIES);
+            assertModuleContains(module, PROJECT_A_DEPENDENCIES);
         } catch (Exception e) {
             fail(e.getMessage());
         }
+    }
+
+    private void assertModuleContained(Module module, Collection<String> dependencies) {
+        module.getDependencies().forEach(dependency ->
+                assertTrue(dependencies.contains(dependency.getId()), "Dependency " + dependency.getId() + " must be contained in module"));
+    }
+
+    private void assertModuleContains(Module module, Collection<String> dependencies) {
+        dependencies.forEach(dependency -> assertTrue(module.getDependencies().stream().anyMatch(actualDependency ->
+                dependency.equals(actualDependency.getId())), "Dependency " + dependency + " must not be contained in module"));
     }
 }

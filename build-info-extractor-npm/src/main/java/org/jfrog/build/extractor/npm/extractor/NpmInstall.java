@@ -131,9 +131,9 @@ public class NpmInstall extends NpmCommand {
      */
     private void setScope(Properties npmrcProperties) {
         String only = npmrcProperties.getProperty("only");
-        if (StringUtils.equals(only, "prod") || Boolean.parseBoolean(npmrcProperties.getProperty("production"))) {
+        if (StringUtils.startsWith(only, "prod") || Boolean.parseBoolean(npmrcProperties.getProperty("production"))) {
             npmPackageInfo.setScope(NpmScope.PRODUCTION.toString());
-        } else if (StringUtils.equals(only, "dev")) {
+        } else if (StringUtils.startsWith(only, "dev")) {
             npmPackageInfo.setScope(NpmScope.DEVELOPMENT.toString());
         }
     }
