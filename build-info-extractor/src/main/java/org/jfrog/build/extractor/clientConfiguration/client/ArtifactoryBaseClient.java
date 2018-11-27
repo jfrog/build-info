@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
+import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.ProxyConfiguration;
 
 import java.io.IOException;
@@ -22,6 +23,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
     protected String artifactoryUrl;
     protected ArtifactoryHttpClient httpClient;
     protected final Log log;
+    /**
+     * Version of Artifactory we work with.
+     */
+    private ArtifactoryVersion artifactoryVersion;
 
     public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, Log logger) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
@@ -95,6 +100,17 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
 
     public String getArtifactoryUrl() {
         return artifactoryUrl;
+    }
+
+    public ArtifactoryVersion getArtifactoryVersion() {
+        if (artifactoryVersion == null) {
+            try {
+                artifactoryVersion = httpClient.getVersion();
+            } catch (IOException e) {
+                artifactoryVersion = ArtifactoryVersion.NOT_FOUND;
+            }
+        }
+        return artifactoryVersion;
     }
 
     public boolean isRepoExist(String repo) {

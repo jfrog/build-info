@@ -83,11 +83,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public static final String APPLICATION_JSON = "application/json";
 
     /**
-     * Version of Artifactory we work with.
-     */
-    private ArtifactoryVersion artifactoryVersion;
-
-    /**
      * Creates a new client for the given Artifactory url.
      *
      * @param artifactoryUrl Artifactory url in the form of: protocol://host[:port]/contextPath
@@ -814,17 +809,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 append(statusLine.getStatusCode()).append(". HTTP response message: ").
                 append(statusLine.getReasonPhrase()).toString();
         throw new IOException(errorMessage);
-    }
-
-    public ArtifactoryVersion getArtifactoryVersion() {
-        if (artifactoryVersion == null) {
-            try {
-                artifactoryVersion = httpClient.getVersion();
-            } catch (IOException e) {
-                artifactoryVersion = ArtifactoryVersion.NOT_FOUND;
-            }
-        }
-        return artifactoryVersion;
     }
 
     /**
