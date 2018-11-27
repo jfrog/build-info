@@ -25,7 +25,7 @@ import java.util.Properties;
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmInstall extends NpmCommand {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
@@ -35,8 +35,8 @@ public class NpmInstall extends NpmCommand {
     private Properties npmAuth;
     private String npmRegistry;
 
-    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String installArgs, String executablePath, Log logger, File ws) {
-        super(client, executablePath, installArgs, resolutionRepository, ws);
+    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String args, String executablePath, Log logger, File ws) {
+        super(client, executablePath, args, resolutionRepository, ws);
         this.client = client;
         this.logger = logger;
     }
@@ -72,7 +72,7 @@ public class NpmInstall extends NpmCommand {
             if (!StringUtils.endsWith(npmRegistry, "/")) {
                 npmRegistry += "/";
             }
-            npmRegistry += "api/npm" + repo;
+            npmRegistry += "api/npm/" + repo;
         }
     }
 
@@ -158,7 +158,7 @@ public class NpmInstall extends NpmCommand {
             scopes.add(NpmScope.DEVELOPMENT);
             scopes.add(NpmScope.PRODUCTION);
         } else {
-            scopes.add(NpmScope.valueOf(npmPackageInfo.getScope()));
+            scopes.add(NpmScope.valueOf(npmPackageInfo.getScope().toUpperCase()));
         }
         NpmProject npmProject = new NpmProject((ArtifactoryDependenciesClient) client, logger);
         for (NpmScope scope : scopes) {

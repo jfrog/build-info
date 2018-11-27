@@ -415,6 +415,7 @@ project('build-info-extractor-npm') {
     description = 'JFrog Build-Info npm Extractor'
 
     dependencies {
+        testCompile project(':build-info-extractor').sourceSets.test.output
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }

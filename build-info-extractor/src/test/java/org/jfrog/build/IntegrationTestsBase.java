@@ -38,6 +38,7 @@ public abstract class IntegrationTestsBase {
     private String password;
     private String url;
     protected String localRepo = "build-info-tests-local";
+    protected String remoteRepo;
     protected String virtualRepo = "build-info-tests-virtual";
     protected ArtifactoryBuildInfoClient buildInfoClient;
     protected ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
@@ -77,6 +78,9 @@ public abstract class IntegrationTestsBase {
         dependenciesClient = createDependenciesClient();
 
         createTestRepo(localRepo);
+        if (StringUtils.isNotBlank(remoteRepo)) {
+            createTestRepo(remoteRepo);
+        }
         createTestRepo(virtualRepo);
     }
 
@@ -84,6 +88,9 @@ public abstract class IntegrationTestsBase {
     protected void terminate() throws IOException {
         // Delete the virtual first.
         deleteTestRepo(virtualRepo);
+        if (StringUtils.isNotBlank(remoteRepo)) {
+            deleteTestRepo(remoteRepo);
+        }
         deleteTestRepo(localRepo);
         preemptiveHttpClient.close();
         buildInfoClient.close();

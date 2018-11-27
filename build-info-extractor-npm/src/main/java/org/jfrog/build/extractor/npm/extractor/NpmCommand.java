@@ -11,6 +11,7 @@ import org.jfrog.build.util.VersionException;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -31,7 +32,7 @@ abstract class NpmCommand implements Serializable {
 
     NpmCommand(ArtifactoryBaseClient client, String executablePath, String args, String repo, File ws) {
         this.client = client;
-        this.args = Arrays.asList(StringUtils.trimToEmpty(args).split("\\s+"));
+        this.args = StringUtils.isBlank(args) ? new ArrayList<>() :  Arrays.asList(args.trim().split("\\s+"));
         this.npmDriver = new NpmDriver(executablePath);
         this.repo = repo;
         this.ws = ws;
