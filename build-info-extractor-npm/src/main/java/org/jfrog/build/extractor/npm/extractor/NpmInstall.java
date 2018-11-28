@@ -13,10 +13,12 @@ import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
 import org.jfrog.build.util.VersionException;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -35,8 +37,8 @@ public class NpmInstall extends NpmCommand {
     private Properties npmAuth;
     private String npmRegistry;
 
-    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String args, String executablePath, Log logger, File ws) {
-        super(client, executablePath, args, resolutionRepository, ws);
+    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String args, String executablePath, Log logger, Path path) {
+        super(client, executablePath, args, resolutionRepository, path);
         this.client = client;
         this.logger = logger;
     }
@@ -54,6 +56,7 @@ public class NpmInstall extends NpmCommand {
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
+        validateArtifactoryVersion();
         validateNpmVersion();
         validateRepoExists("Source repo must be specified");
         setNpmAuth();
@@ -77,7 +80,7 @@ public class NpmInstall extends NpmCommand {
     }
 
     private void readPackageInfoFromPackageJson() throws IOException {
-        try (FileInputStream fis = new FileInputStream(Paths.get(ws.getPath(), "package.json").toFile())) {
+        try (FileInputStream fis = new FileInputStream(workingDir.resolve("package.json").toFile())) {
             npmPackageInfo.readPackageInfo(fis);
         }
     }
@@ -87,18 +90,18 @@ public class NpmInstall extends NpmCommand {
      * If a .npmrc file already exists we will backup it and override while running the command.
      */
     private void backupProjectNpmrc() throws IOException {
-        Path npmrcPath = ws.toPath().resolve(NPMRC_FILE_NAME);
+        Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
         if (!Files.exists(npmrcPath)) {
             return;
         }
-        Path npmrcBackupPath = ws.toPath().resolve(NPMRC_BACKUP_FILE_NAME);
+        Path npmrcBackupPath = workingDir.resolve(NPMRC_BACKUP_FILE_NAME);
         Files.copy(npmrcPath, npmrcBackupPath, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private void createTempNpmrc() throws IOException, InterruptedException {
-        Path npmrcPath = ws.toPath().resolve(NPMRC_FILE_NAME);
+        Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
         Files.deleteIfExists(npmrcPath); // Delete old npmrc file
-        final String configList = npmDriver.configList(ws, args);
+        final String configList = npmDriver.configList(workingDir.toFile(), args);
 
         Properties npmrcProperties = new Properties();
 
@@ -139,12 +142,12 @@ public class NpmInstall extends NpmCommand {
     }
 
     private void runInstall() throws IOException {
-        npmDriver.install(ws, args);
+        npmDriver.install(workingDir.toFile(), args);
     }
 
     private void restoreNpmrc() throws IOException {
-        Path npmrcPath = ws.toPath().resolve(NPMRC_FILE_NAME);
-        Path npmrcBackupPath = ws.toPath().resolve(NPMRC_BACKUP_FILE_NAME);
+        Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
+        Path npmrcBackupPath = workingDir.resolve(NPMRC_BACKUP_FILE_NAME);
         if (!Files.exists(npmrcBackupPath)) { // npmrc file didn't exist before
             Files.deleteIfExists(npmrcPath);
             return;
@@ -164,7 +167,7 @@ public class NpmInstall extends NpmCommand {
         for (NpmScope scope : scopes) {
             List<String> extraListArgs = new ArrayList<>();
             extraListArgs.add("--only=" + scope);
-            JsonNode jsonNode = npmDriver.list(ws, extraListArgs);
+            JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
             npmProject.addDependencies(Pair.of(scope, jsonNode));
         }
 

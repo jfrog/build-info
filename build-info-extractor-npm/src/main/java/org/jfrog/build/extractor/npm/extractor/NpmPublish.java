@@ -15,29 +15,26 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.util.VersionException;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
     private static final long serialVersionUID = 1L;
 
     private ArrayListMultimap<String, String> properties;
-    private Path packedFilePath;
     private boolean tarballProvided;
     private Artifact deployedArtifact;
 
-    public NpmPublish(ArtifactoryBuildInfoClient client, ArrayListMultimap<String, String> properties, String executablePath, File ws, String deploymentRepository, String publishArgs) {
-        super(client, executablePath, publishArgs, deploymentRepository, ws);
+    public NpmPublish(ArtifactoryBuildInfoClient client, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, String publishArgs) {
+        super(client, executablePath, publishArgs, deploymentRepository, path);
         this.properties = properties;
     }
 
@@ -61,29 +58,15 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
+        validateArtifactoryVersion();
         validateNpmVersion();
         validateRepoExists("Target repo must be specified");
-        setPublishPath();
         setPackageInfo();
     }
 
-    private void setPublishPath() {
-        // Look for the publish path in the arguments
-        String publishPathStr = args.stream()
-                .filter(arg -> !arg.startsWith("-")) // Filter flags
-                .findAny()
-                .orElse(".")
-                .replaceFirst("^~", System.getProperty("user.home")); // Replace tilde with user home
-
-        packedFilePath = Paths.get(publishPathStr);
-        if (!packedFilePath.isAbsolute()) {
-            packedFilePath = ws.toPath().resolve(packedFilePath);
-        }
-    }
-
     private void setPackageInfo() throws IOException {
-        if (Files.isDirectory(packedFilePath)) {
-            try (FileInputStream fis = new FileInputStream(packedFilePath.resolve("package.json").toFile())) {
+        if (Files.isDirectory(path)) {
+            try (FileInputStream fis = new FileInputStream(path.resolve("package.json").toFile())) {
                 npmPackageInfo.readPackageInfo(fis);
             }
         } else {
@@ -92,11 +75,11 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void readPackageInfoFromTarball() throws IOException {
-        if (!StringUtils.endsWith(packedFilePath.toString(), ".tgz")) {
+        if (!StringUtils.endsWith(path.toString(), ".tgz")) {
             throw new IOException("Publish path must be a '.tgz' file or a directory containing package.json");
         }
         try (TarArchiveInputStream inputStream = new TarArchiveInputStream(
-                new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(packedFilePath.toFile()))))) {
+                new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(path.toFile()))))) {
             TarArchiveEntry entry;
             while ((entry = inputStream.getNextTarEntry()) != null) {
                 if (StringUtils.endsWith(entry.getName(), "package.json")) {
@@ -106,12 +89,12 @@ public class NpmPublish extends NpmCommand {
                 }
             }
         }
-        throw new IOException("Couldn't find package.json in " + packedFilePath.toString());
+        throw new IOException("Couldn't find package.json in " + path.toString());
     }
 
     private void pack() throws IOException {
-        npmDriver.pack(ws, args);
-        packedFilePath = ws.toPath().resolve(npmPackageInfo.getExpectedPackedFileName());
+        npmDriver.pack(workingDir.toFile(), new ArrayList<>());
+        path = path.resolve(npmPackageInfo.getExpectedPackedFileName());
     }
 
     private void deploy() throws IOException {
@@ -121,7 +104,7 @@ public class NpmPublish extends NpmCommand {
 
     private void doDeploy() throws IOException {
         DeployDetails deployDetails = new DeployDetails.Builder()
-                .file(packedFilePath.toFile())
+                .file(path.toFile())
                 .targetRepository(repo)
                 .addProperties(properties)
                 .artifactPath(npmPackageInfo.getDeployPath())
@@ -136,6 +119,6 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void deleteCreatedTarball() throws IOException {
-        Files.deleteIfExists(packedFilePath);
+        Files.deleteIfExists(path);
     }
 }

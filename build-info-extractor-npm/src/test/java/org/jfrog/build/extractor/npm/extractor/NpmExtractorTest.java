@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -87,15 +88,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @DataProvider
     private Object[][] npmInstallProvider(){
         return new Object[][] {
-                {PROJECTS.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, ""},
-                {PROJECTS.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev"},
-                {PROJECTS.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod"},
-                {PROJECTS.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, ""},
-                {PROJECTS.B, "development:" + PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev"},
-                {PROJECTS.B, "production:" + PACKAGE_B_NAME, Collections.emptySet(), "--production"},
-                {PROJECTS.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, ""},
-                {PROJECTS.C, "development:" + PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development"},
-                {PROJECTS.C, "production:" + PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production"}
+                {PROJECTS.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
+                {PROJECTS.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
+                {PROJECTS.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
+                {PROJECTS.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "", false},
+                {PROJECTS.B, "development:" + PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
+                {PROJECTS.B, "production:" + PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
+                {PROJECTS.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, "", true},
+                {PROJECTS.C, "development:" + PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
+                {PROJECTS.C, "production:" + PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
         };
     }
 
@@ -104,8 +105,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         return new Object[][]{
                 {PROJECTS.A, ArrayListMultimap.create(), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
                 {PROJECTS.A, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").build()), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
-                {PROJECTS.B, ArrayListMultimap.create(), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, ""},
-                {PROJECTS.B, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").put("c", "d").build()), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, ""},
+                {PROJECTS.B, ArrayListMultimap.create(), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
+                {PROJECTS.B, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").put("c", "d").build()), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
                 {PROJECTS.C, ArrayListMultimap.create(), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""},
                 {PROJECTS.C, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").put("a", "d").build()), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""}
         };
@@ -113,36 +114,40 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    private void npmInstallTest(PROJECTS project, String expectedPackageName, Set<String> expectedDependencies, String args) {
-        File projectDir = null;
+    private void npmInstallTest(PROJECTS project, String expectedPackageName, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+        Path projectDir = null;
         try {
             // Run npm install
             projectDir = createProjectDir(project);
-            NpmInstall npmInstall = new NpmInstall(dependenciesClient, virtualRepo, args, null, log, projectDir);
+            Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
+            NpmInstall npmInstall = new NpmInstall(dependenciesClient, virtualRepo, args, null, log, path);
             Module module = npmInstall.execute();
 
-            // Check that the module currect
+            // Check correctness of the module and dependencies
             assertEquals(module.getId(), expectedPackageName);
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, expectedDependencies);
         } catch (Exception e) {
             fail(e.getMessage());
         } finally {
-            FileUtils.deleteQuietly(projectDir);
+            if (projectDir != null) {
+                FileUtils.deleteQuietly(projectDir.toFile());
+            }
         }
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    private void npmPublishTest(PROJECTS project, ArrayListMultimap<String, String> props, String expectedPackageName, String targetPath, String args) {
-        File projectDir = null;
+    private void npmPublishTest(PROJECTS project, ArrayListMultimap<String, String> props, String expectedPackageName, String targetPath, String packageName) {
+        Path projectDir = null;
         try {
             // Run npm publish
             projectDir = createProjectDir(project);
-            NpmPublish npmPublish = new NpmPublish(buildInfoClient, props, null, projectDir, virtualRepo, args);
+            Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
+            NpmPublish npmPublish = new NpmPublish(buildInfoClient, props, null, path, virtualRepo, null);
             Module module = npmPublish.execute();
 
-            // Check that the module correct
+            // Check correctness of the module and the artifact
             assertEquals(module.getId(), expectedPackageName);
             assertEquals(module.getArtifacts().size(), 1);
             assertEquals(module.getArtifacts().get(0).getName(), expectedPackageName);
@@ -153,20 +158,23 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             FileSpec fileSpec = new FileSpec();
             fileSpec.setProps(propertiesBuilder.toString());
             fileSpec.setPattern(localRepo + "/" + targetPath);
-            fileSpec.setTarget(Paths.get(projectDir.getPath(), "download", "/").toString());
+            fileSpec.setTarget(projectDir.toString());
+
             Spec spec = new Spec();
             spec.setFiles(new FileSpec[]{fileSpec});
             assertEquals(downloaderHelper.downloadDependencies(spec).size(), 1);
         } catch (Exception e) {
             fail(e.getMessage());
         } finally {
-            FileUtils.deleteQuietly(projectDir);
+            if (projectDir != null) {
+                FileUtils.deleteQuietly(projectDir.toFile());
+            }
         }
     }
 
-    private File createProjectDir(PROJECTS project) throws IOException {
+    private Path createProjectDir(PROJECTS project) throws IOException {
         File projectFile = Files.createTempDirectory(project.getProjectName()).toFile();
         FileUtils.copyDirectory(project.getProjectOrigin(), projectFile);
-        return projectFile;
+        return projectFile.toPath();
     }
 }
