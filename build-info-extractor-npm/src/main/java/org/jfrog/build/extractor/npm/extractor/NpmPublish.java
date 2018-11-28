@@ -62,7 +62,7 @@ public class NpmPublish extends NpmCommand {
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateNpmVersion();
-        validateRepoExists();
+        validateRepoExists("Target repo must be specified");
         setPublishPath();
         setPackageInfo();
     }
@@ -72,7 +72,7 @@ public class NpmPublish extends NpmCommand {
         String publishPathStr = args.stream()
                 .filter(arg -> !arg.startsWith("-")) // Filter flags
                 .findAny()
-                .orElseThrow(() -> new IllegalArgumentException("Target repo must be specified"))
+                .orElse(".")
                 .replaceFirst("^~", System.getProperty("user.home")); // Replace tilde with user home
 
         packedFilePath = Paths.get(publishPathStr);

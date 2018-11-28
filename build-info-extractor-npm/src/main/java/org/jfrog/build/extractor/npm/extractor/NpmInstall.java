@@ -55,7 +55,7 @@ public class NpmInstall extends NpmCommand {
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateNpmVersion();
-        validateRepoExists();
+        validateRepoExists("Source repo must be specified");
         setNpmAuth();
         setRegistryUrl();
         readPackageInfoFromPackageJson();

@@ -46,7 +46,10 @@ abstract class NpmCommand implements Serializable {
         }
     }
 
-    void validateRepoExists() throws IOException {
+    void validateRepoExists(String repoNotSpecifiedMsg) throws IOException {
+        if (StringUtils.isBlank(repo)) {
+            throw new IllegalArgumentException(repoNotSpecifiedMsg);
+        }
         if (!client.isRepoExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");
         }

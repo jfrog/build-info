@@ -18,7 +18,6 @@ package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +32,7 @@ public class Dependency extends BaseBuildFileBean {
     public static final String SCOPE_BUILD = "_build_";
 
     private String id;
-    private Set<String> scopes = new HashSet<>();
+    private Set<String> scopes;
     private List<String> requiredBy;
 
     /**
