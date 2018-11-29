@@ -27,9 +27,9 @@ import java.util.concurrent.ConcurrentHashMap;
 public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, List<Dependency>> {
 
     private ArtifactoryDependenciesClientBuilder clientBuilder;
-    private Log logger;
     private Map<String, Dependency> dependencies = new ConcurrentHashMap<>();
     private Set<PackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
+    private Log logger;
 
     @SuppressWarnings({"WeakerAccess"})
     public NpmBuildInfoExtractor(ArtifactoryClientBuilderBase clientBuilder, Log logger) {

@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -137,7 +138,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, expectedDependencies);
         } catch (Exception e) {
-            fail(e.getMessage());
+            fail(ExceptionUtils.getStackTrace(e));
         } finally {
             if (projectDir != null) {
                 FileUtils.deleteQuietly(projectDir.toFile());
@@ -173,7 +174,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             spec.setFiles(new FileSpec[]{fileSpec});
             assertEquals(downloaderHelper.downloadDependencies(spec).size(), 1);
         } catch (Exception e) {
-            fail(e.getMessage());
+            fail(ExceptionUtils.getStackTrace(e));
         } finally {
             if (projectDir != null) {
                 FileUtils.deleteQuietly(projectDir.toFile());
