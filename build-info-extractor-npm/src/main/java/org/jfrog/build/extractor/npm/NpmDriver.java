@@ -59,7 +59,7 @@ public class NpmDriver implements Serializable {
     public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
         List<String> args = new ArrayList<>();
         args.add("ls");
-        args.add("json");
+        args.add("--json");
         args.addAll(extraArgs);
         try {
             CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args);
