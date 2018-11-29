@@ -10,6 +10,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.util.VersionException;
@@ -27,34 +28,46 @@ import java.util.List;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
-    private static final long serialVersionUID = 1L;
 
     private ArrayListMultimap<String, String> properties;
-    private boolean tarballProvided;
     private Artifact deployedArtifact;
+    private boolean tarballProvided;
 
-    public NpmPublish(ArtifactoryBuildInfoClient client, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, String publishArgs) {
-        super(client, executablePath, publishArgs, deploymentRepository, path);
+    /**
+     * Publish npm package.
+     *
+     * @param clientBuilder        - Build Info client builder.
+     * @param properties           - The Artifact properties to set (Build name, Build number, etc...).
+     * @param executablePath       - Npm executable path.
+     * @param path                 - Path to directory contains package.json or path to '.tgz' file.
+     * @param deploymentRepository - The repository it'll deploy to.
+     * @param args                 - Npm args.
+     */
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, String args) {
+        super(clientBuilder, executablePath, args, deploymentRepository, path);
         this.properties = properties;
     }
 
     public Module execute() throws InterruptedException, VersionException, IOException {
-        preparePrerequisites();
-        if (!tarballProvided) {
-            pack();
-        }
-        deploy();
-        if (!tarballProvided) {
-            deleteCreatedTarball();
-        }
+        try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
+            client = dependenciesClient;
+            preparePrerequisites();
+            if (!tarballProvided) {
+                pack();
+            }
+            deploy();
+            if (!tarballProvided) {
+                deleteCreatedTarball();
+            }
 
-        List<Artifact> artifactList = new ArrayList<>();
-        artifactList.add(deployedArtifact);
+            List<Artifact> artifactList = new ArrayList<>();
+            artifactList.add(deployedArtifact);
 
-        return new ModuleBuilder().
-                id(npmPackageInfo.getModuleId()).
-                artifacts(artifactList).
-                build();
+            return new ModuleBuilder().
+                    id(npmPackageInfo.getModuleId()).
+                    artifacts(artifactList).
+                    build();
+        }
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {

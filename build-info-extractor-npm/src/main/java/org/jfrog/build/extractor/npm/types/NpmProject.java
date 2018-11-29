@@ -2,32 +2,21 @@ package org.jfrog.build.extractor.npm.types;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Contains a list of scopes and the root node of 'npm ls' command for each scope.
+ * Used by the npm extractor.
+ *
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class NpmProject {
-    private ArtifactoryDependenciesClient dependenciesClient;
     private List<Pair<NpmScope, JsonNode>> dependencies;
-    private Log logger;
 
-    public NpmProject(ArtifactoryDependenciesClient dependenciesClient, Log logger) {
-        this.dependenciesClient = dependenciesClient;
-        this.logger = logger;
+    public NpmProject() {
         dependencies = new ArrayList<>();
-    }
-
-    public ArtifactoryDependenciesClient getDependenciesClient() {
-        return dependenciesClient;
-    }
-
-    public Log getLogger() {
-        return logger;
     }
 
     public List<Pair<NpmScope, JsonNode>> getDependencies() {

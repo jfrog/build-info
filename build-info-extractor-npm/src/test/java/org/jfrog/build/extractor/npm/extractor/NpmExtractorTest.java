@@ -8,6 +8,8 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
@@ -28,6 +30,9 @@ import java.util.stream.Collectors;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
+/**
+ * Created by Yahav Itzhak on 25 Nov 2018.
+ */
 @Test
 public class NpmExtractorTest extends IntegrationTestsBase {
 
@@ -51,6 +56,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final Set<String> PROJECT_C_DEPENDENCIES = Sets.union(PROJECT_A_DEPENDENCIES, PROJECT_B_DEPENDENCIES);
 
     private DependenciesDownloaderHelper downloaderHelper;
+    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
 
     public NpmExtractorTest() {
         localRepo = NPM_LOCAL_REPO;
@@ -83,11 +90,13 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @BeforeClass
     private void setUp() {
         downloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+        dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
     }
 
     @DataProvider
-    private Object[][] npmInstallProvider(){
-        return new Object[][] {
+    private Object[][] npmInstallProvider() {
+        return new Object[][]{
                 {PROJECTS.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
                 {PROJECTS.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
                 {PROJECTS.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
@@ -101,7 +110,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     }
 
     @DataProvider
-    private Object[][] npmPublishProvider(){
+    private Object[][] npmPublishProvider() {
         return new Object[][]{
                 {PROJECTS.A, ArrayListMultimap.create(), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
                 {PROJECTS.A, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").build()), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
@@ -120,7 +129,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm install
             projectDir = createProjectDir(project);
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
-            NpmInstall npmInstall = new NpmInstall(dependenciesClient, virtualRepo, args, null, log, path);
+            NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, null, log, path);
             Module module = npmInstall.execute();
 
             // Check correctness of the module and dependencies
@@ -144,7 +153,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(buildInfoClient, props, null, path, virtualRepo, null);
+            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, null);
             Module module = npmPublish.execute();
 
             // Check correctness of the module and the artifact

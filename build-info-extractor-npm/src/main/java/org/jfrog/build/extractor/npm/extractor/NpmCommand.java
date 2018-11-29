@@ -3,8 +3,9 @@ package org.jfrog.build.extractor.npm.extractor;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.PackageInfo;
 import org.jfrog.build.client.ArtifactoryVersion;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
-import org.jfrog.build.extractor.npm.utils.NpmDriver;
+import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
@@ -25,6 +26,7 @@ abstract class NpmCommand implements Serializable {
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
 
     PackageInfo npmPackageInfo = new PackageInfo();
+    ArtifactoryClientBuilderBase clientBuilder;
     ArtifactoryBaseClient client;
     NpmDriver npmDriver;
     List<String> args;
@@ -33,8 +35,8 @@ abstract class NpmCommand implements Serializable {
     Path path;
 
 
-    NpmCommand(ArtifactoryBaseClient client, String executablePath, String args, String repo, Path path) {
-        this.client = client;
+    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String args, String repo, Path path) {
+        this.clientBuilder = clientBuilder;
         this.args = StringUtils.isBlank(args) ? new ArrayList<>() :  Arrays.asList(args.trim().split("\\s+"));
         this.npmDriver = new NpmDriver(executablePath);
         this.workingDir = Files.isDirectory(path) ? path : path.getParent();

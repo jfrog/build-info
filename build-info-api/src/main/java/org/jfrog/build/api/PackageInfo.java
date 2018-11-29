@@ -3,12 +3,14 @@ package org.jfrog.build.api;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 
-import java.io.*;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class PackageInfo implements Serializable {
+public class PackageInfo implements Serializable, ProducerConsumerItem {
     private static final long serialVersionUID = 1L;
 
     private String name;

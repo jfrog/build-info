@@ -223,8 +223,16 @@ public abstract class IntegrationTestsBase {
         return this.username;
     }
 
+    protected String getPassword() {
+        return password;
+    }
+
     protected String getUrl() {
         return this.url;
+    }
+
+    public static Log getLog() {
+        return log;
     }
 
     private ArtifactoryBuildInfoClient createBuildInfoClient() {

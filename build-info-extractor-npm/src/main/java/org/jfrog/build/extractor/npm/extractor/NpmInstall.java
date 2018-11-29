@@ -8,6 +8,7 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
@@ -32,27 +33,38 @@ public class NpmInstall extends NpmCommand {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
-    private Log logger;
-
     private Properties npmAuth;
     private String npmRegistry;
+    private Log logger;
 
-    public NpmInstall(ArtifactoryDependenciesClient client, String resolutionRepository, String args, String executablePath, Log logger, Path path) {
-        super(client, executablePath, args, resolutionRepository, path);
-        this.client = client;
+    /**
+     * Install npm package.
+     *
+     * @param clientBuilder        - Build Info client builder.
+     * @param resolutionRepository - The repository it'll resolve from.
+     * @param executablePath       - Npm executable path.
+     * @param args                 - Npm args.
+     * @param logger               - The logger.
+     * @param path                 - Path to directory contains package.json or path to '.tgz' file.
+     */
+    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String args, String executablePath, Log logger, Path path) {
+        super(clientBuilder, executablePath, args, resolutionRepository, path);
         this.logger = logger;
     }
 
     public Module execute() throws InterruptedException, VersionException, IOException {
-        preparePrerequisites();
-        createTempNpmrc();
-        runInstall();
-        restoreNpmrc();
+        try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
+            client = dependenciesClient;
+            preparePrerequisites();
+            createTempNpmrc();
+            runInstall();
+            restoreNpmrc();
 
-        ModuleBuilder builder = new ModuleBuilder();
-        builder.id(npmPackageInfo.getModuleId());
-        builder.dependencies(getBuildDependencies());
-        return builder.build();
+            ModuleBuilder builder = new ModuleBuilder();
+            builder.id(npmPackageInfo.getModuleId());
+            builder.dependencies(getBuildDependencies());
+            return builder.build();
+        }
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
@@ -130,6 +142,7 @@ public class NpmInstall extends NpmCommand {
 
     /**
      * npm install type restriction can be set by "--production" or "-only={prod[uction]|dev[elopment]}" flags.
+     *
      * @param npmrcProperties - The results of 'npm config list' command.
      */
     private void setScope(Properties npmrcProperties) {
@@ -163,7 +176,7 @@ public class NpmInstall extends NpmCommand {
         } else {
             scopes.add(NpmScope.valueOf(npmPackageInfo.getScope().toUpperCase()));
         }
-        NpmProject npmProject = new NpmProject((ArtifactoryDependenciesClient) client, logger);
+        NpmProject npmProject = new NpmProject();
         for (NpmScope scope : scopes) {
             List<String> extraListArgs = new ArrayList<>();
             extraListArgs.add("--only=" + scope);
@@ -171,7 +184,7 @@ public class NpmInstall extends NpmCommand {
             npmProject.addDependencies(Pair.of(scope, jsonNode));
         }
 
-        NpmBuildInfoExtractor buildInfoExtractor = new NpmBuildInfoExtractor();
+        NpmBuildInfoExtractor buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, logger);
         return buildInfoExtractor.extract(npmProject);
     }
 }

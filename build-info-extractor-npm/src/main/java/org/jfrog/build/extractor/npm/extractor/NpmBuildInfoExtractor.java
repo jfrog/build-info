@@ -1,107 +1,79 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.PackageInfo;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.search.AqlSearchResult;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
+import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
+import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
+import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 @SuppressWarnings("unused")
 public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, List<Dependency>> {
-    private static final String NPM_AQL_FORMAT =
-            "items.find({" +
-                    "\"@npm.name\": \"%s\"," +
-                    "\"@npm.version\": \"%s\"" +
-                    "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
-    private Map<String, Dependency> dependencies = new HashMap<>();
-    private Set<PackageInfo> badPackages = new HashSet<>();
-    private NpmProject npmProject;
+
+    private ArtifactoryDependenciesClientBuilder clientBuilder;
+    private Log logger;
+    private Map<String, Dependency> dependencies = new ConcurrentHashMap<>();
+    private Set<PackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
+
+    @SuppressWarnings({"WeakerAccess"})
+    public NpmBuildInfoExtractor(ArtifactoryClientBuilderBase clientBuilder, Log logger) {
+        this.clientBuilder = (ArtifactoryDependenciesClientBuilder) clientBuilder;
+        this.logger = logger;
+    }
 
     /**
      * Extract a list of dependencies using the results of 'npm ls' commands.
+     *
      * @param npmProject - The npm project contains the results of the 'npm ls' commands.
      * @return list of dependencies
      */
     @Override
     public List<Dependency> extract(NpmProject npmProject) {
-        this.npmProject = npmProject;
         npmProject.getDependencies().forEach(this::populateDependencies);
         if (!badPackages.isEmpty()) {
-            npmProject.getLogger().info((Arrays.toString(badPackages.toArray())));
-            npmProject.getLogger().info("The npm dependencies above could not be found in Artifactory and therefore are not included in the build-info. " +
+            logger.info((Arrays.toString(badPackages.toArray())));
+            logger.info("The npm dependencies above could not be found in Artifactory and therefore are not included in the build-info. " +
                     "Make sure the dependencies are available in Artifactory for this build.");
         }
         return new ArrayList<>(dependencies.values());
     }
 
 
-    private void populateDependencies(Pair<NpmScope, JsonNode> dependencies) {
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.getDependenciesTree(dependencies.getKey(), dependencies.getValue());
-        Enumeration e = rootNode.breadthFirstEnumeration();
-        while (e.hasMoreElements()) {
-            DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
-            PackageInfo packageInfo = (PackageInfo) node.getUserObject();
-            if (packageInfo == null) {
-                continue;
-            }
-            if (StringUtils.isBlank(packageInfo.getVersion())) {
-                npmProject.getLogger().warn("npm dependencies list contains the package " + packageInfo.getName() + " without version information. The dependency will not be added to build-info");
-                continue;
-            }
-
-            if (!badPackages.contains(packageInfo)) {
-                if (!appendDependency(packageInfo)) {
-                    badPackages.add(packageInfo);
-                }
-            }
-        }
-    }
-
-    private boolean appendDependency(PackageInfo packageInfo) {
-        String id = packageInfo.getName() + ":" + packageInfo.getVersion();
-        if (!dependencies.containsKey(id)) {
-            Dependency dependency = createDependency(packageInfo);
-            if (dependency == null) {
-                return false;
-            }
-            dependencies.put(id, createDependency(packageInfo));
-        } else {
-            dependencies.get(id).getScopes().add(packageInfo.getScope());
-        }
-        return true;
-    }
-
-    private Dependency createDependency(PackageInfo packageInfo) {
-        String aql = String.format(NPM_AQL_FORMAT, packageInfo.getName(), packageInfo.getVersion());
-        AqlSearchResult searchResult;
-        try {
-            searchResult = npmProject.getDependenciesClient().searchArtifactsByAql(aql);
-            if (searchResult.getResults().isEmpty()) {
-                return null;
-            }
-            DependencyBuilder builder = new DependencyBuilder();
-            AqlSearchResult.SearchEntry searchEntry = searchResult.getResults().get(0);
-            return builder.id(searchEntry.getName())
-                    .addScope(packageInfo.getScope())
-                    .md5(searchEntry.getActualMd5())
-                    .sha1(searchEntry.getActualSha1())
-                    .build();
-        } catch (IOException e) {
-            npmProject.getLogger().error(ExceptionUtils.getStackTrace(e), e);
-            return null;
+    private void populateDependencies(Pair<NpmScope, JsonNode> nodeWithScope) {
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.getDependenciesTree(nodeWithScope.getKey(), nodeWithScope.getValue());
+        try (ArtifactoryDependenciesClient client1 = clientBuilder.build();
+             ArtifactoryDependenciesClient client2 = clientBuilder.build();
+             ArtifactoryDependenciesClient client3 = clientBuilder.build()
+        ) {
+            // Create producer Runnable
+            ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractProducer(rootNode)};
+            // Create consumer Runnables
+            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
+                    new NpmExtractorConsumer(client1, dependencies, badPackages),
+                    new NpmExtractorConsumer(client2, dependencies, badPackages),
+                    new NpmExtractorConsumer(client3, dependencies, badPackages)
+            };
+            // Create the deployment executor
+            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, 10);
+            deploymentExecutor.start();
+        } catch (Exception e) {
+            logger.error(ExceptionUtils.getStackTrace(e), e);
         }
     }
 }

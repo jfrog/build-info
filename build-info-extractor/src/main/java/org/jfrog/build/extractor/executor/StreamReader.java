@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.npm.utils;
+package org.jfrog.build.extractor.executor;
 
 import java.io.*;
 
@@ -9,7 +9,7 @@ public class StreamReader implements Runnable {
     private String output;
     private InputStream inputStream;
 
-    public StreamReader(InputStream inputStream) {
+    StreamReader(InputStream inputStream) {
         this.inputStream = inputStream;
     }
 
@@ -22,19 +22,18 @@ public class StreamReader implements Runnable {
         }
     }
 
-    public String getOutput() {
+    String getOutput() {
         return this.output;
     }
 
     private static String readStream(InputStream in) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        try (Reader reader = new InputStreamReader(in);
-             BufferedReader bufferedReader = new BufferedReader(reader)) {
+        StringBuilder stringBuilder = new StringBuilder();
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in))) {
             String line;
             while ((line = bufferedReader.readLine()) != null) {
-                sb.append(line);
+                stringBuilder.append(line);
             }
         }
-        return sb.toString();
+        return stringBuilder.toString();
     }
 }
