@@ -18,6 +18,8 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
+ * Base class for npm install and npm publish commands.
+ *
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 abstract class NpmCommand implements Serializable {
@@ -34,10 +36,9 @@ abstract class NpmCommand implements Serializable {
     String repo;
     Path path;
 
-
     NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String args, String repo, Path path) {
         this.clientBuilder = clientBuilder;
-        this.args = StringUtils.isBlank(args) ? new ArrayList<>() :  Arrays.asList(args.trim().split("\\s+"));
+        this.args = StringUtils.isBlank(args) ? new ArrayList<>() : Arrays.asList(args.trim().split("\\s+"));
         this.npmDriver = new NpmDriver(executablePath);
         this.workingDir = Files.isDirectory(path) ? path : path.getParent();
         this.repo = repo;

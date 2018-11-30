@@ -56,7 +56,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
 
 
     private void populateDependencies(Pair<NpmScope, JsonNode> nodeWithScope) {
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.getDependenciesTree(nodeWithScope.getKey(), nodeWithScope.getValue());
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(nodeWithScope.getKey(), nodeWithScope.getValue());
         try (ArtifactoryDependenciesClient client1 = clientBuilder.build();
              ArtifactoryDependenciesClient client2 = clientBuilder.build();
              ArtifactoryDependenciesClient client3 = clientBuilder.build()

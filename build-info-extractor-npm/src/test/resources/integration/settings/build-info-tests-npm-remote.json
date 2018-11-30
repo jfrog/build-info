@@ -1,7 +1,7 @@
 {
   "packageType": "npm",
-  "rclass": "remote",
   "repoLayoutRef": "npm-default",
   "enableNpmSupport": true,
-  "url": "https://registry.npmjs.org"
+  "url": "https://registry.npmjs.org",
+  "rclass": "remote"
 }

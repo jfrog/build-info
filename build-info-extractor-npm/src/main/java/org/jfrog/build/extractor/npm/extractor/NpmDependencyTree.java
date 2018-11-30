@@ -13,7 +13,14 @@ import java.util.Map;
 @SuppressWarnings({"WeakerAccess"})
 public class NpmDependencyTree {
 
-    public static DefaultMutableTreeNode getDependenciesTree(NpmScope scope, JsonNode npmList) {
+    /**
+     * Create a npm dependencies tree from the results of 'npm ls' command.
+     * @param scope - 'production' or 'development'.
+     * @param npmList - Results of 'npm ls' command.
+     * @return Tree of npm PackageInfos.
+     * @see PackageInfo
+     */
+    public static DefaultMutableTreeNode createDependenciesTree(NpmScope scope, JsonNode npmList) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
         populateDependenciesTree(rootNode, scope, npmList.get("dependencies"));
         return rootNode;

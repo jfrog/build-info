@@ -118,6 +118,6 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
 
     @Override
     public String toString() {
-        return getModuleId();
+        return name + ":" + version;
     }
 }

@@ -54,11 +54,12 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final Set<String> PROJECT_B_DEPENDENCIES = Sets.newHashSet("debug-3.1.0.tgz", "ms-2.0.0.tgz", "fresh-0.1.0.tgz", "mime-1.2.6.tgz", "range-parser-0.0.4.tgz", "send-0.1.0.tgz");
     private static final String PACKAGE_C_NAME = "package-name3:0.0.3";
     private static final String PACKAGE_C_TARGET_PATH = "package-name3/-/package-name3-0.0.3.tgz";
+    // Project C contains prod dependencies of A and dev dependencies of B.
     private static final Set<String> PROJECT_C_DEPENDENCIES = Sets.union(PROJECT_A_DEPENDENCIES, PROJECT_B_DEPENDENCIES);
 
-    private DependenciesDownloaderHelper downloaderHelper;
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private DependenciesDownloaderHelper downloaderHelper;
 
     public NpmExtractorTest() {
         localRepo = NPM_LOCAL_REPO;
@@ -66,7 +67,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         virtualRepo = NPM_VIRTUAL_REPO;
     }
 
-    private enum PROJECTS {
+    private enum Projects {
         A("NpmExtractorTest Project A", PROJECT_A_SOURCE),
         B("NpmExtractorTest-Project-B", PROJECT_B_SOURCE),
         C("NpmExtractorTestProjectC", PROJECT_C_SOURCE);
@@ -74,7 +75,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         private String projectName;
         private File projectOrigin;
 
-        PROJECTS(String projectName, File projectOrigin) {
+        Projects(String projectName, File projectOrigin) {
             this.projectName = projectName;
             this.projectOrigin = projectOrigin;
         }
@@ -90,41 +91,29 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        downloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
         dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        downloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
     }
 
     @DataProvider
     private Object[][] npmInstallProvider() {
         return new Object[][]{
-                {PROJECTS.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
-                {PROJECTS.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
-                {PROJECTS.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
-                {PROJECTS.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "", false},
-                {PROJECTS.B, "development:" + PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
-                {PROJECTS.B, "production:" + PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
-                {PROJECTS.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, "", true},
-                {PROJECTS.C, "development:" + PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
-                {PROJECTS.C, "production:" + PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
-        };
-    }
-
-    @DataProvider
-    private Object[][] npmPublishProvider() {
-        return new Object[][]{
-                {PROJECTS.A, ArrayListMultimap.create(), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
-                {PROJECTS.A, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").build()), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
-                {PROJECTS.B, ArrayListMultimap.create(), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
-                {PROJECTS.B, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").put("c", "d").build()), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
-                {PROJECTS.C, ArrayListMultimap.create(), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""},
-                {PROJECTS.C, ArrayListMultimap.create(ImmutableMultimap.<String, String>builder().put("a", "b").put("a", "d").build()), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""}
+                {Projects.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
+                {Projects.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
+                {Projects.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
+                {Projects.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "", false},
+                {Projects.B, "development:" + PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
+                {Projects.B, "production:" + PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
+                {Projects.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, "", true},
+                {Projects.C, "development:" + PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
+                {Projects.C, "production:" + PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    private void npmInstallTest(PROJECTS project, String expectedPackageName, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    private void npmInstallTest(Projects project, String expectedPackageName, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
         Path projectDir = null;
         try {
             // Run npm install
@@ -146,9 +135,21 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         }
     }
 
+    @DataProvider
+    private Object[][] npmPublishProvider() {
+        return new Object[][]{
+                {Projects.A, ArrayListMultimap.create(), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
+                {Projects.A, ArrayListMultimap.create(ImmutableMultimap.of("a", "b")), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
+                {Projects.B, ArrayListMultimap.create(), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
+                {Projects.B, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "c", "d")), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
+                {Projects.C, ArrayListMultimap.create(), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""},
+                {Projects.C, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "a", "d")), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""}
+        };
+    }
+
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    private void npmPublishTest(PROJECTS project, ArrayListMultimap<String, String> props, String expectedPackageName, String targetPath, String packageName) {
+    private void npmPublishTest(Projects project, ArrayListMultimap<String, String> props, String expectedPackageName, String targetPath, String packageName) {
         Path projectDir = null;
         try {
             // Run npm publish
@@ -182,7 +183,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         }
     }
 
-    private Path createProjectDir(PROJECTS project) throws IOException {
+    private Path createProjectDir(Projects project) throws IOException {
         File projectFile = Files.createTempDirectory(project.getProjectName()).toFile();
         FileUtils.copyDirectory(project.getProjectOrigin(), projectFile);
         return projectFile.toPath();

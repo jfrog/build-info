@@ -8,20 +8,22 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
 
 /**
+ * Produces PackageInfos from the dependencies tree.
+ *
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class NpmExtractProducer extends ProducerRunnableBase {
 
-    private DefaultMutableTreeNode rootNode;
+    private DefaultMutableTreeNode dependenciesRootNode;
 
-    NpmExtractProducer(DefaultMutableTreeNode rootNode) {
-        this.rootNode = rootNode;
+    NpmExtractProducer(DefaultMutableTreeNode dependenciesRootNode) {
+        this.dependenciesRootNode = dependenciesRootNode;
     }
 
     @Override
     public void producerRun() throws InterruptedException {
         try {
-            Enumeration e = rootNode.breadthFirstEnumeration();
+            Enumeration e = dependenciesRootNode.breadthFirstEnumeration();
             while (e.hasMoreElements()) {
                 if (Thread.interrupted()) {
                     break;

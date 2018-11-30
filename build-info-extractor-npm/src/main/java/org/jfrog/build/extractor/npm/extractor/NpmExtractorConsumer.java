@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
+ * Consumes PackageInfos and fills the dependencies map with sha1 and md5.
+ *
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class NpmExtractorConsumer extends ConsumerRunnableBase {
@@ -30,7 +32,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
     private Set<PackageInfo> badPackages;
     private Log log;
 
-    NpmExtractorConsumer(ArtifactoryDependenciesClient client, Map<String, Dependency> dependencies, Set<PackageInfo> badPackages){
+    NpmExtractorConsumer(ArtifactoryDependenciesClient client, Map<String, Dependency> dependencies, Set<PackageInfo> badPackages) {
         this.client = client;
         this.dependencies = dependencies;
         this.badPackages = badPackages;
@@ -42,7 +44,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
             try {
                 ProducerConsumerItem item = executor.take();
                 if (item == executor.TERMINATE) {
-                    // If reached the TERMINATE DeployDetails, return it to the queue and exit
+                    // If reached the TERMINATE PackageInfo, return it to the queue and exit
                     executor.put(item);
                     break;
                 }

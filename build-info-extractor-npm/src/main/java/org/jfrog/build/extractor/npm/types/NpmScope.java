@@ -7,7 +7,7 @@ public enum NpmScope {
     PRODUCTION("production"),
     DEVELOPMENT("development");
 
-    String scope;
+    private String scope;
 
     NpmScope(String scope) {
         this.scope = scope;
