@@ -82,13 +82,11 @@ public class NpmInstall extends NpmCommand {
     }
 
     private void setRegistryUrl() {
-        if (StringUtils.isNoneBlank(repo)) {
-            npmRegistry = client.getArtifactoryUrl();
-            if (!StringUtils.endsWith(npmRegistry, "/")) {
-                npmRegistry += "/";
-            }
-            npmRegistry += "api/npm/" + repo;
+        npmRegistry = client.getArtifactoryUrl();
+        if (!StringUtils.endsWith(npmRegistry, "/")) {
+            npmRegistry += "/";
         }
+        npmRegistry += "api/npm/" + repo;
     }
 
     private void readPackageInfoFromPackageJson() throws IOException {
@@ -141,7 +139,7 @@ public class NpmInstall extends NpmCommand {
     }
 
     /**
-     * npm install type restriction can be set by "--production" or "-only={prod[uction]|dev[elopment]}" flags.
+     * npm install scope can be set by "--production" or "--only={prod[uction]|dev[elopment]}" flags.
      *
      * @param npmrcProperties - The results of 'npm config list' command.
      */
@@ -161,11 +159,11 @@ public class NpmInstall extends NpmCommand {
     private void restoreNpmrc() throws IOException {
         Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
         Path npmrcBackupPath = workingDir.resolve(NPMRC_BACKUP_FILE_NAME);
-        if (!Files.exists(npmrcBackupPath)) { // npmrc file didn't exist before
+        if (Files.exists(npmrcBackupPath)) { // npmrc file did exist before - Restore it.
+            Files.move(npmrcBackupPath, npmrcPath, StandardCopyOption.REPLACE_EXISTING);
+        } else { // npmrc file didn't exist before - Delete the temporary npmrc file.
             Files.deleteIfExists(npmrcPath);
-            return;
         }
-        Files.move(npmrcBackupPath, npmrcPath, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private List<Dependency> getBuildDependencies() throws IOException {
@@ -184,7 +182,6 @@ public class NpmInstall extends NpmCommand {
             npmProject.addDependencies(Pair.of(scope, jsonNode));
         }
 
-        NpmBuildInfoExtractor buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, logger);
-        return buildInfoExtractor.extract(npmProject);
+        return new NpmBuildInfoExtractor(clientBuilder, logger).extract(npmProject);
     }
 }

@@ -12,11 +12,11 @@ import java.util.Enumeration;
  *
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
-public class NpmExtractProducer extends ProducerRunnableBase {
+public class NpmExtractorProducer extends ProducerRunnableBase {
 
     private DefaultMutableTreeNode dependenciesRootNode;
 
-    NpmExtractProducer(DefaultMutableTreeNode dependenciesRootNode) {
+    NpmExtractorProducer(DefaultMutableTreeNode dependenciesRootNode) {
         this.dependenciesRootNode = dependenciesRootNode;
     }
 

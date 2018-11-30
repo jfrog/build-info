@@ -62,7 +62,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
              ArtifactoryDependenciesClient client3 = clientBuilder.build()
         ) {
             // Create producer Runnable
-            ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractProducer(rootNode)};
+            ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
                     new NpmExtractorConsumer(client1, dependencies, badPackages),

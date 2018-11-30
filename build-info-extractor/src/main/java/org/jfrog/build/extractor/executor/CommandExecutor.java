@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String executablePath; // Path to executable file
+    private String executablePath; // Path to an executable file
 
     public CommandExecutor(String executablePath) {
         this.executablePath = executablePath;

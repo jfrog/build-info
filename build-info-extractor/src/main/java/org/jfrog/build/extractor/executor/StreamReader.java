@@ -1,13 +1,19 @@
 package org.jfrog.build.extractor.executor;
 
-import java.io.*;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class StreamReader implements Runnable {
-    private String output;
+
     private InputStream inputStream;
+    private String output;
 
     StreamReader(InputStream inputStream) {
         this.inputStream = inputStream;
@@ -16,24 +22,13 @@ public class StreamReader implements Runnable {
     @Override
     public void run() {
         try {
-            output = readStream(inputStream);
+            output = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
         } catch (IOException e) {
-            output = e.toString();
+            output = ExceptionUtils.getStackTrace(e);
         }
     }
 
     String getOutput() {
         return this.output;
-    }
-
-    private static String readStream(InputStream in) throws IOException {
-        StringBuilder stringBuilder = new StringBuilder();
-        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in))) {
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                stringBuilder.append(line);
-            }
-        }
-        return stringBuilder.toString();
     }
 }
