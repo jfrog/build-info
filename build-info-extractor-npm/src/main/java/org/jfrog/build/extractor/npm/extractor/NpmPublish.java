@@ -5,10 +5,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
@@ -41,14 +43,15 @@ public class NpmPublish extends NpmCommand {
      * @param executablePath       - Npm executable path.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository - The repository it'll deploy to.
+     * @param logger               - The logger.
      * @param args                 - Npm args.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, String args) {
-        super(clientBuilder, executablePath, args, deploymentRepository, path);
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, String args) {
+        super(clientBuilder, executablePath, args, deploymentRepository, logger, path);
         this.properties = properties;
     }
 
-    public Module execute() throws InterruptedException, VersionException, IOException {
+    public Module execute() {
         try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
             client = dependenciesClient;
             preparePrerequisites();
@@ -67,6 +70,9 @@ public class NpmPublish extends NpmCommand {
                     id(npmPackageInfo.getModuleId()).
                     artifacts(artifactList).
                     build();
+        } catch (Exception e) {
+            logger.error(ExceptionUtils.getStackTrace(e), e);
+            return null;
         }
     }
 

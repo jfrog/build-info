@@ -4,39 +4,22 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
 
+import java.io.Serializable;
+
 /**
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBuilderBase<T>> {
+public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBuilderBase<T>> implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-    protected String username;
-    protected String password;
-    protected String artifactoryUrl;
-    protected Log log;
     protected ProxyConfiguration proxyConfiguration;
     protected int connectionTimeout = -1;
     protected int connectionRetry = -1;
-
-    public T setUsername(String username) {
-        this.username = username;
-        return self();
-    }
-
-    public T setPassword(String password) {
-        this.password = password;
-        return self();
-    }
-
-    public T setArtifactoryUrl(String artifactoryUrl) {
-        this.artifactoryUrl = artifactoryUrl;
-        return self();
-    }
-
-    public T setLog(Log log) {
-        this.log = log;
-        return self();
-    }
+    protected String artifactoryUrl;
+    protected String username;
+    protected String password;
+    protected Log log;
 
     public T setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
         this.proxyConfiguration = proxyConfiguration;
@@ -50,6 +33,26 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
 
     public T setConnectionRetry(int connectionRetry) {
         this.connectionRetry = connectionRetry;
+        return self();
+    }
+
+    public T setArtifactoryUrl(String artifactoryUrl) {
+        this.artifactoryUrl = artifactoryUrl;
+        return self();
+    }
+
+    public T setUsername(String username) {
+        this.username = username;
+        return self();
+    }
+
+    public T setPassword(String password) {
+        this.password = password;
+        return self();
+    }
+
+    public T setLog(Log log) {
+        this.log = log;
         return self();
     }
 

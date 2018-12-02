@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
@@ -34,14 +35,16 @@ abstract class NpmCommand implements Serializable {
     List<String> args;
     Path workingDir;
     String repo;
+    Log logger;
     Path path;
 
-    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String args, String repo, Path path) {
+    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String args, String repo, Log logger, Path path) {
         this.clientBuilder = clientBuilder;
         this.args = StringUtils.isBlank(args) ? new ArrayList<>() : Arrays.asList(args.trim().split("\\s+"));
         this.npmDriver = new NpmDriver(executablePath);
         this.workingDir = Files.isDirectory(path) ? path : path.getParent();
         this.repo = repo;
+        this.logger = logger;
         this.path = path;
     }
 

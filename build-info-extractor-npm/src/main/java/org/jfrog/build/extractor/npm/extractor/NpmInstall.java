@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.npm.extractor;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -35,7 +36,6 @@ public class NpmInstall extends NpmCommand {
 
     private Properties npmAuth;
     private String npmRegistry;
-    private Log logger;
 
     /**
      * Install npm package.
@@ -48,11 +48,10 @@ public class NpmInstall extends NpmCommand {
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      */
     public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String args, String executablePath, Log logger, Path path) {
-        super(clientBuilder, executablePath, args, resolutionRepository, path);
-        this.logger = logger;
+        super(clientBuilder, executablePath, args, resolutionRepository, logger, path);
     }
 
-    public Module execute() throws InterruptedException, VersionException, IOException {
+    public Module execute() {
         try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
             client = dependenciesClient;
             preparePrerequisites();
@@ -64,6 +63,9 @@ public class NpmInstall extends NpmCommand {
             builder.id(npmPackageInfo.getModuleId());
             builder.dependencies(getBuildDependencies());
             return builder.build();
+        } catch (Exception e) {
+            logger.error(ExceptionUtils.getStackTrace(e), e);
+            return null;
         }
     }
 
