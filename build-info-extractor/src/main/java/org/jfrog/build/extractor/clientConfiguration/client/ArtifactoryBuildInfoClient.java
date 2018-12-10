@@ -286,24 +286,27 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StringEntity stringEntity = new StringEntity(content, "UTF-8");
         stringEntity.setContentType(contentType);
         request.setEntity(stringEntity);
-        sendHttpRequest(request, HttpStatus.SC_NO_CONTENT);
+        sendHttpRequest(request, HttpStatus.SC_CREATED, HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT);
     }
 
-    private HttpResponse sendHttpRequest(HttpUriRequest request, int expectedStatusCode) throws IOException {
+    private HttpResponse sendHttpRequest(HttpUriRequest request, int ... httpStatuses) throws IOException {
         HttpResponse httpResponse;
         int connectionRetries = httpClient.getConnectionRetries();
         try {
             httpResponse = httpClient.getHttpClient().execute(request);
             StatusLine statusLine = httpResponse.getStatusLine();
-            if (statusLine.getStatusCode() != expectedStatusCode) {
-                HttpEntity responseEntity = httpResponse.getEntity();
-                throw new IOException(statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+            for (int status : httpStatuses) {
+                if (statusLine.getStatusCode() == status) {
+                    return httpResponse;
+                }
             }
+
+            HttpEntity responseEntity = httpResponse.getEntity();
+            throw new IOException(statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
         } finally {
             // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
             httpClient.setConnectionRetries(connectionRetries);
         }
-        return httpResponse;
     }
 
     public String getItemLastModified(String path) throws IOException, ParseException {
