@@ -198,7 +198,7 @@ public class DependenciesDownloaderHelper {
     }
 
     private void validateFileSpec(FileSpec file) throws IOException {
-        if (file.getPattern() != null && file.getAql() != null ) {
+        if (file.getPattern() != null && file.getAql() != null) {
             throw new InputMismatchException("Spec can include either the 'aql' or 'pattern' properties, but not both.");
         }
     }
@@ -220,6 +220,7 @@ public class DependenciesDownloaderHelper {
 
     /**
      * Get artifact metadata and download the artifact if it's not a directory.
+     *
      * @param downloadableArtifact download recipe
      * @return artifact dependency
      * @throws IOException
@@ -241,17 +242,19 @@ public class DependenciesDownloaderHelper {
 
     /**
      * Download artifact.
+     *
      * @param downloadableArtifact download recipe
-     * @param artifactMetaData the artifact metadata
-     * @param uriWithParams full artifact uri with matrix params
-     * @param filePath the path to file in file system
+     * @param artifactMetaData     the artifact metadata
+     * @param uriWithParams        full artifact uri with matrix params
+     * @param filePath             the path to file in file system
      * @return artifact dependency
      * @throws IOException
      */
     Dependency downloadArtifact(DownloadableArtifact downloadableArtifact, ArtifactMetaData artifactMetaData, String uriWithParams, String filePath) throws IOException {
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
-            downloadableArtifact.getRelativeDirPath());
-        Dependency dependencyResult = getDependencyLocally(artifactMetaData, fileDestination);
+                downloadableArtifact.getRelativeDirPath());
+        String remotePath = downloadableArtifact.getRepoUrl() + "/" + filePath;
+        Dependency dependencyResult = getDependencyLocally(artifactMetaData, fileDestination, remotePath);
 
         if (dependencyResult != null) {
             return dependencyResult;
@@ -268,7 +271,7 @@ public class DependenciesDownloaderHelper {
                 throw new IOException("Received null checksums map for downloaded file.");
             }
 
-            dependencyResult = validateChecksumsAndBuildDependency(checksumsMap, artifactMetaData, filePath);
+            dependencyResult = validateChecksumsAndBuildDependency(checksumsMap, artifactMetaData, filePath, fileDestination, remotePath);
             log.info(String.format("Successfully downloaded '%s' to '%s'", uriWithParams, fileDestination));
 
             return dependencyResult;
@@ -292,10 +295,11 @@ public class DependenciesDownloaderHelper {
     /**
      * Download an artifact using {@link #CONCURRENT_DOWNLOAD_THREADS} multiple threads.
      * This method will be used for artifacts of size larger than {@link #MIN_SIZE_FOR_CONCURRENT_DOWNLOAD}.
-     * @param uriWithParams the request uri
-     * @param fileSize in bytes, used for setting the download ranges
+     *
+     * @param uriWithParams   the request uri
+     * @param fileSize        in bytes, used for setting the download ranges
      * @param fileDestination location of saving the downloaded file in the file system
-     * @param filePath path of the downloaded file
+     * @param filePath        path of the downloaded file
      * @return checksums map of the downloaded artifact
      */
     protected Map<String, String> downloadFileConcurrently(final String uriWithParams, long fileSize, final String fileDestination, String filePath)
@@ -362,9 +366,10 @@ public class DependenciesDownloaderHelper {
     /**
      * Executes a GET request to download files and saves the result to the file system.
      * Used by the downloading threads of concurrentDownloadedArtifact.
-     * @param uriWithParams the request uri
+     *
+     * @param uriWithParams   the request uri
      * @param fileDestination location to save the downloaded file to
-     * @param headers additional headers for the request
+     * @param headers         additional headers for the request
      */
     private void saveRequestToFile(String uriWithParams, String fileDestination, Map<String, String> headers) throws IOException {
         HttpResponse httpResponse = null;
@@ -380,6 +385,7 @@ public class DependenciesDownloaderHelper {
     /**
      * Create a single InputStream.
      * The stream is constructed from the multiple provided file paths.
+     *
      * @param downloadedFilesPaths String array containing paths to the downloaded files
      * @return single InputStream of the downloaded file
      */
@@ -402,14 +408,20 @@ public class DependenciesDownloaderHelper {
      * Returns the dependency if it exists locally and has the sent fileMetaData.
      * Otherwise return null.
      *
-     * @param fileMetaData     The artifact fileMetaData returned from Artifactory.
-     * @param filePath      The locally file path
+     * @param fileMetaData The artifact fileMetaData returned from Artifactory.
+     * @param localPath    The local file path
+     * @param remotePath   The remote file path
      */
-    private Dependency getDependencyLocally(ArtifactMetaData fileMetaData, String filePath) throws IOException {
-        if (downloader.isFileExistsLocally(filePath, fileMetaData.getMd5(), fileMetaData.getSha1())) {
-            log.info(String.format("The file '%s' exists locally.", filePath));
-            return new DependencyBuilder().md5(fileMetaData.getMd5()).sha1(fileMetaData.getSha1())
-                    .id(filePath.substring(filePath.lastIndexOf(String.valueOf(IOUtils.DIR_SEPARATOR))+1)).build();
+    private Dependency getDependencyLocally(ArtifactMetaData fileMetaData, String localPath, String remotePath) throws IOException {
+        if (downloader.isFileExistsLocally(localPath, fileMetaData.getMd5(), fileMetaData.getSha1())) {
+            log.info(String.format("The file '%s' exists locally.", localPath));
+            return new DependencyBuilder()
+                    .md5(fileMetaData.getMd5())
+                    .sha1(fileMetaData.getSha1())
+                    .id(localPath.substring(localPath.lastIndexOf(String.valueOf(IOUtils.DIR_SEPARATOR)) + 1))
+                    .localPath(localPath)
+                    .remotePath(remotePath)
+                    .build();
         }
         return null;
     }
@@ -460,13 +472,18 @@ public class DependenciesDownloaderHelper {
         return headerContent;
     }
 
-    private Dependency validateChecksumsAndBuildDependency(Map<String, String> checksumsMap, ArtifactMetaData artifactMetaData, String filePath)
+    private Dependency validateChecksumsAndBuildDependency(Map<String, String> checksumsMap, ArtifactMetaData artifactMetaData, String filePath, String fileDestination, String remotePath)
             throws IOException {
         String md5 = validateMd5Checksum(artifactMetaData.getMd5(), checksumsMap.get(MD5_ALGORITHM_NAME));
         String sha1 = validateSha1Checksum(artifactMetaData.getSha1(), checksumsMap.get(SHA1_ALGORITHM_NAME));
 
-        return new DependencyBuilder().md5(md5).sha1(sha1)
-                .id(filePath.substring(filePath.lastIndexOf(File.separatorChar)+1)).build();
+        return new DependencyBuilder()
+                .md5(md5)
+                .sha1(sha1)
+                .id(filePath.substring(filePath.lastIndexOf(File.separatorChar) + 1))
+                .localPath(fileDestination)
+                .remotePath(remotePath)
+                .build();
     }
 
     private static void consumeEntity(HttpResponse response) {

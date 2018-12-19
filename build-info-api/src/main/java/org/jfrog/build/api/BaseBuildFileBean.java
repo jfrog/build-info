@@ -1,4 +1,4 @@
-    /*
+/*
  * Copyright (C) 2011 JFrog Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,6 +16,8 @@
 
 package org.jfrog.build.api;
 
+import java.util.Objects;
+
 /**
  * Base implementation of the build file bean interface
  *
@@ -27,6 +29,8 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
     protected String sha1;
     protected String sha256;
     protected String md5;
+    protected String localPath;
+    protected String remotePath;
 
     public String getType() {
         return type;
@@ -60,6 +64,22 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
         this.md5 = md5;
     }
 
+    public String getLocalPath() {
+        return localPath;
+    }
+
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
+    }
+
+    public String getRemotePath() {
+        return remotePath;
+    }
+
+    public void setRemotePath(String remotePath) {
+        this.remotePath = remotePath;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -69,19 +89,16 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
             return false;
         }
         BaseBuildFileBean that = (BaseBuildFileBean) o;
-        if (md5 != null ? !md5.equals(that.md5) : that.md5 != null) {
+        if (!Objects.equals(md5, that.md5)) {
             return false;
         }
-        if (sha1 != null ? !sha1.equals(that.sha1) : that.sha1 != null) {
+        if (!Objects.equals(sha1, that.sha1)) {
             return false;
         }
-        if (sha256 != null ? !sha256.equals(that.sha256) : that.sha256 != null) {
+        if (!Objects.equals(sha256, that.sha256)) {
             return false;
         }
-        if (type != null ? !type.equals(that.type) : that.type != null) {
-            return false;
-        }
-        return true;
+        return Objects.equals(type, that.type);
     }
 
     @Override
