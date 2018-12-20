@@ -54,6 +54,7 @@ public class ArtifactoryHttpClient {
             new ArtifactoryVersion("5.2.1");
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
+    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
     public static final int DEFAULT_CONNECTION_RETRY = 3;
     private final Log log;
@@ -150,44 +151,71 @@ public class ArtifactoryHttpClient {
 
     public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
-        PreemptiveHttpClient client = getHttpClient();
-        HttpGet httpGet = new HttpGet(versionUrl);
-        HttpResponse response = client.execute(httpGet);
+        HttpResponse response = executeGetRequest(versionUrl);
         int statusCode = response.getStatusLine().getStatusCode();
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                EntityUtils.consume(httpEntity);
-            }
+            consumeEntity(response);
             return ArtifactoryVersion.NOT_FOUND;
         }
         if (statusCode != HttpStatus.SC_OK) {
-            if (response.getEntity() != null) {
-                EntityUtils.consume(response.getEntity());
-            }
+            consumeEntity(response);
             throw new IOException(response.getStatusLine().getReasonPhrase());
         }
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
-            InputStream content = httpEntity.getContent();
-            JsonParser parser;
-            try {
-                parser = createJsonParser(content);
-                EntityUtils.consume(httpEntity);
-                JsonNode result = parser.readValueAsTree();
+            try (InputStream content = httpEntity.getContent()) {
+                JsonNode result = getJsonNode(httpEntity, content);
                 log.debug("Version result: " + result);
                 String version = result.get("version").asText();
                 JsonNode addonsNode = result.get("addons");
                 boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
                 return new ArtifactoryVersion(version, hasAddons);
-            } finally {
-                if (content != null) {
-                    content.close();
-                }
             }
         }
-
         return ArtifactoryVersion.NOT_FOUND;
+    }
+
+    public ArtifactoryItemLastModified getItemLastModified(String path) throws IOException {
+        String lastModifiedUrl = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
+        HttpResponse response = executeGetRequest(lastModifiedUrl);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode == HttpStatus.SC_BAD_REQUEST) {
+            consumeEntity(response);
+            return ArtifactoryItemLastModified.NOT_FOUND;
+        }
+        if (statusCode != HttpStatus.SC_OK) {
+            consumeEntity(response);
+            throw new IOException(response.getStatusLine().getReasonPhrase());
+        }
+        HttpEntity httpEntity = response.getEntity();
+        if (httpEntity != null) {
+            try (InputStream content = httpEntity.getContent()) {
+                JsonNode result = getJsonNode(httpEntity, content);
+                String version = result.get("lastModified").asText();
+                String uri = result.get("uri").asText();
+                return new ArtifactoryItemLastModified(uri, version);
+            }
+        }
+        return ArtifactoryItemLastModified.NOT_FOUND;
+    }
+
+    private JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
+        JsonParser parser = createJsonParser(content);
+        EntityUtils.consume(httpEntity);
+        return parser.readValueAsTree();
+    }
+
+    private HttpResponse executeGetRequest(String lastModifiedUrl) throws IOException {
+        PreemptiveHttpClient client = getHttpClient();
+        HttpGet httpGet = new HttpGet(lastModifiedUrl);
+        return client.execute(httpGet);
+    }
+
+    private void consumeEntity(HttpResponse response) throws IOException {
+        HttpEntity httpEntity = response.getEntity();
+        if (httpEntity != null) {
+            EntityUtils.consume(httpEntity);
+        }
     }
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
