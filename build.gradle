@@ -165,7 +165,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile group: 'com.google.guava', name: 'guava', 'version': '18.0'
+        compile group: 'com.google.guava', name: 'guava', 'version': '27.0.1'
         compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.10'
 
     }
