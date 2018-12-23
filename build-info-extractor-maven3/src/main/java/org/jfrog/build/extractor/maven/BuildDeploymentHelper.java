@@ -27,21 +27,16 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
-import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.retention.Utils;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
+import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Noam Y. Tenne
@@ -105,10 +100,24 @@ public class BuildDeploymentHelper {
         }
 
         if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifacts)) {
+            logExcludedArtifacts(build);
             deployArtifacts(clientConf, deployableArtifacts);
         }
         if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
             publishBuildInfo(clientConf, build, buildInfoAggregated);
+        }
+    }
+
+
+    private void logExcludedArtifacts(Build build) {
+        List<Module> modules = build.getModules();
+        if (modules != null) {
+            modules.stream()
+                    .map(Module::getExcludedArtifacts)
+                    .filter(Objects::nonNull)
+                    .flatMap(Collection::stream)
+                    .forEach(excludedArtifact ->
+                            logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" + excludedArtifact.getName() + "' due to the defined include-exclude patterns."));
         }
     }
 
@@ -299,17 +308,8 @@ public class BuildDeploymentHelper {
     }
 
     private void deployArtifacts(ArtifactoryClientConfiguration clientConf, Set<DeployDetails> deployableArtifacts) {
-        ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf);
-        try {
-            IncludeExcludePatterns includeExcludePatterns = getArtifactDeploymentPatterns(clientConf.publisher);
+        try (ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf)) {
             for (DeployDetails artifact : deployableArtifacts) {
-                String artifactPath = artifact.getArtifactPath();
-                if (PatternMatcher.pathConflicts(artifactPath, includeExcludePatterns)) {
-                    logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" +
-                            artifactPath + "' due to the defined include-exclude patterns.");
-                    continue;
-                }
-
                 try {
                     client.deployArtifact(artifact);
                 } catch (IOException e) {
@@ -318,8 +318,6 @@ public class BuildDeploymentHelper {
                             ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
                 }
             }
-        } finally {
-            client.close();
         }
     }
 
@@ -333,10 +331,5 @@ public class BuildDeploymentHelper {
                 logger.error("Could not set checksum values on '" + artifact.getName() + "': " + e.getMessage(), e);
             }
         }
-    }
-
-    private IncludeExcludePatterns getArtifactDeploymentPatterns(
-            ArtifactoryClientConfiguration.PublisherHandler publishConf) {
-        return new IncludeExcludePatterns(publishConf.getIncludePatterns(), publishConf.getExcludePatterns());
     }
 }

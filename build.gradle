@@ -204,7 +204,7 @@ configure(extractorProjects()) {
         } else {
             uberJar project(':build-info-extractor')
         }
-        tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+        tools group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
     }
 
     task jarAll(type: Jar) {
