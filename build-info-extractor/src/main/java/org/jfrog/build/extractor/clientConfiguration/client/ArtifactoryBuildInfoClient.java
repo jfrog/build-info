@@ -158,7 +158,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StatusLine statusLine = response.getStatusLine();
         HttpEntity entity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(entity));
+            throw new IOException("Failed to obtain list of repositories. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(entity));
         } else {
             if (entity != null) {
                 repositories = new ArrayList<String>();
@@ -302,7 +302,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             }
 
             HttpEntity responseEntity = httpResponse.getEntity();
-            throw new IOException(statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+            throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
         } finally {
             // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
             httpClient.setConnectionRetries(connectionRetries);
@@ -317,7 +317,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StatusLine statusLine = response.getStatusLine();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
             HttpEntity entity = response.getEntity();
-            throw new IOException("Failed to obtain item info. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(entity));
+            throw new IOException("Failed to obtain item info. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(entity));
         } else {
             HttpEntity entity = response.getEntity();
             if (entity != null) {
@@ -523,7 +523,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StatusLine statusLine = getResponse.getStatusLine();
         HttpEntity responseEntity = getResponse.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain user plugin information. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+            throw new IOException("Failed to obtain user plugin information. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
         } else {
             if (responseEntity != null) {
                 InputStream content = responseEntity.getContent();
@@ -560,7 +560,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StatusLine statusLine = response.getStatusLine();
         HttpEntity responseEntity = response.getEntity();
         if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain staging strategy. Status code: " + statusLine.getStatusCode() + getMessageFromEntity(responseEntity));
+            throw new IOException("Failed to obtain staging strategy. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
         } else {
             if (responseEntity != null) {
                 InputStream content = responseEntity.getContent();
@@ -862,39 +862,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                     append(error.getStatus());
         }
         return builder.toString();
-    }
-
-    /**
-     * @param entity the entity to retrive the message from.
-     * @return response entity content.
-     * @throws IOException
-     */
-
-    private String getMessageFromEntity(HttpEntity entity) throws IOException {
-        String responseMessage = "";
-        if (entity != null) {
-            responseMessage = getResponseEntityContent(entity);
-            EntityUtils.consume(entity);
-            if (StringUtils.isNotBlank(responseMessage)) {
-                responseMessage = " Response message: " + responseMessage;
-            }
-        }
-        return responseMessage;
-    }
-
-    /**
-     * Returns the response entity content
-     *
-     * @param responseEntity the response entity
-     * @return response entity content
-     * @throws IOException
-     */
-    private String getResponseEntityContent(HttpEntity responseEntity) throws IOException {
-        InputStream in = responseEntity.getContent();
-        if (in != null) {
-            return IOUtils.toString(in, "UTF-8");
-        }
-        return "";
     }
 }
 
