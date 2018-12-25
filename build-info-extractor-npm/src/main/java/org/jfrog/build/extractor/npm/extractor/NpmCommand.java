@@ -1,12 +1,12 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.PackageInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
 import org.jfrog.build.extractor.npm.NpmDriver;
+import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
@@ -28,7 +28,7 @@ abstract class NpmCommand implements Serializable {
     private static final ArtifactoryVersion MIN_SUPPORTED_ARTIFACTORY_VERSION = new ArtifactoryVersion("5.5.2");
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
 
-    PackageInfo npmPackageInfo = new PackageInfo();
+    NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
     ArtifactoryClientBuilderBase clientBuilder;
     ArtifactoryBaseClient client;
     NpmDriver npmDriver;

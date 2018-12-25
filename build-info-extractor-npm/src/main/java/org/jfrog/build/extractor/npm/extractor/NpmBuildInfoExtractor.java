@@ -6,10 +6,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.api.PackageInfo;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.jfrog.build.extractor.npm.types.NpmScope;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
@@ -28,12 +27,13 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
 
     private ArtifactoryDependenciesClientBuilder clientBuilder;
     private Map<String, Dependency> dependencies = new ConcurrentHashMap<>();
-    private Set<PackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
+    // Set of packages that could not be found in Artifactory
+    private Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
     private Log logger;
 
     @SuppressWarnings({"WeakerAccess"})
-    public NpmBuildInfoExtractor(ArtifactoryClientBuilderBase clientBuilder, Log logger) {
-        this.clientBuilder = (ArtifactoryDependenciesClientBuilder) clientBuilder;
+    public NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder clientBuilder, Log logger) {
+        this.clientBuilder = clientBuilder;
         this.logger = logger;
     }
 
@@ -49,12 +49,18 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject, Lis
         if (!badPackages.isEmpty()) {
             logger.info((Arrays.toString(badPackages.toArray())));
             logger.info("The npm dependencies above could not be found in Artifactory and therefore are not included in the build-info. " +
-                    "Make sure the dependencies are available in Artifactory for this build.");
+                    "Make sure the dependencies are available in Artifactory for this build. " +
+                    "Deleting the local cache will force populating Artifactory with these dependencies.");
         }
         return new ArrayList<>(dependencies.values());
     }
 
-
+    /**
+     * Populate the dependencies map for the specified scope by:
+     * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
+     * 2. For each dependency, get sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
+     * @param nodeWithScope - Scope and root node of 'npm ls' command tree.
+     */
     private void populateDependencies(Pair<NpmScope, JsonNode> nodeWithScope) {
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(nodeWithScope.getKey(), nodeWithScope.getValue());
         try (ArtifactoryDependenciesClient client1 = clientBuilder.build();

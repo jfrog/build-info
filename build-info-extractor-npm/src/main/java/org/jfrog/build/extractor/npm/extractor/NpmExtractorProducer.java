@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -30,15 +30,15 @@ public class NpmExtractorProducer extends ProducerRunnableBase {
                 }
 
                 DefaultMutableTreeNode node = (DefaultMutableTreeNode) e.nextElement();
-                PackageInfo packageInfo = (PackageInfo) node.getUserObject();
-                if (packageInfo == null) {
+                NpmPackageInfo npmPackageInfo = (NpmPackageInfo) node.getUserObject();
+                if (npmPackageInfo == null) {
                     continue;
                 }
-                if (StringUtils.isBlank(packageInfo.getVersion())) {
-                    log.warn("npm dependencies list contains the package " + packageInfo.getName() + " without version information. The dependency will not be added to build-info");
+                if (StringUtils.isBlank(npmPackageInfo.getVersion())) {
+                    log.warn("npm dependencies list contains the package " + npmPackageInfo.getName() + " without version information. The dependency will not be added to build-info");
                     continue;
                 }
-                executor.put(packageInfo);
+                executor.put(npmPackageInfo);
             }
         } catch (InterruptedException e) {
             throw e;

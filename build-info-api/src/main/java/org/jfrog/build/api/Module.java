@@ -124,18 +124,12 @@ public class Module extends BaseBuildBean {
      * @param other Module to append
      */
     public void append(Module other) {
-        artifacts = appendArtifacts(artifacts, other.getArtifacts());
-        excludedArtifacts = appendArtifacts(excludedArtifacts, other.getExcludedArtifacts());
-        dependencies = appendDependencies(dependencies, other.getDependencies());
+        artifacts = appendBuildFileLists(artifacts, other.getArtifacts());
+        excludedArtifacts = appendBuildFileLists(excludedArtifacts, other.getExcludedArtifacts());
+        dependencies = appendBuildFileLists(dependencies, other.getDependencies());
     }
 
-    private List<Artifact> appendArtifacts(List<Artifact> a, List<Artifact> b) {
-        return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList());
-    }
-
-    private List<Dependency> appendDependencies(List<Dependency> a, List<Dependency> b) {
+    private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
         return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
                 .flatMap(Collection::stream)
                 .collect(Collectors.toList());

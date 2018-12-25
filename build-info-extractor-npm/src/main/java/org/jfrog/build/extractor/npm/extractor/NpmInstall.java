@@ -184,6 +184,6 @@ public class NpmInstall extends NpmCommand {
             npmProject.addDependencies(Pair.of(scope, jsonNode));
         }
 
-        return new NpmBuildInfoExtractor(clientBuilder, logger).extract(npmProject);
+        return new NpmBuildInfoExtractor((ArtifactoryDependenciesClientBuilder) clientBuilder, logger).extract(npmProject);
     }
 }

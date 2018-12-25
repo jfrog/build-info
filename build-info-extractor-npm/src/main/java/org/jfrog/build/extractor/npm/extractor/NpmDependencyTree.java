@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.jfrog.build.api.PackageInfo;
+import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.npm.types.NpmScope;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -18,7 +18,7 @@ public class NpmDependencyTree {
      * @param scope - 'production' or 'development'.
      * @param npmList - Results of 'npm ls' command.
      * @return Tree of npm PackageInfos.
-     * @see PackageInfo
+     * @see NpmPackageInfo
      */
     public static DefaultMutableTreeNode createDependenciesTree(NpmScope scope, JsonNode npmList) {
         DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode();
@@ -41,9 +41,9 @@ public class NpmDependencyTree {
     }
 
     private static void addSubtree(Map.Entry<String, JsonNode> stringJsonNodeEntry, DefaultMutableTreeNode node, String name, String version, NpmScope scope) {
-        PackageInfo packageInfo = new PackageInfo(name, version, scope.toString());
+        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, scope.toString());
         JsonNode childDependencies = stringJsonNodeEntry.getValue().get("dependencies");
-        DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(packageInfo);
+        DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(npmPackageInfo);
         populateDependenciesTree(childTreeNode, scope, childDependencies); // Mutual recursive call
         node.add(childTreeNode);
     }

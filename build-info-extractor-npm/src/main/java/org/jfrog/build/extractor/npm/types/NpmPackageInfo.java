@@ -1,4 +1,4 @@
-package org.jfrog.build.api;
+package org.jfrog.build.extractor.npm.types;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Objects;
 
-public class PackageInfo implements Serializable, ProducerConsumerItem {
+public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     private static final long serialVersionUID = 1L;
 
     private String name;
@@ -18,10 +18,10 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
     private String scope;
 
     @SuppressWarnings("unused")
-    public PackageInfo() {
+    public NpmPackageInfo() {
     }
 
-    public PackageInfo(String name, String version, String scope) {
+    public NpmPackageInfo(String name, String version, String scope) {
         this.name = name;
         this.version = version;
         this.scope = scope;
@@ -51,12 +51,12 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
         this.scope = scope;
     }
 
-    private void removeVersionPrefixes() {
-        version = StringUtils.removeStart(version, "v");
+    void removeVersionPrefixes() {
         version = StringUtils.removeStart(version, "=");
+        version = StringUtils.removeStart(version, "v");
     }
 
-    private void splitScopeFromName() {
+    void splitScopeFromName() {
         if (StringUtils.startsWith(name, "@") && StringUtils.contains(name, "/")) {
             String[] splitValues = StringUtils.split(name, "/");
             scope = splitValues[0];
@@ -68,18 +68,17 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        PackageInfo packageInfo = mapper.readValue(inputStream, PackageInfo.class);
+        NpmPackageInfo npmPackageInfo = mapper.readValue(inputStream, NpmPackageInfo.class);
 
-        setVersion(packageInfo.getVersion());
+        setVersion(npmPackageInfo.getVersion());
         removeVersionPrefixes();
 
-        setName(packageInfo.getName());
+        setName(npmPackageInfo.getName());
         splitScopeFromName();
-
     }
 
     public String getModuleId() {
-        String nameBase = String.format("%s:%s", name ,version);
+        String nameBase = String.format("%s:%s", name, version);
         if (StringUtils.isBlank(scope)) {
             return nameBase;
         }
@@ -87,7 +86,7 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
     }
 
     public String getExpectedPackedFileName() {
-        String nameBase = String.format("%s-%s.tgz", name ,version);
+        String nameBase = String.format("%s-%s.tgz", name, version);
         if (StringUtils.isBlank(scope)) {
             return nameBase;
         }
@@ -107,7 +106,7 @@ public class PackageInfo implements Serializable, ProducerConsumerItem {
         if (obj.getClass() != getClass()) {
             return false;
         }
-        PackageInfo other = (PackageInfo) obj;
+        NpmPackageInfo other = (NpmPackageInfo) obj;
         return Objects.equals(name, other.getName()) && Objects.equals(version, other.getVersion()) && Objects.equals(scope, other.getScope());
     }
 
