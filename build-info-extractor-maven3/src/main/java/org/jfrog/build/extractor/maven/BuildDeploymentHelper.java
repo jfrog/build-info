@@ -100,24 +100,10 @@ public class BuildDeploymentHelper {
         }
 
         if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifacts)) {
-            logExcludedArtifacts(build);
             deployArtifacts(clientConf, deployableArtifacts);
         }
         if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
             publishBuildInfo(clientConf, build, buildInfoAggregated);
-        }
-    }
-
-
-    private void logExcludedArtifacts(Build build) {
-        List<Module> modules = build.getModules();
-        if (modules != null) {
-            modules.stream()
-                    .map(Module::getExcludedArtifacts)
-                    .filter(Objects::nonNull)
-                    .flatMap(Collection::stream)
-                    .forEach(excludedArtifact ->
-                            logger.info("Artifactory Build Info Recorder: Skipping the deployment of '" + excludedArtifact.getName() + "' due to the defined include-exclude patterns."));
         }
     }
 
