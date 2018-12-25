@@ -158,8 +158,7 @@ public class ArtifactoryHttpClient {
             return ArtifactoryVersion.NOT_FOUND;
         }
         if (statusCode != HttpStatus.SC_OK) {
-            consumeEntity(response);
-            throw new IOException(response.getStatusLine().getReasonPhrase());
+            throw new IOException(getMessageFromEntity(response.getEntity()));
         }
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
@@ -175,17 +174,12 @@ public class ArtifactoryHttpClient {
         return ArtifactoryVersion.NOT_FOUND;
     }
 
-    public ArtifactoryItemLastModified getItemLastModified(String path) throws IOException {
+    public ItemLastModified getItemLastModified(String path) throws IOException {
         String lastModifiedUrl = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
         HttpResponse response = executeGetRequest(lastModifiedUrl);
         int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode == HttpStatus.SC_BAD_REQUEST) {
-            consumeEntity(response);
-            return ArtifactoryItemLastModified.NOT_FOUND;
-        }
         if (statusCode != HttpStatus.SC_OK) {
-            consumeEntity(response);
-            throw new IOException(response.getStatusLine().getReasonPhrase());
+            throw new IOException("The path " + path + " returned " + response.getStatusLine().getStatusCode() + ":" + getMessageFromEntity(response.getEntity()));
         }
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
@@ -193,10 +187,10 @@ public class ArtifactoryHttpClient {
                 JsonNode result = getJsonNode(httpEntity, content);
                 String version = result.get("lastModified").asText();
                 String uri = result.get("uri").asText();
-                return new ArtifactoryItemLastModified(uri, version);
+                return new ItemLastModified(uri, version);
             }
         }
-        return ArtifactoryItemLastModified.NOT_FOUND;
+        throw new IOException("The path " + path + " returned empty entity");
     }
 
     private JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
@@ -269,5 +263,38 @@ public class ArtifactoryHttpClient {
         StatusLine statusLine = response.getStatusLine();
         artifactoryResponse.setStatusLine(statusLine);
         return artifactoryResponse;
+    }
+
+    /**
+     * @param entity the entity to retrive the message from.
+     * @return response entity content.
+     * @throws IOException
+     */
+
+    public String getMessageFromEntity(HttpEntity entity) throws IOException {
+        String responseMessage = "";
+        if (entity != null) {
+            responseMessage = getResponseEntityContent(entity);
+            EntityUtils.consume(entity);
+            if (StringUtils.isNotBlank(responseMessage)) {
+                responseMessage = " Response message: " + responseMessage;
+            }
+        }
+        return responseMessage;
+    }
+
+    /**
+     * Returns the response entity content
+     *
+     * @param responseEntity the response entity
+     * @return response entity content
+     * @throws IOException
+     */
+    private String getResponseEntityContent(HttpEntity responseEntity) throws IOException {
+        InputStream in = responseEntity.getContent();
+        if (in != null) {
+            return IOUtils.toString(in, "UTF-8");
+        }
+        return "";
     }
 }
