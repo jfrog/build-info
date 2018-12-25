@@ -613,7 +613,15 @@ public class ArtifactoryClientConfiguration {
 
         public abstract String getContextUrl();
 
+        public void setMatrixParam(String key, String value) {
+            putMatrixParam(key, value, true);
+        }
+
         public void addMatrixParam(String key, String value) {
+            putMatrixParam(key, value, false);
+        }
+
+        private void putMatrixParam(String key, String value, boolean override) {
             if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
                 return;
             }
@@ -621,7 +629,7 @@ public class ArtifactoryClientConfiguration {
             if (!key.startsWith(matrixParamPrefix)) {
                 key = matrixParamPrefix + key;
             }
-            if (props.get(key) != null) {
+            if (!override && props.get(key) != null) {
                 value = props.get(key) + "," + value;
             }
             props.put(key, value);

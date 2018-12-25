@@ -92,9 +92,7 @@ public class GradleArtifactoryClientConfigUpdater {
             buildName = project.getRootProject().getName();
             config.info.setBuildName(buildName);
         }
-        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_NAME))) {
-            config.publisher.addMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
-        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
 
         // Build number
         String buildNumber = config.info.getBuildNumber();
@@ -102,9 +100,7 @@ public class GradleArtifactoryClientConfigUpdater {
             buildNumber = new Date().getTime() + "";
             config.info.setBuildNumber(buildNumber);
         }
-        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_NUMBER))) {
-            config.publisher.addMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
-        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
 
         // Build start (was set by the plugin - no need to make up a fallback val)
         String buildTimestamp = config.info.getBuildTimestamp();
@@ -119,9 +115,7 @@ public class GradleArtifactoryClientConfigUpdater {
             buildTimestamp = String.valueOf(buildStartDate.getTime());
             config.info.setBuildTimestamp(buildTimestamp);
         }
-        if (StringUtils.isBlank(config.publisher.getMatrixParam(BuildInfoFields.BUILD_TIMESTAMP))) {
-            config.publisher.addMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
-        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
 
         // Build agent
         String buildAgentName = config.info.getBuildAgentName();
