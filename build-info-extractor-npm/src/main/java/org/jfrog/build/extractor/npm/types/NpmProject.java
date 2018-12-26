@@ -1,9 +1,6 @@
 package org.jfrog.build.extractor.npm.types;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.ArrayList;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -13,18 +10,26 @@ import java.util.List;
  * Created by Yahav Itzhak on 25 Nov 2018.
  */
 public class NpmProject {
-    private List<Pair<NpmScope, JsonNode>> dependencies;
 
-    public NpmProject() {
-        dependencies = new ArrayList<>();
+    private List<String> installationArgs;
+    private String resolutionRepository;
+    private Path workingDir;
+
+    public NpmProject(List<String> installationArgs, String resolutionRepository, Path workingDir) {
+        this.installationArgs = installationArgs;
+        this.resolutionRepository = resolutionRepository;
+        this.workingDir = workingDir;
     }
 
-    public List<Pair<NpmScope, JsonNode>> getDependencies() {
-        return dependencies;
+    public String getResolutionRepository() {
+        return resolutionRepository;
     }
 
-    @SuppressWarnings("unused")
-    public void addDependencies(Pair<NpmScope, JsonNode> dependencies) {
-        this.dependencies.add(dependencies);
+    public Path getWorkingDir() {
+        return workingDir;
+    }
+
+    public List<String> getInstallationArgs() {
+        return installationArgs;
     }
 }

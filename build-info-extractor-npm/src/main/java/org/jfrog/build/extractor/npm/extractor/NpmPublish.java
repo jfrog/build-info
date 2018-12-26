@@ -1,12 +1,14 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Lists;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
@@ -15,6 +17,7 @@ import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.util.VersionException;
 
 import java.io.BufferedInputStream;
@@ -30,7 +33,6 @@ import java.util.List;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
-
     private ArrayListMultimap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
@@ -48,10 +50,11 @@ public class NpmPublish extends NpmCommand {
      */
     public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, String args) {
         super(clientBuilder, executablePath, args, deploymentRepository, logger, path);
+        this.npmDriver = new NpmDriver(executablePath);
         this.properties = properties;
     }
 
-    public Module execute() {
+    public Build execute() {
         try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
             client = dependenciesClient;
             preparePrerequisites();
@@ -62,18 +65,11 @@ public class NpmPublish extends NpmCommand {
             if (!tarballProvided) {
                 deleteCreatedTarball();
             }
-
-            List<Artifact> artifactList = new ArrayList<>();
-            artifactList.add(deployedArtifact);
-
-            return new ModuleBuilder().
-                    id(npmPackageInfo.getModuleId()).
-                    artifacts(artifactList).
-                    build();
+            return createBuild();
         } catch (Exception e) {
             logger.error(ExceptionUtils.getStackTrace(e), e);
-            return null;
         }
+        return null;
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
@@ -139,5 +135,14 @@ public class NpmPublish extends NpmCommand {
 
     private void deleteCreatedTarball() throws IOException {
         Files.deleteIfExists(path);
+    }
+
+    private Build createBuild() {
+        List<Artifact> artifactList = Lists.newArrayList(deployedArtifact);
+        Module module = new ModuleBuilder().id(npmPackageInfo.getModuleId()).artifacts(artifactList).build();
+        List<Module> modules = Lists.newArrayList(module);
+        Build build = new Build();
+        build.setModules(modules);
+        return build;
     }
 }

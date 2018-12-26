@@ -7,6 +7,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
@@ -120,8 +121,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             projectDir = createProjectDir(project);
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, null, log, path);
-            Module module = npmInstall.execute();
-
+            Build build = npmInstall.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
             // Check correctness of the module and dependencies
             assertEquals(module.getId(), expectedPackageName);
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
@@ -156,7 +158,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
             NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, log, null);
-            Module module = npmPublish.execute();
+            Build build = npmPublish.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
 
             // Check correctness of the module and the artifact
             assertEquals(module.getId(), expectedPackageName);

@@ -61,7 +61,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
  *
  * @author Tomer Cohen
  */
-public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project, Build> {
+public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     private static final Logger log = Logging.getLogger(GradleBuildInfoExtractor.class);
 
     private static final String SHA1 = "sha1";
