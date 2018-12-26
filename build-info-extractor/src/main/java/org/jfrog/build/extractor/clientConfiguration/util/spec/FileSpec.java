@@ -1,5 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.IOException;
 import java.util.Arrays;
 
@@ -17,6 +19,10 @@ public class FileSpec {
     private String build;
     private String explode;
     private String[] excludePatterns;
+    public static final String SPEC_TYPE_BUILD = "build";
+    public static final String SPEC_TYPE_PATTERN = "pattern";
+    public static final String SPEC_TYPE_AQL = "aql";
+
 
     public String getAql() throws IOException {
         if (aql != null) {
@@ -123,5 +129,16 @@ public class FileSpec {
                 ", explode='" + explode + '\'' +
                 ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
                 '}';
+    }
+
+    public String getSpecType() throws IOException {
+        if (StringUtils.isNotEmpty(this.build) && StringUtils.isEmpty(getAql()) && (StringUtils.isEmpty(this.pattern) || this.pattern.equals("*"))) {
+            return SPEC_TYPE_BUILD;
+        } else if (StringUtils.isNotEmpty(this.pattern)) {
+            return SPEC_TYPE_PATTERN;
+        } else if (StringUtils.isNotEmpty(getAql())) {
+            return SPEC_TYPE_AQL;
+        }
+        return null;
     }
 }
