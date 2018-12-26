@@ -4,17 +4,18 @@ import org.apache.commons.lang.StringUtils
 import org.gradle.BuildAdapter
 import org.gradle.StartParameter
 import org.gradle.api.Project
+import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.Task
 import org.gradle.api.invocation.Gradle
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
-import org.gradle.api.ProjectEvaluationListener
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+
 import java.util.concurrent.ConcurrentHashMap
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME

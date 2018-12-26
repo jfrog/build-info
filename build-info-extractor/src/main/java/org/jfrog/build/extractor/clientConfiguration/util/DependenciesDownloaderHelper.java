@@ -27,7 +27,10 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 
 import java.io.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Helper class for downloading dependencies

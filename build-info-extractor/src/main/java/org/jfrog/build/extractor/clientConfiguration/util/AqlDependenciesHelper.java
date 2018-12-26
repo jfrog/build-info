@@ -1,8 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;

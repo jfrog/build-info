@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.producerConsumer.ProducerConsumerItem;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
+import org.jfrog.build.extractor.producerConsumer.ProducerConsumerItem;
 
 import java.io.IOException;
 
