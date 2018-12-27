@@ -84,18 +84,18 @@ public class DependenciesDownloaderHelper {
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
             switch(file.getSpecType()) {
-                case FileSpec.SPEC_TYPE_PATTERN: {
+                case PATTERN: {
                     setWildcardHelperProperties(wildcardHelper,file);
                     log.info(String.format("Downloading artifacts using pattern: %s%s", file.getPattern(), SpecsHelper.getExcludePatternsLogStr(file.getExcludePatterns())));
                     resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), file.getExcludePatterns(), Boolean.valueOf(file.getExplode())));
                     break;
                 }
-                case FileSpec.SPEC_TYPE_BUILD: {
+                case BUILD: {
                     setAqlHelperProperties(aqlHelper,file);
                     resolvedDependencies.addAll(aqlHelper.retrievePublishedDependenciesByBuildOnly(Boolean.valueOf(file.getExplode())));
                     break;
                 }
-                case FileSpec.SPEC_TYPE_AQL: {
+                case AQL: {
                     setAqlHelperProperties(aqlHelper,file);
                     resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), null, Boolean.valueOf(file.getExplode())));
                     break;

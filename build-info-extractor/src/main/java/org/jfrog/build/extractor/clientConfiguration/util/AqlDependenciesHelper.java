@@ -86,30 +86,30 @@ public class AqlDependenciesHelper implements DependenciesHelper {
      * 3rd priority: Match {Sha1}
      */
     private List<AqlSearchResult.SearchEntry> filterBuildAqlSearchResults(List<AqlSearchResult.SearchEntry> itemsToFilter, Map<String,Boolean> buildArtifactsSha1){
+        // Maps that contain the search results, mapped by the priority they match.
+        Map<String, List<AqlSearchResult.SearchEntry>> firstPriority = new HashMap<>();
+        Map<String, List<AqlSearchResult.SearchEntry>> secondPriority = new HashMap<>();
+        Map<String, List<AqlSearchResult.SearchEntry>> thirdPriority = new HashMap<>();
+        // List that contains the filtered results, after step 2.
         List<AqlSearchResult.SearchEntry> filteredResults = new ArrayList<>();
-        Map<String,List<AqlSearchResult.SearchEntry>> firstPriority = new HashMap<>();
-        Map<String,List<AqlSearchResult.SearchEntry>> secondPriority = new HashMap<>();
-        Map<String,List<AqlSearchResult.SearchEntry>> thirdPriority = new HashMap<>();
-        boolean isBuildNameMatch;
-        boolean isBuildNumberMatch;
 
         // Step 1 - Populate 3 priorities mappings.
-        for (AqlSearchResult.SearchEntry item:itemsToFilter) {
-            if(!buildArtifactsSha1.containsKey(item.getActualSha1())){
+        for (AqlSearchResult.SearchEntry item : itemsToFilter) {
+            if (!buildArtifactsSha1.containsKey(item.getActualSha1())){
                 continue;
             }
 
-            isBuildNameMatch = item.getBuildName().equals(this.buildName);
-            isBuildNumberMatch = item.getBuildNumber().equals(this.buildNumber);
-            if (isBuildNameMatch && isBuildNumberMatch) {
-                firstPriority = addToListInMap(firstPriority,item);
-                continue;
-            }
+            boolean isBuildNameMatch = item.getBuildName().equals(this.buildName);
+            boolean isBuildNumberMatch = item.getBuildNumber().equals(this.buildNumber);
             if (isBuildNameMatch) {
-                secondPriority = addToListInMap(secondPriority,item);
+                if (isBuildNumberMatch) {
+                    addToListInMap(firstPriority,item);
+                    continue;
+                }
+                addToListInMap(secondPriority,item);
                 continue;
             }
-            thirdPriority = addToListInMap(thirdPriority,item);
+            addToListInMap(thirdPriority,item);
         }
 
         // Step 2 - Append mappings to the final results, respectively.
@@ -126,13 +126,11 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         return filteredResults;
     }
 
-    private Map<String,List<AqlSearchResult.SearchEntry>> addToListInMap(
-            Map<String,List<AqlSearchResult.SearchEntry>> map, AqlSearchResult.SearchEntry item) {
+    private void addToListInMap(Map<String, List<AqlSearchResult.SearchEntry>> map, AqlSearchResult.SearchEntry item) {
         List<AqlSearchResult.SearchEntry> curList=map.get(item.getActualSha1());
         if (curList==null) curList = new ArrayList<>();
         curList.add(item);
         map.put(item.getActualSha1(),curList);
-        return map;
     }
 
     private Map<String,Boolean> extractSha1FromAqlResponse(List<AqlSearchResult.SearchEntry> searchResults) {

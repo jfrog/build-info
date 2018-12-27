@@ -2,6 +2,7 @@ package org.jfrog.build.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BuildInfoFields;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -98,11 +99,11 @@ public class AqlSearchResult {
         }
 
         public String getBuildName() {
-            return properties.get("build.name");
+            return properties.get(BuildInfoFields.BUILD_NAME);
         }
 
         public String getBuildNumber() {
-            return properties.get("build.number");
+            return properties.get(BuildInfoFields.BUILD_NUMBER);
         }
     }
 

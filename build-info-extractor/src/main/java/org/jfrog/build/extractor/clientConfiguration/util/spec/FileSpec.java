@@ -19,10 +19,12 @@ public class FileSpec {
     private String build;
     private String explode;
     private String[] excludePatterns;
-    public static final String SPEC_TYPE_BUILD = "build";
-    public static final String SPEC_TYPE_PATTERN = "pattern";
-    public static final String SPEC_TYPE_AQL = "aql";
 
+    public enum SpecType {
+        BUILD,
+        PATTERN,
+        AQL
+    }
 
     public String getAql() throws IOException {
         if (aql != null) {
@@ -131,13 +133,13 @@ public class FileSpec {
                 '}';
     }
 
-    public String getSpecType() throws IOException {
+    public SpecType getSpecType() throws IOException {
         if (StringUtils.isNotEmpty(this.build) && StringUtils.isEmpty(getAql()) && (StringUtils.isEmpty(this.pattern) || this.pattern.equals("*"))) {
-            return SPEC_TYPE_BUILD;
+            return SpecType.BUILD;
         } else if (StringUtils.isNotEmpty(this.pattern)) {
-            return SPEC_TYPE_PATTERN;
+            return SpecType.PATTERN;
         } else if (StringUtils.isNotEmpty(getAql())) {
-            return SPEC_TYPE_AQL;
+            return SpecType.AQL;
         }
         return null;
     }
