@@ -18,8 +18,6 @@ package org.jfrog.build.extractor.maven.transformer;
 
 import com.google.common.collect.Maps;
 import com.google.common.io.Files;
-import org.jdom.Document;
-import org.jdom.output.XMLOutputter;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 import org.testng.annotations.Test;
 

@@ -18,10 +18,9 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.gradle.api.artifacts.PublishArtifact;
 
-import java.io.File;
-import java.lang.Comparable;
-import java.util.Map;
 import javax.xml.namespace.QName;
+import java.io.File;
+import java.util.Map;
 
 /**
  * Minimal impl of a publish artifact model

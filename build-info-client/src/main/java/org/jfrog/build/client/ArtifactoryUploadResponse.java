@@ -1,6 +1,7 @@
 package org.jfrog.build.client;
 
 import org.apache.http.StatusLine;
+
 import java.util.List;
 
 /**

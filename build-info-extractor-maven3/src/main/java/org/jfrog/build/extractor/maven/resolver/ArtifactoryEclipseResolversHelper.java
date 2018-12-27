@@ -10,7 +10,6 @@ import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
-import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import javax.inject.Named;
