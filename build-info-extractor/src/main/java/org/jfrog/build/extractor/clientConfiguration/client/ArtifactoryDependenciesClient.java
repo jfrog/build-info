@@ -128,9 +128,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
             return entity.getContent();
         } else {
             HttpEntity httpEntity = response.getEntity();
-            if (httpEntity != null) {
-                IOUtils.closeQuietly(httpEntity.getContent());
-            }
+            EntityUtils.consume(httpEntity);
             throw new IOException(errorMessage + ": " + response.getStatusLine());
         }
     }

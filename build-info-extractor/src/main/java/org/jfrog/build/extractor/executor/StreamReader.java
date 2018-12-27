@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.executor;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.exception.ExceptionUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,7 +23,7 @@ public class StreamReader implements Runnable {
         try {
             output = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
         } catch (IOException e) {
-            output = ExceptionUtils.getStackTrace(e);
+            throw new RuntimeException(e);
         }
     }
 
