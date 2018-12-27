@@ -28,7 +28,7 @@ public class AqlSearchResult {
         private String actualSha1;
         private String actualMd5;
         private String[] virtualRepos = new String[]{};
-        private HashMap<String,String> properties = new HashMap<>();
+        private HashMap<String, String> properties = new HashMap<>();
 
         public void setRepo(String repo) {
             this.repo = repo;

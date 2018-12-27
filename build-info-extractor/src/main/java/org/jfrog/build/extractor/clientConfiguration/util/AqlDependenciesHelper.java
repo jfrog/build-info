@@ -30,6 +30,9 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         this.target = target;
     }
 
+    /**
+     * Retrieves dependencies by aql
+     */
     @Override
     public List<Dependency> retrievePublishedDependencies(String aql, String[] excludePattern, boolean explode) throws IOException {
         if (StringUtils.isBlank(aql)) {
@@ -39,25 +42,35 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         return downloadDependencies(downloadableArtifacts);
     }
 
+    /**
+     * Finds and collects artifacts to download by aql
+     */
     Set<DownloadableArtifact> collectArtifactsToDownload(String aqlBody, boolean explode) throws IOException {
         String aql = buildQuery(aqlBody);
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearch(aql);
+        // If buildName specified, filter the results to keep only artifacts matching the requested build
         if (StringUtils.isNotBlank(buildName) && searchResults.size()>0) {
             searchResults=filterAqlSearchResultsByBuild(searchResults);
         }
         return fetchDownloadableArtifactsFromResult(searchResults,explode);
     }
 
+    /**
+     * Retrieves dependencies for file spec of type BUILD (build specified without pattern/aql)
+     */
     public List<Dependency> retrievePublishedDependenciesByBuildOnly(boolean explode) throws IOException {
         Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownloadByBuildOnly(explode);
         return downloadDependencies(downloadableArtifacts);
     }
 
+    /**
+     * Finds and collects artifacts to download for file spec of type BUILD
+     */
     private Set<DownloadableArtifact> collectArtifactsToDownloadByBuildOnly(boolean explode) throws IOException {
         String aql = createAqlBodyForBuild();
         aql = buildQuery(aql);
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearch(aql);
-        Map<String,Boolean> buildSha1Map = extractSha1FromAqlResponse(searchResults);
+        Map<String, Boolean> buildSha1Map = extractSha1FromAqlResponse(searchResults);
         searchResults = filterBuildAqlSearchResults(searchResults,buildSha1Map);
         return fetchDownloadableArtifactsFromResult(searchResults,explode);
     }
@@ -74,6 +87,9 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         this.downloader.setFlatDownload(flat);
     }
 
+    /**
+     * Filters the found results to keep only artifacts matching the requested build
+     */
     private List<AqlSearchResult.SearchEntry> filterAqlSearchResultsByBuild(List<AqlSearchResult.SearchEntry> searchResults) throws IOException {
         Map<String,Boolean> buildArtifactsSha1 = fetchBuildArtifactsSha1();
         return filterBuildAqlSearchResults(searchResults,buildArtifactsSha1);
@@ -113,7 +129,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         }
 
         // Step 2 - Append mappings to the final results, respectively.
-        for (Map.Entry<String,Boolean> entry : buildArtifactsSha1.entrySet()) {
+        for (Map.Entry<String, Boolean> entry : buildArtifactsSha1.entrySet()) {
             String shaToMatch = entry.getKey();
             if (firstPriority.containsKey(shaToMatch)) {
                 filteredResults.addAll(firstPriority.get(shaToMatch));
@@ -133,13 +149,19 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         map.put(item.getActualSha1(),curList);
     }
 
-    private Map<String,Boolean> extractSha1FromAqlResponse(List<AqlSearchResult.SearchEntry> searchResults) {
-        Map<String,Boolean> resultsMap = new HashMap<>();
+    /**
+     * Maps all Sha1 values that exist in the results found
+     */
+    private Map<String, Boolean> extractSha1FromAqlResponse(List<AqlSearchResult.SearchEntry> searchResults) {
+        Map<String, Boolean> resultsMap = new HashMap<>();
         searchResults.forEach((result)-> resultsMap.put(result.getActualSha1(),true));
         return resultsMap;
     }
 
-    private Map<String,Boolean> fetchBuildArtifactsSha1() throws  IOException {
+    /**
+     * Sends an aql query to get all Sha1 value of the requested build, then returns a Map of the Sha1 values.
+     */
+    private Map<String, Boolean> fetchBuildArtifactsSha1() throws  IOException {
         String buildQuery = createAqlQueryForBuild(buildIncludeQueryPart(Arrays.asList("name", "repo", "path", "actual_sha1")));
         return extractSha1FromAqlResponse(aqlSearch(buildQuery));
     }
@@ -176,6 +198,9 @@ public class AqlDependenciesHelper implements DependenciesHelper {
         return Arrays.asList("name", "repo", "path", "actual_md5", "actual_sha1", "size", "type", "property");
     }
 
+    /**
+     * Converts the found results to DownloadableArtifact types before downloading.
+     */
     private Set<DownloadableArtifact> fetchDownloadableArtifactsFromResult(List<AqlSearchResult.SearchEntry> searchResults, boolean explode) {
         Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
