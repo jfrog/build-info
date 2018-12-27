@@ -137,7 +137,7 @@ public class NpmPublish extends NpmCommand {
 
     private Build createBuild() {
         List<Artifact> artifactList = Lists.newArrayList(deployedArtifact);
-        Module module = new ModuleBuilder().id(npmPackageInfo.getModuleId()).artifacts(artifactList).build();
+        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).artifacts(artifactList).build();
         List<Module> modules = Lists.newArrayList(module);
         Build build = new Build();
         build.setModules(modules);
