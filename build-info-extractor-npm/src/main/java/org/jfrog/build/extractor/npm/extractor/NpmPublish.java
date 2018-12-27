@@ -45,10 +45,9 @@ public class NpmPublish extends NpmCommand {
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository - The repository it'll deploy to.
      * @param logger               - The logger.
-     * @param args                 - Npm args.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, String args) {
-        super(clientBuilder, executablePath, args, deploymentRepository, logger, path);
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger) {
+        super(clientBuilder, executablePath, deploymentRepository, logger, path);
         this.npmDriver = new NpmDriver(executablePath);
         this.properties = properties;
     }

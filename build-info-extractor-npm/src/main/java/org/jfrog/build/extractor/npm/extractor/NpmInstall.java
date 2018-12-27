@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.npm.extractor;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
@@ -7,6 +8,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.npm.types.NpmProject;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author Yahav Itzhak
@@ -15,6 +19,7 @@ import java.nio.file.Path;
 public class NpmInstall extends NpmCommand {
 
     NpmBuildInfoExtractor buildInfoExtractor;
+    List<String> installArgs;
 
     /**
      * Install npm package.
@@ -22,13 +27,14 @@ public class NpmInstall extends NpmCommand {
      * @param clientBuilder        - Build Info client builder.
      * @param resolutionRepository - The repository it'll resolve from.
      * @param executablePath       - Npm executable path.
-     * @param args                 - Npm args.
+     * @param installArgs          - Npm install args.
      * @param logger               - The logger.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      */
-    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String args, String executablePath, Log logger, Path path) {
-        super(clientBuilder, executablePath, args, resolutionRepository, logger, path);
+    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path) {
+        super(clientBuilder, executablePath, resolutionRepository, logger, path);
         buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, executablePath, logger);
+        this.installArgs = StringUtils.isBlank(installArgs) ? new ArrayList<>() : Arrays.asList(installArgs.trim().split("\\s+"));
     }
 
     public Build execute() {
@@ -38,7 +44,7 @@ public class NpmInstall extends NpmCommand {
             validateNpmVersion();
             validateRepoExists("Source repo must be specified");
 
-            NpmProject npmProject = new NpmProject(args, repo, workingDir);
+            NpmProject npmProject = new NpmProject(installArgs, repo, workingDir);
             return buildInfoExtractor.extract(npmProject);
         } catch (Exception e) {
             logger.error("Failed during NpmInstall", e);

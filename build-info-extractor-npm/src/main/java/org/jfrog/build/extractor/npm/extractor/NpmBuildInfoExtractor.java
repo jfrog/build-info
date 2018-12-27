@@ -198,7 +198,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private Build createBuild(List<Dependency> dependencies) {
-        Module module = new ModuleBuilder().id(npmPackageInfo.getModuleId()).dependencies(dependencies).build();
+        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();

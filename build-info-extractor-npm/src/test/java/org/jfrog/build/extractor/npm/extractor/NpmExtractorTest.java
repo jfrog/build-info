@@ -101,20 +101,20 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private Object[][] npmInstallProvider() {
         return new Object[][]{
                 {Projects.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
-                {Projects.A, "development:" + PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
-                {Projects.A, "production:" + PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
+                {Projects.A, PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
+                {Projects.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
                 {Projects.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "", false},
-                {Projects.B, "development:" + PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
-                {Projects.B, "production:" + PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
+                {Projects.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
+                {Projects.B, PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
                 {Projects.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, "", true},
-                {Projects.C, "development:" + PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
-                {Projects.C, "production:" + PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
+                {Projects.C, PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
+                {Projects.C, PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    private void npmInstallTest(Projects project, String expectedPackageName, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    private void npmInstallTest(Projects project, String expectedModuleId, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
         Path projectDir = null;
         try {
             // Run npm install
@@ -125,7 +125,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
             // Check correctness of the module and dependencies
-            assertEquals(module.getId(), expectedPackageName);
+            assertEquals(module.getId(), expectedModuleId);
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, expectedDependencies);
         } catch (Exception e) {
@@ -157,7 +157,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, log, null);
+            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, log);
             Build build = npmPublish.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
