@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.producerConsumer;
+package org.jfrog.build.api.producerConsumer;
 
 /**
  * Interface for defining a ProducerConsumerExecutor suitable item

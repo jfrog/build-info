@@ -1,0 +1,11 @@
+{
+  "name": "package-name2",
+  "version": "0.0.2",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "devDependencies": {
+    "send": "0.1.0"
+  }
+}

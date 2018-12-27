@@ -18,7 +18,12 @@ package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jfrog.build.api.BuildBean.MODULE;
 
@@ -111,6 +116,23 @@ public class Module extends BaseBuildBean {
      */
     public void setExcludedArtifacts(List<Artifact> excludedArtifacts) {
         this.excludedArtifacts = excludedArtifacts;
+    }
+
+    /**
+     * Append other module to this module
+     *
+     * @param other Module to append
+     */
+    public void append(Module other) {
+        artifacts = appendBuildFileLists(artifacts, other.getArtifacts());
+        excludedArtifacts = appendBuildFileLists(excludedArtifacts, other.getExcludedArtifacts());
+        dependencies = appendBuildFileLists(dependencies, other.getDependencies());
+    }
+
+    private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
+        return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -1,0 +1,6 @@
+{
+  "rclass": "virtual",
+  "packageType": "npm",
+  "repositories": ["build-info-tests-npm-local", "build-info-tests-npm-remote"],
+  "defaultDeploymentRepo": "build-info-tests-npm-local"
+}
