@@ -33,7 +33,7 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 @Test
 public class NpmExtractorTest extends IntegrationTestsBase {

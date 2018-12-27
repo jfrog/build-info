@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
@@ -10,7 +9,7 @@ import org.jfrog.build.extractor.npm.types.NpmProject;
 import java.nio.file.Path;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmInstall extends NpmCommand {
@@ -42,7 +41,7 @@ public class NpmInstall extends NpmCommand {
             NpmProject npmProject = new NpmProject(args, repo, workingDir);
             return buildInfoExtractor.extract(npmProject);
         } catch (Exception e) {
-            logger.error(ExceptionUtils.getStackTrace(e), e);
+            logger.error("Failed during NpmInstall", e);
         }
         return null;
     }

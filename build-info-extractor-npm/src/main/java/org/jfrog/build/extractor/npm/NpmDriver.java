@@ -10,12 +10,15 @@ import org.jfrog.build.extractor.executor.CommandResults;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Created by Yahav Itzhak on 15 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class NpmDriver implements Serializable {
     private static final long serialVersionUID = 1L;

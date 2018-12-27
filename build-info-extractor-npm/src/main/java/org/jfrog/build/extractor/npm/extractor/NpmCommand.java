@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * Base class for npm install and npm publish commands.
  *
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 abstract class NpmCommand implements Serializable {
     private static final long serialVersionUID = 1L;

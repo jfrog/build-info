@@ -6,7 +6,6 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
@@ -29,7 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
@@ -67,7 +66,7 @@ public class NpmPublish extends NpmCommand {
             }
             return createBuild();
         } catch (Exception e) {
-            logger.error(ExceptionUtils.getStackTrace(e), e);
+            logger.error("Failed during NpmPublish", e);
         }
         return null;
     }

@@ -8,7 +8,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class StreamReader implements Runnable {
 

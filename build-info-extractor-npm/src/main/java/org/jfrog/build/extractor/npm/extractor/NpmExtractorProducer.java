@@ -8,9 +8,9 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
 
 /**
- * Produces PackageInfos from the dependencies tree.
+ * Traverse over the dependencies tree of 'NpmPackageInfo's. If a node is legal - Produce it.
  *
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class NpmExtractorProducer extends ProducerRunnableBase {
 

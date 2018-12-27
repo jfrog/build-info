@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class ArtifactoryDependenciesClientBuilder extends ArtifactoryClientBuilderBase<ArtifactoryDependenciesClientBuilder> {
 

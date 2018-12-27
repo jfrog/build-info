@@ -31,7 +31,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";

@@ -8,7 +8,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Map;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 @SuppressWarnings({"WeakerAccess"})
 public class NpmDependencyTree {

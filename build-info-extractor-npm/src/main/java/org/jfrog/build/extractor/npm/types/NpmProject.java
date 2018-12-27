@@ -7,7 +7,7 @@ import java.util.List;
  * Contains a list of scopes and the root node of 'npm ls' command for each scope.
  * Used by the npm extractor.
  *
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public class NpmProject {
 

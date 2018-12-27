@@ -92,6 +92,7 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
 
     /**
      * Log setter for the PreemptiveHttpClient for jobs like the Jenkins Generic job that uses NullLog by default.
+     *
      * @param log Log instance
      */
     public void setLog(Log log) {
@@ -113,7 +114,7 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         return artifactoryVersion;
     }
 
-    public boolean isRepoExist(String repo) {
+    public boolean isRepoExist(String repo) throws IOException {
         String fullItemUrl = artifactoryUrl + API_REPOSITORIES + "/" + repo;
         String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpGet(encodedUrl);
@@ -125,8 +126,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
             if (statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
                 return false;
             }
-        } catch (IOException e) {
-            return false;
         } finally {
             // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
             httpClient.setConnectionRetries(connectionRetries);

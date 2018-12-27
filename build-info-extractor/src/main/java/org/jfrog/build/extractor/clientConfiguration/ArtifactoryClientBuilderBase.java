@@ -7,7 +7,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClien
 import java.io.Serializable;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBuilderBase<T>> implements Serializable {

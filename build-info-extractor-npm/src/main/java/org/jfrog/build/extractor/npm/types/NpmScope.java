@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.npm.types;
 
 /**
- * Created by Yahav Itzhak on 25 Nov 2018.
+ * @author Yahav Itzhak
  */
 public enum NpmScope {
     PRODUCTION("production"),
