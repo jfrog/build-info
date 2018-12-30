@@ -1,14 +1,14 @@
 package org.jfrog.build.extractor.maven.plugin
 
 import org.apache.maven.Maven
-import org.jfrog.build.api.BuildInfoFields
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
 import org.jfrog.build.api.BuildInfoConfigProperties
+import org.jfrog.build.api.BuildInfoFields
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties
+
 import java.lang.reflect.Field
 import java.lang.reflect.Method
-
 
 /**
  * Helper merging all mojo properties.

@@ -22,7 +22,7 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
-import org.jfrog.build.extractor.producerConsumer.ProducerConsumerItem;
+import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 
 import java.io.File;
 import java.io.Serializable;

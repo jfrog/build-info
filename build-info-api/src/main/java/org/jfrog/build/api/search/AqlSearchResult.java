@@ -1,9 +1,13 @@
 package org.jfrog.build.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.BuildInfoFields;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class AqlSearchResult {
@@ -24,7 +28,7 @@ public class AqlSearchResult {
         private String actualSha1;
         private String actualMd5;
         private String[] virtualRepos = new String[]{};
-
+        private HashMap<String, String> properties = new HashMap<>();
 
         public void setRepo(String repo) {
             this.repo = repo;
@@ -51,6 +55,15 @@ public class AqlSearchResult {
         @JsonProperty("virtual_repos")
         public void setVirtualRepos(String[] virtualRepos) {
             this.virtualRepos = virtualRepos;
+        }
+
+        @JsonProperty("properties")
+        public void setProperties(List<Property> propertiesList) {
+            for (Property property : propertiesList) {
+                if (StringUtils.isNotEmpty(property.key)) {
+                    properties.put(property.key,property.value);
+                }
+            }
         }
 
         public String getRepo() {
@@ -80,5 +93,42 @@ public class AqlSearchResult {
             return virtualRepos;
         }
 
+        @JsonProperty("properties")
+        public Map<String, String> getProperties() {
+            return properties;
+        }
+
+        public String getBuildName() {
+            return properties.get(BuildInfoFields.BUILD_NAME);
+        }
+
+        public String getBuildNumber() {
+            return properties.get(BuildInfoFields.BUILD_NUMBER);
+        }
+    }
+
+    public static class Property {
+        private String key;
+        private String value;
+
+        @JsonProperty("key")
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        @JsonProperty("key")
+        public String getkey() {
+            return key;
+        }
+
+        @JsonProperty("value")
+        public void setValue(String value) {
+            this.value = value;
+        }
+
+        @JsonProperty("value")
+        public String getValue() {
+            return value;
+        }
     }
 }

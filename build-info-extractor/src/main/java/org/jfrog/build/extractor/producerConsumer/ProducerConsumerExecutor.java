@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.producerConsumer;
 
+import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 import org.jfrog.build.api.util.Log;
 
 import java.io.PrintWriter;

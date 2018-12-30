@@ -18,7 +18,7 @@ package org.jfrog.gradle.plugin.artifactory;
 
 import org.gradle.api.Project;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;;
+import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 
 public class ArtifactoryPluginUtil {
 

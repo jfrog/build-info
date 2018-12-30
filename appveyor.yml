@@ -1,4 +1,4 @@
-stack: jdk 8
+stack: jdk 8, node 8
 skip_tags: true
 environment:
   matrix:
@@ -16,7 +16,7 @@ environment:
     secure: Xf371RQAxCTMn/S7NdmV8g==
 
 test_script:
-- sh: ./gradlew clean test
-- cmd: gradlew.bat clean test
+  - sh: ./gradlew clean test
+  - cmd: gradlew.bat clean test
 
 build: off
