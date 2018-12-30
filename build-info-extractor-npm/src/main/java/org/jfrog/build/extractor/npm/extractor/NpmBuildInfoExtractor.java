@@ -192,7 +192,12 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             scopes.add(NpmScope.DEVELOPMENT);
             scopes.add(NpmScope.PRODUCTION);
         } else {
-            scopes.add(NpmScope.valueOf(npmPackageInfo.getScope().toUpperCase()));
+            if (!StringUtils.containsIgnoreCase(NpmScope.DEVELOPMENT.toString(), npmPackageInfo.getScope())) {
+                scopes.add(NpmScope.PRODUCTION);
+            }
+            if (!StringUtils.containsIgnoreCase(NpmScope.PRODUCTION.toString(), npmPackageInfo.getScope())) {
+                scopes.add(NpmScope.DEVELOPMENT);
+            }
         }
         return scopes;
     }

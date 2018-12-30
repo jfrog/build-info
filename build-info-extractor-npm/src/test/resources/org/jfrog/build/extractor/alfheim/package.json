@@ -1,0 +1,7 @@
+{
+    "name": "jfrog-alfheim",
+    "version": "3.5.2",
+    "scripts": {
+        "start": "node app"
+    }
+}

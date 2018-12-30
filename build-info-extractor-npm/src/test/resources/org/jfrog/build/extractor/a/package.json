@@ -6,6 +6,7 @@
     "start": "node app"
   },
   "dependencies": {
-    "debug": "3.1.0"
+    "jfrog-asgard": "2.0.0",
+    "jfrog-svartalfheim": "0.5.0"
   }
 }

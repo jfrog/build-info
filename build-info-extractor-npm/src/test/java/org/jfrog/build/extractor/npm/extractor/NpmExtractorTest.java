@@ -12,9 +12,12 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.build.extractor.npm.NpmDriver;
+import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -42,25 +45,12 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final String NPM_REMOTE_REPO = "build-info-tests-npm-remote";
     private static final String NPM_VIRTUAL_REPO = "build-info-tests-npm-virtual";
 
-    private static final Path PROJECTS_PATH = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
-    private static final File PROJECT_A_SOURCE = PROJECTS_PATH.resolve("a").toFile();
-    private static final File PROJECT_B_SOURCE = PROJECTS_PATH.resolve("b").toFile();
-    private static final File PROJECT_C_SOURCE = PROJECTS_PATH.resolve("c").toFile();
-
-    private static final String PACKAGE_A_NAME = "package-name1:0.0.1";
-    private static final String PACKAGE_A_TARGET_PATH = "package-name1/-/package-name1-0.0.1.tgz";
-    private static final Set<String> PROJECT_A_DEPENDENCIES = Sets.newHashSet("debug-3.1.0.tgz", "ms-2.0.0.tgz");
-    private static final String PACKAGE_B_NAME = "package-name2:0.0.2";
-    private static final String PACKAGE_B_TARGET_PATH = "package-name2/-/package-name2-0.0.2.tgz";
-    private static final Set<String> PROJECT_B_DEPENDENCIES = Sets.newHashSet("debug-3.1.0.tgz", "ms-2.0.0.tgz", "fresh-0.1.0.tgz", "mime-1.2.6.tgz", "range-parser-0.0.4.tgz", "send-0.1.0.tgz");
-    private static final String PACKAGE_C_NAME = "package-name3:0.0.3";
-    private static final String PACKAGE_C_TARGET_PATH = "package-name3/-/package-name3-0.0.3.tgz";
-    // Project C contains prod dependencies of A and dev dependencies of B.
-    private static final Set<String> PROJECT_C_DEPENDENCIES = Sets.union(PROJECT_A_DEPENDENCIES, PROJECT_B_DEPENDENCIES);
+    private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
+    private NpmDriver driver = new NpmDriver("");
 
     public NpmExtractorTest() {
         localRepo = NPM_LOCAL_REPO;
@@ -68,53 +58,94 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         virtualRepo = NPM_VIRTUAL_REPO;
     }
 
-    private enum Projects {
-        A("NpmExtractorTest Project A", PROJECT_A_SOURCE),
-        B("NpmExtractorTest-Project-B", PROJECT_B_SOURCE),
-        C("NpmExtractorTestProjectC", PROJECT_C_SOURCE);
+    private enum Project {
+        // Dependencies
+        ASGARD("asgard", "jfrog-asgard", "jfrog-asgard", "2.0.0"),
+        MIDGARD("midgard", "jfrog-midgard", "jfrog-midgard", "1.0.0"),
+        ALFHEIM("alfheim", "jfrog-alfheim", "jfrog-alfheim", "3.5.2"),
+        SVARTALFHEIM("svartalfheim", "jfrog-svartalfheim", "jfrog-svartalfheim", "0.5.0"),
 
-        private String projectName;
+        // Test projects
+        A("a", "NpmExtractorTest Project A", "package-name1", "0.0.1", ASGARD.getPackedFileName(), SVARTALFHEIM.getPackedFileName()),
+        B("b", "NpmExtractorTest-Project-B", "package-name2", "0.0.2", ASGARD.getPackedFileName(), MIDGARD.getPackedFileName(), ALFHEIM.getPackedFileName()),
+        C("c", "NpmExtractorTestProjectC", "package-name3", "0.0.3", ASGARD.getPackedFileName(), MIDGARD.getPackedFileName(), ALFHEIM.getPackedFileName(), SVARTALFHEIM.getPackedFileName());
+
         private File projectOrigin;
+        private String targetDir;
+        private String name;
+        private String version;
+        private Set<String> dependencies;
 
-        Projects(String projectName, File projectOrigin) {
-            this.projectName = projectName;
-            this.projectOrigin = projectOrigin;
+        Project(String sourceDir, String targetDir, String name, String version, String... dependencies) {
+            this.projectOrigin = PROJECTS_ROOT.resolve(sourceDir).toFile();
+            this.targetDir = targetDir;
+            this.name = name;
+            this.version = version;
+            this.dependencies = Sets.newHashSet(dependencies);
         }
 
-        public String getProjectName() {
-            return this.projectName;
+        private String getModuleId() {
+            return String.format("%s:%s", name, version);
         }
 
-        public File getProjectOrigin() {
-            return this.projectOrigin;
+        private String getPackedFileName() {
+            return String.format("%s-%s.tgz", name, version);
+        }
+
+        private String getTargetPath() {
+            return String.format("%s/-/%s", name, getPackedFileName());
         }
     }
 
     @BeforeClass
-    private void setUp() {
+    private void setUp() throws IOException {
         dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         downloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+        deployTestDependencies(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
+    }
+
+    private void deployTestDependencies(Project... projects) throws IOException {
+        for(Project project : projects) {
+            driver.pack(project.projectOrigin, Collections.emptyList());
+            DeployDetails deployDetails = new DeployDetails.Builder()
+                    .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
+                    .targetRepository(localRepo)
+                    .artifactPath(project.getTargetPath())
+                    .build();
+            buildInfoClient.deployArtifact(deployDetails);
+        }
+    }
+
+    @AfterClass
+    private void tearDown() throws IOException {
+        deletePackedFiles(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
+    }
+
+    private void deletePackedFiles(Project... projects) throws IOException {
+        for (Project project : projects) {
+            Files.deleteIfExists(project.projectOrigin.toPath().resolve(project.getPackedFileName()));
+        }
     }
 
     @DataProvider
     private Object[][] npmInstallProvider() {
         return new Object[][]{
-                {Projects.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "", true},
-                {Projects.A, PACKAGE_A_NAME, Collections.emptySet(), "--only=dev", false},
-                {Projects.A, PACKAGE_A_NAME, PROJECT_A_DEPENDENCIES, "--only=prod", true},
-                {Projects.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "", false},
-                {Projects.B, PACKAGE_B_NAME, PROJECT_B_DEPENDENCIES, "--only=dev", true},
-                {Projects.B, PACKAGE_B_NAME, Collections.emptySet(), "--production", false},
-                {Projects.C, PACKAGE_C_NAME, PROJECT_C_DEPENDENCIES, "", true},
-                {Projects.C, PACKAGE_C_NAME, PROJECT_B_DEPENDENCIES, "--only=development", false},
-                {Projects.C, PACKAGE_C_NAME, PROJECT_A_DEPENDENCIES, "--only=production", true}
+                {Project.A, Project.A.dependencies, "", true},
+                {Project.A, Collections.emptySet(), "--only=dev", false},
+                {Project.A, Project.A.dependencies, "--only=prod", true},
+                {Project.B, Project.B.dependencies, "", false},
+                {Project.B, Project.B.dependencies, "--only=dev", true},
+                {Project.B, Collections.emptySet(), "--production", false},
+                {Project.C, Project.C.dependencies, "", true},
+                {Project.C, Project.B.dependencies, "--only=development", false},
+                {Project.C, Project.A.dependencies, "--only=production", true}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    private void npmInstallTest(Projects project, String expectedModuleId, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    private void npmInstallTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
         Path projectDir = null;
         try {
             // Run npm install
@@ -125,7 +156,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
             // Check correctness of the module and dependencies
-            assertEquals(module.getId(), expectedModuleId);
+            assertEquals(module.getId(), project.getModuleId());
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, expectedDependencies);
         } catch (Exception e) {
@@ -140,18 +171,18 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @DataProvider
     private Object[][] npmPublishProvider() {
         return new Object[][]{
-                {Projects.A, ArrayListMultimap.create(), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
-                {Projects.A, ArrayListMultimap.create(ImmutableMultimap.of("a", "b")), PACKAGE_A_NAME, PACKAGE_A_TARGET_PATH, ""},
-                {Projects.B, ArrayListMultimap.create(), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
-                {Projects.B, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "c", "d")), PACKAGE_B_NAME, PACKAGE_B_TARGET_PATH, "package-name2-0.0.2.tgz"},
-                {Projects.C, ArrayListMultimap.create(), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""},
-                {Projects.C, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "a", "d")), PACKAGE_C_NAME, PACKAGE_C_TARGET_PATH, ""}
+                {Project.A, ArrayListMultimap.create(), Project.A.getTargetPath(), ""},
+                {Project.A, ArrayListMultimap.create(ImmutableMultimap.of("a", "b")), Project.A.getTargetPath(), ""},
+                {Project.B, ArrayListMultimap.create(), Project.B.getTargetPath(), Project.B.getPackedFileName()},
+                {Project.B, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "c", "d")), Project.B.getTargetPath(), Project.B.getPackedFileName()},
+                {Project.C, ArrayListMultimap.create(), Project.C.getTargetPath(), ""},
+                {Project.C, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "a", "d")), Project.C.getTargetPath(), ""}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    private void npmPublishTest(Projects project, ArrayListMultimap<String, String> props, String expectedPackageName, String targetPath, String packageName) {
+    private void npmPublishTest(Project project, ArrayListMultimap<String, String> props, String targetPath, String packageName) {
         Path projectDir = null;
         try {
             // Run npm publish
@@ -163,9 +194,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Module module = build.getModules().get(0);
 
             // Check correctness of the module and the artifact
-            assertEquals(module.getId(), expectedPackageName);
+            assertEquals(module.getId(), project.getModuleId());
             assertEquals(module.getArtifacts().size(), 1);
-            assertEquals(module.getArtifacts().get(0).getName(), expectedPackageName);
+            assertEquals(module.getArtifacts().get(0).getName(), project.getModuleId());
 
             // Download the artifact and check for its properties
             StringJoiner propertiesBuilder = new StringJoiner(";");
@@ -187,9 +218,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         }
     }
 
-    private Path createProjectDir(Projects project) throws IOException {
-        File projectFile = Files.createTempDirectory(project.getProjectName()).toFile();
-        FileUtils.copyDirectory(project.getProjectOrigin(), projectFile);
-        return projectFile.toPath();
+    private Path createProjectDir(Project project) throws IOException {
+        File projectDir = Files.createTempDirectory(project.targetDir).toFile();
+        FileUtils.copyDirectory(project.projectOrigin, projectDir);
+        return projectDir.toPath();
     }
 }
