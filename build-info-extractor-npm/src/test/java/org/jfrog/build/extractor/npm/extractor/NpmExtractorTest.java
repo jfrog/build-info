@@ -106,7 +106,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     }
 
     private void deployTestDependencies(Project... projects) throws IOException {
-        for(Project project : projects) {
+        for (Project project : projects) {
             driver.pack(project.projectOrigin, Collections.emptyList());
             DeployDetails deployDetails = new DeployDetails.Builder()
                     .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
