@@ -27,10 +27,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class for downloading dependencies
@@ -83,6 +80,7 @@ public class DependenciesDownloaderHelper {
 
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
+            validateFileSpec(file);
             switch(file.getSpecType()) {
                 case PATTERN: {
                     setWildcardHelperProperties(wildcardHelper,file);
@@ -212,6 +210,12 @@ public class DependenciesDownloaderHelper {
         }
         sb.append(" could not be found.");
         log.warn(sb.toString());
+    }
+
+    private void validateFileSpec(FileSpec file) throws IOException {
+        if (file.getPattern() != null && file.getAql() != null ) {
+            throw new InputMismatchException("Spec cannot include both 'aql' and 'pattern' properties.");
+        }
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
