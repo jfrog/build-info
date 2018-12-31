@@ -1,0 +1,7 @@
+{
+    "name": "jfrog-asgard",
+    "version": "2.0.0",
+    "scripts": {
+        "start": "node app"
+    }
+}

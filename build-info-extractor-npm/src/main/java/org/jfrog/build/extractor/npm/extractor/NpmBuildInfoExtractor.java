@@ -186,13 +186,26 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return new ArrayList<>(dependencies.values());
     }
 
+    /**
+     * This method returns the npm scopes of this npm install command.
+     * It does this by checking the scopes on the npm package - dev, prod or no scope ("no scope" actually means both) and builds the list of scopes to be returned.
+     *
+     * @return list of "production", "development" or both.
+     */
     private List<NpmScope> getNpmScopes() {
         List<NpmScope> scopes = new ArrayList<>();
         if (StringUtils.isBlank(npmPackageInfo.getScope())) {
             scopes.add(NpmScope.DEVELOPMENT);
             scopes.add(NpmScope.PRODUCTION);
         } else {
-            scopes.add(NpmScope.valueOf(npmPackageInfo.getScope().toUpperCase()));
+            // If this npm package is not installed with the dev scope, then it is installed with the prod scope.
+            if (!StringUtils.containsIgnoreCase(NpmScope.DEVELOPMENT.toString(), npmPackageInfo.getScope())) {
+                scopes.add(NpmScope.PRODUCTION);
+            }
+            // If this npm package is not installed with the prod scope, then it is installed with the dev scope.
+            if (!StringUtils.containsIgnoreCase(NpmScope.PRODUCTION.toString(), npmPackageInfo.getScope())) {
+                scopes.add(NpmScope.DEVELOPMENT);
+            }
         }
         return scopes;
     }
