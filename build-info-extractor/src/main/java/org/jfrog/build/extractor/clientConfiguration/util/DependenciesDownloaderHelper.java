@@ -25,9 +25,13 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 
 import java.io.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Helper class for downloading dependencies
@@ -77,10 +81,10 @@ public class DependenciesDownloaderHelper {
         AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, "", log);
         WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, "", log);
         List<Dependency> resolvedDependencies = Lists.newArrayList();
+        new DownloadSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
-            validateFileSpec(file);
             switch(file.getSpecType()) {
                 case PATTERN: {
                     setWildcardHelperProperties(wildcardHelper,file);
@@ -210,12 +214,6 @@ public class DependenciesDownloaderHelper {
         }
         sb.append(" could not be found.");
         log.warn(sb.toString());
-    }
-
-    private void validateFileSpec(FileSpec file) throws IOException {
-        if (file.getPattern() != null && file.getAql() != null ) {
-            throw new InputMismatchException("Spec cannot include both 'aql' and 'pattern' properties.");
-        }
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
