@@ -25,6 +25,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 
 import java.io.*;
 import java.util.HashMap;
@@ -80,6 +81,7 @@ public class DependenciesDownloaderHelper {
         AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, "", log);
         WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, "", log);
         List<Dependency> resolvedDependencies = Lists.newArrayList();
+        new DownloadSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());

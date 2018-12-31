@@ -18,9 +18,6 @@ public abstract class SpecsValidator {
         boolean isPattern = StringUtils.isNotBlank(fileSpec.getPattern());
         boolean isExcludePattern = !ArrayUtils.isEmpty(fileSpec.getExcludePatterns()) && StringUtils.isNotBlank(fileSpec.getExcludePattern(0));
 
-        if (!isAql && !isPattern) {
-            throw new IllegalArgumentException("Spec must contain AQL or Pattern key");
-        }
         if (isAql && isPattern) {
             throw new IllegalArgumentException("Spec can't contain both AQL and Pattern keys");
         }

@@ -18,6 +18,12 @@ public class UploadSpecValidator extends SpecsValidator {
             throw new IllegalArgumentException("Spec must contain at least one fileSpec.");
         }
         for (FileSpec fileSpec : spec.getFiles()) {
+            boolean isAql = StringUtils.isNotBlank(fileSpec.getAql());
+            boolean isPattern = StringUtils.isNotBlank(fileSpec.getPattern());
+
+            if (!isAql && !isPattern) {
+                throw new IllegalArgumentException("Upload Spec must contain AQL or Pattern key");
+            }
             if (StringUtils.isBlank(fileSpec.getTarget())) {
                 throw new IllegalArgumentException("The argument 'target' is missing from the upload spec.");
             }
