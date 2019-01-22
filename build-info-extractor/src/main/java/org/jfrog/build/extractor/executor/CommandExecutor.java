@@ -5,7 +5,9 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -16,10 +18,16 @@ import java.util.concurrent.TimeUnit;
 public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private String[] env;
     private String executablePath; // Path to an executable file
 
-    public CommandExecutor(String executablePath) {
+    public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;
+        if (env != null) {
+            Map<String, String> envMap = new HashMap<>(System.getenv());
+            envMap.putAll(env);
+            this.env = envMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        }
     }
 
     /**
@@ -35,7 +43,7 @@ public class CommandExecutor implements Serializable {
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
             CommandResults commandRes = new CommandResults();
-            process = runProcess(execDir, args);
+            process = runProcess(execDir, args, env);
             StreamReader inputStreamReader = new StreamReader(process.getInputStream());
             StreamReader errorStreamReader = new StreamReader(process.getErrorStream());
             service.submit(inputStreamReader);
@@ -72,16 +80,16 @@ public class CommandExecutor implements Serializable {
         return System.getProperty("os.name").toLowerCase().contains("mac");
     }
 
-    private static Process runProcess(File execDir, List<String> args) throws IOException {
+    private static Process runProcess(File execDir, List<String> args, String[] env) throws IOException {
         String strArgs = String.join(" ", args);
         if (isWindows()) {
-            return Runtime.getRuntime().exec(new String[]{"cmd", "/c", strArgs}, null, execDir);
+            return Runtime.getRuntime().exec(new String[]{"cmd", "/c", strArgs}, env, execDir);
         }
         if (isMac()) {
-            return Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", strArgs}, new String[]{"PATH=$PATH:/usr/local/bin"}, execDir);
+            return Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", strArgs}, env, execDir);
         }
         // Linux
-        return Runtime.getRuntime().exec(args.toArray(new String[0]), null, execDir);
+        return Runtime.getRuntime().exec(args.toArray(new String[0]), env, execDir);
     }
 
 }

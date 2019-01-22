@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * Base class for npm install and npm publish commands.
@@ -34,9 +35,9 @@ abstract class NpmCommand implements Serializable {
     Log logger;
     Path path;
 
-    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String repo, Log logger, Path path) {
+    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String repo, Log logger, Path path, Map<String, String> env) {
         this.clientBuilder = clientBuilder;
-        this.npmDriver = new NpmDriver(executablePath);
+        this.npmDriver = new NpmDriver(executablePath, env);
         this.workingDir = Files.isDirectory(path) ? path : path.getParent();
         this.repo = repo;
         this.logger = logger;
