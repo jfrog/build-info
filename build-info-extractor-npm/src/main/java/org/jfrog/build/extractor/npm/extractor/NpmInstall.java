@@ -11,6 +11,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Yahav Itzhak
@@ -26,14 +27,15 @@ public class NpmInstall extends NpmCommand {
      *
      * @param clientBuilder        - Build Info client builder.
      * @param resolutionRepository - The repository it'll resolve from.
-     * @param executablePath       - Npm executable path.
      * @param installArgs          - Npm install args.
+     * @param executablePath       - Npm executable path.
      * @param logger               - The logger.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
+     * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path) {
-        super(clientBuilder, executablePath, resolutionRepository, logger, path);
-        buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, executablePath, logger);
+    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path, Map<String, String> env) {
+        super(clientBuilder, executablePath, resolutionRepository, logger, path, env);
+        buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, npmDriver, logger);
         this.installArgs = StringUtils.isBlank(installArgs) ? new ArrayList<>() : Arrays.asList(installArgs.trim().split("\\s+"));
     }
 

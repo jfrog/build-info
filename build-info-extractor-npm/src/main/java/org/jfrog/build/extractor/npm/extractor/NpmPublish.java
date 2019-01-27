@@ -16,7 +16,6 @@ import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
-import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.util.VersionException;
 
 import java.io.BufferedInputStream;
@@ -26,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Yahav Itzhak
@@ -45,10 +45,10 @@ public class NpmPublish extends NpmCommand {
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository - The repository it'll deploy to.
      * @param logger               - The logger.
+     * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger) {
-        super(clientBuilder, executablePath, deploymentRepository, logger, path);
-        this.npmDriver = new NpmDriver(executablePath);
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, Map<String, String> env) {
+        super(clientBuilder, executablePath, deploymentRepository, logger, path, env);
         this.properties = properties;
     }
 

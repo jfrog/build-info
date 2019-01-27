@@ -44,9 +44,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private Properties npmAuth;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, String executablePath, Log logger) {
+    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.npmDriver = new NpmDriver(executablePath);
+        this.npmDriver = npmDriver;
         this.logger = logger;
     }
 

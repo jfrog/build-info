@@ -10,10 +10,7 @@ import org.jfrog.build.extractor.executor.CommandResults;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -26,8 +23,8 @@ public class NpmDriver implements Serializable {
     private static ObjectReader jsonReader = new ObjectMapper().reader();
     private CommandExecutor commandExecutor;
 
-    public NpmDriver(String executablePath) {
-        this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "npm"));
+    public NpmDriver(String executablePath, Map<String, String> env) {
+        this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "npm"), env);
     }
 
     @SuppressWarnings("unused")
