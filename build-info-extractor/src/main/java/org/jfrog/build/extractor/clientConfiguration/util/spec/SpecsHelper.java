@@ -13,9 +13,9 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
@@ -63,7 +63,6 @@ public class SpecsHelper {
         return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), clientBuilder);
     }
 
-
     /**
      * Upload artifacts according to a given spec, return a list describing the deployed items.
      *
@@ -90,7 +89,7 @@ public class SpecsHelper {
      * @param numberOfThreads Number of concurrent threads to use for handling uploads
      * @param workspace       File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients per the number of passed threads number to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
@@ -100,8 +99,7 @@ public class SpecsHelper {
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        try ( buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder) )
-        {
+        try ( buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder)) {
             // Build the buildInfoClient's
             clients.buildBuildInfoClients();
             // Create producer Runnable
@@ -233,21 +231,20 @@ public class SpecsHelper {
         private ArtifactoryBuildInfoClientBuilder clientBuilder;
         private ArtifactoryBuildInfoClient[] buildInfoClients;
 
-
-        public buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder)
+        private buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder)
         {
             this.clientBuilder = clientBuilder;
             buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
         }
 
-        public void buildBuildInfoClients() {
+        private void buildBuildInfoClients() {
             for (int i = 0; i < buildInfoClients.length; i++) {
                 buildInfoClients[i] = clientBuilder.build();
             }
         }
 
         @Override
-        public void close() throws Exception {
+        public void close() {
             for (ArtifactoryBuildInfoClient client : buildInfoClients) {
                 client.close();
             }
