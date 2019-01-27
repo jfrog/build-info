@@ -27,10 +27,11 @@ public class NpmInstall extends NpmCommand {
      *
      * @param clientBuilder        - Build Info client builder.
      * @param resolutionRepository - The repository it'll resolve from.
-     * @param executablePath       - Npm executable path.
      * @param installArgs          - Npm install args.
+     * @param executablePath       - Npm executable path.
      * @param logger               - The logger.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
+     * @param env                  - Environment variables to use during npm execution.
      */
     public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path, Map<String, String> env) {
         super(clientBuilder, executablePath, resolutionRepository, logger, path, env);

@@ -19,8 +19,12 @@ public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String[] env;
-    private String executablePath; // Path to an executable file
+    private String executablePath;
 
+    /**
+     * @param executablePath - Npm executable path.
+     * @param env            - Environment variables to use during npm execution.
+     */
     public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;
         if (env != null) {
