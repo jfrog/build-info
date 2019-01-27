@@ -22,7 +22,8 @@ import java.util.*;
 
 /**
  * Integration tests for the SpecHelper.
- * Performs tests using the resources provided by IntegrationTestsBase (such as Artifactory, localRepo, and credentials).
+ * Performs tests using the infrastructure resources provided by 'IntegrationTestsBase' (such as Artifactory, localRepo, and credentials),
+ * and the data resources that are prepared by 'testCases'.
  */
 @Test
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
@@ -76,6 +77,12 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         }
     }
 
+    /**
+     * This data provider goes over all cases in "resources/integration/tests/" and creates triplets of upload and download fileSpecs,
+     * and an 'expected' json file that lists all the expected downloaded files.
+     * If the current case is missing a download or upload fileSpec, the corresponding default fileSpec ("resources/integration/default/") is used instead.
+     * The created triplets are then provided to 'integrationTests' for testing.
+     * */
     @DataProvider
     private Object[][] testCases() throws IOException, URISyntaxException {
         ObjectMapper mapper = new ObjectMapper();

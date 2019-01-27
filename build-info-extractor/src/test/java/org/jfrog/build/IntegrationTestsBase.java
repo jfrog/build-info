@@ -30,6 +30,7 @@ import java.util.Properties;
 import static org.testng.Assert.fail;
 
 /**
+ * Prepares the infrastructure resources used by tests.
  * Created by diman on 27/02/2017.
  */
 public abstract class IntegrationTestsBase {

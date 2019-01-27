@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * Integration tests for the ArtifactoryBuildInfoClient.
- * Performs tests using the resources provided by IntegrationTestsBase (such as Artifactory, localRepo, and credentials).
+ * Performs tests using the infrastructure resources provided by IntegrationTestsBase (such as Artifactory, localRepo, and credentials).
  *
  * @author Yahav Itzhak
  */
