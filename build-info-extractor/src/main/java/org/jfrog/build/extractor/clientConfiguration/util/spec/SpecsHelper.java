@@ -98,7 +98,7 @@ public class SpecsHelper {
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        try (buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder)) {
+        try (BuildInfoClientsArray clients = new BuildInfoClientsArray(numberOfThreads, clientBuilder)) {
             // Build the buildInfoClient's
             clients.buildBuildInfoClients();
             // Create producer Runnable
@@ -230,7 +230,7 @@ public class SpecsHelper {
         private ArtifactoryBuildInfoClientBuilder clientBuilder;
         private ArtifactoryBuildInfoClient[] buildInfoClients;
 
-        private buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder) {
+        private BuildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder) {
             this.clientBuilder = clientBuilder;
             this.buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
         }
