@@ -51,12 +51,11 @@ public class SpecsHelper {
      * @param uploadSpec      The required spec represented as String
      * @param workspace       File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
      */
-
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Map<String, String> buildProperties,
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
@@ -70,7 +69,7 @@ public class SpecsHelper {
      * @param uploadSpec      The required spec represented as String
      * @param workspace       File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
@@ -99,7 +98,7 @@ public class SpecsHelper {
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        try ( buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder)) {
+        try (buildInfoClientsArray clients = new buildInfoClientsArray(numberOfThreads, clientBuilder)) {
             // Build the buildInfoClient's
             clients.buildBuildInfoClients();
             // Create producer Runnable
@@ -227,14 +226,13 @@ public class SpecsHelper {
         return result;
     }
 
-    private class buildInfoClientsArray implements AutoCloseable {
+    private class BuildInfoClientsArray implements AutoCloseable {
         private ArtifactoryBuildInfoClientBuilder clientBuilder;
         private ArtifactoryBuildInfoClient[] buildInfoClients;
 
-        private buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder)
-        {
+        private buildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder) {
             this.clientBuilder = clientBuilder;
-            buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
+            this.buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
         }
 
         private void buildBuildInfoClients() {
