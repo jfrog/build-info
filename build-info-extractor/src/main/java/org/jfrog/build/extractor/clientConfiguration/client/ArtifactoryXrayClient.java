@@ -81,7 +81,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         try {
             result = mapper.readTree(content);
             if (result == null) {
-                throw new NullArgumentException("received empty content from Artifactory");
+                throw new NullArgumentException("Received empty content from Artifactory");
             }
         } catch (Exception ex) {
             // Throwing XrayErrorException since the retry-mechanism should not reset the retries-count in such error.
