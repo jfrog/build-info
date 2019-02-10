@@ -165,7 +165,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile group: 'com.google.guava', name: 'guava', 'version': '18.0'
+        compile group: 'com.google.guava', name: 'guava', 'version': '27.0.1-jre'
         compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.10'
 
     }
@@ -264,9 +264,9 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.5'
-        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.16'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
+        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.18'
     }
 }
 
@@ -278,7 +278,7 @@ project('build-info-client') {
             exclude module: "commons-codec"
         }
         compile 'org.apache.httpcomponents:httpcore:4.4.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.5'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
         compile "commons-codec:commons-codec:1.8"
     }
     sourceSets {
