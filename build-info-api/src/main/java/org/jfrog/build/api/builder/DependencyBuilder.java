@@ -37,6 +37,8 @@ public class DependencyBuilder {
     private String sha1;
     private String sha256;
     private String md5;
+    private String localPath;
+    private String remotePath;
     private List<String> requiredBy;
     private Properties properties;
 
@@ -53,6 +55,8 @@ public class DependencyBuilder {
         dependency.setSha1(sha1);
         dependency.setSha256(sha256);
         dependency.setMd5(md5);
+        dependency.setLocalPath(localPath);
+        dependency.setRemotePath(remotePath);
         dependency.setRequiredBy(requiredBy);
         dependency.setProperties(properties);
         return dependency;
@@ -135,6 +139,28 @@ public class DependencyBuilder {
      */
     public DependencyBuilder md5(String md5) {
         this.md5 = md5;
+        return this;
+    }
+
+    /**
+     * Sets the local path of the dependency
+     *
+     * @param localPath Dependency local path
+     * @return Builder instance
+     */
+    public DependencyBuilder localPath(String localPath) {
+        this.localPath = localPath;
+        return this;
+    }
+
+    /**
+     * Sets the remote path of the dependency
+     *
+     * @param remotePath Dependency remote path
+     * @return Builder instance
+     */
+    public DependencyBuilder remotePath(String remotePath) {
+        this.remotePath = remotePath;
         return this;
     }
 

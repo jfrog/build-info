@@ -219,9 +219,15 @@ public class SpecsHelper {
         List<Artifact> result = Lists.newArrayList();
         for (DeployDetails detail : details) {
             String ext = FilenameUtils.getExtension(detail.getFile().getName());
-            Artifact artifact = new ArtifactBuilder(detail.getFile().getName()).md5(detail.getMd5())
-                    .sha1(detail.getSha1()).type(ext).build();
-            result.add(artifact);
+            ArtifactBuilder artifactBuilder = new ArtifactBuilder(detail.getFile().getName());
+            artifactBuilder
+                    .md5(detail.getMd5())
+                    .sha1(detail.getSha1())
+                    .type(ext)
+                    .localPath(detail.getFile().getAbsolutePath())
+                    .remotePath(detail.getTargetRepository() + detail.getArtifactPath())
+                    .build();
+            result.add(artifactBuilder.build());
         }
         return result;
     }
