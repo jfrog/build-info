@@ -1,7 +1,5 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.BuildArtifactsMapping;
 import org.jfrog.build.api.release.Promotion;
@@ -97,7 +95,7 @@ public class PromotionBuilder {
 
     public PromotionBuilder addScope(String scope) {
         if (scopes == null) {
-            scopes = Sets.newHashSet();
+            scopes = new HashSet<>();
         }
         scopes.add(scope);
         return this;
@@ -110,12 +108,12 @@ public class PromotionBuilder {
 
     public PromotionBuilder addProperty(String key, String value) {
         if (properties == null) {
-            properties = Maps.newHashMap();
+            properties = new HashMap<>();
         }
         Collection<String> collection;
 
         if (!properties.containsKey(key)) {
-            collection = Sets.newHashSet();
+            collection = new HashSet<>();
         } else {
             collection = properties.get(key);
         }

@@ -16,7 +16,6 @@
 
 package org.jfrog.build.extractor.maven;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
@@ -271,7 +270,7 @@ public class BuildDeploymentHelper {
 
     private Set<DeployDetails> prepareDeployableArtifacts(Build build,
             Map<String, DeployDetails> deployableArtifactBuilders) {
-        Set<DeployDetails> deployableArtifacts = Sets.newLinkedHashSet();
+        Set<DeployDetails> deployableArtifacts = new LinkedHashSet<>();
         List<Module> modules = build.getModules();
         for (Module module : modules) {
             List<Artifact> artifacts = module.getArtifacts();

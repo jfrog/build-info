@@ -1,6 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -13,6 +12,7 @@ import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -50,7 +50,7 @@ public abstract class TaskHelper {
     protected Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, String publicationName) {
         Project project = getProject();
         if (defaultProps == null) {
-            defaultProps = Maps.newHashMap();
+            defaultProps = new HashMap<>();
             addProps(defaultProps, artifactoryTask.getProperties());
             // Add the publisher properties
             ArtifactoryClientConfiguration.PublisherHandler publisher =
@@ -60,7 +60,7 @@ public abstract class TaskHelper {
             }
         }
 
-        Map<String, String> propsToAdd = Maps.newHashMap(defaultProps);
+        Map<String, String> propsToAdd = new HashMap<>(defaultProps);
         //Apply artifact-specific props from the artifact specs
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration(publicationName)

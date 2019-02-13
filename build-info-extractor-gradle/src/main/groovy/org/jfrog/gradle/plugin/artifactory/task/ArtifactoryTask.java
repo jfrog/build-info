@@ -1,9 +1,7 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
@@ -15,6 +13,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
@@ -30,9 +29,7 @@ import org.jfrog.gradle.plugin.artifactory.task.helper.TaskHelperPublications;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Lior Hasson
@@ -46,7 +43,7 @@ public class ArtifactoryTask extends DefaultTask {
     private boolean evaluated = false;
 
     private static final Logger log = Logging.getLogger(ArtifactoryTask.class);
-    private final Map<String, Boolean> flags = Maps.newHashMap();
+    private final Map<String, Boolean> flags = new HashMap<>();
 
     @InputFile
     @Optional
@@ -58,15 +55,15 @@ public class ArtifactoryTask extends DefaultTask {
 
     @InputFiles
     @Optional
-    public Set<Configuration> publishConfigs = Sets.newHashSet();
+    public Set<Configuration> publishConfigs = new HashSet<>();
 
     @Input
     @Optional
-    public Set<IvyPublication> ivyPublications = Sets.newHashSet();
+    public Set<IvyPublication> ivyPublications = new HashSet<>();
 
     @Input
     @Optional
-    public Set<MavenPublication> mavenPublications = Sets.newHashSet();
+    public Set<MavenPublication> mavenPublications = new HashSet<>();
 
     private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
@@ -145,7 +142,7 @@ public class ArtifactoryTask extends DefaultTask {
         this.addArchivesConfigToTask = addArchivesConfigToTask;
     }
 
-    public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
+    public final Set<GradleDeployDetails> deployDetails = new TreeSet<>();
 
     private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 

@@ -16,9 +16,8 @@
 
 package org.jfrog.build.api.dependency;
 
-import com.google.common.collect.Lists;
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,7 +35,7 @@ public class BuildPatternArtifactsRequest implements Serializable {
     private List<Pattern> patterns;
 
     public BuildPatternArtifactsRequest() {
-        patterns = Lists.newArrayList();
+        patterns = new ArrayList<>();
     }
 
     public BuildPatternArtifactsRequest(String buildName, String buildNumber) {
@@ -78,7 +77,7 @@ public class BuildPatternArtifactsRequest implements Serializable {
 
     public void addPattern(Pattern pattern) {
         if (patterns == null) {
-            patterns = Lists.newArrayList();
+            patterns = new ArrayList<>();
         }
         patterns.add(pattern);
     }

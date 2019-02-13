@@ -16,13 +16,13 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoFields;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
@@ -78,7 +78,7 @@ public class GradleArtifactoryClientConfigUpdater {
         // from inside the gradle script, we do not want to override them by the values sent from
         // the CI server plugin.
         String prefix = BuildInfoProperties.BUILD_INFO_PREFIX;
-        Set<String> excludeIfExist = Sets.newHashSet(prefix + BuildInfoFields.BUILD_NUMBER, prefix + BuildInfoFields.BUILD_NAME, prefix + BuildInfoFields.BUILD_STARTED);
+        Set<String> excludeIfExist = CommonUtils.newHashSet(prefix + BuildInfoFields.BUILD_NUMBER, prefix + BuildInfoFields.BUILD_NAME, prefix + BuildInfoFields.BUILD_STARTED);
         config.fillFromProperties(mergedProps, excludeIfExist);
 
         // After props are set, apply missing project props (not set by CI-plugin generated props)

@@ -16,9 +16,6 @@
 
 package org.jfrog.build.extractor.maven;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
@@ -39,6 +36,7 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -61,6 +59,7 @@ import javax.xml.xpath.XPathFactory;
 import java.io.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
@@ -145,8 +144,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         try {
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
-            deployableArtifactBuilderMap = Maps.newConcurrentMap();
-            matrixParams = Maps.newConcurrentMap();
+            deployableArtifactBuilderMap = new ConcurrentHashMap<>();
+            matrixParams = new ConcurrentHashMap<>();
             Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
             for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
                 String key = matrixParamProp.getKey();
@@ -305,7 +304,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private List<File> getSurefireResultsFile(MavenProject project) {
-        List<File> surefireReports = Lists.newArrayList();
+        List<File> surefireReports = new ArrayList<>();
         File surefireDirectory = new File(new File(project.getFile().getParentFile(), "target"), "surefire-reports");
         String[] xmls;
         try {
@@ -318,7 +317,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         } catch (Exception e) {
             logger.error("Error occurred: " + e.getMessage() + " while retrieving surefire descriptors at: "
                     + surefireDirectory.getAbsolutePath(), e);
-            return Lists.newArrayList();
+            return new ArrayList<>();
         }
         if (xmls != null) {
             for (String xml : xmls) {
@@ -447,7 +446,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void mergeProjectDependencies(Set<Artifact> projectDependencies) {
         // Go over all the artifacts taken from the MavenProject object, and replace their equals method, so that we are
         // able to merge them together with the artifacts inside the resolvedArtifacts set:
-        Set<Artifact> dependecies = Sets.newHashSet();
+        Set<Artifact> dependecies = new HashSet<>();
         for (Artifact artifact : projectDependencies) {
             String classifier = artifact.getClassifier();
             classifier = classifier == null ? "" : classifier;
@@ -464,7 +463,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         // the one that was taken from the MavenProject, because of the scope it has.
         // The merge is done only if the client is configured to do so.
         Set<Artifact> moduleDependencies = currentModuleDependencies.get();
-        Set<Artifact> tempSet = Sets.newHashSet(moduleDependencies);
+        Set<Artifact> tempSet = new HashSet<>(moduleDependencies);
         moduleDependencies.clear();
         moduleDependencies.addAll(dependecies);
         moduleDependencies.addAll(tempSet);
@@ -649,7 +648,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                             dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
             if (StringUtils.isNotBlank(scopes)) {
-                dependencyBuilder.scopes(Sets.newHashSet(scopes));
+                dependencyBuilder.scopes(CommonUtils.newHashSet(scopes));
             }
             setDependencyChecksums(depFile, dependencyBuilder);
             module.addDependency(dependencyBuilder.build());

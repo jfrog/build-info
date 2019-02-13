@@ -16,7 +16,6 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -344,7 +343,7 @@ public class BuildInfoBuilder {
 
     public BuildInfoBuilder addStatus(PromotionStatus promotionStatus) {
         if (statuses == null) {
-            statuses = Lists.newArrayList();
+            statuses = new ArrayList<>();
         }
         statuses.add(promotionStatus);
         return this;
@@ -391,7 +390,7 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder addRunParameters(MatrixParameter parameter) {
         if (runParameters == null) {
-            runParameters = Lists.newArrayList();
+            runParameters = new ArrayList<>();
         }
         runParameters.add(parameter);
 

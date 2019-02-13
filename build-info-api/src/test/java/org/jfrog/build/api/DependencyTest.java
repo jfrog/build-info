@@ -16,16 +16,11 @@
 
 package org.jfrog.build.api;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -59,11 +54,11 @@ public class DependencyTest {
     public void testSetters() {
         String id = "moo";
         String type = "bob";
-        Set<String> scopes = Sets.newHashSet("mitzi");
+        Set<String> scopes = CommonUtils.newHashSet("mitzi");
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        List<String> requiredBy = Lists.newArrayList("pitzi");
+        List<String> requiredBy = Collections.singletonList("pitzi");
 
         Dependency dependency = new Dependency();
         dependency.setId(id);
@@ -93,8 +88,8 @@ public class DependencyTest {
         dependency1.setSha1("111");
         dependency1.setSha256("11111");
         dependency1.setMd5("1111");
-        dependency1.setRequiredBy(Lists.newArrayList("11111"));
-        dependency1.setScopes(Sets.newHashSet("1", "11"));
+        dependency1.setRequiredBy(Collections.singletonList("11111"));
+        dependency1.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency1.setProperties(properties);
 
         Dependency dependency2 = new Dependency();
@@ -103,8 +98,8 @@ public class DependencyTest {
         dependency2.setSha1("111");
         dependency2.setSha256("11111");
         dependency2.setMd5("1111");
-        dependency2.setRequiredBy(Lists.newArrayList("11111"));
-        dependency2.setScopes(Sets.newHashSet("1", "11"));
+        dependency2.setRequiredBy(Collections.singletonList("11111"));
+        dependency2.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency2.setProperties(properties);
 
         Dependency dependency3 = new Dependency();
@@ -113,14 +108,14 @@ public class DependencyTest {
         dependency3.setSha1("333");
         dependency3.setSha256("33333");
         dependency3.setMd5("3333");
-        dependency3.setRequiredBy(Lists.newArrayList("33333"));
-        dependency3.setScopes(Sets.newHashSet("333333", "3333333"));
+        dependency3.setRequiredBy(Collections.singletonList("33333"));
+        dependency3.setScopes(CommonUtils.newHashSet("333333", "3333333"));
         dependency3.setProperties(properties);
 
         Assert.assertEquals(dependency1, dependency2, "Expected equals == true for equivalent artifacts");
         Assert.assertTrue(!dependency1.equals(dependency3), "Expected equals == false for non-equivalent artifacts");
 
-        HashMap<Dependency, String> testMap = Maps.newHashMap();
+        HashMap<Dependency, String> testMap = new HashMap<>();
         testMap.put(dependency1, "1");
         testMap.put(dependency2, "2");
         Assert.assertEquals(testMap.size(), 1, "Expected same hashcode for equal artifacts");

@@ -16,11 +16,10 @@
 
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Maps;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 
 import java.io.UnsupportedEncodingException;
@@ -47,12 +46,7 @@ public abstract class DeploymentUrlUtils {
      */
     public static String getDeploymentUrl(String artifactoryUrl, Properties properties)
             throws UnsupportedEncodingException {
-        Map<Object, Object> filteredProperties = Maps.filterKeys(properties, new Predicate<Object>() {
-            public boolean apply(Object input) {
-                String inputKey = (String) input;
-                return inputKey.startsWith(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-            }
-        });
+        Map<Object, Object> filteredProperties = CommonUtils.filterMapKeys(properties, input -> ((String) input).startsWith(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX));
         StringBuilder deploymentUrl = new StringBuilder(artifactoryUrl);
         Set<Map.Entry<Object, Object>> propertyEntries = filteredProperties.entrySet();
         for (Map.Entry<Object, Object> propertyEntry : propertyEntries) {

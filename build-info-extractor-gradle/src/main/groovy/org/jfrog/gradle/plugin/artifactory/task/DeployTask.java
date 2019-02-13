@@ -1,6 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -75,7 +74,7 @@ public class DeployTask extends DefaultTask {
         GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
                 accRoot, getProject().getRootProject());
 
-        Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
+        Set<GradleDeployDetails> allDeployDetails = new TreeSet<>();
         List<ArtifactoryTask> orderedTasks = findArtifactoryPublishTasks(getProject().getGradle().getTaskGraph());
         for (ArtifactoryTask artifactoryTask : orderedTasks) {
             if (artifactoryTask.getDidWork()) {
@@ -217,7 +216,7 @@ public class DeployTask extends DefaultTask {
 
     private void exportDeployableArtifacts(Set<GradleDeployDetails> allDeployDetails, File toFile) throws IOException {
         log.debug("Exporting deployable artifacts to '{}'", toFile.getAbsolutePath());
-        Set<DeployDetails> deploySet = Sets.newLinkedHashSet();
+        Set<DeployDetails> deploySet = new LinkedHashSet<>();
         for (GradleDeployDetails details : allDeployDetails) {
             deploySet.add(details.getDeployDetails());
         }

@@ -1,4 +1,4 @@
-<ivy-module version="1.0" xmlns:e="http://ant.apache.org/ivy/extra">
+<ivy-module version="1.0">
     <info organisation="org.jfrog.buildinfo" module="build-info-extractor-ivy" revision="1.0"/>
     <dependencies>
         <dependency org="org.jfrog.buildinfo" name="build-info-api" rev="1.4.0" changing="false"/>

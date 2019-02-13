@@ -16,8 +16,7 @@
 
 package org.jfrog.build.extractor.maven.transformer;
 
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.maven.reader.ModuleName;
 import org.testng.annotations.Test;
 
@@ -45,7 +44,7 @@ public class PomTransformerTest {
     @Test
     public void transformSimplePom() throws Exception {
         File pomFile = getResourceAsFile("/poms/parentonly/pom.xml");
-        HashMap<ModuleName, String> modules = Maps.newHashMap();
+        HashMap<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test", "parent"), "2.2");
 
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "").transform(pomFile);
@@ -60,7 +59,7 @@ public class PomTransformerTest {
     @Test
     public void transformMultiPom() throws Exception {
         File pomFile = getResourceAsFile("/poms/multi/pom.xml");
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        Map<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test.nested", "nested1"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "nested2"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "two"), "3.6");
@@ -77,7 +76,7 @@ public class PomTransformerTest {
     @Test
     public void transformGitScm() throws Exception {
         File pomFile = getResourceAsFile("/poms/scm/git/pom.xml");
-        HashMap<ModuleName, String> modules = Maps.newHashMap();
+        HashMap<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test", "parent"), "1");
 
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, null).transform(pomFile);
@@ -90,7 +89,7 @@ public class PomTransformerTest {
     @Test
     public void transformSvnScm() throws Exception {
         File pomFile = getResourceAsFile("/poms/scm/svn/pom.xml");
-        HashMap<ModuleName, String> modules = Maps.newHashMap();
+        HashMap<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test", "parent"), "1");
 
         new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules,
@@ -125,7 +124,7 @@ public class PomTransformerTest {
     @Test
     public void snapshotsInParent() throws Exception {
         File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshot-parent.xml");
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        Map<ModuleName, String> modules = new HashMap<>();
         try {
             new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "", true).transform(pomFile);
             fail("Pom contains snapshot in the parent and should fail");
@@ -139,7 +138,7 @@ public class PomTransformerTest {
     @Test
     public void snapshotsInDependenciesManagement() throws Exception {
         File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshots-in-dep-management.xml");
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        Map<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test.nested", "nested1"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "nested2"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "four"), "3.6");
@@ -157,7 +156,7 @@ public class PomTransformerTest {
     @Test
     public void snapshotsInDependencies() throws Exception {
         File pomFile = getResourceAsFile("/poms/snapshots/pom-snapshots-in-dependencies.xml");
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        Map<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test.nested", "nested1"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "nested2"), "3.6");
         modules.put(new ModuleName("org.jfrog.test.nested", "four"), "3.6");
@@ -209,19 +208,19 @@ public class PomTransformerTest {
 
     private String transformPomWithEol(String eol) throws IOException {
         File file = File.createTempFile("temp", "pom");
-        Files.write(getPomContent(eol), file, Charset.defaultCharset());
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        CommonUtils.writeByCharset(getPomContent(eol), file, Charset.defaultCharset());
+        Map<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("group", "artifact"), "112");
         new PomTransformer(new ModuleName("group", "artifact"), modules, "").transform(file);
         return getFileAsString(file);
     }
 
     private String getFileAsString(File file) throws IOException {
-        return Files.toString(file, Charset.defaultCharset());
+        return CommonUtils.readByCharset(file, Charset.defaultCharset());
     }
 
     private String snapshotModule(File pomFile, String moduleVersion) throws Exception {
-        Map<ModuleName, String> modules = Maps.newHashMap();
+        Map<ModuleName, String> modules = new HashMap<>();
         modules.put(new ModuleName("org.jfrog.test", "one"), moduleVersion);
         try {
             new PomTransformer(new ModuleName("org.jfrog.test", "one"), modules, "", true).transform(pomFile);

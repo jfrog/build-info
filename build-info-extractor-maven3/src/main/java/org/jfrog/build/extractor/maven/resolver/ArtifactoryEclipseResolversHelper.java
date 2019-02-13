@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
@@ -13,6 +12,7 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -102,7 +102,7 @@ public class ArtifactoryEclipseResolversHelper {
                 releaseRepository = builder.build();
             }
 
-            List<RemoteRepository> tempRepositories = Lists.newArrayList();
+            List<RemoteRepository> tempRepositories = new ArrayList<>();
             if (releaseRepository != null) {
                 tempRepositories.add(releaseRepository);
             }

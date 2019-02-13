@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Issue;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -14,7 +14,7 @@ import java.util.Set;
 public class IssuesTrackerUtils {
 
     public static Set<Issue> getAffectedIssuesSet(String affectedIssues) {
-        Set<Issue> affectedIssuesSet = Sets.newHashSet();
+        Set<Issue> affectedIssuesSet = new HashSet<>();
         if (StringUtils.isNotBlank(affectedIssues)) {
             String[] issuePairs = affectedIssues.split(",");
             for (String pair : issuePairs) {

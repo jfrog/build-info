@@ -1,8 +1,7 @@
 package org.jfrog.build.api;
 
-import com.google.common.collect.Sets;
-
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -29,7 +28,7 @@ public class Issues implements Serializable {
 
     public void addIssue(Issue issue) {
         if (affectedIssues == null) {
-            affectedIssues = Sets.newHashSet();
+            affectedIssues = new HashSet<>();
         }
         affectedIssues.add(issue);
     }

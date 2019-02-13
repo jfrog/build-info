@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
@@ -24,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -136,9 +136,9 @@ public class NpmPublish extends NpmCommand {
     }
 
     private Build createBuild() {
-        List<Artifact> artifactList = Lists.newArrayList(deployedArtifact);
+        List<Artifact> artifactList = Collections.singletonList(deployedArtifact);
         Module module = new ModuleBuilder().id(npmPackageInfo.toString()).artifacts(artifactList).build();
-        List<Module> modules = Lists.newArrayList(module);
+        List<Module> modules = Collections.singletonList(module);
         Build build = new Build();
         build.setModules(modules);
         return build;

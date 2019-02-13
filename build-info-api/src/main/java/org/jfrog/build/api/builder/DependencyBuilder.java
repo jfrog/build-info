@@ -16,13 +16,9 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.Dependency;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A builder for the dependency class
@@ -157,7 +153,7 @@ public class DependencyBuilder {
      */
     public DependencyBuilder addRequiredBy(String requiredBy) {
         if (this.requiredBy == null) {
-            this.requiredBy = Lists.newArrayList();
+            this.requiredBy = new ArrayList<>();
         }
         this.requiredBy.add(requiredBy);
         return this;

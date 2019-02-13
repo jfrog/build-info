@@ -16,13 +16,13 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -79,9 +79,9 @@ public class BuildInfoBuilderTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        List<Module> modules = Lists.newArrayList();
+        List<Module> modules = new ArrayList<>();
         Properties properties = new Properties();
-        List<MatrixParameter> runParameters = Lists.newArrayList();
+        List<MatrixParameter> runParameters = new ArrayList<>();
 
         Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
                 .agent(agent).durationMillis(durationMillis).principal(principal)

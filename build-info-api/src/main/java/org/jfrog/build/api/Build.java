@@ -15,12 +15,12 @@
  */
 package org.jfrog.build.api;
 
-import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -498,7 +498,7 @@ public class Build extends BaseBuildBean {
 
     public void addStatus(PromotionStatus promotionStatus) {
         if (statuses == null) {
-            statuses = Lists.newArrayList();
+            statuses = new ArrayList<>();
         }
 
         statuses.add(promotionStatus);
@@ -529,7 +529,7 @@ public class Build extends BaseBuildBean {
      */
     public void addBuildDependency(BuildDependency buildDependency) {
         if (buildDependencies == null) {
-            buildDependencies = Lists.newArrayList();
+            buildDependencies = new ArrayList<>();
         }
         buildDependencies.add(buildDependency);
     }

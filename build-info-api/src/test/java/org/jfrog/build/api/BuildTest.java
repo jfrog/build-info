@@ -16,23 +16,18 @@
 
 package org.jfrog.build.api;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
-import static com.google.common.collect.Iterables.getLast;
-import static com.google.common.collect.Iterables.getOnlyElement;
 import static org.jfrog.build.api.BuildType.GRADLE;
 import static org.testng.Assert.*;
 
@@ -84,8 +79,8 @@ public class BuildTest {
         String parentName = "pooh";
         String parentNumber = "5";
         String vcsRevision = "2421";
-        List<Module> modules = Lists.newArrayList();
-        List<PromotionStatus> statuses = Lists.newArrayList();
+        List<Module> modules = new ArrayList<>();
+        List<PromotionStatus> statuses = new ArrayList<>();
         List<BuildDependency> buildDependencies = Arrays.asList(
                 new BuildDependencyBuilder().name("foo").number("123").startedDate(new Date()).build(),
                 new BuildDependencyBuilder().name("bar").number("456").startedDate(new Date()).build()
@@ -179,12 +174,12 @@ public class BuildTest {
         build.addBuildDependency(buildDependency);
 
         assertFalse(build.getBuildDependencies().isEmpty(), "BuildDependency object should have been added.");
-        assertEquals(getOnlyElement(build.getBuildDependencies()), buildDependency, "Unexpected build dependency object.");
+        assertEquals(CommonUtils.getOnlyElement(build.getBuildDependencies()), buildDependency, "Unexpected build dependency object.");
 
         BuildDependency otherBuildDependency = new BuildDependencyBuilder().name("bar").number("456").startedDate(new Date()).build();
         build.addBuildDependency(otherBuildDependency);
 
         assertEquals(build.getBuildDependencies().size(), 2, "Second BuildDependency object should have been added.");
-        assertEquals(getLast(build.getBuildDependencies()), otherBuildDependency, "Unexpected build dependency object.");
+        assertEquals(CommonUtils.getLast(build.getBuildDependencies()), otherBuildDependency, "Unexpected build dependency object.");
     }
 }

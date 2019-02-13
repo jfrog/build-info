@@ -16,10 +16,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -33,6 +29,7 @@ import org.gradle.api.tasks.TaskState;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -49,9 +46,9 @@ import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
-import static com.google.common.collect.Iterables.*;
-import static com.google.common.collect.Lists.newArrayList;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
@@ -285,10 +282,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                 Iterable<GradleDeployDetails> deployExcludeDetails = null;
                 Iterable<GradleDeployDetails> deployIncludeDetails = null;
                 if (excludeArtifactsFromBuild) {
-                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
-                    deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
+                    deployIncludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
+                    deployExcludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
                 } else {
-                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
+                    deployIncludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new ProjectPredicate(project));
                     deployExcludeDetails = new ArrayList<GradleDeployDetails>();
                 }
                 builder.artifacts(calculateArtifacts(deployIncludeDetails))
@@ -304,7 +301,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     }
 
     private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) throws Exception {
-        List<Artifact> artifacts = newArrayList(transform(deployDetails, new Function<GradleDeployDetails, Artifact>() {
+        Function function = new Function<GradleDeployDetails, Artifact>() {
             public Artifact apply(GradleDeployDetails from) {
                 PublishArtifactInfo publishArtifact = from.getPublishArtifact();
                 DeployDetails deployDetails = from.getDeployDetails();
@@ -315,13 +312,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                                 publishArtifact.getClassifier(), publishArtifact.getExtension()))
                         .md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
             }
-        }));
-        return artifacts;
+        };
+        return CommonUtils.transformList(deployDetails, function);
     }
 
     private List<Dependency> calculateDependencies(Project project) throws Exception {
         Set<Configuration> configurationSet = project.getConfigurations();
-        List<Dependency> dependencies = newArrayList();
+        List<Dependency> dependencies = new ArrayList<>();
         for (Configuration configuration : configurationSet) {
             if (configuration.getState() != Configuration.State.RESOLVED) {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
@@ -335,14 +332,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                     ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
                     final String depId = getModuleIdString(id.getGroup(),
                             id.getName(), id.getVersion());
-                    Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
-                        public boolean apply(@Nullable Dependency input) {
-                            return input.getId().equals(depId);
-                        }
-                    };
                     // if it's already in the dependencies list just add the current scope
-                    if (any(dependencies, idEqualsPredicate)) {
-                        Dependency existingDependency = find(dependencies, idEqualsPredicate);
+                    Dependency existingDependency = CommonUtils.findFirstSatisfying(dependencies, input -> input.getId().equals(depId), null);
+                    if (existingDependency != null) {
                         Set<String> existingScopes = existingDependency.getScopes();
                         existingScopes.add(configuration.getName());
                         existingDependency.setScopes(existingScopes);
@@ -351,7 +343,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                                 .type(getTypeString(artifact.getType(),
                                         artifact.getClassifier(), artifact.getExtension()))
                                 .id(depId)
-                                .scopes(Sets.newHashSet(configuration.getName()));
+                                .scopes(CommonUtils.newHashSet(configuration.getName()));
                         if (file.isFile()) {
                             // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
                             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
@@ -372,7 +364,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             this.project = project;
         }
 
-        public boolean apply(@Nullable GradleDeployDetails input) {
+        public boolean test(@Nullable GradleDeployDetails input) {
             return input.getProject().equals(project);
         }
     }
@@ -388,7 +380,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             include = isInclude;
         }
 
-        public boolean apply(@Nullable GradleDeployDetails input) {
+        public boolean test(@Nullable GradleDeployDetails input) {
             if (include) {
                 return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
             } else {

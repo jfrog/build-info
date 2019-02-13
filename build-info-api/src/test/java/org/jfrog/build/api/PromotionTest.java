@@ -1,7 +1,5 @@
 package org.jfrog.build.api;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.BuildArtifactsMapping;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
@@ -34,8 +32,8 @@ public class PromotionTest {
     }
 
     public void testConstructor() {
-        Set<String> scopes = Sets.newHashSet();
-        Map<String, Collection<String>> properties = Maps.newHashMap();
+        Set<String> scopes = new HashSet<>();
+        Map<String, Collection<String>> properties = new HashMap<>();
         BuildArtifactsMapping mapping = createMapping();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
@@ -60,8 +58,8 @@ public class PromotionTest {
     }
 
     public void testSetters() {
-        Set<String> scopes = Sets.newHashSet();
-        Map<String, Collection<String>> properties = Maps.newHashMap();
+        Set<String> scopes = new HashSet<>();
+        Map<String, Collection<String>> properties = new HashMap<>();
         BuildArtifactsMapping mapping = createMapping();
 
         Promotion promotion = new Promotion();

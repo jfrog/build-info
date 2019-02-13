@@ -23,24 +23,23 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import com.google.common.base.Charsets;
-import com.google.common.base.Predicate;
-import com.google.common.collect.Maps;
-import com.google.common.io.Files;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Predicate;
 
 /**
  * @author Noam Y. Tenne
@@ -92,17 +91,13 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static Map<String, ?> filterStringEntries(Map<String, ?> map) {
-        return Maps.filterValues(map, new Predicate<Object>() {
-            public boolean apply(Object input) {
-                return input != null && input instanceof String;
-            }
-        });
+        return CommonUtils.filterMapValues(map, value -> value instanceof String);
     }
 
     public static Properties filterDynamicProperties(Properties source, Predicate<Object> filter) {
         Properties properties = new Properties();
         if (source != null) {
-            properties.putAll(Maps.filterKeys(source, filter));
+            properties.putAll(CommonUtils.filterMapKeys(source, filter));
         }
         return properties;
     }
@@ -142,7 +137,8 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         Map<String, String> sysProps = new HashMap(System.getProperties());
-        Map<String, String> filteredSysProps = Maps.difference(sysProps, System.getenv()).entriesOnlyOnLeft();
+        // Filter map to include entries with keys only in System Properties:
+        Map<String, String> filteredSysProps = CommonUtils.entriesOnlyOnLeftMap(sysProps, System.getenv());
         for (Map.Entry<String, String> entry : filteredSysProps.entrySet()) {
             String varKey = entry.getKey();
             if (PatternMatcher.pathConflicts(varKey, patterns)) {
@@ -229,7 +225,7 @@ public abstract class BuildInfoExtractorUtils {
         if (!toFile.exists()) {
             toFile.createNewFile();
         }
-        Files.write(buildInfoJson, toFile, Charsets.UTF_8);
+        CommonUtils.writeByCharset(buildInfoJson, toFile, StandardCharsets.UTF_8);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
@@ -306,7 +302,7 @@ public abstract class BuildInfoExtractorUtils {
             this.prefix = prefix;
         }
 
-        public boolean apply(Object o) {
+        public boolean test(Object o) {
             return o != null && ((String) o).startsWith(prefix);
         }
     }

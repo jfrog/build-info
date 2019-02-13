@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -28,10 +26,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class for downloading dependencies
@@ -80,7 +75,7 @@ public class DependenciesDownloaderHelper {
     public List<Dependency> downloadDependencies(Spec downloadSpec) throws IOException {
         AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, "", log);
         WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, "", log);
-        List<Dependency> resolvedDependencies = Lists.newArrayList();
+        List<Dependency> resolvedDependencies = new ArrayList<>();
         new DownloadSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
@@ -142,8 +137,8 @@ public class DependenciesDownloaderHelper {
     }
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
-        List<Dependency> dependencies = Lists.newArrayList();
-        Set<DownloadableArtifact> downloadedArtifacts = Sets.newHashSet();
+        List<Dependency> dependencies = new ArrayList<>();
+        Set<DownloadableArtifact> downloadedArtifacts = new HashSet<>();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             Dependency dependency = downloadArtifact(downloadableArtifact);
             if (dependency != null) {
@@ -191,7 +186,7 @@ public class DependenciesDownloaderHelper {
                 if (downloader.getClient().isArtifactoryOSS()) {
                     throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
                 }
-                List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
+                List<BuildPatternArtifactsRequest> artifactsRequest = new ArrayList<>();
                 artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
                 List<BuildPatternArtifacts> artifactsResponses =
                         downloader.getClient().retrievePatternArtifacts(artifactsRequest);
@@ -217,8 +212,8 @@ public class DependenciesDownloaderHelper {
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
-        Set<String> forDeletionFiles = Sets.newHashSet();
-        Set<String> allResolvesFiles = Sets.newHashSet();
+        Set<String> forDeletionFiles = new HashSet<>();
+        Set<String> allResolvesFiles = new HashSet<>();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
                     downloadableArtifact.getRelativeDirPath());

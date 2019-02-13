@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -202,7 +201,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
      * Converts the found results to DownloadableArtifact types before downloading.
      */
     private Set<DownloadableArtifact> fetchDownloadableArtifactsFromResult(List<AqlSearchResult.SearchEntry> searchResults, boolean explode) {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
             String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
             DownloadableArtifact downloadableArtifact = new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" +

@@ -1,9 +1,5 @@
 package org.jfrog.build.extractor.trigger;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.ant.IvyTask;
 import org.apache.ivy.core.IvyContext;
@@ -27,6 +23,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -36,6 +33,7 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.util.IvyResolverHelper;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -101,7 +99,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
         project.log("[buildinfo:collect] Collecting dependencies for " + module.getId(), Project.MSG_INFO);
         if (module.getDependencies() == null || module.getDependencies().isEmpty()) {
             String[] configurations = report.getConfigurations();
-            List<Dependency> moduleDependencies = Lists.newArrayList();
+            List<Dependency> moduleDependencies = new ArrayList<>();
             for (String configuration : configurations) {
                 project.log("[buildinfo:collect] Configuration: " + configuration + " Dependencies", Project.MSG_DEBUG);
                 ConfigurationResolveReport configurationReport = report.getConfigurationReport(configuration);
@@ -115,7 +113,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
                     Dependency dependency = findDependencyInList(id, type, moduleDependencies);
                     if (dependency == null) {
                         DependencyBuilder dependencyBuilder = new DependencyBuilder();
-                        dependencyBuilder.type(type).scopes(Sets.newHashSet(configuration));
+                        dependencyBuilder.type(type).scopes(CommonUtils.newHashSet(configuration));
                         String idString = getModuleIdString(id.getOrganisation(),
                                 id.getName(), id.getRevision());
                         dependencyBuilder.id(idString);
@@ -168,11 +166,11 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
         Module module = getOrCreateModule(map);
         List<Artifact> artifacts = module.getArtifacts();
         if (artifacts == null) {
-            module.setArtifacts(Lists.<Artifact>newArrayList());
+            module.setArtifacts(new ArrayList<>());
         }
         List<Artifact> excludedArtifacts = module.getExcludedArtifacts();
         if (excludedArtifacts == null) {
-            module.setExcludedArtifacts(Lists.<Artifact>newArrayList());
+            module.setExcludedArtifacts(new ArrayList<>());
         }
 
         final org.apache.ivy.core.module.descriptor.Artifact pubArtifact = ((PublishEvent) event).getArtifact();
@@ -281,19 +279,11 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
 
     private Dependency findDependencyInList(final ModuleRevisionId id, final String type, List<Dependency> moduleDependencies) {
         final String idToFind = getModuleIdString(id.getOrganisation(), id.getName(), "");
-        return Iterables.find(moduleDependencies, new Predicate<Dependency>() {
-            public boolean apply(Dependency input) {
-                return input.getId().startsWith(idToFind) && input.getType().equals(type);
-            }
-        }, null);
+        return CommonUtils.findFirstSatisfying(moduleDependencies, input -> input.getId().startsWith(idToFind) && input.getType().equals(type), null);
     }
 
     private Module findModule(List<Module> modules, final String moduleKey) {
-        return Iterables.find(modules, new Predicate<Module>() {
-            public boolean apply(Module input) {
-                return input.getId().startsWith(moduleKey);
-            }
-        }, null);
+        return CommonUtils.findFirstSatisfying(modules, input -> input.getId().startsWith(moduleKey), null);
     }
 
     private Module getOrCreateModule(Map<String, String> attributes) {
@@ -314,11 +304,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
     }
 
     private boolean isArtifactExist(List<Artifact> artifacts, final String artifactName) {
-        return Iterables.any(artifacts, new Predicate<Artifact>() {
-            public boolean apply(Artifact input) {
-                return input.getName().equals(artifactName);
-            }
-        });
+        return CommonUtils.isAnySatisfying(artifacts, input -> input.getName().equals(artifactName));
     }
 }
 

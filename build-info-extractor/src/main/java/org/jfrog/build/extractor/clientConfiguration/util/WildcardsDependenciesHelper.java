@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -166,7 +165,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         if (excludePatterns == null) {
             return "";
         }
-        List<PathFilePair> excludePairs = Lists.newArrayList();
+        List<PathFilePair> excludePairs = new ArrayList<>();
         for (String excludePattern : excludePatterns) {
             excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
         }
