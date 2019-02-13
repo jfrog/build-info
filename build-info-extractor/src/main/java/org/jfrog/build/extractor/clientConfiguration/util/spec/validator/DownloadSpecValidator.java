@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec.validator;
 
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 
@@ -16,6 +17,13 @@ public class DownloadSpecValidator extends SpecsValidator {
             throw new IllegalArgumentException("Spec must contain at least one fileSpec.");
         }
         for (FileSpec fileSpec : spec.getFiles()) {
+            boolean isAql = StringUtils.isNotBlank(fileSpec.getAql());
+            boolean isPattern = StringUtils.isNotBlank(fileSpec.getPattern());
+            boolean isBuild = StringUtils.isNotBlank(fileSpec.getBuild());
+
+            if (!isAql && !isPattern && !isBuild) {
+                throw new IllegalArgumentException("Download Spec must contain AQL or Pattern, and/or Build keys.");
+            }
             validateQueryInputs(fileSpec);
         }
     }

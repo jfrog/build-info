@@ -165,7 +165,7 @@ configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
     dependencies {
-        compile group: 'com.google.guava', name: 'guava', 'version': '18.0'
+        compile group: 'com.google.guava', name: 'guava', 'version': '27.0.1-jre'
         compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.10'
 
     }
@@ -204,7 +204,7 @@ configure(extractorProjects()) {
         } else {
             uberJar project(':build-info-extractor')
         }
-        tools group: 'com.tonicsystems.jarjar', name: 'jarjar-plugin', version: '1.0'
+        tools group: 'com.googlecode.jarjar', name: 'jarjar', version: '1.3'
     }
 
     task jarAll(type: Jar) {
@@ -264,9 +264,9 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.5'
-        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.16'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
+        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.18'
     }
 }
 
@@ -278,7 +278,7 @@ project('build-info-client') {
             exclude module: "commons-codec"
         }
         compile 'org.apache.httpcomponents:httpcore:4.4.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.5'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
         compile "commons-codec:commons-codec:1.8"
     }
     sourceSets {
@@ -411,6 +411,15 @@ project('build-info-extractor-maven3') {
     }
 }
 
+project('build-info-extractor-npm') {
+    description = 'JFrog Build-Info npm Extractor'
+
+    dependencies {
+        testCompile project(':build-info-extractor').sourceSets.test.output
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
+}
+
 if (!excludeMavenPluginBuild) {
     project('artifactory-maven-plugin') {
         Project p ->
@@ -510,8 +519,8 @@ if (!excludeMavenPluginBuild) {
 
 idea {
     project {
-        jdkName = '1.7'
-        languageLevel = '1.7'
+        jdkName = '1.8'
+        languageLevel = '1.8'
         wildcards += '?*.gradle'
         idea.project.ipr {
             withXml { provider ->

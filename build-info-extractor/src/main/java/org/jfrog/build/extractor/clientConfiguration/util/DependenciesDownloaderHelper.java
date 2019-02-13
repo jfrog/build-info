@@ -25,9 +25,13 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
 
 import java.io.*;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Helper class for downloading dependencies
@@ -77,33 +81,48 @@ public class DependenciesDownloaderHelper {
         AqlDependenciesHelper aqlHelper = new AqlDependenciesHelper(downloader, "", log);
         WildcardsDependenciesHelper wildcardHelper = new WildcardsDependenciesHelper(downloader, "", log);
         List<Dependency> resolvedDependencies = Lists.newArrayList();
+        new DownloadSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
-            validateFileSpec(file);
-            String buildName = getBuildName(file.getBuild());
-            String buildNumber = getBuildNumber(buildName, file.getBuild());
-            if (StringUtils.isNotBlank(buildName) && StringUtils.isBlank(buildNumber)) {
-                return resolvedDependencies;
-            }
-            if (file.getPattern() != null) {
-                wildcardHelper.setTarget(file.getTarget());
-                wildcardHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
-                wildcardHelper.setRecursive(!"false".equalsIgnoreCase(file.getRecursive()));
-                wildcardHelper.setProps(file.getProps());
-                wildcardHelper.setBuildName(buildName);
-                wildcardHelper.setBuildNumber(buildNumber);
-                log.info(String.format("Downloading artifacts using pattern: %s%s", file.getPattern(), SpecsHelper.getExcludePatternsLogStr(file.getExcludePatterns())));
-                resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), file.getExcludePatterns(), Boolean.valueOf(file.getExplode())));
-            } else if (file.getAql() != null) {
-                aqlHelper.setTarget(file.getTarget());
-                aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
-                aqlHelper.setBuildName(buildName);
-                aqlHelper.setBuildNumber(buildNumber);
-                resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), null, Boolean.valueOf(file.getExplode())));
+            switch(file.getSpecType()) {
+                case PATTERN: {
+                    setWildcardHelperProperties(wildcardHelper,file);
+                    log.info(String.format("Downloading artifacts using pattern: %s%s", file.getPattern(), SpecsHelper.getExcludePatternsLogStr(file.getExcludePatterns())));
+                    resolvedDependencies.addAll(wildcardHelper.retrievePublishedDependencies(file.getPattern(), file.getExcludePatterns(), Boolean.valueOf(file.getExplode())));
+                    break;
+                }
+                case BUILD: {
+                    setAqlHelperProperties(aqlHelper,file);
+                    resolvedDependencies.addAll(aqlHelper.retrievePublishedDependenciesByBuildOnly(Boolean.valueOf(file.getExplode())));
+                    break;
+                }
+                case AQL: {
+                    setAqlHelperProperties(aqlHelper,file);
+                    resolvedDependencies.addAll(aqlHelper.retrievePublishedDependencies(file.getAql(), null, Boolean.valueOf(file.getExplode())));
+                    break;
+                }
             }
         }
         return resolvedDependencies;
+    }
+
+    private void setWildcardHelperProperties(WildcardsDependenciesHelper wildcardHelper, FileSpec file) throws IOException{
+        wildcardHelper.setTarget(file.getTarget());
+        wildcardHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
+        wildcardHelper.setRecursive(!"false".equalsIgnoreCase(file.getRecursive()));
+        wildcardHelper.setProps(file.getProps());
+        String buildName = getBuildName(file.getBuild());
+        wildcardHelper.setBuildName(buildName);
+        wildcardHelper.setBuildNumber(getBuildNumber(buildName, file.getBuild()));
+    }
+
+    private void setAqlHelperProperties(AqlDependenciesHelper aqlHelper, FileSpec file) throws IOException{
+        aqlHelper.setTarget(file.getTarget());
+        aqlHelper.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
+        String buildName = getBuildName(file.getBuild());
+        aqlHelper.setBuildName(buildName);
+        aqlHelper.setBuildNumber(getBuildNumber(buildName, file.getBuild()));
     }
 
     private String getBuildName(String build) {
@@ -195,12 +214,6 @@ public class DependenciesDownloaderHelper {
         }
         sb.append(" could not be found.");
         log.warn(sb.toString());
-    }
-
-    private void validateFileSpec(FileSpec file) throws IOException {
-        if (file.getPattern() != null && file.getAql() != null) {
-            throw new InputMismatchException("Spec can include either the 'aql' or 'pattern' properties, but not both.");
-        }
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {

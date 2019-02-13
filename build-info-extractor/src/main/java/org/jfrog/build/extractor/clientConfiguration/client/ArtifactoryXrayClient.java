@@ -3,6 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
@@ -74,7 +76,17 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         }
 
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode result = mapper.readTree(response.getEntity().getContent());
+        String content = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+        JsonNode result;
+        try {
+            result = mapper.readTree(content);
+            if (result == null) {
+                throw new NullArgumentException("Received empty content from Artifactory");
+            }
+        } catch (Exception ex) {
+            // Throwing XrayErrorException since the retry-mechanism should not reset the retries-count in such error.
+            throw new XrayErrorException(String.format("Failed processing scan response: %s\n%s", ex.toString(), content));
+        }
         if (result.get("errors") != null) {
             String resultStr = result.get("errors").toString();
             for (JsonNode error : result.get("errors")) {

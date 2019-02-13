@@ -30,6 +30,7 @@ import java.util.Properties;
 import static org.testng.Assert.fail;
 
 /**
+ * Prepares the infrastructure resources used by tests.
  * Created by diman on 27/02/2017.
  */
 public abstract class IntegrationTestsBase {
@@ -38,6 +39,7 @@ public abstract class IntegrationTestsBase {
     private String password;
     private String url;
     protected String localRepo = "build-info-tests-local";
+    protected String remoteRepo;
     protected String virtualRepo = "build-info-tests-virtual";
     protected ArtifactoryBuildInfoClient buildInfoClient;
     protected ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
@@ -77,6 +79,9 @@ public abstract class IntegrationTestsBase {
         dependenciesClient = createDependenciesClient();
 
         createTestRepo(localRepo);
+        if (StringUtils.isNotBlank(remoteRepo)) {
+            createTestRepo(remoteRepo);
+        }
         createTestRepo(virtualRepo);
     }
 
@@ -84,6 +89,9 @@ public abstract class IntegrationTestsBase {
     protected void terminate() throws IOException {
         // Delete the virtual first.
         deleteTestRepo(virtualRepo);
+        if (StringUtils.isNotBlank(remoteRepo)) {
+            deleteTestRepo(remoteRepo);
+        }
         deleteTestRepo(localRepo);
         preemptiveHttpClient.close();
         buildInfoClient.close();
@@ -216,8 +224,16 @@ public abstract class IntegrationTestsBase {
         return this.username;
     }
 
+    protected String getPassword() {
+        return password;
+    }
+
     protected String getUrl() {
         return this.url;
+    }
+
+    public static Log getLog() {
+        return log;
     }
 
     private ArtifactoryBuildInfoClient createBuildInfoClient() {

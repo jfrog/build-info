@@ -36,6 +36,7 @@ import java.util.Set;
  */
 public class SpecsHelper {
 
+    private static final int DEFAULT_NUMBER_OF_THREADS = 3; // default number of threads for file spec uploads
     private final Log log;
 
     public SpecsHelper(Log log) {
@@ -44,11 +45,31 @@ public class SpecsHelper {
 
     /**
      * Upload artifacts according to a given spec, return a list describing the deployed items.
+     * Retains compatibility with other plugins using file specs
+     * with default number of concurrent upload threads
      *
-     * @param uploadSpec The required spec represented as String
-     * @param workspace File object that represents the workspace
+     * @param uploadSpec      The required spec represented as String
+     * @param workspace       File object that represents the workspace
      * @param buildProperties Upload properties
-     * @param clientBuilder ArtifactoryBuildInfoClientBuilder which will build the clients to perform the actual upload
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @return Set of DeployDetails that was calculated from the given params
+     * @throws IOException Thrown if any error occurs while reading the file, calculating the
+     *                     checksums or in case of any file system exception
+     */
+    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
+                                                Map<String, String> buildProperties,
+                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
+        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), clientBuilder);
+    }
+
+    /**
+     * Upload artifacts according to a given spec, return a list describing the deployed items.
+     *
+     *
+     * @param uploadSpec      The required spec represented as String
+     * @param workspace       File object that represents the workspace
+     * @param buildProperties Upload properties
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
@@ -56,20 +77,37 @@ public class SpecsHelper {
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Multimap<String, String> buildProperties,
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
+        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, buildProperties, clientBuilder);
+    }
+
+
+    /**
+     * Upload artifacts according to a given spec, return a list describing the deployed items.
+     *
+     * @param uploadSpec      The required spec represented as String
+     * @param numberOfThreads Number of concurrent threads to use for handling uploads
+     * @param workspace       File object that represents the workspace
+     * @param buildProperties Upload properties
+     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients per the number of passed threads number to perform the actual upload
+     * @return Set of DeployDetails that was calculated from the given params
+     * @throws IOException Thrown if any error occurs while reading the file, calculating the
+     *                     checksums or in case of any file system exception
+     */
+    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, int numberOfThreads, File workspace,
+                                                Multimap<String, String> buildProperties,
+                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
 
-        try (ArtifactoryBuildInfoClient client1 = clientBuilder.build();
-             ArtifactoryBuildInfoClient client2 = clientBuilder.build();
-             ArtifactoryBuildInfoClient client3 = clientBuilder.build()
-        ) {
+        try (BuildInfoClientsArray clients = new BuildInfoClientsArray(numberOfThreads, clientBuilder)) {
+            // Build the buildInfoClient's
+            clients.buildBuildInfoClients();
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
             // Create consumer Runnables
-            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new SpecDeploymentConsumer(client1),
-                    new SpecDeploymentConsumer(client2),
-                    new SpecDeploymentConsumer(client3)
-            };
+            ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[numberOfThreads];
+            for (int i = 0; i < clients.buildInfoClients.length; i++) {
+                consumerRunnables[i] = new SpecDeploymentConsumer(clients.buildInfoClients[i]);
+            }
             // Create the deployment executor
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
 
@@ -77,12 +115,6 @@ public class SpecsHelper {
             Set<DeployDetails> deployedArtifacts = ((SpecDeploymentProducer) producerRunnable[0]).getDeployedArtifacts();
             return convertDeployDetailsToArtifacts(deployedArtifacts);
         }
-    }
-
-    public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
-                                                Map<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
-        return uploadArtifactsBySpec(uploadSpec, workspace, createMultiMap(buildProperties), clientBuilder);
     }
 
     public static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {
@@ -198,5 +230,28 @@ public class SpecsHelper {
             result.add(artifactBuilder.build());
         }
         return result;
+    }
+
+    private class BuildInfoClientsArray implements AutoCloseable {
+        private ArtifactoryBuildInfoClientBuilder clientBuilder;
+        private ArtifactoryBuildInfoClient[] buildInfoClients;
+
+        private BuildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder) {
+            this.clientBuilder = clientBuilder;
+            this.buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
+        }
+
+        private void buildBuildInfoClients() {
+            for (int i = 0; i < buildInfoClients.length; i++) {
+                buildInfoClients[i] = clientBuilder.build();
+            }
+        }
+
+        @Override
+        public void close() {
+            for (ArtifactoryBuildInfoClient client : buildInfoClients) {
+                client.close();
+            }
+        }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "name": "@jscope/package-name2",
+  "version": "v0.0.2",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "devDependencies": {
+    "jfrog-midgard": "1.0.0"
+  }
+}

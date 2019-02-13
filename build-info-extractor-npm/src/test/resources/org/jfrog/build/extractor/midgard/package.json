@@ -1,0 +1,11 @@
+{
+    "name": "jfrog-midgard",
+    "version": "1.0.0",
+    "scripts": {
+        "start": "node app"
+    },
+    "dependencies": {
+        "jfrog-asgard": "2.0.0",
+        "jfrog-alfheim": "3.5.2"
+    }
+}

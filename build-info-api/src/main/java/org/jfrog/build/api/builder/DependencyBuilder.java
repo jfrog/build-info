@@ -19,6 +19,7 @@ package org.jfrog.build.api.builder;
 import com.google.common.collect.Lists;
 import org.jfrog.build.api.Dependency;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -91,6 +92,20 @@ public class DependencyBuilder {
      */
     public DependencyBuilder scopes(Set<String> scopes) {
         this.scopes = scopes;
+        return this;
+    }
+
+    /**
+     * Adds the given scope to the scopes set
+     *
+     * @param scope Dependency scope list
+     * @return Builder instance
+     */
+    public DependencyBuilder addScope(String scope) {
+        if (scopes == null) {
+            scopes = new HashSet<>();
+        }
+        scopes.add(scope);
         return this;
     }
 

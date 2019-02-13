@@ -1,0 +1,15 @@
+{
+  "name": "package-name3",
+  "version": "=0.0.3",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "jfrog-asgard": "2.0.0",
+    "jfrog-svartalfheim": "0.5.0"
+  },
+  "devDependencies": {
+    "jfrog-midgard": "1.0.0"
+  }
+}
