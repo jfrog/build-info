@@ -164,22 +164,22 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     }
 
     public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
-        return execute(downloadUrl, false, null);
+        return executeDownload(downloadUrl, false, null);
     }
 
     public HttpResponse downloadArtifact(String downloadUrl, Map<String, String> headers) throws IOException {
-        return execute(downloadUrl, false, headers);
+        return executeDownload(downloadUrl, false, headers);
     }
 
     public HttpResponse getArtifactMetadata(String artifactUrl) throws IOException {
-        return execute(artifactUrl, true, null);
+        return executeDownload(artifactUrl, true, null);
     }
 
     public boolean isArtifactoryOSS() throws IOException {
         return !httpClient.getVersion().hasAddons();
     }
 
-    private HttpResponse execute(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
+    private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);

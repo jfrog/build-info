@@ -172,7 +172,7 @@ public class SpecsHelper {
 
     @SuppressWarnings("unused")
     public boolean editPropertiesBySpec(String spec, ArtifactoryDependenciesClient client,
-                                        EditPropertiesHelper.EditPropertiesCommandType editType, String props) throws IOException {
+                                        EditPropertiesHelper.EditPropertiesActionType editType, String props) throws IOException {
         EditPropertiesHelper helper = new EditPropertiesHelper(client, log);
         return helper.editProperties(getSpecFromString(spec, new SearchBasedSpecValidator()), editType, props);
     }

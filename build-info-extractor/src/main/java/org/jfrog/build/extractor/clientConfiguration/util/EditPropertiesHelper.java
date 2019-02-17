@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.util.List;
 
 public class EditPropertiesHelper {
-    public enum EditPropertiesCommandType {
+    public enum EditPropertiesActionType {
         SET,
         DELETE
     }
@@ -27,53 +27,50 @@ public class EditPropertiesHelper {
         this.artifactoryEditPropsUrl = StringUtils.stripEnd(client.getArtifactoryUrl(), "/") + "/api/storage/";
     }
 
-    public boolean editProperties(Spec spec, EditPropertiesCommandType editType, String props) throws IOException {
+    public boolean editProperties(Spec spec, EditPropertiesActionType editType, String props) throws IOException {
         ArtifactorySearcher searcher = new ArtifactorySearcher(client, log);
-        List<AqlSearchResult.SearchEntry> searchResults;
-        boolean success = false;
+        // Here to mark that at least one action has been successfully made. Needed for the failNoOp flag.
+        boolean propertiesSet = false;
         new SearchBasedSpecValidator().validate(spec);
 
         for (FileSpec file : spec.getFiles()) {
             log.debug("Editing properties using spec: \n" + file.toString());
-            searchResults = searcher.SearchByFileSpec(file);
-            success = success || editPropertiesOnResults(searchResults, editType, props);
-        }
-        return success;
-    }
-
-    private boolean editPropertiesOnResults(List<AqlSearchResult.SearchEntry> searchResults,
-                                            EditPropertiesCommandType editType, String props) throws IOException {
-        boolean propertiesSet = false;
-
-        if (editType == EditPropertiesCommandType.SET) {
-            log.info("Setting properties...");
-            validateSetProperties(props);
-        } else {
-            log.info("Deleting properties...");
-        }
-
-        String curEntryUrl;
-        for (AqlSearchResult.SearchEntry result : searchResults) {
-            curEntryUrl = artifactoryEditPropsUrl + result.getRepo() + "/" + result.getPath();
-
-            if (editType == EditPropertiesCommandType.SET) {
-                client.setProperties(curEntryUrl, props);
+            if (editType == EditPropertiesActionType.SET) {
+                propertiesSet = propertiesSet || setPropertiesOnResults(searcher.SearchByFileSpec(file), props);
             } else {
-                client.deleteProperties(curEntryUrl, props);
+                propertiesSet = propertiesSet || deletePropertiesOnResults(searcher.SearchByFileSpec(file), props);
             }
 
-            propertiesSet = true;
         }
-
-        if (editType == EditPropertiesCommandType.SET) {
-            log.info("Done setting properties.");
-        } else {
-            log.info("Done deleting properties.");
-        }
-
         return propertiesSet;
     }
 
+    private boolean setPropertiesOnResults(List<AqlSearchResult.SearchEntry> searchResults, String props) throws IOException {
+        boolean propertiesSet = false;
+        log.info("Setting properties...");
+        validateSetProperties(props);
+        for (AqlSearchResult.SearchEntry result : searchResults) {
+            client.setProperties(buildEntryUrl(result), props);
+            propertiesSet = true;
+        }
+        log.info("Done setting properties.");
+        return propertiesSet;
+    }
+
+    private boolean deletePropertiesOnResults(List<AqlSearchResult.SearchEntry> searchResults, String props) throws IOException {
+        boolean propertiesSet = false;
+        log.info("Deleting properties...");
+        for (AqlSearchResult.SearchEntry result : searchResults) {
+            client.deleteProperties(buildEntryUrl(result), props);
+            propertiesSet = true;
+        }
+        log.info("Done deleting properties.");
+        return propertiesSet;
+    }
+
+    private String buildEntryUrl(AqlSearchResult.SearchEntry result) {
+        return artifactoryEditPropsUrl + result.getRepo() + "/" + result.getPath();
+    }
     private void validateSetProperties(String props) throws IOException {
         for (String prop : props.trim().split(";")) {
             if (prop.isEmpty()) {
