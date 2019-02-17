@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.util.NullLog;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SearchBasedSpecValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.UploadSpecValidator;
 import org.testng.annotations.DataProvider;
@@ -26,7 +26,7 @@ public class SpecsHelperTest {
     private static final String[] NEGATIVE_DOWNLOAD_FILE_SPEC;
     private static final String[] NEGATIVE_UPLOAD_FILE_SPEC;
     private static SpecsValidator uploadSpecValidator = new UploadSpecValidator();
-    private static SpecsValidator downloadSpecValidator = new DownloadSpecValidator();
+    private static SpecsValidator downloadSpecValidator = new SearchBasedSpecValidator();
 
     static {
         POSITIVE_FILE_SPEC = getPositiveTestFileSpecs();
@@ -47,7 +47,7 @@ public class SpecsHelperTest {
                                                                  String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName));
-        FileSpec spec = specsHelper.getDownloadUploadSpec(specString, downloadSpecValidator).getFiles()[0];
+        FileSpec spec = specsHelper.getSpecFromString(specString, downloadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }
 
@@ -60,7 +60,7 @@ public class SpecsHelperTest {
                                                    String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName));
-        FileSpec spec = specsHelper.getDownloadUploadSpec(specString, uploadSpecValidator).getFiles()[0];
+        FileSpec spec = specsHelper.getSpecFromString(specString, uploadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }
 
@@ -73,7 +73,7 @@ public class SpecsHelperTest {
                                                                String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         File fileSpec = getFileFromResources("positiveTestSpecs/" + specFileName);
-        FileSpec spec = specsHelper.getDownloadUploadSpec(fileSpec, downloadSpecValidator).getFiles()[0];
+        FileSpec spec = specsHelper.getSpecFromFile(fileSpec, downloadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }
 
@@ -86,7 +86,7 @@ public class SpecsHelperTest {
                                                   String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         File fileSpec = getFileFromResources("positiveTestSpecs/" + specFileName);
-        FileSpec spec = specsHelper.getDownloadUploadSpec(fileSpec, uploadSpecValidator).getFiles()[0];
+        FileSpec spec = specsHelper.getSpecFromFile(fileSpec, uploadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }
 
@@ -97,7 +97,7 @@ public class SpecsHelperTest {
     @Test(dataProvider = "negativeDownloadStringSpecProvider", expectedExceptions = {JsonMappingException.class, IllegalArgumentException.class})
     public void testNegativeDownloadSpecFromString (String spec) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
-        specsHelper.getDownloadUploadSpec(spec, downloadSpecValidator);
+        specsHelper.getSpecFromString(spec, downloadSpecValidator);
     }
 
     /**
@@ -106,7 +106,7 @@ public class SpecsHelperTest {
     @Test(dataProvider = "negativeUploadStringSpecProvider", expectedExceptions = {JsonMappingException.class, IllegalArgumentException.class})
     public void testNegativeUploadSpecFromString (String spec) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
-        specsHelper.getDownloadUploadSpec(spec, uploadSpecValidator);
+        specsHelper.getSpecFromString(spec, uploadSpecValidator);
     }
 
     /**
@@ -116,7 +116,7 @@ public class SpecsHelperTest {
     public void testNegativeDownloadSpecFromFile(String specFileName) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         File fileSpec = getFileFromResources("negativeTestSpecs/" + specFileName);
-        specsHelper.getDownloadUploadSpec(fileSpec, downloadSpecValidator);
+        specsHelper.getSpecFromFile(fileSpec, downloadSpecValidator);
     }
 
     /**
@@ -126,7 +126,7 @@ public class SpecsHelperTest {
     public void testNegativeUploadSpecFromFile(String specFileName) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
         File fileSpec = getFileFromResources("negativeTestSpecs/" + specFileName);
-        specsHelper.getDownloadUploadSpec(fileSpec, uploadSpecValidator);
+        specsHelper.getSpecFromFile(fileSpec, uploadSpecValidator);
     }
 
     // Data Providers

@@ -9,7 +9,7 @@ import java.io.IOException;
 /**
  * Created by tamirh on 19/06/2017.
  */
-public class DownloadSpecValidator extends SpecsValidator {
+public class SearchBasedSpecValidator extends SpecsValidator {
 
     @Override
     public void validate(Spec spec) throws IOException {
@@ -22,7 +22,7 @@ public class DownloadSpecValidator extends SpecsValidator {
             boolean isBuild = StringUtils.isNotBlank(fileSpec.getBuild());
 
             if (!isAql && !isPattern && !isBuild) {
-                throw new IllegalArgumentException("Download Spec must contain AQL or Pattern, and/or Build keys.");
+                throw new IllegalArgumentException("A search based Spec must contain AQL or Pattern, and/or Build keys.");
             }
             validateQueryInputs(fileSpec);
         }
