@@ -1,12 +1,8 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.search.AqlSearchResult;
-import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.IOException;
 import java.util.*;
@@ -14,77 +10,41 @@ import java.util.*;
 /**
  * Created by Tamirh on 25/04/2016.
  */
-public class AqlDependenciesHelper implements DependenciesHelper {
-
-    private DependenciesDownloader downloader;
-    private Log log;
-    private String artifactoryUrl;
-    private String target;
+public class AqlSearchHelper {
+    private ArtifactoryDependenciesClient client;
     private String buildName;
     private String buildNumber;
 
-    public AqlDependenciesHelper(DependenciesDownloader downloader, String target, Log log) {
-        this.downloader = downloader;
-        this.log = log;
-        this.artifactoryUrl = downloader.getClient().getArtifactoryUrl();
-        this.target = target;
+    AqlSearchHelper(ArtifactoryDependenciesClient client) {
+        this.client = client;
     }
 
     /**
-     * Retrieves dependencies by aql
+     * Finds and collects artifacts by aql
      */
-    @Override
-    public List<Dependency> retrievePublishedDependencies(String aql, String[] excludePattern, boolean explode) throws IOException {
-        if (StringUtils.isBlank(aql)) {
+    List<AqlSearchResult.SearchEntry> collectArtifactsByAql(String aqlBody) throws IOException {
+        if (StringUtils.isBlank(aqlBody)) {
             return Collections.emptyList();
         }
-        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownload(aql, explode);
-        return downloadDependencies(downloadableArtifacts);
-    }
 
-    /**
-     * Finds and collects artifacts to download by aql
-     */
-    Set<DownloadableArtifact> collectArtifactsToDownload(String aqlBody, boolean explode) throws IOException {
         String aql = buildQuery(aqlBody);
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearch(aql);
         // If buildName specified, filter the results to keep only artifacts matching the requested build
         if (StringUtils.isNotBlank(buildName) && searchResults.size()>0) {
             searchResults=filterAqlSearchResultsByBuild(searchResults);
         }
-        return fetchDownloadableArtifactsFromResult(searchResults,explode);
+        return searchResults;
     }
 
     /**
-     * Retrieves dependencies for file spec of type BUILD (build specified without pattern/aql)
+     * Finds and collects artifacts by build only
      */
-    public List<Dependency> retrievePublishedDependenciesByBuildOnly(boolean explode) throws IOException {
-        Set<DownloadableArtifact> downloadableArtifacts = collectArtifactsToDownloadByBuildOnly(explode);
-        return downloadDependencies(downloadableArtifacts);
-    }
-
-    /**
-     * Finds and collects artifacts to download for file spec of type BUILD
-     */
-    private Set<DownloadableArtifact> collectArtifactsToDownloadByBuildOnly(boolean explode) throws IOException {
+    List<AqlSearchResult.SearchEntry> collectArtifactsByBuild() throws IOException {
         String aql = createAqlBodyForBuild();
         aql = buildQuery(aql);
         List<AqlSearchResult.SearchEntry> searchResults = aqlSearch(aql);
         Map<String, Boolean> buildSha1Map = extractSha1FromAqlResponse(searchResults);
-        searchResults = filterBuildAqlSearchResults(searchResults,buildSha1Map);
-        return fetchDownloadableArtifactsFromResult(searchResults,explode);
-    }
-
-    List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
-        log.info("Beginning to resolve Build Info published dependencies.");
-        List<Dependency> dependencies = downloader.download(downloadableArtifacts);
-        log.info("Finished resolving Build Info published dependencies.");
-        return dependencies;
-    }
-
-    @Override
-    public void setFlatDownload(boolean flat) {
-        this.downloader.setFlatDownload(flat);
+        return filterBuildAqlSearchResults(searchResults,buildSha1Map);
     }
 
     /**
@@ -175,7 +135,7 @@ public class AqlDependenciesHelper implements DependenciesHelper {
     }
 
     private List<AqlSearchResult.SearchEntry> aqlSearch(String aql) throws IOException {
-        AqlSearchResult aqlSearchResult = downloader.getClient().searchArtifactsByAql(aql);
+        AqlSearchResult aqlSearchResult = client.searchArtifactsByAql(aql);
         return aqlSearchResult.getResults();
     }
 
@@ -196,33 +156,6 @@ public class AqlDependenciesHelper implements DependenciesHelper {
 
     private List<String> getQueryReturnFields() {
         return Arrays.asList("name", "repo", "path", "actual_md5", "actual_sha1", "size", "type", "property");
-    }
-
-    /**
-     * Converts the found results to DownloadableArtifact types before downloading.
-     */
-    private Set<DownloadableArtifact> fetchDownloadableArtifactsFromResult(List<AqlSearchResult.SearchEntry> searchResults, boolean explode) {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
-        for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
-            String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
-            DownloadableArtifact downloadableArtifact = new DownloadableArtifact(StringUtils.stripEnd(artifactoryUrl, "/") + "/" +
-                    searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL);
-            downloadableArtifact.setExplode(explode);
-            downloadableArtifacts.add(downloadableArtifact);
-        }
-        return downloadableArtifacts;
-    }
-
-    public void setArtifactoryUrl(String artifactoryUrl) {
-        this.artifactoryUrl = artifactoryUrl;
-    }
-
-    public void setTarget(String target) {
-        this.target = target;
-    }
-
-    public String getArtifactoryUrl() {
-        return artifactoryUrl;
     }
 
     public String getBuildName() {
