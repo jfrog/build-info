@@ -69,7 +69,8 @@ public class EditPropertiesHelper {
     }
 
     private String buildEntryUrl(AqlSearchResult.SearchEntry result) {
-        return artifactoryEditPropsUrl + result.getRepo() + "/" + result.getPath();
+        String path = result.getPath().equals(".") ? "" : result.getPath() + "/";
+        return artifactoryEditPropsUrl + result.getRepo() + "/" + path + result.getName();
     }
     private void validateSetProperties(String props) throws IOException {
         for (String prop : props.trim().split(";")) {
