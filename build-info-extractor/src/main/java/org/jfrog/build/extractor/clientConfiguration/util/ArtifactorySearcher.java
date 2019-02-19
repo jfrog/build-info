@@ -27,26 +27,30 @@ class ArtifactorySearcher {
         this.log = log;
     }
 
-    List<AqlSearchResult.SearchEntry> SearchByFileSpec(FileSpec file) throws IOException{
+    List<AqlSearchResult.SearchEntry> SearchByFileSpec(FileSpec file) throws IOException {
         AqlSearchHelper aqlHelper = new AqlSearchHelper(client);
         WildcardsSearchHelper wildcardHelper = new WildcardsSearchHelper(client);
-
+        List<AqlSearchResult.SearchEntry> results = new ArrayList<>();
+        log.info("Searching for artifacts...");
         switch(file.getSpecType()) {
             case PATTERN: {
                 setWildcardHelperProperties(wildcardHelper,file);
-                log.info(String.format("Searching artifacts using pattern: %s%s", file.getPattern(), SpecsHelper.getExcludePatternsLogStr(file.getExcludePatterns())));
-                return wildcardHelper.collectArtifactsByPattern(file.getPattern(), file.getExcludePatterns());
+                results = wildcardHelper.collectArtifactsByPattern(file.getPattern(), file.getExcludePatterns());
+                break;
             }
             case BUILD: {
                 setAqlHelperProperties(aqlHelper,file);
-                return aqlHelper.collectArtifactsByBuild();
+                results = aqlHelper.collectArtifactsByBuild();
+                break;
             }
             case AQL: {
                 setAqlHelperProperties(aqlHelper,file);
-                return aqlHelper.collectArtifactsByAql(file.getAql());
+                results = aqlHelper.collectArtifactsByAql(file.getAql());
+                break;
             }
         }
-        return new ArrayList<>();
+        log.info(String.format("Found %s artifacts.", results.size()));
+        return results;
     }
 
     private void setWildcardHelperProperties(WildcardsSearchHelper wildcardHelper, FileSpec file) throws IOException {
