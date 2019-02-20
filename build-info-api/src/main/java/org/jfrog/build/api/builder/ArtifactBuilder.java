@@ -33,6 +33,8 @@ public class ArtifactBuilder {
     private String sha1;
     private String sha256;
     private String md5;
+    private String localPath;
+    private String remotePath;
     private Properties properties;
 
     public ArtifactBuilder(String name) {
@@ -54,6 +56,8 @@ public class ArtifactBuilder {
         artifact.setSha1(sha1);
         artifact.setSha256(sha256);
         artifact.setMd5(md5);
+        artifact.setLocalPath(localPath);
+        artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
         return artifact;
     }
@@ -110,6 +114,28 @@ public class ArtifactBuilder {
      */
     public ArtifactBuilder md5(String md5) {
         this.md5 = md5;
+        return this;
+    }
+
+    /**
+     * Sets the local path of the artifact
+     *
+     * @param localPath Artifact local Path
+     * @return Builder instance
+     */
+    public ArtifactBuilder localPath(String localPath) {
+        this.localPath = localPath;
+        return this;
+    }
+
+    /**
+     * Sets the remote path of the artifact
+     *
+     * @param remotePath Artifact remote Path
+     * @return Builder instance
+     */
+    public ArtifactBuilder remotePath(String remotePath) {
+        this.remotePath = remotePath;
         return this;
     }
 

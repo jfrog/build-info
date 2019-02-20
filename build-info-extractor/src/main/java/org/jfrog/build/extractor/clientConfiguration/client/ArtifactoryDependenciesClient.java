@@ -25,10 +25,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
@@ -167,22 +164,22 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     }
 
     public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
-        return execute(downloadUrl, false, null);
+        return executeDownload(downloadUrl, false, null);
     }
 
     public HttpResponse downloadArtifact(String downloadUrl, Map<String, String> headers) throws IOException {
-        return execute(downloadUrl, false, headers);
+        return executeDownload(downloadUrl, false, headers);
     }
 
     public HttpResponse getArtifactMetadata(String artifactUrl) throws IOException {
-        return execute(artifactUrl, true, null);
+        return executeDownload(artifactUrl, true, null);
     }
 
     public boolean isArtifactoryOSS() throws IOException {
         return !httpClient.getVersion().hasAddons();
     }
 
-    private HttpResponse execute(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
+    private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);
@@ -210,5 +207,27 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
                     statusLine.getReasonPhrase());
         }
         return response;
+    }
+
+    public void setProperties(String urlPath, String props) throws IOException {
+        String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+        HttpPut httpPut = new HttpPut(url);
+        checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");
+    }
+
+    public void deleteProperties(String urlPath, String props) throws IOException {
+        String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+        HttpDelete httpDelete = new HttpDelete(url);
+        checkNoContent(client.execute(httpDelete), "Failed to delete properties to '" + urlPath + "'");
+    }
+
+    private void checkNoContent(HttpResponse response, String errorMessage) throws IOException {
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
+            HttpEntity httpEntity = response.getEntity();
+            EntityUtils.consume(httpEntity);
+            throw new IOException(errorMessage + ": " + response.getStatusLine());
+        }
     }
 }

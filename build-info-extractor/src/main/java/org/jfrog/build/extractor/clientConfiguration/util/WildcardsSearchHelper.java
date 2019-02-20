@@ -1,52 +1,30 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.api.util.Log;
+import org.jfrog.build.api.search.AqlSearchResult;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by Tamirh on 25/04/2016.
  */
-public class WildcardsDependenciesHelper implements DependenciesHelper {
-    private DependenciesDownloader downloader;
-    private Log log;
-    private String artifactoryUrl;
-    private String target;
+public class WildcardsSearchHelper {
+    private ArtifactoryDependenciesClient client;
     private String props;
     private String buildName;
     private String buildNumber;
     private boolean recursive;
 
-    public WildcardsDependenciesHelper(DependenciesDownloader downloader, String target, Log log) {
-        this.downloader = downloader;
-        this.log = log;
-        this.artifactoryUrl = downloader.getClient().getArtifactoryUrl();
-        this.target = target;
+    WildcardsSearchHelper(ArtifactoryDependenciesClient client) {
+        this.client = client;
         this.recursive = false;
         this.props = "";
         this.buildName = "";
         this.buildNumber = "";
-    }
-
-    public String getArtifactoryUrl() {
-        return artifactoryUrl;
-    }
-
-    public void setArtifactoryUrl(String artifactoryUrl) {
-        this.artifactoryUrl = artifactoryUrl;
-    }
-
-    public String getTarget() {
-        return target;
-    }
-
-    public void setTarget(String target) {
-        this.target = target;
     }
 
     public void setProps(String props) {
@@ -73,43 +51,22 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         this.buildNumber = StringUtils.defaultIfEmpty(buildNumber , "");
     }
 
-    @Override
-    public List<Dependency> retrievePublishedDependencies(String searchPattern, String[] excludePatterns, boolean explode) throws IOException {
+    /**
+     * Finds and collects artifacts by pattern
+     */
+    List<AqlSearchResult.SearchEntry> collectArtifactsByPattern(String searchPattern, String[] excludePatterns) throws IOException {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
-        AqlDependenciesHelper dependenciesHelper = new AqlDependenciesHelper(downloader, target, log);
+        AqlSearchHelper dependenciesHelper = new AqlSearchHelper(client);
         if (StringUtils.isNotBlank(buildName)) {
             dependenciesHelper.setBuildName(buildName);
             dependenciesHelper.setBuildNumber(buildNumber);
         }
-        Set<DownloadableArtifact> downloadableArtifacts = dependenciesHelper.collectArtifactsToDownload(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props), explode);
-        replaceTargetPlaceholders(searchPattern, downloadableArtifacts);
-        return dependenciesHelper.downloadDependencies(downloadableArtifacts);
+        return dependenciesHelper.collectArtifactsByAql(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props));
     }
 
-    private void replaceTargetPlaceholders(String searchPattern, Set<DownloadableArtifact> downloadableArtifacts) {
-        searchPattern = StringUtils.substringAfter(searchPattern, "/");
-        Pattern pattern = Pattern.compile(PathsUtils.pathToRegExp(searchPattern));
-        target = StringUtils.defaultIfEmpty(target , "");
-        for (DownloadableArtifact artifact : downloadableArtifacts) {
-            if (StringUtils.isEmpty(target) || target.endsWith("/")) {
-                artifact.setTargetDirPath(PathsUtils.reformatRegexp(artifact.getFilePath(), target, pattern));
-            } else {
-                String targetAfterReplacement = PathsUtils.reformatRegexp(artifact.getFilePath(), target, pattern);
-                Map<String, String> targetFileName = PathsUtils.replaceFilesName(targetAfterReplacement, artifact.getRelativeDirPath());
-                artifact.setRelativeDirPath(targetFileName.get("srcPath"));
-                artifact.setTargetDirPath(targetFileName.get("targetPath"));
-            }
-        }
-    }
-
-    @Override
-    public void setFlatDownload(boolean flat) {
-        this.downloader.setFlatDownload(flat);
-    }
-
-    public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
+    private String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
         StringBuilder aqlQuery = new StringBuilder();
         searchPattern = prepareSearchPattern(searchPattern, true);
         int repoIndex = searchPattern.indexOf("/");
@@ -192,7 +149,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
                 "}]}", path, name);
     }
 
-    // We need to translate the provided download pattern to an AQL query.
+    // We need to translate the provided pattern to an AQL query.
     // In Artifactory, for each artifact the name and path of the artifact are saved separately.
     // We therefore need to build an AQL query that covers all possible paths and names the provided
     // pattern can include.
@@ -275,7 +232,7 @@ public class WildcardsDependenciesHelper implements DependenciesHelper {
         private String path;
         private String file;
 
-        public PathFilePair(String path, String file) {
+        private PathFilePair(String path, String file) {
             this.path = path;
             this.file = file;
         }

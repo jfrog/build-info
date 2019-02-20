@@ -16,7 +16,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfo
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.DownloadSpecValidator;
+import org.jfrog.build.extractor.clientConfiguration.util.EditPropertiesHelper;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SearchBasedSpecValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SpecsValidator;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.UploadSpecValidator;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
@@ -92,7 +93,7 @@ public class SpecsHelper {
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, int numberOfThreads, File workspace,
                                                 Multimap<String, String> buildProperties,
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
-        Spec spec = this.getDownloadUploadSpec(uploadSpec, new UploadSpecValidator());
+        Spec spec = this.getSpecFromString(uploadSpec, new UploadSpecValidator());
 
         try (BuildInfoClientsArray clients = new BuildInfoClientsArray(numberOfThreads, clientBuilder)) {
             // Build the buildInfoClient's
@@ -134,35 +135,42 @@ public class SpecsHelper {
      */
     public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
-        return helper.downloadDependencies(getDownloadUploadSpec(spec, new DownloadSpecValidator()));
+        return helper.downloadDependencies(getSpecFromString(spec, new SearchBasedSpecValidator()));
     }
 
     /**
      * Converts File to Spec object
      *
-     * @param downloadUploadSpecFile the File to convert
+     * @param specFile the File to convert
      * @return Spec object that represents the provided file
      * @throws IOException in case of IO problem
      */
-    public Spec getDownloadUploadSpec(File downloadUploadSpecFile, SpecsValidator specsValidator) throws IOException {
-        return getDownloadUploadSpec(FileUtils.readFileToString(downloadUploadSpecFile), specsValidator);
+    public Spec getSpecFromFile(File specFile, SpecsValidator specsValidator) throws IOException {
+        return getSpecFromString(FileUtils.readFileToString(specFile), specsValidator);
     }
 
     /**
      * Converts String to Spec object
      *
-     * @param downloadUploadSpec the String to convert
+     * @param specStr the String to convert
      * @return Spec object that represents the string
      * @throws IOException in case of IO problem
      */
-    public Spec getDownloadUploadSpec(String downloadUploadSpec, SpecsValidator specsValidator) throws IOException {
+    public Spec getSpecFromString(String specStr, SpecsValidator specsValidator) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
-        downloadUploadSpec = downloadUploadSpec.replace("\\", "\\\\");
-        Spec spec = mapper.readValue(downloadUploadSpec, Spec.class);
+        specStr = specStr.replace("\\", "\\\\");
+        Spec spec = mapper.readValue(specStr, Spec.class);
         specsValidator.validate(spec);
         pathToUnixFormat(spec);
         return spec;
+    }
+
+    @SuppressWarnings("unused")
+    public boolean editPropertiesBySpec(String spec, ArtifactoryDependenciesClient client,
+                                        EditPropertiesHelper.EditPropertiesActionType editType, String props) throws IOException {
+        EditPropertiesHelper helper = new EditPropertiesHelper(client, log);
+        return helper.editProperties(getSpecFromString(spec, new SearchBasedSpecValidator()), editType, props);
     }
 
     private void pathToUnixFormat(Spec spec) {
@@ -215,9 +223,15 @@ public class SpecsHelper {
         List<Artifact> result = new ArrayList<>();
         for (DeployDetails detail : details) {
             String ext = FilenameUtils.getExtension(detail.getFile().getName());
-            Artifact artifact = new ArtifactBuilder(detail.getFile().getName()).md5(detail.getMd5())
-                    .sha1(detail.getSha1()).type(ext).build();
-            result.add(artifact);
+            ArtifactBuilder artifactBuilder = new ArtifactBuilder(detail.getFile().getName());
+            artifactBuilder
+                    .md5(detail.getMd5())
+                    .sha1(detail.getSha1())
+                    .type(ext)
+                    .localPath(detail.getFile().getAbsolutePath())
+                    .remotePath(detail.getTargetRepository() + detail.getArtifactPath())
+                    .build();
+            result.add(artifactBuilder.build());
         }
         return result;
     }
