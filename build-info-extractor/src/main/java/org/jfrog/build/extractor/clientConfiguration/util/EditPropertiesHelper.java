@@ -50,7 +50,9 @@ public class EditPropertiesHelper {
         log.info("Setting properties...");
         validateSetProperties(props);
         for (AqlSearchResult.SearchEntry result : searchResults) {
-            client.setProperties(buildEntryUrl(result), props);
+            String url = buildEntryUrl(result);
+            log.info(String.format("Setting the properties: \'%s\', on artifact: %s", props, url));
+            client.setProperties(url, props);
             propertiesSet = true;
         }
         log.info("Done setting properties.");
@@ -61,7 +63,9 @@ public class EditPropertiesHelper {
         boolean propertiesSet = false;
         log.info("Deleting properties...");
         for (AqlSearchResult.SearchEntry result : searchResults) {
-            client.deleteProperties(buildEntryUrl(result), props);
+            String url = buildEntryUrl(result);
+            log.info(String.format("Deleting the properties: \'%s\', on artifact: %s", props, url));
+            client.deleteProperties(url, props);
             propertiesSet = true;
         }
         log.info("Done deleting properties.");
@@ -69,7 +73,8 @@ public class EditPropertiesHelper {
     }
 
     private String buildEntryUrl(AqlSearchResult.SearchEntry result) {
-        return artifactoryEditPropsUrl + result.getRepo() + "/" + result.getPath();
+        String path = result.getPath().equals(".") ? "" : result.getPath() + "/";
+        return artifactoryEditPropsUrl + result.getRepo() + "/" + path + result.getName();
     }
     private void validateSetProperties(String props) throws IOException {
         for (String prop : props.trim().split(";")) {

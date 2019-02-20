@@ -20,7 +20,7 @@ public class WildcardsSearchHelper {
     private String buildNumber;
     private boolean recursive;
 
-    public WildcardsSearchHelper(ArtifactoryDependenciesClient client) {
+    WildcardsSearchHelper(ArtifactoryDependenciesClient client) {
         this.client = client;
         this.recursive = false;
         this.props = "";
@@ -55,7 +55,7 @@ public class WildcardsSearchHelper {
     /**
      * Finds and collects artifacts by pattern
      */
-    public List<AqlSearchResult.SearchEntry> collectArtifactsByPattern(String searchPattern, String[] excludePatterns) throws IOException {
+    List<AqlSearchResult.SearchEntry> collectArtifactsByPattern(String searchPattern, String[] excludePatterns) throws IOException {
         if (StringUtils.isBlank(searchPattern)) {
             return Collections.emptyList();
         }
@@ -67,7 +67,7 @@ public class WildcardsSearchHelper {
         return dependenciesHelper.collectArtifactsByAql(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props));
     }
 
-    public String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
+    private String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
         StringBuilder aqlQuery = new StringBuilder();
         searchPattern = prepareSearchPattern(searchPattern, true);
         int repoIndex = searchPattern.indexOf("/");
@@ -233,7 +233,7 @@ public class WildcardsSearchHelper {
         private String path;
         private String file;
 
-        public PathFilePair(String path, String file) {
+        private PathFilePair(String path, String file) {
             this.path = path;
             this.file = file;
         }
