@@ -8,7 +8,6 @@ import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.SpecsHelper;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,43 +27,46 @@ class ArtifactorySearcher {
     }
 
     List<AqlSearchResult.SearchEntry> SearchByFileSpec(FileSpec file) throws IOException {
-        AqlSearchHelper aqlHelper = new AqlSearchHelper(client);
-        WildcardsSearchHelper wildcardHelper = new WildcardsSearchHelper(client);
-        List<AqlSearchResult.SearchEntry> results = new ArrayList<>();
+        List<AqlSearchResult.SearchEntry> results = null;
         log.info("Searching for artifacts...");
-        switch(file.getSpecType()) {
+        switch (file.getSpecType()) {
             case PATTERN: {
-                setWildcardHelperProperties(wildcardHelper,file);
+                WildcardsSearchHelper wildcardHelper = getNewWildcardHelper(file);
                 results = wildcardHelper.collectArtifactsByPattern(file.getPattern(), file.getExcludePatterns());
                 break;
             }
             case BUILD: {
-                setAqlHelperProperties(aqlHelper,file);
+                AqlSearchHelper aqlHelper = getNewAqlHelper(file);
                 results = aqlHelper.collectArtifactsByBuild();
                 break;
             }
             case AQL: {
-                setAqlHelperProperties(aqlHelper,file);
+                AqlSearchHelper aqlHelper = getNewAqlHelper(file);
                 results = aqlHelper.collectArtifactsByAql(file.getAql());
                 break;
             }
         }
+        results = (results == null ? new ArrayList<>() : results);
         log.info(String.format("Found %s artifacts.", results.size()));
         return results;
     }
 
-    private void setWildcardHelperProperties(WildcardsSearchHelper wildcardHelper, FileSpec file) throws IOException {
+    private WildcardsSearchHelper getNewWildcardHelper(FileSpec file) throws IOException {
+        WildcardsSearchHelper wildcardHelper = new WildcardsSearchHelper(client);
         wildcardHelper.setRecursive(!"false".equalsIgnoreCase(file.getRecursive()));
         wildcardHelper.setProps(file.getProps());
         String buildName = getBuildName(file.getBuild());
         wildcardHelper.setBuildName(buildName);
         wildcardHelper.setBuildNumber(getBuildNumber(buildName, file.getBuild()));
+        return wildcardHelper;
     }
 
-    private void setAqlHelperProperties(AqlSearchHelper aqlHelper, FileSpec file) throws IOException{
+    private AqlSearchHelper getNewAqlHelper(FileSpec file) throws IOException {
+        AqlSearchHelper aqlHelper = new AqlSearchHelper(client);
         String buildName = getBuildName(file.getBuild());
         aqlHelper.setBuildName(buildName);
         aqlHelper.setBuildNumber(getBuildNumber(buildName, file.getBuild()));
+        return aqlHelper;
     }
 
     private String getBuildName(String build) {
