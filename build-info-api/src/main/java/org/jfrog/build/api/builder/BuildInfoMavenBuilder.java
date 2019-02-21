@@ -371,7 +371,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     private Artifact findArtifact(List<Artifact> existingArtifacts, final String artifactKey) {
-        return CommonUtils.findFirstSatisfying(existingArtifacts, input -> input.getName().equals(artifactKey), null);
+        return CommonUtils.getFirstSatisfying(existingArtifacts, input -> input.getName().equals(artifactKey), null);
     }
 
     private void mergeModuleDependencies(Module existingModule, Module moduleToMerge) {
@@ -399,7 +399,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     private Dependency findDependency(List<Dependency> existingDependencies, final String dependencyId) {
-        return CommonUtils.findFirstSatisfying(existingDependencies, input -> input.getId().equals(dependencyId), null);
+        return CommonUtils.getFirstSatisfying(existingDependencies, input -> input.getId().equals(dependencyId), null);
     }
 
 }

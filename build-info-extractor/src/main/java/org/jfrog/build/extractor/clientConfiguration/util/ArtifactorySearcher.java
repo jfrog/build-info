@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
@@ -104,7 +103,7 @@ class ArtifactorySearcher {
                 if (this.client.isArtifactoryOSS()) {
                     throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
                 }
-                List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
+                List<BuildPatternArtifactsRequest> artifactsRequest = new ArrayList<>();
                 artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
                 List<BuildPatternArtifacts> artifactsResponses =  this.client.retrievePatternArtifacts(artifactsRequest);
                 // Artifactory returns null if no build was found

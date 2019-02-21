@@ -279,11 +279,11 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
 
     private Dependency findDependencyInList(final ModuleRevisionId id, final String type, List<Dependency> moduleDependencies) {
         final String idToFind = getModuleIdString(id.getOrganisation(), id.getName(), "");
-        return CommonUtils.findFirstSatisfying(moduleDependencies, input -> input.getId().startsWith(idToFind) && input.getType().equals(type), null);
+        return CommonUtils.getFirstSatisfying(moduleDependencies, input -> input.getId().startsWith(idToFind) && input.getType().equals(type), null);
     }
 
     private Module findModule(List<Module> modules, final String moduleKey) {
-        return CommonUtils.findFirstSatisfying(modules, input -> input.getId().startsWith(moduleKey), null);
+        return CommonUtils.getFirstSatisfying(modules, input -> input.getId().startsWith(moduleKey), null);
     }
 
     private Module getOrCreateModule(Map<String, String> attributes) {

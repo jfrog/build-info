@@ -333,7 +333,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                     final String depId = getModuleIdString(id.getGroup(),
                             id.getName(), id.getVersion());
                     // if it's already in the dependencies list just add the current scope
-                    Dependency existingDependency = CommonUtils.findFirstSatisfying(dependencies, input -> input.getId().equals(depId), null);
+                    Dependency existingDependency = CommonUtils.getFirstSatisfying(dependencies, input -> input.getId().equals(depId), null);
                     if (existingDependency != null) {
                         Set<String> existingScopes = existingDependency.getScopes();
                         existingScopes.add(configuration.getName());

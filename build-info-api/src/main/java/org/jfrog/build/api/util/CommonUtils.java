@@ -33,22 +33,14 @@ public class CommonUtils {
     }
 
     /**
-     * Returns a map of the entries that differ between the two given maps.
+     * Returns a map with entries from the left map which keys aren't in the right map.
      * */
-    private static <K, V> Map<K, V> mapDifference(Map<K, V> left, Map<K, V> right) {
+    public static <K, V> Map<K, V> entriesOnlyOnLeftMap(Map<K, V> left, Map<K, V> right) {
         Map<K, V> difference = new HashMap<>();
         difference.putAll(left);
         difference.putAll(right);
         difference.entrySet().removeAll(right.entrySet());
         return difference;
-    }
-
-    /**
-     * Returns a map of the entries that only exists on the provided left map.
-     * */
-    public static <K, V> Map<K, V> entriesOnlyOnLeftMap(Map<K, V> left, Map<K, V> right) {
-        left.keySet().retainAll(mapDifference(left, right).keySet());
-        return left;
     }
 
     /**
@@ -71,10 +63,12 @@ public class CommonUtils {
     /**
      * Returns the first element in the provided collection that satisfies the predicate.
      * If no such element found, returns the defaultValue.
+     * NOTE: This function filters null elements, so the predicate shouldn't be looking for one.
      * */
-    public static <T> T findFirstSatisfying(Collection<T> collection, Predicate<T> predicate, T defaultValue) {
+    public static <T> T getFirstSatisfying(Collection<T> collection, Predicate<T> predicate, T defaultValue) {
         return collection.stream()
-                .filter(t -> predicate.test(t))
+                .filter(Objects::nonNull)
+                .filter(predicate)
                 .findFirst()
                 .orElse(defaultValue);
     }
@@ -82,17 +76,20 @@ public class CommonUtils {
     /**
      * Returns true if any of the elements in the provided collection satisfies the predicate.
      * Returns false otherwise.
+     * NOTE: This function filters null elements, so the predicate shouldn't be looking for one.
      * */
     public static <T> boolean isAnySatisfying(Collection<T> collection, Predicate<T> predicate) {
-        return findFirstSatisfying(collection, predicate, null) != null;
+        return getFirstSatisfying(collection, predicate, null) != null;
     }
 
     /**
      * Returns a collection containing only the elements of the original collection that satisfy the predicate.
+     * NOTE: This function filters null elements, so the predicate shouldn't be looking for one.
      * */
     public static <T> Collection<T> filterCollection(Collection<T> unfiltered, Predicate<T> predicate) {
         return unfiltered.stream()
-                .filter(t -> predicate.test(t))
+                .filter(Objects::nonNull)
+                .filter(predicate)
                 .collect(Collectors.toList());
     }
 
