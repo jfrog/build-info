@@ -14,20 +14,24 @@ import java.util.stream.Stream;
 public class CommonUtils {
     /**
      * Returns a map containing only the values of the original map that satisfy the predicate.
+     * NOTE: This function filters null elements, so the predicate shouldn't be looking for one.
      * */
     public static <K, V> Map<K, V> filterMapValues(Map<K, V> map, Predicate<V> predicate) {
         return map.entrySet()
                 .stream()
+                .filter(entry -> entry.getValue() != null)
                 .filter(entry -> predicate.test(entry.getValue()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     /**
      * Returns a map containing only the keys of the original map that satisfy the predicate.
+     * NOTE: This function filters null elements, so the predicate shouldn't be looking for one.
      * */
     public static <K, V> Map<K, V> filterMapKeys(Map<K, V> map, Predicate<K> predicate) {
         return map.entrySet()
                 .stream()
+                .filter(entry -> entry.getKey() != null)
                 .filter(entry -> predicate.test(entry.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

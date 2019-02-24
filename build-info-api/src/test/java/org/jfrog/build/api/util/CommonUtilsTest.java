@@ -27,6 +27,26 @@ public class CommonUtilsTest {
         assertNotEquals(filterMap, expectedMap, "Unexpected maps initializing.");
         filterMap = CommonUtils.filterMapValues(filterMap, value -> value.equals("good"));
         assertEquals(filterMap, expectedMap, "Unexpected map filtering.");
+
+        assertEquals(new HashMap<>(), CommonUtils.filterMapValues(new HashMap<>(), value -> value.equals("good")),
+                "Unexpected empty map filtering.");
+
+        // Function should filter null elements
+        try {
+            Map<String, Object> expectedMap2 = new HashMap<>();
+            expectedMap2.put("first", "string 1");
+            expectedMap2.put("second", "s");
+            Map<String, Object> withNull = new HashMap<>(expectedMap2);
+            withNull.put("third", null);
+            withNull.put("forth", 2);
+            withNull.put("fifth", "none of the letter");
+
+            withNull = CommonUtils.filterMapValues(withNull, value -> value.toString().contains("s"));
+            assertEquals(withNull, expectedMap2, "Unexpected map filtering.");
+
+        } catch (NullPointerException e) {
+            throw new TestException("Unexpected NullPointerException. Function should filter null elements.");
+        }
     }
 
     public void testFilterMapKeys() {
@@ -37,14 +57,28 @@ public class CommonUtilsTest {
         filterMap.put("badOne",1);
         filterMap.put("badTwo",2);
 
+        assertEquals(new HashMap<>(), CommonUtils.filterMapKeys(new HashMap<>(), key -> key.equals("good")),
+                "Unexpected empty map filtering.");
+
         assertNotEquals(filterMap, expectedMap, "Unexpected maps initializing.");
         filterMap = CommonUtils.filterMapKeys(filterMap, key -> key.startsWith("good"));
         assertEquals(filterMap, expectedMap, "Unexpected map filtering.");
-    }
 
-    public void testFiltersWithEmpty() {
-        assertEquals(new HashMap<>(), CommonUtils.filterMapValues(new HashMap<>(), value -> value.equals("good")), "Unexpected empty map filtering.");
-        assertEquals(new HashMap<>(), CommonUtils.filterMapKeys(new HashMap<>(), key -> key.equals("good")), "Unexpected empty map filtering.");
+        // Function should filter null elements
+        try {
+            Map<Object, String> expectedMap2 = new HashMap<>();
+            expectedMap2.put("1", "string 1");
+            expectedMap2.put(1, "s");
+            Map<Object, String> withNull = new HashMap<>(expectedMap2);
+            withNull.put(null, "a");
+            withNull.put(2, "2");
+
+            withNull = CommonUtils.filterMapKeys(withNull, key -> key.toString().equals("1"));
+            assertEquals(withNull, expectedMap2, "Unexpected map filtering.");
+
+        } catch (NullPointerException e) {
+            throw new TestException("Unexpected NullPointerException. Function should filter null elements.");
+        }
     }
 
     public void testEntriesOnlyOnLeftMap() {
