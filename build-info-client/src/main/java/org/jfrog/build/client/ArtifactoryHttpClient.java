@@ -54,7 +54,6 @@ public class ArtifactoryHttpClient {
             new ArtifactoryVersion("5.2.1");
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
-    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
     public static final int DEFAULT_CONNECTION_RETRY = 3;
     private final Log log;
@@ -174,26 +173,7 @@ public class ArtifactoryHttpClient {
         return ArtifactoryVersion.NOT_FOUND;
     }
 
-    public ItemLastModified getItemLastModified(String path) throws IOException {
-        String lastModifiedUrl = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
-        HttpResponse response = executeGetRequest(lastModifiedUrl);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != HttpStatus.SC_OK) {
-            throw new IOException("The path " + path + " returned " + response.getStatusLine().getStatusCode() + ":" + getMessageFromEntity(response.getEntity()));
-        }
-        HttpEntity httpEntity = response.getEntity();
-        if (httpEntity != null) {
-            try (InputStream content = httpEntity.getContent()) {
-                JsonNode result = getJsonNode(httpEntity, content);
-                String version = result.get("lastModified").asText();
-                String uri = result.get("uri").asText();
-                return new ItemLastModified(uri, version);
-            }
-        }
-        throw new IOException("The path " + path + " returned empty entity");
-    }
-
-    private JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
+    public JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
         JsonParser parser = createJsonParser(content);
         EntityUtils.consume(httpEntity);
         return parser.readValueAsTree();
