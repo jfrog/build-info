@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.maven.plugin
 
+import org.apache.commons.lang.StringUtils
 import org.apache.maven.Maven
 import org.gcontracts.annotations.Ensures
 import org.gcontracts.annotations.Requires
@@ -37,15 +38,15 @@ class PublishMojoHelper
 
     @Requires({ mojo })
     @Ensures ({ this.mojo && ( this.systemProperties != null ) && prefixPropertyHandlers })
-    PublishMojoHelper ( PublishMojo mojo )
-    {
-        this.mojo              = mojo
-        final systemProperty   = System.getProperty( BuildInfoConfigProperties.PROP_PROPS_FILE )
-        this.systemProperties  = readProperties( systemProperty ? new File( systemProperty ) : '' )
+    PublishMojoHelper ( PublishMojo mojo )  {
+        this.mojo = mojo
+        final String systemProperty = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE)
+        this.systemProperties = StringUtils.isEmpty(systemProperty) ?
+                readProperties("") : readPropertiesFromFile(new File(systemProperty))
         prefixPropertyHandlers = (( Map ) mojo.class.declaredFields.
-                                 findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
-                                 inject( [:] ) { Map m, Field f -> m[ f.name ] = mojo."${ f.name }"; m }).
-                                 asImmutable()
+                findAll{ Field f -> Config.DelegatesToPrefixPropertyHandler.isAssignableFrom( f.type ) }.
+                inject( [:] ) { Map m, Field f -> m[ f.name ] = mojo."${ f.name }"; m }).
+                asImmutable()
     }
 
 
@@ -145,7 +146,7 @@ class PublishMojoHelper
             String key, String value -> [ "${ ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX }${ key }".toString(), value ]
         }
 
-        addProperties(( Map<String, String> ) readProperties( mojo.propertiesFile ) + readProperties( mojo.properties ),
+        addProperties(( Map<String, String> ) readPropertiesFromFile( mojo.propertiesFile ) + readProperties( mojo.properties ),
                       mergedProperties )
 
         addProperties( artifactory.delegate.root.props,
@@ -185,7 +186,7 @@ class PublishMojoHelper
      * Reads {@link Properties} from the {@link File} specified.
      */
     @Ensures ({ result != null })
-    private Properties readProperties ( File propertiesFile )
+    private Properties readPropertiesFromFile( File propertiesFile )
     {
         assert (( ! propertiesFile ) || propertiesFile.file ), "Properties file [$propertiesFile.canonicalPath] is not available"
         readProperties( propertiesFile?.file ? propertiesFile.getText( 'UTF-8' ) : '' )
