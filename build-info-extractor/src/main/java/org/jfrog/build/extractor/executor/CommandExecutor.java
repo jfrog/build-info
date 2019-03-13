@@ -27,10 +27,25 @@ public class CommandExecutor implements Serializable {
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;
+        Map<String, String> envMap = new HashMap<>(System.getenv());
         if (env != null) {
-            Map<String, String> envMap = new HashMap<>(System.getenv());
             envMap.putAll(env);
-            this.env = envMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        }
+        fixPathEnv(envMap);
+        this.env = envMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+    }
+
+    /**
+     * Append :/usr/local/bin to PATH environment variable.
+     *
+     * @param env - Environment variables map.
+     */
+    private void fixPathEnv(Map<String, String> env) {
+        if (!isWindows()) {
+            String path = env.get("PATH");
+            if (path != null) {
+                env.replace("PATH", path + ":/usr/local/bin");
+            }
         }
     }
 
