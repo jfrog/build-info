@@ -5,18 +5,34 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.Set;
+import java.util.UUID;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
  * @author yahavi
  */
-public class DependenciesTreeTest extends DependenciesTreeTestBase {
+public class DependenciesTreeTest {
 
+    private DependenciesTree root, one, two, three, four, five;
+
+    /**
+     * Build an empty tree with 5 nodes
+     */
     @BeforeClass
     public void init() {
-        super.init();
+        root = new DependenciesTree("0");
+        one = new DependenciesTree("1");
+        two = new DependenciesTree("2");
+        three = new DependenciesTree("3");
+        four = new DependenciesTree("4");
+        five = new DependenciesTree("5");
+        root.add(one); // 0 -> 1
+        root.add(two); // 0 -> 2
+        two.add(three); // 2 -> 3
+        two.add(four); // 2 -> 4
+        four.add(five); // 4 -> 5
     }
 
     @Test
@@ -105,4 +121,17 @@ public class DependenciesTreeTest extends DependenciesTreeTestBase {
         assertEquals("5", five.getTopIssue().getComponent());
     }
 
+    /**
+     * Create a random issue
+     *
+     * @param severity the issue severity
+     * @return the random issue
+     */
+    private Issue createIssue(Severity severity) {
+        return new Issue(generateUID(), generateUID(), generateUID(), generateUID(), severity, generateUID());
+    }
+
+    private String generateUID() {
+        return UUID.randomUUID().toString();
+    }
 }
