@@ -29,13 +29,11 @@ import org.gradle.api.publish.PublicationArtifact;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
-import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
 import org.gradle.api.publish.maven.MavenArtifact;
-import org.gradle.api.publish.maven.MavenArtifactSet;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.MavenPublicationInternal;
 import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublication;
@@ -200,21 +198,22 @@ public class TaskHelperPublications extends TaskHelper {
             IvyNormalizedPublication ivyNormalizedPublication = ivyPublicationInternal.asNormalisedPublication();
             IvyPublicationIdentity projectIdentity = ivyNormalizedPublication.getProjectIdentity();
             Map<QName, String> extraInfo = ivyPublication.getDescriptor().getExtraInfo().asMap();
+            File ivyDescriptorFile = getIvyDescriptorFile(ivyNormalizedPublication);
 
             // First adding the Ivy descriptor (if the build is configured to add it):
             if (isPublishIvy()) {
-                File file = getIvyDescriptorFile(ivyNormalizedPublication);
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(ivyDescriptorFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, file);
+                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, ivyDescriptorFile);
                     addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
                 }
             }
 
-            IvyArtifactSet artifacts = ivyPublication.getArtifacts();
+            Set<IvyArtifact> artifacts = getAllIvyArtifacts(ivyNormalizedPublication);
             for (IvyArtifact artifact : artifacts) {
                 File file = artifact.getFile();
+                if (file.equals(ivyDescriptorFile)) continue;
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
@@ -234,21 +233,22 @@ public class TaskHelperPublications extends TaskHelper {
             }
             MavenPublicationInternal mavenPublicationInternal = (MavenPublicationInternal) mavenPublication;
             MavenNormalizedPublication mavenNormalizedPublication = mavenPublicationInternal.asNormalisedPublication();
+            File pomFile = mavenNormalizedPublication.getPomFile();
 
             // First adding the Maven descriptor (if the build is configured to add it):
             if (isPublishMaven()) {
-                File file = mavenNormalizedPublication.getPomFile();
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(pomFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            mavenPublication.getArtifactId(), "pom", "pom", null, file);
+                            mavenPublication.getArtifactId(), "pom", "pom", null, pomFile);
                     addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
 
-            MavenArtifactSet artifacts = mavenPublication.getArtifacts();
+            Set<MavenArtifact> artifacts = getAllMavenArtifacts(mavenNormalizedPublication);
             for (MavenArtifact artifact : artifacts) {
                 File file = artifact.getFile();
+                if (file.equals(pomFile)) continue;
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
@@ -269,6 +269,34 @@ public class TaskHelperPublications extends TaskHelper {
             try {
                 Method m = ivy.getClass().getMethod("getDescriptorFile");
                 return (File)m.invoke(ivy);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private Set<IvyArtifact> getAllIvyArtifacts(IvyNormalizedPublication ivy) {
+        try {
+            return ivy.getAllArtifacts();
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            try {
+                Method m = ivy.getClass().getMethod("getArtifacts");
+                return (Set<IvyArtifact>)m.invoke(ivy);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private Set<MavenArtifact> getAllMavenArtifacts(MavenNormalizedPublication maven) {
+        try {
+            return maven.getAllArtifacts();
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            try {
+                Method m = maven.getClass().getMethod("getArtifacts");
+                return (Set<MavenArtifact>)m.invoke(maven);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
