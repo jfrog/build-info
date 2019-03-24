@@ -31,13 +31,6 @@ public class License {
         this.moreInfoUrl = moreInfoUrl;
     }
 
-    public License(License other) {
-        this.components = other.components;
-        this.fullName = StringUtils.trim(other.fullName);
-        this.name = StringUtils.trim(other.name);
-        this.moreInfoUrl = other.moreInfoUrl;
-    }
-
     @SuppressWarnings("unused")
     public List<String> getComponents() {
         return components;
@@ -77,9 +70,7 @@ public class License {
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(fullName);
-        result += Objects.hashCode(name);
-        return result * 31;
+        return Objects.hash(name, fullName);
     }
 
     @Override

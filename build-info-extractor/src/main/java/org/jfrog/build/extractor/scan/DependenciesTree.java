@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.Vector;
 
 /**
+ * Dependencies tree for Xray scan. Used in 'Eclipse' and 'Idea' Xray plugins.
+ *
  * @author yahavi
  */
 public class DependenciesTree extends DefaultMutableTreeNode {
@@ -51,7 +53,7 @@ public class DependenciesTree extends DefaultMutableTreeNode {
     }
 
     /**
-     * @return top severity issue of the current node and it's ancestors
+     * @return top severity issue of the current node and its ancestors
      */
     @SuppressWarnings("WeakerAccess")
     public Issue getTopIssue() {
@@ -59,7 +61,7 @@ public class DependenciesTree extends DefaultMutableTreeNode {
     }
 
     /**
-     * @return total number of issues of the current node and it's ancestors
+     * @return total number of issues of the current node and its ancestors
      */
     @SuppressWarnings("WeakerAccess")
     public int getIssueCount() {
@@ -80,7 +82,7 @@ public class DependenciesTree extends DefaultMutableTreeNode {
      * 3. Populate current node and subtree's top issue
      * 4. Sort the tree
      *
-     * @return all issues of the current node and it's ancestors
+     * @return all issues of the current node and its ancestors
      */
     @SuppressWarnings({"WeakerAccess", "unused"})
     public Set<Issue> processTreeIssues() {

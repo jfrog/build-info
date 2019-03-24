@@ -33,16 +33,6 @@ public class Issue implements Comparable<Issue> {
         this.summary = summary;
     }
 
-    @SuppressWarnings({"WeakerAccess", "CopyConstructorMissesField"})
-    public Issue(Issue other) {
-        this.created = other.created;
-        this.description = other.description;
-        this.issueType = other.issueType;
-        this.provider = other.provider;
-        this.severity = other.severity;
-        this.summary = other.summary;
-    }
-
     @SuppressWarnings("WeakerAccess")
     public Severity getSeverity() {
         return this.severity;
@@ -114,8 +104,6 @@ public class Issue implements Comparable<Issue> {
 
     @Override
     public int hashCode() {
-        int result = Objects.hashCode(summary);
-        result += StringUtils.isEmpty(component) ? Objects.hashCode(description) : Objects.hashCode(component);
-        return result * 31;
+        return Objects.hash(summary, component, description);
     }
 }

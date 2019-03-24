@@ -31,17 +31,6 @@ public class GeneralInfo implements Serializable {
         this.pkgType = pkgType;
     }
 
-    @SuppressWarnings("WeakerAccess")
-    public GeneralInfo(GeneralInfo other) {
-        this.componentId = other.componentId;
-        this.name = other.name;
-        this.path = other.path;
-        this.pkgType = other.pkgType;
-        this.groupId = other.groupId;
-        this.artifactId = other.artifactId;
-        this.version = other.version;
-    }
-
     public String getGroupId() {
         if (StringUtils.isNotBlank(groupId)) {
             return groupId;

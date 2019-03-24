@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.scan;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author yahavi
@@ -21,15 +20,9 @@ public class Artifact implements Serializable {
     }
 
     public Artifact(GeneralInfo generalInfo, Set<Issue> issues, Set<License> licenses) {
-        this.generalInfo = new GeneralInfo(generalInfo);
-        this.issues.addAll(issues
-                .stream()
-                .map(Issue::new)
-                .collect(Collectors.toSet()));
-        this.licenses.addAll(licenses
-                .stream()
-                .map(License::new)
-                .collect(Collectors.toSet()));
+        this.generalInfo = generalInfo;
+        this.issues = issues;
+        this.licenses = licenses;
     }
 
     @SuppressWarnings("unused")

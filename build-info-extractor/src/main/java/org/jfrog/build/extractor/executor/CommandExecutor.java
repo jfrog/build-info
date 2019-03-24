@@ -22,7 +22,7 @@ public class CommandExecutor implements Serializable {
     private String executablePath;
 
     /**
-     * @param executablePath - Npm executable path.
+     * @param executablePath - Executable path.
      * @param env            - Environment variables to use during npm execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
