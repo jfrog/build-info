@@ -44,10 +44,7 @@ import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ArtifactoryHttpClient;
-import org.jfrog.build.client.ArtifactoryUploadResponse;
-import org.jfrog.build.client.ArtifactoryVersion;
-import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.client.*;
 import org.jfrog.build.client.bintrayResponse.BintrayResponse;
 import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -83,6 +80,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
+    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -307,33 +305,28 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
     }
 
-    public String getItemLastModified(String path) throws IOException, ParseException {
-        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified&deep=1";
+    public ItemLastModified getItemLastModified(String path) throws IOException {
+        String url = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
-
-        StatusLine statusLine = response.getStatusLine();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            HttpEntity entity = response.getEntity();
-            throw new IOException("Failed to obtain item info. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(entity));
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream content = entity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    JsonNode result = parser.readValueAsTree();
-                    return result.get("lastModified").asText();
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
-                    EntityUtils.consume(entity);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpStatus.SC_OK) {
+            throw new IOException("While requesting item info for path " + path + " received " + response.getStatusLine().getStatusCode() + ":" + httpClient.getMessageFromEntity(response.getEntity()));
+        }
+        HttpEntity httpEntity = response.getEntity();
+        if (httpEntity != null) {
+            try (InputStream content = httpEntity.getContent()) {
+                JsonNode result = httpClient.getJsonNode(httpEntity, content);
+                JsonNode lastModified = result.get("lastModified");
+                JsonNode uri = result.get("uri");
+                if (lastModified == null || uri == null) {
+                    throw new IOException("Unexpected JSON response when requesting info for path " + path + httpClient.getMessageFromEntity(response.getEntity()));
                 }
+
+                return new ItemLastModified(uri.asText(), lastModified.asText());
             }
         }
-        return null;
+        throw new IOException("The path " + path + " returned empty entity");
     }
 
     /**
