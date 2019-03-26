@@ -94,7 +94,10 @@ public class DependenciesTree extends DefaultMutableTreeNode {
     }
 
     private void setIssuesComponent() {
-        issues.forEach(issue -> issue.setComponent(getUserObject().toString()));
+        Object userObject = getUserObject();
+        if (userObject != null) {
+            issues.forEach(issue -> issue.setComponent(userObject.toString()));
+        }
     }
 
     private void sortChildren() {
