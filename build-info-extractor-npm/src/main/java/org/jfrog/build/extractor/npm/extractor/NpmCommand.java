@@ -46,6 +46,10 @@ abstract class NpmCommand implements Serializable {
 
     void validateArtifactoryVersion() throws VersionException {
         ArtifactoryVersion version = client.getArtifactoryVersion();
+        if (version.isNotFound()) {
+            String message = "Couldn't execute npm task. Check connection with Artifactory.";
+            throw new VersionException(message, VersionCompatibilityType.NOT_FOUND);
+        }
         if (!version.isAtLeast(MIN_SUPPORTED_ARTIFACTORY_VERSION)) {
             String message = String.format("Couldn't execute npm task. Artifactory version is %s but must be at least %s.", version.toString(), MIN_SUPPORTED_ARTIFACTORY_VERSION.toString());
             throw new VersionException(message, VersionCompatibilityType.INCOMPATIBLE);
