@@ -45,9 +45,9 @@ public class NpmDriver implements Serializable {
         }
     }
 
-    public void pack(File workingDirectory, List<String> extraArgs) throws IOException {
+    public String pack(File workingDirectory, List<String> extraArgs) throws IOException {
         try {
-            runCommand(workingDirectory, new String[]{"pack"}, extraArgs);
+            return runCommand(workingDirectory, new String[]{"pack"}, extraArgs);
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm pack failed: " + e.getMessage(), e);
         }
@@ -81,6 +81,6 @@ public class NpmDriver implements Serializable {
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr());
         }
-        return npmCommandRes.getRes();
+        return npmCommandRes.getErr() + System.lineSeparator() + npmCommandRes.getRes();
     }
 }

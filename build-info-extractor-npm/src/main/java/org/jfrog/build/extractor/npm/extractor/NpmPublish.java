@@ -106,7 +106,7 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void pack() throws IOException {
-        npmDriver.pack(workingDir.toFile(), new ArrayList<>());
+        logger.info(npmDriver.pack(workingDir.toFile(), new ArrayList<>()));
         path = path.resolve(npmPackageInfo.getExpectedPackedFileName());
     }
 
