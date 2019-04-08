@@ -37,9 +37,9 @@ public class NpmDriver implements Serializable {
         }
     }
 
-    public void install(File workingDirectory, List<String> extraArgs) throws IOException {
+    public String install(File workingDirectory, List<String> extraArgs) throws IOException {
         try {
-            runCommand(workingDirectory, new String[]{"i"}, extraArgs);
+            return runCommand(workingDirectory, new String[]{"i"}, extraArgs);
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm install failed: " + e.getMessage(), e);
         }
