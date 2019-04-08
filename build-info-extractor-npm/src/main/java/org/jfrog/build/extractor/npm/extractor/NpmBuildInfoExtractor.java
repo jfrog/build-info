@@ -150,7 +150,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private void runInstall(Path workingDir, List<String> installationArgs) throws IOException {
-        npmDriver.install(workingDir.toFile(), installationArgs);
+        logger.info(npmDriver.install(workingDir.toFile(), installationArgs));
     }
 
     private void restoreNpmrc(Path workingDir) throws IOException {
