@@ -81,6 +81,6 @@ public class NpmDriver implements Serializable {
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr());
         }
-        return npmCommandRes.getErr() + System.lineSeparator() + npmCommandRes.getRes();
+        return npmCommandRes.getErr() + npmCommandRes.getRes();
     }
 }
