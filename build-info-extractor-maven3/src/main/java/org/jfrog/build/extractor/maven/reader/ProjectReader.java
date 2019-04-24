@@ -72,7 +72,7 @@ public class ProjectReader {
      */
     private Model readModel(File pom) throws IOException {
         MavenXpp3Reader reader = new MavenXpp3Reader();
-        try (FileInputStream inputStream = new FileInputStream(pom)){
+        try (FileInputStream inputStream = new FileInputStream(pom)) {
             return reader.read(inputStream);
         } catch (XmlPullParserException e) {
             throw new IOException(e);
