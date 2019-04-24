@@ -67,14 +67,11 @@ public class CommandExecutor implements Serializable {
             StreamReader errorStreamReader = new StreamReader(process.getErrorStream());
             service.submit(inputStreamReader);
             service.submit(errorStreamReader);
-            if (process.waitFor(30, TimeUnit.SECONDS)) {
-                service.shutdown();
-                service.awaitTermination(10, TimeUnit.SECONDS);
-                commandRes.setRes(inputStreamReader.getOutput());
-                commandRes.setErr(errorStreamReader.getOutput());
-            } else {
-                commandRes.setErr(String.format("Process execution %s timed out.", String.join(" ", args)));
-            }
+            process.waitFor();
+            service.shutdown();
+            service.awaitTermination(10, TimeUnit.SECONDS);
+            commandRes.setRes(inputStreamReader.getOutput());
+            commandRes.setErr(errorStreamReader.getOutput());
             commandRes.setExitValue(process.exitValue());
             return commandRes;
         } finally {
