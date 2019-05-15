@@ -25,7 +25,9 @@ import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
+import org.gradle.api.publish.PublicationArtifact;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
@@ -54,6 +56,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 
 /**
@@ -136,12 +139,11 @@ public class TaskHelperPublications extends TaskHelper {
         }
         for (IvyPublication ivyPublication : ivyPublications) {
             if (!(ivyPublication instanceof IvyPublicationInternal)) {
-                // TODO: Check how the output files can be extracted without using getPublishableFiles
                 log.warn("Ivy publication name '{}' is of unsupported type '{}'!",
                         ivyPublication.getName(), ivyPublication.getClass());
                 continue;
             }
-            dependsOn(((IvyPublicationInternal) ivyPublication).getPublishableFiles());
+            dependOn(ivyPublication);
             String capitalizedPublicationName = ivyPublication.getName().substring(0, 1).toUpperCase() + ivyPublication.getName().substring(1);
             dependsOn(String.format("%s:generateDescriptorFileFor%sPublication",
                 getProject().getPath(), capitalizedPublicationName));
@@ -150,17 +152,24 @@ public class TaskHelperPublications extends TaskHelper {
         // the 'generate Pom file' task
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
-                // TODO: Check how the output files can be extracted without using getPublishableFiles
                 log.warn("Maven publication name '{}' is of unsupported type '{}'!",
                     mavenPublication.getName(), mavenPublication.getClass());
                 continue;
             }
-            dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
+            dependOn(mavenPublication);
             String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() +
                 mavenPublication.getName().substring(1);
             dependsOn(String.format("%s:generatePomFileFor%sPublication",
                 getProject().getPath(), capitalizedPublicationName));
         }
+    }
+
+    private void dependOn(Publication publication) {
+        // TODO: Check how we can find the artifact dependencies without using internal api's.
+	// Based on org.gradle.plugins.signing.Sign#sign
+	PublicationInternal<?> publicationInternal = (PublicationInternal<?>) publication;
+	dependsOn((Callable<Set<? extends PublicationArtifact>>) publicationInternal::getPublishableArtifacts);
+	publicationInternal.allPublishableArtifacts(this::dependsOn);
     }
 
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
