@@ -1,12 +1,15 @@
 package org.jfrog.build.extractor.scan;
 
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.compress.utils.Sets;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertEquals;
 
@@ -54,7 +57,7 @@ public class DependenciesTreeTest {
         // Assert the tree has 1 issue
         Set<Issue> rootIssues = root.processTreeIssues();
         assertEquals(1, rootIssues.size());
-        assertEquals(Severity.Normal, ((Issue)rootIssues.toArray()[0]).getSeverity());
+        assertEquals(Severity.Normal, ((Issue) rootIssues.toArray()[0]).getSeverity());
 
         // Check isHigherSeverityThan() functionality
         assertTrue(createIssue(Severity.Unknown).isHigherSeverityThan(root.getTopIssue()));
@@ -71,8 +74,8 @@ public class DependenciesTreeTest {
         // Assert the tree has 2 issues
         Set<Issue> rootIssues = root.processTreeIssues();
         assertEquals(2, rootIssues.size());
-        assertEquals(Severity.Normal, ((Issue)rootIssues.toArray()[0]).getSeverity());
-        assertEquals(Severity.Normal, ((Issue)rootIssues.toArray()[1]).getSeverity());
+        assertEquals(Severity.Normal, ((Issue) rootIssues.toArray()[0]).getSeverity());
+        assertEquals(Severity.Normal, ((Issue) rootIssues.toArray()[1]).getSeverity());
         assertTrue(createIssue(Severity.Unknown).isHigherSeverityThan(root.getTopIssue()));
     }
 
@@ -121,6 +124,40 @@ public class DependenciesTreeTest {
         assertEquals("5", five.getTopIssue().getComponent());
     }
 
+    @Test
+    public void testFixedVersions() {
+        // Check no fixed versions
+        Issue issue = createIssue(Severity.Normal);
+        one.setIssues(Sets.newHashSet(issue));
+        Set<Issue> rootIssues = root.processTreeIssues();
+        assertEquals(Lists.newArrayList(), ((Issue) rootIssues.toArray()[0]).getFixedVersions());
+
+        // Check null fixed versions
+        issue.setFixedVersions(null);
+        one.setIssues(Sets.newHashSet(issue));
+        rootIssues = root.processTreeIssues();
+        assertNull(((Issue) rootIssues.toArray()[0]).getFixedVersions());
+
+        // Check one fixed version
+        List<String> fixedVersions = Lists.newArrayList();
+        fixedVersions.add("1.2.3");
+        issue.setFixedVersions(fixedVersions);
+        one.setIssues(Sets.newHashSet(issue));
+        rootIssues = root.processTreeIssues();
+        assertEquals(fixedVersions, ((Issue) rootIssues.toArray()[0]).getFixedVersions());
+
+        // Check two fixed version
+        fixedVersions.add("1.3.2");
+        issue.setFixedVersions(fixedVersions);
+        one.setIssues(Sets.newHashSet(issue));
+        rootIssues = root.processTreeIssues();
+        assertEquals(fixedVersions, ((Issue) rootIssues.toArray()[0]).getFixedVersions());
+
+        // Clean up
+        root.setIssues(Sets.newHashSet());
+        one.setIssues(Sets.newHashSet());
+    }
+
     /**
      * Create a random issue
      *
@@ -128,7 +165,7 @@ public class DependenciesTreeTest {
      * @return the random issue
      */
     private Issue createIssue(Severity severity) {
-        return new Issue(generateUID(), generateUID(), generateUID(), generateUID(), severity, generateUID());
+        return new Issue(generateUID(), generateUID(), generateUID(), generateUID(), severity, generateUID(), Lists.newArrayList());
     }
 
     private String generateUID() {

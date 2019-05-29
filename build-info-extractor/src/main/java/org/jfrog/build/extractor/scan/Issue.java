@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -18,22 +19,22 @@ public class Issue implements Comparable<Issue> {
     private Severity severity = Severity.Normal;
     private String summary;
     private String component = "";
+    private List<String> fixedVersions;
 
-    @SuppressWarnings("WeakerAccess")
     public Issue() {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String created, String description, String issueType, String provider, Severity severity, String summary) {
+    public Issue(String created, String description, String issueType, String provider, Severity severity, String summary, List<String> fixedVersions) {
         this.created = created;
         this.description = description;
         this.issueType = issueType;
         this.provider = provider;
         this.severity = severity;
         this.summary = summary;
+        this.fixedVersions = fixedVersions;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public Severity getSeverity() {
         return this.severity;
     }
@@ -70,6 +71,16 @@ public class Issue implements Comparable<Issue> {
         return summary;
     }
 
+    @SuppressWarnings("unused")
+    public List<String> getFixedVersions() {
+        return fixedVersions;
+    }
+
+    @SuppressWarnings("unused")
+    public void setFixedVersions(List<String> fixedVersions) {
+        this.fixedVersions = fixedVersions;
+    }
+
     @JsonIgnore
     @SuppressWarnings("WeakerAccess")
     public boolean isTopSeverity() {
@@ -77,7 +88,6 @@ public class Issue implements Comparable<Issue> {
     }
 
     @JsonIgnore
-    @SuppressWarnings("WeakerAccess")
     public boolean isHigherSeverityThan(Issue o) {
         return getSeverity().isHigherThan(o.getSeverity());
     }
