@@ -139,7 +139,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                 {Project.B, Collections.emptySet(), "--production", false},
                 {Project.C, Project.C.dependencies, "", true},
                 {Project.C, Project.B.dependencies, "--only=development", false},
-                {Project.C, Project.A.dependencies, "--only=production", true}
+                {Project.C, Project.A.dependencies, "--only=production", true},
+                {Project.C, Project.C.dependencies, "--verbose", true}
         };
     }
 
