@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
@@ -37,9 +38,9 @@ public class NpmDriver implements Serializable {
         }
     }
 
-    public String install(File workingDirectory, List<String> extraArgs) throws IOException {
+    public String install(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
         try {
-            return runCommand(workingDirectory, new String[]{"i"}, extraArgs);
+            return runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm install failed: " + e.getMessage(), e);
         }
@@ -59,7 +60,7 @@ public class NpmDriver implements Serializable {
         args.add("--json");
         args.addAll(extraArgs);
         try {
-            CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args);
+            CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null);
             String res = StringUtils.isBlank(npmCommandRes.getRes()) ? "{}" : npmCommandRes.getRes();
             return jsonReader.readTree(res);
         } catch (IOException | InterruptedException e) {
@@ -72,12 +73,26 @@ public class NpmDriver implements Serializable {
     }
 
     public String configList(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
-        return runCommand(workingDirectory, new String[]{"c", "ls", "--json"}, extraArgs);
+        // We're making sure that the --verbose npm option is not included in the options list,
+        // because it will break the the command output parsing.
+        // Remove the --verbose option.
+        List<String> args = new ArrayList<>();
+        for (String arg : extraArgs) {
+            if (!"--verbose".equals(arg)) {
+                args.add(arg);
+            }
+        }
+
+        return runCommand(workingDirectory, new String[]{"c", "ls", "--json"}, args);
     }
 
     private String runCommand(File workingDirectory, String[] args, List<String> extraArgs) throws IOException, InterruptedException {
+        return runCommand(workingDirectory, args, extraArgs, null);
+    }
+
+    private String runCommand(File workingDirectory, String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
-        CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs);
+        CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr());
         }

@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.executor;
 
 import org.apache.commons.io.IOUtils;
+import org.jfrog.build.api.util.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,13 +57,13 @@ public class CommandExecutor implements Serializable {
      * @param args    - Command arguments.
      * @return CommandResults
      */
-    public CommandResults exeCommand(File execDir, List<String> args) throws InterruptedException, IOException {
+    public CommandResults exeCommand(File execDir, List<String> args, Log logger) throws InterruptedException, IOException {
         args.add(0, executablePath);
         Process process = null;
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
             CommandResults commandRes = new CommandResults();
-            process = runProcess(execDir, args, env);
+            process = runProcess(execDir, args, env, logger);
             StreamReader inputStreamReader = new StreamReader(process.getInputStream());
             StreamReader errorStreamReader = new StreamReader(process.getErrorStream());
             service.submit(inputStreamReader);
@@ -97,7 +98,14 @@ public class CommandExecutor implements Serializable {
     }
 
     private static Process runProcess(File execDir, List<String> args, String[] env) throws IOException {
+        return runProcess(execDir, args, env, null);
+    }
+
+    private static Process runProcess(File execDir, List<String> args, String[] env, Log logger) throws IOException {
         String strArgs = String.join(" ", args);
+        if (logger != null) {
+            logger.info("Executing command: " + strArgs);
+        }
         if (isWindows()) {
             return Runtime.getRuntime().exec(new String[]{"cmd", "/c", strArgs}, env, execDir);
         }
