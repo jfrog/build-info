@@ -29,7 +29,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
     /**
      * Expecting \r\n every 30 seconds
      */
-    private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;
+    private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 500;
     /**
      * 30 seconds sleep between retry
      */
