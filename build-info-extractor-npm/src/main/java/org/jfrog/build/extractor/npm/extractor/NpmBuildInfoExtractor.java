@@ -30,6 +30,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jfrog.build.client.PreemptiveHttpClient.CONNECTION_POOL_SIZE;
+
 /**
  * @author Yahav Itzhak
  */
@@ -228,20 +230,17 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         // Set of packages that could not be found in Artifactory
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(scope, npmDependenciesTree);
-        try (ArtifactoryDependenciesClient client1 = dependenciesClientBuilder.build();
-             ArtifactoryDependenciesClient client2 = dependenciesClientBuilder.build();
-             ArtifactoryDependenciesClient client3 = dependenciesClientBuilder.build()
-        ) {
+        try (ArtifactoryDependenciesClient client = dependenciesClientBuilder.build()) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new NpmExtractorConsumer(client1, dependencies, badPackages),
-                    new NpmExtractorConsumer(client2, dependencies, badPackages),
-                    new NpmExtractorConsumer(client3, dependencies, badPackages)
+                    new NpmExtractorConsumer(client, dependencies, badPackages),
+                    new NpmExtractorConsumer(client, dependencies, badPackages),
+                    new NpmExtractorConsumer(client, dependencies, badPackages)
             };
             // Create the deployment executor
-            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, 10);
+            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
             deploymentExecutor.start();
             if (!badPackages.isEmpty()) {
                 logger.info((Arrays.toString(badPackages.toArray())));

@@ -31,6 +31,7 @@ import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.jfrog.build.api.util.Log;
 
@@ -47,36 +48,38 @@ import java.util.Set;
  *
  * @author Yossi Shaul
  */
-public class PreemptiveHttpClient {
+public class PreemptiveHttpClient implements AutoCloseable {
 
-    private final static String CLIENT_VERSION;
-    private final boolean requestSentRetryEnabled = true;
-    private CloseableHttpClient httpClient;
-    private HttpClientContext localContext = HttpClientContext.create();
+    private static final boolean REQUEST_SENT_RETRY_ENABLED = true;
+    public static final int CONNECTION_POOL_SIZE = 10;
+    private static final String CLIENT_VERSION;
+
+    private PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
+    private AuthCache authCache = new BasicAuthCache();
+    private CloseableHttpClient httpClient;
     private int connectionRetries;
     private Log log;
 
     static {
         // initialize client version
         Properties properties = new Properties();
-        InputStream is = PreemptiveHttpClient.class.getResourceAsStream("/bi.client.properties");
-        if (is != null) {
-            try {
-                properties.load(is);
-                is.close();
-            } catch (IOException e) {
-                // ignore, use the default value
-            }
+        try (InputStream is = PreemptiveHttpClient.class.getResourceAsStream("/bi.client.properties")) {
+            properties.load(is);
+        } catch (IOException e) {
+            // ignore, use the default value
         }
         CLIENT_VERSION = properties.getProperty("client.version", "unknown");
     }
 
+    @SuppressWarnings("WeakerAccess")
     public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
         HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, connectionRetries);
         if (proxyConfiguration != null) {
             setProxyConfiguration(httpClientBuilder, proxyConfiguration);
         }
+        connectionManager.setMaxTotal(CONNECTION_POOL_SIZE);
+        connectionManager.setDefaultMaxPerRoute(CONNECTION_POOL_SIZE);
         httpClient = httpClientBuilder.build();
     }
 
@@ -87,22 +90,20 @@ public class PreemptiveHttpClient {
         if (proxyConfiguration.username != null) {
             basicCredentialsProvider.setCredentials(new AuthScope(proxyConfiguration.host, proxyConfiguration.port),
                     new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
-            localContext.setCredentialsProvider(basicCredentialsProvider);
             // Create AuthCache instance
-            AuthCache authCache = new BasicAuthCache();
+            authCache = new BasicAuthCache();
             // Generate BASIC scheme object and add it to the local auth cache
-            BasicScheme basicAuth = new BasicScheme();
-            authCache.put(proxy, basicAuth);
-            localContext.setAuthCache(authCache);
+            authCache.put(proxy, new BasicScheme());
         }
     }
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
-        if (localContext != null) {
-            return httpClient.execute(request, localContext);
-        } else {
-            return httpClient.execute(request);
+        HttpClientContext clientContext = HttpClientContext.create();
+        clientContext.setCredentialsProvider(basicCredentialsProvider);
+        if (authCache != null) {
+            clientContext.setAuthCache(authCache);
         }
+        return httpClient.execute(request, clientContext);
     }
 
     private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int connectionRetries) {
@@ -117,6 +118,7 @@ public class PreemptiveHttpClient {
 
         HttpClientBuilder builder = HttpClientBuilder
                 .create()
+                .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig);
 
         if (StringUtils.isEmpty(userName)) {
@@ -126,7 +128,6 @@ public class PreemptiveHttpClient {
 
         basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
                 new UsernamePasswordCredentials(userName, password));
-        localContext.setCredentialsProvider(basicCredentialsProvider);
 
         // Add as the first request interceptor
         builder.addInterceptorFirst(new PreemptiveAuth());
@@ -142,12 +143,14 @@ public class PreemptiveHttpClient {
         return builder;
     }
 
+    @Override
     public void close() {
         try {
             httpClient.close();
         } catch (IOException e) {
             // Do nothing
         }
+        connectionManager.close();
     }
 
     public void setLog(Log log) {
@@ -160,13 +163,13 @@ public class PreemptiveHttpClient {
      * @return set of Exceptions that will not be retired
      */
     private Set<Class<? extends IOException>> getNonRetriableClasses() {
-        Set<Class<? extends IOException>> classSet = new HashSet<Class<? extends IOException>>();
+        Set<Class<? extends IOException>> classSet = new HashSet<>();
         classSet.add(SSLException.class);
         return classSet;
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
-        public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
+        public void process(final HttpRequest request, final HttpContext context) throws HttpException {
             HttpClientContext finalContext = (HttpClientContext) context;
             AuthState authState = finalContext.getTargetAuthState();
             // If no auth scheme available yet, try to initialize it preemptively
@@ -220,7 +223,7 @@ public class PreemptiveHttpClient {
     private class PreemptiveRetryHandler extends DefaultHttpRequestRetryHandler {
 
         PreemptiveRetryHandler(int connectionRetries) {
-            super(connectionRetries, requestSentRetryEnabled, getNonRetriableClasses());
+            super(connectionRetries, REQUEST_SENT_RETRY_ENABLED, getNonRetriableClasses());
         }
 
         @Override
