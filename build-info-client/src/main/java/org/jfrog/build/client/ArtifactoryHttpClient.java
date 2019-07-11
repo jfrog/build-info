@@ -44,7 +44,7 @@ import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 /**
  * @author Noam Y. Tenne
  */
-public class ArtifactoryHttpClient {
+public class ArtifactoryHttpClient implements AutoCloseable {
 
     public static final ArtifactoryVersion UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION =
             new ArtifactoryVersion("2.2.3");
@@ -129,6 +129,7 @@ public class ArtifactoryHttpClient {
     /**
      * Release all connection and cleanup resources.
      */
+    @Override
     public void close() {
         if (deployClient != null) {
             deployClient.close();
