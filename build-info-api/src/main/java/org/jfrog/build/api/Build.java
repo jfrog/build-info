@@ -17,12 +17,14 @@ package org.jfrog.build.api;
 
 import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import static org.jfrog.build.api.BuildBean.ROOT;
 
@@ -548,6 +550,65 @@ public class Build extends BaseBuildBean {
 
     public void setGovernance(Governance governance) {
         this.governance = governance;
+    }
+
+    public void append(Build other) {
+        if (buildAgent == null) {
+            setBuildAgent(other.buildAgent);
+        }
+
+        appendProperties(other);
+        appendModules(other);
+        appendBuildDependencies(other);
+    }
+
+    private void appendBuildDependencies(Build other) {
+        List<BuildDependency> buildDependencies = other.getBuildDependencies();
+        if (buildDependencies != null && buildDependencies.size() > 0) {
+            if (this.buildDependencies == null) {
+                this.setBuildDependencies(buildDependencies);
+            } else {
+                this.buildDependencies.addAll(buildDependencies);
+            }
+        }
+    }
+
+    private void appendModules(Build other) {
+        List<Module> modules = other.getModules();
+        if (modules != null && modules.size() > 0) {
+            if (this.getModules() == null) {
+                this.setModules(modules);
+            } else {
+                modules.forEach(this::addModule);
+            }
+        }
+    }
+
+    private void appendProperties(Build other) {
+        Properties properties = other.getProperties();
+        if (properties != null && properties.size() > 0) {
+            if (this.getProperties() == null) {
+                this.setProperties(properties);
+            } else {
+                this.getProperties().putAll(properties);
+            }
+        }
+    }
+
+    private void addModule(Module other) {
+        List<Module> modules = getModules();
+        Module currentModule = modules.stream()
+                // Check if there's already a module with the same name.
+                .filter(module -> StringUtils.equals(module.getId(), other.getId()))
+                .findAny()
+                .orElse(null);
+        if (currentModule == null) {
+            // Append new module.
+            modules.add(other);
+        } else {
+            // Append the other module into the existing module with the same name.
+            currentModule.append(other);
+        }
     }
 
     @Override
