@@ -65,7 +65,7 @@ public class BuildDeploymentHelper {
         File aggregateDirectory;
         File buildInfoAggregated = null;
         File buildInfoFile = null;
-        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.getAggregateArtifacts() != null) {
+        if (clientConf.publisher.isPublishBuildInfo() || clientConf.publisher.getAggregateArtifacts() != null || StringUtils.isNotBlank(clientConf.info.getGeneratedBuildInfoFilePath())) {
             buildInfoFile = saveBuildInfoToFile(build, clientConf, basedir);
         }
         if (clientConf.publisher.getAggregateArtifacts() != null) {
