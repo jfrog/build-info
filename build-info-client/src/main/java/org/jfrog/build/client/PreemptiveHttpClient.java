@@ -86,31 +86,6 @@ public class PreemptiveHttpClient implements AutoCloseable {
     public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
         HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, connectionRetries);
 
-        PublicSuffixMatcher publicSuffixMatcher = PublicSuffixMatcherLoader.getDefault();
-        httpClientBuilder.setPublicSuffixMatcher(publicSuffixMatcher);
-
-        final CookieSpecProvider defaultProvider = new DefaultCookieSpecProvider(
-                DefaultCookieSpecProvider.CompatibilityLevel.DEFAULT, publicSuffixMatcher, new String[]{
-                "EEE, dd-MMM-yy HH:mm:ss z", // Netscape expires pattern
-                DateUtils.PATTERN_RFC1036,
-                DateUtils.PATTERN_ASCTIME,
-                DateUtils.PATTERN_RFC1123
-        }, false);
-
-        final CookieSpecProvider laxStandardProvider = new RFC6265CookieSpecProvider(
-                RFC6265CookieSpecProvider.CompatibilityLevel.RELAXED, publicSuffixMatcher);
-        final CookieSpecProvider strictStandardProvider = new RFC6265CookieSpecProvider(
-                RFC6265CookieSpecProvider.CompatibilityLevel.STRICT, publicSuffixMatcher);
-
-        httpClientBuilder.setDefaultCookieSpecRegistry(RegistryBuilder.<CookieSpecProvider>create()
-                .register(CookieSpecs.DEFAULT, defaultProvider)
-                .register("best-match", defaultProvider)
-                .register("compatibility", defaultProvider)
-                .register(CookieSpecs.STANDARD, laxStandardProvider)
-                .register(CookieSpecs.STANDARD_STRICT, strictStandardProvider)
-                .register(CookieSpecs.NETSCAPE, new NetscapeDraftSpecProvider())
-                .register(CookieSpecs.IGNORE_COOKIES, new IgnoreSpecProvider())
-                .build());
         if (proxyConfiguration != null) {
             setProxyConfiguration(httpClientBuilder, proxyConfiguration);
         }
@@ -176,7 +151,41 @@ public class PreemptiveHttpClient implements AutoCloseable {
         // set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
         builder.setUserAgent(userAgent);
+
+        setDefaultCookieSpecRegistry(builder);
         return builder;
+    }
+
+    /**
+     * This method configures the http client builder cookie spec, to avoid log messages like:
+     * Invalid cookie header: "Set-Cookie: AWSALB=jgFuoBrtnHLZCOr1B07ulLBEGSXLWcGZO8rTzzuuORNDpTubaDixX30r9N3F3Hy9xAlFgXhVghWJHE4V8uNQSNUsz7Wx7geQ8zrlG8mPva2yeCyuKDVm4iO6/IdP; Expires=Tue, 25 Jun 2019 22:20:19 GMT; Path=/". Invalid 'expires' attribute: Tue, 25 Jun 2019 22:20:19 GMT
+     */
+    private void setDefaultCookieSpecRegistry(HttpClientBuilder clientBuilder) {
+        PublicSuffixMatcher publicSuffixMatcher = PublicSuffixMatcherLoader.getDefault();
+        clientBuilder.setPublicSuffixMatcher(publicSuffixMatcher);
+
+        final CookieSpecProvider defaultProvider = new DefaultCookieSpecProvider(
+                DefaultCookieSpecProvider.CompatibilityLevel.DEFAULT, publicSuffixMatcher, new String[]{
+                "EEE, dd-MMM-yy HH:mm:ss z", // Netscape expires pattern
+                DateUtils.PATTERN_RFC1036,
+                DateUtils.PATTERN_ASCTIME,
+                DateUtils.PATTERN_RFC1123
+        }, false);
+
+        final CookieSpecProvider laxStandardProvider = new RFC6265CookieSpecProvider(
+                RFC6265CookieSpecProvider.CompatibilityLevel.RELAXED, publicSuffixMatcher);
+        final CookieSpecProvider strictStandardProvider = new RFC6265CookieSpecProvider(
+                RFC6265CookieSpecProvider.CompatibilityLevel.STRICT, publicSuffixMatcher);
+
+        clientBuilder.setDefaultCookieSpecRegistry(RegistryBuilder.<CookieSpecProvider>create()
+                .register(CookieSpecs.DEFAULT, defaultProvider)
+                .register("best-match", defaultProvider)
+                .register("compatibility", defaultProvider)
+                .register(CookieSpecs.STANDARD, laxStandardProvider)
+                .register(CookieSpecs.STANDARD_STRICT, strictStandardProvider)
+                .register(CookieSpecs.NETSCAPE, new NetscapeDraftSpecProvider())
+                .register(CookieSpecs.IGNORE_COOKIES, new IgnoreSpecProvider())
+                .build());
     }
 
     @Override
