@@ -19,6 +19,7 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -53,9 +54,15 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
  * @author Noam Y. Tenne
  */
 public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
+    private static final String LATEST = "LATEST";
+    private static final String LAST_RELEASE = "LAST_RELEASE";
 
     public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, Log logger) {
         super(artifactoryUrl, username, password, logger);
+    }
+
+    public ArtifactoryDependenciesClient(String artifactoryUrl, ArtifactoryHttpClient httpClient, Log logger) {
+        super(artifactoryUrl, httpClient, logger);
     }
 
     /**
@@ -133,9 +140,9 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     /**
      * Reads HTTP response and converts it to object of the type specified.
      *
-     * @param responseStream     response to read
-     * @param valueType    response object type
-     * @param <T>          response object type
+     * @param responseStream response to read
+     * @param valueType      response object type
+     * @param <T>            response object type
      * @return response object converted from HTTP Json reponse to the type specified.
      * @throws java.io.IOException if reading or converting response fails.
      */
@@ -229,5 +236,28 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
             EntityUtils.consume(httpEntity);
             throw new IOException(errorMessage + ": " + response.getStatusLine());
         }
+    }
+
+    /**
+     * Retrieves build number for the provided build name. For LATEST / LAST_RELEASE build numbers, retrieves actual build number from Artifactory.
+     *
+     * @return actual build number, null if buildName is not found.
+     */
+    public String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber) throws IOException {
+        if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
+            if (isArtifactoryOSS()) {
+                throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
+            }
+            List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
+            artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
+            List<BuildPatternArtifacts> artifactsResponses = retrievePatternArtifacts(artifactsRequest);
+            // Artifactory returns null if no build was found
+            if (artifactsResponses.get(0) != null) {
+                buildNumber = artifactsResponses.get(0).getBuildNumber();
+            } else {
+                return null;
+            }
+        }
+        return buildNumber;
     }
 }

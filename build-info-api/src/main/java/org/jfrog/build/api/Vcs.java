@@ -5,11 +5,12 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
+import java.util.Objects;
 
-@XStreamAlias("vcs")
+@XStreamAlias(BuildInfoFields.VCS)
 public class Vcs implements Serializable {
-    String revision = "";
-    String url = "";
+    private String revision = "";
+    private String url = "";
 
     public Vcs() {
     }
@@ -39,6 +40,31 @@ public class Vcs implements Serializable {
     public String toString() {
         return "revision= '" + revision + '\'' +
                 ", url='" + url + '\'';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Vcs)) {
+            return false;
+        }
+
+        Vcs that = (Vcs) o;
+
+        if (!Objects.equals(revision, that.revision)) {
+            return false;
+        }
+
+        return Objects.equals(url, that.url);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (revision != null ? revision.hashCode() : 0);
+        result = 31 * result + (url != null ? url.hashCode() : 0);
+        return result;
     }
 
     @JsonIgnore

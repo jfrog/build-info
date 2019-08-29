@@ -1,6 +1,7 @@
 package org.jfrog.build.api;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * @author Noam Y. Tenne
@@ -36,5 +37,23 @@ public class IssueTracker implements Serializable {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof IssueTracker)) {
+            return false;
+        }
+
+        IssueTracker that = (IssueTracker) o;
+
+        if (!Objects.equals(name, that.name)) {
+            return false;
+        }
+
+        return Objects.equals(version, that.version);
     }
 }
