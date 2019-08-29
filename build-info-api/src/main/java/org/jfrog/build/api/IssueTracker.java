@@ -49,11 +49,6 @@ public class IssueTracker implements Serializable {
         }
 
         IssueTracker that = (IssueTracker) o;
-
-        if (!Objects.equals(name, that.name)) {
-            return false;
-        }
-
-        return Objects.equals(version, that.version);
+        return Objects.equals(name, that.name) && Objects.equals(version, that.version);
     }
 }

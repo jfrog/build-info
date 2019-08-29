@@ -79,8 +79,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
     public static final String ITEM_LAST_MODIFIED = "/api/storage/";
-    private static final String LATEST = "LATEST";
-    private static final String LAST_RELEASE = "LAST_RELEASE";
 
     /**
      * Creates a new client for the given Artifactory url.

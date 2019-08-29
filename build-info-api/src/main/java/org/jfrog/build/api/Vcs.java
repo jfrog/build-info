@@ -52,12 +52,7 @@ public class Vcs implements Serializable {
         }
 
         Vcs that = (Vcs) o;
-
-        if (!Objects.equals(revision, that.revision)) {
-            return false;
-        }
-
-        return Objects.equals(url, that.url);
+        return Objects.equals(revision, that.revision) && Objects.equals(url, that.url);
     }
 
     @Override
