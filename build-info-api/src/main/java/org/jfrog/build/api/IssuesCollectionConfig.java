@@ -32,9 +32,6 @@ public class IssuesCollectionConfig implements Serializable {
         if (issues == null) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + MISSING_CONFIGURATION_ERROR + "issues");
         }
-        if (issues.serverID == null) {
-            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + MISSING_CONFIGURATION_ERROR + "serverID");
-        }
         if (issues.trackerName == null) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + MISSING_CONFIGURATION_ERROR + "trackerName");
         }
@@ -50,7 +47,6 @@ public class IssuesCollectionConfig implements Serializable {
     }
 
     public static class Issues implements Serializable {
-        private String serverID;
         private String trackerName;
         private String regexp;
         private int keyGroupIndex;
@@ -58,14 +54,6 @@ public class IssuesCollectionConfig implements Serializable {
         private String trackerUrl;
         private boolean aggregate;
         private String aggregationStatus;
-
-        public String getServerID() {
-            return serverID;
-        }
-
-        public void setServerID(String serverID) {
-            this.serverID = serverID;
-        }
 
         public String getTrackerName() {
             return trackerName;
