@@ -30,7 +30,18 @@ public class IssuesCollector {
         this.commandExecutor = new CommandExecutor("git", null);
     }
 
-    public IssuesCollectionConfig parseConfig(String config) throws IOException {
+    /**
+     * Main function that manages the issue collection process.
+     * */
+    public Issues collectIssues(File dotGitPath, Log logger, String config, ArtifactoryBuildInfoClient client,
+                                String buildName) throws InterruptedException, IOException {
+        IssuesCollectionConfig parsedConfig = parseConfig(config);
+        String previousVcsRevision = getPreviousVcsRevision(client, buildName);
+        Set<Issue> affectedIssues = doCollect(dotGitPath, logger, parsedConfig, previousVcsRevision);
+        return buildIssuesObject(parsedConfig, affectedIssues);
+    }
+
+    private IssuesCollectionConfig parseConfig(String config) throws IOException {
         // When mapping the config from String to IssuesCollectionConfig one backslash is being removed, multiplying the backslashes solves this.
         config = config.replace("\\", "\\\\");
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
@@ -39,7 +50,11 @@ public class IssuesCollector {
         return parsedConfig;
     }
 
-    public String getPreviousVcsRevision(ArtifactoryBuildInfoClient client, String buildName) throws IOException {
+    /**
+     * Gets the previous vcs revision from the LATEST build published to Artifactory.
+     * */
+    private String getPreviousVcsRevision(ArtifactoryBuildInfoClient client, String buildName) throws IOException {
+        // Get LATEST build info from Artifactory
         Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
         if (previousBuildInfo == null) {
             return "";
@@ -47,6 +62,7 @@ public class IssuesCollector {
         if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
             return previousBuildInfo.getVcsRevision();
         }
+        // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
         List<Vcs> vcsList = previousBuildInfo.getVcs();
         if (vcsList != null && vcsList.size() > 0) {
             for (Vcs curVcs : previousBuildInfo.getVcs()) {
@@ -58,18 +74,10 @@ public class IssuesCollector {
         return "";
     }
 
-    public Issues doCollect(File dotGitPath, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
-        Set<Issue> affectedIssues = collectAffectedIssues(dotGitPath, logger, issuesConfig, previousVcsRevision);
-        IssueTracker tracker = new IssueTracker(issuesConfig.getIssues().getTrackerName());
-        boolean aggregateBuildIssues = issuesConfig.getIssues().isAggregate();
-        String aggregationBuildStatus = issuesConfig.getIssues().getAggregationStatus();
-        return new Issues(tracker, aggregateBuildIssues, aggregationBuildStatus, affectedIssues);
-    }
-
     /**
-     * Collect affected issues from git log
+     * Collects affected issues from git log
      */
-    private Set<Issue> collectAffectedIssues(File dotGitPath, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
+    private Set<Issue> doCollect(File dotGitPath, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
         verifyGitExists(dotGitPath, logger);
         String gitLog = getGitLog(dotGitPath, logger, previousVcsRevision);
 
@@ -88,6 +96,13 @@ public class IssuesCollector {
             }
         }
         return affectedIssues;
+    }
+
+    private Issues buildIssuesObject(IssuesCollectionConfig parsedConfig, Set<Issue> affectedIssues) {
+        IssueTracker tracker = new IssueTracker(parsedConfig.getIssues().getTrackerName());
+        boolean aggregateBuildIssues = parsedConfig.getIssues().isAggregate();
+        String aggregationBuildStatus = parsedConfig.getIssues().getAggregationStatus();
+        return new Issues(tracker, aggregateBuildIssues, aggregationBuildStatus, affectedIssues);
     }
 
     private Issue getMatchingIssue(int keyIndex, int summaryIndex, Matcher matcher, IssuesCollectionConfig issuesConfig) throws IOException {
@@ -125,7 +140,7 @@ public class IssuesCollector {
         }
         CommandResults res = this.commandExecutor.exeCommand(dotGitPath, args, logger);
         if (!res.isOk()) {
-            throw new IOException(res.getErr());
+            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + res.getErr());
         }
         return res.getRes();
     }
