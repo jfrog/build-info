@@ -9,14 +9,14 @@ public class IssuesCollectionConfig implements Serializable {
     public static final String ISSUES_COLLECTION_ERROR_PREFIX = "Issues Collection: ";
     private static final String MISSING_CONFIGURATION_ERROR = "Configuration file must contain: ";
 
-    private String version;
+    private int version;
     private Issues issues;
 
-    public String getVersion() {
+    public int getVersion() {
         return version;
     }
 
-    public void setVersion(String version) {
+    public void setVersion(int version) {
         this.version = version;
     }
 

@@ -33,15 +33,15 @@ public class IssuesCollector {
     /**
      * Main function that manages the issue collection process.
      * */
-    public Issues collectIssues(File dotGitPath, Log logger, String config, ArtifactoryBuildInfoClient client,
+    public Issues collectIssues(File execDir, Log logger, String config, ArtifactoryBuildInfoClient client,
                                 String buildName) throws InterruptedException, IOException {
         IssuesCollectionConfig parsedConfig = parseConfig(config);
         String previousVcsRevision = getPreviousVcsRevision(client, buildName);
-        Set<Issue> affectedIssues = doCollect(dotGitPath, logger, parsedConfig, previousVcsRevision);
+        Set<Issue> affectedIssues = doCollect(execDir, logger, parsedConfig, previousVcsRevision);
         return buildIssuesObject(parsedConfig, affectedIssues);
     }
 
-    private IssuesCollectionConfig parseConfig(String config) throws IOException {
+    IssuesCollectionConfig parseConfig(String config) throws IOException {
         // When mapping the config from String to IssuesCollectionConfig one backslash is being removed, multiplying the backslashes solves this.
         config = config.replace("\\", "\\\\");
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
@@ -77,9 +77,9 @@ public class IssuesCollector {
     /**
      * Collects affected issues from git log
      */
-    private Set<Issue> doCollect(File dotGitPath, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
-        verifyGitExists(dotGitPath, logger);
-        String gitLog = getGitLog(dotGitPath, logger, previousVcsRevision);
+    private Set<Issue> doCollect(File execDir, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
+        verifyGitExists(execDir, logger);
+        String gitLog = getGitLog(execDir, logger, previousVcsRevision);
 
         int keyIndex = issuesConfig.getIssues().getKeyGroupIndex();
         int summaryIndex = issuesConfig.getIssues().getSummaryGroupIndex();
@@ -121,16 +121,16 @@ public class IssuesCollector {
         return new Issue(key, url, summary);
     }
 
-    private void verifyGitExists(File dotGitPath, Log logger) throws InterruptedException, IOException {
+    private void verifyGitExists(File execDir, Log logger) throws InterruptedException, IOException {
         List<String> args = new ArrayList<>();
         args.add("help");
-        CommandResults res = this.commandExecutor.exeCommand(dotGitPath, args, logger);
+        CommandResults res = this.commandExecutor.exeCommand(execDir, args, logger);
         if (!res.isOk()) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git executable not found in path");
         }
     }
 
-    private String getGitLog(File dotGitPath, Log logger, String previousVcsRevision) throws InterruptedException, IOException {
+    private String getGitLog(File execDir, Log logger, String previousVcsRevision) throws InterruptedException, IOException {
         List<String> args = new ArrayList<>();
         args.add("log");
         args.add("--pretty=format:%s");
@@ -138,7 +138,7 @@ public class IssuesCollector {
         if (!previousVcsRevision.isEmpty()) {
             args.add(previousVcsRevision + "..");
         }
-        CommandResults res = this.commandExecutor.exeCommand(dotGitPath, args, logger);
+        CommandResults res = this.commandExecutor.exeCommand(execDir, args, logger);
         if (!res.isOk()) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + res.getErr());
         }
