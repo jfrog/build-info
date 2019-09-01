@@ -1,11 +1,12 @@
 package org.jfrog.build.extractor.issuesCollection;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Issues;
+import org.jfrog.build.api.IssuesCollectionConfig;
+import org.jfrog.build.api.Vcs;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -15,7 +16,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -71,8 +72,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         Assert.assertEquals(parsedConfig.getVersion(), 1);
         IssuesCollectionConfig.Issues issues = parsedConfig.getIssues();
         Assert.assertEquals(issues.getTrackerName(), "TESTING");
-        // Double backslash since the parseConfig method doubles them as well:
-        Assert.assertEquals(issues.getRegexp(), "([a-zA-Z]+-[0-9]*)\\\\s-\\\\s(.*)");
+        Assert.assertEquals(issues.getRegexp(), "([a-zA-Z]+-[0-9]*)\\s-\\s(.*)");
         Assert.assertEquals(issues.getKeyGroupIndex(), 1);
         Assert.assertEquals(issues.getSummaryGroupIndex(), 2);
         Assert.assertEquals(issues.getTrackerUrl(), "http://TESTING.com");
@@ -81,21 +81,23 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
     }
 
     @Test
-    public void testDoCollectWithoutRevision() throws IOException, InterruptedException {
-        runDoCollect("git_issues_.git_suffix", new Vcs(), 2);
+    public void testCollectIssuesWithoutRevision() throws IOException, InterruptedException {
+        List<Vcs> vcsList = Collections.singletonList(new Vcs());
+        runCollectIssues("git_issues_.git_suffix", vcsList, 2);
     }
 
     @Test
-    public void testDoCollectWithRevision() throws IOException, InterruptedException {
-        runDoCollect("git_issues2_.git_suffix", new Vcs("http://TESTING.com", "6198a6294722fdc75a570aac505784d2ec0d1818"), 2);
+    public void testCollectIssuesWithRevision() throws IOException, InterruptedException {
+        List<Vcs> vcsList = Collections.singletonList(new Vcs("http://TESTING.com", "6198a6294722fdc75a570aac505784d2ec0d1818"));
+        runCollectIssues("git_issues2_.git_suffix", vcsList, 2);
     }
 
-    private void runDoCollect(String sourceFolder, Vcs vcs, int expectedNumOfIssues) throws IOException, InterruptedException {
+    private void runCollectIssues(String sourceFolder, List<Vcs> vcs, int expectedNumOfIssues) throws IOException, InterruptedException {
         // Copy the provided folder and create .git
-        FileUtils.copyDirectory(new File(testResourcesPath, "git_issues_.git_suffix"), dotGitPath);
+        FileUtils.copyDirectory(new File(testResourcesPath, sourceFolder), dotGitPath);
 
         // Publishing build without vcs
-        publishBuildInfoWithVcs(null);
+        publishBuildInfoWithVcs(vcs);
 
         // Get config
         String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, "issues_config_full_test.json"));

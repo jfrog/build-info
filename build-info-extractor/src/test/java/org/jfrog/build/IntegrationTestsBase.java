@@ -186,7 +186,7 @@ public abstract class IntegrationTestsBase {
         try {
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
-                throw new IOException("Error creating repository" + repo + ". Code: " + statusCode + " Message: " +
+                throw new IOException("Error creating repository: " + repo + ". Code: " + statusCode + " Message: " +
                         response.getStatusLine().getReasonPhrase());
             }
         } finally {
