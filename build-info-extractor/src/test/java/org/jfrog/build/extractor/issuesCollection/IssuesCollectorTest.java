@@ -94,6 +94,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
 
     private void runCollectIssues(String sourceFolder, List<Vcs> vcs, int expectedNumOfIssues) throws IOException, InterruptedException {
         // Copy the provided folder and create .git
+        FileUtils.deleteDirectory(dotGitPath);
         FileUtils.copyDirectory(new File(testResourcesPath, sourceFolder), dotGitPath);
 
         // Publishing build without vcs

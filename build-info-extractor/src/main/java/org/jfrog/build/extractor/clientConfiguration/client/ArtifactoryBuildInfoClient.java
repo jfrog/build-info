@@ -188,12 +188,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
+        // Only If the value of the buildNumber sent is "LATEST" or "LAST_RELEASE", replace the value with a specific build number.
         buildNumber = getLatestBuildNumberFromArtifactory(buildName, buildNumber);
         if (buildNumber == null) {
             return null;
         }
 
-        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, buildName, buildNumber);
+        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber));
         HttpGet httpGet = new HttpGet(url);
         try {
             HttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK);
