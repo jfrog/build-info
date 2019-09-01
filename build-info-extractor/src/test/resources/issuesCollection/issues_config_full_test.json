@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "issues": {
+    "trackerName": "TESTING",
+    "regexp": "(.+-[0-9]+)\s-\s(.+)",
+    "keyGroupIndex": "1",
+    "summaryGroupIndex": "2",
+    "trackerUrl": "http://TESTING.com",
+    "aggregate": false,
+    "aggregationStatus": "RELEASE"
+  }
+}

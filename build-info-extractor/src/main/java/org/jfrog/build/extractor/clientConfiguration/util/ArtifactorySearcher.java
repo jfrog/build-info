@@ -1,9 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.dependency.BuildPatternArtifacts;
-import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -16,8 +13,8 @@ import java.util.List;
 class ArtifactorySearcher {
     private ArtifactoryDependenciesClient client;
     private Log log;
-    private final String LATEST = "LATEST";
-    private final String LAST_RELEASE = "LAST_RELEASE";
+    private static final String LATEST = "LATEST";
+    private static final String LAST_RELEASE = "LAST_RELEASE";
     private static final String DELIMITER = "/";
     private static final String ESCAPE_CHAR = "\\";
 
@@ -100,21 +97,11 @@ class ArtifactorySearcher {
                 // Remove the escape chars before the delimiters
                 buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
-                if (this.client.isArtifactoryOSS()) {
-                    throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
-                }
-                List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
-                artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
-                List<BuildPatternArtifacts> artifactsResponses =  this.client.retrievePatternArtifacts(artifactsRequest);
-                // Artifactory returns null if no build was found
-                if (artifactsResponses.get(0) != null) {
-                    buildNumber = artifactsResponses.get(0).getBuildNumber();
-                } else {
-                    logBuildNotFound(buildName, buildNumber);
-                    return null;
-                }
+            String retrievedBuildNumber = this.client.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+            if (retrievedBuildNumber == null) {
+                logBuildNotFound(buildName, buildNumber);
             }
+            buildNumber = retrievedBuildNumber;
         }
         return buildNumber;
     }

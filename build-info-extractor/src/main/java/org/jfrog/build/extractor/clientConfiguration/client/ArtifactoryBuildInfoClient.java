@@ -25,7 +25,6 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -58,7 +57,6 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
@@ -190,6 +188,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
+        buildNumber = getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+        if (buildNumber == null) {
+            return null;
+        }
+
         String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, buildName, buildNumber);
         HttpGet httpGet = new HttpGet(url);
         try {
@@ -199,6 +202,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         } catch (IOException e) {
             throw new IOException("Failed to get build info. " + e.getMessage(), e);
         }
+    }
+
+    private String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber) throws IOException {
+        ArtifactoryDependenciesClient dependenciesClient = new ArtifactoryDependenciesClient(artifactoryUrl, httpClient, log);
+        return dependenciesClient.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
     }
 
     public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
@@ -343,7 +351,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     /**
      * Deploys the artifact to the destination repository, with addition of prefix to the printed log.
      *
-     * @param details Details about the deployed artifact
+     * @param details   Details about the deployed artifact
      * @param logPrefix Will be printed as a log-prefix
      * @return
      * @throws IOException On any connection error
@@ -363,7 +371,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return StringUtils.join(pathComponents, "/");
     }
 
-    private ArtifactoryUploadResponse doDeployArtifact(DeployDetails details, String deploymentPath) throws IOException{
+    private ArtifactoryUploadResponse doDeployArtifact(DeployDetails details, String deploymentPath) throws IOException {
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
