@@ -28,7 +28,7 @@ public class GitUtils {
     public static Vcs extractVcs(File workingDir, Log log) throws IOException {
         File dotGit = getDotGit(workingDir);
         if (dotGit == null) {
-            throw new FileNotFoundException("Could not find .git directory for extracting Vcs details");
+            return null;
         }
         Vcs vcs = new Vcs();
         vcs.setRevision(extractVcsRevision(dotGit, log));
