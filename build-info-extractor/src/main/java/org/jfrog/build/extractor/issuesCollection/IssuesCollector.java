@@ -49,7 +49,13 @@ public class IssuesCollector {
         // When mapping the config from String to IssuesCollectionConfig one backslash is being removed, multiplying the backslashes solves this.
         config = config.replace("\\", "\\\\");
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
-        IssuesCollectionConfig parsedConfig = mapper.readValue(config, IssuesCollectionConfig.class);
+        IssuesCollectionConfig parsedConfig;
+        try {
+            parsedConfig = mapper.readValue(config, IssuesCollectionConfig.class);
+        } catch (Exception e) {
+            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Failed parsing config: " + e.getMessage());
+        }
+
         parsedConfig.validateConfig();
         return parsedConfig;
     }
@@ -82,7 +88,6 @@ public class IssuesCollector {
      * Collects affected issues from git log
      */
     private Set<Issue> doCollect(File execDir, Log logger, IssuesCollectionConfig issuesConfig, String previousVcsRevision) throws InterruptedException, IOException {
-        verifyGitExists(execDir, logger);
         String gitLog = getGitLog(execDir, logger, previousVcsRevision);
 
         int keyIndex = issuesConfig.getIssues().getKeyGroupIndex();
@@ -125,15 +130,6 @@ public class IssuesCollector {
         return new Issue(key, url, summary);
     }
 
-    private void verifyGitExists(File execDir, Log logger) throws InterruptedException, IOException {
-        List<String> args = new ArrayList<>();
-        args.add("help");
-        CommandResults res = this.commandExecutor.exeCommand(execDir, args, logger);
-        if (!res.isOk()) {
-            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git executable not found in path");
-        }
-    }
-
     private String getGitLog(File execDir, Log logger, String previousVcsRevision) throws InterruptedException, IOException {
         List<String> args = new ArrayList<>();
         args.add("log");
@@ -144,7 +140,7 @@ public class IssuesCollector {
         }
         CommandResults res = this.commandExecutor.exeCommand(execDir, args, logger);
         if (!res.isOk()) {
-            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + res.getErr());
+            throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git log command failed: " + res.getErr());
         }
         return res.getRes();
     }
