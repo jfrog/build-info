@@ -9,7 +9,7 @@ import java.io.Serializable;
  * This class is used by the IssuesCollector to parse the configuration file for the collectIssues method.
  */
 public class IssuesCollectionConfig implements Serializable {
-    public static final String ISSUES_COLLECTION_ERROR_PREFIX = "Issues Collection: ";
+    public static final String ISSUES_COLLECTION_ERROR_PREFIX = "Issues Collection Failed: ";
     private static final String MISSING_CONFIGURATION_ERROR = "Configuration file must contain: ";
 
     /**
