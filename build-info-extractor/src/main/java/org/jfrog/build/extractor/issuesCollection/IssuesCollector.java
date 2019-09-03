@@ -20,6 +20,10 @@ import java.util.regex.Pattern;
 
 import static org.jfrog.build.api.IssuesCollectionConfig.ISSUES_COLLECTION_ERROR_PREFIX;
 
+/**
+ * This class handles the issues collection.
+ * Issues are collected from the log, following the configuration that is passed as a Json file.
+ */
 public class IssuesCollector {
     private static final String LATEST = "LATEST";
     private static final String GIT_LOG_LIMIT = "100";
@@ -92,7 +96,7 @@ public class IssuesCollector {
             if (matcher.find()) {
                 Issue foundIssue = getMatchingIssue(keyIndex, summaryIndex, matcher, issuesConfig);
                 affectedIssues.add(foundIssue);
-                logger.debug("Found issue: " + foundIssue.getKey());
+                logger.info("Added issue: " + foundIssue.getKey() + " to the build-info");
             }
         }
         return affectedIssues;

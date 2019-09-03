@@ -46,38 +46,6 @@ public class Issues implements Serializable {
         affectedIssues.add(issue);
     }
 
-    private void addIssues(Set<Issue> issues) {
-        if (issues == null) {
-            return;
-        }
-        if (affectedIssues == null) {
-            affectedIssues = issues;
-            return;
-        }
-        affectedIssues.addAll(issues);
-    }
-
-    /**
-     * If one of the objects did not collect issues (empty tracker) - keep the other.
-     * If both collected and the tracker's match, append affected issues.
-     * Otherwise, keep this object.
-     */
-    public void append(Issues issuesToAppend) {
-        if (issuesToAppend == null || issuesToAppend.tracker == null) {
-            return;
-        }
-        if (this.tracker == null) {
-            this.tracker = issuesToAppend.tracker;
-            this.aggregateBuildIssues = issuesToAppend.aggregateBuildIssues;
-            this.aggregationBuildStatus = issuesToAppend.aggregationBuildStatus;
-            this.affectedIssues = issuesToAppend.affectedIssues;
-            return;
-        }
-        if (issuesToAppend.tracker.equals(this.tracker)) {
-            this.addIssues(issuesToAppend.affectedIssues);
-        }
-    }
-
     @JsonIgnore
     public boolean isEmpty() {
         if (tracker != null && StringUtils.isNotEmpty(aggregationBuildStatus)) {
