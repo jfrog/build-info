@@ -12,7 +12,9 @@ public class IssuesCollectionConfig implements Serializable {
     public static final String ISSUES_COLLECTION_ERROR_PREFIX = "Issues Collection: ";
     private static final String MISSING_CONFIGURATION_ERROR = "Configuration file must contain: ";
 
-    // The schema version is intended for internal use.
+    /**
+     * The schema version is intended for internal use.
+     * */
     private int version;
     private Issues issues;
 
@@ -51,19 +53,33 @@ public class IssuesCollectionConfig implements Serializable {
     }
 
     public static class Issues implements Serializable {
-        // The name (type) of the issue tracking system. For example, JIRA. This property can take any value.
+        /**
+         * The name (type) of the issue tracking system. For example, JIRA. This property can take any value.
+         * */
         private String trackerName;
-        // A regular expression used for matching the git commit messages. The expression should include two capturing groups - for the issue key (ID) and the issue summary.
+        /**
+         * A regular expression used for matching the git commit messages. The expression should include two capturing groups - for the issue key (ID) and the issue summary.
+         * */
         private String regexp;
-        // The capturing group index in the regular expression used for retrieving the issue key.
+        /**
+         * The capturing group index in the regular expression used for retrieving the issue key.
+         * */
         private int keyGroupIndex;
-        // The capturing group index in the regular expression for retrieving the issue summary.
+        /**
+         * The capturing group index in the regular expression for retrieving the issue summary.
+         * */
         private int summaryGroupIndex;
-        // The issue tracking URL. This value is used for constructing a direct link to the issues in the Artifactory build UI.
+        /**
+         * The issue tracking URL. This value is used for constructing a direct link to the issues in the Artifactory build UI.
+         * */
         private String trackerUrl;
-        // Set to true, if you wish all builds to include issues from previous builds.
+        /**
+         * Set to true, if you wish all builds to include issues from previous builds.
+         * */
         private boolean aggregate;
-        // If aggregate is set to true, this property indicates how far in time should the issues be aggregated.
+        /**
+         * If aggregate is set to true, this property indicates how far in time should the issues be aggregated.
+         * */
         private String aggregationStatus;
 
         public String getTrackerName() {
