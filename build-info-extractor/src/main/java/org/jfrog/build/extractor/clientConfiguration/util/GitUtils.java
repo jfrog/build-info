@@ -4,15 +4,12 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Vcs;
 import org.jfrog.build.api.util.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GitUtils {
-    private static String CREDENTIALS_IN_URL_REGEXP = "((http|https):\\/\\/\\w.*?:\\w.*?@)";
+    private static Pattern CredentialsInUrlRegexpPattern = Pattern.compile("((http|https):\\/\\/\\w.*?:\\w.*?@)");
 
     private static File getDotGit(File file) {
         if (file == null) {
@@ -30,6 +27,9 @@ public class GitUtils {
      */
     public static Vcs extractVcs(File workingDir, Log log) throws IOException {
         File dotGit = getDotGit(workingDir);
+        if (dotGit == null) {
+            throw new FileNotFoundException("Could not find .git directory for extracting Vcs details");
+        }
         Vcs vcs = new Vcs();
         vcs.setRevision(extractVcsRevision(dotGit, log));
         vcs.setUrl(extractVcsUrl(dotGit, log));
@@ -71,8 +71,7 @@ public class GitUtils {
     }
 
     static String maskCredentialsInUrl(String originalUrl) throws IOException {
-        Pattern pattern = Pattern.compile(CREDENTIALS_IN_URL_REGEXP);
-        Matcher matcher = pattern.matcher(originalUrl);
+        Matcher matcher = CredentialsInUrlRegexpPattern.matcher(originalUrl);
         if (!matcher.find()) {
             return originalUrl;
         }
