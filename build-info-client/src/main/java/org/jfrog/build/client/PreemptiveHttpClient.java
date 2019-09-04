@@ -49,6 +49,7 @@ import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -63,6 +64,10 @@ public class PreemptiveHttpClient implements AutoCloseable {
     private static final boolean REQUEST_SENT_RETRY_ENABLED = true;
     public static final int CONNECTION_POOL_SIZE = 10;
     private static final String CLIENT_VERSION;
+    /**
+     * Used for storing the original host name, before a redirect to a new URL, on the request context.
+     */
+    private static final String ORIGINAL_HOST_CONTEXT_PARAM = "original.host.context.param";
 
     private PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
@@ -215,6 +220,10 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
         public void process(final HttpRequest request, final HttpContext context) throws HttpException {
+            if (!shouldSetAuthScheme(request, context)) {
+                return;
+            }
+
             HttpClientContext finalContext = (HttpClientContext) context;
             AuthState authState = finalContext.getTargetAuthState();
             // If no auth scheme available yet, try to initialize it preemptively
@@ -229,6 +238,28 @@ public class PreemptiveHttpClient implements AutoCloseable {
                 BasicScheme authScheme = new BasicScheme();
                 authState.update(authScheme, creds);
             }
+        }
+
+        /**
+         * Used to determine whether preemptive authentication should be performed.
+         * In the case of a redirect to a different host, preemptive authentication should not be performed.
+         */
+        private boolean shouldSetAuthScheme(final HttpRequest request, final HttpContext context) {
+            // Get the original host name (before the redirect).
+            String originalHost = (String)context.getAttribute(ORIGINAL_HOST_CONTEXT_PARAM);
+            if (originalHost == null) {
+                // No redirect was performed.
+                return true;
+            }
+            String host;
+            try {
+                // In case of a redirect, get the new target host.
+                host = new URI(((HttpRequestWrapper) request).getOriginal().getRequestLine().getUri()).getHost();
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            // Return true if the original host and the target host are identical.
+            return host.equals(originalHost);
         }
     }
 
@@ -307,9 +338,22 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
         @Override
         public HttpUriRequest getRedirect(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
+            // Get the original host name (before the redirect) and save it on the context.
+            String originalHost = getHost(request);
+            context.setAttribute(ORIGINAL_HOST_CONTEXT_PARAM, originalHost);
             URI uri = getLocationURI(request, response, context);
             log.debug("Redirecting to " + uri);
             return RequestBuilder.copy(request).setUri(uri).build();
+        }
+
+        private String getHost(HttpRequest request) {
+            URI uri;
+            try {
+                uri = new URI(request.getRequestLine().getUri());
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            return uri.getHost();
         }
 
         @Override
