@@ -560,6 +560,7 @@ public class Build extends BaseBuildBean {
         appendProperties(other);
         appendModules(other);
         appendBuildDependencies(other);
+        this.issues.append(other.getIssues());
     }
 
     private void appendBuildDependencies(Build other) {
