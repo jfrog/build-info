@@ -372,7 +372,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
-            ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
+            ResolvedConfiguration resolvedConfiguration = getResolvedConfiguration(project, configuration);
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 File file = artifact.getFile();
@@ -408,6 +408,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             }
         }
         return dependencies;
+    }
+
+    private ResolvedConfiguration getResolvedConfiguration(Project project, Configuration configuration) {
+        try {
+            // Gradle 5.0 and above:
+            return ((ProjectInternal) project).getMutationState().withMutableState(configuration::getResolvedConfiguration);
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            return configuration.getResolvedConfiguration();
+        }
     }
 
     private class ProjectPredicate implements Predicate<GradleDeployDetails> {
