@@ -237,7 +237,7 @@ public class TaskHelperPublications extends TaskHelper {
 
             // First adding the Maven descriptor (if the build is configured to add it):
             if (isPublishMaven()) {
-                File file = mavenNormalizedPublication.getPomFile();
+                File file = mavenNormalizedPublication.getPomArtifact().getFile();
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
