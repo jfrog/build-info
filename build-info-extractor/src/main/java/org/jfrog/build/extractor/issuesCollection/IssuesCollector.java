@@ -68,25 +68,26 @@ public class IssuesCollector implements Serializable {
      * Gets the previous vcs revision from the LATEST build published to Artifactory.
      */
     private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String buildName) throws IOException {
-        ArtifactoryBuildInfoClient client = clientBuilder.build();
-        // Get LATEST build info from Artifactory
-        Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
-        if (previousBuildInfo == null) {
-            return "";
-        }
-        if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
-            return previousBuildInfo.getVcsRevision();
-        }
-        // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
-        List<Vcs> vcsList = previousBuildInfo.getVcs();
-        if (vcsList != null && vcsList.size() > 0) {
-            for (Vcs curVcs : previousBuildInfo.getVcs()) {
-                if (StringUtils.isNotEmpty(curVcs.getRevision())) {
-                    return curVcs.getRevision();
+        try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
+            // Get LATEST build info from Artifactory
+            Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
+            if (previousBuildInfo == null) {
+                return "";
+            }
+            if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
+                return previousBuildInfo.getVcsRevision();
+            }
+            // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
+            List<Vcs> vcsList = previousBuildInfo.getVcs();
+            if (vcsList != null && vcsList.size() > 0) {
+                for (Vcs curVcs : previousBuildInfo.getVcs()) {
+                    if (StringUtils.isNotEmpty(curVcs.getRevision())) {
+                        return curVcs.getRevision();
+                    }
                 }
             }
+            return "";
         }
-        return "";
     }
 
     /**
