@@ -9,6 +9,8 @@ import java.io.Serializable;
  * This class is used by the IssuesCollector to parse the configuration file for the collectIssues method.
  */
 public class IssuesCollectionConfig implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     public static final String ISSUES_COLLECTION_ERROR_PREFIX = "Issues Collection Failed: ";
     private static final String MISSING_CONFIGURATION_ERROR = "Configuration file must contain: ";
 
@@ -53,6 +55,7 @@ public class IssuesCollectionConfig implements Serializable {
     }
 
     public static class Issues implements Serializable {
+        private static final long serialVersionUID = 1L;
         /**
          * The name (type) of the issue tracking system. For example, JIRA. This property can take any value.
          * */
