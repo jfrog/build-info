@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +26,9 @@ import static org.jfrog.build.api.IssuesCollectionConfig.ISSUES_COLLECTION_ERROR
  * This class handles the issues collection.
  * Issues are collected from the log, following the configuration that is passed as a Json file.
  */
-public class IssuesCollector {
+public class IssuesCollector implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private static final String LATEST = "LATEST";
     private static final String GIT_LOG_LIMIT = "100";
 
@@ -36,11 +40,11 @@ public class IssuesCollector {
 
     /**
      * Main function that manages the issue collection process.
-     * */
-    public Issues collectIssues(File execDir, Log logger, String config, ArtifactoryBuildInfoClient client,
+     */
+    public Issues collectIssues(File execDir, Log logger, String config, ArtifactoryBuildInfoClientBuilder clientBuilder,
                                 String buildName) throws InterruptedException, IOException {
         IssuesCollectionConfig parsedConfig = parseConfig(config);
-        String previousVcsRevision = getPreviousVcsRevision(client, buildName);
+        String previousVcsRevision = getPreviousVcsRevision(clientBuilder, buildName);
         Set<Issue> affectedIssues = doCollect(execDir, logger, parsedConfig, previousVcsRevision);
         return buildIssuesObject(parsedConfig, affectedIssues);
     }
@@ -62,26 +66,28 @@ public class IssuesCollector {
 
     /**
      * Gets the previous vcs revision from the LATEST build published to Artifactory.
-     * */
-    private String getPreviousVcsRevision(ArtifactoryBuildInfoClient client, String buildName) throws IOException {
-        // Get LATEST build info from Artifactory
-        Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
-        if (previousBuildInfo == null) {
-            return "";
-        }
-        if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
-            return previousBuildInfo.getVcsRevision();
-        }
-        // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
-        List<Vcs> vcsList = previousBuildInfo.getVcs();
-        if (vcsList != null && vcsList.size() > 0) {
-            for (Vcs curVcs : previousBuildInfo.getVcs()) {
-                if (StringUtils.isNotEmpty(curVcs.getRevision())) {
-                    return curVcs.getRevision();
+     */
+    private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String buildName) throws IOException {
+        try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
+            // Get LATEST build info from Artifactory
+            Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
+            if (previousBuildInfo == null) {
+                return "";
+            }
+            if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
+                return previousBuildInfo.getVcsRevision();
+            }
+            // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
+            List<Vcs> vcsList = previousBuildInfo.getVcs();
+            if (vcsList != null && vcsList.size() > 0) {
+                for (Vcs curVcs : previousBuildInfo.getVcs()) {
+                    if (StringUtils.isNotEmpty(curVcs.getRevision())) {
+                        return curVcs.getRevision();
+                    }
                 }
             }
+            return "";
         }
-        return "";
     }
 
     /**
