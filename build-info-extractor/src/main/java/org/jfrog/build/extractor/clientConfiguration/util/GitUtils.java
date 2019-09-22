@@ -97,13 +97,28 @@ public class GitUtils {
 
         // Else, if found ref try getting revision using it
         File pathToRef = new File(dotGit, revisionOrRef.ref);
-
-        // Read HEAD file for ref or revision
-        try (BufferedReader br = new BufferedReader(new FileReader(pathToRef))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                log.debug("Fetched revision from git config: " + line.trim());
-                return line.trim();
+        if (pathToRef.exists()) {
+            // Read HEAD file for ref or revision
+            try (BufferedReader br = new BufferedReader(new FileReader(pathToRef))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    log.debug("Fetched revision from git config: " + line.trim());
+                    return line.trim();
+                }
+            }
+        } else {
+            // Try to find .git/packed-refs and look for the HEAD there
+            File pathToPackedRefs = new File(dotGit, "packed-refs");
+            if (pathToPackedRefs.exists()) {
+                try (BufferedReader br = new BufferedReader(new FileReader(pathToPackedRefs))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        if (line.endsWith(revisionOrRef.ref)) {
+                            String[] split = line.split("\\s+");
+                            return split[0];
+                        }
+                    }
+                }
             }
         }
 
