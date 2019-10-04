@@ -48,37 +48,19 @@ public class ArtifactoryTask extends DefaultTask {
     private static final Logger log = Logging.getLogger(ArtifactoryTask.class);
     private final Map<String, Boolean> flags = Maps.newHashMap();
 
-    @InputFile
-    @Optional
     public File ivyDescriptor;
 
-    @InputFile
-    @Optional
     public File mavenDescriptor;
 
-    @InputFiles
-    @Optional
     public Set<Configuration> publishConfigs = Sets.newHashSet();
 
-    @Input
-    @Optional
     public Set<IvyPublication> ivyPublications = Sets.newHashSet();
 
-    @Input
-    @Optional
     public Set<MavenPublication> mavenPublications = Sets.newHashSet();
 
     private boolean addArchivesConfigToTask = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);
-
-    @Input
-    Set<Publication> getPublications() {
-        Set<Publication> publications = new HashSet<Publication>();
-        publications.addAll(ivyPublications);
-        publications.addAll(mavenPublications);
-        return publications;
-    }
 
     @TaskAction
     public void taskAction() throws IOException {
@@ -128,15 +110,40 @@ public class ArtifactoryTask extends DefaultTask {
     }
 
     /** Getters **/
+    @Input
+    Set<Publication> getPublications() {
+        Set<Publication> publications = new HashSet<Publication>();
+        publications.addAll(ivyPublications);
+        publications.addAll(mavenPublications);
+        return publications;
+    }
 
+    @InputFiles
+    @Optional
+    public Set<Configuration> getPublishConfigs() {
+        return publishConfigs;
+    }
+
+    @Input
+    @Optional
     public Set<IvyPublication> getIvyPublications() {
         return ivyPublications;
     }
 
+    @Input
+    @Optional
+    public Set<MavenPublication> getMavenPublications() {
+        return mavenPublications;
+    }
+
+    @InputFile
+    @Optional
     public File getIvyDescriptor() {
         return ivyDescriptor;
     }
 
+    @InputFile
+    @Optional
     public File getMavenDescriptor() {
         return mavenDescriptor;
     }
@@ -235,6 +242,7 @@ public class ArtifactoryTask extends DefaultTask {
         finalizedBy(deployTask);
     }
 
+    @Internal
     public boolean isEvaluated() {
         return evaluated;
     }
@@ -263,6 +271,8 @@ public class ArtifactoryTask extends DefaultTask {
         }
     }
 
+    @Input
+    @Optional
     public Set<GradleDeployDetails> getDeployDetails() {
         return deployDetails;
     }
