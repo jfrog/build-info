@@ -55,6 +55,15 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
 
         String scanUrl = artifactoryUrl + SCAN_BUILD_URL;
         HttpPost httpPost = new HttpPost(scanUrl);
+
+        // The scan build operation can take a long time to finish.
+        // To keep the connection open, when Xray starts scanning the build, it starts sending new-lines
+        // on the open channel. This tells the client that the operation is still in progress and the
+        // connection does not get timed out.
+        // We need make sure the new-lines are not buffered on the nginx and are flushed
+        // as soon as Xray sends them.
+        httpPost.addHeader("X-Accel-Buffering", "no");
+
         httpPost.setEntity(entity);
         return execute(httpPost);
     }
