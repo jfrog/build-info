@@ -367,6 +367,14 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(PUBLISH_BUILD_INFO, true);
         }
 
+        public void setPublishForkCount(int value) {
+            setIntegerValue(PUBLISH_FORK_COUNT, value);
+        }
+
+        public Integer getPublishForkCount() {
+            return getIntegerValue(PUBLISH_FORK_COUNT, 8);
+        }
+
         public boolean isRecordAllDependencies() {
             return getBooleanValue(RECORD_ALL_DEPENDENCIES, false);
         }

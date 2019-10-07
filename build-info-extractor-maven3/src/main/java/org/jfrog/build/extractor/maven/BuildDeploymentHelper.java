@@ -60,6 +60,7 @@ public class BuildDeploymentHelper {
         Set<DeployDetails> deployableArtifacts = prepareDeployableArtifacts(build, deployableArtifactBuilders);
 
         logger.debug("Build Info Recorder: deploy artifacts: " + clientConf.publisher.isPublishArtifacts());
+        logger.debug("Build Info Recorder: publication fork count: " + clientConf.publisher.getPublishForkCount());
         logger.debug("Build Info Recorder: publish build info: " + clientConf.publisher.isPublishBuildInfo());
 
         File aggregateDirectory;

@@ -29,7 +29,16 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Ruben Perez
@@ -75,52 +84,21 @@ public class DeployTask extends DefaultTask {
         GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
                 accRoot, getProject().getRootProject());
 
-        Set<GradleDeployDetails> allDeployDetails = Sets.newTreeSet();
+        Set<GradleDeployDetails> allDeployDetails = Collections.synchronizedSet(Sets.newTreeSet());
         List<ArtifactoryTask> orderedTasks = findArtifactoryPublishTasks(getProject().getGradle().getTaskGraph());
-        for (ArtifactoryTask artifactoryTask : orderedTasks) {
-            if (artifactoryTask.getDidWork()) {
-                ArtifactoryClientConfiguration.PublisherHandler publisher =
-                        ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
 
-                if (publisher != null && publisher.getContextUrl() != null) {
-                    Map<String, String> moduleProps = new HashMap<String, String>(propsRoot);
-                    moduleProps.putAll(publisher.getProps());
-                    publisher.getProps().putAll(moduleProps);
-                    String contextUrl = publisher.getContextUrl();
-                    String username = publisher.getUsername();
-                    String password = publisher.getPassword();
-                    if (StringUtils.isBlank(username)) {
-                        username = "";
-                    }
-                    if (StringUtils.isBlank(password)) {
-                        password = "";
-                    }
-
-                    artifactoryTask.collectDescriptorsAndArtifactsForUpload();
-                    if (publisher.isPublishArtifacts()) {
-                        ArtifactoryBuildInfoClient client = null;
-                        try {
-                            client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
-                                    new GradleClientLogger(log));
-
-                            log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
-                            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                                    publisher.getIncludePatterns(),
-                                    publisher.getExcludePatterns());
-                            configureProxy(accRoot, client);
-                            configConnectionTimeout(accRoot, client);
-                            configRetriesParams(accRoot, client);
-                            deployArtifacts(artifactoryTask.deployDetails, client, patterns);
-                        } finally {
-                            if (client != null) {
-                                client.close();
-                            }
-                        }
-                    }
-                    allDeployDetails.addAll(artifactoryTask.deployDetails);
-                }
-            } else {
-                log.debug("Task '{}' did no work", artifactoryTask.getPath());
+        int publishForkCount = getPublishForkCount(accRoot);
+        if (publishForkCount <= 1) {
+            orderedTasks.forEach(t -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t));
+        } else {
+            try {
+                ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
+                CompletableFuture<Void> allUploads = CompletableFuture.allOf(orderedTasks.stream()
+                    .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t), executor))
+                    .toArray(CompletableFuture[]::new));
+                allUploads.get();
+            } catch (InterruptedException | ExecutionException e) {
+                throw new RuntimeException(e);
             }
         }
 
@@ -144,7 +122,7 @@ public class DeployTask extends DefaultTask {
                 configureProxy(accRoot, client);
                 configConnectionTimeout(accRoot, client);
                 configRetriesParams(accRoot, client);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails);
+                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails, publishForkCount);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
@@ -179,6 +157,57 @@ public class DeployTask extends DefaultTask {
                     client.close();
                 }
             }
+        }
+    }
+
+    private void deployArtifacts(ArtifactoryClientConfiguration accRoot, Map<String, String> propsRoot, Set<GradleDeployDetails> allDeployDetails, ArtifactoryTask artifactoryTask) {
+        try {
+            if (artifactoryTask.getDidWork()) {
+                ArtifactoryClientConfiguration.PublisherHandler publisher =
+                    ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
+
+                if (publisher != null && publisher.getContextUrl() != null) {
+                    Map<String, String> moduleProps = new HashMap<String, String>(propsRoot);
+                    moduleProps.putAll(publisher.getProps());
+                    publisher.getProps().putAll(moduleProps);
+                    String contextUrl = publisher.getContextUrl();
+                    String username = publisher.getUsername();
+                    String password = publisher.getPassword();
+                    if (StringUtils.isBlank(username)) {
+                        username = "";
+                    }
+                    if (StringUtils.isBlank(password)) {
+                        password = "";
+                    }
+
+                    artifactoryTask.collectDescriptorsAndArtifactsForUpload();
+                    if (publisher.isPublishArtifacts()) {
+                        ArtifactoryBuildInfoClient client = null;
+                        try {
+                            client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
+                                new GradleClientLogger(log));
+
+                            log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
+                            IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                                publisher.getIncludePatterns(),
+                                publisher.getExcludePatterns());
+                            configureProxy(accRoot, client);
+                            configConnectionTimeout(accRoot, client);
+                            configRetriesParams(accRoot, client);
+                            deployArtifacts(artifactoryTask.deployDetails, client, patterns);
+                        } finally {
+                            if (client != null) {
+                                client.close();
+                            }
+                        }
+                    }
+                    allDeployDetails.addAll(artifactoryTask.deployDetails);
+                }
+            } else {
+                log.debug("Task '{}' did no work", artifactoryTask.getPath());
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -236,6 +265,10 @@ public class DeployTask extends DefaultTask {
     @Nonnull
     private Boolean isPublishBuildInfo(ArtifactoryClientConfiguration acc) {
         return acc.publisher.isPublishBuildInfo();
+    }
+
+    private int getPublishForkCount(ArtifactoryClientConfiguration acc) {
+        return acc.publisher.getPublishForkCount();
     }
 
     @Nonnull
