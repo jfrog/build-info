@@ -27,6 +27,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublicationArtifact;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.internal.PublicationArtifactSet;
 import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyArtifactSet;
@@ -202,19 +203,22 @@ public class TaskHelperPublications extends TaskHelper {
             Map<QName, String> extraInfo = ivyPublication.getDescriptor().getExtraInfo().asMap();
 
             // First adding the Ivy descriptor (if the build is configured to add it):
+            File ivyFile = getIvyDescriptorFile(ivyNormalizedPublication);
             if (isPublishIvy()) {
-                File file = getIvyDescriptorFile(ivyNormalizedPublication);
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(ivyFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, file);
+                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, ivyFile);
                     addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
                 }
             }
 
-            IvyArtifactSet artifacts = ivyPublication.getArtifacts();
+            // Second adding all artifacts, skipping the ivy file
+            PublicationArtifactSet<IvyArtifact> artifacts = ivyPublicationInternal.getPublishableArtifacts();
             for (IvyArtifact artifact : artifacts) {
                 File file = artifact.getFile();
+                // Skip the ivy file
+                if (file.equals(ivyFile)) continue;
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
