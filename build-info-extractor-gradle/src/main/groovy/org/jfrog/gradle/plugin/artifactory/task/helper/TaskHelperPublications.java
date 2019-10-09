@@ -36,7 +36,6 @@ import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
 import org.gradle.api.publish.maven.MavenArtifact;
-import org.gradle.api.publish.maven.MavenArtifactSet;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.MavenPublicationInternal;
 import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublication;
@@ -249,20 +248,27 @@ public class TaskHelperPublications extends TaskHelper {
                     addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
+            // Second adding the main artifact of the publication
+            createPublishArtifactInfoAndAddToDeployDetails(mavenNormalizedPublication.getMainArtifact(), deployDetails, mavenPublication, publicationName);
 
-            MavenArtifactSet artifacts = mavenPublication.getArtifacts();
+            // Third adding all additional artifacts - includes Gradle Module Metadata when produced
+            Set<MavenArtifact> artifacts = mavenNormalizedPublication.getAdditionalArtifacts();
             for (MavenArtifact artifact : artifacts) {
-                File file = artifact.getFile();
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
-                if (builder == null) continue;
-                PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        mavenPublication.getArtifactId(), artifact.getExtension(),
-                        artifact.getExtension(), artifact.getClassifier(),
-                        file);
-                addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
+                createPublishArtifactInfoAndAddToDeployDetails(artifact, deployDetails, mavenPublication, publicationName);
             }
         }
         return deployDetails;
+    }
+
+    private void createPublishArtifactInfoAndAddToDeployDetails(MavenArtifact artifact, Set<GradleDeployDetails> deployDetails, MavenPublication mavenPublication, String publicationName) {
+        File file = artifact.getFile();
+        DeployDetails.Builder builder = createBuilder(file, publicationName);
+        if (builder == null) return;
+        PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
+                mavenPublication.getArtifactId(), artifact.getExtension(),
+                artifact.getExtension(), artifact.getClassifier(),
+                file);
+        addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
     }
 
     private File getIvyDescriptorFile(IvyNormalizedPublication ivy) {
