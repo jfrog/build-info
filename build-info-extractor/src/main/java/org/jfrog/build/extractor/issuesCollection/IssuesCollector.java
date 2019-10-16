@@ -32,10 +32,7 @@ public class IssuesCollector implements Serializable {
     private static final String LATEST = "LATEST";
     private static final String GIT_LOG_LIMIT = "100";
 
-    private CommandExecutor commandExecutor;
-
     public IssuesCollector() {
-        this.commandExecutor = new CommandExecutor("git", null);
     }
 
     /**
@@ -144,7 +141,8 @@ public class IssuesCollector implements Serializable {
         if (!previousVcsRevision.isEmpty()) {
             args.add(previousVcsRevision + "..");
         }
-        CommandResults res = this.commandExecutor.exeCommand(execDir, args, logger);
+        CommandExecutor commandExecutor = new CommandExecutor("git", null);
+        CommandResults res = commandExecutor.exeCommand(execDir, args, logger);
         if (!res.isOk()) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git log command failed: " + res.getErr());
         }
