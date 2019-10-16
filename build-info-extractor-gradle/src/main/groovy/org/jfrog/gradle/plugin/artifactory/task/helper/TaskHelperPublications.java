@@ -248,8 +248,10 @@ public class TaskHelperPublications extends TaskHelper {
                     addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
-            // Second adding the main artifact of the publication
-            createPublishArtifactInfoAndAddToDeployDetails(mavenNormalizedPublication.getMainArtifact(), deployDetails, mavenPublication, publicationName);
+            // Second adding the main artifact of the publication, if present
+            if (mavenNormalizedPublication.getMainArtifact() != null) {
+                createPublishArtifactInfoAndAddToDeployDetails(mavenNormalizedPublication.getMainArtifact(), deployDetails, mavenPublication, publicationName);
+            }
 
             // Third adding all additional artifacts - includes Gradle Module Metadata when produced
             Set<MavenArtifact> artifacts = mavenNormalizedPublication.getAdditionalArtifacts();
