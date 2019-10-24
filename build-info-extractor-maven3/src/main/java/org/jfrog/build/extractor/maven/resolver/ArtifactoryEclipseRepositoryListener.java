@@ -68,9 +68,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     private void enforceArtifactoryResolver() throws ComponentLookupException, NoSuchFieldException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
 
-        artifactResolver = (ArtifactoryEclipseArtifactResolver)plexusContainer.lookup(ArtifactoryEclipseArtifactResolver.class.getName());
-        metadataResolver = (ArtifactoryEclipseMetadataResolver)plexusContainer.lookup(ArtifactoryEclipseMetadataResolver.class.getName());
-        buildInfoRecorder = (BuildInfoRecorder)plexusContainer.lookup(BuildInfoRecorder.class.getName());
+        artifactResolver = (ArtifactoryEclipseArtifactResolver) plexusContainer.lookup(ArtifactoryEclipseArtifactResolver.class.getName());
+        metadataResolver = (ArtifactoryEclipseMetadataResolver) plexusContainer.lookup(ArtifactoryEclipseMetadataResolver.class.getName());
+        buildInfoRecorder = (BuildInfoRecorder) plexusContainer.lookup(BuildInfoRecorder.class.getName());
 
         descriptorReader.setArtifactResolver(artifactResolver);
         repositorySystem.setArtifactResolver(artifactResolver);
@@ -161,12 +161,12 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         // If the artifact about to be downloaded was not handled by the Artifactory resolution resolver, but by the default resolver (before
         // it had been replaced), modify the repository URL:
         try {
-            if (snapshot && !repo.getUrl().equals(artifactorySnapshotRepo.getUrl())) {
+            if (snapshot && !repo.getUrl().equals(artifactorySnapshotRepo.getUrl()) && repo.getPolicy(true).isEnabled()) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactorySnapshotRepo.getUrl());
                 copyRepositoryFields(artifactorySnapshotRepo, repo);
                 setRepositoryPolicy(repo);
             } else
-            if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl())) {
+            if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl()) && repo.getPolicy(false).isEnabled()) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactoryReleaseRepo.getUrl());
                 copyRepositoryFields(artifactoryReleaseRepo, repo);
                 setRepositoryPolicy(repo);
@@ -192,6 +192,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         Field url = RemoteRepository.class.getDeclaredField("url");
         url.setAccessible(true);
         url.set(toRepo, fromRepo.getUrl());
+        Field id = RemoteRepository.class.getDeclaredField("id");
+        id.setAccessible(true);
+        id.set(toRepo, fromRepo.getId());
         if (fromRepo.getAuthentication() != null) {
             Field authentication = RemoteRepository.class.getDeclaredField("authentication");
             authentication.setAccessible(true);

@@ -2,6 +2,10 @@ package org.jfrog.build.extractor.maven.resolver;
 
 import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
+import org.apache.maven.artifact.repository.MavenArtifactRepository;
+import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -17,7 +21,7 @@ import java.util.List;
 import java.util.Properties;
 
 @Named
-@Component( role = ArtifactoryEclipseResolversHelper.class )
+@Component(role = ArtifactoryEclipseResolversHelper.class)
 public class ArtifactoryEclipseResolversHelper {
 
     @Requirement
@@ -26,27 +30,27 @@ public class ArtifactoryEclipseResolversHelper {
     @Requirement
     private Logger logger;
 
+    private List<ArtifactRepository> resolutionPluginRepositories = null;
     private List<RemoteRepository> resolutionRepositories = null;
     private RemoteRepository releaseRepository = null;
     private RemoteRepository snapshotRepository = null;
 
-    public void initResolutionRepositories(RepositorySystemSession session) {
+    void initResolutionRepositories(RepositorySystemSession session) {
         getResolutionRepositories(session);
     }
 
     /**
      * Create a list containing one release and one snapshot resolution repositories, according to the configuration in the Artifactory plugin.
      * The list is used to override Maven's default or configured repositories, so that the build dependencies are resolved from Artifactory.
-     * The list is saved and reused for further invokations to this method.
-     * @param session
-     * @return
+     * The list is saved and reused for further invocations to this method.
+     *
+     * @param session - Settings and components that control the repository system
+     * @return Snapshot and release resolution repositories
      */
-    public List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
+    List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories == null) {
-            Properties allMavenProps = new Properties();
-            allMavenProps.putAll(session.getSystemProperties());
-            allMavenProps.putAll(session.getUserProperties());
-            resolutionHelper.init(allMavenProps);
+            List<RemoteRepository> tempRepositories = Lists.newArrayList();
+            initResolutionHelper(session);
 
             String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
             String snapshotRepoUrl = resolutionHelper.getRepoSnapshotUrl();
@@ -79,6 +83,7 @@ public class ArtifactoryEclipseResolversHelper {
                     builder.setProxy(proxy);
                 }
                 snapshotRepository = builder.build();
+                tempRepositories.add(snapshotRepository);
             }
 
             if (StringUtils.isNotBlank(releaseRepoUrl)) {
@@ -100,21 +105,79 @@ public class ArtifactoryEclipseResolversHelper {
                     builder.setProxy(proxy);
                 }
                 releaseRepository = builder.build();
-            }
-
-            List<RemoteRepository> tempRepositories = Lists.newArrayList();
-            if (releaseRepository != null) {
                 tempRepositories.add(releaseRepository);
-            }
-            if (snapshotRepository != null) {
-                tempRepositories.add(snapshotRepository);
             }
             resolutionRepositories = tempRepositories;
         }
         return resolutionRepositories;
     }
 
-    public RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
+    List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
+        if (resolutionPluginRepositories == null) {
+            List<ArtifactRepository> tempRepositories = Lists.newArrayList();
+            initResolutionHelper(session);
+
+            String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
+            String snapshotRepoUrl = resolutionHelper.getRepoSnapshotUrl();
+
+            org.apache.maven.artifact.repository.Authentication authentication = null;
+            if (StringUtils.isNotBlank(resolutionHelper.getRepoUsername())) {
+                authentication = new org.apache.maven.artifact.repository.Authentication(resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword());
+            }
+            org.apache.maven.repository.Proxy proxy = null;
+            if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
+                proxy = new org.apache.maven.repository.Proxy();
+                proxy.setHost(resolutionHelper.getProxyHost());
+                proxy.setPort(resolutionHelper.getProxyPort());
+                proxy.setUserName(resolutionHelper.getProxyUsername());
+                proxy.setPassword(resolutionHelper.getProxyPassword());
+            }
+
+            if (StringUtils.isNotBlank(snapshotRepoUrl)) {
+                logger.debug("[buildinfo] Enforcing snapshot repository for resolution: " + snapshotRepoUrl);
+                ArtifactRepositoryPolicy releasePolicy = new ArtifactRepositoryPolicy(false, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+                ArtifactRepositoryPolicy snapshotPolicy = new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+                ArtifactRepository snapshotPluginRepository = new MavenArtifactRepository("artifactory-snapshot", snapshotRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy);
+                if (authentication != null) {
+                    logger.debug("[buildinfo] Enforcing repository authentication: " + authentication + " for snapshot resolution repository");
+                    snapshotPluginRepository.setAuthentication(authentication);
+                }
+
+                if (StringUtils.isNotBlank(resolutionHelper.getRepoUsername())) {
+                    authentication = new org.apache.maven.artifact.repository.Authentication(resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword());
+                }
+                if (proxy != null) {
+                    logger.debug("[buildinfo] Enforcing proxy: " + proxy + " for snapshot resolution repository");
+                    snapshotPluginRepository.setProxy(proxy);
+                }
+                tempRepositories.add(snapshotPluginRepository);
+            }
+
+            if (StringUtils.isNotBlank(releaseRepoUrl)) {
+                logger.debug("[buildinfo] Enforcing release repository for resolution: " + releaseRepoUrl);
+                boolean snapshotPolicyEnabled = tempRepositories.isEmpty();
+                String repositoryId = snapshotPolicyEnabled ? "artifactory-release-snapshot" : "artifactory-release";
+
+                ArtifactRepositoryPolicy releasePolicy = new ArtifactRepositoryPolicy(true, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+                ArtifactRepositoryPolicy snapshotPolicy = new ArtifactRepositoryPolicy(snapshotPolicyEnabled, ArtifactRepositoryPolicy.UPDATE_POLICY_DAILY, ArtifactRepositoryPolicy.CHECKSUM_POLICY_WARN);
+                ArtifactRepository releasePluginRepository = new MavenArtifactRepository(repositoryId, releaseRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy);
+                if (authentication != null) {
+                    logger.debug("[buildinfo] Enforcing repository authentication: " + authentication + " for release resolution repository");
+                    releasePluginRepository.setAuthentication(authentication);
+                }
+                if (proxy != null) {
+                    logger.debug("[buildinfo] Enforcing proxy: " + proxy + " for release resolution repository");
+                    releasePluginRepository.setProxy(proxy);
+                }
+                tempRepositories.add(releasePluginRepository);
+            }
+
+            resolutionPluginRepositories = tempRepositories;
+        }
+        return resolutionPluginRepositories;
+    }
+
+    RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
         // Init repositories configured in the Artifactory plugin:
         initResolutionRepositories(session);
 
@@ -124,10 +187,20 @@ public class ArtifactoryEclipseResolversHelper {
         return releaseRepository;
     }
 
-    public RemoteRepository getReleaseRepository(RepositorySystemSession session) {
+    RemoteRepository getReleaseRepository(RepositorySystemSession session) {
         // Init repositories configured in the Artifactory plugin:
         initResolutionRepositories(session);
 
         return releaseRepository;
+    }
+
+    private void initResolutionHelper(RepositorySystemSession session) {
+        if (!resolutionHelper.isInitialized()) {
+            Properties allMavenProps = new Properties();
+            allMavenProps.putAll(session.getSystemProperties());
+            allMavenProps.putAll(session.getUserProperties());
+            resolutionHelper.init(allMavenProps);
+        }
+
     }
 }

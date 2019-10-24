@@ -34,6 +34,62 @@
                 </requirement>
             </requirements>
         </component>
+        <component>
+            <role>org.apache.maven.plugin.internal.DefaultMavenPluginManager</role>
+            <role-hint>default</role-hint>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipsePluginManager</implementation>
+            <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</role>
+                    <role-hint>default</role-hint>
+                    <field-name>helper</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.LoggerManager</role>
+                    <field-name>loggerManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.PlexusContainer</role>
+                    <field-name>container</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.classrealm.ClassRealmManager</role>
+                    <field-name>classRealmManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.PluginDescriptorCache</role>
+                    <field-name>pluginDescriptorCache</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.PluginRealmCache</role>
+                    <field-name>pluginRealmCache</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.internal.PluginDependenciesResolver</role>
+                    <field-name>pluginDependenciesResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.rtinfo.RuntimeInformation</role>
+                    <field-name>runtimeInformation</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.ExtensionRealmCache</role>
+                    <field-name>extensionRealmCache</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.version.PluginVersionResolver</role>
+                    <field-name>pluginVersionResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.PluginArtifactsCache</role>
+                    <field-name>pluginArtifactsCache</field-name>
+                </requirement>
+            </requirements>
+        </component>
         <!-- A helper class for the ArtifactorySonatypeArtifactResolver abd ArtifactorySonatypeMetadataResolver classes -->
         <component>
             <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
