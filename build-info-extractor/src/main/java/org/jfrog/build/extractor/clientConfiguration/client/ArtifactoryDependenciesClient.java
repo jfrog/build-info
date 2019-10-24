@@ -45,6 +45,11 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -217,10 +222,24 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     }
 
     public void setProperties(String urlPath, String props) throws IOException {
-        String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
+        String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=");
+        // Use URLEncoder to allow special characters use
+        url += encodeProps(props);
         PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpPut httpPut = new HttpPut(url);
         checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");
+    }
+
+    private String encodeProps(String props) throws UnsupportedEncodingException {
+        List<String> propsList = new ArrayList<String>(Arrays.asList(props.split(";")));
+        StringBuilder encodedProps = new StringBuilder();
+        for (String prop : propsList) {
+            String[] propArray = prop.split("=");
+            String encodedKey = URLEncoder.encode(propArray[0], StandardCharsets.UTF_8.toString());
+            String encodedValue = URLEncoder.encode(propArray[1], StandardCharsets.UTF_8.toString());
+            encodedProps.append(";").append(encodedKey).append("=").append(encodedValue);
+        }
+        return encodedProps.toString();
     }
 
     public void deleteProperties(String urlPath, String props) throws IOException {
