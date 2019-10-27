@@ -31,26 +31,8 @@ import org.gradle.api.internal.project.ProjectInternal;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskState;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Governance;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
-import org.jfrog.build.api.MatrixParameter;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.Vcs;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.*;
+import org.jfrog.build.api.builder.*;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -67,17 +49,7 @@ import java.io.File;
 import java.lang.reflect.Method;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -97,13 +69,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     private static final String MD5 = "md5";
     private final ArtifactoryClientConfiguration clientConf;
     private final Set<GradleDeployDetails> gradleDeployDetails;
-    private int publishForkCount;
 
     public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-                                    Set<GradleDeployDetails> gradleDeployDetails, int publishForkCount) {
+                                    Set<GradleDeployDetails> gradleDeployDetails) {
         this.clientConf = clientConf;
         this.gradleDeployDetails = gradleDeployDetails;
-        this.publishForkCount = publishForkCount;
     }
 
     @Override
@@ -143,17 +113,12 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         bib.durationMillis(durationMillis);
 
         Set<Project> allProjects = rootProject.getAllprojects();
-        if (publishForkCount <= 1) {
-            allProjects.forEach(p -> addModule(bib, p));
-        } else {
-            try {
-                ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
-                CompletableFuture<Void> allModules = CompletableFuture.allOf(allProjects.stream()
-                        .map(project -> CompletableFuture.runAsync(() -> addModule(bib, project), executor))
-                        .toArray(CompletableFuture[]::new));
-                allModules.get();
-            } catch (InterruptedException | ExecutionException e) {
-                throw new RuntimeException(e);
+        for (Project project : allProjects) {
+            if (project.getState().getExecuted()) {
+                ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
+                if (buildInfoTask != null && buildInfoTask.hasModules()) {
+                    bib.addModule(extractModule(project));
+                }
             }
         }
         String parentName = clientConf.info.getParentBuildName();
@@ -269,15 +234,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         return build;
     }
 
-    private void addModule(BuildInfoBuilder bib, Project project) {
-        if (project.getState().getExecuted()) {
-            ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
-            if (buildInfoTask != null && buildInfoTask.hasModules()) {
-                bib.addModule(extractModule(project));
-            }
-        }
-    }
-
     private ArtifactoryTask getBuildInfoTask(Project project) {
         Set<Task> tasks = project.getTasksByName(ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME, false);
         if (tasks.isEmpty()) {
@@ -372,7 +328,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
-            ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
+            ResolvedConfiguration resolvedConfiguration = getResolvedConfiguration(project, configuration);
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 File file = artifact.getFile();
@@ -408,6 +364,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             }
         }
         return dependencies;
+    }
+
+    private ResolvedConfiguration getResolvedConfiguration(Project project, Configuration configuration) {
+        try {
+            // Gradle 5.0 and above:
+            return ((ProjectInternal) project).getMutationState().withMutableState(configuration::getResolvedConfiguration);
+        } catch (NoSuchMethodError error) {
+            // Compatibility with older versions of Gradle:
+            return configuration.getResolvedConfiguration();
+        }
     }
 
     private class ProjectPredicate implements Predicate<GradleDeployDetails> {
