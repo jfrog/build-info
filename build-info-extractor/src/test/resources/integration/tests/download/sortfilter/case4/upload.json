@@ -1,0 +1,33 @@
+{
+  "files": [
+    {
+      "pattern": "files/(a/a*)",
+      "target": "${LOCAL_REPO}/{1}",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/specialchars/hash/(*)",
+      "target": "${LOCAL_REPO}/{1}",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/specialchars/plus/(*)",
+      "target": "${LOCAL_REPO}/{1}",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/specialchars/space/(*)",
+      "target": "${LOCAL_REPO}/{1}",
+      "flat": "true",
+      "recursive": "true"
+    },
+    {
+      "pattern": "files/specialchars/ampersand/(*)",
+      "target": "${LOCAL_REPO}/{1}",
+      "flat": "true"
+    }
+  ]
+}
