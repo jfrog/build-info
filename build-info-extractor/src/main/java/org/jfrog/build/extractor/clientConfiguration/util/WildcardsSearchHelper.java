@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class WildcardsSearchHelper {
     private String buildName;
     private String buildNumber;
     private boolean recursive;
+    private String aqlSortAndFilter;
+    private String[] sortByFields;
 
     WildcardsSearchHelper(ArtifactoryDependenciesClient client) {
         this.client = client;
@@ -26,6 +29,8 @@ public class WildcardsSearchHelper {
         this.props = "";
         this.buildName = "";
         this.buildNumber = "";
+        this.aqlSortAndFilter = "";
+        this.sortByFields = new String[0];
     }
 
     public void setProps(String props) {
@@ -52,6 +57,36 @@ public class WildcardsSearchHelper {
         this.buildNumber = StringUtils.defaultIfEmpty(buildNumber , "");
     }
 
+    public void setAqlSortAndFilter(FileSpec file) {
+        StringBuilder query = new StringBuilder();
+        if (file.getSortBy() != null) {
+            sortByFields = file.getSortBy();
+            String sortOrder = StringUtils.defaultIfEmpty(file.getSortOrder(), "asc");
+            query.append(".sort({\"$").append(sortOrder).append("\":");
+            query.append("[").append(prepareSortFieldsForQuery(file.getSortBy())).append("]})");
+        }
+        if (StringUtils.isNotBlank(file.getOffset())) {
+            query.append(".offset(").append(file.getOffset()).append(")");
+        }
+        if (StringUtils.isNotBlank(file.getLimit())) {
+            query.append(".limit(").append(file.getLimit()).append(")");
+        }
+        aqlSortAndFilter = query.toString();
+    }
+
+    private String prepareSortFieldsForQuery(String[] sortByFields) {
+        StringBuilder fields = new StringBuilder();
+        int size = sortByFields.length;
+        for (int i = 0; i < size; i++) {
+            fields.append("\"").append(sortByFields[i]).append("\"");
+            if (i < size - 1) {
+                fields.append(",");
+            }
+        }
+        return fields.toString();
+    }
+
+
     /**
      * Finds and collects artifacts by pattern
      */
@@ -63,6 +98,10 @@ public class WildcardsSearchHelper {
         if (StringUtils.isNotBlank(buildName)) {
             dependenciesHelper.setBuildName(buildName);
             dependenciesHelper.setBuildNumber(buildNumber);
+        }
+        if (StringUtils.isNotBlank(aqlSortAndFilter)) {
+            dependenciesHelper.setSortAndFilter(aqlSortAndFilter);
+            dependenciesHelper.setSortByFields(sortByFields);
         }
         return dependenciesHelper.collectArtifactsByAql(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props));
     }

@@ -14,9 +14,15 @@ public class AqlSearchHelper {
     private ArtifactoryDependenciesClient client;
     private String buildName;
     private String buildNumber;
+    private String[] sortByFields;
+    private String sortAndFilter;
 
     AqlSearchHelper(ArtifactoryDependenciesClient client) {
         this.client = client;
+        this.buildName = "";
+        this.buildNumber = "";
+        this.sortAndFilter = "";
+        this.sortByFields = new String[0];
     }
 
     /**
@@ -141,11 +147,15 @@ public class AqlSearchHelper {
 
     private String buildQuery(String aql){
         aql = "items.find(" + aql + ")";
-        aql += buildIncludeQueryPart(getQueryReturnFields());
+        aql += buildIncludeQueryPart(getQueryReturnFields(sortByFields));
+        aql += StringUtils.defaultIfEmpty(sortAndFilter, "");
         return aql;
     }
 
     private String buildIncludeQueryPart(List<String> fieldsToInclude) {
+        if (StringUtils.isBlank(sortAndFilter)) {
+            fieldsToInclude.add("property");
+        }
         return ".include(" + StringUtils.join(prepareFieldsForQuery(fieldsToInclude),',') + ")";
     }
 
@@ -154,8 +164,15 @@ public class AqlSearchHelper {
         return fields;
     }
 
-    private List<String> getQueryReturnFields() {
-        return Arrays.asList("name", "repo", "path", "actual_md5", "actual_sha1", "size", "type", "property");
+    private List<String> getQueryReturnFields(String[] sortByFields) {
+        ArrayList<String> includeFields = new ArrayList<String>(
+                Arrays.asList("name", "repo", "path", "actual_md5", "actual_sha1", "size", "type"));
+        for (String field : sortByFields) {
+            if (includeFields.indexOf(field) == -1) {
+                includeFields.add(field);
+            }
+        }
+        return includeFields;
     }
 
     public String getBuildName() {
@@ -172,5 +189,21 @@ public class AqlSearchHelper {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getSortAndFilter() {
+        return sortAndFilter;
+    }
+
+    public void setSortAndFilter(String sortAndFilter) {
+        this.sortAndFilter = sortAndFilter;
+    }
+
+    public String[] getSortByFields() {
+        return sortByFields;
+    }
+
+    public void setSortByFields(String[] sortByFields) {
+        this.sortByFields = sortByFields;
     }
 }

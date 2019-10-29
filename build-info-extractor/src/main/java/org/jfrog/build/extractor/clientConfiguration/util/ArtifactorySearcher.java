@@ -55,6 +55,7 @@ class ArtifactorySearcher {
         String buildName = getBuildName(file.getBuild());
         wildcardHelper.setBuildName(buildName);
         wildcardHelper.setBuildNumber(getBuildNumber(buildName, file.getBuild()));
+        wildcardHelper.setAqlSortAndFilter(file);
         return wildcardHelper;
     }
 

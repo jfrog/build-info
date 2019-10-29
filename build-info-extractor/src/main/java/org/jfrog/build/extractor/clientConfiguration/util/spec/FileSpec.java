@@ -19,6 +19,11 @@ public class FileSpec {
     private String build;
     private String explode;
     private String[] excludePatterns;
+    private String[] sortBy;
+    private String sortOrder;
+    private String resultLimit;
+    private String offset;
+
 
     public enum SpecType {
         BUILD,
@@ -117,6 +122,38 @@ public class FileSpec {
         this.excludePatterns[index] = excludePattern;
     }
 
+    public String[] getSortBy() {
+        return sortBy;
+    }
+
+    public void setSortBy(String[] sortBy) {
+        this.sortBy = sortBy;
+    }
+
+    public String getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(String sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
+    public String getOffset() {
+        return offset;
+    }
+
+    public void setOffset(String offset) {
+        this.offset = offset;
+    }
+
+    public String getLimit() {
+        return resultLimit;
+    }
+
+    public void setLimit(String resultLimit) {
+        this.resultLimit = resultLimit;
+    }
+
     @Override
     public String toString() {
         return "FileSpec{" +
@@ -130,6 +167,10 @@ public class FileSpec {
                 ", build='" + build + '\'' +
                 ", explode='" + explode + '\'' +
                 ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
+                ", sortBy='" + Arrays.toString(sortBy) + '\'' +
+                ", sortOrder='" + sortOrder + '\'' +
+                ", offset='" + offset + '\'' +
+                ", limit='" + resultLimit + '\'' +
                 '}';
     }
 
