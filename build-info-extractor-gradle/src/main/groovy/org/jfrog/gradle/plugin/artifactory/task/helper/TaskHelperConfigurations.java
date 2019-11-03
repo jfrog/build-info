@@ -236,27 +236,24 @@ public class TaskHelperConfigurations extends TaskHelper {
         return deployDetails;
     }
 
-    public boolean AddDefaultArchiveConfiguration(Project project) {
+    public void addDefaultArchiveConfiguration() {
         if (!hasConfigurations()) {
             if (publishConfigsSpecified) {
                 log.warn("None of the specified publish configurations matched for project '{}' - nothing to publish.",
-                        project.getPath());
-                return true;
-            } else {
-                Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-                if (archiveConfig != null) {
-                    log.info("No publish configurations specified for project '{}' - using the default '{}' " +
-                            "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    publishConfigurations.add(archiveConfig);
-                    checkDependsOnArtifactsToPublish();
-                } else {
-                    log.warn("No publish configurations specified for project '{}' and the default '{}' " +
-                            "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    return true;
-                }
+                        getProject().getPath());
+                return;
             }
+            Configuration archiveConfig = getProject().getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+            if (archiveConfig == null) {
+                log.warn("No publish configurations specified for project '{}' and the default '{}' " +
+                        "configuration does not exist.", getProject().getPath(), Dependency.ARCHIVES_CONFIGURATION);
+                return;
+            }
+            log.info("No publish configurations specified for project '{}' - using the default '{}' " +
+                    "configuration.", getProject().getPath(), Dependency.ARCHIVES_CONFIGURATION);
+            publishConfigurations.add(archiveConfig);
+            checkDependsOnArtifactsToPublish();
         }
-        return false;
     }
 
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
