@@ -102,7 +102,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
         return project.repositories.ivy {
             name = 'artifactory-ivy-resolver'
             url = resolverConf.urlWithMatrixParams(pUrl)
-            layout 'pattern', {
+            patternLayout {
                 artifact resolverConf.getIvyArtifactPattern()
                 ivy resolverConf.getIvyPattern()
             }
