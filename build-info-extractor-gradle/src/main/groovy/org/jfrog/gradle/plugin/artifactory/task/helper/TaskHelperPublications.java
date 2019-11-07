@@ -30,7 +30,6 @@ import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.internal.PublicationArtifactSet;
 import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
-import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
@@ -64,6 +63,8 @@ import java.util.concurrent.Callable;
  */
 public class TaskHelperPublications extends TaskHelper {
     private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
+    public static final String MAVEN_JAVA = "mavenJava";
+    public static final String IVY_JAVA = "ivyJava";
     private Set<IvyPublication> ivyPublications = new HashSet<>();
     private Set<MavenPublication> mavenPublications = new HashSet<>();
     private Set<Object> publications = new HashSet<>();
@@ -82,8 +83,8 @@ public class TaskHelperPublications extends TaskHelper {
         for (Object publication : publications) {
             if (publication instanceof CharSequence) {
                 Publication publicationObj = getProject().getExtensions()
-                    .getByType(PublishingExtension.class)
-                    .getPublications().findByName(publication.toString());
+                        .getByType(PublishingExtension.class)
+                        .getPublications().findByName(publication.toString());
 
                 if (publicationObj != null) {
                     addPublication(publicationObj);
@@ -146,30 +147,30 @@ public class TaskHelperPublications extends TaskHelper {
             dependOn(ivyPublication);
             String capitalizedPublicationName = ivyPublication.getName().substring(0, 1).toUpperCase() + ivyPublication.getName().substring(1);
             dependsOn(String.format("%s:generateDescriptorFileFor%sPublication",
-                getProject().getPath(), capitalizedPublicationName));
+                    getProject().getPath(), capitalizedPublicationName));
         }
         // This makes the artifactoryPublish task to be depended on
         // the 'generate Pom file' task
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
                 log.warn("Maven publication name '{}' is of unsupported type '{}'!",
-                    mavenPublication.getName(), mavenPublication.getClass());
+                        mavenPublication.getName(), mavenPublication.getClass());
                 continue;
             }
             dependOn(mavenPublication);
             String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() +
-                mavenPublication.getName().substring(1);
+                    mavenPublication.getName().substring(1);
             dependsOn(String.format("%s:generatePomFileFor%sPublication",
-                getProject().getPath(), capitalizedPublicationName));
+                    getProject().getPath(), capitalizedPublicationName));
         }
     }
 
     private void dependOn(Publication publication) {
         // TODO: Check how we can find the artifact dependencies without using internal api's.
-	// Based on org.gradle.plugins.signing.Sign#sign
-	PublicationInternal<?> publicationInternal = (PublicationInternal<?>) publication;
-	dependsOn((Callable<Set<? extends PublicationArtifact>>) publicationInternal::getPublishableArtifacts);
-	publicationInternal.allPublishableArtifacts(this::dependsOn);
+        // Based on org.gradle.plugins.signing.Sign#sign
+        PublicationInternal<?> publicationInternal = (PublicationInternal<?>) publication;
+        dependsOn((Callable<Set<? extends PublicationArtifact>>) publicationInternal::getPublishableArtifacts);
+        publicationInternal.allPublishableArtifacts(this::dependsOn);
     }
 
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
@@ -262,6 +263,35 @@ public class TaskHelperPublications extends TaskHelper {
         return deployDetails;
     }
 
+    public void addDefaultPublications() {
+        if (!hasPublications()) {
+            if (publishPublicationsSpecified) {
+                log.warn("None of the specified publications matched for project '{}' - nothing to publish.",
+                        getProject().getPath());
+                return;
+            }
+            PublishingExtension publishingExtension = (PublishingExtension) getProject().getExtensions().findByName("publishing");
+            if (publishingExtension == null) {
+                log.warn("None of the specified publications matched for project '{}' - nothing to publish.",
+                        getProject().getPath());
+                return;
+            }
+            Publication mavenJavaPublication = publishingExtension.getPublications().findByName(MAVEN_JAVA);
+            if (mavenJavaPublication != null) {
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
+                        getProject().getPath(), MAVEN_JAVA);
+                addPublication(mavenJavaPublication);
+            }
+            Publication ivyJavaPublication = publishingExtension.getPublications().findByName(IVY_JAVA);
+            if (ivyJavaPublication != null) {
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
+                        getProject().getPath(), IVY_JAVA);
+                addPublication(ivyJavaPublication);
+            }
+            checkDependsOnArtifactsToPublish();
+        }
+    }
+
     private void createPublishArtifactInfoAndAddToDeployDetails(MavenArtifact artifact, Set<GradleDeployDetails> deployDetails, MavenPublication mavenPublication, String publicationName) {
         File file = artifact.getFile();
         DeployDetails.Builder builder = createBuilder(file, publicationName);
@@ -280,7 +310,7 @@ public class TaskHelperPublications extends TaskHelper {
             // Compatibility with older versions of Gradle:
             try {
                 Method m = ivy.getClass().getMethod("getDescriptorFile");
-                return (File)m.invoke(ivy);
+                return (File) m.invoke(ivy);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -338,7 +368,7 @@ public class TaskHelperPublications extends TaskHelper {
                                                IvyPublicationIdentity projectIdentity, DeployDetails.Builder builder,
                                                PublishArtifactInfo artifactInfo) {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher == null) {
             return;
         }
@@ -381,7 +411,7 @@ public class TaskHelperPublications extends TaskHelper {
     private void addArtifactInfoToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
                                                 DeployDetails.Builder builder, PublishArtifactInfo artifactInfo) {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher != null) {
             builder.targetRepository(publisher.getRepoKey());
             Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, publicationName);
