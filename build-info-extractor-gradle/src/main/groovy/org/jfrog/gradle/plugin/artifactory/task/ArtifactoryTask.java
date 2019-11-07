@@ -58,7 +58,7 @@ public class ArtifactoryTask extends DefaultTask {
 
     public Set<MavenPublication> mavenPublications = Sets.newHashSet();
 
-    private boolean ciBuild = false;
+    private boolean ciServerBuild = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
     public TaskHelperPublications helperPublications = new TaskHelperPublications(this);
 
@@ -153,12 +153,12 @@ public class ArtifactoryTask extends DefaultTask {
     }
 
     @Input
-    public boolean isCiBuild() {
-        return this.ciBuild;
+    public boolean isCiServerBuild() {
+        return this.ciServerBuild;
     }
 
-    public void setCiBuild() {
-        this.ciBuild = true;
+    public void setCiServerBuild() {
+        this.ciServerBuild = true;
     }
 
     public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();

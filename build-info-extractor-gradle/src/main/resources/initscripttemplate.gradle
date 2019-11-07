@@ -31,7 +31,7 @@ class BuildInfoPluginListener extends BuildAdapter {
             Task t = p.getTasks().findByName(ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME)
             if (t != null) {
                 ArtifactoryTask task = (ArtifactoryTask) t
-                task.setCiBuild()
+                task.setCiServerBuild()
             }
         }
     }

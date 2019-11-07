@@ -107,7 +107,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (resolver != null) {
                 defineResolvers(artifactoryTask.project, resolver)
             }
-            if (artifactoryTask.isCiBuild()) {
+            if (artifactoryTask.isCiServerBuild()) {
                 addDefaultPublicationsOrConfigurations(artifactoryTask);
             }
             artifactoryTask.projectEvaluated()

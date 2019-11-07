@@ -278,13 +278,13 @@ public class TaskHelperPublications extends TaskHelper {
             }
             Publication mavenJavaPublication = publishingExtension.getPublications().findByName(MAVEN_JAVA);
             if (mavenJavaPublication != null) {
-                log.info("No publications specified for project '{}' - adding '{}' configuration.",
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
                         getProject().getPath(), MAVEN_JAVA);
                 addPublication(mavenJavaPublication);
             }
             Publication ivyJavaPublication = publishingExtension.getPublications().findByName(IVY_JAVA);
             if (ivyJavaPublication != null) {
-                log.info("No publications specified for project '{}' - adding '{}' configuration.",
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
                         getProject().getPath(), IVY_JAVA);
                 addPublication(ivyJavaPublication);
             }
