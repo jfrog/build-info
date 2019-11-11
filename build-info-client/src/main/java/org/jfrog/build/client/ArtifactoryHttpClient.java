@@ -31,6 +31,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.URI;
@@ -60,17 +61,23 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private final String artifactoryUrl;
     private final String username;
     private final String password;
+    private final String accessToken;
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private int connectionRetries = DEFAULT_CONNECTION_RETRY;
     private ProxyConfiguration proxyConfiguration;
 
     private PreemptiveHttpClient deployClient;
 
-    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
+    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         this.username = username;
         this.password = password;
+        this.accessToken = accessToken;
         this.log = log;
+    }
+
+    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
     }
 
     public static String encodeUrl(String unescaped) {
@@ -277,5 +284,11 @@ public class ArtifactoryHttpClient implements AutoCloseable {
             return IOUtils.toString(in, "UTF-8");
         }
         return "";
+    }
+
+    public void addAccessTokenHeaderToRequestIfNeeded(AbstractHttpMessage httpRequest) {
+        if (StringUtils.isNotEmpty(accessToken)) {
+            httpRequest.addHeader("Authorization", "Bearer " + accessToken);
+        }
     }
 }

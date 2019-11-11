@@ -57,8 +57,12 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     private static final String LATEST = "LATEST";
     private static final String LAST_RELEASE = "LAST_RELEASE";
 
+    public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
+        super(artifactoryUrl, username, password, accessToken, logger);
+    }
+
     public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, Log logger) {
-        super(artifactoryUrl, username, password, logger);
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
     }
 
     public ArtifactoryDependenciesClient(String artifactoryUrl, ArtifactoryHttpClient httpClient, Log logger) {
@@ -109,6 +113,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         HttpPost httpPost = new HttpPost(url);
         StringEntity entity = new StringEntity(aql);
         httpPost.setEntity(entity);
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpPost);
         InputStream responseStream = getResponseStream(client.execute(httpPost), "Failed to search artifact by the aql '" + aql + "'");
         return readJsonResponse(responseStream,
                 new TypeReference<AqlSearchResult>() {},
@@ -192,6 +197,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);
         HttpRequestBase httpRequest = isHead ? new HttpHead(artifactUrl) : new HttpGet(artifactUrl);
 
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpRequest);
+
         // Explicitly force keep alive
         httpRequest.setHeader("Connection", "Keep-Alive");
         // Add all required headers to the request
@@ -220,6 +227,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
         PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpPut httpPut = new HttpPut(url);
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpPut);
         checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");
     }
 
@@ -227,6 +235,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
         PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpDelete httpDelete = new HttpDelete(url);
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpDelete);
         checkNoContent(client.execute(httpDelete), "Failed to delete properties to '" + urlPath + "'");
     }
 

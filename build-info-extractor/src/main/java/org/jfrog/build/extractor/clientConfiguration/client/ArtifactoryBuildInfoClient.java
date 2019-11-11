@@ -89,6 +89,10 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         this(artifactoryUrl, null, null, log);
     }
 
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
+        super(artifactoryUrl, username, password, accessToken, log);
+    }
+
     /**
      * Creates a new client for the given Artifactory url.
      *
@@ -97,7 +101,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param password       Authentication password
      */
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-        super(artifactoryUrl, username, password, log);
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
     }
 
     /**
@@ -181,6 +185,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         HttpPut httpPut = new HttpPut(url);
         try {
             log.info("Deploying build descriptor to: " + httpPut.getURI().toString());
+            httpClient.addAccessTokenHeaderToRequestIfNeeded(httpPut);
             sendHttpEntityRequest(httpPut, buildInfoJson, APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         } catch (IOException e) {
             throw new IOException("Failed to send build descriptor. " + e.getMessage(), e);
@@ -484,6 +489,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         String promotionJson = toJsonString(promotion);
 
         HttpPost httpPost = new HttpPost(urlBuilder.toString());
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpPost);
 
         StringEntity stringEntity = new StringEntity(promotionJson);
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
@@ -593,6 +599,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 .append(encodeUrl(itemPath)).append("?").append("properties=").append(encodeUrl(properties));
 
         HttpPut postRequest = new HttpPut(urlBuilder.toString());
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(postRequest);
         return httpClient.getHttpClient().execute(postRequest);
     }
 
@@ -679,6 +686,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         HttpPut httpPut = createHttpPutMethod(details, uploadUrl);
         // add the 100 continue directive
         httpPut.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
+        httpClient.addAccessTokenHeaderToRequestIfNeeded(httpPut);
 
         if (details.isExplode()) {
             httpPut.addHeader("X-Explode-Archive", "true");
