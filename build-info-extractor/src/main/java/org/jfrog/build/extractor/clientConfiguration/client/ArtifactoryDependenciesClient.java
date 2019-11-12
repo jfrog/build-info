@@ -19,6 +19,7 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -37,6 +38,7 @@ import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
 
 import java.io.FileNotFoundException;
@@ -45,11 +47,8 @@ import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -223,23 +222,20 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
 
     public void setProperties(String urlPath, String props) throws IOException {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=");
-        // Use URLEncoder to allow special characters use
-        url += encodeProps(props);
+        url += DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(props));
         PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpPut httpPut = new HttpPut(url);
         checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");
     }
 
-    private String encodeProps(String props) throws UnsupportedEncodingException {
-        List<String> propsList = new ArrayList<String>(Arrays.asList(props.split(";")));
-        StringBuilder encodedProps = new StringBuilder();
+    private ArrayListMultimap<String, String> mapPropsString(String props) throws UnsupportedEncodingException {
+        ArrayListMultimap<String, String> propsMap = ArrayListMultimap.create();
+        List<String> propsList = Arrays.asList(props.split(";"));
         for (String prop : propsList) {
-            String[] propArray = prop.split("=");
-            String encodedKey = URLEncoder.encode(propArray[0], StandardCharsets.UTF_8.toString());
-            String encodedValue = URLEncoder.encode(propArray[1], StandardCharsets.UTF_8.toString());
-            encodedProps.append(";").append(encodedKey).append("=").append(encodedValue);
+            String[] propParts = prop.split("=");
+            propsMap.put(propParts[0], propParts[1]);
         }
-        return encodedProps.toString();
+        return propsMap;
     }
 
     public void deleteProperties(String urlPath, String props) throws IOException {
