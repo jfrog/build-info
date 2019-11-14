@@ -28,6 +28,7 @@ class ArtifactoryPluginConvention {
     final Project project
     final ArtifactoryClientConfiguration clientConfig
     def PublisherConfig publisherConfig
+    def DistributerConfig distributerConfig
     def boolean conventionSet = false
 
     ArtifactoryPluginConvention(Project project) {
@@ -49,6 +50,11 @@ class ArtifactoryPluginConvention {
     def setContextUrl(def contextUrl) {
         clientConfig.publisher.setContextUrl(contextUrl?.toString())
         clientConfig.resolver.setContextUrl(contextUrl?.toString())
+    }
+
+    def distribute(Closure closure) {
+        distributerConfig = new DistributerConfig(this)
+        distributerConfig.config(closure)
     }
 
     def publish(Closure closure) {

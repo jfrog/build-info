@@ -3,9 +3,11 @@ package org.jfrog.gradle.plugin.artifactory
 import org.gradle.api.Project
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
+import org.jfrog.gradle.plugin.artifactory.task.DistributeTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.DistributeTask.DISTRIBUTE_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.DEPLOY_TASK_NAME
 
 /**
@@ -21,6 +23,13 @@ class ArtifactoryPlugin extends ArtifactoryPluginBase {
     protected ArtifactoryTask createArtifactoryPublishTask(Project project) {
         def result = project.getTasks().create(ARTIFACTORY_PUBLISH_TASK_NAME, ArtifactoryTask.class)
         result.setDescription('''AddS artifacts and generates build-info to be later deployed to Artifactory,''')
+        return result
+    }
+
+    @Override
+    protected DistributeTask createArtifactoryDistributeTask(Project project) {
+        def result = project.getTasks().create(DISTRIBUTE_TASK_NAME, DistributeTask.class)
+        result.setDescription('''Distribute build artifacts to Bintray,''')
         return result
     }
 
