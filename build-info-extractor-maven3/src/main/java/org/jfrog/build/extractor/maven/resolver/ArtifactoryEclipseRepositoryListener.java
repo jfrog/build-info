@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.maven.resolver;
 
+import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;
@@ -55,7 +56,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
 
     private PlexusContainer plexusContainer;
 
-    Boolean artifactoryRepositoriesEnforced = false;
+    private final MutableBoolean artifactoryRepositoriesEnforced = new MutableBoolean(false);
     private ArtifactoryEclipseArtifactResolver artifactResolver = null;
     private ArtifactoryEclipseMetadataResolver metadataResolver = null;
 
@@ -84,7 +85,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         repoSystemPluginField.setAccessible(true);
         repoSystemPluginField.set(pluginDependenciesResolver, repositorySystem);
 
-        artifactoryRepositoriesEnforced = true;
+        artifactoryRepositoriesEnforced.setValue(true);
         synchronized (artifactoryRepositoriesEnforced) {
             artifactoryRepositoriesEnforced.notifyAll();
         }
@@ -106,9 +107,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
 
     private void waitForResolutionToBeSet() {
         // In case the Artifactory resolver is not yet set, we wait for it first:
-        if (!artifactoryRepositoriesEnforced) {
+        if (!artifactoryRepositoriesEnforced.booleanValue()) {
             synchronized (artifactoryRepositoriesEnforced) {
-                if (!artifactoryRepositoriesEnforced) {
+                if (!artifactoryRepositoriesEnforced.booleanValue()) {
                     try {
                         artifactoryRepositoriesEnforced.wait();
                     } catch (InterruptedException e) {
