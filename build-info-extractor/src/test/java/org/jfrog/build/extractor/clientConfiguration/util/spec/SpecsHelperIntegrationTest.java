@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
+import org.jfrog.build.extractor.clientConfiguration.util.EditPropertiesHelper;
 import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.AfterMethod;
@@ -33,6 +34,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
     private static final String INTEGRATION_TESTS = "/integration/tests";
     private static final String DEFAULT_SPEC_PATH = "/integration/default";
+    private static final String PROPS_TEST_PATH = "/propsTests";
     private static final String UPLOAD_SPEC = "upload.json";
     private static final String DOWNLOAD_SPEC = "download.json";
     private static final String EXPECTED = "expected.json";
@@ -42,6 +44,47 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);
         deleteContentFromRepo(localRepo);
+    }
+
+    @Test
+    public void propsTest() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        File propsTestPath = new File(this.getClass().getResource(PROPS_TEST_PATH).toURI()).getCanonicalFile();
+
+        String uploadSpec = readSpec(new File(propsTestPath, UPLOAD_SPEC));
+        String propsSpec = readSpec(new File(propsTestPath, "setProps.json"));
+        String downloadSpec = readSpec(new File(propsTestPath, DOWNLOAD_SPEC));
+        Expected expected = mapper.readValue(new File(propsTestPath, EXPECTED), Expected.class);
+
+        // Upload artifacts.
+        File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClientBuilder);
+        Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
+
+        // Set Properties on the uploaded artifacts
+        specsHelper.editPropertiesBySpec(propsSpec, dependenciesClient, EditPropertiesHelper.EditPropertiesActionType.SET, "p=v+1+d!");
+
+        // Download artifacts to compare against the expected result.
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
+
+        // Verify expected results
+        verifyExpected(expected);
+
+        // Delete Properties from the uploaded artifacts
+        specsHelper.editPropertiesBySpec(propsSpec, dependenciesClient, EditPropertiesHelper.EditPropertiesActionType.DELETE, "p");
+
+        // Clean all files from download's target
+        FileUtils.deleteDirectory(tempWorkspace);
+
+        // Download artifacts to compare against the expected result.
+        downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
+
+        // No artifacts should be downloaded, assert that target dir was not created
+        Assert.assertFalse(tempWorkspace.exists(), "The path: '" + tempWorkspace.getPath() + "' should not been created.");
+
     }
 
     @Test(dataProvider = "testCases")

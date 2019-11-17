@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/a*",
+      "target": "${LOCAL_REPO}/",
+      "flat": "true",
+      "recursive": "true",
+      "props": "key=v2"
+    },
+    {
+      "pattern": "files/a/b/b*",
+      "target": "${LOCAL_REPO}/",
+      "flat": "true",
+      "recursive": "true",
+      "props": "key=v1+v2;"
+    },
+    {
+      "pattern": "files/a/b/c*",
+      "target": "${LOCAL_REPO}/",
+      "flat": "true",
+      "recursive": "true",
+      "props": "key=v1;"
+    }
+  ]
+}
