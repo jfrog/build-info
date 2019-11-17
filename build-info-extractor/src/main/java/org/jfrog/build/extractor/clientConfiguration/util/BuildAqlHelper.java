@@ -11,20 +11,20 @@ import java.util.Map;
 
 public class BuildAqlHelper extends AqlHelperBase {
 
-    BuildAqlHelper(ArtifactoryDependenciesClient client, Log log) {
-        super(client, log);
+    BuildAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
+        super(client, log, file);
     }
 
     @Override
-    public void convertFileSpecToAql(FileSpec file) throws IOException {
+    protected void convertFileSpecToAql(FileSpec file) throws IOException {
         super.buildQueryAdditionalParts(file);
-        this.queryBody = AqlUtils.createAqlBodyForBuild(buildName, buildNumber);
+        this.queryBody = createAqlBodyForBuild(buildName, buildNumber);
     }
 
     @Override
     protected List<AqlSearchResult.SearchEntry> filterResult(List<AqlSearchResult.SearchEntry> queryResults) throws IOException {
-        Map<String, Boolean> buildArtifactsSha1 = AqlUtils.extractSha1FromAqlResponse(queryResults);
-        return AqlUtils.filterAqlSearchResultsByBuild(queryResults, buildArtifactsSha1, buildName, buildNumber);
+        Map<String, Boolean> buildArtifactsSha1 = extractSha1FromAqlResponse(queryResults);
+        return filterAqlSearchResultsByBuild(queryResults, buildArtifactsSha1, buildName, buildNumber);
     }
 
 }

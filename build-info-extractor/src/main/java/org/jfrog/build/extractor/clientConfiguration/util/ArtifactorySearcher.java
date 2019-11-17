@@ -21,24 +21,23 @@ class ArtifactorySearcher {
 
     List<AqlSearchResult.SearchEntry> SearchByFileSpec(FileSpec file) throws IOException {
         List<AqlSearchResult.SearchEntry> results = null;
-        AqlHelperBase aqlHelper = new AqlHelperBase(client, log);
+        AqlHelperBase aqlHelper = null;
         log.info("Searching for artifacts...");
         switch (file.getSpecType()) {
             case PATTERN: {
-                aqlHelper = new PatternAqlHelper(client, log);
+                aqlHelper = new PatternAqlHelper(client, log, file);
                 break;
             }
             case BUILD: {
-                aqlHelper = new BuildAqlHelper(client, log);
+                aqlHelper = new BuildAqlHelper(client, log, file);
                 break;
             }
             case AQL: {
+                aqlHelper = new AqlHelperBase(client, log, file);
                 break;
             }
         }
-        aqlHelper.convertFileSpecToAql(file);
         results = aqlHelper.run();
-        results = (results == null ? new ArrayList<>() : results);
         log.info(String.format("Found %s artifacts.", results.size()));
         return results;
     }

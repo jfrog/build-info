@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PatternAqlHelper extends AqlHelperBase {
-    PatternAqlHelper(ArtifactoryDependenciesClient client, Log log) {
-        super(client, log);
+    PatternAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
+        super(client, log, file);
     }
 
     @Override
