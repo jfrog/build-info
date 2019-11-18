@@ -5,13 +5,9 @@ import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
-import org.codehaus.plexus.PlexusConstants;
-import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.context.ContextException;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.eclipse.aether.AbstractRepositoryListener;
@@ -38,13 +34,16 @@ import java.util.Properties;
 public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryListener implements Contextualizable {
 
     @Requirement
-    private Logger logger;
-
-    @Requirement
     private DefaultProjectDependenciesResolver pojectDependenciesResolver;
 
     @Requirement
     private DefaultPluginDependenciesResolver pluginDependenciesResolver;
+
+    @Requirement
+    private ArtifactoryEclipseArtifactResolver artifactResolver;
+
+    @Requirement
+    private ArtifactoryEclipseMetadataResolver metadataResolver;
 
     @Requirement
     private DefaultArtifactDescriptorReader descriptorReader;
@@ -52,26 +51,20 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     @Requirement
     private DefaultRepositorySystem repositorySystem;
 
-    private BuildInfoRecorder buildInfoRecorder = null;
+    @Requirement
+    private BuildInfoRecorder buildInfoRecorder;
 
-    private PlexusContainer plexusContainer;
+    @Requirement
+    private Logger logger;
 
     private final MutableBoolean artifactoryRepositoriesEnforced = new MutableBoolean(false);
-    private ArtifactoryEclipseArtifactResolver artifactResolver = null;
-    private ArtifactoryEclipseMetadataResolver metadataResolver = null;
 
     /**
      * The method replaces the DefaultArtifactResolver instance with an instance of ArtifactoryEclipseArtifactResolver.
      * The new class sets the configured Artifactory resolution repositories for each resolved artifact.
-     *
-     * @throws ComponentLookupException
      */
-    private void enforceArtifactoryResolver() throws ComponentLookupException, NoSuchFieldException, IllegalAccessException {
+    private void enforceArtifactoryResolver() throws NoSuchFieldException, IllegalAccessException {
         logger.debug("Enforcing Artifactory artifact resolver");
-
-        artifactResolver = (ArtifactoryEclipseArtifactResolver) plexusContainer.lookup(ArtifactoryEclipseArtifactResolver.class.getName());
-        metadataResolver = (ArtifactoryEclipseMetadataResolver) plexusContainer.lookup(ArtifactoryEclipseMetadataResolver.class.getName());
-        buildInfoRecorder = (BuildInfoRecorder) plexusContainer.lookup(BuildInfoRecorder.class.getName());
 
         descriptorReader.setArtifactResolver(artifactResolver);
         repositorySystem.setArtifactResolver(artifactResolver);
@@ -124,7 +117,6 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
      * The enforceArtifactoryResolver() method replaces the default artifact resolver instance with a resolver that enforces Artifactory
      * resolution repositories. However, since there's a chance that Maven started resolving a few artifacts before the instance replacement,
      * this method makes sure those artifacts will be resolved from Artifactory as well.
-     * @param event
      */
     private void verifyArtifactoryResolutionEnforced(RepositoryEvent event) {
         initResolutionHelper(event.getSession());
@@ -138,7 +130,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
             return;
         }
 
-        RemoteRepository repo = (RemoteRepository)event.getRepository();
+        RemoteRepository repo = (RemoteRepository) event.getRepository();
 
         waitForResolutionToBeSet();
 
@@ -166,8 +158,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactorySnapshotRepo.getUrl());
                 copyRepositoryFields(artifactorySnapshotRepo, repo);
                 setRepositoryPolicy(repo);
-            } else
-            if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl()) && repo.getPolicy(false).isEnabled()) {
+            } else if (!snapshot && !repo.getUrl().equals(artifactoryReleaseRepo.getUrl()) && repo.getPolicy(false).isEnabled()) {
                 logger.debug("Replacing resolution repository URL: " + repo + " with: " + artifactoryReleaseRepo.getUrl());
                 copyRepositoryFields(artifactoryReleaseRepo, repo);
                 setRepositoryPolicy(repo);
@@ -229,7 +220,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     public void artifactResolved(RepositoryEvent event) {
         waitForResolutionToBeSet();
 
-        String requestContext = ((ArtifactRequest)event.getTrace().getData()).getRequestContext();
+        String requestContext = ((ArtifactRequest) event.getTrace().getData()).getRequestContext();
         String scope = getBuildInfoRecorder().getResolutionHelper().getScopeByRequestContext(requestContext);
         org.apache.maven.artifact.Artifact artifact = toMavenArtifact(event.getArtifact(), scope);
         if (event.getRepository() != null) {
@@ -256,8 +247,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
     }
 
     @Override
-    public void contextualize(Context context) throws ContextException {
-        plexusContainer = (PlexusContainer)context.get(PlexusConstants.PLEXUS_KEY);
+    public void contextualize(Context context) {
         try {
             enforceArtifactoryResolver();
         } catch (Exception e) {
