@@ -377,6 +377,21 @@
                     <role-hint>default</role-hint>
                     <field-name>repositorySystem</field-name>
                 </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>artifactResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>metadataResolver</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
+                    <role-hint>default</role-hint>
+                    <field-name>buildInfoRecorder</field-name>
+                </requirement>
             </requirements>
         </component>
         <component>
