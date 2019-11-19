@@ -68,7 +68,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     private PreemptiveHttpClient deployClient;
 
-    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
+    private ArtifactoryHttpClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         this.username = username;
         this.password = password;
@@ -78,6 +78,10 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
         this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+    }
+
+    public ArtifactoryHttpClient(String artifactoryUrl, String accessToken, Log log) {
+        this(artifactoryUrl, StringUtils.EMPTY, StringUtils.EMPTY, accessToken, log);
     }
 
     public static String encodeUrl(String unescaped) {
@@ -149,7 +153,11 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
-            deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration, connectionRetries);
+            if (StringUtils.isNotEmpty(accessToken)) {
+                deployClient = new PreemptiveHttpClient(accessToken, connectionTimeout, proxyConfiguration, connectionRetries);
+            } else {
+                deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration, connectionRetries);
+            }
             deployClient.setLog(log);
         }
 
@@ -284,11 +292,5 @@ public class ArtifactoryHttpClient implements AutoCloseable {
             return IOUtils.toString(in, "UTF-8");
         }
         return "";
-    }
-
-    public void addAccessTokenHeaderToRequestIfNeeded(AbstractHttpMessage httpRequest) {
-        if (StringUtils.isNotEmpty(accessToken)) {
-            httpRequest.addHeader("Authorization", "Bearer " + accessToken);
-        }
     }
 }

@@ -71,6 +71,7 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     private PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
     private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
+    private String accessToken;
     private AuthCache authCache = new BasicAuthCache();
     private CloseableHttpClient httpClient;
     private int connectionRetries;
@@ -87,13 +88,22 @@ public class PreemptiveHttpClient implements AutoCloseable {
         CLIENT_VERSION = properties.getProperty("client.version", "unknown");
     }
 
-    @SuppressWarnings("WeakerAccess")
+    public PreemptiveHttpClient(String accessToken, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
+        this(StringUtils.EMPTY, StringUtils.EMPTY, accessToken, timeout, proxyConfiguration, connectionRetries);
+    }
+
     public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
-        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, connectionRetries);
+        this(userName, password, StringUtils.EMPTY, timeout, proxyConfiguration, connectionRetries);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    private PreemptiveHttpClient(String userName, String password, String accessToken, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
+        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, accessToken, timeout, connectionRetries);
 
         if (proxyConfiguration != null) {
             setProxyConfiguration(httpClientBuilder, proxyConfiguration);
         }
+        this.accessToken = accessToken;
         connectionManager.setMaxTotal(CONNECTION_POOL_SIZE);
         connectionManager.setDefaultMaxPerRoute(CONNECTION_POOL_SIZE);
         httpClient = httpClientBuilder.build();
@@ -115,14 +125,18 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
         HttpClientContext clientContext = HttpClientContext.create();
-        clientContext.setCredentialsProvider(basicCredentialsProvider);
+        if (StringUtils.isNotEmpty(accessToken)) {
+            clientContext.setUserToken(accessToken);
+        } else {
+            clientContext.setCredentialsProvider(basicCredentialsProvider);
+        }
         if (authCache != null) {
             clientContext.setAuthCache(authCache);
         }
         return httpClient.execute(request, clientContext);
     }
 
-    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int connectionRetries) {
+    private HttpClientBuilder createHttpClientBuilder(String userName, String password, String accessToken, int timeout, int connectionRetries) {
         this.connectionRetries = connectionRetries;
         int timeoutMilliSeconds = timeout * 1000;
         RequestConfig requestConfig = RequestConfig
@@ -137,13 +151,15 @@ public class PreemptiveHttpClient implements AutoCloseable {
                 .setConnectionManager(connectionManager)
                 .setDefaultRequestConfig(requestConfig);
 
-        if (StringUtils.isEmpty(userName)) {
-            userName = "anonymous";
-            password = "";
-        }
+        if (StringUtils.isEmpty(accessToken)) {
+            if (StringUtils.isEmpty(userName)) {
+                userName = "anonymous";
+                password = "";
+            }
 
-        basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                new UsernamePasswordCredentials(userName, password));
+            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                    new UsernamePasswordCredentials(userName, password));
+        }
 
         // Add as the first request interceptor
         builder.addInterceptorFirst(new PreemptiveAuth());
@@ -228,15 +244,20 @@ public class PreemptiveHttpClient implements AutoCloseable {
             AuthState authState = finalContext.getTargetAuthState();
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
-                CredentialsProvider credsProvider = finalContext.getCredentialsProvider();
-                HttpHost targetHost = finalContext.getTargetHost();
-                Credentials creds = credsProvider.getCredentials(
-                        new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-                if (creds == null) {
-                    throw new HttpException("No credentials for preemptive authentication");
+                String accessToken = finalContext.getUserToken(String.class);
+                if (StringUtils.isNotEmpty(accessToken)) {
+                    request.addHeader("Authorization", "Bearer " + accessToken);
+                } else {
+                    CredentialsProvider credsProvider = finalContext.getCredentialsProvider();
+                    HttpHost targetHost = finalContext.getTargetHost();
+                    Credentials creds = credsProvider.getCredentials(
+                            new AuthScope(targetHost.getHostName(), targetHost.getPort()));
+                    if (creds == null) {
+                        throw new HttpException("No credentials for preemptive authentication");
+                    }
+                    BasicScheme authScheme = new BasicScheme();
+                    authState.update(authScheme, creds);
                 }
-                BasicScheme authScheme = new BasicScheme();
-                authState.update(authScheme, creds);
             }
         }
 
