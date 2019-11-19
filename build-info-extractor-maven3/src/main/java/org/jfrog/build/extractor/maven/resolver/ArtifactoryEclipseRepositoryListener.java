@@ -184,9 +184,6 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         Field url = RemoteRepository.class.getDeclaredField("url");
         url.setAccessible(true);
         url.set(toRepo, fromRepo.getUrl());
-        Field id = RemoteRepository.class.getDeclaredField("id");
-        id.setAccessible(true);
-        id.set(toRepo, fromRepo.getId());
         if (fromRepo.getAuthentication() != null) {
             Field authentication = RemoteRepository.class.getDeclaredField("authentication");
             authentication.setAccessible(true);
