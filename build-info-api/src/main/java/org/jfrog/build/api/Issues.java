@@ -76,4 +76,36 @@ public class Issues implements Serializable {
     public void setAggregationBuildStatus(String aggregationBuildStatus) {
         this.aggregationBuildStatus = aggregationBuildStatus;
     }
+
+    /**
+     * If one of the objects did not collect issues (empty tracker or affected issues) - keep the other.
+     * If both collected and the tracker names match, append affected issues.
+     * Otherwise, keep this original object.
+     */
+    public void append(Issues other) {
+        if (other == null || other.getTracker() == null || other.affectedIssues == null) {
+            return;
+        }
+        if (this.getTracker() == null || this.affectedIssues == null) {
+            this.setTracker(other.getTracker());
+            this.aggregateBuildIssues = other.aggregateBuildIssues;
+            this.aggregationBuildStatus = other.aggregationBuildStatus;
+            this.affectedIssues = other.affectedIssues;
+            return;
+        }
+        if (other.getTracker().getName().equals(this.getTracker().getName())) {
+            this.appendAffectedIssues(other.affectedIssues);
+        }
+    }
+
+    private void appendAffectedIssues(Set<Issue> otherAffectedIssues) {
+        if (otherAffectedIssues == null) {
+            return;
+        }
+        if (this.affectedIssues == null) {
+            this.affectedIssues = otherAffectedIssues;
+            return;
+        }
+        this.affectedIssues.addAll(otherAffectedIssues);
+    }
 }
