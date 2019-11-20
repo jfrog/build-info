@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.Task
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.IvyPublication
@@ -158,13 +159,9 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     }
 
     private def createIvyRepo(Project project, String pUrl, ArtifactoryClientConfiguration.ResolverHandler resolverConf) {
-        return project.repositories.ivy {
+        IvyArtifactRepository ivyRepo = project.repositories.ivy {
             name = 'artifactory-ivy-resolver'
             url = resolverConf.urlWithMatrixParams(pUrl)
-            patternLayout {
-                artifact resolverConf.getIvyArtifactPattern()
-                ivy resolverConf.getIvyPattern()
-            }
             if (StringUtils.isNotBlank(resolverConf.username) && StringUtils.isNotBlank(resolverConf.password)) {
                 credentials {
                     username = resolverConf.username
@@ -172,6 +169,20 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                 }
             }
         }
+        if (ivyRepo.metaClass.respondsTo(ivyRepo, 'patternLayout')) {
+            // Gradle 5 an above
+            ivyRepo.patternLayout {
+                artifact resolverConf.getIvyArtifactPattern()
+                ivy resolverConf.getIvyPattern()
+            }
+        } else {
+            // Gradle 4
+            ivyRepo.layout 'pattern', {
+                artifact resolverConf.getIvyArtifactPattern()
+                ivy resolverConf.getIvyPattern()
+            }
+        }
+        return ivyRepo
     }
 
     /**
