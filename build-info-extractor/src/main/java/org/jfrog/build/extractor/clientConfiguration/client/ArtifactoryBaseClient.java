@@ -96,6 +96,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
     }
 
+    public ProxyConfiguration getProxyConfiguration() {
+        return httpClient.getProxyConfiguration();
+    }
+
     /**
      * Log setter for the PreemptiveHttpClient for jobs like the Jenkins Generic job that uses NullLog by default.
      *
