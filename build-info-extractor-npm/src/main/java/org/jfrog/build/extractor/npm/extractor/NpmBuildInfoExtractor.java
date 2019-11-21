@@ -8,6 +8,7 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -44,6 +45,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
+    private String npmProxy;
     private Log logger;
 
     NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger) {
@@ -71,6 +73,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             setNpmAuth(dependenciesClient);
             setRegistryUrl(dependenciesClient, resolutionRepository);
+            setNpmProxy(dependenciesClient);
         }
         readPackageInfoFromPackageJson(workingDir);
         backupProjectNpmrc(workingDir);
@@ -86,6 +89,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             npmRegistry += "/";
         }
         npmRegistry += "api/npm/" + resolutionRepository;
+    }
+
+    private void setNpmProxy(ArtifactoryDependenciesClient dependenciesClient) {
+        ProxyConfiguration proxyConfiguration = dependenciesClient.getProxyConfiguration();
+        if (proxyConfiguration == null || StringUtils.isBlank(proxyConfiguration.host)) {
+            return;
+        }
+        npmProxy = "http://";
+        String username = proxyConfiguration.username;
+        String password = proxyConfiguration.password;
+        if (StringUtils.isNoneBlank(username) && StringUtils.isNotBlank(password)) {
+            npmProxy += username + ":" + password + "@";
+        }
+        npmProxy += proxyConfiguration.host + ":" + proxyConfiguration.port;
     }
 
     private void readPackageInfoFromPackageJson(Path workingDir) throws IOException {
@@ -125,6 +142,11 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         // Save registry
         npmrcProperties.setProperty("registry", npmRegistry);
         npmrcProperties.remove("metrics-registry");
+
+        // Save npm proxy
+        if (StringUtils.isNotBlank(npmProxy)) {
+            npmrcProperties.setProperty("proxy", npmProxy);
+        }
 
         // Write npmrc file
         StringBuilder stringBuffer = new StringBuilder();

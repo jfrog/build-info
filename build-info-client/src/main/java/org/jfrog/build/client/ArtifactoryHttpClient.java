@@ -126,6 +126,10 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         return connectionRetries;
     }
 
+    public ProxyConfiguration getProxyConfiguration() {
+        return this.proxyConfiguration;
+    }
+
     /**
      * Release all connection and cleanup resources.
      */
