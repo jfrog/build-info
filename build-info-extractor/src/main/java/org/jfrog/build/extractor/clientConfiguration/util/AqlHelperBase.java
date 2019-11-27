@@ -41,7 +41,6 @@ public class AqlHelperBase {
     protected void convertFileSpecToAql(FileSpec file) throws IOException {
         buildQueryAdditionalParts(file);
         this.queryBody = file.getAql();
-
     }
 
     public List<AqlSearchResult.SearchEntry> run() throws IOException {

@@ -12,7 +12,6 @@ import java.util.List;
 class ArtifactorySearcher {
     private ArtifactoryDependenciesClient client;
     private Log log;
-    private static final String LAST_RELEASE = "LAST_RELEASE";
 
     ArtifactorySearcher(ArtifactoryDependenciesClient client, Log log) {
         this.client = client;
