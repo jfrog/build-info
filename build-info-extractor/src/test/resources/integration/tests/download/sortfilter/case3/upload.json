@@ -1,0 +1,49 @@
+{
+  "files": [
+    {
+      "pattern": "files/a/a1.in",
+      "target": "${LOCAL_REPO}/one/a1.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/b1.in",
+      "target": "${LOCAL_REPO}/one/b1.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/c/c1.in",
+      "target": "${LOCAL_REPO}/one/c1.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/a2.in",
+      "target": "${LOCAL_REPO}/two/a2.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/b2.in",
+      "target": "${LOCAL_REPO}/two/b2.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/c/c2.in",
+      "target": "${LOCAL_REPO}/two/c2.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/a3.in",
+      "target": "${LOCAL_REPO}/three/a3.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/b3.in",
+      "target": "${LOCAL_REPO}/three/b3.in",
+      "flat": "true"
+    },
+    {
+      "pattern": "files/a/b/c/c3.in",
+      "target": "${LOCAL_REPO}/three/c3.in",
+      "flat": "true"
+    }
+  ]
+}

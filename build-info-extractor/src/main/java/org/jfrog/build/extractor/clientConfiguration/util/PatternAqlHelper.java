@@ -1,70 +1,24 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.search.AqlSearchResult;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Tamirh on 25/04/2016.
- */
-public class WildcardsSearchHelper {
-    private ArtifactoryDependenciesClient client;
-    private String props;
-    private String buildName;
-    private String buildNumber;
-    private boolean recursive;
-
-    WildcardsSearchHelper(ArtifactoryDependenciesClient client) {
-        this.client = client;
-        this.recursive = false;
-        this.props = "";
-        this.buildName = "";
-        this.buildNumber = "";
+public class PatternAqlHelper extends AqlHelperBase {
+    PatternAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
+        super(client, log, file);
     }
 
-    public void setProps(String props) {
-        this.props = StringUtils.defaultIfEmpty(props , "");
-    }
-
-    public void setRecursive(boolean recursive) {
-        this.recursive = recursive;
-    }
-
-    public String getBuildName() {
-        return buildName;
-    }
-
-    public void setBuildName(String buildName) {
-        this.buildName = StringUtils.defaultIfEmpty(buildName , "");
-    }
-
-    public String getBuildNumber() {
-        return buildNumber;
-    }
-
-    public void setBuildNumber(String buildNumber) {
-        this.buildNumber = StringUtils.defaultIfEmpty(buildNumber , "");
-    }
-
-    /**
-     * Finds and collects artifacts by pattern
-     */
-    List<AqlSearchResult.SearchEntry> collectArtifactsByPattern(String searchPattern, String[] excludePatterns) throws IOException {
-        if (StringUtils.isBlank(searchPattern)) {
-            return Collections.emptyList();
-        }
-        AqlSearchHelper dependenciesHelper = new AqlSearchHelper(client);
-        if (StringUtils.isNotBlank(buildName)) {
-            dependenciesHelper.setBuildName(buildName);
-            dependenciesHelper.setBuildNumber(buildNumber);
-        }
-        return dependenciesHelper.collectArtifactsByAql(buildAqlSearchQuery(searchPattern, excludePatterns, this.recursive, this.props));
+    @Override
+    public void convertFileSpecToAql(FileSpec file) throws IOException {
+        super.buildQueryAdditionalParts(file);
+        boolean recursive = !"false".equalsIgnoreCase(file.getRecursive());
+        this.queryBody = buildAqlSearchQuery(file.getPattern(), file.getExcludePatterns(), recursive, file.getProps());
     }
 
     private String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
@@ -77,7 +31,7 @@ public class WildcardsSearchHelper {
         List<PathFilePair> pathFilePairs = createPathFilePairs(searchPattern, recursive);
         int pathFilePairsSize = pathFilePairs.size();
 
-        String excludeQuery = buildExcludeQuery(excludePatterns, pathFilePairsSize == 0 || recursive);
+        String excludeQuery = buildExcludeQuery(excludePatterns, pathFilePairsSize == 0 || recursive, recursive);
         String nePath = buildNePathQuery(pathFilePairsSize == 0 || !searchPattern.contains("/"));
         aqlQuery.append("{\"repo\": \"").append(repo).append("\",").append(buildPropsQuery(props)).append(nePath).append(excludeQuery).append("\"$or\": [");
         if (pathFilePairsSize == 0) {
@@ -99,55 +53,6 @@ public class WildcardsSearchHelper {
             pattern += "*";
         }
         return pattern.replaceAll("[()]", "");
-    }
-
-    private String buildPropsQuery(String props) {
-        if (props.equals("")) {
-            return "";
-        }
-        String[] propList = props.split(";");
-        StringBuilder query = new StringBuilder();
-        for (String prop : propList) {
-            String[] keyVal = prop.split("=");
-            if (keyVal.length != 2) {
-                System.out.print("Invalid props pattern: " + prop);
-            }
-            String key = keyVal[0];
-            String value = keyVal[1];
-            query.append("\"@").append(key).append("\": {\"$match\" : \"").append(value).append("\"},");
-        }
-        return query.toString();
-    }
-
-    private String buildExcludeQuery(String[] excludePatterns, boolean useLocalPath) {
-        if (excludePatterns == null) {
-            return "";
-        }
-        List<PathFilePair> excludePairs = Lists.newArrayList();
-        for (String excludePattern : excludePatterns) {
-            excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
-        }
-        StringBuilder excludeQuery = new StringBuilder();
-        for (PathFilePair singleExcludePattern : excludePairs) {
-            String excludePath = singleExcludePattern.getPath();
-            if (!useLocalPath && ".".equals(excludePath)) {
-                excludePath = "*";
-            }
-            excludeQuery.append(String.format("\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}, \"name\": {\"$nmatch\": \"%s\"}}],", excludePath, singleExcludePattern.getFile()));
-        }
-        return excludeQuery.toString();
-    }
-
-    private String buildNePathQuery(boolean includeRoot) {
-        return includeRoot ? "" : "\"path\": {\"$ne\": \".\"}, ";
-    }
-
-    private String buildInnerQuery(String path, String name) {
-         return String.format(
-                "{\"$and\": [{" +
-                    "\"path\": { \"$match\": \"%s\"}," +
-                    "\"name\": { \"$match\": \"%s\"}" +
-                "}]}", path, name);
     }
 
     // We need to translate the provided pattern to an AQL query.
@@ -253,5 +158,54 @@ public class WildcardsSearchHelper {
         public void setFile(String file) {
             this.file = file;
         }
+    }
+
+    private String buildExcludeQuery(String[] excludePatterns, boolean useLocalPath, boolean recursive) {
+        if (excludePatterns == null) {
+            return "";
+        }
+        List<PathFilePair> excludePairs = Lists.newArrayList();
+        for (String excludePattern : excludePatterns) {
+            excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
+        }
+        StringBuilder excludeQuery = new StringBuilder();
+        for (PathFilePair singleExcludePattern : excludePairs) {
+            String excludePath = singleExcludePattern.getPath();
+            if (!useLocalPath && ".".equals(excludePath)) {
+                excludePath = "*";
+            }
+            excludeQuery.append(String.format("\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}, \"name\": {\"$nmatch\": \"%s\"}}],", excludePath, singleExcludePattern.getFile()));
+        }
+        return excludeQuery.toString();
+    }
+
+    private String buildNePathQuery(boolean includeRoot) {
+        return includeRoot ? "" : "\"path\": {\"$ne\": \".\"}, ";
+    }
+
+    private String buildPropsQuery(String props) {
+        if (props == null || props.equals("")) {
+            return "";
+        }
+        String[] propList = props.split(";");
+        StringBuilder query = new StringBuilder();
+        for (String prop : propList) {
+            String[] keyVal = prop.split("=");
+            if (keyVal.length != 2) {
+                System.out.print("Invalid props pattern: " + prop);
+            }
+            String key = keyVal[0];
+            String value = keyVal[1];
+            query.append("\"@").append(key).append("\": {\"$match\" : \"").append(value).append("\"},");
+        }
+        return query.toString();
+    }
+
+    private String buildInnerQuery(String path, String name) {
+        return String.format(
+                "{\"$and\": [{" +
+                        "\"path\": { \"$match\": \"%s\"}," +
+                        "\"name\": { \"$match\": \"%s\"}" +
+                        "}]}", path, name);
     }
 }
