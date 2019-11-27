@@ -1,0 +1,219 @@
+package org.jfrog.build.extractor.go.extractor;
+
+import com.google.common.collect.Lists;
+import org.apache.http.client.utils.URIBuilder;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.executor.CommandExecutor;
+import org.jfrog.build.extractor.executor.CommandResults;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
+import static java.lang.Character.*;
+
+
+@SuppressWarnings({"unused", "WeakerAccess"})
+public class GoRun extends GoCommand {
+
+    private static final String GO_CLIENT_CMD = "go";
+    private static final String GO_MOD_GRAPH_CMD = "mod graph";
+    private static final String GO_ENV_CMD = "env";
+    private static final String GOPATH_ENV_VAR = "GOPATH";
+    private static final String GOPROXY_ENV_VAR = "GOPROXY";
+    private static final String GOPROXY_VCS_FALLBACK = "direct";
+    private static final String CACHE_INNER_PATH =  "/pkg/mod/cache/download/";
+    private static final String ARTIFACTORY_GO_API = "/api/go/";
+    private static final String LOCAL_GO_SUM_FILENAME = "go.sum";
+
+    private List<Dependency> dependenciesList = Lists.newArrayList();
+    private CommandExecutor goCommandExecutor;
+    private String goCmdArgs;
+    private String resolutionRepository;
+    private String resolverUsername;
+    private String resolverPassword;
+    private Map<String, String> env;
+
+    /**
+     * Run go command and collect dependencies.
+     *
+     * @param goCmdArgs     - Go cmd args.
+     * @param path          - Path to directory contains go.mod.
+     * @param clientBuilder - Client builder for resolution.
+     * @param repo          - Artifactory's repository for resolution.
+     * @param username      - Artifactory's username for resolution.
+     * @param password      - Artifactory's password for resolution.
+     * @param logger        - The logger.
+     * @param env           - Environment variables to use during npm execution.
+     */
+    public GoRun(String goCmdArgs, Path path, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) throws IOException {
+        super(clientBuilder, path, logger);
+        this.goCmdArgs = goCmdArgs;
+        this.resolutionRepository = repo;
+        this.resolverUsername = username;
+        this.resolverPassword = password;
+        this.env = env;
+    }
+
+    public Build execute() {
+        try (ArtifactoryBuildInfoClient dependenciesClient = (clientBuilder != null ? (ArtifactoryBuildInfoClient) clientBuilder.build() : null)) {
+            if (dependenciesClient != null) {
+                client = dependenciesClient;
+                preparePrerequisites(resolutionRepository, client);
+                setResolverAsGoProxy();
+            }
+            this.goCommandExecutor = new CommandExecutor(GO_CLIENT_CMD, env);
+            runCmd();
+            collectDependencies();
+            return createBuild(null, dependenciesList);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return null;
+    }
+
+    /*
+     * In order to use Artifactory as a resolver we need to set GOPROXY env. var with Artifactory details.
+     * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
+     */
+    private void setResolverAsGoProxy() throws IOException, URISyntaxException {
+        URL rtUrl = new URL(client.getArtifactoryUrl());
+        URIBuilder proxyUrlBuilder = new URIBuilder()
+                .setScheme(rtUrl.getProtocol())
+                .setUserInfo(resolverUsername, resolverPassword)
+                .setHost(rtUrl.getHost())
+                .setPath(rtUrl.getPath() + ARTIFACTORY_GO_API + resolutionRepository);
+        String proxyValue = proxyUrlBuilder.build().toURL().toString() + "," + GOPROXY_VCS_FALLBACK;
+        env.put(GOPROXY_ENV_VAR, proxyValue);
+    }
+
+    private void runCmd() throws IOException, InterruptedException {
+        List<String> args = new ArrayList<>();
+        for (String arg : goCmdArgs.split(" ")) {
+            args.add(arg);
+        }
+        runGoCmd(args);
+    }
+
+    /*  Run 'go mod graph' and parse its output.
+     *  This command might change go.mod and go.sum content, so we backup and restore those files.
+     *    The output format is:
+     *     * For direct dependencies:
+     *          <module-name> <dependency's-module-name>@v<dependency-module-version>
+     *     * For transient dependencies:
+     *        <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
+     *   In order to populate build info dependencies, we parse the second column uf the mod graph output.
+     */
+    private void collectDependencies() throws IOException, InterruptedException, NoSuchAlgorithmException {
+        backupModAnsSumFiles();
+        List<String> goModArgs = new ArrayList<>();
+        goModArgs.addAll(Arrays.asList(GO_MOD_GRAPH_CMD.split(" ")));
+        CommandResults goGraphResult = runGoCmd(goModArgs);
+        String cachePath = getCachePath();
+        String dependenciesGraph[] = goGraphResult.getRes().split("\\r?\\n");
+        for (String entry : dependenciesGraph) {
+            String moduleToAdd = entry.split(" ")[1];
+            addModuleDependencies(moduleToAdd, cachePath);
+        }
+        restoreModAnsSumFiles();
+    }
+
+    private void backupModAnsSumFiles() throws IOException {
+        createBackupFile(path, LOCAL_GO_MOD_FILENAME);
+        createBackupFile(path, LOCAL_GO_SUM_FILENAME);
+    }
+
+    private void restoreModAnsSumFiles() throws IOException {
+        restoreFile(path, LOCAL_GO_MOD_FILENAME);
+        restoreFile(path, LOCAL_GO_SUM_FILENAME);
+    }
+
+    /* create copy of parentPath/filename under parentPath/_filename */
+    private void createBackupFile(Path parentPath, String filename) throws IOException {
+        File source = new File(path.toString() + "/" + filename);
+        File backup = new File(path.toString() + "/_" + filename);
+        Files.copy(source.toPath(), backup.toPath());
+    }
+
+    /* restore the content of parentPath/filename from the backup file parentPath/_filename, and delete it */
+    private void restoreFile(Path parentPath, String filename) throws IOException {
+        File source = new File(path.toString() + "/" + filename);
+        File backup = new File(path.toString() + "/_" + filename);
+
+        Files.copy(backup.toPath(), source.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        backup.delete();
+    }
+
+    private String getCachePath() throws InterruptedException, IOException {
+        List<String> goModArgs = new ArrayList<>();
+        goModArgs.add(GO_ENV_CMD);
+        goModArgs.add(GOPATH_ENV_VAR);
+        CommandResults goEnvResult = runGoCmd(goModArgs);
+        return goEnvResult.getRes().trim() + CACHE_INNER_PATH;
+    }
+
+    /*
+     *  According to Go convention, module name in cache path contains only lower case letters,
+     *  each upper case letter is replaced with "! + lower case letter". (e.g: "AbC" => "!ab!c")
+     */
+    private String convertModuleNameToCachePathConvention(String moduleName) {
+        String upperCaseSign = "!";
+        for (int i = 0; i < moduleName.length(); i++) {
+            if (isUpperCase(moduleName.charAt(i))) {
+                moduleName = moduleName.replace( moduleName.substring(i, i + 1),  upperCaseSign + toLowerCase(moduleName.charAt(i)));
+                i += upperCaseSign.length();
+            }
+        }
+        return moduleName;
+    }
+
+    /*
+     * Each module is in format <module-name>@v<module-version>.
+     * We add only the pgk zip file as build's dependency.
+     * The dependency's id is "module-name:version", and its type is "zip".
+     * We locate each pkg zip file downloaded to local Go cache, and calculate the pkg checksum.
+     */
+    private void addModuleDependencies(String module, String cachePath) throws IOException, NoSuchAlgorithmException {
+        String moduleName = module.split("@")[0];
+        String moduleVersion = module.split("@")[1];
+        String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + "/@v/" + moduleVersion + ".zip";
+        File moduleZip = new File (cachedPkgPath);
+        if (moduleZip.exists()) {
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5, SHA1);
+            Dependency dependency = new DependencyBuilder()
+                    .id(moduleName + ':' + moduleVersion)
+                    .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                    .type("zip")
+                    .build();
+            dependenciesList.add(dependency);
+        }
+    }
+
+    /*
+     * Run go client cmd with goArs.
+     * Write stdout + stderr to looger, and return the command's result.
+     */
+    private CommandResults runGoCmd(List<String> goArgs) throws IOException, InterruptedException {
+        CommandResults goCmdResult = goCommandExecutor.exeCommand(path.toFile(), goArgs, logger);
+        if (!goCmdResult.isOk()) {
+            throw new IOException(goCmdResult.getErr());
+        }
+        logger.info(goCmdResult.getErr() + goCmdResult.getRes());
+        return goCmdResult;
+    }
+}

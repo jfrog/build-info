@@ -420,6 +420,15 @@ project('build-info-extractor-npm') {
     }
 }
 
+project('build-info-extractor-go') {
+    description = 'JFrog Build-Info Go Extractor'
+
+    dependencies {
+        testCompile project(':build-info-extractor').sourceSets.test.output
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
+}
+
 if (!excludeMavenPluginBuild) {
     project('artifactory-maven-plugin') {
         Project p ->
