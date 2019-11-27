@@ -19,6 +19,7 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
     protected String artifactoryUrl;
     protected String username;
     protected String password;
+    protected String accessToken;
     protected Log log;
 
     public T setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
@@ -48,6 +49,11 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
 
     public T setPassword(String password) {
         this.password = password;
+        return self();
+    }
+
+    public T setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
         return self();
     }
 

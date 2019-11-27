@@ -9,7 +9,7 @@ public class ArtifactoryBuildInfoClientBuilder extends ArtifactoryClientBuilderB
 
     @Override
     public ArtifactoryBuildInfoClient build() {
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, username, password, log);
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, username, password, accessToken, log);
         build(client);
         return client;
     }

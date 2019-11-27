@@ -246,7 +246,7 @@ public abstract class IntegrationTestsBase {
     }
 
     private ArtifactoryDependenciesClient createDependenciesClient() {
-        return new ArtifactoryDependenciesClient(url, username, password, log);
+        return new ArtifactoryDependenciesClient(url, username, password, StringUtils.EMPTY, log);
     }
 
     private ArtifactoryHttpClient createHttpClient() {

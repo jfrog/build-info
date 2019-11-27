@@ -86,7 +86,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param artifactoryUrl Artifactory url in the form of: protocol://host[:port]/contextPath
      */
     public ArtifactoryBuildInfoClient(String artifactoryUrl, Log log) {
-        this(artifactoryUrl, null, null, log);
+        this(artifactoryUrl, StringUtils.EMPTY, StringUtils.EMPTY, StringUtils.EMPTY, log);
     }
 
     /**
@@ -96,10 +96,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param username       Authentication username
      * @param password       Authentication password
      */
-    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-        super(artifactoryUrl, username, password, log);
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
+        super(artifactoryUrl, username, password, accessToken, log);
     }
 
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
+        super(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+    }
     /**
      * @return A list of local repositories available for deployment.
      * @throws IOException On any connection error

@@ -9,7 +9,7 @@ public class ArtifactoryDependenciesClientBuilder extends ArtifactoryClientBuild
 
     @Override
     public ArtifactoryDependenciesClient build() {
-        ArtifactoryDependenciesClient client = new ArtifactoryDependenciesClient(artifactoryUrl, username, password, log);
+        ArtifactoryDependenciesClient client = new ArtifactoryDependenciesClient(artifactoryUrl, username, password, accessToken, log);
         build(client);
         return client;
     }

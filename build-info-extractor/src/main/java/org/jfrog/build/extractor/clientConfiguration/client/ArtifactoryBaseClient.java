@@ -28,9 +28,13 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
      */
     private ArtifactoryVersion artifactoryVersion;
 
-    public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, Log logger) {
+    public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, logger);
+        if (StringUtils.isNotEmpty(accessToken)) {
+            httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, accessToken, logger);
+        } else {
+            httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, logger);
+        }
         this.log = logger;
     }
 

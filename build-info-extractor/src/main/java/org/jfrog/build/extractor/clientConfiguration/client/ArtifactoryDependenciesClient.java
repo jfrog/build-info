@@ -57,8 +57,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     private static final String LATEST = "LATEST";
     private static final String LAST_RELEASE = "LAST_RELEASE";
 
-    public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, Log logger) {
-        super(artifactoryUrl, username, password, logger);
+    public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
+        super(artifactoryUrl, username, password, accessToken, logger);
     }
 
     public ArtifactoryDependenciesClient(String artifactoryUrl, ArtifactoryHttpClient httpClient, Log logger) {

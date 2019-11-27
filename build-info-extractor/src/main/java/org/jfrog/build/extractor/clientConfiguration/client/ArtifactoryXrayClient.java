@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
@@ -44,7 +45,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
     private static final int HTTP_CLIENT_RETRIES = 0;
 
     public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
-        super(artifactoryUrl, username, password, logger);
+        super(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
         setConnectionRetries(HTTP_CLIENT_RETRIES);
     }
 
