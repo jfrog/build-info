@@ -101,7 +101,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-        super(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
     }
     /**
      * @return A list of local repositories available for deployment.
@@ -468,7 +468,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private BintrayResponse parseResponse(HttpResponse response) throws IOException {
         InputStream content = response.getEntity().getContent();
         int status = response.getStatusLine().getStatusCode();
-        JsonParser parser = httpClient.createJsonFactory().createJsonParser(content);
+        JsonParser parser = httpClient.createJsonFactory().createParser(content);
         BintrayResponse responseObject = BintrayResponseFactory.createResponse(status, parser);
         return responseObject;
     }

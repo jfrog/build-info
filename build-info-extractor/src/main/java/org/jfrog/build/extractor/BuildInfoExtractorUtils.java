@@ -199,7 +199,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Build jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        JsonParser parser = jsonFactory.createParser(new StringReader(json));
         return jsonFactory.getCodec().readValue(parser, Build.class);
     }
 
@@ -217,7 +217,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static <T extends Serializable> T jsonStringToGeneric(String json, Class<T> clazz) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        JsonParser parser = jsonFactory.createParser(new StringReader(json));
         return jsonFactory.getCodec().readValue(parser, clazz);
     }
 

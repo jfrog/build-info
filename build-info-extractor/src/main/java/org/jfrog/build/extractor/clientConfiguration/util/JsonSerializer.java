@@ -39,7 +39,7 @@ public class JsonSerializer<T> {
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         jsonFactory.setCodec(mapper);
         StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
+        JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer);
         jsonGenerator.useDefaultPrettyPrinter();
         jsonGenerator.writeObject(object);
         return writer.getBuffer().toString();
