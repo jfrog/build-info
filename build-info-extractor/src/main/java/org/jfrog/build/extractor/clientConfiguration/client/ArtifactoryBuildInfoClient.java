@@ -48,6 +48,8 @@ import org.jfrog.build.client.bintrayResponse.BintrayResponse;
 import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
+import org.jfrog.build.extractor.usageReport.UsageReporter;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
@@ -79,6 +81,8 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
     public static final String ITEM_LAST_MODIFIED = "/api/storage/";
+    private static final String USAGE_API = "/api/system/usage";
+    private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -299,22 +303,16 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     private HttpResponse sendHttpRequest(HttpUriRequest request, int ... httpStatuses) throws IOException {
         HttpResponse httpResponse;
-        int connectionRetries = httpClient.getConnectionRetries();
-        try {
-            httpResponse = httpClient.getHttpClient().execute(request);
-            StatusLine statusLine = httpResponse.getStatusLine();
-            for (int status : httpStatuses) {
-                if (statusLine.getStatusCode() == status) {
-                    return httpResponse;
-                }
+        httpResponse = httpClient.getHttpClient().execute(request);
+        StatusLine statusLine = httpResponse.getStatusLine();
+        for (int status : httpStatuses) {
+            if (statusLine.getStatusCode() == status) {
+                return httpResponse;
             }
-
-            HttpEntity responseEntity = httpResponse.getEntity();
-            throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
-        } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
         }
+
+        HttpEntity responseEntity = httpResponse.getEntity();
+        throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
     }
 
     public ItemLastModified getItemLastModified(String path) throws IOException {
@@ -855,5 +853,35 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
         return builder.toString();
     }
-}
 
+    public void reportUsage(UsageReporter usageReporter) throws IOException {
+        // Check Artifactory supported version.
+        ArtifactoryVersion version = getArtifactoryVersion();
+        if (version.isNotFound() || !version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
+            return;
+        }
+
+        // Create request.
+        String url = artifactoryUrl + USAGE_API;
+        String encodedUrl = ArtifactoryHttpClient.encodeUrl(url);
+        String requestBody = new JsonSerializer<UsageReporter>().toJSON(usageReporter);
+        StringEntity entity = new StringEntity(requestBody, "UTF-8");
+        entity.setContentType("application/json");
+        HttpPost request = new HttpPost(encodedUrl);
+        request.setEntity(entity);
+
+        // Send request
+        HttpResponse httpResponse = null;
+        try {
+            httpResponse = httpClient.getHttpClient().execute(request);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+                throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
+            }
+        } finally {
+            if (httpResponse != null) {
+                EntityUtils.consumeQuietly(httpResponse.getEntity());
+            }
+        }
+    }
+}

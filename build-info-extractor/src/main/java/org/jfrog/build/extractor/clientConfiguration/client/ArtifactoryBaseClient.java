@@ -5,18 +5,12 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.StringEntity;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.ProxyConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
-import org.jfrog.build.extractor.usageReport.UsageReporter;
-import org.jfrog.build.util.VersionCompatibilityType;
-import org.jfrog.build.util.VersionException;
 
 import java.io.IOException;
 
@@ -25,8 +19,6 @@ import java.io.IOException;
  */
 public abstract class ArtifactoryBaseClient implements AutoCloseable {
     private static final String API_REPOSITORIES = "/api/repositories";
-    private static final String USAGE_API = "/api/system/usage";
-    private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
     protected String artifactoryUrl;
     protected ArtifactoryHttpClient httpClient;
@@ -141,7 +133,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpGet(encodedUrl);
         HttpResponse httpResponse = null;
-        int connectionRetries = httpClient.getConnectionRetries();
         try {
             httpResponse = httpClient.getHttpClient().execute(httpRequest);
             StatusLine statusLine = httpResponse.getStatusLine();
@@ -149,52 +140,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
                 return false;
             }
         } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
             if (httpResponse != null) {
                 EntityUtils.consumeQuietly(httpResponse.getEntity());
             }
         }
         return true;
-    }
-
-    public void reportUsage(UsageReporter usageReporter) throws VersionException, IOException {
-        // Check Artifactory supported version.
-        ArtifactoryVersion version = getArtifactoryVersion();
-        if (version.isNotFound()) {
-            throw new VersionException("Could not get Artifactory version.", VersionCompatibilityType.NOT_FOUND);
-        }
-        if (!version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
-            String message = String.format("Expected Artifactory version %s or above for usage report, got %s.", USAGE_ARTIFACTORY_MIN_VERSION.toString(), version.toString());
-            throw new VersionException(message, VersionCompatibilityType.INCOMPATIBLE);
-        }
-
-        // Build Artifactory URL.
-        String fullItemUrl = artifactoryUrl + USAGE_API;
-        String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
-
-        // Create request.
-        String requestBody = new JsonSerializer<UsageReporter>().toJSON(usageReporter);
-        StringEntity entity = new StringEntity(requestBody, "UTF-8");
-        entity.setContentType("application/json");
-        HttpPost request = new HttpPost(encodedUrl);
-        request.setEntity(entity);
-
-        // Send request
-        int connectionRetries = httpClient.getConnectionRetries();
-        HttpResponse httpResponse = null;
-        try {
-            httpResponse = httpClient.getHttpClient().execute(request);
-            StatusLine statusLine = httpResponse.getStatusLine();
-            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-                throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
-            }
-        } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
-            if (httpResponse != null) {
-                EntityUtils.consumeQuietly(httpResponse.getEntity());
-            }
-        }
     }
 }
