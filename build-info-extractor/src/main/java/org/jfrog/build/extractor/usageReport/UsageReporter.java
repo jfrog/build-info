@@ -12,27 +12,18 @@ import java.io.IOException;
 public class UsageReporter {
     private String productId;
     private FeatureId[] features;
-    private Log log;
-    private ArtifactoryBuildInfoClient client;
 
-    public UsageReporter(String productId, String[] featureIds, String artifactoryUrl, String username, String password, String accessToken, Log log) {
+    public UsageReporter(String productId, String[] featureIds) {
         this.productId = productId;
-        this.log = log;
         setFeatures(featureIds);
-        this.client = new ArtifactoryBuildInfoClient(artifactoryUrl, username, password, accessToken, log);
     }
 
-    public UsageReporter(String productId, String[] featureIds, String artifactoryUrl, String username, String password, String accessToken, Log log, ProxyConfiguration proxyConfiguration) {
-        this(productId, featureIds, artifactoryUrl, username, password, accessToken, log);
-        client.setProxyConfiguration(proxyConfiguration);
-    }
-
-    public void reportUsage() {
-        try {
-            client.reportUsage(this);
-        } catch (IOException ex) {
-            log.info("Failed reporting usage to Artifactory: " + ex);
+    public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, Log log) throws IOException {
+        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, username, password, accessToken, log);
+        if (proxyConfiguration != null) {
+            client.setProxyConfiguration(proxyConfiguration);
         }
+        client.reportUsage(this);
     }
 
     public String getProductId() {
