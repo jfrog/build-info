@@ -32,6 +32,7 @@ import org.gradle.api.internal.artifacts.configurations.DefaultConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskState;
+import org.gradle.internal.concurrent.GradleThread;
 import org.gradle.util.SingleMessageLogger;
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
@@ -271,11 +272,20 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         return build;
     }
 
+    private Module extractModuleInManagedThread(Project project) {
+        try {
+            GradleThread.setManaged();
+            return extractModule(project);
+        } finally {
+            GradleThread.setUnmanaged();
+        }
+    }
+
     private void addModule(BuildInfoBuilder bib, Project project) {
         if (project.getState().getExecuted()) {
             ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
             if (buildInfoTask != null && buildInfoTask.hasModules()) {
-                bib.addModule(extractModule(project));
+                bib.addModule(extractModuleInManagedThread(project));
             }
         }
     }
@@ -371,7 +381,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
             DefaultConfiguration defaultConfiguration = (DefaultConfiguration) configuration;
-            if (defaultConfiguration.getResolvedState() != ConfigurationInternal.InternalState.ARTIFACTS_RESOLVED) {
+            if (defaultConfiguration.getResolvedState().compareTo(ConfigurationInternal.InternalState.GRAPH_RESOLVED) < 0) {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
