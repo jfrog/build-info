@@ -60,8 +60,8 @@ public class NpmInstall extends NpmCommand {
     }
 
     /**
-     * Allow running npm install and npm publish using a new Java process.
-     * Used only in Jenkins to allow running 'rtNpm install' or 'rtNpm publish' in a docker container.
+     * Allow running npm install using a new Java process.
+     * Used only in Jenkins to allow running 'rtNpm install' in a docker container.
      */
     public static void main(String[] ignored) {
         try {
