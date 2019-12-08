@@ -42,6 +42,8 @@ public interface ClientProperties {
 
     String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
 
+    String PROP_NPM_PREFIX = ARTIFACTORY_PREFIX + "npm.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */

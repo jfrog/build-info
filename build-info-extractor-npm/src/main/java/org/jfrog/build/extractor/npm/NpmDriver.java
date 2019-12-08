@@ -87,7 +87,7 @@ public class NpmDriver implements Serializable {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
         CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);
         if (!npmCommandRes.isOk()) {
-            throw new IOException(npmCommandRes.getErr());
+            throw new IOException(npmCommandRes.getErr() + npmCommandRes.getRes());
         }
         return npmCommandRes.getErr() + npmCommandRes.getRes();
     }

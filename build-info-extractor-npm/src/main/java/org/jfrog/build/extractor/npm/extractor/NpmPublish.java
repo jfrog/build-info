@@ -6,6 +6,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
@@ -14,6 +15,7 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.util.VersionException;
@@ -23,6 +25,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +55,7 @@ public class NpmPublish extends NpmCommand {
         this.properties = properties;
     }
 
+    @Override
     public Build execute() {
         try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
             client = dependenciesClient;
@@ -142,5 +146,28 @@ public class NpmPublish extends NpmCommand {
         Build build = new Build();
         build.setModules(modules);
         return build;
+    }
+
+    /**
+     * Allow running npm publish using a new Java process.
+     * Used only in Jenkins to allow running 'rtNpm publish' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryBuildInfoClientBuilder clientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
+            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            NpmPublish npmPublish = new NpmPublish(clientBuilder,
+                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    npmHandler.getNpmExecutablePath(),
+                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    clientConfiguration.publisher.getRepoKey(),
+                    clientConfiguration.getLog(),
+                    clientConfiguration.getAllProperties());
+            npmPublish.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
     }
 }

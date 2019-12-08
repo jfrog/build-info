@@ -1,13 +1,16 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,9 +42,11 @@ public class NpmInstall extends NpmCommand {
         this.installArgs = StringUtils.isBlank(installArgs) ? new ArrayList<>() : Arrays.asList(installArgs.trim().split("\\s+"));
     }
 
+    @Override
     public Build execute() {
         try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
             client = dependenciesClient;
+            validatePath();
             validateArtifactoryVersion();
             validateNpmVersion();
             validateRepoExists("Source repo must be specified");
@@ -52,5 +57,28 @@ public class NpmInstall extends NpmCommand {
             logger.error(e.getMessage(), e);
         }
         return null;
+    }
+
+    /**
+     * Allow running npm install and npm publish using a new Java process.
+     * Used only in Jenkins to allow running 'rtNpm install' or 'rtNpm publish' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            NpmInstall npmInstall = new NpmInstall(clientBuilder,
+                    clientConfiguration.resolver.getRepoKey(),
+                    npmHandler.getNpmInstallArgs(),
+                    npmHandler.getNpmExecutablePath(),
+                    clientConfiguration.getLog(),
+                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    clientConfiguration.getAllProperties());
+            npmInstall.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
     }
 }

@@ -30,6 +30,9 @@ public interface ClientConfigurationFields {
     String IVY_ART_PATTERN = "ivy.artPattern";
     String IVY_REPO_DEFINED = "ivy.repo.defined";
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
+    String NPM_INSTALL_ARGS = "npm.installArgs";
+    String NPM_EXECUTABLE_PATH = "npm.executablePath"; // Path to npm CLI
+    String NPM_PATH = "npm.path"; // Path to package.json dir
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
