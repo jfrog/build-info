@@ -857,8 +857,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public void reportUsage(UsageReporter usageReporter) throws IOException {
         // Check Artifactory supported version.
         ArtifactoryVersion version = getArtifactoryVersion();
-        if (version.isNotFound() || !version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
-            return;
+        if (version.isNotFound()) {
+            throw new IOException("Could not get Artifactory version.");
+        }
+        if (!version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
+            throw new IOException("Usage report is not supported on targeted Artifactory server.");
         }
 
         // Create request.
