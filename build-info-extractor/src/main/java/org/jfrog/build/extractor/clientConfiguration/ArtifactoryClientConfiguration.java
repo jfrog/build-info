@@ -44,6 +44,7 @@ import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
 import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
+
 /**
  * @author freds
  */
@@ -52,7 +53,8 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
-    private final PrefixPropertyHandler root;
+    public final NpmHandler npmHandler;
+    public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
      */
@@ -65,6 +67,7 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
+        this.npmHandler = new NpmHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -79,6 +82,7 @@ public class ArtifactoryClientConfiguration {
 
     /**
      * Add properties to the client configuration.
+     *
      * @param props The properties to be added.
      */
     public void fillFromProperties(Properties props) {
@@ -87,16 +91,17 @@ public class ArtifactoryClientConfiguration {
 
     /**
      * Add properties to the client configuration, excluding specific properties, if they already exist in the client configuration.
-     * @param props The properties to be added to the client configuration.
-     * @param excludeIfAlreadyExists    A collection of property names which will not be added to the client configuration
-     *                                  if they already exist in it.
+     *
+     * @param props                  The properties to be added to the client configuration.
+     * @param excludeIfAlreadyExists A collection of property names which will not be added to the client configuration
+     *                               if they already exist in it.
      */
     public void fillFromProperties(Properties props, Set<String> excludeIfAlreadyExists) {
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String key = (String) entry.getKey();
             if (excludeIfAlreadyExists == null ||
                     !excludeIfAlreadyExists.contains(key) || root.getStringValue(key) == null) {
-                root.setStringValue(key, (String)entry.getValue());
+                root.setStringValue(key, (String) entry.getValue());
             }
         }
     }
@@ -133,8 +138,8 @@ public class ArtifactoryClientConfiguration {
 
     public static Map<String, String> filterMapNullValues(Map<String, String> map) {
         Map<String, String> result = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry: map.entrySet()) {
-            if(StringUtils.isNotBlank(entry.getValue())) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (StringUtils.isNotBlank(entry.getValue())) {
                 result.put(entry.getKey(), entry.getValue());
             }
         }
@@ -459,6 +464,37 @@ public class ArtifactoryClientConfiguration {
 
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
+        }
+    }
+
+    public class NpmHandler extends PrefixPropertyHandler {
+
+        public NpmHandler() {
+            super(root, PROP_NPM_PREFIX);
+        }
+
+        public String getNpmInstallArgs() {
+            return rootConfig.getStringValue(NPM_INSTALL_ARGS);
+        }
+
+        public void setNpmInstallArgs(String npmInstallArgs) {
+            rootConfig.setStringValue(NPM_INSTALL_ARGS, npmInstallArgs);
+        }
+
+        public String getNpmExecutablePath() {
+            return rootConfig.getStringValue(NPM_EXECUTABLE_PATH);
+        }
+
+        public void setNpmExecutablePath(String npmExecutablePath) {
+            rootConfig.setStringValue(NPM_EXECUTABLE_PATH, npmExecutablePath);
+        }
+
+        public String getNpmPath() {
+            return rootConfig.getStringValue(NPM_PATH);
+        }
+
+        public void setNpmPath(String npmPath) {
+            rootConfig.setStringValue(NPM_PATH, npmPath);
         }
     }
 
@@ -930,10 +966,13 @@ public class ArtifactoryClientConfiguration {
             setStringValue(PRINCIPAL, principal);
         }
 
-        public String getArtifactoryPluginVersion(){ return getStringValue(ARTIFACTORY_PLUGIN_VERSION);}
+        public String getArtifactoryPluginVersion() {
+            return getStringValue(ARTIFACTORY_PLUGIN_VERSION);
+        }
 
         public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
-            setStringValue(ARTIFACTORY_PLUGIN_VERSION, artifactoryPluginVersion);}
+            setStringValue(ARTIFACTORY_PLUGIN_VERSION, artifactoryPluginVersion);
+        }
 
         public String getBuildUrl() {
             return getStringValue(BUILD_URL);
@@ -1120,8 +1159,8 @@ public class ArtifactoryClientConfiguration {
         }
 
         /*
-        * Use for Multi-configuration/Matrix builds
-        */
+         * Use for Multi-configuration/Matrix builds
+         */
         public void addRunParameters(String key, String value) {
             setStringValue(RUN_PARAMETERS + key, value);
         }
