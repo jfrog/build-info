@@ -6,7 +6,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Log npm install build outputs. Used only in Jenkins.
+ * Log npm install build outputs.
+ * Since Jenkins is currently the only CI server which executes the npm-build-info-extractor in a new process,
+ * this logger is currently used by Jenkins only.
  *
  * @author yahavi
  */
