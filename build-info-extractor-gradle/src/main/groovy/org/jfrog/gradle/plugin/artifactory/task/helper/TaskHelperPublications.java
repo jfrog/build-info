@@ -239,16 +239,17 @@ public class TaskHelperPublications extends TaskHelper {
             MavenNormalizedPublication mavenNormalizedPublication = mavenPublicationInternal.asNormalisedPublication();
 
             // First adding the Maven descriptor (if the build is configured to add it):
+            File pomFile = mavenNormalizedPublication.getPomArtifact().getFile();
             if (isPublishMaven()) {
-                File file = mavenNormalizedPublication.getPomArtifact().getFile();
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(pomFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            mavenPublication.getArtifactId(), "pom", "pom", null, file);
+                            mavenPublication.getArtifactId(), "pom", "pom", null, pomFile);
                     addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
 
+            boolean legacy = false;
             Set<MavenArtifact> artifacts;
             try {
                 // Gradle 5.0 and above:
@@ -260,10 +261,15 @@ public class TaskHelperPublications extends TaskHelper {
             } catch (NoSuchMethodError error) {
                 // Compatibility with older versions of Gradle:
                 artifacts = mavenNormalizedPublication.getAllArtifacts();
+                legacy = true;
             }
 
             // Third adding all additional artifacts - includes Gradle Module Metadata when produced
             for (MavenArtifact artifact : artifacts) {
+                if (legacy && artifact.getFile().equals(pomFile)) {
+                    // Need to skip the POM file for Gradle < 5.0
+                    continue;
+                }
                 createPublishArtifactInfoAndAddToDeployDetails(artifact, deployDetails, mavenPublication, publicationName);
             }
         }
