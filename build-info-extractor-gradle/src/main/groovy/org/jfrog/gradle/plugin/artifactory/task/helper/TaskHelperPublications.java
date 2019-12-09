@@ -27,7 +27,6 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublicationArtifact;
 import org.gradle.api.publish.PublishingExtension;
-import org.gradle.api.publish.internal.PublicationArtifactSet;
 import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
 import org.gradle.api.publish.ivy.IvyPublication;
@@ -214,7 +213,7 @@ public class TaskHelperPublications extends TaskHelper {
             }
 
             // Second adding all artifacts, skipping the ivy file
-            PublicationArtifactSet<IvyArtifact> artifacts = ivyPublicationInternal.getPublishableArtifacts();
+            Set<IvyArtifact> artifacts = ivyNormalizedPublication.getAllArtifacts();
             for (IvyArtifact artifact : artifacts) {
                 File file = artifact.getFile();
                 // Skip the ivy file
