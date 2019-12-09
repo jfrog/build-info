@@ -133,7 +133,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpGet(encodedUrl);
         HttpResponse httpResponse = null;
-        int connectionRetries = httpClient.getConnectionRetries();
         try {
             httpResponse = httpClient.getHttpClient().execute(httpRequest);
             StatusLine statusLine = httpResponse.getStatusLine();
@@ -141,8 +140,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
                 return false;
             }
         } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
             if (httpResponse != null) {
                 EntityUtils.consumeQuietly(httpResponse.getEntity());
             }

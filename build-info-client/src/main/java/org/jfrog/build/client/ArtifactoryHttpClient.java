@@ -31,7 +31,6 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.URI;
@@ -214,12 +213,12 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        return jsonFactory.createJsonParser(in);
+        return jsonFactory.createParser(in);
     }
 
     public JsonParser createJsonParser(String content) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        return jsonFactory.createJsonParser(content);
+        return jsonFactory.createParser(content);
     }
 
     public JsonFactory createJsonFactory() {

@@ -61,6 +61,10 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         super(artifactoryUrl, username, password, accessToken, logger);
     }
 
+    public ArtifactoryDependenciesClient(String artifactoryUrl, String username, String password, Log logger) {
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
+    }
+
     public ArtifactoryDependenciesClient(String artifactoryUrl, ArtifactoryHttpClient httpClient, Log logger) {
         super(artifactoryUrl, httpClient, logger);
     }
