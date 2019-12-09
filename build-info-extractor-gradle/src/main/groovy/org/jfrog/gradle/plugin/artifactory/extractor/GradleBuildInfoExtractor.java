@@ -385,7 +385,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
-            ResolvedConfiguration resolvedConfiguration = SingleMessageLogger.whileDisabled(() -> configuration.getResolvedConfiguration());
+            ResolvedConfiguration resolvedConfiguration = SingleMessageLogger.whileDisabled(configuration::getResolvedConfiguration);
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 File file = artifact.getFile();
