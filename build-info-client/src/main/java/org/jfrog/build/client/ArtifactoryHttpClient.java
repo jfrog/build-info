@@ -181,20 +181,21 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
             try (InputStream content = httpEntity.getContent()) {
-                JsonNode result = getJsonNode(httpEntity, content);
+                JsonNode result = getJsonNode(content);
                 log.debug("Version result: " + result);
                 String version = result.get("version").asText();
                 JsonNode addonsNode = result.get("addons");
                 boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
                 return new ArtifactoryVersion(version, hasAddons);
+            } finally {
+                EntityUtils.consume(httpEntity);
             }
         }
         return ArtifactoryVersion.NOT_FOUND;
     }
 
-    public JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
+    public JsonNode getJsonNode(InputStream content) throws IOException {
         JsonParser parser = createJsonParser(content);
-        EntityUtils.consume(httpEntity);
         return parser.readValueAsTree();
     }
 
