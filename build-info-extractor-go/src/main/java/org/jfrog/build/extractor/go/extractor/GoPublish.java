@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.go.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -14,7 +15,6 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.InterruptedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -30,7 +30,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GoPublish extends GoCommand {
 
-    private static final String LOCAL_ZIP_FILENAME = "package.zip";
+    private static final String LOCAL_TMP_ZIP_FILENAME = "tmp_package.zip";
+    private static final String LOCAL_DEPLOYABLE_ZIP_FILENAME = "package.zip";
     private static final String LOCAL_INFO_FILENAME = "package.info";
     private static final String GO_VERSION_PREFIX = "v";
     private static final String PKG_ZIP_FILE_EXTENSION = "zip";
@@ -77,18 +78,30 @@ public class GoPublish extends GoCommand {
      *     2. go.mod file.
      *     3. go.info file.
      * */
-    private void publishPkg() throws IOException, NoSuchAlgorithmException, InterruptedException {
+    private void publishPkg() throws IOException, NoSuchAlgorithmException {
         createAndDeployZip();
         deployGoMod();
         createAndDeployInfo();
     }
 
-    private void createAndDeployZip() throws IOException, NoSuchAlgorithmException, InterruptedException { //, ArchiveException {
-        String zipLocalPath = path.toString() + "/" + LOCAL_ZIP_FILENAME;
-        File zipFile = zipProjectDir(zipLocalPath); // TODO: we need to call ARTIFACTORY code to filter the project zip
-        Artifact deployedPackage = deploy(zipFile, PKG_ZIP_FILE_EXTENSION);
+    private void createAndDeployZip() throws IOException, NoSuchAlgorithmException {
+        // First, we create a temporary zip file of all project files.
+        String tmpZipPath = path.toString() + "/" + LOCAL_TMP_ZIP_FILENAME;
+        File tmpZipFile = archiveProjectDir(tmpZipPath);
+
+        // Second, filter the raw zip file according to Go rules and create deployable zip can be later resolved.
+        // We use the same code as Artifactory when he resolve a Go module directly from Github.
+        String deploayableZipPath = path.toString() + "/" + LOCAL_DEPLOYABLE_ZIP_FILENAME;
+        File deployableZipFile = new File(deploayableZipPath);
+        GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger);
+        pkgArchiver.writeDeployableZip(deployableZipFile);
+
+        Artifact deployedPackage = deploy(deployableZipFile, PKG_ZIP_FILE_EXTENSION);
         artifactList.add(deployedPackage);
-        zipFile.delete();
+
+        // After uploading the package zip we can delete both zip files.
+        tmpZipFile.delete();
+        deployableZipFile.delete();
     }
 
     private void deployGoMod() throws IOException, NoSuchAlgorithmException {
@@ -105,12 +118,12 @@ public class GoPublish extends GoCommand {
         infoFile.delete();
     }
 
-    private File zipProjectDir(String localZipPath) throws IOException {
+    private File archiveProjectDir(String localZipPath) throws IOException {
         File zipFile = new File(localZipPath);
 
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
             List<Path> pathsList = Files.walk(path)
-                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(LOCAL_ZIP_FILENAME))
+                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(LOCAL_TMP_ZIP_FILENAME))
                     .collect(Collectors.toList());
             for (Path filePath : pathsList) {
                 ZipEntry zipEntry = new ZipEntry(path.relativize(filePath).toString());
