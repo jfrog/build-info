@@ -31,7 +31,7 @@ public class NpmDriver implements Serializable {
     @SuppressWarnings("unused")
     public boolean isNpmInstalled() {
         try {
-            version(new File(""));
+            version(null);
             return true;
         } catch (IOException | InterruptedException e) {
             return false;
