@@ -1,0 +1,136 @@
+plugins {
+    id "groovy"
+    id "java-gradle-plugin"
+    id "de.undercouch.download" version "4.0.2"
+}
+
+ext.testBuildDir = file('src/integTest/testBuilds')
+sourceSets {
+    integrationTest {
+        groovy.srcDir file('src/integTest/groovy')
+        resources.srcDir file('src/integTest/resources')
+        compileClasspath += sourceSets.main.output + configurations.testRuntime
+        runtimeClasspath += output + compileClasspath
+    }
+}
+
+gradlePlugin {
+    testSourceSets sourceSets.integrationTest
+}
+
+dependencies {
+    dependencies {
+        integrationTestImplementation gradleTestKit()
+    }
+}
+
+tasks.register('downloadArtifactoryOpenSource', Download) {
+    description = 'Downloads the latest Artifactory Open Source distribution.'
+    group = 'setup'
+    src 'https://api.bintray.com/content/jfrog/artifactory/jfrog-artifactory-oss-$latest.zip;bt_package=jfrog-artifactory-oss-zip'
+    dest "${buildDir}/downloads/artifactoryOpenSource.zip"
+    overwrite false
+}
+
+tasks.register('extractArtifactoryOpenSource', Copy) {
+    description = 'Extracts the latest Artifactory Open Source distribution to a temporary directory.'
+    group = 'setup'
+    dependsOn downloadArtifactoryOpenSource
+    from { downloadArtifactoryOpenSource.outputs.files.collect { zipTree(it) } }
+    into "${buildDir}/artifactoryOpenSource"
+
+    // Assumes that the zip file will contain a single sub-directory that is the root of the distribution
+    ext.rootDir = {
+        if (destinationDir.exists() && destinationDir.listFiles().size() > 0) {
+            return destinationDir.listFiles()[0]
+        } else {
+            return destinationDir
+        }
+    }
+}
+
+tasks.register('startArtifactoryOpenSource', Exec) {
+    description = 'Starts an instance of the latest Artifactory Open Source distribution.'
+    group = 'setup'
+    outputs.upToDateWhen { isArtifactoryRunning() }
+    dependsOn extractArtifactoryOpenSource
+
+    ext.artifactoryRoot = layout.buildDirectory.map { extractArtifactoryOpenSource.rootDir() }
+    workingDir artifactoryRoot
+    commandLine "bin/artifactory.${getOsSpecificScriptExtension()}", 'start'
+
+    doFirst {
+        File artifactorySystemProperties = new File(extractArtifactoryOpenSource.rootDir(), 'etc/artifactory.system.properties')
+        if (!artifactorySystemProperties.text.contains('\nartifactory.ping.allowUnauthenticated=true')) {
+            artifactorySystemProperties << '\nartifactory.ping.allowUnauthenticated=true'
+        }
+    }
+
+    doLast {
+        logger.lifecycle("Waiting for artifactory to finish starting...")
+        waitForArtifactory()
+    }
+}
+
+boolean isArtifactoryRunning() {
+    try {
+        def response = new URL('http://localhost:8081/artifactory/api/system/ping').text
+        return response == 'OK'
+    } catch(Exception e) {
+        return false
+    }
+}
+
+def waitForArtifactory() {
+    long timeout_seconds = 120
+    long current_time = System.currentTimeMillis()
+    long end_time = current_time + (timeout_seconds * 1000)
+    def last_exception = null
+    while(current_time < end_time) {
+        try {
+            logger.lifecycle(new URL('http://localhost:8081/artifactory/api/system/ping').text)
+            last_exception = null
+            break
+        } catch (Exception e) {
+            last_exception = e
+            sleep 1000
+        } finally {
+            current_time = System.currentTimeMillis()
+        }
+    }
+
+    if (last_exception != null) {
+        throw new Exception("Artifactory did not report ready after ${timeout_seconds} seconds.", last_exception)
+    }
+}
+
+tasks.register('stopArtifactoryOpenSource', Exec) {
+    description = 'Stops a running instance of the latest Artifactory Open Source distribution.'
+    group = 'setup'
+    // Assumes that the zip file will contain a single sub-directory that is the root of the distribution
+    ext.artifactoryRoot = layout.buildDirectory.map { extractArtifactoryOpenSource.rootDir() }
+    outputs.upToDateWhen { !new File(artifactoryRoot.get(), 'bin/artifactory.sh').exists() }
+    workingDir artifactoryRoot
+    commandLine "bin/artifactory.${getOsSpecificScriptExtension()}", 'stop'
+}
+
+def getOsSpecificScriptExtension() {
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        return "bat"
+    } else {
+        return "sh"
+    }
+}
+
+tasks.register('integrationTest', Test) {
+    description = 'Runs integration tests against various versions of Gradle.'
+    group = 'verification'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+
+    shouldRunAfter test
+    dependsOn startArtifactoryOpenSource
+    finalizedBy stopArtifactoryOpenSource
+}
+
+
