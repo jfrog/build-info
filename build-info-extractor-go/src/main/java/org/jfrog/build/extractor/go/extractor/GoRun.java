@@ -40,6 +40,8 @@ public class GoRun extends GoCommand {
     private static final String CACHE_INNER_PATH =  "/pkg/mod/cache/download/";
     private static final String ARTIFACTORY_GO_API = "/api/go/";
     private static final String LOCAL_GO_SUM_FILENAME = "go.sum";
+    private static final String LOCAL_GO_SUM_BACKUP_FILENAME = "jfrog.go.sum.backup";
+    private static final String LOCAL_GO_MOD_BACKUP_FILENAME = "jfrog.go.mod.backup";
 
     private List<Dependency> dependenciesList = Lists.newArrayList();
     private CommandExecutor goCommandExecutor;
@@ -134,29 +136,28 @@ public class GoRun extends GoCommand {
     }
 
     private void backupModAnsSumFiles() throws IOException {
-        createBackupFile(path, LOCAL_GO_MOD_FILENAME);
-        createBackupFile(path, LOCAL_GO_SUM_FILENAME);
+        createBackupFile(path, LOCAL_GO_MOD_FILENAME, LOCAL_GO_MOD_BACKUP_FILENAME);
+        createBackupFile(path, LOCAL_GO_SUM_FILENAME, LOCAL_GO_SUM_BACKUP_FILENAME);
     }
 
     private void restoreModAnsSumFiles() throws IOException {
-        restoreFile(path, LOCAL_GO_MOD_FILENAME);
-        restoreFile(path, LOCAL_GO_SUM_FILENAME);
+        restoreFile(path, LOCAL_GO_MOD_FILENAME, LOCAL_GO_MOD_BACKUP_FILENAME);
+        restoreFile(path, LOCAL_GO_SUM_FILENAME, LOCAL_GO_SUM_BACKUP_FILENAME);
     }
 
-    /* create copy of parentPath/filename under parentPath/_filename */
-    private void createBackupFile(Path parentPath, String filename) throws IOException {
-        File source = new File(path.toString() + "/" + filename);
-        File backup = new File(path.toString() + "/_" + filename);
-        Files.copy(source.toPath(), backup.toPath());
+    /* create copy of parentPath/sourceFilename under parentPath/backupFilename */
+    private void createBackupFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
+        File source = new File(path.toString() + "/" + sourceFilename);
+        File backup = new File(path.toString() + "/" + backupFilename);
+        Files.copy(source.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    /* restore the content of parentPath/filename from the backup file parentPath/_filename, and delete it */
-    private void restoreFile(Path parentPath, String filename) throws IOException {
-        File source = new File(path.toString() + "/" + filename);
-        File backup = new File(path.toString() + "/_" + filename);
+    /* restore the original sourceFilename content by renaming parentPath/backupFilename -> parentPath/sourceFilename */
+    private void restoreFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
+        File source = new File(path.toString() + "/" + sourceFilename);
+        File backup = new File(path.toString() + "/" + backupFilename);
 
-        Files.copy(backup.toPath(), source.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        backup.delete();
+        Files.move(backup.toPath(), source.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
     private String getCachePath() throws InterruptedException, IOException {
