@@ -40,6 +40,7 @@ import java.util.Set;
 public class ArtifactoryTask extends DefaultTask {
     public static final String DEPLOY_TASK_NAME = "artifactoryDeploy";
     public static final String ARTIFACTORY_PUBLISH_TASK_NAME = "artifactoryPublish";
+    public static final String EXTRACT_MODULE_TASK_NAME = "extractModuleInfo";
     public static final String PUBLISH_ARTIFACTS = "publishArtifacts";
     public static final String PUBLISH_IVY = "publishIvy";
     public static final String PUBLISH_POM = "publishPom";

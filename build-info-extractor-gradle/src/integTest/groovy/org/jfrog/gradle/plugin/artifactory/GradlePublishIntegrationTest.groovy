@@ -16,10 +16,15 @@ import static org.gradle.testkit.runner.TaskOutcome.SUCCESS
 class GradlePublishIntegrationTest extends Specification {
     private static VersionNumber GRADLE_6 = VersionNumber.parse('6.0')
 
-    @Rule TestBuildRule testBuild = new TestBuildRule("gradle-example-publish")
+    @Rule TestBuildRule testBuild = new TestBuildRule()
 
+    /**
+     * Tests that when all projects in a multi-project build have the artifactory plugin applied, all artifacts
+     * and build info are published to a local artifactory instance.
+     */
     @Unroll
-    def "can publish artifacts and build info to local artifactory instance (Gradle #gradleVersion)"() {
+    @UsesTestBuild("all-projects-publish")
+    def "can publish artifacts and build info to local artifactory instance when plugin is applied to all projects (Gradle #gradleVersion)"() {
         def version = VersionNumber.parse(gradleVersion)
 
         expect:
@@ -70,6 +75,62 @@ class GradlePublishIntegrationTest extends Specification {
                     'shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.module'
             )
         }
+        true
+
+        where:
+        gradleVersion << ['4.10.3', '5.6.4', '6.0.1']
+    }
+
+    /**
+     * Tests that when only certain projects in a multi-project build have the artifactory plugin applied, the plugin
+     * correctly handles the case.  Checks that all artifacts and build info are published to a local artifactory
+     * instance.
+     */
+    @Unroll
+    @UsesTestBuild("some-projects-publish")
+    def "can publish artifacts and build info to local artifactory instance when plugin is applied to only some projects (Gradle #gradleVersion)"() {
+        def version = VersionNumber.parse(gradleVersion)
+
+        expect:
+        BuildResult result = succeeds(gradleVersion, "artifactoryPublish")
+
+        and:
+        result.task(':services:webservice:artifactoryPublish').outcome == SUCCESS
+        result.task(':api:artifactoryPublish').outcome == SUCCESS
+        result.task(':artifactoryDeploy').outcome == SUCCESS
+
+        and:
+        Build buildInfo = new PublishedBuildInfo(result.output).getPublishedInfo()
+        buildInfo.modules.size() == 2
+
+        def webservice = buildInfo.getModule("org.jfrog.test.gradle.publish:webservice:1.0-SNAPSHOT")
+        webservice.artifacts.size() == (version < GRADLE_6 ? 3 : 4)
+        webservice.dependencies.size() == 6
+
+        def api = buildInfo.getModule("org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT")
+        api.artifacts.size() == (version < GRADLE_6 ? 5 : 6)
+        api.dependencies.size() == 4
+
+        and:
+        assertAllArtifactsExist(
+                'webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.jar',
+                'webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.properties',
+                'webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.pom',
+                'api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.jar',
+                'api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.properties',
+                'api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.txt',
+                'api/ivy-1.0-SNAPSHOT.xml',
+                'api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.pom'
+        )
+
+        and:
+        if (version >= GRADLE_6) {
+            assertAllArtifactsExist(
+                    'webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.module',
+                    'api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.module'
+            )
+        }
+        true
 
         where:
         gradleVersion << ['4.10.3', '5.6.4', '6.0.1']

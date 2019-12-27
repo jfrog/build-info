@@ -4,7 +4,6 @@ plugins {
     id "de.undercouch.download" version "4.0.2"
 }
 
-ext.testBuildDir = file('src/integTest/testBuilds')
 sourceSets {
     integrationTest {
         groovy.srcDir file('src/integTest/groovy')
