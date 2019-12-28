@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -29,8 +28,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GoPublish extends GoCommand {
 
-    private static final String LOCAL_TMP_ZIP_FILENAME = "tmp_package.zip";
-    private static final String LOCAL_DEPLOYABLE_ZIP_FILENAME = "package.zip";
+    private static final String LOCAL_PKG_FILENAME = "package";
+    private static final String LOCAL_TMP_PKG_PREFIX = "tmp.";
     private static final String LOCAL_INFO_FILENAME = "package.info";
     private static final String GO_VERSION_PREFIX = "v";
     private static final String PKG_ZIP_FILE_EXTENSION = "zip";
@@ -38,7 +37,7 @@ public class GoPublish extends GoCommand {
     private static final String PKG_INFO_FILE_EXTENSION = "info";
 
     private ArrayListMultimap<String, String> properties;
-    private List<Artifact> artifactList = Lists.newArrayList();
+    private List<Artifact> artifactList = new ArrayList<>();
     private String deploymentRepo;
     private String version;
 
@@ -70,12 +69,12 @@ public class GoPublish extends GoCommand {
         return null;
     }
 
-    /*
+    /**
      * The deployment of a Go package requires 3 files:
      *     1. zip file of source files.
      *     2. go.mod file.
      *     3. go.info file.
-     * */
+     */
     private void publishPkg(ArtifactoryBuildInfoClient client) throws Exception {
         createAndDeployZip(client);
         deployGoMod(client);
@@ -84,22 +83,18 @@ public class GoPublish extends GoCommand {
 
     private void createAndDeployZip(ArtifactoryBuildInfoClient client) throws Exception {
         // First, we create a temporary zip file of all project files.
-        String tmpZipPath = path.toString() + File.separator + LOCAL_TMP_ZIP_FILENAME;
-        File tmpZipFile = archiveProjectDir(tmpZipPath);
+        File tmpZipFile = archiveProjectDir();
+        tmpZipFile.deleteOnExit();
 
         // Second, filter the raw zip file according to Go rules and create deployable zip can be later resolved.
         // We use the same code as Artifactory when he resolve a Go module directly from Github.
-        String deploayableZipPath = path.toString() + File.separator + LOCAL_DEPLOYABLE_ZIP_FILENAME;
-        File deployableZipFile = new File(deploayableZipPath);
-        GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger);
-        pkgArchiver.writeDeployableZip(deployableZipFile);
-
-        Artifact deployedPackage = deploy(client, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
-        artifactList.add(deployedPackage);
-
-        // After uploading the package zip we can delete both zip files.
-        tmpZipFile.delete();
-        deployableZipFile.delete();
+        File deployableZipFile = File.createTempFile(LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
+        deployableZipFile.deleteOnExit();
+        try (GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger)) {
+            pkgArchiver.writeDeployableZip(deployableZipFile);
+            Artifact deployedPackage = deploy(client, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
+            artifactList.add(deployedPackage);
+        }
     }
 
     private void deployGoMod(ArtifactoryBuildInfoClient client) throws Exception {
@@ -116,12 +111,12 @@ public class GoPublish extends GoCommand {
         infoFile.delete();
     }
 
-    private File archiveProjectDir(String localZipPath) throws IOException {
-        File zipFile = new File(localZipPath);
+    private File archiveProjectDir() throws IOException {
+        File zipFile = File.createTempFile(LOCAL_TMP_PKG_PREFIX + LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
 
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
             List<Path> pathsList = Files.walk(path)
-                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(LOCAL_TMP_ZIP_FILENAME))
+                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
                     .collect(Collectors.toList());
             for (Path filePath : pathsList) {
                 ZipEntry zipEntry = new ZipEntry(path.relativize(filePath).toString());
@@ -134,7 +129,7 @@ public class GoPublish extends GoCommand {
         return zipFile;
     }
 
-    /*
+    /**
      * pkg info is a json file containing:
      *      1. The package's version.
      *      2. The package creation timestamp.
@@ -153,7 +148,9 @@ public class GoPublish extends GoCommand {
         return infoFile;
     }
 
-    /* Deploy pkg file and add it as an buildInfo's artifact */
+    /**
+     * Deploy pkg file and add it as an buildInfo's artifact
+     */
     private Artifact deploy(ArtifactoryBuildInfoClient client, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
         Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5, SHA1);
@@ -165,7 +162,7 @@ public class GoPublish extends GoCommand {
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
                 .build();
 
-        ArtifactoryUploadResponse response = ((ArtifactoryBuildInfoClient) client).deployArtifact(deployDetails);
+        ArtifactoryUploadResponse response = client.deployArtifact(deployDetails);
 
         Artifact deployedArtifact =  new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())

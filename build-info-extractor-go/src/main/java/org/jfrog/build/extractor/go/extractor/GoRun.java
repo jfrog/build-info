@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import com.google.common.collect.Lists;
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
@@ -35,6 +34,7 @@ public class GoRun extends GoCommand {
     private static final String GO_ENV_CMD = "env";
     private static final String GOPATH_ENV_VAR = "GOPATH";
     private static final String GOPROXY_ENV_VAR = "GOPROXY";
+    private static final String GO_GET_GOPATH_CMD = GO_ENV_CMD + " " + GOPATH_ENV_VAR;
     private static final String GOPROXY_VCS_FALLBACK = "direct";
     private static final String CACHE_INNER_PATH = Paths.get("pkg", "mod", "cache", "download").toString();
     private static final String ARTIFACTORY_GO_API = "/api/go/";
@@ -42,7 +42,7 @@ public class GoRun extends GoCommand {
     private static final String LOCAL_GO_SUM_BACKUP_FILENAME = "jfrog.go.sum.backup";
     private static final String LOCAL_GO_MOD_BACKUP_FILENAME = "jfrog.go.mod.backup";
 
-    private List<Dependency> dependenciesList = Lists.newArrayList();
+    private List<Dependency> dependenciesList = new ArrayList<>();
     private CommandExecutor goCommandExecutor;
     private String goCmdArgs;
     private String resolutionRepository;
@@ -78,7 +78,7 @@ public class GoRun extends GoCommand {
                 setResolverAsGoProxy(artifactoryClient);
             }
             this.goCommandExecutor = new CommandExecutor(GO_CLIENT_CMD, env);
-            runCmd();
+            runGoCmd(goCmdArgs);
             collectDependencies();
             return createBuild(null, dependenciesList);
         } catch (Exception e) {
@@ -87,7 +87,7 @@ public class GoRun extends GoCommand {
         return null;
     }
 
-    /*
+    /**
      * In order to use Artifactory as a resolver we need to set GOPROXY env var with Artifactory details.
      * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
      */
@@ -102,15 +102,8 @@ public class GoRun extends GoCommand {
         env.put(GOPROXY_ENV_VAR, proxyValue);
     }
 
-    private void runCmd() throws Exception {
-        List<String> args = new ArrayList<>();
-        for (String arg : goCmdArgs.split(" ")) {
-            args.add(arg);
-        }
-        runGoCmd(args);
-    }
-
-    /*  Run 'go mod graph' and parse its output.
+    /**
+     *  Run 'go mod graph' and parse its output.
      *  This command might change go.mod and go.sum content, so we backup and restore those files.
      *    The output format is:
      *     * For direct dependencies:
@@ -121,11 +114,9 @@ public class GoRun extends GoCommand {
      */
     private void collectDependencies() throws Exception {
         backupModAnsSumFiles();
-        List<String> goModArgs = new ArrayList<>();
-        goModArgs.addAll(Arrays.asList(GO_MOD_GRAPH_CMD.split(" ")));
-        CommandResults goGraphResult = runGoCmd(goModArgs);
+        CommandResults goGraphResult = runGoCmd(GO_MOD_GRAPH_CMD);
         String cachePath = getCachePath();
-        String dependenciesGraph[] = goGraphResult.getRes().split("\\r?\\n");
+        String[] dependenciesGraph = goGraphResult.getRes().split("\\r?\\n");
         for (String entry : dependenciesGraph) {
             String moduleToAdd = entry.split(" ")[1];
             addModuleDependencies(moduleToAdd, cachePath);
@@ -143,14 +134,18 @@ public class GoRun extends GoCommand {
         restoreFile(path, LOCAL_GO_SUM_FILENAME, LOCAL_GO_SUM_BACKUP_FILENAME);
     }
 
-    /* create copy of parentPath/sourceFilename under parentPath/backupFilename */
+    /**
+     * Create copy of parentPath/sourceFilename under parentPath/backupFilename
+     */
     private void createBackupFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
         File source = new File(path.toString() + File.separator + sourceFilename);
         File backup = new File(path.toString() + File.separator + backupFilename);
         Files.copy(source.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    /* restore the original sourceFilename content by renaming parentPath/backupFilename -> parentPath/sourceFilename */
+    /**
+     * Restore the original sourceFilename content by renaming parentPath/backupFilename -> parentPath/sourceFilename
+     */
     private void restoreFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
         File source = new File(path.toString() + File.separator + sourceFilename);
         File backup = new File(path.toString() + File.separator + backupFilename);
@@ -159,14 +154,11 @@ public class GoRun extends GoCommand {
     }
 
     private String getCachePath() throws Exception {
-        List<String> goModArgs = new ArrayList<>();
-        goModArgs.add(GO_ENV_CMD);
-        goModArgs.add(GOPATH_ENV_VAR);
-        CommandResults goEnvResult = runGoCmd(goModArgs);
+        CommandResults goEnvResult = runGoCmd(GO_GET_GOPATH_CMD);
         return goEnvResult.getRes().trim() + File.separator + CACHE_INNER_PATH + File.separator;
     }
 
-    /*
+    /**
      *  According to Go convention, module name in cache path contains only lower case letters,
      *  each upper case letter is replaced with "! + lower case letter". (e.g: "AbC" => "!ab!c")
      */
@@ -181,7 +173,7 @@ public class GoRun extends GoCommand {
         return moduleName;
     }
 
-    /*
+    /**
      * Each module is in format <module-name>@v<module-version>.
      * We add only the pgk zip file as build's dependency.
      * The dependency's id is "module-name:version", and its type is "zip".
@@ -203,11 +195,13 @@ public class GoRun extends GoCommand {
         }
     }
 
-    /*
+    /**
      * Run go client cmd with goArs.
-     * Write stdout + stderr to looger, and return the command's result.
+     * goArgs must be a space-separated string.
+     * Write stdout + stderr to logger, and return the command's result.
      */
-    private CommandResults runGoCmd(List<String> goArgs) throws Exception {
+    private CommandResults runGoCmd(String args) throws Exception {
+        List goArgs = new ArrayList<>(Arrays.asList(args.split(" ")));
         CommandResults goCmdResult = goCommandExecutor.exeCommand(path.toFile(), goArgs, logger);
         if (!goCmdResult.isOk()) {
             throw new IOException(goCmdResult.getErr());

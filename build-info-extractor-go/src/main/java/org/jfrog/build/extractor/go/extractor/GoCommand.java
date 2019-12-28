@@ -36,7 +36,7 @@ abstract class GoCommand implements Serializable {
     protected static final String LOCAL_GO_MOD_FILENAME = "go.mod";
     private static final long serialVersionUID = 1L;
     private static final ArtifactoryVersion MIN_SUPPORTED_ARTIFACTORY_VERSION = new ArtifactoryVersion("6.10.0");
-    static final Pattern moduleNameRegexPattern = Pattern.compile("module \"?([\\w\\.@:%_\\+-.~#?&]+/?.+\\w)");
+    static final Pattern MODULE_NAME_REGEX_PATTERN = Pattern.compile("module \"?([\\w\\.@:%_\\+-.~#?&]+/?.+\\w)");
 
     ArtifactoryClientBuilderBase clientBuilder;
     Path path;
@@ -54,7 +54,7 @@ abstract class GoCommand implements Serializable {
         Path modPath = Paths.get(path.toString(), LOCAL_GO_MOD_FILENAME);
         Stream<String> stream = Files.lines(modPath, StandardCharsets.UTF_8);
         stream.forEach(line -> {
-            if (moduleNameRegexPattern.matcher(line).matches()) {
+            if (MODULE_NAME_REGEX_PATTERN.matcher(line).matches()) {
                 moduleName = line;
             }
         });
@@ -63,7 +63,7 @@ abstract class GoCommand implements Serializable {
 
     protected void preparePrerequisites(String repo, ArtifactoryBaseClient client) throws VersionException, IOException {
         validateArtifactoryVersion(client);
-        validateRepoExists(repo, client,"Target repo must be specified");
+        validateRepoExists(repo, client, "The provided repo must be specified");
     }
 
     private void validateArtifactoryVersion(ArtifactoryBaseClient client) throws VersionException {
