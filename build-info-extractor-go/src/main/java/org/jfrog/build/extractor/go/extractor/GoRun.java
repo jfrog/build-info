@@ -14,12 +14,11 @@ import org.jfrog.build.extractor.executor.CommandResults;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,7 +36,7 @@ public class GoRun extends GoCommand {
     private static final String GOPATH_ENV_VAR = "GOPATH";
     private static final String GOPROXY_ENV_VAR = "GOPROXY";
     private static final String GOPROXY_VCS_FALLBACK = "direct";
-    private static final String CACHE_INNER_PATH =  "/pkg/mod/cache/download/";
+    private static final String CACHE_INNER_PATH = Paths.get("pkg", "mod", "cache", "download").toString();
     private static final String ARTIFACTORY_GO_API = "/api/go/";
     private static final String LOCAL_GO_SUM_FILENAME = "go.sum";
     private static final String LOCAL_GO_SUM_BACKUP_FILENAME = "jfrog.go.sum.backup";
@@ -73,11 +72,10 @@ public class GoRun extends GoCommand {
     }
 
     public Build execute() {
-        try (ArtifactoryBuildInfoClient dependenciesClient = (clientBuilder != null ? (ArtifactoryBuildInfoClient) clientBuilder.build() : null)) {
-            if (dependenciesClient != null) {
-                client = dependenciesClient;
-                preparePrerequisites(resolutionRepository, client);
-                setResolverAsGoProxy();
+        try (ArtifactoryBuildInfoClient artifactoryClient = (clientBuilder != null ? (ArtifactoryBuildInfoClient) clientBuilder.build() : null)) {
+            if (artifactoryClient != null) {
+                preparePrerequisites(resolutionRepository, artifactoryClient);
+                setResolverAsGoProxy(artifactoryClient);
             }
             this.goCommandExecutor = new CommandExecutor(GO_CLIENT_CMD, env);
             runCmd();
@@ -90,10 +88,10 @@ public class GoRun extends GoCommand {
     }
 
     /*
-     * In order to use Artifactory as a resolver we need to set GOPROXY env. var with Artifactory details.
+     * In order to use Artifactory as a resolver we need to set GOPROXY env var with Artifactory details.
      * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
      */
-    private void setResolverAsGoProxy() throws IOException, URISyntaxException {
+    private void setResolverAsGoProxy(ArtifactoryBuildInfoClient client) throws Exception {
         URL rtUrl = new URL(client.getArtifactoryUrl());
         URIBuilder proxyUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
@@ -104,7 +102,7 @@ public class GoRun extends GoCommand {
         env.put(GOPROXY_ENV_VAR, proxyValue);
     }
 
-    private void runCmd() throws IOException, InterruptedException {
+    private void runCmd() throws Exception {
         List<String> args = new ArrayList<>();
         for (String arg : goCmdArgs.split(" ")) {
             args.add(arg);
@@ -121,7 +119,7 @@ public class GoRun extends GoCommand {
      *        <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
      *   In order to populate build info dependencies, we parse the second column uf the mod graph output.
      */
-    private void collectDependencies() throws IOException, InterruptedException, NoSuchAlgorithmException {
+    private void collectDependencies() throws Exception {
         backupModAnsSumFiles();
         List<String> goModArgs = new ArrayList<>();
         goModArgs.addAll(Arrays.asList(GO_MOD_GRAPH_CMD.split(" ")));
@@ -147,25 +145,25 @@ public class GoRun extends GoCommand {
 
     /* create copy of parentPath/sourceFilename under parentPath/backupFilename */
     private void createBackupFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
-        File source = new File(path.toString() + "/" + sourceFilename);
-        File backup = new File(path.toString() + "/" + backupFilename);
+        File source = new File(path.toString() + File.separator + sourceFilename);
+        File backup = new File(path.toString() + File.separator + backupFilename);
         Files.copy(source.toPath(), backup.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     /* restore the original sourceFilename content by renaming parentPath/backupFilename -> parentPath/sourceFilename */
     private void restoreFile(Path parentPath, String sourceFilename, String backupFilename) throws IOException {
-        File source = new File(path.toString() + "/" + sourceFilename);
-        File backup = new File(path.toString() + "/" + backupFilename);
+        File source = new File(path.toString() + File.separator + sourceFilename);
+        File backup = new File(path.toString() + File.separator + backupFilename);
 
         Files.move(backup.toPath(), source.toPath(), StandardCopyOption.REPLACE_EXISTING);
     }
 
-    private String getCachePath() throws InterruptedException, IOException {
+    private String getCachePath() throws Exception {
         List<String> goModArgs = new ArrayList<>();
         goModArgs.add(GO_ENV_CMD);
         goModArgs.add(GOPATH_ENV_VAR);
         CommandResults goEnvResult = runGoCmd(goModArgs);
-        return goEnvResult.getRes().trim() + CACHE_INNER_PATH;
+        return goEnvResult.getRes().trim() + File.separator + CACHE_INNER_PATH + File.separator;
     }
 
     /*
@@ -189,10 +187,10 @@ public class GoRun extends GoCommand {
      * The dependency's id is "module-name:version", and its type is "zip".
      * We locate each pkg zip file downloaded to local Go cache, and calculate the pkg checksum.
      */
-    private void addModuleDependencies(String module, String cachePath) throws IOException, NoSuchAlgorithmException {
+    private void addModuleDependencies(String module, String cachePath) throws Exception {
         String moduleName = module.split("@")[0];
         String moduleVersion = module.split("@")[1];
-        String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + "/@v/" + moduleVersion + ".zip";
+        String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + File.separator + "@v" + File.separator + moduleVersion + ".zip";
         File moduleZip = new File (cachedPkgPath);
         if (moduleZip.exists()) {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5, SHA1);
@@ -209,7 +207,7 @@ public class GoRun extends GoCommand {
      * Run go client cmd with goArs.
      * Write stdout + stderr to looger, and return the command's result.
      */
-    private CommandResults runGoCmd(List<String> goArgs) throws IOException, InterruptedException {
+    private CommandResults runGoCmd(List<String> goArgs) throws Exception {
         CommandResults goCmdResult = goCommandExecutor.exeCommand(path.toFile(), goArgs, logger);
         if (!goCmdResult.isOk()) {
             throw new IOException(goCmdResult.getErr());

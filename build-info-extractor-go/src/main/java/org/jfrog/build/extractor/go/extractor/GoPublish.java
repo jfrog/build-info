@@ -22,7 +22,6 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.io.FileOutputStream;
-import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,10 +60,9 @@ public class GoPublish extends GoCommand {
     }
 
     public Build execute() {
-        try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
-            client = dependenciesClient;
-            preparePrerequisites(deploymentRepo, client);
-            publishPkg();
+        try (ArtifactoryBuildInfoClient artifactoryClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
+            preparePrerequisites(deploymentRepo, artifactoryClient);
+            publishPkg(artifactoryClient);
             return createBuild(artifactList, null);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -73,30 +71,30 @@ public class GoPublish extends GoCommand {
     }
 
     /*
-     * Go pkg contains 3 files:
+     * The deployment of a Go package requires 3 files:
      *     1. zip file of source files.
      *     2. go.mod file.
      *     3. go.info file.
      * */
-    private void publishPkg() throws IOException, NoSuchAlgorithmException {
-        createAndDeployZip();
-        deployGoMod();
-        createAndDeployInfo();
+    private void publishPkg(ArtifactoryBuildInfoClient client) throws Exception {
+        createAndDeployZip(client);
+        deployGoMod(client);
+        createAndDeployInfo(client);
     }
 
-    private void createAndDeployZip() throws IOException, NoSuchAlgorithmException {
+    private void createAndDeployZip(ArtifactoryBuildInfoClient client) throws Exception {
         // First, we create a temporary zip file of all project files.
-        String tmpZipPath = path.toString() + "/" + LOCAL_TMP_ZIP_FILENAME;
+        String tmpZipPath = path.toString() + File.separator + LOCAL_TMP_ZIP_FILENAME;
         File tmpZipFile = archiveProjectDir(tmpZipPath);
 
         // Second, filter the raw zip file according to Go rules and create deployable zip can be later resolved.
         // We use the same code as Artifactory when he resolve a Go module directly from Github.
-        String deploayableZipPath = path.toString() + "/" + LOCAL_DEPLOYABLE_ZIP_FILENAME;
+        String deploayableZipPath = path.toString() + File.separator + LOCAL_DEPLOYABLE_ZIP_FILENAME;
         File deployableZipFile = new File(deploayableZipPath);
         GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger);
         pkgArchiver.writeDeployableZip(deployableZipFile);
 
-        Artifact deployedPackage = deploy(deployableZipFile, PKG_ZIP_FILE_EXTENSION);
+        Artifact deployedPackage = deploy(client, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
         artifactList.add(deployedPackage);
 
         // After uploading the package zip we can delete both zip files.
@@ -104,16 +102,16 @@ public class GoPublish extends GoCommand {
         deployableZipFile.delete();
     }
 
-    private void deployGoMod() throws IOException, NoSuchAlgorithmException {
+    private void deployGoMod(ArtifactoryBuildInfoClient client) throws Exception {
         String modLocalPath = getModFilePath();
-        Artifact deployedMod = deploy(new File(modLocalPath), PKG_MOD_FILE_EXTENSION);
+        Artifact deployedMod = deploy(client, new File(modLocalPath), PKG_MOD_FILE_EXTENSION);
         artifactList.add(deployedMod);
     }
 
-    private void createAndDeployInfo() throws IOException, NoSuchAlgorithmException {
-        String infoLocalPath = path.toString() + "/" + LOCAL_INFO_FILENAME;
+    private void createAndDeployInfo(ArtifactoryBuildInfoClient client) throws Exception {
+        String infoLocalPath = path.toString() + File.separator + LOCAL_INFO_FILENAME;
         File infoFile = writeInfoFile(infoLocalPath);
-        Artifact deployedInfo = deploy(infoFile, PKG_INFO_FILE_EXTENSION);
+        Artifact deployedInfo = deploy(client, infoFile, PKG_INFO_FILE_EXTENSION);
         artifactList.add(deployedInfo);
         infoFile.delete();
     }
@@ -137,7 +135,7 @@ public class GoPublish extends GoCommand {
     }
 
     /*
-     * pkg info is a json file contains:
+     * pkg info is a json file containing:
      *      1. The package's version.
      *      2. The package creation timestamp.
      */
@@ -156,7 +154,7 @@ public class GoPublish extends GoCommand {
     }
 
     /* Deploy pkg file and add it as an buildInfo's artifact */
-    private Artifact deploy(File deployedFile, String extension) throws IOException, NoSuchAlgorithmException {
+    private Artifact deploy(ArtifactoryBuildInfoClient client, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
         Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5, SHA1);
         DeployDetails deployDetails = new DeployDetails.Builder()

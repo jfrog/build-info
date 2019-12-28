@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
@@ -15,12 +14,14 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClien
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -35,27 +36,25 @@ abstract class GoCommand implements Serializable {
     protected static final String LOCAL_GO_MOD_FILENAME = "go.mod";
     private static final long serialVersionUID = 1L;
     private static final ArtifactoryVersion MIN_SUPPORTED_ARTIFACTORY_VERSION = new ArtifactoryVersion("6.10.0");
+    static final Pattern moduleNameRegexPattern = Pattern.compile("module \"?([\\w\\.@:%_\\+-.~#?&]+/?.+\\w)");
 
     ArtifactoryClientBuilderBase clientBuilder;
-    ArtifactoryBaseClient client;
     Path path;
     String moduleName;
     Log logger;
 
     GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) throws IOException {
         this.clientBuilder = clientBuilder;
-        this.client = null;
         this.logger = logger;
         this.path = path;
         parseModuleName();
     }
 
     private void parseModuleName() throws IOException {
-        Pattern regexPattern = Pattern.compile("module \"?([\\w\\.@:%_\\+-.~#?&]+/?.+\\w)");
-        Path modPath = Paths.get(path.toString(), "go.mod");
+        Path modPath = Paths.get(path.toString(), LOCAL_GO_MOD_FILENAME);
         Stream<String> stream = Files.lines(modPath, StandardCharsets.UTF_8);
         stream.forEach(line -> {
-            if (regexPattern.matcher(line).matches()) {
+            if (moduleNameRegexPattern.matcher(line).matches()) {
                 moduleName = line;
             }
         });
@@ -79,7 +78,6 @@ abstract class GoCommand implements Serializable {
         }
     }
 
-
     private void validateRepoExists(String repo, ArtifactoryBaseClient client, String repoNotSpecifiedMsg) throws IOException {
         if (StringUtils.isBlank(repo)) {
             throw new IllegalArgumentException(repoNotSpecifiedMsg);
@@ -97,13 +95,13 @@ abstract class GoCommand implements Serializable {
         if (dependencies != null) {
             moduleBuilder.dependencies(dependencies);
         }
-        List<Module> modules = Lists.newArrayList(moduleBuilder.build());
+        List<Module> modules = Arrays.asList(moduleBuilder.build());
         Build build = new Build();
         build.setModules(modules);
         return build;
     }
 
     protected String getModFilePath() {
-        return path.toString() + "/" + LOCAL_GO_MOD_FILENAME;
+        return path.toString() + File.separator + LOCAL_GO_MOD_FILENAME;
     }
 }
