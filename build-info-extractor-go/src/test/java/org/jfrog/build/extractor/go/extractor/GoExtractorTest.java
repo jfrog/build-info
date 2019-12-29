@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
@@ -143,6 +144,10 @@ public class GoExtractorTest extends IntegrationTestsBase {
     @SuppressWarnings("unused")
     @Test(dataProvider = "goRunProvider")
     private void goRunTest(Project project, String args, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo) {
+        // The go tests are currently disabled on Windows.
+        // This is because “go build” fails due to “Access is denied” when invoked from the tests.
+        if (SystemUtils.IS_OS_WINDOWS)
+            return;
         Path projectDir = null;
         try {
             // Run Go build
@@ -172,6 +177,10 @@ public class GoExtractorTest extends IntegrationTestsBase {
      */
     @Test
     private void goRunPublishTest() {
+        // The go tests are currently disabled on Windows.
+        // This is because “go build” fails due to “Access is denied” when invoked from the tests.
+        if (SystemUtils.IS_OS_WINDOWS)
+            return;
         Path projectDir = null;
         ArrayListMultimap<String, String> properties = ArrayListMultimap.create();
         try {
@@ -209,7 +218,6 @@ public class GoExtractorTest extends IntegrationTestsBase {
             assertEquals(module.getId(), project.getModuleId());
             moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, project.dependencies);
-
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         } finally {
