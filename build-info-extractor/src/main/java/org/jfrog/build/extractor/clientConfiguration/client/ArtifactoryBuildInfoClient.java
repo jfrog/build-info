@@ -326,7 +326,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
             try (InputStream content = httpEntity.getContent()) {
-                JsonNode result = httpClient.getJsonNode(httpEntity, content);
+                JsonNode result = httpClient.getJsonNode(content);
                 JsonNode lastModified = result.get("lastModified");
                 JsonNode uri = result.get("uri");
                 if (lastModified == null || uri == null) {
@@ -334,6 +334,8 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 }
 
                 return new ItemLastModified(uri.asText(), lastModified.asText());
+            } finally {
+                EntityUtils.consume(httpEntity);
             }
         }
         throw new IOException("The path " + path + " returned empty entity");

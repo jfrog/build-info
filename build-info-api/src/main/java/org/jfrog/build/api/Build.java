@@ -561,9 +561,10 @@ public class Build extends BaseBuildBean {
         appendModules(other);
         appendBuildDependencies(other);
         if (this.issues == null) {
-            this.issues = new Issues();
+            this.issues = other.issues;
+            return;
         }
-        this.issues.append(other.getIssues());
+        this.issues.append(other.issues);
     }
 
     private void appendBuildDependencies(Build other) {
