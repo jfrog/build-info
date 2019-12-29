@@ -32,6 +32,7 @@ public class GoRun extends GoCommand {
     private static final String GO_CLIENT_CMD = "go";
     private static final String GO_MOD_GRAPH_CMD = "mod graph";
     private static final String GO_ENV_CMD = "env";
+    private static final String GO_VERSION_CMD = "version";
     private static final String GOPATH_ENV_VAR = "GOPATH";
     private static final String GOPROXY_ENV_VAR = "GOPROXY";
     private static final String GO_GET_GOPATH_CMD = GO_ENV_CMD + " " + GOPATH_ENV_VAR;
@@ -78,6 +79,8 @@ public class GoRun extends GoCommand {
                 setResolverAsGoProxy(artifactoryClient);
             }
             this.goCommandExecutor = new CommandExecutor(GO_CLIENT_CMD, env);
+            // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
+            runGoCmd(GO_VERSION_CMD);
             runGoCmd(goCmdArgs);
             collectDependencies();
             return createBuild(null, dependenciesList);

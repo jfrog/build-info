@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.go.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.io.FileUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -84,16 +85,17 @@ public class GoPublish extends GoCommand {
     private void createAndDeployZip(ArtifactoryBuildInfoClient client) throws Exception {
         // First, we create a temporary zip file of all project files.
         File tmpZipFile = archiveProjectDir();
-        tmpZipFile.deleteOnExit();
 
         // Second, filter the raw zip file according to Go rules and create deployable zip can be later resolved.
         // We use the same code as Artifactory when he resolve a Go module directly from Github.
         File deployableZipFile = File.createTempFile(LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
-        deployableZipFile.deleteOnExit();
         try (GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger)) {
             pkgArchiver.writeDeployableZip(deployableZipFile);
             Artifact deployedPackage = deploy(client, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
             artifactList.add(deployedPackage);
+        } finally {
+            Files.deleteIfExists(tmpZipFile.toPath());
+            Files.deleteIfExists(deployableZipFile.toPath());
         }
     }
 
