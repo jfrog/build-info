@@ -1,0 +1,6 @@
+{
+  "packageType": "go",
+  "repoLayoutRef": "go-default",
+  "enableGoSupport": true,
+  "rclass": "local"
+}
