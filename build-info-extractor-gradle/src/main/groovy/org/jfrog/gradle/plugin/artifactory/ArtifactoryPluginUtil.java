@@ -31,7 +31,7 @@ public class ArtifactoryPluginUtil {
             ArtifactoryPluginConvention acc = project.getConvention().findPlugin(ArtifactoryPluginConvention.class);
             if (acc != null) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher = acc.getClientConfig().publisher;
-                if (publisher.getContextUrl() != null && publisher.getRepoKey() != null) {
+                if (publisher.getContextUrl() != null && (publisher.getRepoKey() != null || publisher.getSnapshotRepoKey() != null)) {
                     return acc;
                 }
             }

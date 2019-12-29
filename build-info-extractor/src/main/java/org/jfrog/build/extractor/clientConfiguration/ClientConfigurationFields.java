@@ -45,6 +45,7 @@ public interface ClientConfigurationFields {
     String PUBLISH_FORK_COUNT = "forkCount";
     String RECORD_ALL_DEPENDENCIES = "record.all.dependencies";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";
+    String RELEASE_REPO_KEY = "release.repoKey";
     String MATRIX = "matrix";
     String ARTIFACT_SPECS = "artifactSpecs";
     String INCLUDE_PATTERNS = "includePatterns";
