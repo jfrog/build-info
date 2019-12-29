@@ -1,6 +1,7 @@
 package org.jfrog.build;
 
 import com.google.common.io.Closeables;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -19,12 +20,16 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientB
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.util.TestingLog;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
 import java.util.Properties;
 
 import static org.testng.Assert.fail;
@@ -51,6 +56,9 @@ public abstract class IntegrationTestsBase {
     protected static final String LOCAL_REPO_PLACEHOLDER = "${LOCAL_REPO}";
     protected static final String VIRTUAL_REPO_PLACEHOLDER = "${VIRTUAL_REPO}";
     protected static final String TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
+    protected static final String UPLOAD_SPEC = "upload.json";
+    protected static final String DOWNLOAD_SPEC = "download.json";
+    protected static final String EXPECTED = "expected.json";
 
     private static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
     private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
@@ -220,6 +228,37 @@ public abstract class IntegrationTestsBase {
         return ArtifactoryHttpClient.encodeUrl(fullItemUrl);
     }
 
+    /**
+     * Read spec file and replace the placeholder test data.
+     *
+     * @param specFile
+     * @return
+     * @throws IOException
+     */
+    protected String readSpec(File specFile, String workSpacePath) throws IOException {
+        String spec = FileUtils.readFileToString(specFile);
+        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
+        spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
+        spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, workSpacePath);
+        return StringUtils.replace(spec, "${WORKSPACE}", workSpacePath);
+    }
+
+    protected void verifyExpected(Expected expected, File workspace) {
+        // Verify tempWorkspace exists
+        Assert.assertTrue(workspace.exists(), "The path: '" + workspace.getPath() + "' does not exist");
+        // Verify expected results
+        Collection<File> downloadedFiles = FileUtils.listFiles(workspace, null, true);
+        for (String path : expected.getFiles()) {
+            File f = new File(workspace, path);
+            Assert.assertTrue(downloadedFiles.contains(f), "Missing file: '" + path + "'.");
+            downloadedFiles.remove(f);
+        }
+
+        for (File f : downloadedFiles) {
+            Assert.fail("Unexpected file: '" + f.getPath() + "'.");
+        }
+    }
+
     protected String getUsername() {
         return this.username;
     }
@@ -251,6 +290,22 @@ public abstract class IntegrationTestsBase {
 
     private ArtifactoryHttpClient createHttpClient() {
         return new ArtifactoryHttpClient(url, username, password, log);
+    }
+
+    /**
+     * Expected inner class for testing proposes.
+     * Contains the local files expected to be found after successful download.
+     */
+    protected static class Expected {
+        private List<String> files;
+
+        public List<String> getFiles() {
+            return files;
+        }
+
+        public void setFiles(List<String> files) {
+            this.files = files;
+        }
     }
 
 }

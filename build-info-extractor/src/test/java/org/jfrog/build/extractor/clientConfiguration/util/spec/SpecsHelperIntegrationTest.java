@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
+import org.jfrog.build.extractor.clientConfiguration.util.EditPropertiesHelper;
 import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.AfterMethod;
@@ -33,9 +34,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
     private static final String INTEGRATION_TESTS = "/integration/tests";
     private static final String DEFAULT_SPEC_PATH = "/integration/default";
-    private static final String UPLOAD_SPEC = "upload.json";
-    private static final String DOWNLOAD_SPEC = "download.json";
-    private static final String EXPECTED = "expected.json";
 
     @BeforeMethod
     @AfterMethod
@@ -58,23 +56,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
 
         // Verify expected results
-        verifyExpected(expected);
-    }
-
-    private void verifyExpected(Expected expected) {
-        // Verify tempWorkspace exists
-        Assert.assertTrue(tempWorkspace.exists(), "The path: '" + tempWorkspace.getPath() + "' does not exist");
-        // Verify expected results
-        Collection<File> downloadedFiles = FileUtils.listFiles(tempWorkspace, null, true);
-        for (String path : expected.getFiles()) {
-            File f = new File(tempWorkspace, path);
-            Assert.assertTrue(downloadedFiles.contains(f), "Missing file: '" + path + "'.");
-            downloadedFiles.remove(f);
-        }
-
-        for (File f : downloadedFiles) {
-            Assert.fail("Unexpected file: '" + f.getPath() + "'.");
-        }
+        verifyExpected(expected, tempWorkspace);
     }
 
     /**
@@ -90,8 +72,8 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Get default upload, download specs.
         File defaultSpecPath = new File(this.getClass().getResource(DEFAULT_SPEC_PATH).toURI()).getCanonicalFile();
-        String defaultUpload = readSpec(new File(defaultSpecPath, UPLOAD_SPEC));
-        String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC));
+        String defaultUpload = readSpec(new File(defaultSpecPath, UPLOAD_SPEC), tempWorkspace.getPath());
+        String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC), tempWorkspace.getPath());
 
         File searchPath = new File(this.getClass().getResource(INTEGRATION_TESTS).toURI()).getCanonicalFile();
         Set<String> testPaths = new HashSet<>();
@@ -103,13 +85,13 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
             String uploadSpec = defaultUpload;
             File uploadSpecFile = new File(testPath, UPLOAD_SPEC);
             if (uploadSpecFile.exists()) {
-                uploadSpec = readSpec(uploadSpecFile);
+                uploadSpec = readSpec(uploadSpecFile, tempWorkspace.getPath());
             }
 
             String downloadSpec = defaultDownload;
             File downloadSpecFile = new File(testPath, DOWNLOAD_SPEC);
             if (downloadSpecFile.exists()) {
-                downloadSpec = readSpec(downloadSpecFile);
+                downloadSpec = readSpec(downloadSpecFile, tempWorkspace.getPath());
             }
             try {
                 Expected expected = mapper.readValue(new File(testPath, EXPECTED), Expected.class);
@@ -149,37 +131,6 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         }
         for (File f : files) {
             listTestPaths(f, testPaths);
-        }
-    }
-
-    /**
-     * Read spec file and replace the placeholder test data.
-     *
-     * @param specFile
-     * @return
-     * @throws IOException
-     */
-    private String readSpec(File specFile) throws IOException {
-        String spec = FileUtils.readFileToString(specFile);
-        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
-        spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
-        spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, tempWorkspace.getPath());
-        return StringUtils.replace(spec, "${WORKSPACE}", tempWorkspace.getPath());
-    }
-
-    /**
-     * Expected inner class for testing proposes.
-     * Contains the local files expected to be found after successful download.
-     */
-    private static class Expected {
-        private List<String> files;
-
-        public List<String> getFiles() {
-            return files;
-        }
-
-        public void setFiles(List<String> files) {
-            this.files = files;
         }
     }
 }
