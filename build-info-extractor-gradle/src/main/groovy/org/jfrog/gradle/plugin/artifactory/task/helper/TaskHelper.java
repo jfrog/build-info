@@ -125,9 +125,9 @@ public abstract class TaskHelper {
 
     /**
      * @param deployPath the full path string to deploy the artifact.
-     * @return Return the target deployment repository. Either the releases
-     * repository (default) or snapshots if defined and the deployed file is a
-     * snapshot.
+     * @return Target deployment repository.
+     * If snapshot repository is defined and artifact's version is snapshot, deploy to snapshot repository.
+     * Otherwise, return the corresponding release repository.
      */
     protected String getTargetRepository(String deployPath, ArtifactoryClientConfiguration.PublisherHandler publisher) {
         String snapshotsRepository = publisher.getSnapshotRepoKey();
