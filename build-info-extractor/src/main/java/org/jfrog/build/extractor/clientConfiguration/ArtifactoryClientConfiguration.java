@@ -332,6 +332,14 @@ public class ArtifactoryClientConfiguration {
             setStringValue(SNAPSHOT_REPO_KEY, repoKey);
         }
 
+        public String getReleaseRepoKey() {
+            return getStringValue(RELEASE_REPO_KEY);
+        }
+
+        public void setReleaseRepoKey(String repoKey) {
+            setStringValue(RELEASE_REPO_KEY, repoKey);
+        }
+
         public String getAggregateArtifacts() {
             return getStringValue(AGGREGATE_ARTIFACTS);
         }

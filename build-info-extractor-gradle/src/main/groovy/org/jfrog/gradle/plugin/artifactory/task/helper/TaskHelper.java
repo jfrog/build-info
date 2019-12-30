@@ -2,6 +2,7 @@ package org.jfrog.gradle.plugin.artifactory.task.helper;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.logging.Logger;
@@ -120,6 +121,23 @@ public abstract class TaskHelper {
             publishIvy = artifactoryTask.getPublishIvy();
         }
         return publishIvy != null ? publishIvy : true;
+    }
+
+    /**
+     * @param deployPath the full path string to deploy the artifact.
+     * @return Target deployment repository.
+     * If snapshot repository is defined and artifact's version is snapshot, deploy to snapshot repository.
+     * Otherwise, return the corresponding release repository.
+     */
+    protected String getTargetRepository(String deployPath, ArtifactoryClientConfiguration.PublisherHandler publisher) {
+        String snapshotsRepository = publisher.getSnapshotRepoKey();
+        if (snapshotsRepository != null && deployPath.contains("-SNAPSHOT")) {
+            return snapshotsRepository;
+        }
+        if (StringUtils.isNotEmpty(publisher.getReleaseRepoKey())) {
+            return publisher.getReleaseRepoKey();
+        }
+        return publisher.getRepoKey();
     }
 }
 

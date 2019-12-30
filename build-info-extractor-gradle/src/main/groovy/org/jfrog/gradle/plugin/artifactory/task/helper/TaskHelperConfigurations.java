@@ -272,10 +272,12 @@ public class TaskHelperConfigurations extends TaskHelper {
         if (publisher.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
-        artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(publisher.getIvyPattern(), gid, getModuleName(),
-                        getProject().getVersion().toString(), null, "ivy", "xml"));
-        artifactBuilder.targetRepository(publisher.getRepoKey());
+        String artifactPath = IvyPatternHelper.substitute(
+                publisher.getIvyPattern(), gid, getModuleName(),
+                getProject().getVersion().toString(), null, "ivy", "xml");
+
+        artifactBuilder.artifactPath(artifactPath);
+        artifactBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.ivyDescriptor.getName(), "xml", "ivy", null,
                         artifactoryTask.ivyDescriptor);
@@ -297,10 +299,12 @@ public class TaskHelperConfigurations extends TaskHelper {
                     "Failed to calculate checksums for artifact: " + artifactoryTask.mavenDescriptor.getAbsolutePath(), e);
         }
         // for pom files always enforce the M2 pattern
-        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
+        String artifactPath = IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
                 getProject().getGroup().toString().replace(".", "/"), getModuleName(),
-                getProject().getVersion().toString(), null, "pom", "pom"));
-        artifactBuilder.targetRepository(publisher.getRepoKey());
+                getProject().getVersion().toString(), null, "pom", "pom");
+
+        artifactBuilder.artifactPath(artifactPath);
+        artifactBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.mavenDescriptor.getName(), "pom", "pom", null, artifactoryTask.mavenDescriptor);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
@@ -409,15 +413,15 @@ public class TaskHelperConfigurations extends TaskHelper {
             throw new GradleException("Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
         }
 
-        if (artifactPath != null) {
-            deployDetailsBuilder.artifactPath(artifactPath);
-        } else {
-            deployDetailsBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getModuleName(),
+        if (artifactPath == null) {
+            artifactPath = IvyPatternHelper.substitute(pattern, gid, getModuleName(),
                     revision, artifact.getName(), artifact.getType(),
                     artifact.getExtension(), configuration,
-                    extraTokens, null));
+                    extraTokens, null);
         }
-        deployDetailsBuilder.targetRepository(publisher.getRepoKey());
+        deployDetailsBuilder.artifactPath(artifactPath);
+
+        deployDetailsBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration);
         deployDetailsBuilder.addProperties(propsToAdd);

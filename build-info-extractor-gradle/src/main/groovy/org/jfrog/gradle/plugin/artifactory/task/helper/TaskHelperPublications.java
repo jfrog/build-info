@@ -399,34 +399,36 @@ public class TaskHelperPublications extends TaskHelper {
 
         // TODO: Gradle should support multi params
         Map<String, String> extraTokens = getExtraTokens(artifactInfo);
-        builder.artifactPath(IvyPatternHelper.substitute(
+        String artifactPath = IvyPatternHelper.substitute(
                 pattern, gid, projectIdentity.getModule(),
                 projectIdentity.getRevision(), artifactInfo.getName(), artifactInfo.getType(),
                 artifactInfo.getExtension(), publicationName,
-                extraTokens, null));
-        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo);
+                extraTokens, null);
+        builder.artifactPath(artifactPath);
+        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo, artifactPath);
     }
 
     private void addMavenArtifactToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
                                                  DeployDetails.Builder builder,
                                                  PublishArtifactInfo artifactInfo, MavenPublication mavenPublication) {
         Map<String, String> extraTokens = getExtraTokens(artifactInfo);
-        builder.artifactPath(IvyPatternHelper.substitute(
+        String artifactPath = IvyPatternHelper.substitute(
                 LayoutPatterns.M2_PATTERN, mavenPublication.getGroupId().replace(".", "/"),
                 mavenPublication.getArtifactId(),
                 mavenPublication.getVersion(),
                 artifactInfo.getName(), artifactInfo.getType(),
                 artifactInfo.getExtension(), publicationName,
-                extraTokens, null));
-        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo);
+                extraTokens, null);
+        builder.artifactPath(artifactPath);
+        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo, artifactPath);
     }
 
     private void addArtifactInfoToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
-                                                DeployDetails.Builder builder, PublishArtifactInfo artifactInfo) {
+                                                DeployDetails.Builder builder, PublishArtifactInfo artifactInfo, String artifactPath) {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher != null) {
-            builder.targetRepository(publisher.getRepoKey());
+            builder.targetRepository(getTargetRepository(artifactPath, publisher));
             Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, publicationName);
             builder.addProperties(propsToAdd);
             DeployDetails details = builder.build();
