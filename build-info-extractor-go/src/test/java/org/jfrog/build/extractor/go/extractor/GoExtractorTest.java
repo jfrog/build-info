@@ -177,10 +177,6 @@ public class GoExtractorTest extends IntegrationTestsBase {
      */
     @Test
     private void goRunPublishTest() {
-        // The go tests are currently disabled on Windows.
-        // This is because “go build” fails due to “Access is denied” when invoked from the tests.
-        if (SystemUtils.IS_OS_WINDOWS)
-            return;
         Path projectDir = null;
         ArrayListMultimap<String, String> properties = ArrayListMultimap.create();
         try {
