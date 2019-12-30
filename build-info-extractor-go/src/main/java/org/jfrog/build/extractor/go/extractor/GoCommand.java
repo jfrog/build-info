@@ -52,12 +52,13 @@ abstract class GoCommand implements Serializable {
 
     private void parseModuleName() throws IOException {
         Path modPath = Paths.get(path.toString(), LOCAL_GO_MOD_FILENAME);
-        Stream<String> stream = Files.lines(modPath, StandardCharsets.UTF_8);
-        stream.forEach(line -> {
-            if (MODULE_NAME_REGEX_PATTERN.matcher(line).matches()) {
-                moduleName = line;
-            }
-        });
+        try (Stream<String> stream = Files.lines(modPath, StandardCharsets.UTF_8)) {
+            stream.forEach(line -> {
+                if (MODULE_NAME_REGEX_PATTERN.matcher(line).matches()) {
+                    moduleName = line;
+                }
+            });
+        }
         moduleName = StringUtils.split(moduleName, " ")[1];
     }
 
@@ -90,7 +91,7 @@ abstract class GoCommand implements Serializable {
     protected Build createBuild(List<Artifact> artifacts, List<Dependency> dependencies) {
         ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
         if (artifacts != null) {
-                moduleBuilder.artifacts(artifacts);
+            moduleBuilder.artifacts(artifacts);
         }
         if (dependencies != null) {
             moduleBuilder.dependencies(dependencies);
