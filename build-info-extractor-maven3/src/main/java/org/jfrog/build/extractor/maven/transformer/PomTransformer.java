@@ -19,6 +19,7 @@ package org.jfrog.build.extractor.maven.transformer;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Parent;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -44,6 +45,8 @@ import java.util.logging.Logger;
  */
 public class PomTransformer {
 
+    private final String UNIX_DEFAULT_PARENT_POM_RELATIVE_PATH = "../pom.xml";
+    private final String WINDOWS_DEFAULT_PARENT_POM_RELATIVE_PATH = "..\\pom.xml";
     private final String scmUrl;
     private final ModuleName currentModule;
     private final Map<ModuleName, String> versionsByModule;
@@ -76,7 +79,7 @@ public class PomTransformer {
      *                         version changes
      */
     public PomTransformer(ModuleName currentModule, Map<ModuleName, String> versionsByModule, String scmUrl,
-            boolean failOnSnapshot) {
+                          boolean failOnSnapshot) {
         this(currentModule, versionsByModule, scmUrl, failOnSnapshot, false);
     }
 
@@ -89,10 +92,9 @@ public class PomTransformer {
      * @param failOnSnapshot   If true, fail with IllegalStateException if the pom contains snapshot version after the
      *                         version changes
      * @param dryRun           If true, changes will not take effect.
-     *
      */
     public PomTransformer(ModuleName currentModule, Map<ModuleName, String> versionsByModule, String scmUrl,
-            boolean failOnSnapshot, boolean dryRun) {
+                          boolean failOnSnapshot, boolean dryRun) {
         this.currentModule = currentModule;
         this.versionsByModule = versionsByModule;
         this.scmUrl = scmUrl;
@@ -172,9 +174,9 @@ public class PomTransformer {
         }
 
         List<Element> children = propertiesElement.getChildren();
-        for(Element child : children) {
+        for (Element child : children) {
             String key = child.getName();
-            if(pomProperties.get(key) == null) {
+            if (pomProperties.get(key) == null) {
                 pomProperties.put(key, child.getText());
             }
         }
@@ -306,12 +308,9 @@ public class PomTransformer {
             return false;
         }
 
-        Model model;
-        FileReader reader = null;
         MavenXpp3Reader mavenReader = new MavenXpp3Reader();
-        try {
-            reader = new FileReader(nextPomToLoad);
-            model = mavenReader.read(reader);
+        try (FileReader reader = new FileReader(nextPomToLoad)) {
+            Model model = mavenReader.read(reader);
             Properties properties = model.getProperties();
             for (String key : properties.stringPropertyNames()) {
                 if (pomProperties.get(key) == null) {
@@ -319,16 +318,19 @@ public class PomTransformer {
                 }
             }
 
-            if (model.getParent() != null) {
-                nextPomToLoad = StringUtils.substringBeforeLast(nextPomToLoad, java.io.File.separator) + java.io.File.separator + model.getParent().getRelativePath();
+            Parent parent = model.getParent();
+            if (parent != null) {
+                String relativePath = parent.getRelativePath();
+                if (File.separatorChar == '\\' && UNIX_DEFAULT_PARENT_POM_RELATIVE_PATH.equals(relativePath)) {
+                    relativePath = WINDOWS_DEFAULT_PARENT_POM_RELATIVE_PATH;
+                }
+                nextPomToLoad = StringUtils.substringBeforeLast(nextPomToLoad, File.separator) + File.separator + relativePath;
             } else {
                 nextPomToLoad = null;
             }
         } catch (Exception e) {
             Logger.getLogger(PomTransformer.class.getName()).info("couldn't load pom file at: " + nextPomToLoad);
             return false;
-        } finally {
-            IOUtils.closeQuietly(reader);
         }
         return true;
     }
