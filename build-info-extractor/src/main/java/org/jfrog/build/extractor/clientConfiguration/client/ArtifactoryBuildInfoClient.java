@@ -26,10 +26,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
+import org.apache.http.*;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.FileEntity;
@@ -77,12 +74,12 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
     private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
-    public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
     public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final String USAGE_API = "/api/system/usage";
     private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
+    private static final ArtifactoryVersion BUILDINFO_URL_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("7.0.0");
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -270,13 +267,24 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         log.debug("Sending build info: " + buildInfo);
         try {
             sendBuildInfo(buildInfoToJsonString(buildInfo));
+            log.info("Build successfully deployed. Browse it in Artifactory under " + Build.createBuildInfoUrl(artifactoryUrl, buildInfo.getName(), buildInfo.getNumber(), buildInfo.getStarted(),getArtifactoryVersion().isAtLeast(BUILDINFO_URL_ARTIFACTORY_MIN_VERSION)));
+        } catch (ParseException pe) {
+            log.error("Could not parse 'started' in build-info object, inorder to calculate timestamp.", pe);
+            throw new IOException("Could not parse 'started' in build-info object, inorder to calculate timestamp.: " + pe.getMessage());
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());
         }
-        String url = artifactoryUrl +
-                BUILD_BROWSE_URL + "/" + encodeUrl(buildInfo.getName()) + "/" + encodeUrl(buildInfo.getNumber());
-        log.info("Build successfully deployed. Browse it in Artifactory under " + url);
+    }
+
+    public Boolean isArtifactoryUnify() {
+        if (getArtifactoryVersion().isAtLeast(BUILDINFO_URL_ARTIFACTORY_MIN_VERSION)) {
+            ArtifactoryVersion version = getArtifactoryVersion();
+            if (version.isAtLeast(new ArtifactoryVersion("7.0.0"))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void sendModuleInfo(Build build) throws IOException {

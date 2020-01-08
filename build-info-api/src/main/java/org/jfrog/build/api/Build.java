@@ -21,6 +21,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -96,6 +97,25 @@ public class Build extends BaseBuildBean {
     public static String formatBuildStarted(long timestamp) {
         SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
         return dateFormat.format(timestamp);
+    }
+
+    public static String createBuildInfoUrl(String url, String buildName, String buildNumber, String timestamp, boolean isUnify) throws ParseException {
+        if (isUnify) {
+            String baseUrl = url.replaceFirst("/artifactory", "") + "/ui/builds";
+            return baseUrl + "/" + buildName + "/" + buildNumber + "/" + timestampBuildStarted(timestamp);
+        }
+        return url + "/webapp/builds/" + buildName + "/" + buildNumber;
+    }
+
+    /**
+     * Formats the started date time string to timestamp millisecond.
+     *
+     * @param started The build ISO date time string format
+     * @return ISO date as millisecond
+     */
+    private static long timestampBuildStarted(String started) throws ParseException {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
+        return dateFormat.parse(started).getTime();
     }
 
     /**
@@ -377,14 +397,16 @@ public class Build extends BaseBuildBean {
      *
      * @return Artifactory plugin version
      */
-    public String getArtifactoryPluginVersion() {return artifactoryPluginVersion;}
+    public String getArtifactoryPluginVersion() {
+        return artifactoryPluginVersion;
+    }
 
     /**
      * Sets the Artifactory plugin version of the build
      *
      * @param artifactoryPluginVersion Artifactory plugin version
      */
-    public void setArtifactoryPluginVersion (String artifactoryPluginVersion){
+    public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
         this.artifactoryPluginVersion = artifactoryPluginVersion;
     }
 
@@ -629,7 +651,7 @@ public class Build extends BaseBuildBean {
                 ", durationMillis=" + durationMillis +
                 ", principal='" + principal + '\'' +
                 ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
-                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\''+
+                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\'' +
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +
