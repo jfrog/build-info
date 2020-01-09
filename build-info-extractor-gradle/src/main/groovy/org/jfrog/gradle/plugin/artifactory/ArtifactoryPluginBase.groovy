@@ -20,6 +20,7 @@ import org.gradle.api.Named
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.Usage
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
@@ -38,7 +39,6 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
     public static final String PUBLISH_TASK_GROUP = "publishing"
     public static final String MODULES_CONFIGURATION = "moduleInfo"
-    public static final String MODULE_INFO_USAGE = "moduleInfo"
 
     void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -110,8 +110,8 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         Configuration allModules = project.getConfigurations().create(ALL_MODULES_CONFIGURATION)
         allModules.canBeConsumed = false
         allModules.canBeResolved = true
-        Named moduleInfoUsage = project.getObjects().named(Usage.class, MODULE_INFO_USAGE)
-        allModules.attributes.attribute(Usage.USAGE_ATTRIBUTE, moduleInfoUsage)
+        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
+        allModules.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
         project.allprojects { subproject ->
             subproject.pluginManager.withPlugin('com.jfrog.artifactory') {
                 project.dependencies.add(ALL_MODULES_CONFIGURATION, subproject)
@@ -123,8 +123,8 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         Configuration moduleInfo = project.getConfigurations().create(MODULES_CONFIGURATION)
         moduleInfo.canBeConsumed = true
         moduleInfo.canBeResolved = false
-        Named moduleInfoUsage = project.getObjects().named(Usage.class, MODULE_INFO_USAGE)
-        moduleInfo.attributes.attribute(Usage.USAGE_ATTRIBUTE, moduleInfoUsage)
+        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
+        moduleInfo.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
     }
 
     private ExtractModuleTask addModuleInfoTask(Project project) {
@@ -151,5 +151,11 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             deployTask.inputs.files(project.getConfigurations().findByName(ALL_MODULES_CONFIGURATION))
         }
         deployTask
+    }
+
+    interface BuildInfoType extends Named {
+        Attribute<BuildInfoType> BUILD_INFO_ATTRIBUTE = Attribute.of("org.jfrog.build-info", BuildInfoType.class)
+
+        static final String MODULE_INFO = "moduleInfo"
     }
 }

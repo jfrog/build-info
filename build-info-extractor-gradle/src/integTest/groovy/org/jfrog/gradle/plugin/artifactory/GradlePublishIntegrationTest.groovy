@@ -136,6 +136,49 @@ class GradlePublishIntegrationTest extends Specification {
         gradleVersion << ['4.10.3', '5.6.4', '6.0.1']
     }
 
+    /**
+     * Tests that publishing works with only a single project build.  Checks that all artifacts and build info are
+     * published to a local artifactory instance.
+     */
+    @Unroll
+    @UsesTestBuild("single-project-publish")
+    def "can publish artifacts and build info to local artifactory instance when plugin is applied to a single project build (Gradle #gradleVersion)"() {
+        def version = VersionNumber.parse(gradleVersion)
+
+        expect:
+        BuildResult result = succeeds(gradleVersion, "artifactoryPublish")
+
+        and:
+        result.task(':artifactoryPublish').outcome == SUCCESS
+        result.task(':artifactoryDeploy').outcome == SUCCESS
+
+        and:
+        Build buildInfo = new PublishedBuildInfo(result.output).getPublishedInfo()
+        buildInfo.modules.size() == 1
+
+        def shared = buildInfo.getModule("org.jfrog.test.gradle.publish:shared:1.0-SNAPSHOT")
+        shared.artifacts.size() == (version < GRADLE_6 ? 3 : 4)
+        shared.dependencies.size() == 0
+
+        and:
+        assertAllArtifactsExist(
+            'shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.jar',
+            'shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.properties',
+            'shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.pom'
+        )
+
+        and:
+        if (version >= GRADLE_6) {
+            assertAllArtifactsExist(
+                'shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.module'
+            )
+        }
+        true
+
+        where:
+        gradleVersion << ['4.10.3', '5.6.4', '6.0.1']
+    }
+
     BuildResult succeeds(String gradleVersion, String... tasks) {
         String[] arguments = (['--stacktrace'] + tasks).flatten()
         BuildResult result = GradleRunner.create()
