@@ -35,8 +35,7 @@ public class ModuleExtractorUtils {
         jsonGenerator.useDefaultPrettyPrinter();
 
         jsonGenerator.writeObject(module);
-        String result = writer.getBuffer().toString();
-        return result;
+        return writer.getBuffer().toString();
     }
 
     public static Module jsonStringToModule(String json) throws IOException {
