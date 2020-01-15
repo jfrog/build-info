@@ -17,7 +17,7 @@ public class ExtractModuleTask extends DefaultTask {
     public ExtractModuleTask() {
         try {
             this.moduleFile = getProject().getObjects().fileProperty();
-        } catch(NoSuchMethodError e) {
+        } catch (NoSuchMethodError e) {
             // Gradle 4.x
             this.moduleFile = getProject().getLayout().fileProperty();
         }
