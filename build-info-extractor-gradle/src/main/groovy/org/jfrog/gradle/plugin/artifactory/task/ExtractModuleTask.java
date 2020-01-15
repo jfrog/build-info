@@ -9,6 +9,7 @@ import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleModuleExtractor;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 
 public class ExtractModuleTask extends DefaultTask {
     @OutputFile
@@ -19,7 +20,7 @@ public class ExtractModuleTask extends DefaultTask {
             this.moduleFile = getProject().getObjects().fileProperty();
         } catch (NoSuchMethodError e) {
             // Gradle 4.x
-            this.moduleFile = getProject().getLayout().fileProperty();
+            this.moduleFile = invokeMethod(getProject().getLayout(), "fileProperty");
         }
     }
 
@@ -30,6 +31,14 @@ public class ExtractModuleTask extends DefaultTask {
             ModuleExtractorUtils.saveModuleToFile(module, moduleFile.getAsFile().get());
         } catch (IOException e) {
             throw new RuntimeException("Could not extract module file", e);
+        }
+    }
+
+    <T> T invokeMethod(Object source, String methodName) {
+        try {
+            return (T) source.getClass().getMethod(methodName).invoke(source);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
+            throw new RuntimeException(e);
         }
     }
 }
