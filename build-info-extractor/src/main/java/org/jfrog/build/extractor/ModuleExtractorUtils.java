@@ -52,7 +52,7 @@ public class ModuleExtractorUtils {
         if (!toFile.exists()) {
             toFile.createNewFile();
         }
-        Files.write(moduleInfoJson, toFile, Charsets.UTF_8);
+        Files.asCharSink(toFile, Charsets.UTF_8).write(moduleInfoJson);
     }
 
     public static Module readModuleFromFile(File fromFile) throws IOException {
