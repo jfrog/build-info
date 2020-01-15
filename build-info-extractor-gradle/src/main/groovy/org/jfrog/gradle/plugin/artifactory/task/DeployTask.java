@@ -122,7 +122,7 @@ public class DeployTask extends DefaultTask {
                 configureProxy(accRoot, client);
                 configConnectionTimeout(accRoot, client);
                 configRetriesParams(accRoot, client);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails, publishForkCount);
+                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
