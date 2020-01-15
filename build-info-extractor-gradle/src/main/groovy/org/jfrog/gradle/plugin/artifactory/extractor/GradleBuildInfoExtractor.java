@@ -63,14 +63,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     public static final String ALL_MODULES_CONFIGURATION = "allModules";
 
     private final ArtifactoryClientConfiguration clientConf;
-    private final Set<GradleDeployDetails> gradleDeployDetails;
-    private int publishForkCount;
 
-    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-                                    Set<GradleDeployDetails> gradleDeployDetails, int publishForkCount) {
+    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf) {
         this.clientConf = clientConf;
-        this.gradleDeployDetails = gradleDeployDetails;
-        this.publishForkCount = publishForkCount;
     }
 
     @Override
