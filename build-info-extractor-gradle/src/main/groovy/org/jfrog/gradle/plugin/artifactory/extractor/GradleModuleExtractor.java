@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static com.google.common.collect.Iterables.*;
 import static com.google.common.collect.Lists.newArrayList;
@@ -90,20 +92,17 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         return builder.build();
     }
 
-    private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) throws Exception {
-        List<Artifact> artifacts = newArrayList(transform(deployDetails, new Function<GradleDeployDetails, Artifact>() {
-            public Artifact apply(GradleDeployDetails from) {
-                PublishArtifactInfo publishArtifact = from.getPublishArtifact();
-                DeployDetails deployDetails = from.getDeployDetails();
-                String artifactPath = deployDetails.getArtifactPath();
-                int index = artifactPath.lastIndexOf('/');
-                return new ArtifactBuilder(artifactPath.substring(index + 1))
-                        .type(getTypeString(publishArtifact.getType(),
-                                publishArtifact.getClassifier(), publishArtifact.getExtension()))
-                        .md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
-            }
-        }));
-        return artifacts;
+    private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) {
+        return newArrayList(StreamSupport.stream(deployDetails.spliterator(), false).map(from -> {
+            PublishArtifactInfo publishArtifact = from.getPublishArtifact();
+            DeployDetails deployDetails1 = from.getDeployDetails();
+            String artifactPath = deployDetails1.getArtifactPath();
+            int index = artifactPath.lastIndexOf('/');
+            return new ArtifactBuilder(artifactPath.substring(index + 1))
+                .type(getTypeString(publishArtifact.getType(),
+                    publishArtifact.getClassifier(), publishArtifact.getExtension()))
+                .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).build();
+        }).collect(Collectors.toList()));
     }
 
     private List<Dependency> calculateDependencies(Project project) throws Exception {
