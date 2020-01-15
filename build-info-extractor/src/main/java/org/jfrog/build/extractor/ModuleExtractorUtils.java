@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 
 import java.io.File;
