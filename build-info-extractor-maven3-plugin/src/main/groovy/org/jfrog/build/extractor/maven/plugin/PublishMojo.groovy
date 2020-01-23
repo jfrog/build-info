@@ -1,10 +1,7 @@
 package org.jfrog.build.extractor.maven.plugin
 
 import org.apache.maven.AbstractMavenLifecycleParticipant
-import org.apache.maven.execution.ExecutionEvent
 import org.apache.maven.execution.MavenSession
-import org.apache.maven.lifecycle.internal.DefaultExecutionEventCatapult
-import org.apache.maven.lifecycle.internal.ExecutionEventCatapult
 import org.apache.maven.plugin.MojoExecutionException
 import org.apache.maven.plugin.MojoFailureException
 import org.apache.maven.plugins.annotations.Component
@@ -40,9 +37,6 @@ class PublishMojo extends GroovyMojo
 
     @Component( role = AbstractMavenLifecycleParticipant )
     private BuildInfoRecorderLifecycleParticipant listener
-
-    @Component( role = ExecutionEventCatapult )
-    private DefaultExecutionEventCatapult eventCatapult
 
     /**
      * ----------------
@@ -158,7 +152,7 @@ class PublishMojo extends GroovyMojo
     /**
      * Adds original Maven listener to the lifecycle so that it records and publishes build info, together with build artifacts.
      */
-    @Requires({ session && deployGoals && session.goals && listener && eventCatapult })
+    @Requires({ session && deployGoals && session.goals && listener })
     private void recordBuildInfo()
     {
         final isDeployGoal = deployGoals.tokenize( ',' )*.trim().any {
@@ -169,10 +163,8 @@ class PublishMojo extends GroovyMojo
 
         if ( isDeployGoal )
         {
-            listener.afterSessionStart( session )
             listener.afterProjectsRead( session )
-            eventCatapult.fire( ExecutionEvent.Type.SessionStarted, session, null )
-            eventCatapult.fire( ExecutionEvent.Type.ProjectStarted, session, null )
+            listener.afterSessionStart( session )
         }
     }
 }

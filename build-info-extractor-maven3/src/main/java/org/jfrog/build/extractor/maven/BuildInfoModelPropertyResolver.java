@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.maven;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.Maven;
-import org.apache.maven.execution.ExecutionEvent;
+import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -31,10 +31,9 @@ public class BuildInfoModelPropertyResolver {
     @Requirement
     private Logger logger;
 
-
-    public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
-        BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
-                artifactoryPrincipal(clientConf.publisher.getName()).artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion()).
+    public BuildInfoMavenBuilder resolveProperties(MavenSession session, ArtifactoryClientConfiguration clientConf) {
+        BuildInfoMavenBuilder builder = resolveCoreProperties(session, clientConf).
+                artifactoryPrincipal(clientConf.publisher.getName()).
                 principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
                 clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber());
@@ -137,17 +136,16 @@ public class BuildInfoModelPropertyResolver {
         }
     }
 
-    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event,
-                                                        ArtifactoryClientConfiguration clientConf) {
+    private BuildInfoMavenBuilder resolveCoreProperties(MavenSession session, ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
-            buildName = event.getSession().getTopLevelProject().getName();
+            buildName = session.getTopLevelProject().getName();
         }
         String buildNumber = clientConf.info.getBuildNumber();
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = Long.toString(System.currentTimeMillis());
         }
-        Date buildStartedDate = event.getSession().getRequest().getStartTime();
+        Date buildStartedDate = session.getRequest().getStartTime();
         String buildStarted = clientConf.info.getBuildStarted();
         if (StringUtils.isBlank(buildStarted)) {
             buildStarted = new SimpleDateFormat(Build.STARTED_FORMAT).format(buildStartedDate);
