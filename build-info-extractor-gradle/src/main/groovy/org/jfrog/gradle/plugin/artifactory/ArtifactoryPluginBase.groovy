@@ -122,6 +122,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         Configuration moduleInfo = project.getConfigurations().create(MODULES_CONFIGURATION)
         moduleInfo.canBeConsumed = true
         moduleInfo.canBeResolved = false
+        moduleInfo.visible = false
         Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
         moduleInfo.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
     }
