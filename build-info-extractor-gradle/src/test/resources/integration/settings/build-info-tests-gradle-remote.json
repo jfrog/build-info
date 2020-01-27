@@ -1,0 +1,6 @@
+{
+  "packageType": "gradle",
+  "repoLayoutRef": "gradle-default",
+  "url": "https://jcenter.bintray.com",
+  "rclass": "remote"
+}

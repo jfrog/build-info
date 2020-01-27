@@ -349,13 +349,7 @@ project('build-info-extractor-gradle') {
             transitive = false
         }
         testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
-    }
-
-    test {
-        //Spock runs with JUnit
-        test.useJUnit()
-        systemProperties['buildInfoConfig.propertiesFile'] = ''
-        environment['buildInfoConfig.propertiesFile'] = ''
+        testCompile project(':build-info-extractor').sourceSets.test.output
     }
 
     configure(install.repositories.mavenInstaller) {

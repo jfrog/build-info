@@ -48,7 +48,6 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
     private NpmDriver driver = new NpmDriver("", null);
 
