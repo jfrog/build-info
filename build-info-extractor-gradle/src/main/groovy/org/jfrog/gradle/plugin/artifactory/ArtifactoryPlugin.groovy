@@ -29,7 +29,7 @@ class ArtifactoryPlugin extends ArtifactoryPluginBase {
     @Override
     protected DistributeTask createArtifactoryDistributeTask(Project project) {
         def result = project.getTasks().create(DISTRIBUTE_TASK_NAME, DistributeTask.class)
-        result.setDescription('''Distribute build artifacts to Bintray,''')
+        result.setDescription('''Distributes build artifacts to Bintray.'')
         return result
     }
 
