@@ -63,7 +63,7 @@ public class DistributeTask extends DefaultTask {
     }
 
     private void validate() {
-        ArtifactoryPluginConvention convention = (ArtifactoryPluginConvention)getProject().getConvention().getPlugins().get("artifactory");
+        ArtifactoryPluginConvention convention = (ArtifactoryPluginConvention) getProject().getConvention().getPlugins().get("artifactory");
         DistributerConfig config = convention.getDistributerConfig();
         if (StringUtils.isEmpty(config.getContextUrl())) {
             throw new IllegalArgumentException("'contextUrl' is a mandatory field for build distribution");
