@@ -74,11 +74,14 @@ public class ArtifactoryTask extends DefaultTask {
     }
 
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
-        if (helperConfigurations.hasConfigurations()) {
-            helperConfigurations.collectDescriptorsAndArtifactsForUpload();
-        }
-        if (helperPublications.hasPublications()) {
-            helperPublications.collectDescriptorsAndArtifactsForUpload();
+        // Only collect descriptors and artifacts once
+        if (deployDetails.isEmpty()) {
+            if (helperConfigurations.hasConfigurations()) {
+                helperConfigurations.collectDescriptorsAndArtifactsForUpload();
+            }
+            if (helperPublications.hasPublications()) {
+                helperPublications.collectDescriptorsAndArtifactsForUpload();
+            }
         }
     }
 
