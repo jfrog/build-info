@@ -11,6 +11,8 @@ class DistributerConfig {
     private String targetRepoKey
     private String username
     private String password
+    private String buildName
+    private String buildNumber
     private HashSet<String> sourceRepoKeys
     private boolean publish
     private boolean overrideExistingFiles
@@ -58,6 +60,9 @@ class DistributerConfig {
     }
 
     HashSet<String> getSourceRepoKeys() {
+        if (sourceRepoKeys == null) {
+            return new HashSet<String>()
+        }
         return sourceRepoKeys
     }
 
@@ -103,5 +108,21 @@ class DistributerConfig {
 
     void setPassword(String password) {
         this.password = password
+    }
+
+    String getBuildName() {
+        return buildName
+    }
+
+    void setBuildName(String buildName) {
+        this.buildName = buildName
+    }
+
+    String getBuildNumber() {
+        return buildNumber
+    }
+
+    void setBuildNumber(String buildNumber) {
+        this.buildNumber = buildNumber
     }
 }

@@ -17,10 +17,10 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class DistributeTask extends DefaultTask {
+public class DistributeBuildTask extends DefaultTask {
 
-    public static final String DISTRIBUTE_TASK_NAME = "artifactoryDistribute";
-    private static final Logger log = Logging.getLogger(DistributeTask.class);
+    public static final String DISTRIBUTE_TASK_NAME = "artifactoryDistributeBuild";
+    private static final Logger log = Logging.getLogger(DistributeBuildTask.class);
 
     @TaskAction
     public void distributeBuild() throws IOException {
@@ -30,36 +30,42 @@ public class DistributeTask extends DefaultTask {
         DistributerConfig distributerConfig = convention.getDistributerConfig();
         ArtifactoryClientConfiguration clientConf = convention.getClientConfig();
 
-        ArtifactoryBuildInfoClient infoClient = new ArtifactoryBuildInfoClient(
+        String buildName = distributerConfig.getBuildName();
+        String buildNumber = distributerConfig.getBuildNumber();
+        buildName = buildName == null ? clientConf.info.getBuildName() : buildName;
+        buildNumber = buildNumber == null ? clientConf.info.getBuildNumber() : buildNumber;
+
+        try (ArtifactoryBuildInfoClient infoClient = new ArtifactoryBuildInfoClient(
                 distributerConfig.getContextUrl(),
                 distributerConfig.getUsername(),
                 distributerConfig.getPassword(),
-                new GradleClientLogger(getLogger()));
+                new GradleClientLogger(getLogger()))) {
 
-        HttpResponse response = infoClient.distributeBuild(
-                clientConf.info.getBuildName(),
-                clientConf.info.getBuildNumber(),
-                new Distribution(distributerConfig.getPublish(),
-                        distributerConfig.getOverrideExistingFiles(),
-                        distributerConfig.getGpgPassphrase(),
-                        distributerConfig.getAsync(),
-                        distributerConfig.getTargetRepoKey(),
-                        new ArrayList<>(distributerConfig.getSourceRepoKeys()),
-                        distributerConfig.getDryRun()));
+            HttpResponse response = infoClient.distributeBuild(
+                    buildName,
+                    buildNumber,
+                    new Distribution(distributerConfig.getPublish(),
+                            distributerConfig.getOverrideExistingFiles(),
+                            distributerConfig.getGpgPassphrase(),
+                            distributerConfig.getAsync(),
+                            distributerConfig.getTargetRepoKey(),
+                            new ArrayList<>(distributerConfig.getSourceRepoKeys()),
+                            distributerConfig.getDryRun()));
 
-        String content;
-        if (response.getEntity() != null) {
-            content = EntityUtils.toString(response.getEntity(), "UTF-8");
-        } else {
-            content = "";
+            String content;
+            if (response.getEntity() != null) {
+                content = EntityUtils.toString(response.getEntity(), "UTF-8");
+            } else {
+                content = "";
+            }
+
+            StatusLine status = response.getStatusLine();
+            if (status.getStatusCode() != 200) {
+                throw new IOException(String.format("Distribution failed. Received '%s', '%s' from Artifactory.", status.getReasonPhrase(), content));
+            }
+
+            log.info(String.format("Successfully distributed build %s/%s", clientConf.info.getBuildName(), clientConf.info.getBuildNumber()));
         }
-
-        StatusLine status = response.getStatusLine();
-        if (status.getStatusCode() != 200) {
-            throw new IOException(String.format("Distribution failed. Received '%s', '%s' from Artifactory.", status.getReasonPhrase(), content));
-        }
-
-        log.info(String.format("Successfully distributed build %s/%s", clientConf.info.getBuildName(), clientConf.info.getBuildNumber()));
     }
 
     private void validate() {
