@@ -113,6 +113,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         httpClient.getHttpClient().setLog(log);
     }
 
+    public void setInsecureTls(boolean insecureTls) {
+        httpClient.setInsecureTls(insecureTls);
+    }
+
     public String getArtifactoryUrl() {
         return artifactoryUrl;
     }

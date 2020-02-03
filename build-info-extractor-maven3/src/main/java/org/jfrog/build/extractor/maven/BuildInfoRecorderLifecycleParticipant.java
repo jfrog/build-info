@@ -26,6 +26,7 @@ import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 
 import java.util.Properties;
 
@@ -74,6 +75,11 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
 
         Maven3BuildInfoLogger log = new Maven3BuildInfoLogger(logger);
         Properties allProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(allMavenProps, log);
+        if (allProps.getProperty(ClientProperties.PROP_INSECURE_TLS, "false").equals("true")) {
+            System.setProperty("maven.wagon.http.ssl.insecure", "true");
+            System.setProperty("maven.wagon.http.ssl.allowall", "true");
+            System.setProperty("maven.wagon.http.ssl.ignore.validity.dates", "true");
+        }
         internalConfiguration = new ArtifactoryClientConfiguration(log);
         internalConfiguration.fillFromProperties(allProps);
         return internalConfiguration;

@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jfrog.build.client.PreemptiveHttpClient.CONNECTION_POOL_SIZE;
+import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
 /**
  * Created by diman on 24/08/2016.

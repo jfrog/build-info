@@ -64,4 +64,9 @@ public interface ClientProperties {
      * Prefix for properties that are dynamically added to deployment (as matrix params)
      */
     String PROP_DEPLOY_PARAM_PROP_PREFIX = ARTIFACTORY_PREFIX + "deploy.";
+
+    /**
+     * Property for whether to use relaxed ssl check and ignore issues with server certificate
+     */
+    String PROP_INSECURE_TLS = ARTIFACTORY_PREFIX + "insecureTls";
 }

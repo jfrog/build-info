@@ -178,6 +178,10 @@ public class ArtifactoryClientConfiguration {
         return root.getIntegerValue(PROP_CONNECTION_RETRIES);
     }
 
+    public boolean getInsecureTls() {
+        return root.getBooleanValue(PROP_INSECURE_TLS, false);
+    }
+
     public Integer getSocketTimeout() {
         return root.getIntegerValue(PROP_SO_TIMEOUT);
     }
