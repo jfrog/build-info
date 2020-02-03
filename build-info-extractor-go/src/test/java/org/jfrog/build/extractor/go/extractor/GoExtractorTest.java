@@ -40,15 +40,13 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    private Map<String, String> env;
+    private Map<String, String> env = new TreeMap<>();
+    ;
 
     public GoExtractorTest() {
         localRepo = GO_LOCAL_REPO;
         remoteRepo = GO_REMOTE_REPO;
         virtualRepo = GO_VIRTUAL_REPO;
-        env = new TreeMap<>();
-        // Since we are handling dummy projects, we want to avoid package validation against Go's checksum DB.
-        env.put("GONOSUMDB", "github.com/jfrog");
     }
 
     private enum Project {
@@ -123,12 +121,15 @@ public class GoExtractorTest extends IntegrationTestsBase {
     }
 
     @BeforeMethod
-    private void cleanGoModCache() throws IOException, InterruptedException {
+    private void cleanGoModCacheAndEnv() throws IOException, InterruptedException {
         CommandExecutor goCommandExecutor = new CommandExecutor("go", null);
         List<String> goCleanArgs = new ArrayList<>();
         goCleanArgs.add("clean");
         goCleanArgs.add("-modcache");
         goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goCleanArgs, log);
+        env.clear();
+        // Since we are handling dummy projects, we want to avoid package validation against Go's checksum DB.
+        env.put("GONOSUMDB", "github.com/jfrog");
     }
 
 
@@ -146,6 +147,10 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private void goRunTest(Project project, String args, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo) {
         Path projectDir = null;
         try {
+            CommandExecutor goCommandExecutor = new CommandExecutor("go", null);
+            List<String> goEnvArgs = new ArrayList<>();
+            goEnvArgs.add("env");
+            goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goEnvArgs, log);
             // Run Go build
             projectDir = createProjectDir(project);
             GoRun goRun = new GoRun(args, projectDir, clientBuilder, repo, getUsername(), getPassword(), getLog(), env);
