@@ -41,7 +41,6 @@ public class GoExtractorTest extends IntegrationTestsBase {
 
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private Map<String, String> env = new TreeMap<>();
-    ;
 
     public GoExtractorTest() {
         localRepo = GO_LOCAL_REPO;
@@ -147,10 +146,6 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private void goRunTest(Project project, String args, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo) {
         Path projectDir = null;
         try {
-            CommandExecutor goCommandExecutor = new CommandExecutor("go", null);
-            List<String> goEnvArgs = new ArrayList<>();
-            goEnvArgs.add("env");
-            goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goEnvArgs, log);
             // Run Go build
             projectDir = createProjectDir(project);
             GoRun goRun = new GoRun(args, projectDir, clientBuilder, repo, getUsername(), getPassword(), getLog(), env);
