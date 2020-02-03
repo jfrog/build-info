@@ -60,7 +60,7 @@ public abstract class IntegrationTestsBase {
     protected static final String DOWNLOAD_SPEC = "download.json";
     protected static final String EXPECTED = "expected.json";
 
-    private static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
+    protected static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
     private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
     private static final String API_REPOSITORIES = "api/repositories";
 
@@ -86,21 +86,25 @@ public abstract class IntegrationTestsBase {
         buildInfoClientBuilder = createBuildInfoClientBuilder();
         dependenciesClient = createDependenciesClient();
 
-        createTestRepo(localRepo);
-        if (StringUtils.isNotBlank(remoteRepo)) {
-            createTestRepo(remoteRepo);
+        if (!dependenciesClient.isArtifactoryOSS()) {
+            createTestRepo(localRepo);
+            if (StringUtils.isNotBlank(remoteRepo)) {
+                createTestRepo(remoteRepo);
+            }
+            createTestRepo(virtualRepo);
         }
-        createTestRepo(virtualRepo);
     }
 
     @AfterClass
     protected void terminate() throws IOException {
-        // Delete the virtual first.
-        deleteTestRepo(virtualRepo);
-        if (StringUtils.isNotBlank(remoteRepo)) {
-            deleteTestRepo(remoteRepo);
+        if (!dependenciesClient.isArtifactoryOSS()) {
+            // Delete the virtual first.
+            deleteTestRepo(virtualRepo);
+            if (StringUtils.isNotBlank(remoteRepo)) {
+                deleteTestRepo(remoteRepo);
+            }
+            deleteTestRepo(localRepo);
         }
-        deleteTestRepo(localRepo);
         preemptiveHttpClient.close();
         buildInfoClient.close();
         dependenciesClient.close();

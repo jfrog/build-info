@@ -18,6 +18,20 @@ export BITESTS_ARTIFACTORY_REPO=tests
 ```
 Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
 
+### Running Gradle tests on Artifactory OSS
+By default, the tests infrastructure will create the repositories by REST API. To run the tests on Artifactory OSS, 
+you should create the Gradle repositories by yourself.
+To run Gradle tests on Artifactory OSS run:
+1. Start Artifactory on docker container:
+```
+> docker run --name artifactory -d -p 8081:8081 docker.bintray.io/jfrog/artifactory-oss:latest
+```
+2. Create 3 Gradle repositories:
+  * Local repository: `build-info-tests-gradle-local`
+  * Remote repository to jcenter: `build-info-tests-gradle-remote`
+  * Virtual repository containing both the remote and local: `build-info-tests-gradle-virtual` 
+3. Run tests `./gradlew build-info-extractor-gradle:test`
+
 To build the code using the gradle wrapper in Unix run:  
 ```
 > ./gradlew clean build

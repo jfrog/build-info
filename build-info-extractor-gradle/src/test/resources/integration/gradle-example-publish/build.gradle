@@ -1,32 +1,5 @@
-/*
- * Copyright (C) 2013 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath(group: 'org.jfrog.buildinfo', name: 'build-info-extractor-gradle', version: '4.+')
-    }
-    configurations.classpath {
-        resolutionStrategy {
-            cacheDynamicVersionsFor 0, 'seconds'
-            cacheChangingModulesFor 0, 'seconds'
-        }
-    }
+plugins {
+    id 'com.jfrog.artifactory' apply false
 }
 
 def javaProjects() {
@@ -40,7 +13,11 @@ allprojects {
     status = 'Integration'
     repositories {
         maven {
-            url "http://127.0.0.1:8081/artifactory/jcenter"
+            url "${System.env.BITESTS_ARTIFACTORY_URL}/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
+            credentials {
+                username "${System.env.BITESTS_ARTIFACTORY_USERNAME}"
+                password "${System.env.BITESTS_ARTIFACTORY_PASSWORD}"
+            }
         }
     }
 }
@@ -76,11 +53,6 @@ project('api') {
         publications {
             ivyJava(IvyPublication) {
                 from components.java
-                artifact(file("$rootDir/settings.gradle")) {
-                    name "gradle-settings"
-                    extension "txt"
-                    type "text"
-                }
                 // The config below will add a extra attribute to the ivy.xml
                 // See http://ant.apache.org/ivy/history/latest-milestone/concept.html#extra
                 descriptor.withXml {
@@ -102,19 +74,20 @@ artifactoryPublish.skip = true
 
 artifactory {
     clientConfig.setIncludeEnvVars(true)
-    clientConfig.info.addEnvironmentProperty('test.adding.dynVar',new java.util.Date().toString())
+    clientConfig.info.addEnvironmentProperty('test.adding.dynVar', new java.util.Date().toString())
 
-    contextUrl = 'http://127.0.0.1:8081/artifactory'
+    contextUrl = "$System.env.BITESTS_ARTIFACTORY_URL"
     publish {
         repository {
-            repoKey = 'libs-snapshot-local' // The Artifactory repository key to publish to
-            username = "${artifactory_user}" // The publisher user name
-            password = "${artifactory_password}" // The publisher password
+            repoKey = "$System.env.BITESTS_ARTIFACTORY_LOCAL_REPO" // The Artifactory repository key to publish to
+            username = "$System.env.BITESTS_ARTIFACTORY_USERNAME" // The publisher user name
+            password = "$System.env.BITESTS_ARTIFACTORY_PASSWORD" // The publisher password
             // This is an optional section for configuring Ivy publication (when publishIvy = true).
             ivy {
-              ivyLayout = '[organization]/[module]/ivy-[revision].xml'
-              artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
-              mavenCompatible = true //Convert any dots in an [organization] layout value to path separators, similar to Maven's groupId-to-path conversion. True if not specified
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
+                mavenCompatible = true
+                //Convert any dots in an [organization] layout value to path separators, similar to Maven's groupId-to-path conversion. True if not specified
             }
         }
         defaults {
@@ -124,7 +97,7 @@ artifactory {
             publications('mavenJava')
             publishArtifacts = true
             // Properties to be attached to the published artifacts.
-            properties = ['qa.level': 'basic', 'dev.team' : 'core']
+            properties = ['qa.level': 'basic', 'dev.team': 'core']
             publishPom = true // Publish generated POM files to Artifactory (true by default)
             publishIvy = true // Publish generated Ivy descriptor files to Artifactory (true by default)
         }

@@ -338,6 +338,19 @@ project('build-info-extractor-gradle') {
     description = 'JFrog Build-Info Gradle Extractor'
 
     println description
+
+    sourceSets {
+        test {
+            java.srcDir file('src/test/java')
+
+            resources {
+                srcDir file('build/pluginUnderTestMetadata')
+            }
+            compileClasspath += sourceSets.main.output + configurations.testRuntime
+            runtimeClasspath += output + compileClasspath
+        }
+    }
+
     dependencies {
         compile gradleApi()
         compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
@@ -345,11 +358,8 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-2.0') {
-            transitive = false
-        }
-        testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
         testCompile project(':build-info-extractor').sourceSets.test.output
+        testCompile gradleTestKit()
     }
 
     configure(install.repositories.mavenInstaller) {
@@ -360,6 +370,14 @@ project('build-info-extractor-gradle') {
             }
         }
     }
+    gradlePlugin {
+        testSourceSets sourceSets.test
+    }
+
+    // Generate "build/pluginUnderTestMetadata/plugin-under-test-metadata.properties"
+    tasks.test.dependsOn("pluginUnderTestMetadata")
+    // Generate "build/libs/*"
+    tasks.test.dependsOn("assemble")
 }
 
 project('build-info-extractor-maven3') {
