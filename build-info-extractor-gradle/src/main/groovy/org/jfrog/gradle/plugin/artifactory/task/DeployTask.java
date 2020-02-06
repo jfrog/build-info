@@ -180,7 +180,6 @@ public class DeployTask extends DefaultTask {
                         password = "";
                     }
 
-                    artifactoryTask.collectDescriptorsAndArtifactsForUpload();
                     if (publisher.isPublishArtifacts()) {
                         ArtifactoryBuildInfoClient client = null;
                         try {

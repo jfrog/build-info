@@ -48,13 +48,16 @@ public class GradleDeployDetails implements Comparable<GradleDeployDetails> {
     public PublishArtifactInfo getPublishArtifact() {
         return publishArtifact;
     }
-    
+
     public int compareTo(GradleDeployDetails that) {
         if (this.publishArtifact == null) {
             return -1;
         }
         if (that.publishArtifact == null) {
             return 1;
+        }
+        if (this.deployDetails.compareTo(that.deployDetails) == 0) {
+            return 0;
         }
         String thisExtension = this.publishArtifact.getExtension();
         String thatExtension = that.publishArtifact.getExtension();
