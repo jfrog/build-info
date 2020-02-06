@@ -56,9 +56,12 @@ public class GradleDeployDetails implements Comparable<GradleDeployDetails> {
         if (that.publishArtifact == null) {
             return 1;
         }
-        if (this.deployDetails.compareTo(that.deployDetails) == 0) {
+
+        int compareDeployDetails = this.deployDetails.compareTo(that.deployDetails);
+        if (compareDeployDetails == 0) {
             return 0;
         }
+
         String thisExtension = this.publishArtifact.getExtension();
         String thatExtension = that.publishArtifact.getExtension();
         if (thisExtension == null) {
@@ -75,7 +78,7 @@ public class GradleDeployDetails implements Comparable<GradleDeployDetails> {
         if ("xml".equals(thatExtension) || "pom".equals(thatExtension)) {
             return -1;
         }
-        return this.deployDetails.compareTo(that.deployDetails);
+        return compareDeployDetails;
     }
 
     @Override
