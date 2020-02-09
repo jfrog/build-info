@@ -40,9 +40,9 @@ public class GoVersionUtils {
 
     /**
      * Compatible Go module from major version of 2 and above will end with /vMajor
-     * github.com/owner/repo/v3 -> 3
-     * github.com/owner/repo/v2 -> 2
-     * github.com/owner/repo -> 0 or 1
+     * github.com/owner/repo/v3 - 3
+     * github.com/owner/repo/v2 - 2
+     * github.com/owner/repo - 0 or 1
      *
      * @return Major version of compatible Go module
      */
@@ -73,11 +73,11 @@ public class GoVersionUtils {
 
     /**
      * From major versions of 2+, the project name must end with a /vMajor prefix (for majors of 0 and 1 it will stay without the prefix)
-     * github.com/owner/repo , v2.0.5 -> false
-     * github.com/owner/repo , v2.0.5+incompatible -> false
-     * github.com/owner/repo/v2 , v2.0.5 -> true
-     * github.com/owner/repo , v1.0.5 -> true
-     * github.com/owner/repo , v0.0.5 -> true
+     * github.com/owner/repo , v2.0.5 - false
+     * github.com/owner/repo , v2.0.5+incompatible - false
+     * github.com/owner/repo/v2 , v2.0.5 - true
+     * github.com/owner/repo , v1.0.5 - true
+     * github.com/owner/repo , v0.0.5 - true
      *
      * @return True if the major version is eq or gt than 2 and the project name follows the compatible convention
      */
