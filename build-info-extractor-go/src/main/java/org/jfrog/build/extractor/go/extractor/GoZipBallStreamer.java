@@ -55,8 +55,8 @@ import java.util.zip.ZipEntry;
  */
 public class GoZipBallStreamer implements Closeable {
 
+    protected ArchiveOutputStream archiveOutputStream;
     private final Log log;
-    private ArchiveOutputStream archiveOutputStream;
     private ZipFile zipFile;
     private String projectName;
     private String version;
