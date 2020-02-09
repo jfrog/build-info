@@ -13,7 +13,7 @@ public class GoVersionUtils {
 
     public static final String INCOMPATIBLE = "+incompatible";
     public static final int ZERO_OR_ONE = 0;
-    private static final Pattern VERSION_PATTERN = Pattern.compile("v(\\d*)\\.(\\d+)\\.(\\d+)");
+    protected static final Pattern VERSION_PATTERN = Pattern.compile("v(\\d*)\\.(\\d+)\\.(\\d+)");
 
     /**
      * @param version full version string
