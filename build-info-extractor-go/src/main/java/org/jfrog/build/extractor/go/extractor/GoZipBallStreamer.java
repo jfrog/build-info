@@ -92,7 +92,8 @@ public class GoZipBallStreamer implements Closeable {
      * Determine if the project is a compatible module from version 2+, a sub module or an incompatible module
      */
     private void initiateProjectType() {
-        boolean compatibleModuleFromV2 = GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
+        boolean compatibleModuleFromV2 = GoVersionUtils.getMajorVersion(version, log) >= 2 &&
+                GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
         if (compatibleModuleFromV2) {
             subModuleName = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
             log.debug(projectName + "@" + version + " is compatible Go module from major version " + subModuleName);
@@ -180,7 +181,7 @@ public class GoZipBallStreamer implements Closeable {
                     return !entryName.endsWith("LICENSE");
                 }
             }
-            return (excludedDirectories.stream().parallel().anyMatch(trimmedPrefix::startsWith));
+            return (excludedDirectories.stream().anyMatch(trimmedPrefix::startsWith));
         }
         return false;
     }
