@@ -64,7 +64,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private int connectionRetries = DEFAULT_CONNECTION_RETRY;
     private ProxyConfiguration proxyConfiguration;
-    private boolean insecureTls;
+    private boolean insecureTls = false;
 
     private PreemptiveHttpClient deployClient;
 
@@ -74,7 +74,6 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         this.password = password;
         this.accessToken = accessToken;
         this.log = log;
-        this.insecureTls = false;
     }
 
     public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {

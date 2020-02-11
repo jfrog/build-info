@@ -159,13 +159,10 @@ public class PreemptiveHttpClientBuilder {
             Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder
                     .<ConnectionSocketFactory>create().register("https", connectionFactory)
                     .build();
-            PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(
-                    socketFactoryRegistry);
-            return cm;
+            return new PoolingHttpClientConnectionManager(socketFactoryRegistry);
         } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-            e.printStackTrace();
+           throw new RuntimeException(e);
         }
-        return null;
     }
 
     private HttpClientBuilder createHttpClientBuilder() {
@@ -185,7 +182,7 @@ public class PreemptiveHttpClientBuilder {
         // Add as the first request interceptor
         builder.addInterceptorFirst(new PreemptiveHttpClient.PreemptiveAuth());
 
-        // set the following user agent with each request
+        // Set the following user agent with each request
         String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
         builder.setUserAgent(userAgent);
 
