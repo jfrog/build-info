@@ -36,9 +36,9 @@ public class NpmInstall extends NpmCommand {
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path, Map<String, String> env) {
+    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, String executablePath, Log logger, Path path, Map<String, String> env, String module) {
         super(clientBuilder, executablePath, resolutionRepository, logger, path, env);
-        buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, npmDriver, logger);
+        buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, npmDriver, logger, module);
         this.installArgs = StringUtils.isBlank(installArgs) ? new ArrayList<>() : Arrays.asList(installArgs.trim().split("\\s+"));
     }
 
@@ -74,7 +74,8 @@ public class NpmInstall extends NpmCommand {
                     npmHandler.getNpmExecutablePath(),
                     clientConfiguration.getLog(),
                     Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
-                    clientConfiguration.getAllProperties());
+                    clientConfiguration.getAllProperties(),
+                    npmHandler.getNpmModule());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

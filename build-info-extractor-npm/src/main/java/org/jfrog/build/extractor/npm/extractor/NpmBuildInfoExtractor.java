@@ -46,12 +46,14 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private String npmRegistry;
     private Properties npmAuth;
     private String npmProxy;
+    private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger) {
+    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger, String module) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
+        this.module = module;
     }
 
     @Override
@@ -66,7 +68,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         restoreNpmrc(workingDir);
 
         List<Dependency> dependencies = collectDependencies(workingDir);
-        return createBuild(dependencies);
+        String moduleId = org.apache.commons.lang.StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
+        return createBuild(dependencies,moduleId);
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
@@ -234,8 +237,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return scopes;
     }
 
-    private Build createBuild(List<Dependency> dependencies) {
-        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).dependencies(dependencies).build();
+    private Build createBuild(List<Dependency> dependencies, String moduleId) {
+        Module module = new ModuleBuilder().id(moduleId).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();

@@ -508,6 +508,16 @@ public class ArtifactoryClientConfiguration {
         public void setNpmPath(String npmPath) {
             rootConfig.setStringValue(NPM_PATH, npmPath);
         }
+
+        public String getNpmModule() {
+            return rootConfig.getStringValue(NPM_MODULE);
+        }
+
+        public void setNpmModule(String npmModule) {
+            rootConfig.setStringValue(NPM_MODULE, npmModule);
+        }
+
+
     }
 
     public class AuthenticationConfiguration extends PrefixPropertyHandler {
