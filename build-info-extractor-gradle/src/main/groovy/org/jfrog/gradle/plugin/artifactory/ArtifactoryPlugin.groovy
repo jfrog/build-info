@@ -7,6 +7,7 @@ import org.jfrog.gradle.plugin.artifactory.task.DeployTask
 import org.jfrog.gradle.plugin.artifactory.task.ExtractModuleTask
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask.DISTRIBUTE_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.DEPLOY_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.EXTRACT_MODULE_TASK_NAME
 
@@ -22,14 +23,21 @@ class ArtifactoryPlugin extends ArtifactoryPluginBase {
     @Override
     protected ArtifactoryTask createArtifactoryPublishTask(Project project) {
         def result = project.getTasks().create(ARTIFACTORY_PUBLISH_TASK_NAME, ArtifactoryTask.class)
-        result.setDescription('''AddS artifacts and generates build-info to be later deployed to Artifactory,''')
+        result.setDescription('''Adds artifacts and generates build-info to be later deployed to Artifactory.''')
+        return result
+    }
+
+    @Override
+    protected DistributeBuildTask createArtifactoryDistributeBuildTask(Project project) {
+        def result = project.getTasks().create(DISTRIBUTE_TASK_NAME, DistributeBuildTask.class)
+        result.setDescription('''Distribute build artifacts to Bintray,''')
         return result
     }
 
     @Override
     protected DeployTask createArtifactoryDeployTask(Project project) {
         def result = project.getTasks().create(DEPLOY_TASK_NAME, DeployTask.class)
-        result.setDescription('''Deploys artifacts and build-info to Artifactory''')
+        result.setDescription('''Deploys artifacts and build-info to Artifactory.''')
         return result
     }
 

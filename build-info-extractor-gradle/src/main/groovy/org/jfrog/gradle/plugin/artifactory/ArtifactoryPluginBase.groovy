@@ -24,6 +24,7 @@ import org.gradle.api.attributes.Attribute
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
+import org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
 import org.jfrog.gradle.plugin.artifactory.task.ExtractModuleTask
 import org.slf4j.Logger
@@ -33,6 +34,7 @@ import static org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtra
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.DEPLOY_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.EXTRACT_MODULE_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask.DISTRIBUTE_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
@@ -57,6 +59,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             // Add the aggregate module info configuration to the root project
             addAllModulesConfiguration(project)
             addDeployTask(project)
+            addDistributeBuildTask(project)
         } else {
             // Makes sure the plugin is applied in the root project
             project.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
@@ -71,6 +74,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     protected abstract ArtifactoryTask createArtifactoryPublishTask(Project project)
+    protected abstract DistributeBuildTask createArtifactoryDistributeBuildTask(Project project)
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
     protected abstract DeployTask createArtifactoryDeployTask(Project project);
     protected abstract ExtractModuleTask createExtractModuleTask(Project project);
@@ -93,7 +97,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     /**
-     * Add the "ArtifactoryPublish" gradle task (under "publishing" task group)
+     * Add the "artifactoryPublish" gradle task (under "publishing" task group)
      */
     private ArtifactoryTask addArtifactoryPublishTask(Project project) {
         ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
@@ -105,41 +109,17 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         artifactoryTask
     }
 
-    private void addAllModulesConfiguration(Project project) {
-        Configuration allModules = project.getConfigurations().create(ALL_MODULES_CONFIGURATION)
-        allModules.canBeConsumed = false
-        allModules.canBeResolved = true
-        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
-        allModules.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
-        project.allprojects { subproject ->
-            subproject.pluginManager.withPlugin('com.jfrog.artifactory') {
-                project.dependencies.add(ALL_MODULES_CONFIGURATION, subproject)
-            }
+    /**
+     * Add the "artifactoryDistribute" gradle task (under "publishing" task group)
+     */
+    private DistributeBuildTask addDistributeBuildTask(Project project) {
+        DistributeBuildTask distributeBuildTask = project.tasks.findByName(DISTRIBUTE_TASK_NAME)
+        if (distributeBuildTask == null) {
+            log.debug("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            distributeBuildTask = createArtifactoryDistributeBuildTask(project)
+            distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
         }
-    }
-
-    private void addModuleInfoConfiguration(Project project) {
-        Configuration moduleInfo = project.getConfigurations().create(MODULES_CONFIGURATION)
-        moduleInfo.canBeConsumed = true
-        moduleInfo.canBeResolved = false
-        moduleInfo.visible = false
-        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
-        moduleInfo.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
-    }
-
-    private ExtractModuleTask addModuleInfoTask(Project project) {
-        ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
-        if (extractModuleTask == null) {
-            log.debug("Configuring extractModuleInfo task for project ${project.path}")
-            extractModuleTask = createExtractModuleTask(project)
-        }
-        extractModuleTask.moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
-        extractModuleTask.mustRunAfter(project.tasks.withType(ArtifactoryTask.class))
-
-        project.getArtifacts().add(MODULES_CONFIGURATION, extractModuleTask.moduleFile) {
-            builtBy(extractModuleTask)
-        }
-        return extractModuleTask
+        distributeBuildTask
     }
 
     private DeployTask addDeployTask(Project project) {
