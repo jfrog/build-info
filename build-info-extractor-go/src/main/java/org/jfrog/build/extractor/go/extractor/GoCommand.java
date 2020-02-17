@@ -38,12 +38,14 @@ abstract class GoCommand implements Serializable {
     GoDriver goDriver;
     Path path;
     String moduleName;
+    String buildInfoModuleId;
     Log logger;
 
-    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) {
+    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path,  String buildInfoModuleId, Log logger) throws IOException {
         this.clientBuilder = clientBuilder;
         this.logger = logger;
         this.path = path;
+        this.buildInfoModuleId = buildInfoModuleId;
     }
 
     protected void preparePrerequisites(String repo, ArtifactoryBaseClient client) throws VersionException, IOException {
@@ -73,7 +75,8 @@ abstract class GoCommand implements Serializable {
     }
 
     protected Build createBuild(List<Artifact> artifacts, List<Dependency> dependencies) {
-        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
+        String moduleId = StringUtils.isNotBlank(buildInfoModuleId) ? buildInfoModuleId : moduleName;
+        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
         if (artifacts != null) {
             moduleBuilder.artifacts(artifacts);
         }
