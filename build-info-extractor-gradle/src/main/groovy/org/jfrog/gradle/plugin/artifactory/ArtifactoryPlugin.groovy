@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
+import org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask
 import org.jfrog.gradle.plugin.artifactory.task.ExtractModuleTask
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
