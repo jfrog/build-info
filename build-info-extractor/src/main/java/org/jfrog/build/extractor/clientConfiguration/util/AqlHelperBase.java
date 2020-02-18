@@ -177,8 +177,8 @@ public class AqlHelperBase {
                 continue;
             }
 
-            boolean isBuildNameMatch = item.getBuildName().equals(buildName);
-            boolean isBuildNumberMatch = item.getBuildNumber().equals(buildNumber);
+            boolean isBuildNameMatch = buildName.equals(item.getBuildName());
+            boolean isBuildNumberMatch = buildNumber.equals(item.getBuildNumber());
             if (isBuildNameMatch) {
                 if (isBuildNumberMatch) {
                     addToListInMap(firstPriority, item);
