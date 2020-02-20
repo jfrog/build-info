@@ -118,10 +118,12 @@ public class GoPublish extends GoCommand {
 
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
             List<Path> pathsList = Files.walk(path)
-                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
+                    // Remove .git dir content, directories and the temp zip file
+                    .filter(p -> !path.relativize(p).startsWith(".git/") && !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
                     .collect(Collectors.toList());
             for (Path filePath : pathsList) {
-                ZipEntry zipEntry = new ZipEntry(path.relativize(filePath).toString());
+                // We need to have the parent hierarchy of the project in order to use the zip packaging code in org.jfrog.build.extractor.go.extractor.GoZipBallStreamer
+                ZipEntry zipEntry = new ZipEntry(path.getParent().relativize(filePath).toString());
                 zos.putNextEntry(zipEntry);
                 Files.copy(filePath, zos);
                 zos.closeEntry();
