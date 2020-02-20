@@ -109,6 +109,19 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         artifactoryTask
     }
 
+    private void addAllModulesConfiguration(Project project) {
+        Configuration allModules = project.getConfigurations().create(ALL_MODULES_CONFIGURATION)
+        allModules.canBeConsumed = false
+        allModules.canBeResolved = true
+        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
+        allModules.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
+        project.allprojects { subproject ->
+            subproject.pluginManager.withPlugin('com.jfrog.artifactory') {
+                project.dependencies.add(ALL_MODULES_CONFIGURATION, subproject)
+            }
+        }
+    }
+
     /**
      * Add the "artifactoryDistribute" gradle task (under "publishing" task group)
      */
@@ -120,6 +133,30 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
         }
         distributeBuildTask
+    }
+
+    private void addModuleInfoConfiguration(Project project) {
+        Configuration moduleInfo = project.getConfigurations().create(MODULES_CONFIGURATION)
+        moduleInfo.canBeConsumed = true
+        moduleInfo.canBeResolved = false
+        moduleInfo.visible = false
+        Named moduleInfoType = project.getObjects().named(BuildInfoType.class, BuildInfoType.MODULE_INFO)
+        moduleInfo.attributes.attribute(BuildInfoType.BUILD_INFO_ATTRIBUTE, moduleInfoType)
+    }
+
+    private ExtractModuleTask addModuleInfoTask(Project project) {
+        ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
+        if (extractModuleTask == null) {
+            log.debug("Configuring extractModuleInfo task for project ${project.path}")
+            extractModuleTask = createExtractModuleTask(project)
+        }
+        extractModuleTask.moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
+        extractModuleTask.mustRunAfter(project.tasks.withType(ArtifactoryTask.class))
+
+        project.getArtifacts().add(MODULES_CONFIGURATION, extractModuleTask.moduleFile) {
+            builtBy(extractModuleTask)
+        }
+        return extractModuleTask
     }
 
     private DeployTask addDeployTask(Project project) {
