@@ -8,31 +8,28 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
+import org.jfrog.build.extractor.go.GoDriver;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Path;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static java.lang.Character.*;
+import static java.lang.Character.isUpperCase;
+import static java.lang.Character.toLowerCase;
 
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GoRun extends GoCommand {
 
-    private static final String GO_CLIENT_CMD = "go";
-    private static final String GO_MOD_GRAPH_CMD = "mod graph";
     private static final String GO_ENV_CMD = "env";
-    private static final String GO_VERSION_CMD = "version";
     private static final String GOPATH_ENV_VAR = "GOPATH";
     private static final String GOPROXY_ENV_VAR = "GOPROXY";
     private static final String GO_GET_GOPATH_CMD = GO_ENV_CMD + " " + GOPATH_ENV_VAR;
@@ -44,7 +41,6 @@ public class GoRun extends GoCommand {
     private static final String LOCAL_GO_MOD_BACKUP_FILENAME = "jfrog.go.mod.backup";
 
     private List<Dependency> dependenciesList = new ArrayList<>();
-    private CommandExecutor goCommandExecutor;
     private String goCmdArgs;
     private String resolutionRepository;
     private String resolverUsername;
@@ -65,11 +61,11 @@ public class GoRun extends GoCommand {
      */
     public GoRun(String goCmdArgs, Path path, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) throws IOException {
         super(clientBuilder, path, logger);
+        this.env = env;
         this.goCmdArgs = goCmdArgs;
         this.resolutionRepository = repo;
         this.resolverUsername = username;
         this.resolverPassword = password;
-        this.env = env;
     }
 
     public Build execute() {
@@ -78,10 +74,12 @@ public class GoRun extends GoCommand {
                 preparePrerequisites(resolutionRepository, artifactoryClient);
                 setResolverAsGoProxy(artifactoryClient);
             }
-            this.goCommandExecutor = new CommandExecutor(GO_CLIENT_CMD, env);
+            // We create the GoDriver here as env might had changed.
+            this.goDriver = new GoDriver(GO_CLIENT_CMD, env, path.toFile(), logger);
+            this.moduleName = goDriver.getModuleName();
             // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
-            runGoCmd(GO_VERSION_CMD);
-            runGoCmd(goCmdArgs);
+            goDriver.goVersion(true);
+            goDriver.runGoCmd(goCmdArgs, true);
             collectDependencies();
             return createBuild(null, dependenciesList);
         } catch (Exception e) {
@@ -117,7 +115,7 @@ public class GoRun extends GoCommand {
      */
     private void collectDependencies() throws Exception {
         backupModAnsSumFiles();
-        CommandResults goGraphResult = runGoCmd(GO_MOD_GRAPH_CMD);
+        CommandResults goGraphResult = goDriver.goModGraph(true);
         String cachePath = getCachePath();
         String[] dependenciesGraph = goGraphResult.getRes().split("\\r?\\n");
         for (String entry : dependenciesGraph) {
@@ -157,7 +155,7 @@ public class GoRun extends GoCommand {
     }
 
     private String getCachePath() throws Exception {
-        CommandResults goEnvResult = runGoCmd(GO_GET_GOPATH_CMD);
+        CommandResults goEnvResult = goDriver.runGoCmd(GO_GET_GOPATH_CMD, true);
         return goEnvResult.getRes().trim() + File.separator + CACHE_INNER_PATH + File.separator;
     }
 
@@ -196,20 +194,5 @@ public class GoRun extends GoCommand {
                     .build();
             dependenciesList.add(dependency);
         }
-    }
-
-    /**
-     * Run go client cmd with goArs.
-     * goArgs must be a space-separated string.
-     * Write stdout + stderr to logger, and return the command's result.
-     */
-    private CommandResults runGoCmd(String args) throws Exception {
-        List goArgs = new ArrayList<>(Arrays.asList(args.split(" ")));
-        CommandResults goCmdResult = goCommandExecutor.exeCommand(path.toFile(), goArgs, logger);
-        if (!goCmdResult.isOk()) {
-            throw new IOException(goCmdResult.getErr());
-        }
-        logger.info(goCmdResult.getErr() + goCmdResult.getRes());
-        return goCmdResult;
     }
 }
