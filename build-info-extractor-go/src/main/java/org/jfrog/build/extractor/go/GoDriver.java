@@ -32,16 +32,16 @@ public class GoDriver implements Serializable {
         this.logger = logger;
     }
 
-    public CommandResults runGoCmd(String args, boolean prompt) throws IOException {
-        List argsList = new ArrayList<>(Arrays.asList(args.split(" ")));
-        return runGoCmd(argsList, prompt);
+    public CommandResults runCmd(String args, boolean prompt) throws IOException {
+        List<String> argsList = new ArrayList<>(Arrays.asList(args.split(" ")));
+        return runCmd(argsList, prompt);
     }
 
     /**
      * Run go client cmd with goArs.
      * Write stdout + stderr to logger, and return the command's result.
      */
-    public CommandResults runGoCmd(List<String> args, boolean prompt) throws IOException {
+    public CommandResults runCmd(List<String> args, boolean prompt) throws IOException {
         CommandResults goCmdResult;
         try {
             goCmdResult = commandExecutor.exeCommand(workingDirectory, args, logger);
@@ -59,25 +59,25 @@ public class GoDriver implements Serializable {
     }
 
     @SuppressWarnings("unused")
-    public boolean isGoInstalled() {
+    public boolean isInstalled() {
         try {
-            goVersion(false);
+            version(false);
             return true;
         } catch (IOException e) {
             return false;
         }
     }
 
-    public CommandResults goVersion(boolean prompt) throws IOException {
-        return runGoCmd(GO_VERSION_CMD, prompt);
+    public CommandResults version(boolean prompt) throws IOException {
+        return runCmd(GO_VERSION_CMD, prompt);
     }
 
-    public CommandResults goModGraph(boolean prompt) throws IOException {
-        return runGoCmd(GO_MOD_GRAPH_CMD, prompt);
+    public CommandResults modGraph(boolean prompt) throws IOException {
+        return runCmd(GO_MOD_GRAPH_CMD, prompt);
     }
 
     public String getModuleName() throws IOException {
-        CommandResults commandResults = runGoCmd(GO_LIST_MODULE, false);
+        CommandResults commandResults = runCmd(GO_LIST_MODULE, false);
         return commandResults.getRes().trim();
     }
 }

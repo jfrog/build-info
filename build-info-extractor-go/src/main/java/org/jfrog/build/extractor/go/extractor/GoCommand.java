@@ -40,7 +40,7 @@ abstract class GoCommand implements Serializable {
     String moduleName;
     Log logger;
 
-    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) throws IOException {
+    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) {
         this.clientBuilder = clientBuilder;
         this.logger = logger;
         this.path = path;

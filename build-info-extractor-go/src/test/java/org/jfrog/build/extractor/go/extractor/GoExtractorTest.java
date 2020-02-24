@@ -13,7 +13,6 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.executor.CommandExecutor;
-import org.jfrog.build.extractor.go.TestUtils;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -21,7 +20,9 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,6 +36,8 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private static final String GO_VIRTUAL_REPO = "build-info-tests-go-virtual";
     private static final String[] GO_PACKAGE_EXTENSIONS = {".zip", ".mod", ".info"};
     private static final String GO_BUILD_CMD = "build";
+
+    private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private Map<String, String> env = new TreeMap<>();
@@ -62,7 +65,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         private Set<String> dependencies;
 
         Project(String projectDir, String targetDir, String name, String version, String... dependencies) {
-            this.projectOrigin = TestUtils.PROJECTS_ROOT.resolve(projectDir).toFile();
+            this.projectOrigin = PROJECTS_ROOT.resolve(projectDir).toFile();
             this.targetDir = targetDir;
             this.name = name;
             this.version = version;
@@ -122,7 +125,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         List<String> goCleanArgs = new ArrayList<>();
         goCleanArgs.add("clean");
         goCleanArgs.add("-modcache");
-        goCommandExecutor.exeCommand(TestUtils.PROJECTS_ROOT.toFile(), goCleanArgs, log);
+        goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goCleanArgs, log);
         env.clear();
         // Since we are handling dummy projects, we want to avoid package validation against Go's checksum DB.
         env.put("GONOSUMDB", "github.com/jfrog");
@@ -144,7 +147,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         Path projectDir = null;
         try {
             // Run Go build
-            projectDir = TestUtils.createProjectDir(project.targetDir, project.projectOrigin);
+            projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             GoRun goRun = new GoRun(args, projectDir, clientBuilder, repo, getUsername(), getPassword(), getLog(), env);
             Build build = goRun.execute();
             // Check successful execution and correctness of the module and dependencies
@@ -175,7 +178,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         try {
             // Run Go build on project1 locally
             Project project = Project.PROJECT_1;
-            projectDir = TestUtils.createProjectDir(project.targetDir, project.projectOrigin);
+            projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, StringUtils.EMPTY, getUsername(), getPassword(), getLog(), env);
             Build project1Build = goRun.execute();
             // Check successful execution
@@ -197,7 +200,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
 
             // Run Go build on project2 using Artifctory for resolution
             project = Project.PROJECT_2;
-            projectDir = TestUtils.createProjectDir(project.targetDir, project.projectOrigin);
+            projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             goRun = new GoRun(GO_BUILD_CMD, projectDir, buildInfoClientBuilder, virtualRepo, getUsername(), getPassword(), getLog(), env);
             Build project2Build = goRun.execute();
             // Check successful execution and correctness of the module, dependencies and artifacts
@@ -214,5 +217,11 @@ public class GoExtractorTest extends IntegrationTestsBase {
                 FileUtils.deleteQuietly(projectDir.toFile());
             }
         }
+    }
+
+    private static Path createProjectDir(String targetDir, File projectOrigin) throws IOException {
+        File projectDir = Files.createTempDirectory(targetDir).toFile();
+        FileUtils.copyDirectory(projectOrigin, projectDir);
+        return projectDir.toPath();
     }
 }

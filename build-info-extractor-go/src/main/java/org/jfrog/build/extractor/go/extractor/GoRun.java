@@ -59,7 +59,7 @@ public class GoRun extends GoCommand {
      * @param logger        - The logger.
      * @param env           - Environment variables to use during npm execution.
      */
-    public GoRun(String goCmdArgs, Path path, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) throws IOException {
+    public GoRun(String goCmdArgs, Path path, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) {
         super(clientBuilder, path, logger);
         this.env = env;
         this.goCmdArgs = goCmdArgs;
@@ -78,8 +78,8 @@ public class GoRun extends GoCommand {
             this.goDriver = new GoDriver(GO_CLIENT_CMD, env, path.toFile(), logger);
             this.moduleName = goDriver.getModuleName();
             // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
-            goDriver.goVersion(true);
-            goDriver.runGoCmd(goCmdArgs, true);
+            goDriver.version(true);
+            goDriver.runCmd(goCmdArgs, true);
             collectDependencies();
             return createBuild(null, dependenciesList);
         } catch (Exception e) {
@@ -115,7 +115,7 @@ public class GoRun extends GoCommand {
      */
     private void collectDependencies() throws Exception {
         backupModAnsSumFiles();
-        CommandResults goGraphResult = goDriver.goModGraph(true);
+        CommandResults goGraphResult = goDriver.modGraph(true);
         String cachePath = getCachePath();
         String[] dependenciesGraph = goGraphResult.getRes().split("\\r?\\n");
         for (String entry : dependenciesGraph) {
@@ -155,7 +155,7 @@ public class GoRun extends GoCommand {
     }
 
     private String getCachePath() throws Exception {
-        CommandResults goEnvResult = goDriver.runGoCmd(GO_GET_GOPATH_CMD, true);
+        CommandResults goEnvResult = goDriver.runCmd(GO_GET_GOPATH_CMD, true);
         return goEnvResult.getRes().trim() + File.separator + CACHE_INNER_PATH + File.separator;
     }
 
