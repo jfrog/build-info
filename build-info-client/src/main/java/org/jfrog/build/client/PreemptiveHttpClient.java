@@ -22,36 +22,22 @@ import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.DateUtils;
-import org.apache.http.config.RegistryBuilder;
-import org.apache.http.conn.util.PublicSuffixMatcher;
-import org.apache.http.conn.util.PublicSuffixMatcherLoader;
-import org.apache.http.cookie.CookieSpecProvider;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
-import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
-import org.apache.http.impl.cookie.IgnoreSpecProvider;
-import org.apache.http.impl.cookie.NetscapeDraftSpecProvider;
-import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.jfrog.build.api.util.Log;
 
-import javax.net.ssl.SSLException;
+import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -62,65 +48,32 @@ import java.util.Set;
 public class PreemptiveHttpClient implements AutoCloseable {
 
     private static final boolean REQUEST_SENT_RETRY_ENABLED = true;
-    public static final int CONNECTION_POOL_SIZE = 10;
-    private static final String CLIENT_VERSION;
     /**
      * Used for storing the original host name, before a redirect to a new URL, on the request context.
      */
     private static final String ORIGINAL_HOST_CONTEXT_PARAM = "original.host.context.param";
 
-    private PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-    private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
+    private PoolingHttpClientConnectionManager connectionManager;
+    private BasicCredentialsProvider basicCredentialsProvider;
     private String accessToken;
-    private AuthCache authCache = new BasicAuthCache();
+    private AuthCache authCache;
     private CloseableHttpClient httpClient;
     private int connectionRetries;
     private Log log;
 
-    static {
-        // initialize client version
-        Properties properties = new Properties();
-        try (InputStream is = PreemptiveHttpClient.class.getResourceAsStream("/bi.client.properties")) {
-            properties.load(is);
-        } catch (IOException e) {
-            // ignore, use the default value
-        }
-        CLIENT_VERSION = properties.getProperty("client.version", "unknown");
-    }
-
-    public PreemptiveHttpClient(String accessToken, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
-        this(StringUtils.EMPTY, StringUtils.EMPTY, accessToken, timeout, proxyConfiguration, connectionRetries);
-    }
-
-    public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
-        this(userName, password, StringUtils.EMPTY, timeout, proxyConfiguration, connectionRetries);
-    }
-
-    @SuppressWarnings("WeakerAccess")
-    private PreemptiveHttpClient(String userName, String password, String accessToken, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
-        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, accessToken, timeout, connectionRetries);
-
-        if (proxyConfiguration != null) {
-            setProxyConfiguration(httpClientBuilder, proxyConfiguration);
-        }
+    public PreemptiveHttpClient(PoolingHttpClientConnectionManager connectionManager, BasicCredentialsProvider credentialsProvider, String accessToken, AuthCache authCache, HttpClientBuilder clientBuilder, int connectionRetries, Log log) {
+        this.connectionManager = connectionManager;
+        this.basicCredentialsProvider = credentialsProvider;
         this.accessToken = accessToken;
-        connectionManager.setMaxTotal(CONNECTION_POOL_SIZE);
-        connectionManager.setDefaultMaxPerRoute(CONNECTION_POOL_SIZE);
-        httpClient = httpClientBuilder.build();
-    }
+        this.authCache = authCache;
+        this.connectionRetries = connectionRetries;
+        this.log = log;
 
-    private void setProxyConfiguration(HttpClientBuilder httpClientBuilder, ProxyConfiguration proxyConfiguration) {
-        HttpHost proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
-        httpClientBuilder.setProxy(proxy);
-
-        if (proxyConfiguration.username != null) {
-            basicCredentialsProvider.setCredentials(new AuthScope(proxyConfiguration.host, proxyConfiguration.port),
-                    new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
-            // Create AuthCache instance
-            authCache = new BasicAuthCache();
-            // Generate BASIC scheme object and add it to the local auth cache
-            authCache.put(proxy, new BasicScheme());
-        }
+        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
+        clientBuilder.setRetryHandler(new PreemptiveHttpClient.PreemptiveRetryHandler(retryCount));
+        clientBuilder.setServiceUnavailableRetryStrategy(new PreemptiveHttpClient.PreemptiveRetryStrategy());
+        clientBuilder.setRedirectStrategy(new PreemptiveHttpClient.PreemptiveRedirectStrategy());
+        this.httpClient = clientBuilder.build();
     }
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
@@ -134,79 +87,6 @@ public class PreemptiveHttpClient implements AutoCloseable {
             clientContext.setAuthCache(authCache);
         }
         return httpClient.execute(request, clientContext);
-    }
-
-    private HttpClientBuilder createHttpClientBuilder(String userName, String password, String accessToken, int timeout, int connectionRetries) {
-        this.connectionRetries = connectionRetries;
-        int timeoutMilliSeconds = timeout * 1000;
-        RequestConfig requestConfig = RequestConfig
-                .custom()
-                .setSocketTimeout(timeoutMilliSeconds)
-                .setConnectTimeout(timeoutMilliSeconds)
-                .setCircularRedirectsAllowed(true)
-                .build();
-
-        HttpClientBuilder builder = HttpClientBuilder
-                .create()
-                .setConnectionManager(connectionManager)
-                .setDefaultRequestConfig(requestConfig);
-
-        if (StringUtils.isEmpty(accessToken)) {
-            if (StringUtils.isEmpty(userName)) {
-                userName = "anonymous";
-                password = "";
-            }
-
-            basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                    new UsernamePasswordCredentials(userName, password));
-        }
-
-        // Add as the first request interceptor
-        builder.addInterceptorFirst(new PreemptiveAuth());
-
-        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
-        builder.setRetryHandler(new PreemptiveRetryHandler(retryCount));
-        builder.setServiceUnavailableRetryStrategy(new PreemptiveRetryStrategy());
-        builder.setRedirectStrategy(new PreemptiveRedirectStrategy());
-
-        // set the following user agent with each request
-        String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
-        builder.setUserAgent(userAgent);
-
-        setDefaultCookieSpecRegistry(builder);
-        return builder;
-    }
-
-    /**
-     * This method configures the http client builder cookie spec, to avoid log messages like:
-     * Invalid cookie header: "Set-Cookie: AWSALB=jgFuoBrtnHLZCOr1B07ulLBEGSXLWcGZO8rTzzuuORNDpTubaDixX30r9N3F3Hy9xAlFgXhVghWJHE4V8uNQSNUsz7Wx7geQ8zrlG8mPva2yeCyuKDVm4iO6/IdP; Expires=Tue, 25 Jun 2019 22:20:19 GMT; Path=/". Invalid 'expires' attribute: Tue, 25 Jun 2019 22:20:19 GMT
-     */
-    private void setDefaultCookieSpecRegistry(HttpClientBuilder clientBuilder) {
-        PublicSuffixMatcher publicSuffixMatcher = PublicSuffixMatcherLoader.getDefault();
-        clientBuilder.setPublicSuffixMatcher(publicSuffixMatcher);
-
-        final CookieSpecProvider defaultProvider = new DefaultCookieSpecProvider(
-                DefaultCookieSpecProvider.CompatibilityLevel.DEFAULT, publicSuffixMatcher, new String[]{
-                "EEE, dd-MMM-yy HH:mm:ss z", // Netscape expires pattern
-                DateUtils.PATTERN_RFC1036,
-                DateUtils.PATTERN_ASCTIME,
-                DateUtils.PATTERN_RFC1123
-        }, false);
-
-        final CookieSpecProvider laxStandardProvider = new RFC6265CookieSpecProvider(
-                RFC6265CookieSpecProvider.CompatibilityLevel.RELAXED, publicSuffixMatcher);
-        final CookieSpecProvider strictStandardProvider = new RFC6265CookieSpecProvider(
-                RFC6265CookieSpecProvider.CompatibilityLevel.STRICT, publicSuffixMatcher);
-
-        clientBuilder.setDefaultCookieSpecRegistry(RegistryBuilder.<CookieSpecProvider>create()
-                .register(CookieSpecs.DEFAULT, defaultProvider)
-                .register("best-match", defaultProvider)
-                .register("compatibility", defaultProvider)
-                .register(CookieSpecs.STANDARD, laxStandardProvider)
-                .register(CookieSpecs.STANDARD_STRICT, strictStandardProvider)
-                .register(CookieSpecs.NETSCAPE, new NetscapeDraftSpecProvider())
-                .register(CookieSpecs.IGNORE_COOKIES, new IgnoreSpecProvider())
-                .build());
     }
 
     @Override

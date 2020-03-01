@@ -27,6 +27,7 @@ public class BuildInfoClientBuilder {
         resolveTimeout(clientConf, client);
         resolveProxy(clientConf.proxy, client);
         resolveRetriesParams(clientConf, client);
+        resolveInsecureTls(clientConf, client);
         return client;
     }
 
@@ -65,6 +66,10 @@ public class BuildInfoClientBuilder {
         int configMaxRetries = clientConf.getConnectionRetries();
         logResolvedProperty(PROP_CONNECTION_RETRIES, String.valueOf(configMaxRetries));
         client.setConnectionRetries(configMaxRetries);
+    }
+
+    private void resolveInsecureTls(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+        client.setInsecureTls(clientConf.getInsecureTls());
     }
 
     private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,

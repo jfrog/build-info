@@ -31,7 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jfrog.build.client.PreemptiveHttpClient.CONNECTION_POOL_SIZE;
+import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
 /**
  * @author Yahav Itzhak

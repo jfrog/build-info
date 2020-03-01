@@ -64,6 +64,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private int connectionRetries = DEFAULT_CONNECTION_RETRY;
     private ProxyConfiguration proxyConfiguration;
+    private boolean insecureTls = false;
 
     private PreemptiveHttpClient deployClient;
 
@@ -132,6 +133,10 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         this.connectionRetries = connectionRetries;
     }
 
+    public void setInsecureTls(boolean insecureTls) {
+        this.insecureTls = insecureTls;
+    }
+
     public int getConnectionRetries() {
         return connectionRetries;
     }
@@ -156,12 +161,20 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
-            if (StringUtils.isNotEmpty(accessToken)) {
-                deployClient = new PreemptiveHttpClient(accessToken, connectionTimeout, proxyConfiguration, connectionRetries);
-            } else {
-                deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration, connectionRetries);
+            PreemptiveHttpClientBuilder clientBuilder = new PreemptiveHttpClientBuilder()
+                    .setConnectionRetries(connectionRetries)
+                    .setInsecureTls(insecureTls)
+                    .setTimeout(connectionTimeout)
+                    .setLog(log);
+            if (proxyConfiguration != null) {
+                clientBuilder.setProxyConfiguration(proxyConfiguration);
             }
-            deployClient.setLog(log);
+            if (StringUtils.isNotEmpty(accessToken)) {
+                clientBuilder.setAccessToken(accessToken);
+            } else {
+                clientBuilder.setUserName(username).setPassword(password);
+            }
+            deployClient = clientBuilder.build();
         }
 
         return deployClient;
