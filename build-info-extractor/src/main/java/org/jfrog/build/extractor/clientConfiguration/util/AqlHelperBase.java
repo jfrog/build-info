@@ -240,7 +240,9 @@ public class AqlHelperBase {
      * Sends an aql query to get all Sha1 value of the requested build, then returns a Map of the Sha1 values.
      */
     private Map<String, Boolean> fetchBuildArtifactsSha1() throws IOException {
-        String includeSha1Field = ".include(\"actual_sha1\")";
+        // If a user without admin privileges tries to send AQL query that includes 'actual_sha1' only, a bad request will be return.
+        // In order to fix this, we include name, repo & path.
+        String includeSha1Field = ".include(\"name\",\"repo\",\"path\",\"actual_sha1\")";
         String buildAql = createAqlQueryForBuild(includeSha1Field);
         log.debug("Searching Artifactory for build's checksums using AQL query:\n" + buildAql);
         AqlSearchResult aqlSearchResult = client.searchArtifactsByAql(buildAql);
