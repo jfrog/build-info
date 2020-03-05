@@ -37,7 +37,10 @@ abstract class GoCommand implements Serializable {
     ArtifactoryClientBuilderBase clientBuilder;
     GoDriver goDriver;
     Path path;
+    // Module name, as specified in go.mod, is used for naming the relevant go package files.
     String moduleName;
+    // Module id is used to determine which buildInfo's module should be used for the current go operation.
+    // By default it's value is moduleNme, unless customize differently.
     String buildInfoModuleId;
     Log logger;
 

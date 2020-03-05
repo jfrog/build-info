@@ -68,7 +68,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         restoreNpmrc(workingDir);
 
         List<Dependency> dependencies = collectDependencies(workingDir);
-        String moduleId = org.apache.commons.lang.StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
+        String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         return createBuild(dependencies,moduleId);
     }
 

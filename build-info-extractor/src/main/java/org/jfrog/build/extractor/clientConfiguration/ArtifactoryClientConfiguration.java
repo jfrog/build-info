@@ -516,8 +516,6 @@ public class ArtifactoryClientConfiguration {
         public void setNpmModule(String npmModule) {
             rootConfig.setStringValue(NPM_MODULE, npmModule);
         }
-
-
     }
 
     public class AuthenticationConfiguration extends PrefixPropertyHandler {

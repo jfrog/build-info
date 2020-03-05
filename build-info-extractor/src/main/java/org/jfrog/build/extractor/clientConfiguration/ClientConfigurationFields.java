@@ -33,7 +33,7 @@ public interface ClientConfigurationFields {
     String NPM_INSTALL_ARGS = "npm.installArgs";
     String NPM_EXECUTABLE_PATH = "npm.executablePath"; // Path to npm CLI
     String NPM_PATH = "npm.path"; // Path to package.json dir
-    String NPM_MODULE = "npm.module"; // custom module name for npm operation's build-info
+    String NPM_MODULE = "npm.module"; // Custom npm module name for the build-info
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
