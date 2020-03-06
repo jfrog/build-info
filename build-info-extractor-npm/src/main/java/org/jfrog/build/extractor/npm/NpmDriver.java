@@ -75,6 +75,9 @@ public class NpmDriver implements Serializable {
     public String configList(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
         // We're adding the -s option to the command, to make sure the command output can be parsed properly.
         List<String> args = new ArrayList<>(extraArgs);
+        // We will temporarily remove this argument because we do want to get json output for the config list cmd
+        // The required value will be restore later while writing the npmrc file.
+        args.remove("--json=false");
         args.add("-s");
         return runCommand(workingDirectory, new String[]{"c", "ls", "--json"}, args);
     }

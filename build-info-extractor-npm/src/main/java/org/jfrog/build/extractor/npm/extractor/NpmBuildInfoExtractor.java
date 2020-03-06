@@ -135,6 +135,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
+        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we wrote.
+        // We will get json output only if it was explicitly required in the installation arguments.
+        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequiered(installationArgs)));
 
         // Save npm auth
         npmrcProperties.putAll(npmAuth);
@@ -157,6 +160,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             bufferedWriter.write(stringBuffer.toString());
             bufferedWriter.flush();
         }
+    }
+
+    private boolean isJsonOutputRequiered(List <String> installationArgs) {
+        return installationArgs.contains("--json") || installationArgs.contains("--json=true");
     }
 
     /**
