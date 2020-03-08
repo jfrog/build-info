@@ -168,10 +168,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      *  2. --arg=value (true/false)
      *  3. --arg value (true/false)
      */
-    private boolean isJsonOutputRequired(List <String> installationArgs) {
+    static boolean isJsonOutputRequired(List <String> installationArgs) {
         int jsonIndex = installationArgs.indexOf("--json");
         if (jsonIndex > -1 ) {
-            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex).equals("false");
+            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
         }
         return installationArgs.contains("--json=true");
     }
