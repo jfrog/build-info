@@ -148,7 +148,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         try {
             // Run Go build
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            GoRun goRun = new GoRun(args, projectDir, clientBuilder, repo, getUsername(), getPassword(), getLog(), env);
+            GoRun goRun = new GoRun(args, projectDir, null, clientBuilder, repo, getUsername(), getPassword(), getLog(), env);
             Build build = goRun.execute();
             // Check successful execution and correctness of the module and dependencies
             assertNotNull(build);
@@ -179,12 +179,12 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Run Go build on project1 locally
             Project project = Project.PROJECT_1;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, StringUtils.EMPTY, getUsername(), getPassword(), getLog(), env);
+            GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, null, StringUtils.EMPTY, getUsername(), getPassword(), getLog(), env);
             Build project1Build = goRun.execute();
             // Check successful execution
             assertNotNull(project1Build);
             // Publish project1 to Artifactory
-            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo, projectDir, project.getVersion(), getLog());
+            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo, projectDir, project.getVersion(),null, getLog());
             Build publishBuild = goPublish.execute();
             // Check successful execution
             assertNotNull(publishBuild);
@@ -201,7 +201,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Run Go build on project2 using Artifctory for resolution
             project = Project.PROJECT_2;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            goRun = new GoRun(GO_BUILD_CMD, projectDir, buildInfoClientBuilder, virtualRepo, getUsername(), getPassword(), getLog(), env);
+            goRun = new GoRun(GO_BUILD_CMD, projectDir, null, buildInfoClientBuilder, virtualRepo, getUsername(), getPassword(), getLog(), env);
             Build project2Build = goRun.execute();
             // Check successful execution and correctness of the module, dependencies and artifacts
             assertNotNull(project2Build);

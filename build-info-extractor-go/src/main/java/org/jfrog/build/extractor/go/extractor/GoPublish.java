@@ -51,8 +51,8 @@ public class GoPublish extends GoCommand {
      * @param version       - The package's version.
      * @param logger        - The logger.
      */
-    public GoPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, Log logger) throws  IOException {
-        super(clientBuilder, path, logger);
+    public GoPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
+        super(clientBuilder, path, module, logger);
         this.goDriver = new GoDriver(GO_CLIENT_CMD, null, path.toFile(), logger);
         this.moduleName = goDriver.getModuleName();
         this.properties = properties;

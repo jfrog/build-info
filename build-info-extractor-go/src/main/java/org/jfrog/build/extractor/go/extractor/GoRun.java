@@ -59,8 +59,8 @@ public class GoRun extends GoCommand {
      * @param logger        - The logger.
      * @param env           - Environment variables to use during npm execution.
      */
-    public GoRun(String goCmdArgs, Path path, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) {
-        super(clientBuilder, path, logger);
+    public GoRun(String goCmdArgs, Path path, String buildInfoModuleId, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) throws IOException {
+        super(clientBuilder, path, buildInfoModuleId, logger);
         this.env = env;
         this.goCmdArgs = goCmdArgs;
         this.resolutionRepository = repo;

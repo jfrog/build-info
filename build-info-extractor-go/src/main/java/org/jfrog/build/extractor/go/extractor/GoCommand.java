@@ -37,13 +37,18 @@ abstract class GoCommand implements Serializable {
     ArtifactoryClientBuilderBase clientBuilder;
     GoDriver goDriver;
     Path path;
+    // Module name, as specified in go.mod, is used for naming the relevant go package files.
     String moduleName;
+    // Module id is used to determine which buildInfo's module should be used for the current go operation.
+    // By default it's value is moduleNme, unless customize differently.
+    String buildInfoModuleId;
     Log logger;
 
-    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) {
+    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path,  String buildInfoModuleId, Log logger) throws IOException {
         this.clientBuilder = clientBuilder;
         this.logger = logger;
         this.path = path;
+        this.buildInfoModuleId = buildInfoModuleId;
     }
 
     protected void preparePrerequisites(String repo, ArtifactoryBaseClient client) throws VersionException, IOException {
@@ -73,7 +78,8 @@ abstract class GoCommand implements Serializable {
     }
 
     protected Build createBuild(List<Artifact> artifacts, List<Dependency> dependencies) {
-        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
+        String moduleId = StringUtils.isNotBlank(buildInfoModuleId) ? buildInfoModuleId : moduleName;
+        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
         if (artifacts != null) {
             moduleBuilder.artifacts(artifacts);
         }

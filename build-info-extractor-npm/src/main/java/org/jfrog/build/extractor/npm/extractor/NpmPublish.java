@@ -38,6 +38,7 @@ public class NpmPublish extends NpmCommand {
     private ArrayListMultimap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
+    private String module;
 
     /**
      * Publish npm package.
@@ -50,9 +51,10 @@ public class NpmPublish extends NpmCommand {
      * @param logger               - The logger.
      * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, Map<String, String> env) {
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
         super(clientBuilder, executablePath, deploymentRepository, logger, path, env);
         this.properties = properties;
+        this.module = module;
     }
 
     @Override
@@ -140,8 +142,9 @@ public class NpmPublish extends NpmCommand {
     }
 
     private Build createBuild() {
+        String moduleID = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         List<Artifact> artifactList = Lists.newArrayList(deployedArtifact);
-        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).artifacts(artifactList).build();
+        Module module = new ModuleBuilder().id(moduleID).artifacts(artifactList).build();
         List<Module> modules = Lists.newArrayList(module);
         Build build = new Build();
         build.setModules(modules);
@@ -163,7 +166,8 @@ public class NpmPublish extends NpmCommand {
                     Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
-                    clientConfiguration.getAllProperties());
+                    clientConfiguration.getAllProperties(),
+                    clientConfiguration.npmHandler.getNpmModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
