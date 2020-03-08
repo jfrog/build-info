@@ -30,7 +30,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
-import org.jfrog.build.extractor.moduleParallelDeployer.ModuleParallelDeployHelper;
+import org.jfrog.build.extractor.ModuleParallelDeployHelper;
 import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
