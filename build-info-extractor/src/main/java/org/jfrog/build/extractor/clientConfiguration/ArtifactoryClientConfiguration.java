@@ -493,14 +493,6 @@ public class ArtifactoryClientConfiguration {
             rootConfig.setStringValue(NPM_INSTALL_ARGS, npmInstallArgs);
         }
 
-        public String getNpmExecutablePath() {
-            return rootConfig.getStringValue(NPM_EXECUTABLE_PATH);
-        }
-
-        public void setNpmExecutablePath(String npmExecutablePath) {
-            rootConfig.setStringValue(NPM_EXECUTABLE_PATH, npmExecutablePath);
-        }
-
         public String getNpmPath() {
             return rootConfig.getStringValue(NPM_PATH);
         }

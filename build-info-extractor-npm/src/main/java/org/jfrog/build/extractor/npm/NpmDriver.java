@@ -24,8 +24,8 @@ public class NpmDriver implements Serializable {
     private static ObjectReader jsonReader = new ObjectMapper().reader();
     private CommandExecutor commandExecutor;
 
-    public NpmDriver(String executablePath, Map<String, String> env) {
-        this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "npm"), env);
+    public NpmDriver(Map<String, String> env) {
+        this.commandExecutor = new CommandExecutor("npm", env);
     }
 
     @SuppressWarnings("unused")

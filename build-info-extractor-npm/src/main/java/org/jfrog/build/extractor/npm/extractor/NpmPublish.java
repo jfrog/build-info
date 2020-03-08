@@ -45,14 +45,13 @@ public class NpmPublish extends NpmCommand {
      *
      * @param clientBuilder        - Build Info client builder.
      * @param properties           - The Artifact properties to set (Build name, Build number, etc...).
-     * @param executablePath       - Npm executable path.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository - The repository it'll deploy to.
      * @param logger               - The logger.
      * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
-        super(clientBuilder, executablePath, deploymentRepository, logger, path, env);
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
+        super(clientBuilder, deploymentRepository, logger, path, env);
         this.properties = properties;
         this.module = module;
     }
@@ -162,7 +161,6 @@ public class NpmPublish extends NpmCommand {
             ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    npmHandler.getNpmExecutablePath(),
                     Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
