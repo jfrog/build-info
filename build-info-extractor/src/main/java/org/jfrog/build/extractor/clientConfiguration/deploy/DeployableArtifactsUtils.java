@@ -36,7 +36,7 @@ public class DeployableArtifactsUtils {
             return mapper.readValue(fromFile, new TypeReference<Map<String, List<DeployableArtifactDetail>>>(){});
         } catch (MismatchedInputException e) {
             try {
-                // For backwards compatibility (pipelines who us the native Artifactory plugin), try reading the json file as list
+                // For backwards compatibility (pipelines using the Gradle Artifactory Plugin with version 4.14.1 and bellow), try reading the json file as list
                 List<DeployableArtifactDetail> deployableArtifactDetailList = mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
                 // If successful, convert to map
                 Map<String, List<DeployableArtifactDetail>> deployableArtifactMap = new HashMap<>();

@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.moduleParallelDeployer;
+package org.jfrog.build.extractor;
 
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 /**
  * This class manages artifacts deployment after a maven / gradle build.
  * If publishForkCount is larger than 1, deployment will be parallel between modules.
- * The deployment of every module will always be serial, with pom deployed last. This is done to prevent conflicts in Artifactory.
+ * The deployment of every module will always be serial, with maven / gradle descriptors deployed last. This is done to prevent conflicts in Artifactory.
  */
 public class ModuleParallelDeployHelper {
     public void deployArtifacts(ArtifactoryBuildInfoClient client,
