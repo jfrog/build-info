@@ -344,30 +344,6 @@ public class ArtifactoryClientConfiguration {
             setStringValue(RELEASE_REPO_KEY, repoKey);
         }
 
-        public String getAggregateArtifacts() {
-            return getStringValue(AGGREGATE_ARTIFACTS);
-        }
-
-        public void setAggregateArtifacts(String path) {
-            setStringValue(AGGREGATE_ARTIFACTS, path);
-        }
-
-        public void setCopyAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(COPY_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public void setPublishAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public Boolean isCopyAggregatedArtifacts() {
-            return getBooleanValue(COPY_AGGREGATED_ARTIFACTS, false);
-        }
-
-        public Boolean isPublishAggregatedArtifacts() {
-            return getBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, false);
-        }
-
         public void setPublishArtifacts(Boolean enabled) {
             setBooleanValue(PUBLISH_ARTIFACTS, enabled);
         }

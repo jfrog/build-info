@@ -2,13 +2,12 @@ package org.jfrog.build.extractor.clientConfiguration.deploy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.jfrog.build.client.DeployableArtifactDetail;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utilities for deployable artifacts.
@@ -19,18 +18,34 @@ import java.util.Set;
  */
 public class DeployableArtifactsUtils {
 
-    public static void saveDeployableArtifactsToFile(Set<DeployDetails> deployDetails, File toFile) throws IOException {
-        List<DeployableArtifactDetail> deployableArtifacts = getDeployableArtifactsPaths(deployDetails);
+    public static void saveDeployableArtifactsByModuleToFile(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
+        Map<String, List<DeployableArtifactDetail>> deployableArtifactsDetails = new HashMap<>();
+        deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
+                deployableArtifactsDetails.put(module, DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(toFile, deployableArtifacts);
+        mapper.writeValue(toFile, deployableArtifactsDetails);
     }
 
-    public static List<DeployableArtifactDetail> loadDeployableArtifactsFromFile(File fromFile) throws IOException, ClassNotFoundException {
+    @SuppressWarnings({"UnusedDeclaration"})
+    public static Map<String, List<DeployableArtifactDetail>> loadDeployableArtifactsByModuleFromFile(File fromFile) throws IOException {
         if (fromFile == null || fromFile.length() == 0) {
-            return new ArrayList<DeployableArtifactDetail>();
+            return new HashMap<>();
         }
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
+        try {
+            return mapper.readValue(fromFile, new TypeReference<Map<String, List<DeployableArtifactDetail>>>(){});
+        } catch (MismatchedInputException e) {
+            try {
+                // For backwards compatibility (pipelines using the Gradle Artifactory Plugin with version 4.14.1 and bellow), try reading the json file as list
+                List<DeployableArtifactDetail> deployableArtifactDetailList = mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
+                // If successful, convert to map
+                Map<String, List<DeployableArtifactDetail>> deployableArtifactMap = new HashMap<>();
+                deployableArtifactMap.put("", deployableArtifactDetailList);
+                return deployableArtifactMap;
+            } catch (Exception secondTryException) {
+                throw new RuntimeException("Failed loading deployable artifacts from file: ", e);
+            }
+        }
     }
 
     private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails) {
