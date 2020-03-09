@@ -138,6 +138,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
+        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
+        // We will get json output only if it was explicitly required in the installation arguments.
+        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(installationArgs)));
 
         // Save npm auth
         npmrcProperties.putAll(npmAuth);
@@ -160,6 +163,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             bufferedWriter.write(stringBuffer.toString());
             bufferedWriter.flush();
         }
+    }
+
+    /**
+     * Boolean argument can be provided in one of the following ways:
+     *  1. --arg - which infers true
+     *  2. --arg=value (true/false)
+     *  3. --arg value (true/false)
+     */
+    static boolean isJsonOutputRequired(List <String> installationArgs) {
+        int jsonIndex = installationArgs.indexOf("--json");
+        if (jsonIndex > -1 ) {
+            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
+        }
+        return installationArgs.contains("--json=true");
     }
 
     /**

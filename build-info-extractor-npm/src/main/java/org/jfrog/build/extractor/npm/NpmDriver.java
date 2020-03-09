@@ -73,10 +73,11 @@ public class NpmDriver implements Serializable {
     }
 
     public String configList(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
-        // We're adding the -s option to the command, to make sure the command output can be parsed properly.
+        // We're adding the -s and --json options to the command, to make sure the command output can be parsed properly.
         List<String> args = new ArrayList<>(extraArgs);
         args.add("-s");
-        return runCommand(workingDirectory, new String[]{"c", "ls", "--json"}, args);
+        args.add("--json");
+        return runCommand(workingDirectory, new String[]{"c", "ls"}, args);
     }
 
     private String runCommand(File workingDirectory, String[] args, List<String> extraArgs) throws IOException, InterruptedException {
