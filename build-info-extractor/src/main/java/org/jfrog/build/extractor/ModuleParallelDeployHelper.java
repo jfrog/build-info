@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
  * The deployment of every module will always be serial, with maven / gradle descriptors deployed last. This is done to prevent conflicts in Artifactory.
  */
 public class ModuleParallelDeployHelper {
+    public static final int DEFAULT_DEPLOYMENT_THREADS = 3;
+
     public void deployArtifacts(ArtifactoryBuildInfoClient client,
                                 Map<String, Set<DeployDetails>> deployableArtifactsByModule, int publishForkCount) {
         if (publishForkCount <= 1) {

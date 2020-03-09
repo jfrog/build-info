@@ -42,6 +42,7 @@ import static org.jfrog.build.api.BuildInfoProperties.*;
 import static org.jfrog.build.api.IssuesTrackerFields.*;
 import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
 import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
 
@@ -365,7 +366,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Integer getPublishForkCount() {
-            return getIntegerValue(PUBLISH_FORK_COUNT, 8);
+            return getIntegerValue(PUBLISH_FORK_COUNT, DEFAULT_DEPLOYMENT_THREADS);
         }
 
         public boolean isRecordAllDependencies() {
