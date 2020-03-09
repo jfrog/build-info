@@ -1,10 +1,9 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static org.jfrog.build.extractor.npm.extractor.NpmBuildInfoExtractor.isJsonOutputRequired;
@@ -17,35 +16,35 @@ public class NpmBuildInfoExtractorTest {
     private Object[][] isJsonOutputRequiredProvider() {
         return new Object[][]{
                 //  Check "--json" possible positions
-                {Arrays.asList("--json"), true},
-                {Arrays.asList("--json", "arg2"), true},
-                {Arrays.asList( "arg1", "--json"), true},
-                {Arrays.asList("arg1", "--json", "arg3"), true},
+                {true, "--json"},
+                {true, "--json", "arg2"},
+                {true, "arg1", "--json"},
+                {true, "arg1", "--json", "arg3"},
                 //  Check "--json=true" possible positions
-                {Arrays.asList("--json=true"), true},
-                {Arrays.asList("--json=true", "arg2"), true},
-                {Arrays.asList( "arg1", "--json=true"), true},
-                {Arrays.asList("arg1", "--json=true", "arg3"), true},
+                {true, "--json=true"},
+                {true, "--json=true", "arg2"},
+                {true, "arg1", "--json=true"},
+                {true, "arg1", "--json=true", "arg3"},
                 //  Check "--json=false" possible positions
-                {Arrays.asList("--json=false"), false},
-                {Arrays.asList("--json=false", "arg2"), false},
-                {Arrays.asList( "arg1", "--json=false"), false},
-                {Arrays.asList("arg1", "--json=false", "arg3"), false},
+                {false, "--json=false"},
+                {false, "--json=false", "arg2"},
+                {false, "arg1", "--json=false"},
+                {false, "arg1", "--json=false", "arg3"},
                 //  Check "--json true" possible positions
-                {Arrays.asList("--json", "true"), true},
-                {Arrays.asList("--json", "true", "arg3"), true},
-                {Arrays.asList( "arg1", "--json", "true"), true},
-                {Arrays.asList("arg1", "--json", "true", "arg4"), true},
+                {true, "--json", "true"},
+                {true, "--json", "true", "arg3"},
+                {true, "arg1", "--json", "true"},
+                {true, "arg1", "--json", "true", "arg4"},
                 //  Check "--json false" possible positions
-                {Arrays.asList("--json", "false"), false},
-                {Arrays.asList("--json","false", "arg3"), false},
-                {Arrays.asList( "arg1", "--json", "false"), false},
-                {Arrays.asList("arg1", "--json", "false", "arg4"), false},
+                {false, "--json", "false"},
+                {false, "--json","false", "arg3"},
+                {false, "arg1", "--json", "false"},
+                {false, "arg1", "--json", "false", "arg4"},
         };
     }
 
     @Test(dataProvider = "isJsonOutputRequiredProvider")
-    public void isJsonOutputRequiredTest(List<String> installationArgs, boolean expectedResult) {
-        assertEquals(isJsonOutputRequired(installationArgs), expectedResult);
+    public void isJsonOutputRequiredTest(boolean expectedResult, String[] installationArgs) {
+        assertEquals(isJsonOutputRequired(Lists.newArrayList(installationArgs)), expectedResult);
     }
 }
