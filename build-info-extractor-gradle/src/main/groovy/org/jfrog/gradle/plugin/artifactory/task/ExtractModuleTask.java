@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
 public class ExtractModuleTask extends DefaultTask {
-    @OutputFile
+
     public RegularFileProperty moduleFile;
 
     public ExtractModuleTask() {
@@ -22,6 +22,11 @@ public class ExtractModuleTask extends DefaultTask {
             // Gradle 4.x
             this.moduleFile = invokeMethod(getProject().getLayout(), "fileProperty");
         }
+    }
+
+    @OutputFile
+    public RegularFileProperty getModuleFile() {
+        return moduleFile;
     }
 
     @TaskAction
