@@ -13,7 +13,7 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ExtractModuleTask extends DefaultTask {
 
-    public RegularFileProperty moduleFile;
+    private RegularFileProperty moduleFile;
 
     public ExtractModuleTask() {
         try {
