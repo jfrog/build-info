@@ -4,6 +4,7 @@ import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.util.GradleVersion;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleModuleExtractor;
@@ -13,15 +14,11 @@ import java.lang.reflect.InvocationTargetException;
 
 public class ExtractModuleTask extends DefaultTask {
 
-    private RegularFileProperty moduleFile;
+    private final RegularFileProperty moduleFile;
 
     public ExtractModuleTask() {
-        try {
-            this.moduleFile = getProject().getObjects().fileProperty();
-        } catch (NoSuchMethodError e) {
-            // Gradle 4.x
-            this.moduleFile = invokeMethod(getProject().getLayout(), "fileProperty");
-        }
+        boolean gradleVersionOlderThanFiveZero = GradleVersion.current().compareTo(GradleVersion.version("5.0")) < 0;
+        this.moduleFile = gradleVersionOlderThanFiveZero ?  invokeMethod(getProject().getLayout(), "fileProperty") : getProject().getObjects().fileProperty();
     }
 
     @OutputFile
