@@ -76,7 +76,7 @@ public class BuildDeploymentHelper {
 
         if (!StringUtils.isEmpty(clientConf.info.getDeployableArtifactsFilePath())) {
             try {
-                DeployableArtifactsUtils.saveDeployableArtifactsByModuleToFile(deployableArtifactsByModule, new File(clientConf.info.getDeployableArtifactsFilePath()));
+                DeployableArtifactsUtils.saveDeployableArtifactsToFile(deployableArtifactsByModule, new File(clientConf.info.getDeployableArtifactsFilePath()), false);
             } catch (Exception e) {
                 logger.error("Failed writing deployable artifacts to file: ", e);
                 throw new RuntimeException("Failed writing deployable artifacts to file", e);
