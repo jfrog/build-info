@@ -100,7 +100,8 @@ public class NpmPublish extends NpmCommand {
                 new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(path.toFile()))))) {
             TarArchiveEntry entry;
             while ((entry = inputStream.getNextTarEntry()) != null) {
-                if (StringUtils.endsWith(entry.getName(), "package.json")) {
+                Path parent = Paths.get(entry.getName()).getParent();
+                if (parent != null && StringUtils.equals(parent.toString(), "package") && StringUtils.endsWith(entry.getName(), "package.json")) {
                     npmPackageInfo.readPackageInfo(inputStream);
                     tarballProvided = true;
                     return;
