@@ -1129,8 +1129,18 @@ public class ArtifactoryClientConfiguration {
             setStringValue(DEPLOYABLE_ARTIFACTS, deployableArtifacts);
         }
 
+        @Deprecated
+        public void setBackwardCompatibleDeployableArtifactsFilePath(String deployableArtifacts) {
+            setStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS, deployableArtifacts);
+        }
+
         public String getDeployableArtifactsFilePath() {
-            return getStringValue(DEPLOYABLE_ARTIFACTS);
+            String path = getStringValue(DEPLOYABLE_ARTIFACTS);
+            return StringUtils.isNotEmpty(path) ? path : getStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS);
+        }
+
+        public boolean isBackwardCompatibleDeployableArtifacts() {
+            return StringUtils.isEmpty(getStringValue(DEPLOYABLE_ARTIFACTS));
         }
 
         public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {

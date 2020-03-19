@@ -18,7 +18,15 @@ import java.util.*;
  */
 public class DeployableArtifactsUtils {
 
-    public static void saveDeployableArtifactsByModuleToFile(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
+    public static void saveDeployableArtifactsToFile(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile, boolean saveBackwardCompatible) throws IOException {
+        if (saveBackwardCompatible) {
+            saveBackwardCompatibleDeployableArtifacts(deployableArtifactsByModule, toFile);
+            return;
+        }
+        saveDeployableArtifactsByModule(deployableArtifactsByModule, toFile);
+    }
+
+    private static void saveDeployableArtifactsByModule(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
         Map<String, List<DeployableArtifactDetail>> deployableArtifactsDetails = new HashMap<>();
         deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
                 deployableArtifactsDetails.put(module, DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
@@ -26,26 +34,51 @@ public class DeployableArtifactsUtils {
         mapper.writeValue(toFile, deployableArtifactsDetails);
     }
 
+    /**
+     * For backward compatibility, save the deployable artifacts as list (for pipelines using Gradle Artifactory Plugin with version 4.15.1 and above, along with Jenkins Artifactory Plugin bellow 3.6.1)
+     * */
+    @Deprecated
+    private static void saveBackwardCompatibleDeployableArtifacts(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
+        List<DeployableArtifactDetail> deployableArtifactsList = new ArrayList<DeployableArtifactDetail>();
+        deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
+            deployableArtifactsList.addAll(DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(toFile, deployableArtifactsList);
+    }
+
     @SuppressWarnings({"UnusedDeclaration"})
-    public static Map<String, List<DeployableArtifactDetail>> loadDeployableArtifactsByModuleFromFile(File fromFile) throws IOException {
+    public static Map<String, List<DeployableArtifactDetail>> loadDeployableArtifactsFromFile(File fromFile, File fromBackwardCompatibleFile) throws IOException {
+        Map<String, List<DeployableArtifactDetail>> deployableArtifactsMap = loadDeployableArtifactsByModuleFromFile(fromFile);
+        if (deployableArtifactsMap.isEmpty()) {
+            return loadBackwardCompatibleDeployableArtifactsFromFile(fromBackwardCompatibleFile);
+        }
+        return deployableArtifactsMap;
+    }
+
+    private static Map<String, List<DeployableArtifactDetail>> loadDeployableArtifactsByModuleFromFile(File fromFile) throws IOException {
         if (fromFile == null || fromFile.length() == 0) {
             return new HashMap<>();
         }
         ObjectMapper mapper = new ObjectMapper();
-        try {
-            return mapper.readValue(fromFile, new TypeReference<Map<String, List<DeployableArtifactDetail>>>(){});
-        } catch (MismatchedInputException e) {
-            try {
-                // For backwards compatibility (pipelines using the Gradle Artifactory Plugin with version 4.14.1 and bellow), try reading the json file as list
-                List<DeployableArtifactDetail> deployableArtifactDetailList = mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
-                // If successful, convert to map
-                Map<String, List<DeployableArtifactDetail>> deployableArtifactMap = new HashMap<>();
-                deployableArtifactMap.put("", deployableArtifactDetailList);
-                return deployableArtifactMap;
-            } catch (Exception secondTryException) {
-                throw new RuntimeException("Failed loading deployable artifacts from file: ", e);
-            }
+        return mapper.readValue(fromFile, new TypeReference<Map<String, List<DeployableArtifactDetail>>>(){});
+    }
+
+    /**
+     * For backwards compatibility, load the deployable artifacts as list (for pipelines using Gradle Artifactory Plugin with version bellow 4.15.0, along with Jenkins Artifactory Plugin 3.6.1 and above)
+     * */
+    @Deprecated
+    private static Map<String, List<DeployableArtifactDetail>> loadBackwardCompatibleDeployableArtifactsFromFile(File fromFile) throws IOException {
+        if (fromFile == null || fromFile.length() == 0) {
+            return new HashMap<>();
         }
+        ObjectMapper mapper = new ObjectMapper();
+        List<DeployableArtifactDetail> backwardCompatibleList = mapper.readValue(fromFile, new TypeReference<List<DeployableArtifactDetail>>(){});
+        // Convert to map
+        Map<String, List<DeployableArtifactDetail>> deployableArtifactMap = new HashMap<>();
+        if (!backwardCompatibleList.isEmpty()) {
+            deployableArtifactMap.put("", backwardCompatibleList);
+        }
+        return deployableArtifactMap;
     }
 
     private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails) {
