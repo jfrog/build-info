@@ -135,7 +135,9 @@ public class Utils {
      */
     private static void generateInitScript() throws IOException {
         String content = new String(Files.readAllBytes(INIT_SCRIPT), StandardCharsets.UTF_8);
-        content = content.replace("${pluginLibDir}", LIBS_DIR.toString());
+        // Escape "/" in windows machines
+        String libsDir = LIBS_DIR.toString().replaceAll("\\\\", "\\\\\\\\");
+        content = content.replace("${pluginLibDir}", libsDir);
         Path target = TEST_DIR.toPath().resolve("gradle.init");
         Files.write(target, content.getBytes(StandardCharsets.UTF_8));
     }

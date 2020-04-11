@@ -18,9 +18,9 @@ public class Consts {
     static final File TEST_DIR = new File(System.getProperty("java.io.tmpdir"), "gradle_tests_space");
 
     // Root directories
-    static final Path GRADLE_EXTRACTOR = java.nio.file.Paths.get(".").normalize().toAbsolutePath();
+    static final Path GRADLE_EXTRACTOR = Paths.get(".").normalize().toAbsolutePath();
     static final Path GRADLE_EXTRACTOR_SRC = GRADLE_EXTRACTOR.resolve("src");
-    static final Path PROJECTS_ROOT = GRADLE_EXTRACTOR_SRC.resolve(java.nio.file.Paths.get("test", "resources", "integration"));
+    static final Path PROJECTS_ROOT = GRADLE_EXTRACTOR_SRC.resolve(Paths.get("test", "resources", "integration"));
 
     // Projects
     static final Path GRADLE_EXAMPLE = PROJECTS_ROOT.resolve("gradle-example");
