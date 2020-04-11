@@ -38,21 +38,22 @@ public class NpmPublish extends NpmCommand {
     private ArrayListMultimap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
+    private String module;
 
     /**
      * Publish npm package.
      *
      * @param clientBuilder        - Build Info client builder.
      * @param properties           - The Artifact properties to set (Build name, Build number, etc...).
-     * @param executablePath       - Npm executable path.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository - The repository it'll deploy to.
      * @param logger               - The logger.
      * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String executablePath, Path path, String deploymentRepository, Log logger, Map<String, String> env) {
-        super(clientBuilder, executablePath, deploymentRepository, logger, path, env);
+    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
+        super(clientBuilder, deploymentRepository, logger, path, env);
         this.properties = properties;
+        this.module = module;
     }
 
     @Override
@@ -99,7 +100,8 @@ public class NpmPublish extends NpmCommand {
                 new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(path.toFile()))))) {
             TarArchiveEntry entry;
             while ((entry = inputStream.getNextTarEntry()) != null) {
-                if (StringUtils.endsWith(entry.getName(), "package.json")) {
+                Path parent = Paths.get(entry.getName()).getParent();
+                if (parent != null && StringUtils.equals(parent.toString(), "package") && StringUtils.endsWith(entry.getName(), "package.json")) {
                     npmPackageInfo.readPackageInfo(inputStream);
                     tarballProvided = true;
                     return;
@@ -140,8 +142,9 @@ public class NpmPublish extends NpmCommand {
     }
 
     private Build createBuild() {
+        String moduleID = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         List<Artifact> artifactList = Lists.newArrayList(deployedArtifact);
-        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).artifacts(artifactList).build();
+        Module module = new ModuleBuilder().id(moduleID).artifacts(artifactList).build();
         List<Module> modules = Lists.newArrayList(module);
         Build build = new Build();
         build.setModules(modules);
@@ -159,11 +162,11 @@ public class NpmPublish extends NpmCommand {
             ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    npmHandler.getNpmExecutablePath(),
                     Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
-                    clientConfiguration.getAllProperties());
+                    clientConfiguration.getAllProperties(),
+                    clientConfiguration.npmHandler.getNpmModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

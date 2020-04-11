@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.go.extractor;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
-import org.apache.commons.io.FileUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ArtifactBuilder;
@@ -12,19 +12,18 @@ import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.go.GoDriver;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import java.io.FileOutputStream;
-import java.time.Instant;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GoPublish extends GoCommand {
@@ -52,8 +51,10 @@ public class GoPublish extends GoCommand {
      * @param version       - The package's version.
      * @param logger        - The logger.
      */
-    public GoPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, Log logger) throws  IOException {
-        super(clientBuilder, path, logger);
+    public GoPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
+        super(clientBuilder, path, module, logger);
+        this.goDriver = new GoDriver(GO_CLIENT_CMD, null, path.toFile(), logger);
+        this.moduleName = goDriver.getModuleName();
         this.properties = properties;
         this.deploymentRepo = repo;
         this.version = GO_VERSION_PREFIX + version;
@@ -118,10 +119,12 @@ public class GoPublish extends GoCommand {
 
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
             List<Path> pathsList = Files.walk(path)
-                    .filter(p -> !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
+                    // Remove .git dir content, directories and the temp zip file
+                    .filter(p -> !path.relativize(p).startsWith(".git/") && !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
                     .collect(Collectors.toList());
             for (Path filePath : pathsList) {
-                ZipEntry zipEntry = new ZipEntry(path.relativize(filePath).toString());
+                // We need to have the parent hierarchy of the project in order to use the zip packaging code in org.jfrog.build.extractor.go.extractor.GoZipBallStreamer
+                ZipEntry zipEntry = new ZipEntry(path.getParent().relativize(filePath).toString());
                 zos.putNextEntry(zipEntry);
                 Files.copy(filePath, zos);
                 zos.closeEntry();

@@ -29,16 +29,8 @@ import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Ruben Perez
@@ -84,17 +76,17 @@ public class DeployTask extends DefaultTask {
         GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
                 accRoot, getProject().getRootProject());
 
-        Set<GradleDeployDetails> allDeployDetails = Collections.synchronizedSet(Sets.newTreeSet());
+        Map<String, Set<DeployDetails>> allDeployDetails = new ConcurrentHashMap<>();
         List<ArtifactoryTask> orderedTasks = findArtifactoryPublishTasks(getProject().getGradle().getTaskGraph());
 
         int publishForkCount = getPublishForkCount(accRoot);
         if (publishForkCount <= 1) {
-            orderedTasks.forEach(t -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t));
+            orderedTasks.forEach(t -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, null));
         } else {
             try {
                 ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
                 CompletableFuture<Void> allUploads = CompletableFuture.allOf(orderedTasks.stream()
-                    .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t), executor))
+                    .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, "[" + Thread.currentThread().getName() + "]"), executor))
                     .toArray(CompletableFuture[]::new));
                 allUploads.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -104,15 +96,7 @@ public class DeployTask extends DefaultTask {
 
         ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
-        String username = accRoot.publisher.getUsername();
-        String password = accRoot.publisher.getPassword();
         if (contextUrl != null) {
-            if (StringUtils.isBlank(username)) {
-                username = "";
-            }
-            if (StringUtils.isBlank(password)) {
-                password = "";
-            }
             try {
                 client = new ArtifactoryBuildInfoClient(
                         accRoot.publisher.getContextUrl(),
@@ -122,7 +106,7 @@ public class DeployTask extends DefaultTask {
                 configureProxy(accRoot, client);
                 configConnectionTimeout(accRoot, client);
                 configRetriesParams(accRoot, client);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, allDeployDetails, publishForkCount);
+                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
@@ -146,7 +130,7 @@ public class DeployTask extends DefaultTask {
                 }
                 if (isGenerateDeployableArtifactsToFile(accRoot)) {
                     try {
-                        exportDeployableArtifacts(allDeployDetails, new File(accRoot.info.getDeployableArtifactsFilePath()));
+                        exportDeployableArtifacts(allDeployDetails, new File(accRoot.info.getDeployableArtifactsFilePath()), accRoot.info.isBackwardCompatibleDeployableArtifacts());
                     } catch (Exception e) {
                         log.error("Failed writing deployable artifacts to file: ", e);
                         throw new RuntimeException("Failed writing deployable artifacts to file", e);
@@ -160,7 +144,8 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void deployArtifacts(ArtifactoryClientConfiguration accRoot, Map<String, String> propsRoot, Set<GradleDeployDetails> allDeployDetails, ArtifactoryTask artifactoryTask) {
+    private void deployArtifacts(ArtifactoryClientConfiguration accRoot, Map<String, String> propsRoot, Map<String,
+            Set<DeployDetails>> allDeployDetails, ArtifactoryTask artifactoryTask, String logPrefix) {
         try {
             if (artifactoryTask.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
@@ -180,7 +165,6 @@ public class DeployTask extends DefaultTask {
                         password = "";
                     }
 
-                    artifactoryTask.collectDescriptorsAndArtifactsForUpload();
                     if (publisher.isPublishArtifacts()) {
                         ArtifactoryBuildInfoClient client = null;
                         try {
@@ -194,14 +178,21 @@ public class DeployTask extends DefaultTask {
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
-                            deployArtifacts(artifactoryTask.deployDetails, client, patterns);
+                            deployArtifacts(artifactoryTask.deployDetails, client, patterns, logPrefix);
                         } finally {
                             if (client != null) {
                                 client.close();
                             }
                         }
                     }
-                    allDeployDetails.addAll(artifactoryTask.deployDetails);
+
+                    if (!artifactoryTask.deployDetails.isEmpty()) {
+                        Set<DeployDetails> deployDetailsSet = Sets.newLinkedHashSet();
+                        for (GradleDeployDetails details : artifactoryTask.deployDetails) {
+                            deployDetailsSet.add(details.getDeployDetails());
+                        }
+                        allDeployDetails.put(artifactoryTask.getProject().getName(), deployDetailsSet);
+                    }
                 }
             } else {
                 log.debug("Task '{}' did no work", artifactoryTask.getPath());
@@ -244,13 +235,9 @@ public class DeployTask extends DefaultTask {
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 
-    private void exportDeployableArtifacts(Set<GradleDeployDetails> allDeployDetails, File toFile) throws IOException {
+    private void exportDeployableArtifacts(Map<String, Set<DeployDetails>> allDeployDetails, File toFile, boolean exportBackwardCompatibleDeployableArtifacts) throws IOException {
         log.debug("Exporting deployable artifacts to '{}'", toFile.getAbsolutePath());
-        Set<DeployDetails> deploySet = Sets.newLinkedHashSet();
-        for (GradleDeployDetails details : allDeployDetails) {
-            deploySet.add(details.getDeployDetails());
-        }
-        DeployableArtifactsUtils.saveDeployableArtifactsToFile(deploySet, toFile);
+        DeployableArtifactsUtils.saveDeployableArtifactsToFile(allDeployDetails, toFile, exportBackwardCompatibleDeployableArtifacts);
     }
 
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
@@ -282,7 +269,7 @@ public class DeployTask extends DefaultTask {
     }
 
     private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryBuildInfoClient client,
-                                 IncludeExcludePatterns patterns)
+                                 IncludeExcludePatterns patterns, String logPrefix)
             throws IOException {
         for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
@@ -292,7 +279,7 @@ public class DeployTask extends DefaultTask {
                         "' due to the defined include-exclude patterns.");
                 continue;
             }
-            client.deployArtifact(deployDetails);
+            client.deployArtifact(deployDetails, logPrefix);
         }
     }
 

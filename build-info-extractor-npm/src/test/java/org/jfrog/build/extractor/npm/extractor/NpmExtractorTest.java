@@ -49,7 +49,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
-    private NpmDriver driver = new NpmDriver("", null);
+    private NpmDriver driver = new NpmDriver(null);
 
     public NpmExtractorTest() {
         localRepo = NPM_LOCAL_REPO;
@@ -151,7 +151,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm install
             projectDir = createProjectDir(project);
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
-            NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, null, log, path, null);
+            NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, log, path, null, null);
             Build build = npmInstall.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -188,7 +188,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, log, null);
+            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, path, virtualRepo, log, null, null);
             Build build = npmPublish.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);

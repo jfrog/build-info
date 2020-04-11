@@ -40,10 +40,10 @@ abstract class NpmCommand implements Serializable {
     Log logger;
     Path path;
 
-    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String executablePath, String repo, Log logger, Path path, Map<String, String> env) {
+    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String repo, Log logger, Path path, Map<String, String> env) {
         this.clientBuilder = clientBuilder;
-        this.npmDriver = new NpmDriver(executablePath, env);
-        this.workingDir = Files.isDirectory(path) ? path : path.getParent();
+        this.npmDriver = new NpmDriver(env);
+        this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
         this.repo = repo;
         this.logger = logger;
         this.path = path;

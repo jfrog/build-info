@@ -11,20 +11,16 @@ import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
+import org.jfrog.build.extractor.go.GoDriver;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 /**
  * Base class for go build and go publish commands.
@@ -34,32 +30,25 @@ abstract class GoCommand implements Serializable {
     protected static final String SHA1 = "SHA1";
     protected static final String MD5 = "MD5";
     protected static final String LOCAL_GO_MOD_FILENAME = "go.mod";
+    protected static final String GO_CLIENT_CMD = "go";
     private static final long serialVersionUID = 1L;
     private static final ArtifactoryVersion MIN_SUPPORTED_ARTIFACTORY_VERSION = new ArtifactoryVersion("6.10.0");
-    static final Pattern MODULE_NAME_REGEX_PATTERN = Pattern.compile("module \"?([\\w\\.@:%_\\+-.~#?&]+/?.+\\w)");
 
     ArtifactoryClientBuilderBase clientBuilder;
+    GoDriver goDriver;
     Path path;
+    // Module name, as specified in go.mod, is used for naming the relevant go package files.
     String moduleName;
+    // Module id is used to determine which buildInfo's module should be used for the current go operation.
+    // By default it's value is moduleNme, unless customize differently.
+    String buildInfoModuleId;
     Log logger;
 
-    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path, Log logger) throws IOException {
+    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path,  String buildInfoModuleId, Log logger) throws IOException {
         this.clientBuilder = clientBuilder;
         this.logger = logger;
         this.path = path;
-        parseModuleName();
-    }
-
-    private void parseModuleName() throws IOException {
-        Path modPath = Paths.get(path.toString(), LOCAL_GO_MOD_FILENAME);
-        try (Stream<String> stream = Files.lines(modPath, StandardCharsets.UTF_8)) {
-            stream.forEach(line -> {
-                if (MODULE_NAME_REGEX_PATTERN.matcher(line).matches()) {
-                    moduleName = line;
-                }
-            });
-        }
-        moduleName = StringUtils.split(moduleName, " ")[1];
+        this.buildInfoModuleId = buildInfoModuleId;
     }
 
     protected void preparePrerequisites(String repo, ArtifactoryBaseClient client) throws VersionException, IOException {
@@ -89,7 +78,8 @@ abstract class GoCommand implements Serializable {
     }
 
     protected Build createBuild(List<Artifact> artifacts, List<Dependency> dependencies) {
-        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleName);
+        String moduleId = StringUtils.isNotBlank(buildInfoModuleId) ? buildInfoModuleId : moduleName;
+        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
         if (artifacts != null) {
             moduleBuilder.artifacts(artifacts);
         }

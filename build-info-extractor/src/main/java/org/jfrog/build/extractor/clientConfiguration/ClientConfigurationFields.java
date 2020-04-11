@@ -31,15 +31,12 @@ public interface ClientConfigurationFields {
     String IVY_REPO_DEFINED = "ivy.repo.defined";
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
     String NPM_INSTALL_ARGS = "npm.installArgs";
-    String NPM_EXECUTABLE_PATH = "npm.executablePath"; // Path to npm CLI
     String NPM_PATH = "npm.path"; // Path to package.json dir
+    String NPM_MODULE = "npm.module"; // Custom npm module name for the build-info
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
     // Publish fields
-    String AGGREGATE_ARTIFACTS = "aggregate";   // String  - directory where artifacts should be aggregated
-    String PUBLISH_AGGREGATED_ARTIFACTS = "aggregated"; // Boolean - whether or not aggregated artifacts should be published
-    String COPY_AGGREGATED_ARTIFACTS = "copy.aggregated"; // Boolean - whether or not aggregated artifacts should be published
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
     String PUBLISH_FORK_COUNT = "forkCount";

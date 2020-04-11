@@ -42,6 +42,7 @@ import static org.jfrog.build.api.BuildInfoProperties.*;
 import static org.jfrog.build.api.IssuesTrackerFields.*;
 import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
 import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
 
@@ -176,6 +177,10 @@ public class ArtifactoryClientConfiguration {
 
     public Integer getConnectionRetries() {
         return root.getIntegerValue(PROP_CONNECTION_RETRIES);
+    }
+
+    public boolean getInsecureTls() {
+        return root.getBooleanValue(PROP_INSECURE_TLS, false);
     }
 
     public Integer getSocketTimeout() {
@@ -340,30 +345,6 @@ public class ArtifactoryClientConfiguration {
             setStringValue(RELEASE_REPO_KEY, repoKey);
         }
 
-        public String getAggregateArtifacts() {
-            return getStringValue(AGGREGATE_ARTIFACTS);
-        }
-
-        public void setAggregateArtifacts(String path) {
-            setStringValue(AGGREGATE_ARTIFACTS, path);
-        }
-
-        public void setCopyAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(COPY_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public void setPublishAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public Boolean isCopyAggregatedArtifacts() {
-            return getBooleanValue(COPY_AGGREGATED_ARTIFACTS, false);
-        }
-
-        public Boolean isPublishAggregatedArtifacts() {
-            return getBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, false);
-        }
-
         public void setPublishArtifacts(Boolean enabled) {
             setBooleanValue(PUBLISH_ARTIFACTS, enabled);
         }
@@ -385,7 +366,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Integer getPublishForkCount() {
-            return getIntegerValue(PUBLISH_FORK_COUNT, 8);
+            return getIntegerValue(PUBLISH_FORK_COUNT, DEFAULT_DEPLOYMENT_THREADS);
         }
 
         public boolean isRecordAllDependencies() {
@@ -489,20 +470,20 @@ public class ArtifactoryClientConfiguration {
             rootConfig.setStringValue(NPM_INSTALL_ARGS, npmInstallArgs);
         }
 
-        public String getNpmExecutablePath() {
-            return rootConfig.getStringValue(NPM_EXECUTABLE_PATH);
-        }
-
-        public void setNpmExecutablePath(String npmExecutablePath) {
-            rootConfig.setStringValue(NPM_EXECUTABLE_PATH, npmExecutablePath);
-        }
-
         public String getNpmPath() {
             return rootConfig.getStringValue(NPM_PATH);
         }
 
         public void setNpmPath(String npmPath) {
             rootConfig.setStringValue(NPM_PATH, npmPath);
+        }
+
+        public String getNpmModule() {
+            return rootConfig.getStringValue(NPM_MODULE);
+        }
+
+        public void setNpmModule(String npmModule) {
+            rootConfig.setStringValue(NPM_MODULE, npmModule);
         }
     }
 
@@ -1148,8 +1129,18 @@ public class ArtifactoryClientConfiguration {
             setStringValue(DEPLOYABLE_ARTIFACTS, deployableArtifacts);
         }
 
+        @Deprecated
+        public void setBackwardCompatibleDeployableArtifactsFilePath(String deployableArtifacts) {
+            setStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS, deployableArtifacts);
+        }
+
         public String getDeployableArtifactsFilePath() {
-            return getStringValue(DEPLOYABLE_ARTIFACTS);
+            String path = getStringValue(DEPLOYABLE_ARTIFACTS);
+            return StringUtils.isNotEmpty(path) ? path : getStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS);
+        }
+
+        public boolean isBackwardCompatibleDeployableArtifacts() {
+            return StringUtils.isEmpty(getStringValue(DEPLOYABLE_ARTIFACTS));
         }
 
         public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {

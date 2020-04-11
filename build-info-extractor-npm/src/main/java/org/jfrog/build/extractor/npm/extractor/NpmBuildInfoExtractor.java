@@ -31,7 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jfrog.build.client.PreemptiveHttpClient.CONNECTION_POOL_SIZE;
+import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
 /**
  * @author Yahav Itzhak
@@ -46,12 +46,14 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private String npmRegistry;
     private Properties npmAuth;
     private String npmProxy;
+    private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger) {
+    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger, String module) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
+        this.module = module;
     }
 
     @Override
@@ -66,7 +68,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         restoreNpmrc(workingDir);
 
         List<Dependency> dependencies = collectDependencies(workingDir);
-        return createBuild(dependencies);
+        String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
+        return createBuild(dependencies,moduleId);
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
@@ -135,6 +138,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
+        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
+        // We will get json output only if it was explicitly required in the installation arguments.
+        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(installationArgs)));
 
         // Save npm auth
         npmrcProperties.putAll(npmAuth);
@@ -157,6 +163,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             bufferedWriter.write(stringBuffer.toString());
             bufferedWriter.flush();
         }
+    }
+
+    /**
+     * Boolean argument can be provided in one of the following ways:
+     *  1. --arg - which infers true
+     *  2. --arg=value (true/false)
+     *  3. --arg value (true/false)
+     */
+    static boolean isJsonOutputRequired(List <String> installationArgs) {
+        int jsonIndex = installationArgs.indexOf("--json");
+        if (jsonIndex > -1 ) {
+            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
+        }
+        return installationArgs.contains("--json=true");
     }
 
     /**
@@ -234,8 +254,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return scopes;
     }
 
-    private Build createBuild(List<Dependency> dependencies) {
-        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).dependencies(dependencies).build();
+    private Build createBuild(List<Dependency> dependencies, String moduleId) {
+        Module module = new ModuleBuilder().id(moduleId).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();

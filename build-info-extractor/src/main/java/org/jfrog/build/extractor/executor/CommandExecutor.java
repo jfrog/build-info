@@ -37,17 +37,22 @@ public class CommandExecutor implements Serializable {
     }
 
     /**
-     * Append :/usr/local/bin to PATH environment variable.
+     * 1. Use correct file separator.
+     * 2. In unix, append ":/usr/local/bin" to PATH environment variable.
      *
      * @param env - Environment variables map.
      */
     private void fixPathEnv(Map<String, String> env) {
-        if (!isWindows()) {
-            String path = env.get("PATH");
-            if (path != null) {
-                env.replace("PATH", path + ":/usr/local/bin");
-            }
+        String path = env.get("PATH");
+        if (path == null) {
+            return;
         }
+        if (isWindows()) {
+            path = path.replaceAll(":", File.pathSeparator);
+        } else {
+            path = path.replaceAll(";", File.pathSeparator) + ":/usr/local/bin";
+        }
+        env.replace("PATH", path);
     }
 
     /**
@@ -95,10 +100,6 @@ public class CommandExecutor implements Serializable {
 
     private static boolean isMac() {
         return System.getProperty("os.name").toLowerCase().contains("mac");
-    }
-
-    private static Process runProcess(File execDir, List<String> args, String[] env) throws IOException {
-        return runProcess(execDir, args, env, null);
     }
 
     private static Process runProcess(File execDir, List<String> args, String[] env, Log logger) throws IOException {
