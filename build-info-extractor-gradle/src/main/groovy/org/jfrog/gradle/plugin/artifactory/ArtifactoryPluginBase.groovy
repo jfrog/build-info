@@ -151,7 +151,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             extractModuleTask = createExtractModuleTask(project)
         }
         extractModuleTask.moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
-        extractModuleTask.mustRunAfter(project.tasks.withType(ArtifactoryTask.class))
+        project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME).finalizedBy(extractModuleTask)
 
         project.getArtifacts().add(MODULES_CONFIGURATION, extractModuleTask.moduleFile) {
             builtBy(extractModuleTask)
