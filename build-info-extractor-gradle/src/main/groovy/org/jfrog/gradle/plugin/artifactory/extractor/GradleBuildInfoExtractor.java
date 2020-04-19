@@ -18,7 +18,6 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
-import org.gradle.api.artifacts.ProjectDependency;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.Agent;
@@ -40,17 +39,13 @@ import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * An upload task uploads files to the repositories assigned to it.  The files that get uploaded are the artifacts of
@@ -60,12 +55,13 @@ import java.util.Set;
  */
 public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     private static final Logger log = Logging.getLogger(GradleBuildInfoExtractor.class);
-    public static final String ALL_MODULES_CONFIGURATION = "allModules";
 
     private final ArtifactoryClientConfiguration clientConf;
+    private final List<ModuleInfoFileProducer> moduleInfoFileProducers;
 
-    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf) {
+    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf, List<ModuleInfoFileProducer> moduleInfoFileProducers) {
         this.clientConf = clientConf;
+        this.moduleInfoFileProducers = moduleInfoFileProducers;
     }
 
     @Override
@@ -104,17 +100,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         long durationMillis = buildStartDate != null ? System.currentTimeMillis() - buildStartDate.getTime() : 0;
         bib.durationMillis(durationMillis);
 
-        Set<File> moduleFilesWithModules = rootProject.getConfigurations().getByName(ALL_MODULES_CONFIGURATION).files(dependency -> {
-            if (dependency instanceof ProjectDependency) {
-                Project dependencyProject = ((ProjectDependency) dependency).getDependencyProject();
-                if (dependencyProject.getState().getExecuted()) {
-                    ArtifactoryTask artifactoryTask = ProjectUtils.getBuildInfoTask(dependencyProject);
-                    return artifactoryTask != null && artifactoryTask.hasModules();
-                }
-            }
+        Set<File> moduleFilesWithModules = moduleInfoFileProducers.stream()
+            .filter(ModuleInfoFileProducer::hasModules)
+            .flatMap(moduleInfoFileProducer -> moduleInfoFileProducer.getModuleInfoFiles().getFiles().stream())
+            .collect(Collectors.toSet());
 
-            return false;
-        });
         moduleFilesWithModules.forEach(moduleFile -> {
             try {
                 bib.addModule(ModuleExtractorUtils.readModuleFromFile(moduleFile));
