@@ -155,9 +155,8 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         boolean hasModules() {
             if (artifactoryTask.project.getState().getExecuted()) {
                 return artifactoryTask != null && artifactoryTask.hasModules();
-            } else {
-                return false;
             }
+            return false;
         }
 
         @Override
