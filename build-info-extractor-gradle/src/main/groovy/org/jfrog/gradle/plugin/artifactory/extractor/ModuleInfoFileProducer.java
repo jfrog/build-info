@@ -2,7 +2,6 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.gradle.api.file.FileCollection;
 
-import java.io.File;
 
 /**
  * Represents a producer of ModuleInfo files
