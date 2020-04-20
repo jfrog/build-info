@@ -1,14 +1,19 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.execution.TaskExecutionGraph;
+import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -21,10 +26,7 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
+import org.jfrog.gradle.plugin.artifactory.extractor.*;
 
 import javax.annotation.Nonnull;
 import java.io.File;
@@ -38,6 +40,8 @@ import java.util.concurrent.*;
 public class DeployTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(DeployTask.class);
+    
+    private List<ModuleInfoFileProducer> moduleInfoFileProducers = Lists.newArrayList();
 
     @TaskAction
     public void taskAction() throws IOException {
@@ -106,7 +110,7 @@ public class DeployTask extends DefaultTask {
                 configureProxy(accRoot, client);
                 configConnectionTimeout(accRoot, client);
                 configRetriesParams(accRoot, client);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot);
+                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
@@ -291,5 +295,27 @@ public class DeployTask extends DefaultTask {
             }
         }
         return tasks;
+    }
+
+    /**
+     * Returns a file collection containing all of the module info files that this task aggregates.
+     */
+    @InputFiles
+    public FileCollection getModuleInfoFiles() {
+        ConfigurableFileCollection moduleInfoFiles = getProject().files();
+        moduleInfoFileProducers.forEach(moduleInfoFileProducer -> {
+            moduleInfoFiles.from(moduleInfoFileProducer.getModuleInfoFiles());
+            moduleInfoFiles.builtBy(moduleInfoFileProducer.getModuleInfoFiles().getBuildDependencies());
+        });
+        return moduleInfoFiles;
+    }
+
+    /**
+     * Registers a producer of module info files for this task to aggregate.
+     *
+     * @param moduleInfoFileProducer
+     */
+    public void registerModuleInfoProducer(ModuleInfoFileProducer moduleInfoFileProducer) {
+        this.moduleInfoFileProducers.add(moduleInfoFileProducer);
     }
 }
