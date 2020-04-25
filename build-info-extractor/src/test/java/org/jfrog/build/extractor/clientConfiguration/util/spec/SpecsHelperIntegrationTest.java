@@ -3,12 +3,9 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
-import org.jfrog.build.extractor.clientConfiguration.util.EditPropertiesHelper;
-import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,10 +13,12 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Integration tests for the SpecHelper.
@@ -30,7 +29,7 @@ import java.util.*;
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String TEST_SPACE = "bi_specs_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
-    private SpecsHelper specsHelper = new SpecsHelper(log);
+    private final SpecsHelper specsHelper = new SpecsHelper(log);
 
     private static final String INTEGRATION_TESTS = "/integration/tests";
     private static final String DEFAULT_SPEC_PATH = "/integration/default";
@@ -43,20 +42,20 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "testCases")
-    public void integrationTests(String testName, String uploadSpec, String downloadSpec, Expected expected) throws Exception {
-        Reporter.log("Running test: " + testName, true);
+    public void integrationTests(SingleSpecTest specTest) throws Exception {
+        Reporter.log("Running test: " + specTest.testPath, false);
 
         // Upload artifacts.
         File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClientBuilder);
-        Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(specTest.uploadSpec, uploadFromPath, new HashMap<>(), buildInfoClientBuilder);
+        Reporter.log("Uploaded " + uploaded.size() + " artifacts", false);
 
         // Download artifacts to compare against the expected result.
-        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
-        Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(specTest.downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        Reporter.log("Downloaded " + downloaded.size() + " artifacts", false);
 
         // Verify expected results
-        verifyExpected(expected, tempWorkspace);
+        verifyExpected(specTest.expected, tempWorkspace);
     }
 
     /**
@@ -64,7 +63,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
      * and an 'expected' json file that lists all the expected downloaded files.
      * If the current case is missing a download or upload fileSpec, the corresponding default fileSpec ("resources/integration/default/") is used instead.
      * The created triplets are then provided to 'integrationTests' for testing.
-     * */
+     */
     @DataProvider
     private Object[][] testCases() throws IOException, URISyntaxException {
         ObjectMapper mapper = new ObjectMapper();
@@ -79,7 +78,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         Set<String> testPaths = new HashSet<>();
         listTestPaths(searchPath, testPaths);
 
-        Object[][] tests = new Object[testPaths.size()][4];
+        SingleSpecTest[][] tests = new SingleSpecTest[testPaths.size()][4];
         int i = 0;
         for (String testPath : testPaths) {
             String uploadSpec = defaultUpload;
@@ -95,7 +94,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
             }
             try {
                 Expected expected = mapper.readValue(new File(testPath, EXPECTED), Expected.class);
-                tests[i] = new Object[]{testPath, uploadSpec, downloadSpec, expected};
+                tests[i] = new SingleSpecTest[]{new SingleSpecTest(testPath, uploadSpec, downloadSpec, expected)};
             } catch (IOException e) {
                 throw new IOException("Caught error during parsing expected results at path: " + testPath, e);
             }
@@ -105,22 +104,16 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     /**
-     * Add all paths containing tests to testPaths from the provided path
+     * Add all paths containing tests to testPaths from the provided path.
      *
-     * @param path
-     * @param testPaths
-     * @throws IOException
+     * @param path      - The search path
+     * @param testPaths - The results
      */
-    private void listTestPaths(File path, Set<String> testPaths) throws IOException {
+    private void listTestPaths(File path, Set<String> testPaths) {
         if (path == null) {
             return;
         }
-        File[] files = path.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory();
-            }
-        });
+        File[] files = path.listFiles(File::isDirectory);
 
         if (files == null) {
             return;
@@ -131,6 +124,28 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
         }
         for (File f : files) {
             listTestPaths(f, testPaths);
+        }
+    }
+
+    /**
+     * This class represents a single SpecsHelper integration test
+     */
+    private static class SingleSpecTest {
+        private final String testPath;
+        private final String uploadSpec;
+        private final String downloadSpec;
+        private final Expected expected;
+
+        private SingleSpecTest(String testPath, String uploadSpec, String downloadSpec, Expected expected) {
+            this.testPath = testPath;
+            this.uploadSpec = uploadSpec;
+            this.downloadSpec = downloadSpec;
+            this.expected = expected;
+        }
+
+        @Override
+        public String toString() {
+            return testPath;
         }
     }
 }
