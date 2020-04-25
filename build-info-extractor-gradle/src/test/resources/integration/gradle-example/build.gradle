@@ -24,6 +24,10 @@ allprojects {
 
 artifactoryPublish.skip = true
 
+project('services') {
+    artifactoryPublish.skip = true
+}
+
 subprojects {
     apply plugin: 'java'
     apply plugin: 'maven'

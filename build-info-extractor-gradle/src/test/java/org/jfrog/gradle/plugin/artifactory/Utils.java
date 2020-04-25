@@ -1,10 +1,15 @@
 package org.jfrog.gradle.plugin.artifactory;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Module;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.IOException;
@@ -14,9 +19,9 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient.BUILD_BROWSE_URL;
 import static org.jfrog.gradle.plugin.artifactory.Consts.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 /**
  * @author yahavi
@@ -95,14 +100,15 @@ public class Utils {
      * 1. Check the build status of all tasks.
      * 2. Make sure all artifacts deployed.
      *
+     * @param dependenciesClient    - Artifactory dependencies client
+     * @param buildInfoClient       - The build info client
      * @param buildResult           - The build results
      * @param expectModuleArtifacts - Should we expect *.module files
-     * @param dependenciesClient    - Artifactory dependencies client
      * @param url                   - Artifactory URL
      * @param localRepo             - Artifactory local localRepo
      * @throws IOException - In case of any IO error
      */
-    static void checkBuildResults(BuildResult buildResult, boolean expectModuleArtifacts, ArtifactoryDependenciesClient dependenciesClient, String url, String localRepo) throws IOException {
+    static void checkBuildResults(ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient buildInfoClient, BuildResult buildResult, boolean expectModuleArtifacts, String url, String localRepo) throws IOException {
         // Assert all tasks ended with success outcome
         assertSuccess(buildResult, ":api:artifactoryPublish");
         assertSuccess(buildResult, ":shared:artifactoryPublish");
@@ -113,6 +119,57 @@ public class Utils {
         String[] expectedArtifacts = expectModuleArtifacts ? EXPECTED_MODULE_ARTIFACTS : EXPECTED_ARTIFACTS;
         for (String expectedArtifact : expectedArtifacts) {
             dependenciesClient.getArtifactMetadata(url + localRepo + ARTIFACTS_GROUP_ID + expectedArtifact);
+        }
+
+        // Check build info
+        Build buildInfo = getBuildInfo(buildInfoClient, buildResult);
+        assertNotNull(buildInfo);
+        checkBuildInfoModules(buildInfo, expectModuleArtifacts);
+    }
+
+    /**
+     * Get build info from the build info URL.
+     *
+     * @param buildInfoClient - The build info client
+     * @param buildResult     - The build results
+     * @return build info or null
+     * @throws IOException - In case of any IO error
+     */
+    private static Build getBuildInfo(ArtifactoryBuildInfoClient buildInfoClient, BuildResult buildResult) throws IOException {
+        // Get build info URL
+        String[] res = StringUtils.substringAfter(buildResult.getOutput(), BUILD_BROWSE_URL).split("/");
+        assertTrue(ArrayUtils.getLength(res) >= 3, "Couldn't find build info URL link");
+
+        // Extract build name and number from build info URL
+        String buildName = res[1];
+        String buildNumber = StringUtils.substringBefore(res[2], System.lineSeparator());
+        return buildInfoClient.getBuildInfo(buildName, buildNumber);
+    }
+
+    /**
+     * Check expected build info modules.
+     *
+     * @param buildInfo             - The build info
+     * @param expectModuleArtifacts - Should we expect *.module files
+     */
+    private static void checkBuildInfoModules(Build buildInfo, boolean expectModuleArtifacts) {
+        List<Module> modules = buildInfo.getModules();
+        assertEquals(modules.size(), 3);
+        for (Module module : modules) {
+            assertEquals(module.getArtifacts().size(), expectModuleArtifacts ? 5 : 4);
+            switch (module.getId()) {
+                case "org.jfrog.test.gradle.publish:webservice:1.0-SNAPSHOT":
+                    assertEquals(module.getDependencies().size(), 7);
+                    break;
+                case "org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT":
+                    assertEquals(module.getDependencies().size(), 5);
+                    break;
+                case "org.jfrog.test.gradle.publish:shared:1.0-SNAPSHOT":
+                    assertEquals(module.getDependencies().size(), 0);
+                    break;
+                default:
+                    fail("Unexpected module ID: " + module.getId());
+            }
         }
     }
 

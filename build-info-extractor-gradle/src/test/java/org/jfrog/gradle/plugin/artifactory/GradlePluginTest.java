@@ -22,7 +22,7 @@ import static org.jfrog.gradle.plugin.artifactory.Utils.*;
 @Test
 public class GradlePluginTest extends IntegrationTestsBase {
 
-    private Map<String, String> envVars;
+    final private Map<String, String> envVars;
 
     public GradlePluginTest() {
         localRepo = GRADLE_LOCAL_REPO;
@@ -58,7 +58,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(buildResult, false, dependenciesClient, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, false, getUrl(), localRepo);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -68,7 +68,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, dependenciesClient, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -82,6 +82,6 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
-        checkBuildResults(buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, dependenciesClient, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
     }
 }

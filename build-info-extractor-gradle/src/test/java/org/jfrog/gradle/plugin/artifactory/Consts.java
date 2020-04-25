@@ -36,22 +36,24 @@ public class Consts {
     // Expected artifacts
     static final String ARTIFACTS_GROUP_ID = "/org/jfrog/test/gradle/publish/";
     static final String[] EXPECTED_ARTIFACTS = {
-            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.jar",
-            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.jar",
-            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.jar",
-            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.properties",
-            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.properties",
-            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.properties",
-            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.pom",
-            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.pom",
             "api/ivy-1.0-SNAPSHOT.xml",
-            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.pom"
+            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.jar",
+            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.pom",
+            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.properties",
+            "shared/ivy-1.0-SNAPSHOT.xml",
+            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.jar",
+            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.pom",
+            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.properties",
+            "webservice/ivy-1.0-SNAPSHOT.xml",
+            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.jar",
+            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.pom",
+            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.properties"
     };
     static final String[] EXPECTED_MODULE_ARTIFACTS = Stream.concat(
             Stream.of(EXPECTED_ARTIFACTS),
             Stream.of(
-                    "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.module",
+                    "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.module",
                     "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.module",
-                    "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.module")).
+                    "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.module")).
             toArray(String[]::new);
 }
