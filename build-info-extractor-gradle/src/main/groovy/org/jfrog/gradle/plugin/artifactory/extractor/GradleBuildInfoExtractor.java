@@ -107,7 +107,10 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
 
         moduleFilesWithModules.forEach(moduleFile -> {
             try {
-                bib.addModule(ModuleExtractorUtils.readModuleFromFile(moduleFile));
+                Module module = ModuleExtractorUtils.readModuleFromFile(moduleFile);
+                if(!module.getArtifacts().isEmpty()) {
+                    bib.addModule(module);
+                }
             } catch (IOException e) {
                 throw new RuntimeException("Cannot load module info from file: " + moduleFile.getAbsolutePath(), e);
             }
