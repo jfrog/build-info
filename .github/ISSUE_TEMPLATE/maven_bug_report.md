@@ -1,5 +1,5 @@
 ---
-name: Maven plugin bug report
+name: Maven Artifactory plugin bug report
 about: Create a report to help us improve
 title: ''
 labels: maven bug

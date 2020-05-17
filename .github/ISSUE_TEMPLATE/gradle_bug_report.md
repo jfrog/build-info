@@ -1,5 +1,5 @@
 ---
-name: Gradle plugin bug report
+name: Gradle Artifactory plugin bug report
 about: Create a report to help us improve
 title: ''
 labels: gradle bug
