@@ -1,5 +1,5 @@
 ---
-name: Build info extractors Bug report
+name: Build info extractors bug report
 about: Create a report to help us improve
 title: ''
 labels: bug
