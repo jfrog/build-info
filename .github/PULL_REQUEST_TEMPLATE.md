@@ -1,0 +1,3 @@
+- [ ] I signed [JFrog's CLA](https://secure.echosign.com/public/hostedForm?formid=5IYKLZ2RXB543N).
+- [ ] All [tests](https://ci.appveyor.com/project/jfrog-ecosystem/build-info) passed. If this feature is not already covered by the tests, I added new tests.
+-----
