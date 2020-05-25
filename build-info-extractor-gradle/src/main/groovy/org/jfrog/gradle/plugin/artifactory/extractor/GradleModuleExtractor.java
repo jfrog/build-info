@@ -100,7 +100,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
             return new ArtifactBuilder(artifactPath.substring(index + 1))
                 .type(getTypeString(publishArtifact.getType(),
                     publishArtifact.getClassifier(), publishArtifact.getExtension()))
-                .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).build();
+                .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).remotePath(deployDetails1.getTargetRepository() + "/" + artifactPath).build();
         }).collect(Collectors.toList()));
     }
 
