@@ -32,6 +32,7 @@ import org.jfrog.build.api.Issues;
 import org.jfrog.build.api.LicenseControl;
 import org.jfrog.build.api.MatrixParameter;
 import org.jfrog.build.api.Vcs;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
