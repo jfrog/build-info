@@ -108,7 +108,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         moduleFilesWithModules.forEach(moduleFile -> {
             try {
                 Module module = ModuleExtractorUtils.readModuleFromFile(moduleFile);
-                if(!module.getArtifacts().isEmpty() || !module.getDependencies().isEmpty()) {
+                if (!module.getArtifacts().isEmpty() || !module.getDependencies().isEmpty()) {
                     bib.addModule(module);
                 }
             } catch (IOException e) {
