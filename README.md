@@ -34,6 +34,22 @@ To build the code without running the tests, add to the "clean build" command th
 ```
 > ./gradlew clean build -x test
 ```
+
+### Running Gradle tests on Artifactory OSS
+On Artifactory pro, the tests infrastructure will create the test repositories by REST API.
+To run the tests on Artifactory OSS, you should create the Gradle repositories by yourself.
+To run Gradle tests on Artifactory OSS:
+1. Start Artifactory on docker container:
+```
+> docker run --name artifactory -d -p 8081:8081 docker.bintray.io/jfrog/artifactory-oss:latest
+```
+2. With your web browser, go to Artifactory UI: http://127.0.0.1:8081/artifactory
+3. Create 3 Gradle repositories:
+  * Local repository: `build-info-tests-gradle-local`
+  * Remote repository to jcenter: `build-info-tests-gradle-remote`
+  * Virtual repository containing both the remote and local: `build-info-tests-gradle-virtual` 
+4. Run tests `./gradlew build-info-extractor-gradle:test`
+
 ## Build Info json format
 
 ```groovy

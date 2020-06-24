@@ -1,0 +1,43 @@
+def javaProjects() {
+  subprojects.findAll { new File(it.projectDir, 'src').directory }
+}
+
+allprojects {
+  group = 'org.jfrog.test.gradle.publish'
+  version = currentVersion
+  status = 'Integration'
+  repositories {
+    maven {
+      url "${System.env.BITESTS_ARTIFACTORY_URL}/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
+      credentials {
+        username "${System.env.BITESTS_ARTIFACTORY_USERNAME}"
+        password "${System.env.BITESTS_ARTIFACTORY_PASSWORD}"
+      }
+    }
+  }
+}
+
+artifactoryPublish.skip = true
+
+project('services') {
+  artifactoryPublish.skip = true
+}
+
+configure(javaProjects()) {
+  apply plugin: 'java'
+  apply plugin: 'maven-publish'
+  apply plugin: 'ivy-publish'
+
+  dependencies {
+    testImplementation 'junit:junit:4.7'
+  }
+
+  publishing {
+    publications {
+      mavenJava(MavenPublication) {
+        from components.java
+        artifact(file("$rootDir/gradle.properties"))
+      }
+    }
+  }
+}

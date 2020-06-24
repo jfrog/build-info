@@ -26,6 +26,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
 
 boolean excludeMavenPluginBuild = project.hasProperty('excludeMavenPluginBuild') && project.property('excludeMavenPluginBuild')
+String testNgVersion = '6.10'
 
 // Root project version should not be used
 project.version = '2'
@@ -88,7 +89,7 @@ subprojects {
         compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
         compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
         compile group: 'commons-io', name: 'commons-io', version: '2.2'
-        testCompile group: 'org.testng', name: 'testng', version: '6.10'
+        testCompile group: 'org.testng', name: 'testng', version: testNgVersion
     }
 
     // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
@@ -298,10 +299,12 @@ project('build-info-client') {
 }
 
 project('build-info-extractor') {
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Extractor'
     dependencies {
         compile project(':build-info-client')
         testCompile "org.easymock:easymockclassextension:2.5.2"
+        testFixturesApi group: 'org.testng', name: 'testng', version: testNgVersion
     }
 }
 
@@ -335,9 +338,15 @@ project('build-info-extractor-ivy') {
 project('build-info-extractor-gradle') {
     apply plugin: 'groovy'
     apply plugin: 'java-gradle-plugin'
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Gradle Extractor'
 
     println description
+
+    sourceSets.test.resources {
+        srcDir file('build/pluginUnderTestMetadata')
+    }
+
     dependencies {
         compile gradleApi()
         compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
@@ -345,17 +354,8 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-2.0') {
-            transitive = false
-        }
-        testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
-    }
-
-    test {
-        //Spock runs with JUnit
-        test.useJUnit()
-        systemProperties['buildInfoConfig.propertiesFile'] = ''
-        environment['buildInfoConfig.propertiesFile'] = ''
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        testCompile gradleTestKit()
     }
 
     configure(install.repositories.mavenInstaller) {
@@ -366,6 +366,14 @@ project('build-info-extractor-gradle') {
             }
         }
     }
+    gradlePlugin {
+        testSourceSets sourceSets.test
+    }
+
+    // Generate "build/pluginUnderTestMetadata/plugin-under-test-metadata.properties"
+    tasks.test.dependsOn("pluginUnderTestMetadata")
+    // Generate "build/libs/*"
+    tasks.test.dependsOn("assemble")
 }
 
 project('build-info-extractor-maven3') {
@@ -412,19 +420,21 @@ project('build-info-extractor-maven3') {
 }
 
 project('build-info-extractor-npm') {
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info npm Extractor'
 
     dependencies {
-        testCompile project(':build-info-extractor').sourceSets.test.output
+        testImplementation(testFixtures(project(':build-info-extractor')))
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }
 
 project('build-info-extractor-go') {
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Go Extractor'
 
     dependencies {
-        testCompile project(':build-info-extractor').sourceSets.test.output
+        testImplementation(testFixtures(project(':build-info-extractor')))
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }
