@@ -8,6 +8,7 @@ import org.gradle.api.ProjectEvaluationListener
 import org.gradle.api.ProjectState
 import org.gradle.api.Task
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository
+import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.IvyPublication
@@ -108,11 +109,25 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (resolver != null) {
                 defineResolvers(artifactoryTask.project, resolver)
             }
-            if (artifactoryTask.isCiServerBuild()) {
+            if (artifactoryTask.isCiServerBuild() && isJava(artifactoryTask)) {
                 addDefaultPublicationsOrConfigurations(artifactoryTask);
             }
             artifactoryTask.projectEvaluated()
         }
+    }
+
+    /**
+     * Return true if the 'java' or 'java-library' plugins are applied.
+     * @param artifactoryTask - The artifactory task
+     * @return true if the 'java' or 'java-library' plugins are applied.
+     */
+    private static boolean isJava(ArtifactoryTask artifactoryTask) {
+        artifactoryTask.project.components.contains(new SoftwareComponent() {
+            @Override
+            String getName() {
+                return "java"
+            }
+        })
     }
 
     /**
