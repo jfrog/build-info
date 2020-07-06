@@ -78,8 +78,10 @@ To run Gradle tests on Artifactory OSS:
   "durationMillis" : 9762, // Build duration in milliseconds
   "artifactoryPrincipal" : "james", // Artifactory principal (the Artifactory user used for deployment)
   "url" : "http://my-ci-server/jenkins/job/My-project-name/28/", // CI server URL
-  "vcsRevision" : "e4ab2e493afd369ae7bdc90d69c912e8346a3463", // VCS revision
-  "vcsUrl" : "https://github.com/github-user/my-project.git", // VCS URL
+  "vcs": [{
+    "revision": "d7aa8f8a00cc589c80683a11e03699db90702839",// VCS revision
+    "url": "https://github.com/JFrog/project-examples.git"// VCS URL
+  }],
   "licenseControl" : {	// Artifactory License Control information
     "runChecks" : true,	// Artifactory will run automatic license scanning after the build is complete (true/false)
     "includePublishedArtifacts" : true, // Should Artifactory run license checks on the build artifacts, in addition to the build dependecies (true/false) 
@@ -279,14 +281,18 @@ To run Gradle tests on Artifactory OSS:
       "description": "CI server URL",
       "type": "string"
     },
-    "vcsRevision": {
-      "description": "VCS revision",
-      "type": "string"
-    },
-    "vcsUrl": {
-      "description": "VCS URL",
-      "type": "string"
-    },
+    "vcs": [
+      {
+        "revision": {
+          "description": "VCS revision",
+          "type": "string"
+         },
+         "url": {
+           "description": "VCS URL",
+           "type": "string"
+         }
+      }
+    ],
     "licenseControl": {
       "description": "Artifactory License Control Information",
       "type": "object",
