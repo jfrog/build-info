@@ -109,7 +109,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (resolver != null) {
                 defineResolvers(artifactoryTask.project, resolver)
             }
-            if (artifactoryTask.isCiServerBuild() && isJava(artifactoryTask)) {
+            if (artifactoryTask.isCiServerBuild() && isJava(artifactoryTask.project)) {
                 addDefaultPublicationsOrConfigurations(artifactoryTask);
             }
             artifactoryTask.projectEvaluated()
@@ -118,11 +118,11 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     /**
      * Return true if the 'java' or 'java-library' plugins are applied.
-     * @param artifactoryTask - The artifactory task
+     * @param project - The Gradle project of the task
      * @return true if the 'java' or 'java-library' plugins are applied.
      */
-    private static boolean isJava(ArtifactoryTask artifactoryTask) {
-        artifactoryTask.project.components.contains(new SoftwareComponent() {
+    private static boolean isJava(Project project) {
+        project.components.contains(new SoftwareComponent() {
             @Override
             String getName() {
                 return "java"
