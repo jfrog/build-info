@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.npm.extractor;
+package org.jfrog.build.extractor.buildTool;
 
 import org.jfrog.build.api.util.Log;
 
@@ -6,17 +6,17 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Log npm install build outputs.
- * Since Jenkins is currently the only CI server which executes the npm-build-info-extractor in a new process,
+ * Log build-tool execution outputs.
+ * Since Jenkins is currently the only CI server which executes build-tools builds in a new process,
  * this logger is currently used by Jenkins only.
  *
  * @author yahavi
  */
-public class NpmBuildInfoLogger implements Log {
+public class BuildToolLogger implements Log {
     private Logger logger;
 
-    public NpmBuildInfoLogger() {
-        logger = Logger.getLogger(NpmBuildInfoLogger.class.getName());
+    public BuildToolLogger() {
+        logger = Logger.getLogger(BuildToolLogger.class.getName());
     }
 
     public void debug(String message) {

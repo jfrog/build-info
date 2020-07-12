@@ -24,7 +24,7 @@ public class CommandExecutor implements Serializable {
 
     /**
      * @param executablePath - Executable path.
-     * @param env            - Environment variables to use during npm execution.
+     * @param env            - Environment variables to use during execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;

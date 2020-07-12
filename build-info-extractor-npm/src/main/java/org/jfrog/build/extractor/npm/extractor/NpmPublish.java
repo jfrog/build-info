@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.buildTool.BuildToolUtils.createArtifactoryClientConfiguration;
+
 /**
  * @author Yahav Itzhak
  */
@@ -159,14 +161,14 @@ public class NpmPublish extends NpmCommand {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryBuildInfoClientBuilder clientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
-            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            ArtifactoryClientConfiguration.BuildToolHandler npmHandler = clientConfiguration.buildToolHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    Paths.get(npmHandler.getBuildToolPath() != null ? npmHandler.getBuildToolPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties(),
-                    clientConfiguration.npmHandler.getNpmModule());
+                    clientConfiguration.buildToolHandler.getBuildToolModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

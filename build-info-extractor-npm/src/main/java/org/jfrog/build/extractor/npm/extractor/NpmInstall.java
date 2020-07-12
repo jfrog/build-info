@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.buildTool.BuildToolUtils.createArtifactoryClientConfiguration;
+
 /**
  * @author Yahav Itzhak
  */
@@ -66,14 +68,14 @@ public class NpmInstall extends NpmCommand {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            ArtifactoryClientConfiguration.BuildToolHandler npmHandler = clientConfiguration.buildToolHandler;
             NpmInstall npmInstall = new NpmInstall(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
-                    npmHandler.getNpmInstallArgs(),
+                    npmHandler.getBuildToolArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    Paths.get(npmHandler.getBuildToolPath() != null ? npmHandler.getBuildToolPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    npmHandler.getNpmModule());
+                    npmHandler.getBuildToolModule());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

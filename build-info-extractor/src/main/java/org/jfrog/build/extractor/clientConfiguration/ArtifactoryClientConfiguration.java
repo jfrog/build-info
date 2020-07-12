@@ -54,7 +54,7 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
-    public final NpmHandler npmHandler;
+    public final BuildToolHandler buildToolHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -68,7 +68,7 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
-        this.npmHandler = new NpmHandler();
+        this.buildToolHandler = new BuildToolHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -456,34 +456,35 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    public class NpmHandler extends PrefixPropertyHandler {
+    // Used by other build tools (npm, pip...).
+    public class BuildToolHandler extends PrefixPropertyHandler {
 
-        public NpmHandler() {
-            super(root, PROP_NPM_PREFIX);
+        public BuildToolHandler() {
+            super(root, PROP_BUILD_TOOL_PREFIX);
         }
 
-        public String getNpmInstallArgs() {
-            return rootConfig.getStringValue(NPM_INSTALL_ARGS);
+        public String getBuildToolArgs() {
+            return rootConfig.getStringValue(BUILD_TOOL_ARGS);
         }
 
-        public void setNpmInstallArgs(String npmInstallArgs) {
-            rootConfig.setStringValue(NPM_INSTALL_ARGS, npmInstallArgs);
+        public void setBuildToolArgs(String buildToolArgs) {
+            rootConfig.setStringValue(BUILD_TOOL_ARGS, buildToolArgs);
         }
 
-        public String getNpmPath() {
-            return rootConfig.getStringValue(NPM_PATH);
+        public String getBuildToolPath() {
+            return rootConfig.getStringValue(BUILD_TOOL_PATH);
         }
 
-        public void setNpmPath(String npmPath) {
-            rootConfig.setStringValue(NPM_PATH, npmPath);
+        public void setBuildToolPath(String buildToolPath) {
+            rootConfig.setStringValue(BUILD_TOOL_PATH, buildToolPath);
         }
 
-        public String getNpmModule() {
-            return rootConfig.getStringValue(NPM_MODULE);
+        public String getBuildToolModule() {
+            return rootConfig.getStringValue(BUILD_TOOL_MODULE);
         }
 
-        public void setNpmModule(String npmModule) {
-            rootConfig.setStringValue(NPM_MODULE, npmModule);
+        public void setBuildToolModule(String buildToolModule) {
+            rootConfig.setStringValue(BUILD_TOOL_MODULE, buildToolModule);
         }
     }
 
