@@ -10,6 +10,7 @@ import org.gradle.api.Task
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.invocation.Gradle
+import org.gradle.api.publish.Publication
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.IvyPublication
 import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin
@@ -24,6 +25,7 @@ import org.jfrog.gradle.plugin.artifactory.task.helper.TaskHelperPublications
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
+import javax.annotation.Nullable
 import java.util.concurrent.ConcurrentHashMap
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
@@ -109,10 +111,29 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (resolver != null) {
                 defineResolvers(artifactoryTask.project, resolver)
             }
-            if (artifactoryTask.isCiServerBuild() && isJava(artifactoryTask.project)) {
-                addDefaultPublicationsOrConfigurations(artifactoryTask);
+            if (artifactoryTask.isCiServerBuild()) {
+                PublishingExtension publishingExtension = (PublishingExtension) artifactoryTask.project.extensions.findByName("publishing")
+                String publicationsNames = clientConfig.publisher.getPublications()
+                if (publishingExtension != null && StringUtils.isNotBlank(publicationsNames)) {
+                    addPublications(artifactoryTask, publishingExtension, publicationsNames)
+                } else if (isJava(artifactoryTask.project)) {
+                    addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension);
+                }
             }
             artifactoryTask.projectEvaluated()
+        }
+    }
+
+    /**
+     * Add publications to artifactory task.
+     * @param artifactoryTask - The artifactory task
+     * @param publishingExtension - The publishing extension: 'maven-publish' or 'ivy-publish'
+     * @param publicationsNames - Publications names separated by commas
+     */
+    private static void addPublications(ArtifactoryTask artifactoryTask, PublishingExtension publishingExtension, String publicationsNames) {
+        for (publicationName in publicationsNames.split(",")) {
+            Publication publication = publishingExtension.getPublications().findByName(publicationName);
+            artifactoryTask.publications(publication)
         }
     }
 
@@ -136,9 +157,9 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      * With 'maven-publish' and 'ivy-publish' plugins - Add the default mavenJava and ivyJava publications.
      * With 'maven' plugin (deprecated) - Add the default 'archives' gradle configuration.
      * @param artifactoryTask - The Artifactory task
+     * @param publishingExtension - The publishing extension or null if the project uses configurations
      */
-    private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask) {
-        PublishingExtension publishingExtension = (PublishingExtension) artifactoryTask.project.extensions.findByName('publishing')
+    private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask, @Nullable PublishingExtension publishingExtension) {
         if (publishingExtension != null) {
             addMavenJavaPublication(publishingExtension, artifactoryTask.project)
             addIvyJavaPublication(publishingExtension, artifactoryTask.project)
