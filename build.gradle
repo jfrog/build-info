@@ -439,6 +439,16 @@ project('build-info-extractor-go') {
     }
 }
 
+project('build-info-extractor-pip') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info Pip Extractor'
+
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
+}
+
 if (!excludeMavenPluginBuild) {
     project('artifactory-maven-plugin') {
         Project p ->

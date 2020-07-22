@@ -55,6 +55,7 @@ public class ArtifactoryClientConfiguration {
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
     public final BuildToolHandler buildToolHandler;
+    public final PipHandler pipHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -69,6 +70,7 @@ public class ArtifactoryClientConfiguration {
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
         this.buildToolHandler = new BuildToolHandler();
+        this.pipHandler = new PipHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -485,6 +487,21 @@ public class ArtifactoryClientConfiguration {
 
         public void setBuildToolModule(String buildToolModule) {
             rootConfig.setStringValue(BUILD_TOOL_MODULE, buildToolModule);
+        }
+    }
+
+    public class PipHandler extends PrefixPropertyHandler {
+
+        public PipHandler() {
+            super(root, PROP_PIP_PREFIX);
+        }
+
+        public String getEnvActivation() {
+            return rootConfig.getStringValue(PIP_ENV_ACTIVATION);
+        }
+
+        public void setEnvActivation(String envActivation) {
+            rootConfig.setStringValue(PIP_ENV_ACTIVATION, envActivation);
         }
     }
 

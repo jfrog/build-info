@@ -50,7 +50,7 @@ public class NpmInstall extends NpmCommand {
             validatePath();
             validateArtifactoryVersion();
             validateNpmVersion();
-            validateRepoExists("Source repo must be specified");
+            validateRepoExists(client, repo, "Source repo must be specified");
 
             NpmProject npmProject = new NpmProject(installArgs, repo, workingDir);
             return buildInfoExtractor.extract(npmProject);

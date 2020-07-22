@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.buildTool.BuildToolUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -13,7 +13,6 @@ import org.jfrog.build.extractor.go.GoDriver;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -93,13 +92,8 @@ public class GoRun extends GoCommand {
      * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
      */
     private void setResolverAsGoProxy(ArtifactoryBuildInfoClient client) throws Exception {
-        URL rtUrl = new URL(client.getArtifactoryUrl());
-        URIBuilder proxyUrlBuilder = new URIBuilder()
-                .setScheme(rtUrl.getProtocol())
-                .setUserInfo(resolverUsername, resolverPassword)
-                .setHost(rtUrl.getHost())
-                .setPath(rtUrl.getPath() + ARTIFACTORY_GO_API + resolutionRepository);
-        String proxyValue = proxyUrlBuilder.build().toURL().toString() + "," + GOPROXY_VCS_FALLBACK;
+        String rtUrl = BuildToolUtils.createArtifactoryUrlWithCredentials(client.getArtifactoryUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
+        String proxyValue = rtUrl + "," + GOPROXY_VCS_FALLBACK;
         env.put(GOPROXY_ENV_VAR, proxyValue);
     }
 

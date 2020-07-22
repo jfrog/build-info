@@ -4,8 +4,10 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.Serializable;
 
 /**
@@ -50,4 +52,12 @@ public abstract class BuildToolExtractor implements Serializable {
         }
     }
 
+    protected static void validateRepoExists(ArtifactoryBaseClient client, String repo, String repoNotSpecifiedMsg) throws IOException {
+        if (StringUtils.isBlank(repo)) {
+            throw new IllegalArgumentException(repoNotSpecifiedMsg);
+        }
+        if (!client.isRepoExist(repo)) {
+            throw new IOException("Repo " + repo + " doesn't exist");
+        }
+    }
 }

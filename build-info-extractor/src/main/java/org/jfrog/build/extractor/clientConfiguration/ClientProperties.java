@@ -44,6 +44,8 @@ public interface ClientProperties {
 
     String PROP_BUILD_TOOL_PREFIX = ARTIFACTORY_PREFIX + "build.tool.";
 
+    String PROP_PIP_PREFIX = ARTIFACTORY_PREFIX + "pip.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */

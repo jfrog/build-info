@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.executor;
 
 import org.apache.commons.io.IOUtils;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.util.UrlUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,7 +106,7 @@ public class CommandExecutor implements Serializable {
     private static Process runProcess(File execDir, List<String> args, String[] env, Log logger) throws IOException {
         String strArgs = String.join(" ", args);
         if (logger != null) {
-            logger.info("Executing command: " + strArgs);
+            logger.info("Executing command: " + UrlUtils.maskCredentialsInUrl(strArgs));
         }
         if (isWindows()) {
             return Runtime.getRuntime().exec(new String[]{"cmd", "/c", strArgs}, env, execDir);

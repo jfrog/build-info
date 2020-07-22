@@ -1,8 +1,12 @@
 package org.jfrog.build.extractor.buildTool;
 
+import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -25,4 +29,13 @@ public class BuildToolUtils {
         return clientConfiguration;
     }
 
+    public static String createArtifactoryUrlWithCredentials(String url, String username, String password, String path) throws MalformedURLException, URISyntaxException {
+        URL rtUrl = new URL(url);
+        URIBuilder proxyUrlBuilder = new URIBuilder()
+                .setScheme(rtUrl.getProtocol())
+                .setUserInfo(username, password)
+                .setHost(rtUrl.getHost())
+                .setPath(rtUrl.getPath() + path);
+        return proxyUrlBuilder.build().toURL().toString();
+    }
 }

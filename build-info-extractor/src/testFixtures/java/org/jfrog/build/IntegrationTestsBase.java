@@ -297,7 +297,7 @@ public abstract class IntegrationTestsBase {
     }
 
     /**
-     * Expected inner class for testing proposes.
+     * Expected inner class for testing purposes.
      * Contains the local files expected to be found after successful download.
      */
     protected static class Expected {

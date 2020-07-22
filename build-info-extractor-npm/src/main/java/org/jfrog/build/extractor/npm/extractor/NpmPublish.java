@@ -80,7 +80,7 @@ public class NpmPublish extends NpmCommand {
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateArtifactoryVersion();
         validateNpmVersion();
-        validateRepoExists("Target repo must be specified");
+        validateRepoExists(client, repo, "Target repo must be specified");
         setPackageInfo();
     }
 

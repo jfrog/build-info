@@ -1,0 +1,7 @@
+{
+  "rclass": "virtual",
+  "packageType": "pip",
+  "repositories": [
+    "build-info-tests-pip-remote"
+  ]
+}

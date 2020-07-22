@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.buildTool.BuildToolExtractor;
@@ -67,15 +66,6 @@ abstract class NpmCommand extends BuildToolExtractor {
         ArtifactoryVersion npmVersion = new ArtifactoryVersion(npmVersionStr);
         if (!npmVersion.isAtLeast(MIN_SUPPORTED_NPM_VERSION)) {
             throw new VersionException("Couldn't execute npm task. Npm version must be at least " + MIN_SUPPORTED_NPM_VERSION.toString() + ".", VersionCompatibilityType.INCOMPATIBLE);
-        }
-    }
-
-    void validateRepoExists(String repoNotSpecifiedMsg) throws IOException {
-        if (StringUtils.isBlank(repo)) {
-            throw new IllegalArgumentException(repoNotSpecifiedMsg);
-        }
-        if (!client.isRepoExist(repo)) {
-            throw new IOException("Repo " + repo + " doesn't exist");
         }
     }
 }
