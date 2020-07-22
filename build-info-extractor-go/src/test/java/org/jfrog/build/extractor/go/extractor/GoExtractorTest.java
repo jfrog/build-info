@@ -113,6 +113,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
                         .file(pkgFile)
                         .targetRepository(localRepo)
                         .artifactPath(project.getTargetPath(ext))
+                        .buildToolProduct(DeployDetails.BuildToolProduct.GO)
                         .build();
                 buildInfoClient.deployArtifact(deployDetails);
             }

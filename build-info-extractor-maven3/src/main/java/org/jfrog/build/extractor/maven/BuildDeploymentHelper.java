@@ -166,6 +166,7 @@ public class BuildDeploymentHelper {
                                 sha1(artifact.getSha1()).
                                 addProperties(deployable.getProperties()).
                                 targetRepository(deployable.getTargetRepository()).
+                                buildToolProduct(DeployDetails.BuildToolProduct.MAVEN).
                                 build());
                     }
                 }

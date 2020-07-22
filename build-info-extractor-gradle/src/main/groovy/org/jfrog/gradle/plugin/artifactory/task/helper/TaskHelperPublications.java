@@ -347,7 +347,9 @@ public class TaskHelperPublications extends TaskHelper {
                     " does not exist, and need to be published from publication " + publicationName);
         }
 
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(file)
+                .buildToolProduct(DeployDetails.BuildToolProduct.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");

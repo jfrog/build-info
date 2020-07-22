@@ -65,6 +65,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
      */
     private boolean explode;
     /**
+     * Explode archive
+     */
+    private BuildToolProduct buildToolProduct;
+    /**
      * @return Return the target deployment repository.
      */
     public String getTargetRepository() {
@@ -95,6 +99,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return explode;
     }
 
+    public BuildToolProduct getBuildToolProduct() {
+        return buildToolProduct;
+    }
+
     public int compareTo(DeployDetails that) {
         return this.artifactPath.compareTo(that.artifactPath);
     }
@@ -116,6 +124,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
     public int hashCode() {
         int result = Objects.hashCode(artifactPath);
         return 31 * result + Objects.hashCode(targetRepository);
+    }
+
+    public enum BuildToolProduct {
+        GENERIC, MAVEN, ANT, IVY, GRADLE, GO, NPM
     }
 
     public static class Builder {
@@ -179,6 +191,11 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder explode(boolean isExplodeArchive) {
             deployDetails.explode = isExplodeArchive;
+            return this;
+        }
+
+        public Builder buildToolProduct(BuildToolProduct buildToolProduct) {
+            deployDetails.buildToolProduct = buildToolProduct;
             return this;
         }
 
