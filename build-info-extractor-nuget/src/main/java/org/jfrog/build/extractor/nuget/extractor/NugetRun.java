@@ -74,14 +74,14 @@ public class NugetRun extends BuildToolExtractor {
      * Install npm package.
      *
      * @param clientBuilder        - Build Info client builder.
-     * @param resolutionRepository - The repository it'll resolve from.
-     * @param installArgs          - nuget exec args.
+     * @param resolutionRepo - The repository it'll resolve from.
+     * @param nugetCmdArgs          - nuget exec args.
      * @param logger               - The logger.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param env                  - Environment variables to use during npm execution.
      */
 
-    NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
+    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
         this.clientBuilder = clientBuilder;
         this.nugetDriver = new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
