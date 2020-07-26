@@ -56,8 +56,6 @@ public class BuildInfoBuilderTest {
         assertNull(build.getParentNumber(), "Default build parent build number should be null.");
         assertNull(build.getModules(), "Default build modules should be null.");
         assertNull(build.getProperties(), "Default properties should be null.");
-        assertNull(build.getVcsRevision(), "Default vcs revision should be null.");
-        assertNull(build.getVcsUrl(), "Default vcs url should be null.");
     }
 
     /**

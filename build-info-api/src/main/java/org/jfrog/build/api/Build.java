@@ -53,17 +53,6 @@ public class Build extends BaseBuildBean {
     private String parentNumber;
     private List<Vcs> vcs;
 
-    /**
-     * @deprecated since 2.6.1 use vcs instead.
-     */
-    @Deprecated
-    private String vcsRevision;
-    /**
-     * @deprecated since 2.6.1 use vcs instead.
-     */
-    @Deprecated
-    private String vcsUrl;
-
     @Deprecated
     private String parentBuildId;
 
@@ -192,42 +181,6 @@ public class Build extends BaseBuildBean {
 
     public void setVcs(List<Vcs> vcs) {
         this.vcs = vcs;
-    }
-
-    /**
-     * Returns the vcs revision (format is vcs specific)
-     *
-     * @return The vcs revision
-     */
-    public String getVcsRevision() {
-        return vcsRevision;
-    }
-
-    /**
-     * Sets the vcs revision (format is vcs specific)
-     *
-     * @param vcsRevision The vcs revision
-     */
-    public void setVcsRevision(String vcsRevision) {
-        this.vcsRevision = vcsRevision;
-    }
-
-    /**
-     * Returns the vcs URL (format is vcs specific)
-     *
-     * @return The vcs URL
-     */
-    public String getVcsUrl() {
-        return vcsUrl;
-    }
-
-    /**
-     * Sets the vcs URL (format is vcs specific)
-     *
-     * @param vcsUrl The vcs URL
-     */
-    public void setVcsUrl(String vcsUrl) {
-        this.vcsUrl = vcsUrl;
     }
 
     /**
@@ -609,8 +562,6 @@ public class Build extends BaseBuildBean {
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +
                 ", vcs='" + vcs + '\'' +
-                ", vcsRevision='" + vcsRevision + '\'' +
-                ", vcsUrl='" + vcsUrl + '\'' +
                 ", parentBuildId='" + parentBuildId + '\'' +
                 ", licenseControl=" + licenseControl +
                 ", buildRetention=" + buildRetention +

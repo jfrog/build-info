@@ -629,7 +629,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             buildInfo.setBuildAgent(null);
             buildInfo.setParentName(null);
             buildInfo.setParentNumber(null);
-            buildInfo.setVcsRevision(null);
         }
         //From Artifactory 2.2.4 we also handle non-numeric build numbers
         if (!version.isAtLeast(ArtifactoryHttpClient.NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION)) {

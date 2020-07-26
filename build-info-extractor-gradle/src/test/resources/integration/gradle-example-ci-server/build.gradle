@@ -38,6 +38,9 @@ configure(javaProjects()) {
         from components.java
         artifact(file("$rootDir/gradle.properties"))
       }
+      customIvyPublication(IvyPublication) {
+        from components.java
+      }
     }
   }
 }
