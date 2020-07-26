@@ -60,7 +60,7 @@ public class UploadSpecHelper {
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
                 .explode(BooleanUtils.toBoolean(explode))
                 .addProperties(SpecsHelper.getPropertiesMap(props))
-                .buildToolProduct(DeployDetails.BuildToolProduct.GENERIC);
+                .packageType(DeployDetails.PackageType.GENERIC);
         if (buildProperties != null && !buildProperties.isEmpty()) {
             builder.addProperties(buildProperties);
         }

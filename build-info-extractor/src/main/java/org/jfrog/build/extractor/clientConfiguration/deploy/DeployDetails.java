@@ -65,9 +65,9 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
      */
     private boolean explode;
     /**
-     * Explode archive
+     * The package type generated this artifact's deploy details.
      */
-    private BuildToolProduct buildToolProduct;
+    private PackageType packageType;
     /**
      * @return Return the target deployment repository.
      */
@@ -99,8 +99,8 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return explode;
     }
 
-    public BuildToolProduct getBuildToolProduct() {
-        return buildToolProduct;
+    public PackageType getPackageType() {
+        return packageType;
     }
 
     public int compareTo(DeployDetails that) {
@@ -126,7 +126,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return 31 * result + Objects.hashCode(targetRepository);
     }
 
-    public enum BuildToolProduct {
+    public enum PackageType {
         GENERIC, MAVEN, ANT, IVY, GRADLE, GO, NPM
     }
 
@@ -194,8 +194,8 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
             return this;
         }
 
-        public Builder buildToolProduct(BuildToolProduct buildToolProduct) {
-            deployDetails.buildToolProduct = buildToolProduct;
+        public Builder packageType(PackageType packageType) {
+            deployDetails.packageType = packageType;
             return this;
         }
 

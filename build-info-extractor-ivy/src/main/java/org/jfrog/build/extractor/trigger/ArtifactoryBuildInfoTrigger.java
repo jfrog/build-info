@@ -239,7 +239,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
         ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
         DeployDetails.Builder builder =
                 new DeployDetails.Builder().file(artifactFile).sha1(artifact.getSha1())
-                        .md5(artifact.getMd5()).buildToolProduct(DeployDetails.BuildToolProduct.IVY);
+                        .md5(artifact.getMd5()).packageType(DeployDetails.PackageType.IVY);
         builder.artifactPath(
                 IvyResolverHelper.calculateArtifactPath(clientConf.publisher, map, extraAttributes));
         builder.targetRepository(clientConf.publisher.getRepoKey());

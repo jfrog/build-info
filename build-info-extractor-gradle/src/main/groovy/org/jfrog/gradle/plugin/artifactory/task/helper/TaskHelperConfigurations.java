@@ -261,7 +261,7 @@ public class TaskHelperConfigurations extends TaskHelper {
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
                 .file(artifactoryTask.ivyDescriptor)
-                .buildToolProduct(DeployDetails.BuildToolProduct.GRADLE);
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.ivyDescriptor, "MD5", "SHA1");
@@ -293,7 +293,7 @@ public class TaskHelperConfigurations extends TaskHelper {
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
                 .file(artifactoryTask.mavenDescriptor)
-                .buildToolProduct(DeployDetails.BuildToolProduct.GRADLE);
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.mavenDescriptor, "MD5", "SHA1");
@@ -411,7 +411,7 @@ public class TaskHelperConfigurations extends TaskHelper {
 
         DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder()
                 .file(file)
-                .buildToolProduct(DeployDetails.BuildToolProduct.GRADLE);
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
             deployDetailsBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));

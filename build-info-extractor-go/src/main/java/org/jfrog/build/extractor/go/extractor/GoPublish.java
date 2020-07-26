@@ -165,7 +165,7 @@ public class GoPublish extends GoCommand {
                 .addProperties(properties)
                 .artifactPath(moduleName + "/@v/" + artifactName)
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
-                .buildToolProduct(DeployDetails.BuildToolProduct.GO)
+                .packageType(DeployDetails.PackageType.GO)
                 .build();
 
         ArtifactoryUploadResponse response = client.deployArtifact(deployDetails);

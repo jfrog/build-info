@@ -127,7 +127,7 @@ public class NpmPublish extends NpmCommand {
                 .targetRepository(repo)
                 .addProperties(properties)
                 .artifactPath(npmPackageInfo.getDeployPath())
-                .buildToolProduct(DeployDetails.BuildToolProduct.NPM)
+                .packageType(DeployDetails.PackageType.NPM)
                 .build();
 
         ArtifactoryUploadResponse response = ((ArtifactoryBuildInfoClient) client).deployArtifact(deployDetails);

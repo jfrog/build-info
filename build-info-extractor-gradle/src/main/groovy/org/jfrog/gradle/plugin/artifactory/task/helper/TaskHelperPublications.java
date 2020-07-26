@@ -349,7 +349,7 @@ public class TaskHelperPublications extends TaskHelper {
 
         DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
                 .file(file)
-                .buildToolProduct(DeployDetails.BuildToolProduct.GRADLE);
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
