@@ -255,8 +255,6 @@ public class ArtifactoryBuildListener implements BuildListener {
                 .startedDate(new Date(ctx.getBuildStartTime()))
                 .buildAgent(new BuildAgent("Ivy", Ivy.getIvyVersion()))
                 .agent(new Agent("Ivy", Ivy.getIvyVersion()));
-        // This is here for backwards compatibility.
-        builder.type(BuildType.IVY);
         ArtifactoryClientConfiguration clientConf = ctx.getClientConf();
         String agentName = clientConf.info.getAgentName();
         String agentVersion = clientConf.info.getAgentVersion();

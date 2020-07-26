@@ -41,8 +41,6 @@ public class Build extends BaseBuildBean {
     private String version = "1.0.1";
     private String name;
     private String number;
-    @Deprecated
-    private BuildType type;
     private BuildAgent buildAgent;
     private Agent agent;
     private String started;
@@ -183,28 +181,6 @@ public class Build extends BaseBuildBean {
 
     public void setVcs(List<Vcs> vcs) {
         this.vcs = vcs;
-    }
-
-    /**
-     * Returns the type of the build
-     *
-     * @return Build type
-     * @deprecated Use {@link Build#getBuildAgent()} instead.
-     */
-    @Deprecated
-    public BuildType getType() {
-        return type;
-    }
-
-    /**
-     * Sets the type of the build
-     *
-     * @param type Build type
-     * @deprecated Use {@link Build#setBuildAgent(BuildAgent)} instead.
-     */
-    @Deprecated
-    public void setType(BuildType type) {
-        this.type = type;
     }
 
     /**
@@ -575,7 +551,6 @@ public class Build extends BaseBuildBean {
                 "version='" + version + '\'' +
                 ", name='" + name + '\'' +
                 ", number='" + number + '\'' +
-                ", type=" + type +
                 ", buildAgent=" + buildAgent +
                 ", agent=" + agent +
                 ", started='" + started + '\'' +

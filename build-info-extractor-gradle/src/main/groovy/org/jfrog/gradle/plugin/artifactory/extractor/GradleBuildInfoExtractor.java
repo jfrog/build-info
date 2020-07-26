@@ -24,7 +24,6 @@ import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.BlackDuckProperties;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.BuildType;
 import org.jfrog.build.api.Governance;
 import org.jfrog.build.api.Issue;
 import org.jfrog.build.api.IssueTracker;
@@ -69,8 +68,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     public Build extract(Project rootProject) {
         String buildName = clientConf.info.getBuildName();
         BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
-
-        bib.type(BuildType.GRADLE); //backward compat
 
         String buildNumber = clientConf.info.getBuildNumber();
         bib.number(buildNumber);
