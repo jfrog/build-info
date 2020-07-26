@@ -430,6 +430,14 @@ public class ArtifactoryClientConfiguration {
         public void setArtifactSpecs(String artifactSpecs) {
             setStringValue(ARTIFACT_SPECS, artifactSpecs);
         }
+
+        public String getPublications() {
+            return getStringValue(PUBLICATIONS);
+        }
+
+        public void setPublications(String publications) {
+            setStringValue(PUBLICATIONS, publications);
+        }
     }
 
     public class ProxyHandler extends AuthenticationConfiguration {

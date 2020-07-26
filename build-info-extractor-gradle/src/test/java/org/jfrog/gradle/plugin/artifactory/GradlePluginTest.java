@@ -75,7 +75,21 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo, virtualRepo);
+        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo, virtualRepo, "");
+        Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
+            put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
+        }};
+        // Run Gradle
+        BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
+        // Check results
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
+    }
+
+    @Test(dataProvider = "gradleVersions")
+    public void ciServerPublicationsTest(String gradleVersion) throws IOException {
+        // Create test environment
+        createTestDir(GRADLE_EXAMPLE_CI_SERVER);
+        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo, virtualRepo, "mavenJava,customIvyPublication");
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};

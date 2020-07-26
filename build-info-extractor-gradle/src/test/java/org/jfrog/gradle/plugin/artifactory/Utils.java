@@ -82,9 +82,10 @@ public class Utils {
      * @param virtualRepo - Gradle remote repository
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo) throws IOException {
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications) throws IOException {
         String content = new String(Files.readAllBytes(BUILD_INFO_PROPERTIES_SOURCE), StandardCharsets.UTF_8);
         Map<String, String> valuesMap = new HashMap<String, String>() {{
+            put("publications", publications);
             put("contextUrl", contextUrl);
             put("username", username);
             put("password", password);
