@@ -38,6 +38,15 @@ node('java') {
             buildName: 'EcoSystemRelease :: build-info-go-extractor',
             tagName: 'build-info-go-extractor'
         ],
+        "build-info-extractor-pip": [
+                    releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
+                    nextVersion: "${EXTRACTOR_NEXT_VERSION}",
+                    buildTasks: 'build-info-extractor-pip:clean build-info-extractor-pip:artifactoryPublish -x test',
+                    releaseTasks: '-PextractorRelease=true  build-info-extractor-pip:clean build-info-extractor-pip:artifactoryPublish -x test',
+                    ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
+                    buildName: 'EcoSystemRelease :: build-info-pip-extractor',
+                    tagName: 'build-info-pip-extractor'
+        ],
         "build-info-extractor-maven3": [
             releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
