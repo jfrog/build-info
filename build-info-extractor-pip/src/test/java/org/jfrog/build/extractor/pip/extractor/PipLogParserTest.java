@@ -1,11 +1,15 @@
 package org.jfrog.build.extractor.pip.extractor;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.util.TestingLog;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,28 +21,38 @@ import static org.testng.Assert.assertEquals;
 /**
  * Created by Bar Belity on 21/07/2020.
  */
+@Test
 public class PipLogParserTest {
 
     static final Log log = new TestingLog();
 
     @Test
-    public void pipLogParserTest() {
+    public void pipLogParserTest() throws IOException {
         // Build result map.
         Map<String, String> expectedResult = new HashMap<String, String>() {{
-            put("", "");
-            put("", "");
+            put("ecopkg1", "ecoPkg1-3.11.tar.gz");
+            put("ecopkg2", "");
+            put("ecopkg3", "");
+            put("ecopkg4", "ecoPkg4-1.1.1-py2.py3-none-any.whl");
+            put("ecopkg5", "");
         }};
 
         // Read pip log.
-        String pipLog = this.getClass().getResourceAsStream("/pipLogParser/pipLog.txt").toString();
-
-
-        // Parse.
-        Map<String, String> actualMap = PipLogParser.parse(pipLog, log);
-
-        // Validate.
-        assertEquals(actualMap.keySet(), expectedResult.keySet());
-        assertEquals(actualMap.values(), expectedResult.values());
+        InputStream pipLogStream = this.getClass().getResourceAsStream("/pipLogParser/pipLog.txt");
+        try {
+            String pipLog = IOUtils.toString(pipLogStream, StandardCharsets.UTF_8);
+            // Parse.
+            Map<String, String> actualMap = PipLogParser.parse(pipLog, log);
+            // Validate.
+            assertEquals(actualMap.keySet(), expectedResult.keySet());
+            assertEquals(actualMap.values(), expectedResult.values());
+        } catch (IOException e) {
+            // Do nothing.
+        } finally {
+            if (pipLogStream != null) {
+                pipLogStream.close();
+            }
+        }
     }
 
     @DataProvider

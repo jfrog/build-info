@@ -1,6 +1,6 @@
 {
   "rclass": "virtual",
-  "packageType": "pip",
+  "packageType": "pypi",
   "repositories": [
     "build-info-tests-pip-remote"
   ]

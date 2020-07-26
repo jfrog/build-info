@@ -47,10 +47,6 @@ public class PipDriver implements Serializable {
         }
     }
 
-    /**
-     * Run pip client command with args.
-     * Write stdout + stderr to logger, and return the command's result.
-     */
     public String runCommand(File workingDirectory, List<String> args, Log logger) throws IOException, InterruptedException {
         CommandResults pipCommandRes = commandExecutor.exeCommand(workingDirectory, args, logger);
         if (!pipCommandRes.isOk()) {

@@ -65,7 +65,6 @@ public class PipInstall extends BuildToolExtractor {
 
     public Build execute() {
         try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
-
             validateRepoExists(dependenciesClient, repo, "Source repo must be specified");
             String artifactoryUrlWithCredentials = BuildToolUtils.createArtifactoryUrlWithCredentials(dependenciesClient.getArtifactoryUrl(), username, password, ARTIFACTORY_PIP_API_START + repo + ARTIFACTORY_PIP_API_END);
 

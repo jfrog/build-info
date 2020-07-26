@@ -41,17 +41,15 @@ public class DependenciesCache {
     }
 
     static DependenciesCache getProjectDependenciesCache(Path executionPath, Log logger) throws IOException {
-        // Get cache file-path.
         Path cachePath = getCacheFilePath(executionPath);
-
-        // If file not exists -> create and return null.
         File cacheFile = cachePath.toFile();
         if (!cacheFile.exists()) {
+            // Create an empty cache file to allow future writing to it.
             Files.createDirectories(cacheFile.toPath().getParent());
             return null;
         }
 
-        // Read file to object.
+        // Create DependenciesCache from cache-file content.
         DependenciesCache cache = new DependenciesCache();
         cache.read(cacheFile, logger);
         return cache;
@@ -60,18 +58,14 @@ public class DependenciesCache {
     static void updateDependenciesCache(Map<String, Dependency> updateMap, Path executionPath) throws IOException {
         DependenciesCache cache = new DependenciesCache();
         cache.dependencies = updateMap;
-        // Get cache file-path.
         Path cachePath = getCacheFilePath(executionPath);
-        // Replace file with json content.
         File cacheFile = cachePath.toFile();
         cache.write(cacheFile);
     }
 
-    // Cache file will be located in the ./.jfrog/projects/deps.cache.json
     static Path getCacheFilePath(Path workDir) {
-        // Get workdir.
+        // Cache file will be located in ./.jfrog/projects/deps.cache.json
         Path absoluteWorkDir = workDir.toAbsolutePath().normalize();
-        // Return path of workdir/.jfrog/projects/deps.cache.json.
         return Paths.get(absoluteWorkDir.toString(), ".jfrog", "projects", "deps.cache.json");
     }
 

@@ -19,6 +19,7 @@ import static org.testng.Assert.*;
 /**
  * Created by Bar Belity on 21/07/2020.
  */
+@Test
 public class DependenciesCacheTest {
 
     static final Log log = new TestingLog();
@@ -38,12 +39,12 @@ public class DependenciesCacheTest {
         Path projectDir = null;
         try {
             projectDir = TestUtils.createTempDir("pipCacheTest");
-            // Test reading empty cache.
+            // Read empty cache.
             DependenciesCache nullCache = DependenciesCache.getProjectDependenciesCache(projectDir, log);
             assertNull(nullCache, "Expecting null cache read.");
-            // Test writing cache.
+            // Write cache.
             DependenciesCache.updateDependenciesCache(cacheMap, projectDir);
-            // Test reading cache.
+            // Read existing cache.
             DependenciesCache readCache = DependenciesCache.getProjectDependenciesCache(projectDir, log);
             assertNotNull(readCache, "Expecting cache read.");
             // Validate cache content.

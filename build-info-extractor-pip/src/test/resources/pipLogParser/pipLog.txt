@@ -1,0 +1,16 @@
+This is used for the pip-log-parsing test
+
+Collecting ecoPkg1>=3.11
+  Downloading https://ecoPkg1/pypi/packages/64/c2/b80047cabc2478f9501676c988a5311ed5572f25d1befc9cae07d321512c/ecoPkg1-3.11.tar.gz (1337 kB)
+  Downloading https://this-will-not-be-collected/packages/not-collected-1.1.1.whl (1 kB)
+Requirement already satisfied: ecoPkg2 in /Some/path/venv-test/lib/python3.7/site-packages (from -r requirements.txt (line 100)) (3.5)
+Collecting ecoPkg3
+Collecting ecoPkg4<1.1.2
+  Created temporary directory: /Some/path/fc/03k6jz037cja9ppdc6py13bn81wdp7/K/ecoPkg4
+  https://ecoPkg4:443 "GET /this/url/pypi-test/packages/packages/64/c2/b80047c7ac2478f9501676c988a5411ed5572f35d1beff9cae07d321512c/ecoPkg4-1.1.1-py2.py3-none-any.whl HTTP/1.1" 302 None
+  Starting new HTTPS connection (1): another-url-test.s100.frogwebservicdes.com:443
+  Downloading https://this-will-be-collected/packages/test/ecoPkg4-1.1.1-py2.py3-none-any.whl (88 kB)
+Downloading https://not-collected-2/pypi/packages/64/c2/b80047cabc2478f9501676c988a5311ed5572f25d1befc9cae07d321512c/not-collected-2-3.11.tar.gz (1337 kB)
+  Downloadinghttps://not-collected-3/pypi/packages/64/c2/b80047cabc2478f9501676c988a5311ed5572f25d1befc9cae07d321512c/not-collected-3-3.11.tar.gz (1337 kB)
+  Collecting not-collected-4
+Collecting ecoPkg5

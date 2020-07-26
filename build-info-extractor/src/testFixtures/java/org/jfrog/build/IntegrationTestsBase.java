@@ -88,9 +88,7 @@ public abstract class IntegrationTestsBase {
 
         if (!dependenciesClient.isArtifactoryOSS()) {
             createTestRepo(localRepo);
-            if (StringUtils.isNotBlank(remoteRepo)) {
-                createTestRepo(remoteRepo);
-            }
+            createTestRepo(remoteRepo);
             createTestRepo(virtualRepo);
         }
     }
@@ -100,9 +98,7 @@ public abstract class IntegrationTestsBase {
         if (!dependenciesClient.isArtifactoryOSS()) {
             // Delete the virtual first.
             deleteTestRepo(virtualRepo);
-            if (StringUtils.isNotBlank(remoteRepo)) {
-                deleteTestRepo(remoteRepo);
-            }
+            deleteTestRepo(remoteRepo);
             deleteTestRepo(localRepo);
         }
         preemptiveHttpClient.close();
@@ -186,6 +182,9 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     private void createTestRepo(String repo) throws IOException {
+        if (StringUtils.isBlank(repo)) {
+            return;
+        }
         if (isRepoExists(repo)) {
             return;
         }
@@ -214,6 +213,9 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     private void deleteTestRepo(String repo) throws IOException {
+        if (StringUtils.isBlank(repo)) {
+            return;
+        }
         HttpRequestBase httpRequest = new HttpDelete(getRepoApiUrl(repo));
         HttpResponse response = preemptiveHttpClient.execute(httpRequest);
         try {

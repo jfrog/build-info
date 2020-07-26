@@ -18,18 +18,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * Created by Bar Belity on 21/07/2020.
  */
+@Test
 public class PipExtractorTest extends IntegrationTestsBase {
 
+    private static final String PIP_LOCAL_REPO = "";
     private static final String PIP_REMOTE_REPO = "build-info-tests-pip-remote";
     private static final String PIP_VIRTUAL_REPO = "build-info-tests-pip-virtual";
 
@@ -39,36 +38,40 @@ public class PipExtractorTest extends IntegrationTestsBase {
     private String pipEnvVar;
     private PipDriver driver;
     private Map<String, String> env;
+    private Path projectDir = null;
 
     public PipExtractorTest() {
+        localRepo = PIP_LOCAL_REPO;
         remoteRepo = PIP_REMOTE_REPO;
         virtualRepo = PIP_VIRTUAL_REPO;
     }
 
     private enum Project {
         // Test projects.
-        SETUPPY("setuppy", "setuppyProject", "setuppy", "jfrog-python-example", ". --no-cache-dir --force-reinstall", 3, true),
-        SETUPPYVERBOSE("setupy-verbose", "setuppyProject", "setuppy-verbose", "jfrog-python-example", ". --no-cache-dir --force-reinstall -v", 3, true),
-        REQUIREMENTS("requirements", "requirementsProject", "requirements", "jfrog-pip-requirements", "-r requirements.txt --no-cache-dir --force-reinstall", 5, true),
-        REQUIREMENTSVERBOSE("requirements-verbose", "requirementsProject", "requirements-verbose", "jfrog-pip-requirements-verbose", "-r requirements.txt -v --no-cache-dir --force-reinstall", 5, false),
-        REQUIREMENTSCACHE("requirements-use-cache", "requirementsProject", "requirements-verbose", "jfrog-pip-requirements-usecache", "-r requirements.txt", 5, true);
+        SETUPPY("setuppyProject", "setuppy", "jfrog-python-example", ". --no-cache-dir --force-reinstall", 3, true, false),
+        SETUPPYVERBOSE("setuppyProject", "setuppy-verbose", "jfrog-python-example", ". --no-cache-dir --force-reinstall -v", 3, true, false),
+        REQUIREMENTS("requirementsProject", "requirements", "jfrog-pip-requirements", "-r requirements.txt --no-cache-dir --force-reinstall", 5, true, false),
+        REQUIREMENTSVERBOSE("requirementsProject", "requirements-verbose", "jfrog-pip-requirements-verbose", "-r requirements.txt -v --no-cache-dir --force-reinstall", 5, false, false),
+        REQUIREMENTSCACHE("requirementsProject", "requirements-verbose", "jfrog-pip-requirements-usecache", "-r requirements.txt", 5, true, true);
 
-        private String name;
         private File projectOrigin;
         private String targetDir;
         private String moduleId;
         private String args;
         private int expectedDependencies;
-        private boolean cleanAfterExecution;
+        private boolean cleanEnvAfterExecution;
+        // Allows running a test without cleaning the test environment prior to execution.
+        // Used to test pip-install with dependencies-cache from another execution.
+        private boolean allowDirtyEnv;
 
-        Project(String name, String project, String outputFoder, String moduleId, String args, int expectedDependencies, boolean cleanAfterExecution) {
-            this.name = name;
+        Project(String project, String outputFolder, String moduleId, String args, int expectedDependencies, boolean cleanEnvAfterExecution, boolean allowDirtyEnv) {
             this.projectOrigin = PROJECTS_ROOT.resolve(project).toFile();
-            this.targetDir = outputFoder;
+            this.targetDir = outputFolder;
             this.moduleId = moduleId;
             this.args = args;
             this.expectedDependencies = expectedDependencies;
-            this.cleanAfterExecution = cleanAfterExecution;
+            this.cleanEnvAfterExecution = cleanEnvAfterExecution;
+            this.allowDirtyEnv = allowDirtyEnv;
         }
     }
 
@@ -109,39 +112,38 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
     @Test(dataProvider = "pipInstallProvider")
     private void pipInstallTest(Project project) {
-        Path projectDir = null;
         try {
-            // Check pip env is clean.
-            validateEmptyPipEnv(driver);
-
-            // Copy project files to temp.
-            projectDir = TestUtils.createTestProjectTempDir(project.targetDir, project.projectOrigin);
+            if (!project.allowDirtyEnv) {
+                // Copy project files to temp.
+                projectDir = TestUtils.createTestProjectTempDir(project.targetDir, project.projectOrigin);
+                // Check pip env is clean.
+                validateEmptyPipEnv(driver);
+            }
 
             // Run pip-install.
             PipInstall pipInstall = new PipInstall(dependenciesClientBuilder, virtualRepo, project.args, getLog(),projectDir, env, project.moduleId, getUsername(), getPassword(), null);
             Build build = pipInstall.execute();
+            assertNotNull(build, "Pip execution returned empty build.");
 
             // Validate produced build-info.
             Module module = build.getModules().get(0);
             assertEquals(module.getId(), project.moduleId);
             assertEquals(module.getDependencies().size(), project.expectedDependencies);
 
-            // If should clean env -> clean.
-            if (project.cleanAfterExecution) {
+            if (project.cleanEnvAfterExecution) {
+                // Clean environment.
                 cleanPipEnv(projectDir);
                 FileUtils.deleteQuietly(projectDir.toFile());
             }
-
         } catch (Exception e) {
             // Clean env in case of exception.
-            cleanPipEnv(projectDir);
-            if (projectDir != null) {
-                FileUtils.deleteQuietly(projectDir.toFile());
-            }
-            fail(ExceptionUtils.getStackTrace(e));
-        } finally {
-            if (projectDir != null) {
-                FileUtils.deleteQuietly(projectDir.toFile());
+            try {
+                cleanPipEnv(projectDir);
+            } finally {
+                fail(ExceptionUtils.getStackTrace(e));
+                if (projectDir != null) {
+                    FileUtils.deleteQuietly(projectDir.toFile());
+                }
             }
         }
     }
@@ -158,8 +160,9 @@ public class PipExtractorTest extends IntegrationTestsBase {
             Path freezeOutputPath = Paths.get(projectDir.toString(), "pip-freeze.txt");
             Files.write(freezeOutputPath, freezeOutput.getBytes());
 
-            // Delete freezed packages.
-            driver.runCommand(projectDir.toFile(), Arrays.asList("uninstall -y -r"), log);
+            // Delete packages.
+            List<String> args = new ArrayList<>(Arrays.asList("uninstall", "-y", "-r", freezeOutputPath.toString()));
+            driver.runCommand(projectDir.toFile(), args, log);
         } catch (IOException | InterruptedException e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
@@ -175,8 +178,6 @@ public class PipExtractorTest extends IntegrationTestsBase {
     private Map<String, String> getUpdatedEnvPath() throws IOException {
         // Add virtual env path to 'PATH'.
         String pathValue = System.getenv("PATH");
-        //Map<String, String> allEnv = new HashMap<>(System.getenv());
-        //String pathValue = allEnv.get("PATH");
         if (StringUtils.isBlank(pathValue)) {
             throw new IOException("Couldn't find PATH variable, failing pip tests");
         }
@@ -186,7 +187,6 @@ public class PipExtractorTest extends IntegrationTestsBase {
         } else {
             newPathValue = String.format("%s:%s", pipEnvVar, pathValue);
         }
-        //allEnv.replace("PATH", newPathValue);
         Map<String, String> additionalEnvValues = new HashMap<>();
         additionalEnvValues.put("PATH", newPathValue);
         return additionalEnvValues;
@@ -195,5 +195,4 @@ public class PipExtractorTest extends IntegrationTestsBase {
     private static boolean isWindows() {
         return System.getProperty("os.name").toLowerCase().contains("win");
     }
-
 }
