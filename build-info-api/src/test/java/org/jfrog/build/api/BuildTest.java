@@ -80,7 +80,10 @@ public class BuildTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        String vcsRevision = "2421";
+        List<Vcs> vcsList =Arrays.asList(
+      new Vcs(url,"2421")
+        );
+
         List<Module> modules = Lists.newArrayList();
         List<PromotionStatus> statuses = Lists.newArrayList();
         List<BuildDependency> buildDependencies = Arrays.asList(
@@ -104,7 +107,7 @@ public class BuildTest {
         build.setModules(modules);
         build.setStatuses(statuses);
         build.setProperties(properties);
-        build.setVcsRevision(vcsRevision);
+        build.setVcs(vcsList);
         build.setBuildDependencies(buildDependencies);
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
@@ -118,7 +121,7 @@ public class BuildTest {
         assertEquals(build.getUrl(), url, "Unexpected build URL.");
         assertEquals(build.getParentName(), parentName, "Unexpected build parent build name.");
         assertEquals(build.getParentNumber(), parentNumber, "Unexpected build parent build number.");
-        assertEquals(build.getVcsRevision(), vcsRevision, "Unexpected build vcs revision.");
+        assertEquals(build.getVcs(), vcsList, "Unexpected build vcs revision.");
         assertEquals(build.getModules(), modules, "Unexpected build modules.");
         assertTrue(build.getModules().isEmpty(), "Build modules list should not have been populated.");
         assertEquals(build.getStatuses(), statuses, "Unexpected build statuses.");
