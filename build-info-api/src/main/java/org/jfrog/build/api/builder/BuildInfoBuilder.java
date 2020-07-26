@@ -102,12 +102,6 @@ public class BuildInfoBuilder {
         build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
         build.setStatuses(statuses);
         build.setProperties(properties);
-        if (!StringUtils.isEmpty(vcsRevision)) {
-            build.setVcsRevision(vcsRevision);
-        }
-        if (!StringUtils.isEmpty(vcsUrl)) {
-            build.setVcsUrl(vcsUrl);
-        }
         build.setVcs(vcs);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);

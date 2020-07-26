@@ -71,9 +71,6 @@ public class IssuesCollector implements Serializable {
             if (previousBuildInfo == null) {
                 return "";
             }
-            if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
-                return previousBuildInfo.getVcsRevision();
-            }
             // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
             List<Vcs> vcsList = previousBuildInfo.getVcs();
             if (vcsList != null && vcsList.size() > 0) {
