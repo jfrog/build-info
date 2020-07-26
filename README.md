@@ -15,6 +15,7 @@ export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
 export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
 export BITESTS_ARTIFACTORY_REPO=tests
+export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
 Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
 
@@ -34,6 +35,9 @@ To build the code without running the tests, add to the "clean build" command th
 ```
 > ./gradlew clean build -x test
 ```
+
+### Running pip tests
+Pip tests must run inside a clean pip-environment. Create a virtual environment and provide the path to its '/bin' directory using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.
 
 ### Running Gradle tests on Artifactory OSS
 On Artifactory pro, the tests infrastructure will create the test repositories by REST API.
