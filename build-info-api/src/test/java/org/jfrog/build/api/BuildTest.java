@@ -80,8 +80,8 @@ public class BuildTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        List<Vcs> vcsList =Arrays.asList(
-      new Vcs(url,"2421")
+        List<Vcs> vcsList = Arrays.asList(
+                new Vcs(url, "2421")
         );
 
         List<Module> modules = Lists.newArrayList();
