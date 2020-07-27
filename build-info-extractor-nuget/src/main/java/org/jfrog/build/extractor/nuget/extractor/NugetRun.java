@@ -48,7 +48,8 @@ public class NugetRun extends BuildToolExtractor {
             + "\t<packageSourceCredentials>\n\t</packageSourceCredentials>\n"
             + "</configuration>";
     private static final String SOURCE_NAME = "BuildInfo.extractor.nuget";
-    private static final String SLN_FILE_PARSING_REGEX = "^Project\\(\\\"(.*)";public static final String CONFIG_FILE_FLAG = "-configfile";
+    private static final String SLN_FILE_PARSING_REGEX = "^Project\\(\\\"(.*)";
+    public static final String CONFIG_FILE_FLAG = "-configfile";
     private static final String SHA1 = "SHA1";
     private static final String MD5 = "MD5";
     private static final String ABSENT_NUPKG_WARN_MSG = " Skipping adding this dependency to the build info. " +
@@ -154,13 +155,16 @@ public class NugetRun extends BuildToolExtractor {
      *
      * @return string that represent the projectPath or EMPTY in case of non existing path.
      */
-    private File getProjectPath() {
+    File getProjectRootPath() throws IOException {
         File projectPath = workingDir.toFile();
         // We will check the first argument after the restore sub-command
         String[] args = nugetCmdArgs.split(" ");
         // If projectPath argument was specified we will work with it.
         if (args.length > 1 && !StringUtils.startsWith(args[1], "-")) {
             projectPath = new File(args[1]);
+            if (!projectPath.isAbsolute()) {
+                projectPath = new File(FilenameUtils.concat(workingDir.toString(), args[1]));
+            }
         }
         if (projectPath.exists()) {
             if (projectPath.isFile()) {
@@ -170,7 +174,6 @@ public class NugetRun extends BuildToolExtractor {
             }
         }
         return null;
-
     }
 
     private File findProjectPathInDir(File projectPathRoot) {
@@ -209,7 +212,7 @@ public class NugetRun extends BuildToolExtractor {
 
     private void collectDependencies() throws Exception {
         this.dependenciesSources = findDependenciesSources(workingDir);
-        File projectPathRoot = getProjectPath();
+        File projectPathRoot = getProjectRootPath();
         if (projectPathRoot.toString().endsWith(".sln")) {
             collectDependenciesFromSln(projectPathRoot);
             return;
@@ -226,7 +229,7 @@ public class NugetRun extends BuildToolExtractor {
         try (Stream<String> lines = Files.lines(slnFile.toPath())) {
             lines.filter(pattern.asPredicate()).forEach(line -> {
                 try {
-                    projectLineHandler(line, globalCachePath);
+                    projectLineHandler(line, slnFile.getParentFile(), globalCachePath);
                 } catch (Exception e) {
                     throw new RuntimeException(e.getMessage());
                 }
@@ -245,7 +248,7 @@ public class NugetRun extends BuildToolExtractor {
         }
     }
 
-    private void projectLineHandler(String line, String globalCachePath) throws Exception {
+    private void projectLineHandler(String line, File slnRootDir, String globalCachePath) throws Exception {
         // Fetch the project's name and path from the project line
         String[] projectDetails = line.split("=")[1].split(",");
         String projectName = removeQuotes(projectDetails[0].trim());
@@ -254,7 +257,9 @@ public class NugetRun extends BuildToolExtractor {
             logger.debug("Skipping project " + projectName + ", since it doesn't have a csproj file path.");
             return;
         }
-        singleProjectHandler(projectName, csprojPath, globalCachePath);
+        // We build a full path for the csproj file for single-project solutions.
+        String csprojFullPath = (new File(slnRootDir,csprojPath)).getPath();
+        singleProjectHandler(projectName, csprojFullPath, globalCachePath);
     }
 
     private void singleProjectHandler(String projectName, String csprojPath, String globalCachePath) throws Exception {

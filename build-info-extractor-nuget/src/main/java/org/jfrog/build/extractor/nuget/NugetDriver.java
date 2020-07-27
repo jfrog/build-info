@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -13,8 +12,6 @@ import org.jfrog.build.extractor.executor.CommandResults;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
@@ -23,7 +20,7 @@ import java.util.stream.Stream;
 
 public class NugetDriver implements Serializable {
     private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
-    private static final String ARTIFACTORY_NUGET_API = "api/nuget/";
+    private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
     public static final String SOURCE_FLAG = "-source";
     private static final String NAME_FLAG = "-name";
     private static final String USERNAME_FLAG = "-username";

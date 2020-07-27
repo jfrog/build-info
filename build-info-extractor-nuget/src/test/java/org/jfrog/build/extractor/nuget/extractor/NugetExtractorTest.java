@@ -16,20 +16,23 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.Map;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class NugetExtractorTest extends IntegrationTestsBase {
 
-    private static final String NUGET_LOCAL_REPO = "build-info-tests-npm-local";
-    private static final String NUGET_REMOTE_REPO = "build-info-tests-npm-remote";
-    private static final String NUGET_VIRTUAL_REPO = "build-info-tests-npm-virtual";
+    private static final String NUGET_LOCAL_REPO = "build-info-tests-nuget-local";
+    private static final String NUGET_REMOTE_REPO = "build-info-tests-nuget-remote";
+    private static final String NUGET_VIRTUAL_REPO = "build-info-tests-nuget-virtual";
+    private static final String CUSTOM_MODULE = "custom-module-name";
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private Map<String, String> env = new HashMap<>();
 
     public NugetExtractorTest() {
         localRepo = NUGET_LOCAL_REPO;
@@ -39,19 +42,21 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     private enum Project {
         // Test projects
-        PACKAGESCONFIG("packagesconfig", "NugetExtractorTest PackagesConfig", "package-config", 6),
-        REFERENCE("reference", "NugetExtractorTest Reference", "reference", 6);
+        PACKAGESCONFIG("packagesconfig", "NugetExtractorTest-PackagesConfig", new String[]{"packagesconfig"}, 6),
+        REFERENCE("reference", "NugetExtractorTest-Reference", new String[]{"reference"}, 6),
+        MULTIPACKAGESCONFIG("multipackagesconfig", "NugetExtractorTest-MultiPackagesConfig", new String[]{"proj1", "proj2"}, 4,3),
+        MULTIREFERENCE("multireference", "NugetExtractorTest-MultiReference", new String[]{"proj1", "proj2"}, 5,3);
 
 
         private File projectOrigin;
         private String targetDir;
-        private String name;
-        private Integer[] dependenciesCount;
+        private int[] dependenciesCount;
+        private String[] moduleNames;
 
-        Project(String sourceDir, String targetDir, String name, Integer... dependenciesCounts) {
+        Project(String sourceDir, String targetDir, String[] moduleNames, int... dependenciesCounts) {
             this.projectOrigin = PROJECTS_ROOT.resolve(sourceDir).toFile();
             this.targetDir = targetDir;
-            this.name = name;
+            this.moduleNames = moduleNames;
             this.dependenciesCount = dependenciesCounts;
         }
 
@@ -66,24 +71,35 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     @DataProvider
     private Object[][] nugetRunProvider() {
         return new Object[][]{
-                {Project.PACKAGESCONFIG, "restore", null},
-                {Project.REFERENCE, "restore", null},
+            {Project.PACKAGESCONFIG, "restore", null, Project.PACKAGESCONFIG.moduleNames, 6},
+            {Project.REFERENCE, "restore", null, Project.PACKAGESCONFIG.REFERENCE.moduleNames, 6},
+            {Project.MULTIPACKAGESCONFIG, "restore", null, Project.MULTIPACKAGESCONFIG.moduleNames, 4, 3},
+            {Project.MULTIREFERENCE, "restore", null, Project.PACKAGESCONFIG.MULTIREFERENCE.moduleNames,5, 3},
+            {Project.MULTIPACKAGESCONFIG, "restore", CUSTOM_MODULE, new String[]{CUSTOM_MODULE}, 6},
+            {Project.MULTIREFERENCE, "restore", CUSTOM_MODULE, new String[]{CUSTOM_MODULE},6},
+            {Project.MULTIPACKAGESCONFIG, "restore ./proj1/ -SolutionDirectory .", null, new String[]{"proj1"}, 4},
+            {Project.MULTIPACKAGESCONFIG, "restore proj2/packages.config -SolutionDirectory .", null, new String[]{"proj2"}, 3},
+            {Project.MULTIREFERENCE, "restore src/multireference.proj1/proj1.csproj", null, new String[]{"proj1"},5},
+            {Project.MULTIREFERENCE, "restore ./multireference.sln", CUSTOM_MODULE, new String[]{CUSTOM_MODULE},6},
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "nugetRunProvider")
-    private void nugetRunTest(Project project, String args, String Name) {
+    private void nugetRunTest(Project project, String args, String moduleName, String[] expectedModules, int... expectedDependencies) {
         Path projectDir = null;
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, args, log, projectDir, null, null, getUsername(), getPassword());
+            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, args, log, projectDir, env, moduleName, getUsername(), getPassword());
             Build build = nugetRun.execute();
-            assertEquals(build.getModules().size(), project.dependenciesCount.length);
-            Module module = build.getModules().get(0);
-            // Check correctness of the module and dependencies
-            assertEquals(module.getDependencies().size(), project.dependenciesCount);
+            assertEquals(build.getModules().size(), expectedModules.length);
+            for (int i = 0; i < expectedModules.length; i++) {
+                Module module = build.getModules().get(i);
+                // Check correctness of the module and dependencies
+                assertEquals(module.getId(), expectedModules[i]);
+                assertTrue(module.getDependencies().size() > 0);
+            }
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         } finally {
@@ -97,5 +113,33 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         File projectDir = Files.createTempDirectory(project.targetDir).toFile();
         FileUtils.copyDirectory(project.projectOrigin, projectDir);
         return projectDir.toPath();
+    }
+
+    @DataProvider
+    private Object[][] projectRootProvider() {
+        return new Object[][]{
+                {"restore", "example.sln"},
+                {"restore .", "example.sln"},
+                {"restore ./example.sln", "example.sln"},
+                {"restore example.sln", "example.sln"},
+                {"restore ./packagesConfigDir/", "packages.config"},
+                {"restore packagesConfigDir/packages.config", "packages.config"},
+                {"restore ./packagesConfigDir/example.csproj", "example.csproj"},
+                {"restore projectAssetsDir/", "another_example.csproj"},
+                {"restore ./projectAssetsDir/another_example.csproj", "another_example.csproj"},
+        };
+    }
+
+    @SuppressWarnings("unused")
+    @Test(dataProvider = "projectRootProvider")
+    private void getProjectRootTest(String args, String expectedProjectRootFileName) {
+        try {
+            File rootDir = PROJECTS_ROOT.resolve("projectRootTestDir").toFile();
+            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, args, log, rootDir.toPath(), env, null, getUsername(), getPassword());
+            File projectRoot = nugetRun.getProjectRootPath();
+            assertTrue(projectRoot.getPath().endsWith(expectedProjectRootFileName));
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        }
     }
 }
