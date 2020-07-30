@@ -71,20 +71,6 @@ public class NugetDriver implements Serializable {
         return sourceUrlBuilder.build().toURL().toString();
     }
 
-//    public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
-//        List<String> args = new ArrayList<>();
-//        args.add("ls");
-//        args.add("--json");
-//        args.addAll(extraArgs);
-//        try {
-//            CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null);
-//            String res = StringUtils.isBlank(npmCommandRes.getRes()) ? "{}" : npmCommandRes.getRes();
-//            return jsonReader.readTree(res);
-//        } catch (IOException | InterruptedException e) {
-//            throw new IOException("npm ls failed", e);
-//        }
-//    }
-
     public String help(File workingDirectory) throws IOException, InterruptedException {
         return runCommand(new String[]{"help"}, Collections.emptyList());
     }
