@@ -6,8 +6,7 @@ node('java') {
             releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
             buildTasks: 'build-info-extractor-npm:clean build-info-extractor-npm:artifactoryPublish -x test',
-            releaseTasks: '-PextractorRelease=true  build-info-extractor-npm:clean build-info-extractor-npm:artifactoryPublish -x test',
-            ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
+            releaseTasks: '-PextractorRelease=true build-info-extractor-npm:clean build-info-extractor-npm:artifactoryPublish -x test',
             buildName: 'EcoSystemRelease :: build-info-npm-extractor',
             tagName: 'build-info-npm-extractor'
         ],
@@ -16,7 +15,6 @@ node('java') {
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
             buildTasks: 'build-info-extractor-ivy:clean build-info-extractor-ivy:artifactoryPublish -x test',
             releaseTasks: 'build-info-extractor-ivy:clean build-info-extractor-ivy:artifactoryPublish -x test',
-            ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
             buildName: 'EcoSystemRelease :: build-info-ivy-extractor',
             tagName: 'build-info-ivy-extractor'
         ],
@@ -25,7 +23,6 @@ node('java') {
             nextVersion: "${GRADLE_NEXT_VERSION}",
             buildTasks: 'build-info-extractor-gradle:clean build-info-extractor-gradle:build build-info-extractor-gradle:artifactoryPublish -x  test',
             releaseTasks: 'build-info-extractor-gradle:clean build-info-extractor-gradle:build build-info-extractor-gradle:artifactoryPublish -x  test',
-            ivyPattern: '[organisation]/[module]/ivy-[revision].xml',
             buildName: 'EcoSystemRelease :: build-info-gradle-extractor',
             tagName: 'build-info-gradle-extractor'
         ],
@@ -34,16 +31,22 @@ node('java') {
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
             buildTasks: 'build-info-extractor-go:clean build-info-extractor-go:artifactoryPublish -x test',
             releaseTasks: '-PextractorRelease=true  build-info-extractor-go:clean build-info-extractor-go:artifactoryPublish -x test',
-            ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
             buildName: 'EcoSystemRelease :: build-info-go-extractor',
             tagName: 'build-info-go-extractor'
+        ],
+        "build-info-extractor-pip": [
+            releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
+            nextVersion: "${EXTRACTOR_NEXT_VERSION}",
+            buildTasks: 'build-info-extractor-pip:clean build-info-extractor-pip:artifactoryPublish -x test',
+            releaseTasks: '-PextractorRelease=true  build-info-extractor-pip:clean build-info-extractor-pip:artifactoryPublish -x test',
+            buildName: 'EcoSystemRelease :: build-info-pip-extractor',
+            tagName: 'build-info-pip-extractor'
         ],
         "build-info-extractor-maven3": [
             releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
             buildTasks: 'build-info-extractor-maven3:clean build-info-extractor-maven3:artifactoryPublish -x test',
             releaseTasks: '-PextractorRelease=true  build-info-extractor-maven3:clean build-info-extractor-maven3:artifactoryPublish -x test',
-            ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
             buildName: 'EcoSystemRelease :: build-info-maven3-extractor',
             tagName: 'build-info-extractor-maven3'
         ],
@@ -52,7 +55,6 @@ node('java') {
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
             buildTasks: 'clean build-info-api:artifactoryPublish build-info-client:artifactoryPublish build-info-extractor:artifactoryPublish build-info-vcs:artifactoryPublish -x test',
             releaseTasks: 'clean build-info-api:artifactoryPublish build-info-client:artifactoryPublish build-info-extractor:artifactoryPublish build-info-vcs:artifactoryPublish -x test',
-            ivyPattern: '[organisation]/[module]/[revision]/ivy-[revision].xml',
             buildName: 'EcoSystemRelease :: build-info-extractor',
             tagName: 'build-info-extractor'
         ]

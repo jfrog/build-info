@@ -88,9 +88,7 @@ public abstract class IntegrationTestsBase {
 
         if (!dependenciesClient.isArtifactoryOSS()) {
             createTestRepo(localRepo);
-            if (StringUtils.isNotBlank(remoteRepo)) {
-                createTestRepo(remoteRepo);
-            }
+            createTestRepo(remoteRepo);
             createTestRepo(virtualRepo);
         }
     }
@@ -100,9 +98,7 @@ public abstract class IntegrationTestsBase {
         if (!dependenciesClient.isArtifactoryOSS()) {
             // Delete the virtual first.
             deleteTestRepo(virtualRepo);
-            if (StringUtils.isNotBlank(remoteRepo)) {
-                deleteTestRepo(remoteRepo);
-            }
+            deleteTestRepo(remoteRepo);
             deleteTestRepo(localRepo);
         }
         preemptiveHttpClient.close();
@@ -186,7 +182,7 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     private void createTestRepo(String repo) throws IOException {
-        if (isRepoExists(repo)) {
+        if (StringUtils.isBlank(repo) || isRepoExists(repo)) {
             return;
         }
         HttpPut httpRequest = new HttpPut(getRepoApiUrl(repo));
@@ -214,6 +210,9 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     private void deleteTestRepo(String repo) throws IOException {
+        if (StringUtils.isBlank(repo)) {
+            return;
+        }
         HttpRequestBase httpRequest = new HttpDelete(getRepoApiUrl(repo));
         HttpResponse response = preemptiveHttpClient.execute(httpRequest);
         try {
@@ -297,7 +296,7 @@ public abstract class IntegrationTestsBase {
     }
 
     /**
-     * Expected inner class for testing proposes.
+     * Expected inner class for testing purposes.
      * Contains the local files expected to be found after successful download.
      */
     protected static class Expected {

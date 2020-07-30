@@ -25,7 +25,7 @@ public interface ClientProperties {
      * The URL of the artifactory web application (typically ending with '/artifactory')
      *
      * @deprecated See org.jfrog.build.extractor.build.ArtifactoryClientConfiguration#getContextUrl(). Should not be used as a
-     *             top level property.
+     * top level property.
      */
     @Deprecated
     String PROP_CONTEXT_URL = ARTIFACTORY_PREFIX + "contextUrl";
@@ -42,7 +42,9 @@ public interface ClientProperties {
 
     String PROP_PROXY_PREFIX = ARTIFACTORY_PREFIX + "proxy.";
 
-    String PROP_NPM_PREFIX = ARTIFACTORY_PREFIX + "npm.";
+    String PROP_PACKAGE_MANAGER_PREFIX = ARTIFACTORY_PREFIX + "package.manager.";
+
+    String PROP_PIP_PREFIX = ARTIFACTORY_PREFIX + "pip.";
 
     /**
      * The repo key in Artifactory from where to resolve artifacts.

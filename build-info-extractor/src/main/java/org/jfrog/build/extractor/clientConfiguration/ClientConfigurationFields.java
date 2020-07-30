@@ -30,9 +30,10 @@ public interface ClientConfigurationFields {
     String IVY_ART_PATTERN = "ivy.artPattern";
     String IVY_REPO_DEFINED = "ivy.repo.defined";
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
-    String NPM_INSTALL_ARGS = "npm.installArgs";
-    String NPM_PATH = "npm.path"; // Path to package.json dir
-    String NPM_MODULE = "npm.module"; // Custom npm module name for the build-info
+    String PACKAGE_MANAGER_ARGS = "package.manager.args";
+    String PACKAGE_MANAGER_PATH = "package.manager.path"; // Path to package-manager execution dir
+    String PACKAGE_MANAGER_MODULE = "package.manager.module"; // Custom module name for the build-info
+    String PIP_ENV_ACTIVATION = "pip.env.activation";
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";

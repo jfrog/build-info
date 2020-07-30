@@ -30,6 +30,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
+
 /**
  * @author Yahav Itzhak
  */
@@ -71,14 +73,14 @@ public class NpmPublish extends NpmCommand {
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
         validateArtifactoryVersion();
         validateNpmVersion();
-        validateRepoExists("Target repo must be specified");
+        validateRepoExists(client, repo, "Target repo must be specified");
         setPackageInfo();
     }
 
@@ -159,14 +161,14 @@ public class NpmPublish extends NpmCommand {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryBuildInfoClientBuilder clientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
-            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    Paths.get(npmHandler.getPackageManagerPath() != null ? npmHandler.getPackageManagerPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties(),
-                    clientConfiguration.npmHandler.getNpmModule());
+                    clientConfiguration.packageManagerHandler.getPackageManagerModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

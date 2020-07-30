@@ -322,7 +322,7 @@ public abstract class BuildInfoExtractorUtils {
                 for (String key : keys) {
                     if (commandPart.startsWith("-D" + key)) {
                         additionalProps.put(key, StringUtils.split(commandPart, "=")[1].trim());
-                        log.debug(String.format("Adding property %s from the command property: %s", key, commandKey) );
+                        log.debug(String.format("Adding property %s from the command property: %s", key, commandKey));
                     }
                 }
             }

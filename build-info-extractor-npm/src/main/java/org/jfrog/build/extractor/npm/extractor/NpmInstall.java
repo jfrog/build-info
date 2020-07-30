@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
+
 /**
  * @author Yahav Itzhak
  */
@@ -48,14 +50,14 @@ public class NpmInstall extends NpmCommand {
             validatePath();
             validateArtifactoryVersion();
             validateNpmVersion();
-            validateRepoExists("Source repo must be specified");
+            validateRepoExists(client, repo, "Source repo must be specified");
 
             NpmProject npmProject = new NpmProject(installArgs, repo, workingDir);
             return buildInfoExtractor.extract(npmProject);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**
@@ -66,14 +68,14 @@ public class NpmInstall extends NpmCommand {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmInstall npmInstall = new NpmInstall(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
-                    npmHandler.getNpmInstallArgs(),
+                    npmHandler.getPackageManagerArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(npmHandler.getNpmPath() != null ? npmHandler.getNpmPath() : "."),
+                    Paths.get(npmHandler.getPackageManagerPath() != null ? npmHandler.getPackageManagerPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    npmHandler.getNpmModule());
+                    npmHandler.getPackageManagerModule());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

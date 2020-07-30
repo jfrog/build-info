@@ -6,7 +6,6 @@ import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.jfrog.build.extractor.util.TestingLog;
 import org.testng.Assert;
-import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -15,21 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GitUtilsTest {
-
-    @Test(dataProvider = "testMaskUrlsProvider")
-    public void testMaskCredentialsInUrl(String testName, String originalUrl, String expectedUrl) throws IOException {
-        Assert.assertEquals(GitUtils.maskCredentialsInUrl(originalUrl), expectedUrl, "Failed masking credentials on test name: " + testName);
-    }
-
-    @DataProvider
-    private Object[][] testMaskUrlsProvider() {
-        return new String[][]{
-                {"http", "This is an example line http://user:password@127.0.0.1:8081/artifactory/path/to/repo", "This is an example line http://***.***@127.0.0.1:8081/artifactory/path/to/repo"},
-                {"https", "This is an example line https://user:password@127.0.0.1:8081/artifactory/path/to/repo", "This is an example line https://***.***@127.0.0.1:8081/artifactory/path/to/repo"},
-                {"No credentials", "This is an example line https://127.0.0.1:8081/artifactory/path/to/repo", "This is an example line https://127.0.0.1:8081/artifactory/path/to/repo"},
-                {"No http", "This is an example line", "This is an example line"},
-        };
-    }
 
     /**
      * Tests extracting Vcs details manually by comparing results to those received from the git executable

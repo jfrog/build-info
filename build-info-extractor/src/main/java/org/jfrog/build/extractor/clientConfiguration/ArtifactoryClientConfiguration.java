@@ -54,7 +54,8 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
-    public final NpmHandler npmHandler;
+    public final PackageManagerHandler packageManagerHandler;
+    public final PipHandler pipHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -68,7 +69,8 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
-        this.npmHandler = new NpmHandler();
+        this.packageManagerHandler = new PackageManagerHandler();
+        this.pipHandler = new PipHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -464,34 +466,50 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    public class NpmHandler extends PrefixPropertyHandler {
+    // Used by other build tools (npm, pip...).
+    public class PackageManagerHandler extends PrefixPropertyHandler {
 
-        public NpmHandler() {
-            super(root, PROP_NPM_PREFIX);
+        public PackageManagerHandler() {
+            super(root, PROP_PACKAGE_MANAGER_PREFIX);
         }
 
-        public String getNpmInstallArgs() {
-            return rootConfig.getStringValue(NPM_INSTALL_ARGS);
+        public String getPackageManagerArgs() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_ARGS);
         }
 
-        public void setNpmInstallArgs(String npmInstallArgs) {
-            rootConfig.setStringValue(NPM_INSTALL_ARGS, npmInstallArgs);
+        public void setPackageManagerArgs(String packageManagerArgs) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_ARGS, packageManagerArgs);
         }
 
-        public String getNpmPath() {
-            return rootConfig.getStringValue(NPM_PATH);
+        public String getPackageManagerPath() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_PATH);
         }
 
-        public void setNpmPath(String npmPath) {
-            rootConfig.setStringValue(NPM_PATH, npmPath);
+        public void setPackageManagerPath(String packageManagerPath) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_PATH, packageManagerPath);
         }
 
-        public String getNpmModule() {
-            return rootConfig.getStringValue(NPM_MODULE);
+        public String getPackageManagerModule() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_MODULE);
         }
 
-        public void setNpmModule(String npmModule) {
-            rootConfig.setStringValue(NPM_MODULE, npmModule);
+        public void setPackageManagerModule(String packageManagerModule) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_MODULE, packageManagerModule);
+        }
+    }
+
+    public class PipHandler extends PrefixPropertyHandler {
+
+        public PipHandler() {
+            super(root, PROP_PIP_PREFIX);
+        }
+
+        public String getEnvActivation() {
+            return rootConfig.getStringValue(PIP_ENV_ACTIVATION);
+        }
+
+        public void setEnvActivation(String envActivation) {
+            rootConfig.setStringValue(PIP_ENV_ACTIVATION, envActivation);
         }
     }
 

@@ -4,12 +4,12 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Vcs;
 import org.jfrog.build.api.util.Log;
 
-import java.io.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class GitUtils {
-    private static Pattern CredentialsInUrlRegexpPattern = Pattern.compile("((http|https):\\/\\/\\w.*?:\\w.*?@)");
 
     private static File getDotGit(File file) {
         if (file == null) {
@@ -24,6 +24,7 @@ public class GitUtils {
 
     /**
      * Extract Vcs details from .git configuration.
+     *
      * @return Vcs with the details found, empty Vcs if failed to find .git directory
      */
     public static Vcs extractVcs(File workingDir, Log log) throws IOException {
@@ -68,22 +69,9 @@ public class GitUtils {
             originalUrl += ".git";
         }
 
-        String maskedUrl = maskCredentialsInUrl(originalUrl);
+        String maskedUrl = UrlUtils.maskCredentialsInUrl(originalUrl);
         log.debug("Fetched url from git config: " + maskedUrl);
         return maskedUrl;
-    }
-
-    static String maskCredentialsInUrl(String originalUrl) throws IOException {
-        Matcher matcher = CredentialsInUrlRegexpPattern.matcher(originalUrl);
-        if (!matcher.find()) {
-            return originalUrl;
-        }
-        String credentialsPart = matcher.group();
-        String[] split = credentialsPart.split("//");
-        if (split.length < 2) {
-            throw new IOException("Failed to parse .git config");
-        }
-        return StringUtils.replace(originalUrl, credentialsPart, split[0] + "//***.***@", 1);
     }
 
     private static String extractVcsRevision(File dotGit, Log log) throws IOException {
