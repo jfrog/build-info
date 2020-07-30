@@ -42,13 +42,25 @@ public class PipBuildInfoExtractor {
         return createBuild(dependenciesList, module);
     }
 
+    /**
+     * Create a mapping of this build's package-name and its Dependency object.
+     * Creation is based on the dependencies downloaded in this pip-install execution, and the cache saved in previous builds.
+     *
+     * @param downloadedDependencies - The dependencies of this pip-execution, package-name to downloaded package-file map.
+     * @param client                 - Artifactory client for fetching artifacts data.
+     * @param repository             - Resolution repository.
+     * @param executionPath          - Path of pip command's execution.
+     * @param logger                 - The logger.
+     * @return Mapping of a package-name and its Dependency object.
+     * @throws IOException
+     */
     Map<String, Dependency> buildDependenciesMap(Map<String, String> downloadedDependencies, ArtifactoryDependenciesClient client, String repository, Path executionPath, Log logger) throws IOException {
         Map<String, Dependency> dependenciesMap = new HashMap<>();
         Set<String> missingDeps = new HashSet<>();
         DependenciesCache dependenciesCache = DependenciesCache.getProjectDependenciesCache(executionPath, logger);
 
         for (String pkgName : downloadedDependencies.keySet()) {
-            String fileName =  downloadedDependencies.get(pkgName);
+            String fileName = downloadedDependencies.get(pkgName);
             Dependency dependency = null;
             if (StringUtils.isNotBlank(fileName)) {
                 // Get dependency info from Artifactory - may throw IOException.
@@ -110,7 +122,7 @@ public class PipBuildInfoExtractor {
         Module module = new ModuleBuilder().id(moduleName).dependencies(dependenciesList).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
-        Build build= new Build();
+        Build build = new Build();
         build.setModules(modules);
         return build;
     }

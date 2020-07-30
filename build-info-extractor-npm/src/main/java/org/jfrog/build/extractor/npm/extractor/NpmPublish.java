@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.buildTool.BuildToolUtils.createArtifactoryClientConfiguration;
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 /**
  * @author Yahav Itzhak
@@ -73,8 +73,8 @@ public class NpmPublish extends NpmCommand {
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
@@ -161,14 +161,14 @@ public class NpmPublish extends NpmCommand {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryBuildInfoClientBuilder clientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
-            ArtifactoryClientConfiguration.BuildToolHandler npmHandler = clientConfiguration.buildToolHandler;
+            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    Paths.get(npmHandler.getBuildToolPath() != null ? npmHandler.getBuildToolPath() : "."),
+                    Paths.get(npmHandler.getPackageManagerPath() != null ? npmHandler.getPackageManagerPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties(),
-                    clientConfiguration.buildToolHandler.getBuildToolModule());
+                    clientConfiguration.packageManagerHandler.getPackageManagerModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

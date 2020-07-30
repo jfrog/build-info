@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.buildTool;
+package org.jfrog.build.extractor.packageManager;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
@@ -12,7 +12,7 @@ import java.util.Properties;
 /**
  * Created by Bar Belity on 12/07/2020.
  */
-public class BuildToolUtils {
+public class PackageManagerUtils {
 
     /**
      * Create a new client configuration from the 'buildInfoConfig.propertiesFile' and environment variables.
@@ -20,7 +20,7 @@ public class BuildToolUtils {
      * @return a new client configuration
      */
     public static ArtifactoryClientConfiguration createArtifactoryClientConfiguration() {
-        BuildToolLogger log = new BuildToolLogger();
+        PackageManagerLogger log = new PackageManagerLogger();
         ArtifactoryClientConfiguration clientConfiguration = new ArtifactoryClientConfiguration(log);
         Properties allBuildProps = new Properties();
         allBuildProps.putAll(System.getenv());

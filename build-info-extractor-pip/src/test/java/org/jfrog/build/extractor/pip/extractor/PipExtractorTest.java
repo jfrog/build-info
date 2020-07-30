@@ -85,10 +85,11 @@ public class PipExtractorTest extends IntegrationTestsBase {
             fail("Couldn't read pip virtual-environment variable: " + BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PIP_ENV");
         }
 
-        // Get env with PATH containing pip-virtual-env and create driver.
+        // Initialize driver and validate empty virtual-environment for pip execution.
         try {
             env = getUpdatedEnvPath();
             driver = new PipDriver("pip", env);
+            validateEmptyPipEnv(driver);
         } catch (IOException e) {
             fail(e.getMessage());
         }

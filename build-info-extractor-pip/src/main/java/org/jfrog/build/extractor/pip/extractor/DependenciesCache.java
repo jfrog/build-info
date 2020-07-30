@@ -19,6 +19,13 @@ import java.util.Map;
 
 /**
  * Created by Bar Belity on 19/07/2020.
+ * <p>
+ * Pip-install executions are responsible for downloading and installing the project's dependencies.
+ * When pip identifies that a dependency is already installed, it doesn't reinstall it.
+ * Since we are relying on pip's logs for identifying the project's dependencies, in such case we wouldn't be able to
+ * identify the dependency correctly.
+ * This cache is saved between pip-install executions, and used to get the required information of previously downloaded
+ * pip dependencies.
  */
 public class DependenciesCache {
 
@@ -40,6 +47,17 @@ public class DependenciesCache {
         this.dependencies = new HashMap<>();
     }
 
+    /**
+     * Reads the json cache file of previously created project-dependencies cache.
+     * The cache consists of a map where:
+     * Key: dependency-name, Value: build-info's Dependency object.
+     * If cache-file doesn't exist, create a new file.
+     *
+     * @param executionPath -  Path of pip command's execution.
+     * @param logger        - The logger.
+     * @return The dependencies-cache.
+     * @throws IOException
+     */
     static DependenciesCache getProjectDependenciesCache(Path executionPath, Log logger) throws IOException {
         Path cachePath = getCacheFilePath(executionPath);
         File cacheFile = cachePath.toFile();

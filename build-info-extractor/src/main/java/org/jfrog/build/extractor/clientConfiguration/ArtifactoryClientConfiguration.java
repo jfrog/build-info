@@ -54,7 +54,7 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
-    public final BuildToolHandler buildToolHandler;
+    public final PackageManagerHandler packageManagerHandler;
     public final PipHandler pipHandler;
     public final PrefixPropertyHandler root;
     /**
@@ -69,7 +69,7 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
-        this.buildToolHandler = new BuildToolHandler();
+        this.packageManagerHandler = new PackageManagerHandler();
         this.pipHandler = new PipHandler();
     }
 
@@ -459,34 +459,34 @@ public class ArtifactoryClientConfiguration {
     }
 
     // Used by other build tools (npm, pip...).
-    public class BuildToolHandler extends PrefixPropertyHandler {
+    public class PackageManagerHandler extends PrefixPropertyHandler {
 
-        public BuildToolHandler() {
-            super(root, PROP_BUILD_TOOL_PREFIX);
+        public PackageManagerHandler() {
+            super(root, PROP_PACKAGE_MANAGER_PREFIX);
         }
 
-        public String getBuildToolArgs() {
-            return rootConfig.getStringValue(BUILD_TOOL_ARGS);
+        public String getPackageManagerArgs() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_ARGS);
         }
 
-        public void setBuildToolArgs(String buildToolArgs) {
-            rootConfig.setStringValue(BUILD_TOOL_ARGS, buildToolArgs);
+        public void setPackageManagerArgs(String packageManagerArgs) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_ARGS, packageManagerArgs);
         }
 
-        public String getBuildToolPath() {
-            return rootConfig.getStringValue(BUILD_TOOL_PATH);
+        public String getPackageManagerPath() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_PATH);
         }
 
-        public void setBuildToolPath(String buildToolPath) {
-            rootConfig.setStringValue(BUILD_TOOL_PATH, buildToolPath);
+        public void setPackageManagerPath(String packageManagerPath) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_PATH, packageManagerPath);
         }
 
-        public String getBuildToolModule() {
-            return rootConfig.getStringValue(BUILD_TOOL_MODULE);
+        public String getPackageManagerModule() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_MODULE);
         }
 
-        public void setBuildToolModule(String buildToolModule) {
-            rootConfig.setStringValue(BUILD_TOOL_MODULE, buildToolModule);
+        public void setPackageManagerModule(String packageManagerModule) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_MODULE, packageManagerModule);
         }
     }
 

@@ -5,11 +5,11 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.buildTool.BuildToolUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.jfrog.build.extractor.go.GoDriver;
+import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,20 +92,20 @@ public class GoRun extends GoCommand {
      * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
      */
     private void setResolverAsGoProxy(ArtifactoryBuildInfoClient client) throws Exception {
-        String rtUrl = BuildToolUtils.createArtifactoryUrlWithCredentials(client.getArtifactoryUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
+        String rtUrl = PackageManagerUtils.createArtifactoryUrlWithCredentials(client.getArtifactoryUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
         String proxyValue = rtUrl + "," + GOPROXY_VCS_FALLBACK;
         env.put(GOPROXY_ENV_VAR, proxyValue);
     }
 
     /**
-     *  Run 'go mod graph' and parse its output.
-     *  This command might change go.mod and go.sum content, so we backup and restore those files.
-     *    The output format is:
-     *     * For direct dependencies:
-     *          <module-name> <dependency's-module-name>@v<dependency-module-version>
-     *     * For transient dependencies:
-     *        <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
-     *   In order to populate build info dependencies, we parse the second column uf the mod graph output.
+     * Run 'go mod graph' and parse its output.
+     * This command might change go.mod and go.sum content, so we backup and restore those files.
+     * The output format is:
+     * * For direct dependencies:
+     * <module-name> <dependency's-module-name>@v<dependency-module-version>
+     * * For transient dependencies:
+     * <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
+     * In order to populate build info dependencies, we parse the second column uf the mod graph output.
      */
     private void collectDependencies() throws Exception {
         backupModAnsSumFiles();
@@ -154,14 +154,14 @@ public class GoRun extends GoCommand {
     }
 
     /**
-     *  According to Go convention, module name in cache path contains only lower case letters,
-     *  each upper case letter is replaced with "! + lower case letter". (e.g: "AbC" => "!ab!c")
+     * According to Go convention, module name in cache path contains only lower case letters,
+     * each upper case letter is replaced with "! + lower case letter". (e.g: "AbC" => "!ab!c")
      */
     private String convertModuleNameToCachePathConvention(String moduleName) {
         String upperCaseSign = "!";
         for (int i = 0; i < moduleName.length(); i++) {
             if (isUpperCase(moduleName.charAt(i))) {
-                moduleName = moduleName.replace( moduleName.substring(i, i + 1),  upperCaseSign + toLowerCase(moduleName.charAt(i)));
+                moduleName = moduleName.replace(moduleName.substring(i, i + 1), upperCaseSign + toLowerCase(moduleName.charAt(i)));
                 i += upperCaseSign.length();
             }
         }
@@ -178,7 +178,7 @@ public class GoRun extends GoCommand {
         String moduleName = module.split("@")[0];
         String moduleVersion = module.split("@")[1];
         String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + File.separator + "@v" + File.separator + moduleVersion + ".zip";
-        File moduleZip = new File (cachedPkgPath);
+        File moduleZip = new File(cachedPkgPath);
         if (moduleZip.exists()) {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5, SHA1);
             Dependency dependency = new DependencyBuilder()

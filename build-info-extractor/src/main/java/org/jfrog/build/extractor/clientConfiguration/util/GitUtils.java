@@ -24,6 +24,7 @@ public class GitUtils {
 
     /**
      * Extract Vcs details from .git configuration.
+     *
      * @return Vcs with the details found, empty Vcs if failed to find .git directory
      */
     public static Vcs extractVcs(File workingDir, Log log) throws IOException {
@@ -69,10 +70,6 @@ public class GitUtils {
         }
 
         String maskedUrl = UrlUtils.maskCredentialsInUrl(originalUrl);
-        String[] split = maskedUrl.split("//");
-        if (split.length < 2) {
-            throw new IOException("Failed to parse .git config");
-        }
         log.debug("Fetched url from git config: " + maskedUrl);
         return maskedUrl;
     }

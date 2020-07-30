@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.buildTool;
+package org.jfrog.build.extractor.packageManager;
 
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
@@ -13,7 +13,7 @@ import java.io.Serializable;
 /**
  * Created by Bar Belity on 12/07/2020.
  */
-public abstract class BuildToolExtractor implements Serializable {
+public abstract class PackageManagerExtractor implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -28,7 +28,7 @@ public abstract class BuildToolExtractor implements Serializable {
     public void executeAndSaveBuildInfo(ArtifactoryClientConfiguration clientConfiguration) throws RuntimeException {
         Build build = execute();
         if (build == null) {
-            throw new RuntimeException();
+            return;
         }
         saveBuildInfoToFile(clientConfiguration, build);
     }

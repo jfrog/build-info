@@ -182,10 +182,7 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     private void createTestRepo(String repo) throws IOException {
-        if (StringUtils.isBlank(repo)) {
-            return;
-        }
-        if (isRepoExists(repo)) {
+        if (StringUtils.isBlank(repo) || isRepoExists(repo)) {
             return;
         }
         HttpPut httpRequest = new HttpPut(getRepoApiUrl(repo));

@@ -14,14 +14,17 @@ import java.util.regex.Pattern;
  */
 public class PipLogParser {
 
-    private static final String COLLECTING_PACKAGE_REGEXP = "^Collecting\\s(\\w[\\w-\\.]+)";
-    private static final String DOWNLOADED_FILE_REGEXP = "^\\s\\sDownloading\\s[^\\s]*\\/packages\\/[^\\s]*\\/([^\\s]*)";
-    private static final String INSTALLED_PACKAGE_REGEXP = "^Requirement\\salready\\ssatisfied\\:\\s(\\w[\\w-\\.]+)";
+    static final Pattern COLLECTING_PACKAGE_PATTERN = Pattern.compile("^Collecting\\s(\\w[\\w-\\.]+)");
+    static final Pattern DOWNLOADED_FILE_PATTERN = Pattern.compile("^\\s\\sDownloading\\s[^\\s]*\\/packages\\/[^\\s]*\\/([^\\s]*)");
+    static final Pattern INSTALLED_PACKAGE_PATTERN = Pattern.compile("^Requirement\\salready\\ssatisfied\\:\\s(\\w[\\w-\\.]+)");
 
-    static final Pattern collectingPackagePattern = Pattern.compile(COLLECTING_PACKAGE_REGEXP);
-    static final Pattern downloadedFilePattern = Pattern.compile(DOWNLOADED_FILE_REGEXP);
-    static final Pattern installedPackagePattern = Pattern.compile(INSTALLED_PACKAGE_REGEXP);
-
+    /**
+     * Parse a pip-install execution log and return the installation packages and files.
+     *
+     * @param installationLog - Log output of a pip-install execution.
+     * @param logger          - The logger.
+     * @return the extracted dependencies from provided log, mapping package-name to a downloaded package-file.
+     */
     static Map<String, String> parse(String installationLog, Log logger) {
         Map<String, String> downloadedDependencies = new HashMap<>();
         String[] lines = installationLog.split("\\R");
@@ -30,21 +33,21 @@ public class PipLogParser {
 
         for (String line : lines) {
             // Extract downloaded package name.
-            Matcher matcher = collectingPackagePattern.matcher(line);
+            Matcher matcher = COLLECTING_PACKAGE_PATTERN.matcher(line);
             if (matcher.find()) {
                 packageName = extractPackageName(downloadedDependencies, matcher, packageName, expectingPackageFilePath, logger);
                 continue;
             }
 
             // Extract downloaded file, stored in Artifactory.
-            matcher = downloadedFilePattern.matcher(line);
+            matcher = DOWNLOADED_FILE_PATTERN.matcher(line);
             if (matcher.find()) {
                 extractDownloadedFileName(downloadedDependencies, matcher, packageName, expectingPackageFilePath, logger);
                 continue;
             }
 
             // Extract already installed package name.
-            matcher = installedPackagePattern.matcher(line);
+            matcher = INSTALLED_PACKAGE_PATTERN.matcher(line);
             if (matcher.find()) {
                 extractAlreadyInstalledPackage(downloadedDependencies, matcher, logger);
             }
@@ -77,7 +80,7 @@ public class PipLogParser {
     static void extractDownloadedFileName(Map<String, String> downloadedDependencies, Matcher matcher, String packageName, MutableBoolean expectingPackageFilePath, Log logger) {
         // If this pattern matched before package-name was found, do not collect this path.
         if (expectingPackageFilePath.isFalse()) {
-            logger.debug(String.format("Could not resolve download path for package name: %s , continuing...", packageName));
+            logger.debug(String.format("Could not determine package-name for path: %s, continuing...", matcher.group(1)));
             return;
         }
 

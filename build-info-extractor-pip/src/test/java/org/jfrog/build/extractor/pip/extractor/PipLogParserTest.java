@@ -67,7 +67,7 @@ public class PipLogParserTest {
     @Test(dataProvider = "extractPackageNameProvider")
     public void extractPackageNameTest(String line, String packageName, boolean isExpectingFilePath, String expectedPackageName, boolean expectedExpectingFilePath, Map<String, String> expectedDepMap) {
         Map<String, String> downloadedDependencies = new HashMap<>();
-        Matcher matcher = collectingPackagePattern.matcher(line);
+        Matcher matcher = COLLECTING_PACKAGE_PATTERN.matcher(line);
         matcher.find();
         MutableBoolean expectingFilePath = new MutableBoolean(isExpectingFilePath);
         // Run.
@@ -82,7 +82,9 @@ public class PipLogParserTest {
     @DataProvider
     private Object[][] extractDownloadedFileNameProvider() {
         return new Object[][]{
-                {"  Downloading http://someserver/pypi/packages/more/path/PyYAML-5.3.1.tar.gz", "PyYAML", true, false, new HashMap<String, String>(){{put("pyyaml", "PyYAML-5.3.1.tar.gz");}}},
+                {"  Downloading http://someserver/pypi/packages/more/path/PyYAML-5.3.1.tar.gz", "PyYAML", true, false, new HashMap<String, String>() {{
+                    put("pyyaml", "PyYAML-5.3.1.tar.gz");
+                }}},
                 {"  Downloading http://another-server/pypi/packages/more/path/nltk-3.5.zip", "nltk", false, false, new HashMap<String, String>()},
                 {"  Downloading http://another-s$erver/pypi/packages/p@ypi/more/pa?th/nltk-3.5.zip", "nltk", true, false, Collections.singletonMap("nltk", "nltk-3.5.zip")},
         };
@@ -91,7 +93,7 @@ public class PipLogParserTest {
     @Test(dataProvider = "extractDownloadedFileNameProvider")
     public void extractDownloadedFileNameTest(String line, String packageName, boolean isExpectingFilePath, boolean expectedExpectingFilePath, Map<String, String> expectedDepMap) {
         Map<String, String> downloadedDependencies = new HashMap<>();
-        Matcher matcher = downloadedFilePattern.matcher(line);
+        Matcher matcher = DOWNLOADED_FILE_PATTERN.matcher(line);
         matcher.find();
         MutableBoolean expectingFilePath = new MutableBoolean(isExpectingFilePath);
         // Run.
@@ -105,16 +107,18 @@ public class PipLogParserTest {
     @DataProvider
     private Object[][] extractAlreadyInstalledPackageProvider() {
         return new Object[][]{
-                {"Requirement already satisfied: PyYAML>3.11 /some/path (from -r requirements.txt (line 1))", new HashMap<String, String>(){{put("pyyaml", "");}}},
+                {"Requirement already satisfied: PyYAML>3.11 /some/path (from -r requirements.txt (line 1))", new HashMap<String, String>() {{
+                    put("pyyaml", "");
+                }}},
                 {"Requirement already satisfied: joblib /so@me/pa?th", Collections.singletonMap("joblib", "")},
                 {"Requirement already satisfied: my-pkg.weird.Na-me", Collections.singletonMap("my-pkg.weird.na-me", "")},
         };
     }
 
     @Test(dataProvider = "extractAlreadyInstalledPackageProvider")
-    public void extractAlreadyInstalledPackageTest(String line,  Map<String, String> expectedDepMap) {
+    public void extractAlreadyInstalledPackageTest(String line, Map<String, String> expectedDepMap) {
         Map<String, String> downloadedDependencies = new HashMap<>();
-        Matcher matcher = installedPackagePattern.matcher(line);
+        Matcher matcher = INSTALLED_PACKAGE_PATTERN.matcher(line);
         matcher.find();
         // Run.
         PipLogParser.extractAlreadyInstalledPackage(downloadedDependencies, matcher, log);
