@@ -10,7 +10,7 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.buildTool.BuildToolExtractor;
+import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -34,9 +34,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jfrog.build.extractor.buildTool.BuildToolUtils.createArtifactoryClientConfiguration;
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
-public class NugetRun extends BuildToolExtractor {
+public class NugetRun extends PackageManagerExtractor {
     private static final String TEMP_DIR_PREFIX = "artifactory.plugin";
     private static final String NUGET_CONFIG_FILE_PREFIX = TEMP_DIR_PREFIX + ".nuget.config";
     private static final String PACKAGES_CONFIG = "packages.config";
@@ -437,15 +437,15 @@ public class NugetRun extends BuildToolExtractor {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.BuildToolHandler handler = clientConfiguration.buildToolHandler;
+            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
             NugetRun nugetRun = new NugetRun(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     clientConfiguration.dotnetHandler.useDotnetCoreCli(),
-                    handler.getBuildToolArgs(),
+                    handler.getPackageManagerArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(handler.getBuildToolPath() != null ? handler.getBuildToolPath() : "."),
+                    Paths.get(handler.getPackageManagerPath() != null ? handler.getPackageManagerPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    handler.getBuildToolModule(),
+                    handler.getPackageManagerModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);

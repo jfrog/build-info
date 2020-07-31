@@ -27,9 +27,9 @@ import static org.testng.Assert.*;
 @Test
 public class NugetExtractorTest extends IntegrationTestsBase {
 
-    private static final String NUGET_LOCAL_REPO = "build-info-tests-nuget-local";
     private static final String NUGET_REMOTE_REPO = "build-info-tests-nuget-remote";
-    private static final String NUGET_VIRTUAL_REPO = "build-info-tests-nuget-virtual";
+    private static final String NUGET_LOCAL_REPO = "";
+    private static final String NUGET_VIRTUAL_REPO = "";
     private static final String CUSTOM_MODULE = "custom-module-name";
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
