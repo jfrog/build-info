@@ -46,6 +46,8 @@ public interface ClientProperties {
 
     String PROP_PIP_PREFIX = ARTIFACTORY_PREFIX + "pip.";
 
+    String PROP_DOTNET_PREFIX = ARTIFACTORY_PREFIX + "dotnet.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */

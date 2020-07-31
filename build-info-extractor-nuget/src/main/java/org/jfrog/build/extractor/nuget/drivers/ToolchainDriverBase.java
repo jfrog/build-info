@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.nuget;
+package org.jfrog.build.extractor.nuget.drivers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
@@ -18,61 +18,53 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class NugetDriver implements Serializable {
+abstract public class ToolchainDriverBase implements Serializable {
     private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
     private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
-    public static final String SOURCE_FLAG = "-source";
-    private static final String NAME_FLAG = "-name";
-    private static final String USERNAME_FLAG = "-username";
-    private static final String PASSWORD_FLAG = "-password";
-    private static final String CONFIG_FILE_FLAG = "-configfile";
+    public static final String CONFIG_FILE_FLAG = "configfile";
+    public static final String SOURCE_FLAG = "source";
+    protected static final String NAME_FLAG = "name";
+    protected static final String USERNAME_FLAG = "username";
+    protected static final String PASSWORD_FLAG = "password";
 
     private static final long serialVersionUID = 1L;
 
-    private static ObjectReader jsonReader = new ObjectMapper().reader();
-    private CommandExecutor commandExecutor;
-    private File workingDirectory;
-    private Log logger;
+    protected static ObjectReader jsonReader = new ObjectMapper().reader();
+    protected CommandExecutor commandExecutor;
+    protected File workingDirectory;
+    protected Log logger;
 
-    public NugetDriver(Map<String, String> env, Path workingDirectory, Log logger) {
-        env.put(NUGET_PROMPT_ENV_VAR, "true");
-        this.commandExecutor = new CommandExecutor("nuget", env);
+    public ToolchainDriverBase(Map<String, String> env, Path workingDirectory, Log logger) {
         this.workingDirectory = workingDirectory.toFile();
         this.logger = logger;
+        env.put(NUGET_PROMPT_ENV_VAR, "true");
     }
 
     @SuppressWarnings("unused")
-    public boolean isNugetInstalled() {
+    public boolean isInstalled() {
         try {
-            help(null);
+            help();
             return true;
         } catch (IOException | InterruptedException e) {
             return false;
         }
     }
 
-    public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException {
-        try {
-            String sourceUrl = buildNugetSourceUrl(client, repo);
-            List<String> extraArgs = new ArrayList<>();
-            extraArgs.addAll(Arrays.asList(CONFIG_FILE_FLAG, configPath, SOURCE_FLAG, sourceUrl, NAME_FLAG, sourceName, USERNAME_FLAG, username, PASSWORD_FLAG, password));
-            return runCommand(new String[]{"sources", "add"}, extraArgs);
-        } catch (Exception e) {
-            throw new IOException("nuget restore failed: " + e.getMessage(), e);
-        }
+    abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException;
+    abstract public String globalPackagesCache() throws IOException, InterruptedException;
+    abstract public String getFlagSyntax(String flagName);
+
+    public String help() throws IOException, InterruptedException {
+        return runCommand(new String[]{"help"}, Collections.emptyList());
     }
 
-    private String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
+    protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
         URL rtUrl = new URL(client.getArtifactoryUrl());
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())
                 .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo);
         return sourceUrlBuilder.build().toURL().toString();
-    }
-
-    public String help(File workingDirectory) throws IOException, InterruptedException {
-        return runCommand(new String[]{"help"}, Collections.emptyList());
     }
 
     public void runCmd(String args, List<String> extraArgs, boolean prompt) throws IOException, InterruptedException {
@@ -83,16 +75,7 @@ public class NugetDriver implements Serializable {
         }
     }
 
-    public String globalPackagesCache() throws IOException, InterruptedException {
-        // Run `nuget locals globals-packages -list` to get the global packages path
-        List<String> args = new ArrayList<>();
-        args.add("global-packages");
-        args.add("-list");
-        String output = runCommand(new String[]{"locals", }, args);
-        return output.replaceFirst("^global-packages:", "").trim();
-    }
-
-    private String runCommand(String[] args, List<String> extraArgs) throws IOException, InterruptedException {
+    protected String runCommand(String[] args, List<String> extraArgs) throws IOException, InterruptedException {
         return runCommand(args, extraArgs, null);
     }
     private String runCommand(String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {

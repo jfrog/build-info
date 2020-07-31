@@ -14,7 +14,9 @@ import org.jfrog.build.extractor.buildTool.BuildToolExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
-import org.jfrog.build.extractor.nuget.NugetDriver;
+import org.jfrog.build.extractor.nuget.drivers.DotnetDriver;
+import org.jfrog.build.extractor.nuget.drivers.NugetDriver;
+import org.jfrog.build.extractor.nuget.drivers.ToolchainDriverBase;
 import org.jfrog.build.extractor.nuget.types.NugetPackgesConfig;
 import org.jfrog.build.extractor.nuget.types.NugetProjectAssets;
 
@@ -34,9 +36,6 @@ import java.util.stream.Stream;
 
 import static org.jfrog.build.extractor.buildTool.BuildToolUtils.createArtifactoryClientConfiguration;
 
-/**
- * Base class for nuget run.
- */
 public class NugetRun extends BuildToolExtractor {
     private static final String TEMP_DIR_PREFIX = "artifactory.plugin";
     private static final String NUGET_CONFIG_FILE_PREFIX = TEMP_DIR_PREFIX + ".nuget.config";
@@ -49,7 +48,6 @@ public class NugetRun extends BuildToolExtractor {
             + "</configuration>";
     private static final String SOURCE_NAME = "BuildInfo.extractor.nuget";
     private static final String SLN_FILE_PARSING_REGEX = "^Project\\(\\\"(.*)";
-    public static final String CONFIG_FILE_FLAG = "-configfile";
     private static final String SHA1 = "SHA1";
     private static final String MD5 = "MD5";
     private static final String ABSENT_NUPKG_WARN_MSG = " Skipping adding this dependency to the build info. " +
@@ -59,7 +57,7 @@ public class NugetRun extends BuildToolExtractor {
     private static final long serialVersionUID = 1L;
 
     ArtifactoryDependenciesClientBuilder clientBuilder;
-    NugetDriver nugetDriver;
+    ToolchainDriverBase toolchainDriver;
     Path workingDir;
     Log logger;
     Path path;
@@ -82,9 +80,9 @@ public class NugetRun extends BuildToolExtractor {
      * @param env                  - Environment variables to use during npm execution.
      */
 
-    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
+    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
         this.clientBuilder = clientBuilder;
-        this.nugetDriver = new NugetDriver(env, path, logger);
+        this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
         this.logger = logger;
         this.path = path;
@@ -119,9 +117,9 @@ public class NugetRun extends BuildToolExtractor {
             File configFile = prepareConfig(artifactoryClient);
             if (configFile != null) {
                 String configPath = configFile.getAbsolutePath();
-                extraArgs = StringUtils.isBlank(configPath) ? null : Arrays.asList(CONFIG_FILE_FLAG, configPath);
+                extraArgs = StringUtils.isBlank(configPath) ? null : Arrays.asList(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG), configPath);
             }
-            nugetDriver.runCmd(nugetCmdArgs, extraArgs, true);
+            toolchainDriver.runCmd(nugetCmdArgs, extraArgs, true);
         }
     }
 
@@ -131,13 +129,13 @@ public class NugetRun extends BuildToolExtractor {
      */
     private File prepareConfig(ArtifactoryDependenciesClient client) throws Exception {
         File configFile = null;
-        if (!nugetCmdArgs.contains(CONFIG_FILE_FLAG) && !nugetCmdArgs.contains(NugetDriver.SOURCE_FLAG)) {
+        if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
             BufferedWriter bw = new BufferedWriter(new FileWriter(configFile.getAbsolutePath()));
             bw.write(CONFIG_FILE_TEMPLATE);
             bw.close();
-            nugetDriver.addSource(configFile.getPath(), client, resolutionRepo, SOURCE_NAME, username, password);
+            toolchainDriver.addSource(configFile.getPath(), client, resolutionRepo, SOURCE_NAME, username, password);
         }
         return configFile;
     }
@@ -225,7 +223,7 @@ public class NugetRun extends BuildToolExtractor {
      */
     private void collectDependenciesFromSln(File slnFile) throws IOException, InterruptedException {
         Pattern pattern = Pattern.compile(SLN_FILE_PARSING_REGEX);
-        String globalCachePath = nugetDriver.globalPackagesCache();
+        String globalCachePath = toolchainDriver.globalPackagesCache();
         try (Stream<String> lines = Files.lines(slnFile.toPath())) {
             lines.filter(pattern.asPredicate()).forEach(line -> {
                 try {
@@ -243,7 +241,7 @@ public class NugetRun extends BuildToolExtractor {
         if (csprojFiles.size() == 1) {
             String csprojPath = csprojFiles.get(0).toString();
             String projectName = csprojFiles.get(0).getFileName().toString().replace(".csproj", "");
-            String globalCachePath = nugetDriver.globalPackagesCache();
+            String globalCachePath = toolchainDriver.globalPackagesCache();
             singleProjectHandler(projectName, csprojPath, globalCachePath);
         }
     }
@@ -443,6 +441,7 @@ public class NugetRun extends BuildToolExtractor {
             ArtifactoryClientConfiguration.BuildToolHandler handler = clientConfiguration.buildToolHandler;
             NugetRun nugetRun = new NugetRun(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
+                    clientConfiguration.dotnetHandler.useDotnetCoreCli(),
                     handler.getBuildToolArgs(),
                     clientConfiguration.getLog(),
                     Paths.get(handler.getBuildToolPath() != null ? handler.getBuildToolPath() : "."),
