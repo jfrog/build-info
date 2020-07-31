@@ -56,18 +56,18 @@ public class NugetRun extends BuildToolExtractor {
 
     private static final long serialVersionUID = 1L;
 
-    ArtifactoryDependenciesClientBuilder clientBuilder;
-    ToolchainDriverBase toolchainDriver;
-    Path workingDir;
-    Log logger;
-    Path path;
-    String resolutionRepo;
-    String username;
-    String password;
-    String module;
-    String nugetCmdArgs;
-    List<String> dependenciesSources;
-    List<Module> modulesList = new ArrayList<>();
+    private ArtifactoryDependenciesClientBuilder clientBuilder;
+    private ToolchainDriverBase toolchainDriver;
+    private Path workingDir;
+    private Log logger;
+    private Path path;
+    private String resolutionRepo;
+    private String username;
+    private String password;
+    private String module;
+    private String nugetCmdArgs;
+    private List<String> dependenciesSources;
+    private List<Module> modulesList = new ArrayList<>();
 
     /**
      * Install npm package.
@@ -112,7 +112,7 @@ public class NugetRun extends BuildToolExtractor {
     }
 
     private void prepareAndRunCmd() throws Exception {
-        try (ArtifactoryDependenciesClient artifactoryClient = (clientBuilder != null ? clientBuilder.build() : null)) {
+        try (ArtifactoryDependenciesClient artifactoryClient = clientBuilder.build()) {
             List<String> extraArgs = new ArrayList<>();
             File configFile = prepareConfig(artifactoryClient);
             if (configFile != null) {
@@ -129,12 +129,12 @@ public class NugetRun extends BuildToolExtractor {
      */
     private File prepareConfig(ArtifactoryDependenciesClient client) throws Exception {
         File configFile = null;
+        configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
+        configFile.deleteOnExit();
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
-            configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
-            configFile.deleteOnExit();
-            BufferedWriter bw = new BufferedWriter(new FileWriter(configFile.getAbsolutePath()));
-            bw.write(CONFIG_FILE_TEMPLATE);
-            bw.close();
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(configFile.getAbsolutePath()))) {
+                bw.write(CONFIG_FILE_TEMPLATE);
+            }
             toolchainDriver.addSource(configFile.getPath(), client, resolutionRepo, SOURCE_NAME, username, password);
         }
         return configFile;
@@ -237,7 +237,7 @@ public class NugetRun extends BuildToolExtractor {
 
     private void collectDependenciesFromProjectDir(File projectRoot) throws Exception {
         List<Path> csprojFiles = Files.list(projectRoot.toPath())
-                .filter(path -> path.toString().endsWith("csproj")).collect(Collectors.toList());
+                .filter(path -> path.toString().endsWith(".csproj")).collect(Collectors.toList());
         if (csprojFiles.size() == 1) {
             String csprojPath = csprojFiles.get(0).toString();
             String projectName = csprojFiles.get(0).getFileName().toString().replace(".csproj", "");
@@ -270,11 +270,7 @@ public class NugetRun extends BuildToolExtractor {
         // Check if project uses packages.config or project.assets.json
         List<Dependency> dependencies = new ArrayList<>();
         if (dependenciesSource.endsWith(PACKAGES_CONFIG)) {
-            try {
-                dependencies = collectDependenciesFromPackagesConfig(dependenciesSource, globalCachePath);
-            } catch (Exception e) {
-                throw new RuntimeException(e.getMessage());
-            }
+            dependencies = collectDependenciesFromPackagesConfig(dependenciesSource, globalCachePath);
         } else if (dependenciesSource.endsWith(PROJECT_ASSETS)) {
             dependencies = collectDependenciesFromProjectAssets(dependenciesSource);
         }
@@ -302,7 +298,10 @@ public class NugetRun extends BuildToolExtractor {
     }
 
     private static String removeQuotes(String str) {
-        return str.substring(1,str.length()-1);
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 
     private List<Dependency> collectDependenciesFromPackagesConfig(String packagesConfigPath, String globalCachePath) throws Exception {
@@ -361,7 +360,7 @@ public class NugetRun extends BuildToolExtractor {
      * For example the alternative versions of "1.0.0" are: "1","1.0" and "1.0.0.0".
      * This method will return a list of the possible alternative versions.
      */
-    private  List<String> createAlternativeVersionForms(String originalVersion) {
+    protected static List<String> createAlternativeVersionForms(String originalVersion) {
         List<String> alternativeVersions = new ArrayList<>();
         List<String> versionParts = new ArrayList<>();
         Collections.addAll(versionParts, originalVersion.split("\\."));
@@ -407,7 +406,7 @@ public class NugetRun extends BuildToolExtractor {
                             nupkg.getPath(), ABSENT_NUPKG_WARN_MSG));
                     continue;
                 }
-                throw new RuntimeException(String.format("The file %s doesn't exist in the NuGet cache directory.", nupkg.getPath()));
+                throw new Exception(String.format("The file %s doesn't exist in the NuGet cache directory.", nupkg.getPath()));
             }
         }
         return dependenciesList;
@@ -416,11 +415,11 @@ public class NugetRun extends BuildToolExtractor {
     /**
      * If the package is included in the targets section of the assets.json file,
      * this is a .NET dependency that shouldn't be included in the dependencies list (it come with the SDK).
-     * Those files are located in the under <sdk path>/NuGetFallbackFolder
+     * Those files are located under <sdk path>/NuGetFallbackFolder
      */
     private boolean isPackagePartOfTargetDependencies(String dependencyId, Map<String, Map<String, NugetProjectAssets.TargetDependency>> targets) {
         String dependencyName = dependencyId.split("/")[0];
-        for ( Map<String, NugetProjectAssets.TargetDependency> dependencies : targets.values()) {
+        for (Map<String, NugetProjectAssets.TargetDependency> dependencies : targets.values()) {
             for (String dependencyKey : dependencies.keySet()) {
                 if (dependencyName.equalsIgnoreCase(dependencyKey)) {
                     return true;
@@ -431,7 +430,7 @@ public class NugetRun extends BuildToolExtractor {
     }
 
     /**
-     * Allow running npm install using a new Java process.
+     * Allow running nuget restore using a new Java process.
      * Used only in Jenkins to allow running 'rtNuget run' in a docker container.
      */
     public static void main(String[] ignored) {

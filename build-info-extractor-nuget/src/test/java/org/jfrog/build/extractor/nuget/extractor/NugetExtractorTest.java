@@ -17,7 +17,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.testng.Assert.*;
@@ -48,7 +50,6 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         MULTIPACKAGESCONFIG("multipackagesconfig", "NugetExtractorTest-MultiPackagesConfig", new String[]{"proj1", "proj2"}, 4,3),
         MULTIREFERENCE("multireference", "NugetExtractorTest-MultiReference", new String[]{"proj1", "proj2"}, 5,3);
 
-
         private File projectOrigin;
         private String targetDir;
         private int[] dependenciesCount;
@@ -60,7 +61,6 @@ public class NugetExtractorTest extends IntegrationTestsBase {
             this.moduleNames = moduleNames;
             this.dependenciesCount = dependenciesCounts;
         }
-
     }
 
     @BeforeClass
@@ -171,6 +171,29 @@ public class NugetExtractorTest extends IntegrationTestsBase {
             NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword());
             File projectRoot = nugetRun.getProjectRootPath();
             assertTrue(projectRoot.getPath().endsWith(expectedProjectRootFileName));
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        }
+    }
+
+    @DataProvider
+    private Object[][] alternativeVersionFormsProvider() {
+        return new Object[][]{
+                {"1.0", new String[]{"1.0.0.0", "1.0.0", "1"}},
+                {"1", new String[]{"1.0.0.0", "1.0.0", "1.0"}},
+                {"1.2", new String[]{"1.2.0.0", "1.2.0"}},
+                {"1.22.33", new String[]{"1.22.33.0"}},
+                {"1.22.33.44", new String[]{}},
+                {"1.0.2", new String[]{"1.0.2.0"}},
+        };
+    }
+
+    @SuppressWarnings("unused")
+    @Test(dataProvider = "alternativeVersionFormsProvider")
+    private void createAlternativeVersionFormsTest(String version, String[] expectedForms) {
+        try {
+            List<String> alternativeForms = NugetRun.createAlternativeVersionForms(version);
+            assertEquals(alternativeForms, Arrays.asList(expectedForms));
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
