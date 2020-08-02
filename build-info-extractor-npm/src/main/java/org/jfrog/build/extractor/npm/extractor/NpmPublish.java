@@ -164,11 +164,11 @@ public class NpmPublish extends NpmCommand {
             ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmPublish npmPublish = new NpmPublish(clientBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    Paths.get(npmHandler.getPackageManagerPath() != null ? npmHandler.getPackageManagerPath() : "."),
+                    Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties(),
-                    clientConfiguration.packageManagerHandler.getPackageManagerModule());
+                    npmHandler.getModule());
             npmPublish.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

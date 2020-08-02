@@ -5,11 +5,10 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.executor.CommandExecutor;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.*;
 
-public class NugetDriver extends ToolchainDriverBase implements Serializable {
+public class NugetDriver extends ToolchainDriverBase {
     private static final String FLAG_PREFIX = "-";
 
     public NugetDriver(Map<String, String> env, Path workingDirectory, Log logger) {
@@ -31,10 +30,10 @@ public class NugetDriver extends ToolchainDriverBase implements Serializable {
     public String globalPackagesCache() throws IOException, InterruptedException {
         // Run `nuget locals globals-packages -list` to get the global packages path
         List<String> args = new ArrayList<>();
-        args.add("global-packages");
-        args.add("-list");
-        String output = runCommand(new String[]{"locals", }, args);
-        return output.replaceFirst("^global-packages:", "").trim();
+        args.add(GLOBAL_PACKAGES_ARG);
+        args.add(getFlagSyntax(LIST_FLAG));
+        String output = runCommand(new String[]{LOCALS_ARG, }, args);
+        return output.replaceFirst(GLOBAL_PACKAGES_REGEX, "").trim();
     }
 
     public String getFlagSyntax(String flagName) {

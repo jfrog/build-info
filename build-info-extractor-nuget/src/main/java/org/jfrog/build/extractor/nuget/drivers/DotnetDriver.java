@@ -5,14 +5,13 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.executor.CommandExecutor;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class DotnetDriver extends ToolchainDriverBase implements Serializable {
+public class DotnetDriver extends ToolchainDriverBase {
     private static final String FLAG_PREFIX = "--";
     private static final String CLEAR_TEXT_PASSWORD_FLAG = FLAG_PREFIX + "store-password-in-clear-text";
 
@@ -35,10 +34,10 @@ public class DotnetDriver extends ToolchainDriverBase implements Serializable {
     public String globalPackagesCache() throws IOException, InterruptedException {
         // Run `nuget locals globals-packages -list` to get the global packages path
         List<String> args = new ArrayList<>();
-        args.add("global-packages");
-        args.add("--list");
-        String output = runCommand(new String[]{"nuget", "locals", }, args);
-        return output.replaceFirst("^global-packages:", "").trim();
+        args.add(GLOBAL_PACKAGES_ARG);
+        args.add(getFlagSyntax(LIST_FLAG));
+        String output = runCommand(new String[]{"nuget", LOCALS_ARG, }, args);
+        return output.replaceFirst(GLOBAL_PACKAGES_REGEX, "").trim();
     }
 
     public String getFlagSyntax(String flagName) {

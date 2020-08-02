@@ -475,27 +475,27 @@ public class ArtifactoryClientConfiguration {
             super(root, PROP_PACKAGE_MANAGER_PREFIX);
         }
 
-        public String getPackageManagerArgs() {
+        public String getArgs() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_ARGS);
         }
 
-        public void setPackageManagerArgs(String packageManagerArgs) {
+        public void setArgs(String packageManagerArgs) {
             rootConfig.setStringValue(PACKAGE_MANAGER_ARGS, packageManagerArgs);
         }
 
-        public String getPackageManagerPath() {
+        public String getPath() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_PATH);
         }
 
-        public void setPackageManagerPath(String packageManagerPath) {
+        public void setPath(String packageManagerPath) {
             rootConfig.setStringValue(PACKAGE_MANAGER_PATH, packageManagerPath);
         }
 
-        public String getPackageManagerModule() {
+        public String getModule() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_MODULE);
         }
 
-        public void setPackageManagerModule(String packageManagerModule) {
+        public void setModule(String packageManagerModule) {
             rootConfig.setStringValue(PACKAGE_MANAGER_MODULE, packageManagerModule);
         }
     }

@@ -26,6 +26,10 @@ abstract public class ToolchainDriverBase implements Serializable {
     protected static final String NAME_FLAG = "name";
     protected static final String USERNAME_FLAG = "username";
     protected static final String PASSWORD_FLAG = "password";
+    protected static final String LIST_FLAG = "list";
+    protected static final String LOCALS_ARG = "locals";
+    protected static final String GLOBAL_PACKAGES_ARG = "global-packages";
+    protected static final String GLOBAL_PACKAGES_REGEX = "^global-packages:";
 
     private static final long serialVersionUID = 1L;
 

@@ -129,9 +129,9 @@ public class NugetRun extends PackageManagerExtractor {
      */
     private File prepareConfig(ArtifactoryDependenciesClient client) throws Exception {
         File configFile = null;
-        configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
-        configFile.deleteOnExit();
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
+            configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
+            configFile.deleteOnExit();
             try (BufferedWriter bw = new BufferedWriter(new FileWriter(configFile.getAbsolutePath()))) {
                 bw.write(CONFIG_FILE_TEMPLATE);
             }
@@ -441,11 +441,11 @@ public class NugetRun extends PackageManagerExtractor {
             NugetRun nugetRun = new NugetRun(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     clientConfiguration.dotnetHandler.useDotnetCoreCli(),
-                    handler.getPackageManagerArgs(),
+                    handler.getArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(handler.getPackageManagerPath() != null ? handler.getPackageManagerPath() : "."),
+                    Paths.get(handler.getPath() != null ? handler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    handler.getPackageManagerModule(),
+                    handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
