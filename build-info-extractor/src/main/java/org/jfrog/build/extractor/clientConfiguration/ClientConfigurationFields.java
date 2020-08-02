@@ -34,6 +34,7 @@ public interface ClientConfigurationFields {
     String PACKAGE_MANAGER_PATH = "package.manager.path"; // Path to package-manager execution dir
     String PACKAGE_MANAGER_MODULE = "package.manager.module"; // Custom module name for the build-info
     String PIP_ENV_ACTIVATION = "pip.env.activation";
+    String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";

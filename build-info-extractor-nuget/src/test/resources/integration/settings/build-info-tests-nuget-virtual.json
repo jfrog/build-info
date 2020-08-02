@@ -1,0 +1,6 @@
+{
+  "rclass": "virtual",
+  "packageType": "nuget",
+  "repositories": ["build-info-tests-nuget-local", "build-info-tests-nuget-remote"],
+  "defaultDeploymentRepo": "build-info-tests-nuget-local"
+}

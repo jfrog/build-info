@@ -71,11 +71,11 @@ public class NpmInstall extends NpmCommand {
             ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmInstall npmInstall = new NpmInstall(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
-                    npmHandler.getPackageManagerArgs(),
+                    npmHandler.getArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(npmHandler.getPackageManagerPath() != null ? npmHandler.getPackageManagerPath() : "."),
+                    Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    npmHandler.getPackageManagerModule());
+                    npmHandler.getModule());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

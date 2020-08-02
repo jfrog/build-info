@@ -97,11 +97,11 @@ public class PipInstall extends PackageManagerExtractor {
             ArtifactoryClientConfiguration.PackageManagerHandler pipHandler = clientConfiguration.packageManagerHandler;
             PipInstall pipInstall = new PipInstall(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
-                    pipHandler.getPackageManagerArgs(),
+                    pipHandler.getArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(pipHandler.getPackageManagerPath() != null ? pipHandler.getPackageManagerPath() : "."),
+                    Paths.get(pipHandler.getPath() != null ? pipHandler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    pipHandler.getPackageManagerModule(),
+                    pipHandler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword(),
                     clientConfiguration.pipHandler.getEnvActivation());

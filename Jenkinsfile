@@ -42,6 +42,14 @@ node('java') {
             buildName: 'EcoSystemRelease :: build-info-pip-extractor',
             tagName: 'build-info-pip-extractor'
         ],
+        "build-info-extractor-nuget": [
+            releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
+            nextVersion: "${EXTRACTOR_NEXT_VERSION}",
+            buildTasks: 'build-info-extractor-nuget:clean build-info-extractor-nuget:artifactoryPublish -x test',
+            releaseTasks: '-PextractorRelease=true  build-info-extractor-nuget:clean build-info-extractor-nuget:artifactoryPublish -x test',
+            buildName: 'EcoSystemRelease :: build-info-nuget-extractor',
+            tagName: 'build-info-nuget-extractor'
+        ],
         "build-info-extractor-maven3": [
             releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",

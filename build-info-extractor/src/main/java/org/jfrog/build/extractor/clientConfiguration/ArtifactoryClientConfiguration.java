@@ -56,6 +56,7 @@ public class ArtifactoryClientConfiguration {
     public final ProxyHandler proxy;
     public final PackageManagerHandler packageManagerHandler;
     public final PipHandler pipHandler;
+    public final DotnetHandler dotnetHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -71,6 +72,7 @@ public class ArtifactoryClientConfiguration {
         this.proxy = new ProxyHandler();
         this.packageManagerHandler = new PackageManagerHandler();
         this.pipHandler = new PipHandler();
+        this.dotnetHandler = new DotnetHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -473,27 +475,27 @@ public class ArtifactoryClientConfiguration {
             super(root, PROP_PACKAGE_MANAGER_PREFIX);
         }
 
-        public String getPackageManagerArgs() {
+        public String getArgs() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_ARGS);
         }
 
-        public void setPackageManagerArgs(String packageManagerArgs) {
+        public void setArgs(String packageManagerArgs) {
             rootConfig.setStringValue(PACKAGE_MANAGER_ARGS, packageManagerArgs);
         }
 
-        public String getPackageManagerPath() {
+        public String getPath() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_PATH);
         }
 
-        public void setPackageManagerPath(String packageManagerPath) {
+        public void setPath(String packageManagerPath) {
             rootConfig.setStringValue(PACKAGE_MANAGER_PATH, packageManagerPath);
         }
 
-        public String getPackageManagerModule() {
+        public String getModule() {
             return rootConfig.getStringValue(PACKAGE_MANAGER_MODULE);
         }
 
-        public void setPackageManagerModule(String packageManagerModule) {
+        public void setModule(String packageManagerModule) {
             rootConfig.setStringValue(PACKAGE_MANAGER_MODULE, packageManagerModule);
         }
     }
@@ -510,6 +512,20 @@ public class ArtifactoryClientConfiguration {
 
         public void setEnvActivation(String envActivation) {
             rootConfig.setStringValue(PIP_ENV_ACTIVATION, envActivation);
+        }
+    }
+
+    public class DotnetHandler extends PrefixPropertyHandler {
+        public DotnetHandler() {
+            super(root, PROP_DOTNET_PREFIX);
+        }
+
+        public boolean useDotnetCoreCli() {
+            return rootConfig.getBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, false);
+        }
+
+        public void setUseDotnetCli(boolean useDotnetCli) {
+            rootConfig.setBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, useDotnetCli);
         }
     }
 
