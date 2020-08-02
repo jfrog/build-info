@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.npm;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -58,11 +59,16 @@ public class NpmDriver implements Serializable {
         List<String> args = new ArrayList<>();
         args.add("ls");
         args.add("--json");
+        args.add("--long");
         args.addAll(extraArgs);
         try {
             CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null);
             String res = StringUtils.isBlank(npmCommandRes.getRes()) ? "{}" : npmCommandRes.getRes();
-            return jsonReader.readTree(res);
+            JsonNode npmLsResults = jsonReader.readTree(res);
+            if (!npmCommandRes.isOk() && !npmLsResults.has("problems")) {
+                ((ObjectNode) npmLsResults).put("problems", npmCommandRes.getErr());
+            }
+            return npmLsResults;
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm ls failed", e);
         }

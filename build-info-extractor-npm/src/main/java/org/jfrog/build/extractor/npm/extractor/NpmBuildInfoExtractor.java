@@ -69,7 +69,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
         List<Dependency> dependencies = collectDependencies(workingDir);
         String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
-        return createBuild(dependencies,moduleId);
+        return createBuild(dependencies, moduleId);
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
@@ -167,13 +167,13 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
     /**
      * Boolean argument can be provided in one of the following ways:
-     *  1. --arg - which infers true
-     *  2. --arg=value (true/false)
-     *  3. --arg value (true/false)
+     * 1. --arg - which infers true
+     * 2. --arg=value (true/false)
+     * 3. --arg value (true/false)
      */
-    static boolean isJsonOutputRequired(List <String> installationArgs) {
+    static boolean isJsonOutputRequired(List<String> installationArgs) {
         int jsonIndex = installationArgs.indexOf("--json");
-        if (jsonIndex > -1 ) {
+        if (jsonIndex > -1) {
             return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
         }
         return installationArgs.contains("--json=true");
@@ -220,12 +220,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private List<Dependency> collectDependencies(Path workingDir) throws Exception {
         Map<String, Dependency> dependencies = new ConcurrentHashMap<>();
         List<NpmScope> scopes = getNpmScopes();
-        for (NpmScope scope : scopes) {
-            List<String> extraListArgs = new ArrayList<>();
-            extraListArgs.add("--only=" + scope);
-            JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-            populateDependenciesMap(dependencies, scope, jsonNode);
+        if (scopes.isEmpty()) {
+            return new ArrayList<>();
         }
+        List<String> extraListArgs = new ArrayList<>();
+        if (scopes.size() == 1) {
+            extraListArgs.add("--only=" + scopes.get(0));
+        }
+        JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
+        populateDependenciesMap(dependencies, jsonNode);
 
         return new ArrayList<>(dependencies.values());
     }
@@ -268,10 +271,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, NpmScope scope, JsonNode npmDependenciesTree) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, JsonNode npmDependenciesTree) throws Exception {
         // Set of packages that could not be found in Artifactory
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(scope, npmDependenciesTree);
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(npmDependenciesTree);
         try (ArtifactoryDependenciesClient client = dependenciesClientBuilder.build()) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
