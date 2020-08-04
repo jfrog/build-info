@@ -265,8 +265,8 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.1'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.1'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
         compile group: 'org.apache.commons', name: 'commons-compress', version: '1.19'
     }
 }
@@ -275,11 +275,11 @@ project('build-info-client') {
     description = 'JFrog Build-Info Client'
     dependencies {
         compile project(':build-info-api')
-        compile("org.apache.httpcomponents:httpclient:4.5.10") {
+        compile("org.apache.httpcomponents:httpclient:4.5.12") {
             exclude module: "commons-codec"
         }
         compile 'org.apache.httpcomponents:httpcore:4.4.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.1'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
         compile "commons-codec:commons-codec:1.13"
     }
     sourceSets {
