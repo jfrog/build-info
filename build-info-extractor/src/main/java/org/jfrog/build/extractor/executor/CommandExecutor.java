@@ -29,12 +29,10 @@ public class CommandExecutor implements Serializable {
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;
-        Map<String, String> fixedEnvMap = new HashMap<>(env);
-        // Fix PATH variable.
-        fixPathEnv(fixedEnvMap);
-
         Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
-        if (!fixedEnvMap.isEmpty()) {
+        if (env != null) {
+            Map<String, String> fixedEnvMap = new HashMap<>(env);
+            fixPathEnv(fixedEnvMap);
             finalEnvMap.putAll(fixedEnvMap);
         }
         this.env = finalEnvMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
