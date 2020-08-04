@@ -77,7 +77,7 @@ environment:
       TEST_SUIT:
         "./gradlew clean build-info-extractor-go:test"
 
-    Pip Tests
+    # Pip Tests
     - job_name: pip_extractor_win
       job_group: pip
       appveyor_build_worker_image: Visual Studio 2019
