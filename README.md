@@ -7,9 +7,9 @@ The build information is sent to Artifactory in json format.
 
 ## Building and Testing the Sources
 
-The code is built using Gradle and includes integration tests.<br/>
-It must run using JDK 8 and Gradle 5.6.2. If you are using different gradle version you can use the provided gradle wrapper.<br/>
-In order to run tests the following environment variable must be provide:
+* The code is built using Gradle and includes integration tests.<br/>
+* It must run using JDK 8 and Gradle 5.6.2. If you are using different gradle version you can use the provided gradle wrapper.<br/>
+* In order to run tests the following environment variable must be provided:
 ```
 export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
 export BITESTS_ARTIFACTORY_USERNAME=admin
@@ -17,8 +17,10 @@ export BITESTS_ARTIFACTORY_PASSWORD=password
 export BITESTS_ARTIFACTORY_REPO=tests
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
-Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
+* Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
+* Please follow the testing instructions below for more details of different types of build-tools test instructions.
 
+### Building
 To build the code using the gradle wrapper in Unix run:  
 ```
 > ./gradlew clean build
@@ -36,23 +38,74 @@ To build the code without running the tests, add to the "clean build" command th
 > ./gradlew clean build -x test
 ```
 
-### Running pip tests
-Pip tests must run inside a clean pip-environment. Create a virtual environment and provide the path to its '/bin' directory using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.
+### Testing
+To run *all* tests:   
+```
+> ./gradlew clean test
+```
 
-### Running Gradle tests on Artifactory OSS
+#### Extractor tests
+```
+> ./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test
+```
+
+#### Maven tests
+* Add Maven executable to the system search path (PATH environment variable).
+```
+> ./gradlew clean build-info-extractor-maven3:test
+```
+
+#### Gradle tests
+* Add gradle executable to the system search path (PATH environment variable).
+```
+> ./gradlew clean build-info-extractor-gradle:test
+```
+
+#### Npm tests
+* Add npm executable to the system search path (PATH environment variable).
+```
+> ./gradlew clean build-info-extractor-npm:test
+```
+
+#### Go tests
+* Add Go executable to the system search path (PATH environment variable).
+```
+> ./gradlew clean build-info-extractor-go:test
+```
+
+#### Pip tests
+* Add Python and pip executables to the system search path (PATH environment variable).
+* Pip tests must run inside a clean pip-environment. Create a virtual environment and provide its path using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.  
+When running on a Windows machine, provide the path to the 'Scripts' directory.  
+When running on a unix machine, provide the path to the 'bin' directory.
+```
+> python -m venv buildinfo-tests-env
+> export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/buildinfo-tests-env/bin
+> ./gradlew clean build-info-extractor-pip:test
+```
+
+#### NuGet tests
+* Add Nuget executable to the system search path (PATH environment variable).
+```
+> ./gradlew clean build-info-extractor-nuget:test
+```
+
+###  Testing on Artifactory OSS
+When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
+
 On Artifactory pro, the tests infrastructure will create the test repositories by REST API.
 To run the tests on Artifactory OSS, you should create the Gradle repositories by yourself.
 To run Gradle tests on Artifactory OSS:
-1. Start Artifactory on docker container:
+* Start Artifactory on docker container:
 ```
-> docker run --name artifactory -d -p 8081:8081 docker.bintray.io/jfrog/artifactory-oss:latest
+> docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-oss:latest
 ```
-2. With your web browser, go to Artifactory UI: http://127.0.0.1:8081/artifactory
-3. Create 3 Gradle repositories:
+* With your web browser, go to Artifactory UI: http://127.0.0.1:8081/artifactory
+* Create 3 Gradle repositories:
   * Local repository: `build-info-tests-gradle-local`
   * Remote repository to jcenter: `build-info-tests-gradle-remote`
   * Virtual repository containing both the remote and local: `build-info-tests-gradle-virtual` 
-4. Run tests `./gradlew build-info-extractor-gradle:test`
+* Run tests `./gradlew build-info-extractor-gradle:test`
 
 ## Build Info json format
 
