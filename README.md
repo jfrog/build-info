@@ -50,13 +50,11 @@ To run *all* tests:
 ```
 
 #### Maven tests
-* Add Maven executable to the system search path (PATH environment variable).
 ```
 > ./gradlew clean build-info-extractor-maven3:test
 ```
 
 #### Gradle tests
-* Add gradle executable to the system search path (PATH environment variable).
 ```
 > ./gradlew clean build-info-extractor-gradle:test
 ```
