@@ -118,9 +118,7 @@ node('java') {
             }
             bumpVersion(buildProjList, projectsConfig, latestReleaseVersion, 'releaseVersion')
             sh 'git commit -am "[artifactory-release] Release version"'
-            withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
-                sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
-            }
+            sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
 
             echo "Build release versions"
             rtGradle.deployer server: deployServer, repo: 'oss-release-local'
@@ -135,18 +133,14 @@ node('java') {
                     // Create tag.
                     def tag = buildConfig.tagName + "-" + buildConfig.releaseVersion
                     sh "git tag $tag"
-                    withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
-                        sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git --tags'
-                    }
+                    sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git --tags'
                 }
             }
 
             echo "Bump development version"
             bumpVersion(buildProjList, projectsConfig, latestNextVersion, 'nextVersion')
             sh 'git commit -am "[artifactory-release] Next development version"'
-            withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
-                sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
-            }
+            sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
         }
     }
 }
