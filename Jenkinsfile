@@ -118,7 +118,7 @@ node('java') {
             }
             bumpVersion(buildProjList, projectsConfig, latestReleaseVersion, 'releaseVersion')
             sh 'git commit -am "[artifactory-release] Release version"'
-            wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
+            withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
                 sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
             }
 
@@ -135,7 +135,7 @@ node('java') {
                     // Create tag.
                     def tag = buildConfig.tagName + "-" + buildConfig.releaseVersion
                     sh "git tag $tag"
-                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
+                    withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
                         sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git --tags'
                     }
                 }
@@ -144,7 +144,7 @@ node('java') {
             echo "Bump development version"
             bumpVersion(buildProjList, projectsConfig, latestNextVersion, 'nextVersion')
             sh 'git commit -am "[artifactory-release] Next development version"'
-            wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
+            withCredentials([usernamePassword(credentialsId: 'github-deployer', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_API_KEY')]) {
                 sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
             }
         }
