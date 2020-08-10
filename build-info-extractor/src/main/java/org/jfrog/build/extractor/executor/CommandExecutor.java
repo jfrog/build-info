@@ -29,12 +29,13 @@ public class CommandExecutor implements Serializable {
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
         this.executablePath = executablePath;
-        Map<String, String> envMap = new HashMap<>(System.getenv());
+        Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
         if (env != null) {
-            envMap.putAll(env);
+            Map<String, String> fixedEnvMap = new HashMap<>(env);
+            fixPathEnv(fixedEnvMap);
+            finalEnvMap.putAll(fixedEnvMap);
         }
-        fixPathEnv(envMap);
-        this.env = envMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        this.env = finalEnvMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
     }
 
     /**
@@ -49,11 +50,39 @@ public class CommandExecutor implements Serializable {
             return;
         }
         if (isWindows()) {
-            path = path.replaceAll(":", File.pathSeparator);
+            path = getFixedWindowsPath(path);
         } else {
             path = path.replaceAll(";", File.pathSeparator) + ":/usr/local/bin";
         }
         env.replace("PATH", path);
+    }
+
+    /**
+     * Fix the PATH value to be valid for execution on a Windows machine.
+     * Take care of a case when either non-Windows or Windows environment-variables are received.
+     * Examples:
+     * "C:\my\first;Drive:\my\second" returns "C:\my\first;Drive:\my\second"
+     * "/Users/my/first:/Users/my/second" returns "/Users/my/first;/Users/my/second"
+     *
+     * @param path - Value of PATH environment variable.
+     * @return Fixed PATH value.
+     */
+    static String getFixedWindowsPath(String path) {
+        String[] pathParts = path.split(";");
+        String[] newPathParts = new String[pathParts.length];
+        for (int index = 0; index < pathParts.length; index++) {
+            String part = pathParts[index];
+            int backSlashIndex = part.indexOf('\\');
+            if (backSlashIndex < 0) {
+                newPathParts[index] = part.replaceAll(":", ";");
+                continue;
+            }
+            String startPart = part.substring(0, backSlashIndex);
+            String endPart = part.substring(backSlashIndex);
+            String newPart = startPart + endPart.replaceAll(":", ";");
+            newPathParts[index] = newPart;
+        }
+        return String.join(";", newPathParts);
     }
 
     /**
