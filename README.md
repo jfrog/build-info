@@ -5,11 +5,11 @@
 Build Info is Artifactory's open integration layer for the CI servers and build tools.
 The build information is sent to Artifactory in json format.
 
-## Building and Testing the Sources
+## Building and testing the sources
 
 * The code is built using Gradle and includes integration tests.<br/>
 * It must run using JDK 8 and Gradle 5.6.2. If you are using different gradle version you can use the provided gradle wrapper.<br/>
-* In order to run tests the following environment variable must be provided:
+* In order to run tests the following environment variables must be set:
 ```
 export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
 export BITESTS_ARTIFACTORY_USERNAME=admin
@@ -18,9 +18,10 @@ export BITESTS_ARTIFACTORY_REPO=tests
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
 * Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
-* Please follow the testing instructions below for more details of different types of build-tools test instructions.
 
 ### Building
+When running the following commands to build the code, the entire testing suite is also executed. See the *Testing* section for configuration instructions prior to running the tests.
+
 To build the code using the gradle wrapper in Unix run:  
 ```
 > ./gradlew clean build
