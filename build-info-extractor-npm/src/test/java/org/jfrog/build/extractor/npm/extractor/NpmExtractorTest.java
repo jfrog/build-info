@@ -111,6 +111,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                     .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
                     .targetRepository(localRepo)
                     .artifactPath(project.getTargetPath())
+                    .packageType(DeployDetails.PackageType.NPM)
                     .build();
             buildInfoClient.deployArtifact(deployDetails);
         }

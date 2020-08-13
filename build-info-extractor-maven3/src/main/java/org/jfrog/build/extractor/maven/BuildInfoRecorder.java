@@ -610,7 +610,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         String targetRepository = getTargetRepository(deploymentPath);
 
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
-                targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
+                targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams())
+                .packageType(DeployDetails.PackageType.MAVEN).build();
         String myArtifactId = BuildInfoExtractorUtils.getArtifactId(currentModule.get().build().getId(),
                 artifact.getName());
 

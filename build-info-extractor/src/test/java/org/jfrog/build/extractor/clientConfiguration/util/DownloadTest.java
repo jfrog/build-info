@@ -140,7 +140,9 @@ public class DownloadTest extends IntegrationTestsBase {
                         .targetRepository(localRepo)
                         .md5(checksum.get(MD5_ALGORITHM_NAME))
                         .sha1(checksum.get(SHA1_ALGORITHM_NAME))
-                        .explode(false).build();
+                        .explode(false)
+                        .packageType(DeployDetails.PackageType.GENERIC)
+                        .build();
 
                 // Upload artifact
                 buildInfoClient.deployArtifact(deployDetails);

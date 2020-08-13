@@ -65,6 +65,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
      */
     private boolean explode;
     /**
+     * The package type generated this artifact's deploy details.
+     */
+    private PackageType packageType;
+    /**
      * @return Return the target deployment repository.
      */
     public String getTargetRepository() {
@@ -95,6 +99,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return explode;
     }
 
+    public PackageType getPackageType() {
+        return packageType;
+    }
+
     public int compareTo(DeployDetails that) {
         return this.artifactPath.compareTo(that.artifactPath);
     }
@@ -116,6 +124,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
     public int hashCode() {
         int result = Objects.hashCode(artifactPath);
         return 31 * result + Objects.hashCode(targetRepository);
+    }
+
+    public enum PackageType {
+        GENERIC, MAVEN, ANT, IVY, GRADLE, GO, NPM
     }
 
     public static class Builder {
@@ -179,6 +191,11 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder explode(boolean isExplodeArchive) {
             deployDetails.explode = isExplodeArchive;
+            return this;
+        }
+
+        public Builder packageType(PackageType packageType) {
+            deployDetails.packageType = packageType;
             return this;
         }
 

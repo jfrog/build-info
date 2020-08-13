@@ -259,7 +259,9 @@ public class TaskHelperConfigurations extends TaskHelper {
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.ivyDescriptor);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(artifactoryTask.ivyDescriptor)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.ivyDescriptor, "MD5", "SHA1");
@@ -289,7 +291,9 @@ public class TaskHelperConfigurations extends TaskHelper {
     private GradleDeployDetails getMavenDeployDetails() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.mavenDescriptor);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(artifactoryTask.mavenDescriptor)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.mavenDescriptor, "MD5", "SHA1");
@@ -405,7 +409,9 @@ public class TaskHelperConfigurations extends TaskHelper {
             gid = gid.replace(".", "/");
         }
 
-        DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder().file(file);
+        DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder()
+                .file(file)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
             deployDetailsBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
