@@ -19,10 +19,7 @@ package org.jfrog.build.api.builder;
 import com.google.common.collect.Lists;
 import org.jfrog.build.api.Dependency;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A builder for the dependency class
@@ -212,6 +209,14 @@ public class DependencyBuilder {
             properties = new Properties();
         }
         properties.put(key, value);
+        return this;
+    }
+
+    public DependencyBuilder addProperty(Map props) {
+        if (properties == null) {
+            properties = new Properties();
+        }
+        properties.putAll(props);
         return this;
     }
 }
