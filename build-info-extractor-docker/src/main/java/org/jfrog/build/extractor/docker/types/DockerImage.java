@@ -185,11 +185,7 @@ public class DockerImage implements Serializable {
     }
 
     public Module generateBuildInfoModule(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, Log logger, Map<String, String> artifactProperties) throws IOException {
-        Properties buildInfoItemsProps = new Properties();
-        buildInfoItemsProps.setProperty("build.name", artifactProperties.get("build.name"));
-        buildInfoItemsProps.setProperty("build.number", artifactProperties.get("build.number"));
-        buildInfoItemsProps.setProperty("build.timestamp", artifactProperties.get("build.timestamp"));
-
+        Properties buildInfoItemsProps = getBuildInfoProps(artifactProperties);
         String artifactsPropsStr = DockerUtils.buildPropertiesString(artifactProperties);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build();
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
@@ -247,5 +243,15 @@ public class DockerImage implements Serializable {
             String response = DockerUtils.entityToString(httpResponse.getEntity());
             throw new IOException("Failed while trying to set properties on docker layer: " + response);
         }
+    }
+
+    private Properties getBuildInfoProps(Map<String, String> artifactProperties) {
+        Properties buildInfoItemsProps = new Properties();
+        if (artifactProperties != null) {
+            buildInfoItemsProps.setProperty("build.name", artifactProperties.get("build.name"));
+            buildInfoItemsProps.setProperty("build.number", artifactProperties.get("build.number"));
+            buildInfoItemsProps.setProperty("build.timestamp", artifactProperties.get("build.timestamp"));
+        }
+        return buildInfoItemsProps;
     }
 }
