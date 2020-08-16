@@ -93,13 +93,14 @@ When running on a unix machine, provide the path to the 'bin' directory.
 * In addition to general environment variables you must set the following docker environment variables:
 
  ```
-  export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-docker-local.jfrog.io/'
-  export BITESTS_ARTIFACTORY_DOCKER_REPO=docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-build-info-tests-docker.jfrog.io/'
+  export BITESTS_ARTIFACTORY_DOCKER_REPO=build-info-tests-docker
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
  ```
 > ./gradlew clean build-info-extractor-docker:test
 ```
+* Before running the tests, please make sure you have a docker repository named *build-info-tests-docker* in Artifactory.
 
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
