@@ -1,6 +1,8 @@
 package org.jfrog.build.extractor.docker.extractor;
 
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
@@ -17,7 +19,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.HashMap;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
@@ -31,16 +32,18 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private String repo;
     private String host;
     private String imageTag;
-    private HashMap<String, String> artifactProperties = new HashMap<String, String>() {{
-        put("build.name", "docker-push-test");
-        put("build.number", "1");
-        put("build.timestamp", "321");
-        put("property-key", "property-value");
-    }};
+    private ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
 
     public DockerExtractorTest() {
         localRepo = "";
         virtualRepo = "";
+        artifactProperties.put("build.name", "docker-push-test");
+        artifactProperties.putAll(ImmutableMultimap.<String, String>builder()
+                .put("build.name", "docker-push-test")
+                .put("build.number", "1")
+                .put("build.timestamp", "321")
+                .put("property-key", "property-value")
+                .build());
     }
 
     private static boolean isWindows() {

@@ -15,12 +15,8 @@ export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
 export BITESTS_ARTIFACTORY_REPO=tests
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
-export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-docker-local.jfrog.io/'
-export BITESTS_ARTIFACTORY_DOCKER_REPO=docker-local
-export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
 ```
 * Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
-* Before running Docker tests, create a local docker repository as a value to *BITESTS_ARTIFACTORY_DOCKER_REPO*.
 
 ### Building
 When running the following commands to build the code, the entire testing suite is also executed. See the *Testing* section for configuration instructions prior to running the tests.
@@ -93,8 +89,15 @@ When running on a unix machine, provide the path to the 'bin' directory.
 ```
 
 #### Docker tests
-* Docker runs only on Linux/mac agents. It's required to provide the Docker domain and Repository through environment variables(Docker repo content will be deleted after finishing the tests).
-```
+* Docker tests run only on Linux/mac.
+* In addition to general environment variables you must set the following docker environment variables:
+
+ ```
+  export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-docker-local.jfrog.io/'
+  export BITESTS_ARTIFACTORY_DOCKER_REPO=docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
+ ```
+ ```
 > ./gradlew clean build-info-extractor-docker:test
 ```
 
