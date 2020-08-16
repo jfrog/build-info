@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.hash.Hashing;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +28,7 @@ public class DockerUtils {
      * @return
      * @throws IOException
      */
-    public static String getConfigDigest(String manifest) throws IOException{
+    public static String getConfigDigest(String manifest) throws IOException {
         JsonNode manifestTree = createMapper().readTree(manifest);
         JsonNode schemaVersion = manifestTree.get("schemaVersion");
         if (schemaVersion == null) {
@@ -216,27 +218,6 @@ public class DockerUtils {
             return IOUtils.toString(is, "UTF-8");
         }
         return "";
-    }
-
-    /**
-     * Build string of properties in the following form:
-     * key=value;key=value...
-     *
-     * @param properties - keys and values to concat
-     * @return
-     */
-    public static String buildPropertiesString(Map<String, String> properties) {
-        StringBuilder props = new StringBuilder();
-        List<String> keys = new ArrayList<String>(properties.keySet());
-        for (int i = 0; i < keys.size(); i++) {
-            props.append(keys.get(i)).append("=");
-            String value = properties.get(keys.get(i));
-                props.append(value);
-            if (i != keys.size() - 1) {
-                props.append(";");
-            }
-        }
-        return props.toString();
     }
 
     /**

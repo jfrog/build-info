@@ -37,7 +37,6 @@ public interface ClientConfigurationFields {
     String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
     String DOCKER_IMAGE_TAG = "docker.image.tag";
     String DOCKER_HOST = "docker.host";
-    String DOCKER_PROPERTIES = "docker.properties";
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";

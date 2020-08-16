@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.docker.types;
 
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -12,6 +13,7 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.api.util.Utils;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
@@ -131,9 +133,9 @@ public class DockerImage implements Serializable {
             DockerLayer layer = layers.getByDigest(digest);
             HttpResponse httpResponse = propertyChangeClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
             validateResponse(httpResponse);
-            Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).addProperty(properties).build();
+            Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
             dependencies.add(dependency);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperty(properties).build();
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
             artifacts.add(artifact);
         }
         buildInfoModule.setDependencies(new ArrayList<>(dependencies));
@@ -145,7 +147,7 @@ public class DockerImage implements Serializable {
             }
             HttpResponse httpResponse = propertyChangeClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
             validateResponse(httpResponse);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperty(properties).build();
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
             artifacts.add(artifact);
         }
         buildInfoModule.setArtifacts(new ArrayList<>(artifacts));
@@ -184,9 +186,9 @@ public class DockerImage implements Serializable {
         return aqlRequestForDockerSha.toString();
     }
 
-    public Module generateBuildInfoModule(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, Log logger, Map<String, String> artifactProperties) throws IOException {
+    public Module generateBuildInfoModule(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, Log logger, ArrayListMultimap<String, String> artifactProperties) throws IOException {
         Properties buildInfoItemsProps = getBuildInfoProps(artifactProperties);
-        String artifactsPropsStr = DockerUtils.buildPropertiesString(artifactProperties);
+        String artifactsPropsStr = Utils.buildPropertiesString(artifactProperties);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build();
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             Module buildInfoModule = new Module();
@@ -194,7 +196,7 @@ public class DockerImage implements Serializable {
             try {
                 findAndSetManifestFromArtifactory(dependenciesClient.getArtifactoryUrl(), dependenciesClient, logger);
             } catch (IOException e) {
-                // The manifest could be found in Artifactory.
+                // The manifest could not be found in Artifactory.
                 // Yet, we do not fail the build, but return an empty build-info instead.
                 // The reason for not failing build is that there's a chance that the image was replaced
                 // with another image, deployed to the same repo path.
@@ -245,12 +247,22 @@ public class DockerImage implements Serializable {
         }
     }
 
-    private Properties getBuildInfoProps(Map<String, String> artifactProperties) {
+    private Properties getBuildInfoProps(ArrayListMultimap<String, String> artifactProperties) {
         Properties buildInfoItemsProps = new Properties();
+        List<String> temp;
         if (artifactProperties != null) {
-            buildInfoItemsProps.setProperty("build.name", artifactProperties.get("build.name"));
-            buildInfoItemsProps.setProperty("build.number", artifactProperties.get("build.number"));
-            buildInfoItemsProps.setProperty("build.timestamp", artifactProperties.get("build.timestamp"));
+            temp = artifactProperties.get("build.name");
+            if (temp != null && temp.size() > 0) {
+                buildInfoItemsProps.setProperty("build.name", temp.get(0));
+            }
+            temp = artifactProperties.get("build.number");
+            if (temp != null && temp.size() > 0) {
+                buildInfoItemsProps.setProperty("build.number", temp.get(0));
+            }
+            temp = artifactProperties.get("build.timestamp");
+            if (temp != null && temp.size() > 0) {
+                buildInfoItemsProps.setProperty("build.timestamp", temp.get(0));
+            }
         }
         return buildInfoItemsProps;
     }

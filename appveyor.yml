@@ -116,7 +116,7 @@ environment:
 
     # Docker Tests
     - job_name: docker_extractor_linux
-      job_group: docker
+      job_group: general
       appveyor_build_worker_image: Ubuntu
       TEST_SUIT:
         "./gradlew clean build-info-extractor-docker:test"

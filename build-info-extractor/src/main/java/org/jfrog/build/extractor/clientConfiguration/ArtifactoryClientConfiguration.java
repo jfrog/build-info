@@ -548,30 +548,6 @@ public class ArtifactoryClientConfiguration {
         public void setHost(String host) {
             rootConfig.setStringValue(DOCKER_HOST, host);
         }
-
-        public Map<String, String> getArtifactProperties() {
-            String stringProperties = rootConfig.getStringValue(DOCKER_PROPERTIES);
-            Map<String, String> properties = new HashMap<>();
-            if (stringProperties == null){
-                return properties;
-            }
-            String[] props = stringProperties.split(";");
-            for (String property : props) {
-                String[] keyValue = property.split("=");
-                if (keyValue.length == 2) {
-                    properties.put(keyValue[0], keyValue[1]);
-                }
-            }
-            return properties;
-        }
-
-        public void setArtifactProperties(HashMap<String, String> properties) {
-            String stringProperties = new String();
-            for (Map.Entry<String, String> entry : properties.entrySet()) {
-                stringProperties += entry.getKey() + "=" + entry.getValue() + ";";
-            }
-            rootConfig.setStringValue(DOCKER_PROPERTIES, stringProperties);
-        }
     }
 
     public class AuthenticationConfiguration extends PrefixPropertyHandler {

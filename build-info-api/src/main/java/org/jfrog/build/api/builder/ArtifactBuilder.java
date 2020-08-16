@@ -166,11 +166,17 @@ public class ArtifactBuilder {
         return this;
     }
 
-    public ArtifactBuilder addProperty(Map props) {
-        if (properties == null) {
-            properties = new Properties();
+    /**
+     * Adds properties to the properties object
+     *
+     * @param properties Artifact properties
+     * @return Builder instance
+     */
+    public ArtifactBuilder addProperties(Properties properties) {
+        if (this.properties == null) {
+            this.properties = new Properties();
         }
-        properties.putAll(props);
+        this.properties.putAll(properties);
         return this;
     }
 }

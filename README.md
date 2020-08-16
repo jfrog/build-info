@@ -92,6 +92,12 @@ When running on a unix machine, provide the path to the 'bin' directory.
 > ./gradlew clean build-info-extractor-nuget:test
 ```
 
+#### Docker tests
+* Docker runs only on Linux/mac agents. It's required to provide the Docker domain and Repository through environment variables(Docker repo content will be deleted after finishing the tests).
+```
+> ./gradlew clean build-info-extractor-docker:test
+```
+
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
 

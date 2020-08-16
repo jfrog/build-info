@@ -11,6 +11,7 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -30,7 +31,7 @@ public class DockerAgentUtils {
      * @param host
      * @param envVars
      */
-    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars) {
+    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
@@ -39,7 +40,7 @@ public class DockerAgentUtils {
             dockerClient = getDockerClient(host, envVars);
             dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitSuccess();
         } finally {
-            closeQuietly(dockerClient);
+            closeQuietly(dockerClient,logger);
         }
     }
 
@@ -83,23 +84,22 @@ public class DockerAgentUtils {
      * @param envVars
      * @return
      */
-    public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars) throws IOException {
+    public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars,Log logger) {
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
             return dockerClient.inspectImageCmd(imageTag).exec().getId();
         } finally {
-            closeQuietly(dockerClient);
+            closeQuietly(dockerClient,logger);
         }
     }
 
-    private static void closeQuietly(DockerClient dockerClient) {
+    private static void closeQuietly(DockerClient dockerClient,Log logger) {
         if (dockerClient != null) {
             try {
                 dockerClient.close();
             } catch (IOException e) {
-                // Ignore
-            }
+                logger.error("Closes docker client failed.");            }
         }
     }
 
@@ -112,7 +112,7 @@ public class DockerAgentUtils {
      * @param host
      * @param envVars
      */
-    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars) {
+    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars,Log logger) {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
@@ -121,7 +121,7 @@ public class DockerAgentUtils {
             dockerClient = getDockerClient(host, envVars);
             dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitSuccess();
         } finally {
-            closeQuietly(dockerClient);
+            closeQuietly(dockerClient,logger);
         }
     }
 
