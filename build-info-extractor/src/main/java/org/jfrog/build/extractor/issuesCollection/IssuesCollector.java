@@ -71,9 +71,6 @@ public class IssuesCollector implements Serializable {
             if (previousBuildInfo == null) {
                 return "";
             }
-            if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
-                return previousBuildInfo.getVcsRevision();
-            }
             // Gets the first revision related to the current git repository.
             List<Vcs> vcsList = previousBuildInfo.getVcs();
             if (vcsList != null && vcsList.size() > 0) {
