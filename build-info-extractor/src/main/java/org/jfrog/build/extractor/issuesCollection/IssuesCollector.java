@@ -39,9 +39,9 @@ public class IssuesCollector implements Serializable {
      * Main function that manages the issue collection process.
      */
     public Issues collectIssues(File execDir, Log logger, String config, ArtifactoryBuildInfoClientBuilder clientBuilder,
-                                String buildName) throws InterruptedException, IOException {
+                                String buildName, Vcs vcs) throws InterruptedException, IOException {
         IssuesCollectionConfig parsedConfig = parseConfig(config);
-        String previousVcsRevision = getPreviousVcsRevision(clientBuilder, buildName);
+        String previousVcsRevision = getPreviousVcsRevision(clientBuilder, buildName, vcs);
         Set<Issue> affectedIssues = doCollect(execDir, logger, parsedConfig, previousVcsRevision);
         return buildIssuesObject(parsedConfig, affectedIssues);
     }
@@ -64,18 +64,21 @@ public class IssuesCollector implements Serializable {
     /**
      * Gets the previous vcs revision from the LATEST build published to Artifactory.
      */
-    private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String buildName) throws IOException {
+    private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String prevBuildName, Vcs prevVcs) throws IOException {
         try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
             // Get LATEST build info from Artifactory
-            Build previousBuildInfo = client.getBuildInfo(buildName, LATEST);
+            Build previousBuildInfo = client.getBuildInfo(prevBuildName, LATEST);
             if (previousBuildInfo == null) {
                 return "";
             }
-            // If revision is not listed explicitly, get revision from the first not empty Vcs of the Vcs list.
+            if (StringUtils.isNotEmpty(previousBuildInfo.getVcsRevision())) {
+                return previousBuildInfo.getVcsRevision();
+            }
+            // Gets the first revision related to the current git repository.
             List<Vcs> vcsList = previousBuildInfo.getVcs();
             if (vcsList != null && vcsList.size() > 0) {
                 for (Vcs curVcs : previousBuildInfo.getVcs()) {
-                    if (StringUtils.isNotEmpty(curVcs.getRevision())) {
+                    if (StringUtils.isNotEmpty(curVcs.getRevision()) && StringUtils.equals(curVcs.getUrl(), prevVcs.getUrl())) {
                         return curVcs.getRevision();
                     }
                 }
