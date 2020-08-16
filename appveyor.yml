@@ -29,90 +29,90 @@ environment:
       TEST_SUIT:
         "./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
 
-    # Maven Tests
-    - job_name: maven_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-maven3:test"
-    - job_name: maven_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-maven3:test"
+#     # Maven Tests
+#     - job_name: maven_extractor_win
+#       job_group: general
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-maven3:test"
+#     - job_name: maven_extractor_linux
+#       job_group: general
+#       appveyor_build_worker_image: Ubuntu
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-maven3:test"
 
-    # Gradle Tests
-    - job_name: gradle_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-gradle:test"
-    - job_name: gradle_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-gradle:test"
+#     # Gradle Tests
+#     - job_name: gradle_extractor_win
+#       job_group: general
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-gradle:test"
+#     - job_name: gradle_extractor_linux
+#       job_group: general
+#       appveyor_build_worker_image: Ubuntu
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-gradle:test"
 
-    # npm Tests
-    - job_name: npm_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-npm:test"
-    - job_name: npm_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-npm:test"
+#     # npm Tests
+#     - job_name: npm_extractor_win
+#       job_group: general
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-npm:test"
+#     - job_name: npm_extractor_linux
+#       job_group: general
+#       appveyor_build_worker_image: Ubuntu
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-npm:test"
 
-    # Go Tests
-    - job_name: go_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-go:test"
-    - job_name: go_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-go:test"
+#     # Go Tests
+#     - job_name: go_extractor_win
+#       job_group: general
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-go:test"
+#     - job_name: go_extractor_linux
+#       job_group: general
+#       appveyor_build_worker_image: Ubuntu
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-go:test"
 
-    # Pip Tests
-    - job_name: pip_extractor_win
-      job_group: pip
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      BITESTS_ARTIFACTORY_PIP_ENV: C:\\projects\\build-info\\pip-venv\\Scripts
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-pip:test"
-    - job_name: pip_extractor_linux
-      job_group: pip
-      appveyor_build_worker_image: Ubuntu
-      PYTHON: $HOME/venv3.7.7
-      BITESTS_ARTIFACTORY_PIP_ENV: /home/appveyor/projects/build-info/pip-venv/bin
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-pip:test"
+#     # Pip Tests
+#     - job_name: pip_extractor_win
+#       job_group: pip
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       BITESTS_ARTIFACTORY_PIP_ENV: C:\\projects\\build-info\\pip-venv\\Scripts
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-pip:test"
+#     - job_name: pip_extractor_linux
+#       job_group: pip
+#       appveyor_build_worker_image: Ubuntu
+#       PYTHON: $HOME/venv3.7.7
+#       BITESTS_ARTIFACTORY_PIP_ENV: /home/appveyor/projects/build-info/pip-venv/bin
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-pip:test"
 
-    # NuGet Tests
-    - job_name: nuget_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      # .NET CLI version
-      CLI_VERSION: Latest
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-nuget:test"
-    - job_name: nuget_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      # .NET CLI version
-      CLI_VERSION: Latest
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-nuget:test"
+#     # NuGet Tests
+#     - job_name: nuget_extractor_win
+#       job_group: general
+#       appveyor_build_worker_image: Visual Studio 2019
+#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#       # .NET CLI version
+#       CLI_VERSION: Latest
+#       TEST_SUIT:
+#         "gradlew.bat clean build-info-extractor-nuget:test"
+#     - job_name: nuget_extractor_linux
+#       job_group: general
+#       appveyor_build_worker_image: Ubuntu
+#       # .NET CLI version
+#       CLI_VERSION: Latest
+#       TEST_SUIT:
+#         "./gradlew clean build-info-extractor-nuget:test"
 
     # Docker Tests
     - job_name: docker_extractor_linux
