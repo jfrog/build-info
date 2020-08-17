@@ -103,7 +103,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         // Get config
         String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, "issues_config_full_test.json"));
 
-        Issues issues = collector.collectIssues(dotGitPath, getLog(), successfulConfig, buildInfoClientBuilder, BUILD_NAME);
+        Issues issues = collector.collectIssues(dotGitPath, getLog(), successfulConfig, buildInfoClientBuilder, BUILD_NAME, vcs.get(0));
 
         Assert.assertNotNull(issues);
         Assert.assertNotNull(issues.getAffectedIssues());
