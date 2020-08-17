@@ -2,20 +2,18 @@ stack: jdk 8, node 8, go 1.13, python 3.7.7
 skip_tags: true
 environment:
 
-#  BITESTS_ARTIFACTORY_URL:
-#    secure: RIh0gGFDn2JAnLUEEqLsQm0ihToJ6/4LiR411QpvqDgYYE7Y4Eif2e+wYndvHXnW
-#  BITESTS_ARTIFACTORY_USERNAME:
-#    secure: YEB5Wiv9a2vNpUhy+MfL+A==
-#  BITESTS_ARTIFACTORY_PASSWORD:
-#    secure: Um8o75MQIieSavIemF4ySA==
-#  BITESTS_ARTIFACTORY_REPO:
-#    secure: Xf371RQAxCTMn/S7NdmV8g==
-#  BITESTS_ARTIFACTORY_DOCKER_DOMAIN:
-#    secure: ckPEDCxxbI1Q9NwZoMwKJ9p83YDWBy5dlTsjmXrmDI5wLVdJ1sOAKMIfZVQvLxEw
-#  BITESTS_ARTIFACTORY_DOCKER_REPO:
-#    secure: tkb4QTCpPt1H+/l7WHlUEw==
-#  BITESTS_ARTIFACTORY_DOCKER_HOST:
-#    secure: cS+BXl4CXvSleVCf4s51o4y2nCFHkcxFD74SYJhWPM8=
+  BITESTS_ARTIFACTORY_URL:
+    secure: RIh0gGFDn2JAnLUEEqLsQm0ihToJ6/4LiR411QpvqDgYYE7Y4Eif2e+wYndvHXnW
+  BITESTS_ARTIFACTORY_USERNAME:
+    secure: YEB5Wiv9a2vNpUhy+MfL+A==
+  BITESTS_ARTIFACTORY_PASSWORD:
+    secure: Um8o75MQIieSavIemF4ySA==
+  BITESTS_ARTIFACTORY_REPO:
+    secure: Xf371RQAxCTMn/S7NdmV8g==
+  BITESTS_ARTIFACTORY_DOCKER_DOMAIN:
+    secure: AoaKTKtH3eL36SmENsm51eRFVLU/BGIK+CrBvmsCqO35j3xM9++4E01YWs5CsfXy
+  BITESTS_ARTIFACTORY_DOCKER_REPO:
+    secure: KL72XB/1EBaModiGGpJF9Ge+wdbLmrDwT1lmy28YRiM=
 
   matrix:
     # Extractor Tests
@@ -31,90 +29,90 @@ environment:
       TEST_SUIT:
         "./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
 
-#     # Maven Tests
-#     - job_name: maven_extractor_win
-#       job_group: general
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-maven3:test"
-#     - job_name: maven_extractor_linux
-#       job_group: general
-#       appveyor_build_worker_image: Ubuntu
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-maven3:test"
+    # Maven Tests
+    - job_name: maven_extractor_win
+      job_group: general
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-maven3:test"
+    - job_name: maven_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-maven3:test"
 
-#     # Gradle Tests
-#     - job_name: gradle_extractor_win
-#       job_group: general
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-gradle:test"
-#     - job_name: gradle_extractor_linux
-#       job_group: general
-#       appveyor_build_worker_image: Ubuntu
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-gradle:test"
+    # Gradle Tests
+    - job_name: gradle_extractor_win
+      job_group: general
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-gradle:test"
+    - job_name: gradle_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-gradle:test"
 
-#     # npm Tests
-#     - job_name: npm_extractor_win
-#       job_group: general
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-npm:test"
-#     - job_name: npm_extractor_linux
-#       job_group: general
-#       appveyor_build_worker_image: Ubuntu
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-npm:test"
+    # npm Tests
+    - job_name: npm_extractor_win
+      job_group: general
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-npm:test"
+    - job_name: npm_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-npm:test"
 
-#     # Go Tests
-#     - job_name: go_extractor_win
-#       job_group: general
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-go:test"
-#     - job_name: go_extractor_linux
-#       job_group: general
-#       appveyor_build_worker_image: Ubuntu
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-go:test"
+    # Go Tests
+    - job_name: go_extractor_win
+      job_group: general
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-go:test"
+    - job_name: go_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-go:test"
 
-#     # Pip Tests
-#     - job_name: pip_extractor_win
-#       job_group: pip
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       BITESTS_ARTIFACTORY_PIP_ENV: C:\\projects\\build-info\\pip-venv\\Scripts
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-pip:test"
-#     - job_name: pip_extractor_linux
-#       job_group: pip
-#       appveyor_build_worker_image: Ubuntu
-#       PYTHON: $HOME/venv3.7.7
-#       BITESTS_ARTIFACTORY_PIP_ENV: /home/appveyor/projects/build-info/pip-venv/bin
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-pip:test"
+    # Pip Tests
+    - job_name: pip_extractor_win
+      job_group: pip
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      BITESTS_ARTIFACTORY_PIP_ENV: C:\\projects\\build-info\\pip-venv\\Scripts
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-pip:test"
+    - job_name: pip_extractor_linux
+      job_group: pip
+      appveyor_build_worker_image: Ubuntu
+      PYTHON: $HOME/venv3.7.7
+      BITESTS_ARTIFACTORY_PIP_ENV: /home/appveyor/projects/build-info/pip-venv/bin
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-pip:test"
 
-#     # NuGet Tests
-#     - job_name: nuget_extractor_win
-#       job_group: general
-#       appveyor_build_worker_image: Visual Studio 2019
-#       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-#       # .NET CLI version
-#       CLI_VERSION: Latest
-#       TEST_SUIT:
-#         "gradlew.bat clean build-info-extractor-nuget:test"
-#     - job_name: nuget_extractor_linux
-#       job_group: general
-#       appveyor_build_worker_image: Ubuntu
-#       # .NET CLI version
-#       CLI_VERSION: Latest
-#       TEST_SUIT:
-#         "./gradlew clean build-info-extractor-nuget:test"
+    # NuGet Tests
+    - job_name: nuget_extractor_win
+      job_group: general
+      appveyor_build_worker_image: Visual Studio 2019
+      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+      # .NET CLI version
+      CLI_VERSION: Latest
+      TEST_SUIT:
+        "gradlew.bat clean build-info-extractor-nuget:test"
+    - job_name: nuget_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      # .NET CLI version
+      CLI_VERSION: Latest
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-nuget:test"
 
     # Docker Tests
     - job_name: docker_extractor_linux
@@ -128,7 +126,6 @@ for:
       only:
         - job_group: general
     test_script:
-      - sh: "env"
       - sh: "$TEST_SUIT"
       - cmd: "%TEST_SUIT%"
   - matrix:

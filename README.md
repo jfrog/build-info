@@ -100,7 +100,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
  ```
 > ./gradlew clean build-info-extractor-docker:test
 ```
-* Before running the tests, please make sure you have a docker repository named *build-info-tests-docker* in Artifactory.
+* Before running the tests, please make sure you have a local docker repository named *build-info-tests-docker* in Artifactory.
 
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
