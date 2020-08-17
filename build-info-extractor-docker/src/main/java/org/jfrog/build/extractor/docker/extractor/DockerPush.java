@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.docker.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableSetMultimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
@@ -10,7 +9,7 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.docker.DockerAgentUtils;
+import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.docker.types.DockerImage;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
@@ -98,8 +97,8 @@ public class DockerPush extends PackageManagerExtractor {
         }
         logger.info(message);
         try {
-            DockerAgentUtils.pushImage(imageTag, username, password, host, env, logger);
-            String imageId = DockerAgentUtils.getImageIdFromTag(imageTag, host, env, logger);
+            DockerJavaWrapper.pushImage(imageTag, username, password, host, env, logger);
+            String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
             DockerImage image = new DockerImage(imageId, imageTag, deploymentRepository);
             Module module = image.generateBuildInfoModule(buildInfoClientBuilder, dependenciesClientBuilder, logger, artifactProperties);
             if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {

@@ -7,7 +7,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.docker.DockerAgentUtils;
+import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 import java.util.ArrayList;
 import java.util.List;
@@ -77,7 +77,7 @@ public class DockerPull extends PackageManagerExtractor {
             message += " using docker daemon host: " + host;
         }
         logger.info(message);
-        DockerAgentUtils.pullImage(imageTag, username, password, host, env, logger);
+        DockerJavaWrapper.pullImage(imageTag, username, password, host, env, logger);
         logger.info("Successfully pulled docker image: " + imageTag);
         return new Build();
     }

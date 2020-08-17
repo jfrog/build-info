@@ -56,7 +56,7 @@ public class DeploymentUrlUtilsTest {
         params.put("key", "valueB");
         params.put("keyA", "valueA");
 
-        String matrixParamString = DeploymentUrlUtils.buildMatrixParamsString(params);
+        String matrixParamString = DeploymentUrlUtils.buildMatrixParamsString(params, true);
 
         Assert.assertEquals(matrixParamString, ";keyA=valueA;key=valueA;key=valueB",
                 "Unexpected matrix param with multi values: " + matrixParamString);

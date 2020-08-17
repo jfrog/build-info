@@ -10,7 +10,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.docker.DockerAgentUtils;
+import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -79,7 +79,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_REPO environment variable is not set, failing docker tests.");
             }
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerAgentUtils.buildImage(imageTag, host, Collections.emptyMap(), projectPath);
+            DockerJavaWrapper.buildImage(imageTag, host, Collections.emptyMap(), projectPath);
 
             DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, artifactProperties, repo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();

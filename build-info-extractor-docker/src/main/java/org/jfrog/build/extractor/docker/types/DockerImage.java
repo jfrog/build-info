@@ -13,7 +13,6 @@ import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.api.util.Utils;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
@@ -24,6 +23,8 @@ import org.jfrog.build.extractor.docker.DockerUtils;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+
+import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
 
 public class DockerImage implements Serializable {
     private final String imageId;
@@ -188,7 +189,7 @@ public class DockerImage implements Serializable {
 
     public Module generateBuildInfoModule(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, Log logger, ArrayListMultimap<String, String> artifactProperties) throws IOException {
         Properties buildInfoItemsProps = getBuildInfoProps(artifactProperties);
-        String artifactsPropsStr = Utils.buildPropertiesString(artifactProperties);
+        String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build();
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             Module buildInfoModule = new Module();

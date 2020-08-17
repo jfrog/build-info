@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
-public class DockerAgentUtils {
+public class DockerJavaWrapper {
 
     /**
      * Push docker image using the docker java client.
@@ -134,7 +134,7 @@ public class DockerAgentUtils {
      * @param projectPath - Location of the docker file
      */
     public static void buildImage(String imageName, String host, Map<String, String> envVars, String projectPath) {
-        DockerClient dockerClient = DockerAgentUtils.getDockerClient(host, envVars);
+        DockerClient dockerClient = DockerJavaWrapper.getDockerClient(host, envVars);
         // Build the docker image with the name provided from env.
         BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(Paths.get(projectPath).toFile()).withTags(new HashSet<>(Arrays.asList(imageName)));
         buildImageCmd.exec(new BuildImageResultCallback()).awaitImageId();
