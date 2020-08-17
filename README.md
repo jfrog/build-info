@@ -90,7 +90,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
 
 #### Docker tests
 * Docker tests run only on Linux/mac.
-* In addition to general environment variables you must set the following docker environment variables:
+* In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
 
  ```
   export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-build-info-tests-docker.jfrog.io/'

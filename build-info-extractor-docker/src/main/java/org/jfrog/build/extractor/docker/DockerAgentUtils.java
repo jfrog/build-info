@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 
-
 public class DockerAgentUtils {
 
     /**
@@ -40,7 +39,7 @@ public class DockerAgentUtils {
             dockerClient = getDockerClient(host, envVars);
             dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitSuccess();
         } finally {
-            closeQuietly(dockerClient,logger);
+            closeQuietly(dockerClient, logger);
         }
     }
 
@@ -84,22 +83,23 @@ public class DockerAgentUtils {
      * @param envVars
      * @return
      */
-    public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars,Log logger) {
+    public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars, Log logger) {
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
             return dockerClient.inspectImageCmd(imageTag).exec().getId();
         } finally {
-            closeQuietly(dockerClient,logger);
+            closeQuietly(dockerClient, logger);
         }
     }
 
-    private static void closeQuietly(DockerClient dockerClient,Log logger) {
+    private static void closeQuietly(DockerClient dockerClient, Log logger) {
         if (dockerClient != null) {
             try {
                 dockerClient.close();
             } catch (IOException e) {
-                logger.error("Closes docker client failed.");            }
+                logger.error("Closes docker client failed.");
+            }
         }
     }
 
@@ -112,7 +112,7 @@ public class DockerAgentUtils {
      * @param host
      * @param envVars
      */
-    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars,Log logger) {
+    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
@@ -121,7 +121,7 @@ public class DockerAgentUtils {
             dockerClient = getDockerClient(host, envVars);
             dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitSuccess();
         } finally {
-            closeQuietly(dockerClient,logger);
+            closeQuietly(dockerClient, logger);
         }
     }
 

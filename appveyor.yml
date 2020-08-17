@@ -14,6 +14,8 @@ environment:
     secure: ckPEDCxxbI1Q9NwZoMwKJ9p83YDWBy5dlTsjmXrmDI5wLVdJ1sOAKMIfZVQvLxEw
   BITESTS_ARTIFACTORY_DOCKER_REPO:
     secure: tkb4QTCpPt1H+/l7WHlUEw==
+  BITESTS_ARTIFACTORY_DOCKER_HOST:
+    secure: cS+BXl4CXvSleVCf4s51o4y2nCFHkcxFD74SYJhWPM8=
 
   matrix:
     # Extractor Tests
@@ -126,6 +128,7 @@ for:
       only:
         - job_group: general
     test_script:
+      - sh: "env"
       - sh: "$TEST_SUIT"
       - cmd: "%TEST_SUIT%"
   - matrix:
