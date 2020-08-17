@@ -122,13 +122,15 @@ environment:
         "./gradlew clean build-info-extractor-docker:test"
 
 for:
-  - matrix:
+  -
+    matrix:
       only:
         - job_group: general
     test_script:
       - sh: "$TEST_SUIT"
       - cmd: "%TEST_SUIT%"
-  - matrix:
+  -
+    matrix:
       only:
         - job_group: pip
     test_script:
