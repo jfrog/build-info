@@ -48,6 +48,8 @@ public interface ClientProperties {
 
     String PROP_DOTNET_PREFIX = ARTIFACTORY_PREFIX + "dotnet.";
 
+    String PROP_DOCKER_PREFIX = ARTIFACTORY_PREFIX + "docker.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */

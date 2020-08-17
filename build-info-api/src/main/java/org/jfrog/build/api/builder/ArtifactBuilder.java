@@ -19,6 +19,7 @@ package org.jfrog.build.api.builder;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -162,6 +163,20 @@ public class ArtifactBuilder {
             properties = new Properties();
         }
         properties.put(key, value);
+        return this;
+    }
+
+    /**
+     * Adds properties to the properties object
+     *
+     * @param properties Artifact properties
+     * @return Builder instance
+     */
+    public ArtifactBuilder addProperties(Properties properties) {
+        if (this.properties == null) {
+            this.properties = new Properties();
+        }
+        this.properties.putAll(properties);
         return this;
     }
 }

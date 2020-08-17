@@ -429,6 +429,17 @@ project('build-info-extractor-npm') {
     }
 }
 
+project('build-info-extractor-docker') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info Docker Extractor'
+
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+        compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.2'
+    }
+}
+
 project('build-info-extractor-go') {
     apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Go Extractor'

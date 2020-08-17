@@ -226,7 +226,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
 
     public void setProperties(String urlPath, String props) throws IOException {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=");
-        url += DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(props));
+        url += DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(props), true);
         PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpPut httpPut = new HttpPut(url);
         checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");

@@ -10,6 +10,10 @@ environment:
     secure: Um8o75MQIieSavIemF4ySA==
   BITESTS_ARTIFACTORY_REPO:
     secure: Xf371RQAxCTMn/S7NdmV8g==
+  BITESTS_ARTIFACTORY_DOCKER_DOMAIN:
+    secure: AoaKTKtH3eL36SmENsm51eRFVLU/BGIK+CrBvmsCqO35j3xM9++4E01YWs5CsfXy
+  BITESTS_ARTIFACTORY_DOCKER_REPO:
+    secure: KL72XB/1EBaModiGGpJF9Ge+wdbLmrDwT1lmy28YRiM=
 
   matrix:
     # Extractor Tests
@@ -110,16 +114,21 @@ environment:
       TEST_SUIT:
         "./gradlew clean build-info-extractor-nuget:test"
 
+    # Docker Tests
+    - job_name: docker_extractor_linux
+      job_group: general
+      appveyor_build_worker_image: Ubuntu
+      TEST_SUIT:
+        "./gradlew clean build-info-extractor-docker:test"
+
 for:
-  -
-    matrix:
+  - matrix:
       only:
         - job_group: general
     test_script:
       - sh: "$TEST_SUIT"
       - cmd: "%TEST_SUIT%"
-  -
-    matrix:
+  - matrix:
       only:
         - job_group: pip
     test_script:

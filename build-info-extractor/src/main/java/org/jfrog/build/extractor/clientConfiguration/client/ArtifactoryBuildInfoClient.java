@@ -742,7 +742,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     private HttpPut createHttpPutMethod(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
-        deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.getProperties()));
+        deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.getSha1());
         httpPut.addHeader("X-Checksum-Md5", details.getMd5());
@@ -756,7 +756,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         String sha1 = checksums.get("SHA1");
         if (StringUtils.isNotBlank(sha1)) {
             log.debug("Uploading SHA1 for file " + fileAbsolutePath + " : " + sha1);
-            String sha1Url = uploadUrl + ".sha1" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties());
+            String sha1Url = uploadUrl + ".sha1" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true);
             HttpPut putSha1 = new HttpPut(sha1Url);
             StringEntity sha1StringEntity = new StringEntity(sha1);
             ArtifactoryUploadResponse response = httpClient.upload(putSha1, sha1StringEntity);
@@ -771,7 +771,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         String md5 = checksums.get("MD5");
         if (StringUtils.isNotBlank(md5)) {
             log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
-            String md5Url = uploadUrl + ".md5" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties());
+            String md5Url = uploadUrl + ".md5" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true);
             HttpPut putMd5 = new HttpPut(md5Url);
             StringEntity md5StringEntity = new StringEntity(md5);
             ArtifactoryUploadResponse response = httpClient.upload(putMd5, md5StringEntity);

@@ -30,10 +30,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
@@ -57,6 +54,7 @@ public class ArtifactoryClientConfiguration {
     public final PackageManagerHandler packageManagerHandler;
     public final PipHandler pipHandler;
     public final DotnetHandler dotnetHandler;
+    public final DockerHandler dockerHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -73,6 +71,7 @@ public class ArtifactoryClientConfiguration {
         this.packageManagerHandler = new PackageManagerHandler();
         this.pipHandler = new PipHandler();
         this.dotnetHandler = new DotnetHandler();
+        this.dockerHandler = new DockerHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -526,6 +525,28 @@ public class ArtifactoryClientConfiguration {
 
         public void setUseDotnetCli(boolean useDotnetCli) {
             rootConfig.setBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, useDotnetCli);
+        }
+    }
+
+    public class DockerHandler extends PrefixPropertyHandler {
+        public DockerHandler() {
+            super(root, PROP_DOCKER_PREFIX);
+        }
+
+        public String getImageTag() {
+            return rootConfig.getStringValue(DOCKER_IMAGE_TAG);
+        }
+
+        public void setImageTag(String imageTag) {
+            rootConfig.setStringValue(DOCKER_IMAGE_TAG, imageTag);
+        }
+
+        public String getHost() {
+            return rootConfig.getStringValue(DOCKER_HOST);
+        }
+
+        public void setHost(String host) {
+            rootConfig.setStringValue(DOCKER_HOST, host);
         }
     }
 

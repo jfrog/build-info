@@ -2,8 +2,7 @@
 
 ## Overview
 
-Build Info is Artifactory's open integration layer for the CI servers and build tools.
-The build information is sent to Artifactory in json format.
+Build Info is Artifactory's open integration layer for the CI servers and build tools. The build information is sent to Artifactory in json format.
 
 ## Building and testing the sources
 
@@ -22,15 +21,15 @@ export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ### Building
 When running the following commands to build the code, the entire testing suite is also executed. See the *Testing* section for configuration instructions prior to running the tests.
 
-To build the code using the gradle wrapper in Unix run:  
+To build the code using the gradle wrapper in Unix run:
 ```
 > ./gradlew clean build
 ```
-To build the code using the gradle wrapper in Windows run:  
+To build the code using the gradle wrapper in Windows run:
 ```
 > gradlew clean build
 ```
-To build the code using the environment gradle run:  
+To build the code using the environment gradle run:
 ```
 > gradle clean build
 ```
@@ -40,7 +39,7 @@ To build the code without running the tests, add to the "clean build" command th
 ```
 
 ### Testing
-To run *all* tests:   
+To run *all* tests:
 ```
 > ./gradlew clean test
 ```
@@ -74,8 +73,8 @@ To run *all* tests:
 
 #### Pip tests
 * Add Python and pip executables to the system search path (PATH environment variable).
-* Pip tests must run inside a clean pip-environment. Create a virtual environment and provide its path using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.  
-When running on a Windows machine, provide the path to the 'Scripts' directory.  
+* Pip tests must run inside a clean pip-environment. Create a virtual environment and provide its path using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.
+When running on a Windows machine, provide the path to the 'Scripts' directory.
 When running on a unix machine, provide the path to the 'bin' directory.
 ```
 > python -m venv buildinfo-tests-env
@@ -88,6 +87,20 @@ When running on a unix machine, provide the path to the 'bin' directory.
 ```
 > ./gradlew clean build-info-extractor-nuget:test
 ```
+
+#### Docker tests
+* Docker tests run only on Linux/mac.
+* In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
+
+ ```
+  export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-build-info-tests-docker.jfrog.io/'
+  export BITESTS_ARTIFACTORY_DOCKER_REPO=build-info-tests-docker
+  export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
+ ```
+ ```
+> ./gradlew clean build-info-extractor-docker:test
+```
+* Before running the tests, please make sure you have a local docker repository named *build-info-tests-docker* in Artifactory.
 
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
@@ -103,7 +116,7 @@ To run Gradle tests on Artifactory OSS:
 * Create 3 Gradle repositories:
   * Local repository: `build-info-tests-gradle-local`
   * Remote repository to jcenter: `build-info-tests-gradle-remote`
-  * Virtual repository containing both the remote and local: `build-info-tests-gradle-virtual` 
+  * Virtual repository containing both the remote and local: `build-info-tests-gradle-virtual`
 * Run tests `./gradlew build-info-extractor-gradle:test`
 
 ## Build Info json format
@@ -140,7 +153,7 @@ To run Gradle tests on Artifactory OSS:
   }],
   "licenseControl" : {	// Artifactory License Control information
     "runChecks" : true,	// Artifactory will run automatic license scanning after the build is complete (true/false)
-    "includePublishedArtifacts" : true, // Should Artifactory run license checks on the build artifacts, in addition to the build dependecies (true/false) 
+    "includePublishedArtifacts" : true, // Should Artifactory run license checks on the build artifacts, in addition to the build dependecies (true/false)
     "autoDiscover" : true, // Should Artifactory auto discover licenses (true/false)
     "scopesList" : "", // A space-separated list of dependency scopes/configurations to run license violation checks on. If left empty all dependencies from all scopes will be checked.
     "licenseViolationsRecipientsList" : "" // Emails of recipients that should be notified of license violations in the build info (space-separated list)
@@ -151,7 +164,7 @@ To run Gradle tests on Artifactory OSS:
     "minimumBuildDate" : 1407345768020, // Earliest build date to store in Artifactory
     "buildNumbersNotToBeDiscarded" : [ ] // List of build numbers that should not be removed from Artifactory
   },
-  /* List of build modules */	
+  /* List of build modules */
   "modules" : [ { // The build's first module
     "properties" : { // Module properties
       "project.build.sourceEncoding" : "UTF-8"
@@ -182,7 +195,7 @@ To run Gradle tests on Artifactory OSS:
       "project.build.sourceEncoding" : "UTF-8"
     },
     "id" : "org.jfrog.test:multi3:4.2-SNAPSHOT", // Module ID
-    /* List of module artifacts */	
+    /* List of module artifacts */
     "artifacts" : [ { // Module artifacts
       "type" : "war",
       "sha1" : "df8e7d7b94d5ec9db3bfc92e945c7ff4e2391c7c",
@@ -233,8 +246,8 @@ To run Gradle tests on Artifactory OSS:
       "url" : "https://www.jfrog.com/jira/browse/RTFACT-5678",
       "summary" : "Description of the relevant issue",
       "aggregated" : true
-    } ] 
-  },  
+    } ]
+  },
   "governance" : { // Black Duck Code Center integration information
     "blackDuckProperties" : {
       "appName" : "", // The Black Duck Code Center application name
