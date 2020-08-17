@@ -24,11 +24,11 @@ public class DockerJavaWrapper {
     /**
      * Push docker image using the docker java client.
      *
-     * @param imageTag
-     * @param username
-     * @param password
-     * @param host
-     * @param envVars
+     * @param imageTag - Docker image to push.
+     * @param username - The username to the docker registry.
+     * @param password - The username to the docker registry.
+     * @param host     - Docker daemon ip.
+     * @param envVars - Environment variables to use during docker push execution.
      */
     public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
         final AuthConfig authConfig = new AuthConfig();
@@ -48,7 +48,7 @@ public class DockerJavaWrapper {
      *
      * @param host    - Docker daemon ip.
      * @param envVars - System env variables.
-     * @return
+     * @return - Docker java client
      */
     public static DockerClient getDockerClient(String host, Map<String, String> envVars) {
         if (envVars == null) {
@@ -78,10 +78,10 @@ public class DockerJavaWrapper {
     /**
      * Get image Id from imageTag using DockerClient.
      *
-     * @param imageTag
-     * @param host
-     * @param envVars
-     * @return
+     * @param imageTag - Docker image tag.
+     * @param host  Docker daemon ip.
+     * @param envVars - System env variables.
+     * @return - Docker image tag
      */
     public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars, Log logger) {
         DockerClient dockerClient = null;
@@ -106,11 +106,11 @@ public class DockerJavaWrapper {
     /**
      * Execute pull docker image on agent.
      *
-     * @param imageTag
-     * @param username
-     * @param password
-     * @param host
-     * @param envVars
+     * @param imageTag - Docker image to pull.
+     * @param username - The username to the docker registry.
+     * @param password - The username to the docker registry.
+     * @param host     - Docker daemon ip.
+     * @param envVars - Environment variables to use during docker pull execution.
      */
     public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
         final AuthConfig authConfig = new AuthConfig();

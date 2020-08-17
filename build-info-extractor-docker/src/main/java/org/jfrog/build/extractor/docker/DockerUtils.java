@@ -23,10 +23,6 @@ import java.util.Map;
 public class DockerUtils {
     /**
      * Get config digest from manifest (image id).
-     *
-     * @param manifest
-     * @return
-     * @throws IOException
      */
     public static String getConfigDigest(String manifest) throws IOException {
         JsonNode manifestTree = createMapper().readTree(manifest);
@@ -63,10 +59,6 @@ public class DockerUtils {
 
     /**
      * Get a list of layer digests from docker manifest.
-     *
-     * @param manifestContent
-     * @return
-     * @throws IOException
      */
     public static List<String> getLayersDigests(String manifestContent) throws IOException {
         List<String> dockerLayersDependencies = new ArrayList<String>();
@@ -92,10 +84,6 @@ public class DockerUtils {
 
     /**
      * Return blob sum depend on scheme version.
-     *
-     * @param manifest
-     * @param isSchemeVersion1
-     * @return
      */
     private static JsonNode getFsLayers(JsonNode manifest, boolean isSchemeVersion1) {
         JsonNode fsLayers;
@@ -118,10 +106,6 @@ public class DockerUtils {
 
     /**
      * Return blob sum depend on scheme version.
-     *
-     * @param isSchemeVersion1
-     * @param fsLayer
-     * @return
      */
     private static JsonNode getBlobSum(boolean isSchemeVersion1, JsonNode fsLayer) {
         JsonNode blobSum;
@@ -139,9 +123,6 @@ public class DockerUtils {
     /**
      * Get sha value from digest.
      * example: sha256:abcabcabc12334 the value is sha256.
-     *
-     * @param digest
-     * @return
      */
     public static String getShaVersion(String digest) {
         return StringUtils.substring(digest, 0, StringUtils.indexOf(digest, ":"));
@@ -150,9 +131,6 @@ public class DockerUtils {
     /**
      * Get sha value from digest.
      * example: sha256:abcabcabc12334 the value is abcabcabc12334.
-     *
-     * @param digest
-     * @return
      */
     public static String getShaValue(String digest) {
         return StringUtils.substring(digest, StringUtils.indexOf(digest, ":") + 1);
@@ -160,9 +138,6 @@ public class DockerUtils {
 
     /**
      * Digest format to layer file name.
-     *
-     * @param digest
-     * @return
      */
     public static String digestToFileName(String digest) {
         if (StringUtils.startsWith(digest, "sha1")) {
@@ -174,8 +149,6 @@ public class DockerUtils {
     /**
      * Returns number of dependencies layers in the image.
      *
-     * @param imageContent
-     * @return
      * @throws IOException
      */
     public static int getNumberOfDependentLayers(String imageContent) throws IOException {
@@ -208,8 +181,6 @@ public class DockerUtils {
     /**
      * Converts the http entity to string. If entity is null, returns empty string.
      *
-     * @param entity
-     * @return
      * @throws IOException
      */
     public static String entityToString(HttpEntity entity) throws IOException {
@@ -222,9 +193,6 @@ public class DockerUtils {
 
     /**
      * Layer file name to digest format.
-     *
-     * @param fileName
-     * @return
      */
     public static String fileNameToDigest(String fileName) {
         return StringUtils.replace(fileName, "__", ":");
@@ -233,9 +201,6 @@ public class DockerUtils {
     /**
      * Parse imageTag and get the relative path of the pushed image.
      * example: url:8081/image:version to image/version.
-     *
-     * @param imageTag
-     * @return
      */
     public static String getImagePath(String imageTag) {
         int indexOfSlash = imageTag.indexOf("/");
@@ -255,9 +220,6 @@ public class DockerUtils {
 
     /**
      * Check for the version in docker image tag.
-     *
-     * @param imageTag
-     * @return
      */
     public static Boolean isImageVersioned(String imageTag) {
         int indexOfFirstSlash = imageTag.indexOf("/");
