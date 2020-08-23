@@ -1,5 +1,5 @@
 {
   "packageType": "gradle",
-  "repoLayoutRef": "gradle-default",
+  "repoLayoutRef": "maven-2-default",
   "rclass": "local"
 }
