@@ -70,7 +70,7 @@ node('java') {
 
     // Prepare build env.
     cleanWs()
-    def jdktool = tool name: "openjdk-8"
+    def jdktool = tool name: "jdk-8u111-linux-x64-jce-unlimited-policy"
     env.JAVA_HOME = jdktool
 
     // Get selected projects to build.
