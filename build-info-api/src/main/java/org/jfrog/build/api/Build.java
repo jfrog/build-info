@@ -15,6 +15,7 @@
  */
 package org.jfrog.build.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang.StringUtils;
@@ -34,6 +35,7 @@ import static org.jfrog.build.api.BuildBean.ROOT;
  * @author Noam Y. Tenne
  */
 @XStreamAlias(ROOT)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
