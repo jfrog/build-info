@@ -15,6 +15,7 @@ public class DependenciesTree extends DefaultMutableTreeNode {
 
     private Set<Issue> issues = new HashSet<>();
     private Set<License> licenses = new HashSet<>();
+    private Set<Scope> scopes = new HashSet<>();
     private GeneralInfo generalInfo;
     private Issue topIssue = new Issue();
 
@@ -34,6 +35,10 @@ public class DependenciesTree extends DefaultMutableTreeNode {
         this.licenses = licenses;
     }
 
+    public void setScopes(Set<Scope> scopes) {
+        this.scopes = scopes;
+    }
+
     @SuppressWarnings("unused")
     public void setGeneralInfo(GeneralInfo generalInfo) {
         this.generalInfo = generalInfo;
@@ -50,6 +55,10 @@ public class DependenciesTree extends DefaultMutableTreeNode {
 
     public Set<License> getLicenses() {
         return licenses;
+    }
+
+    public Set<Scope> getScopes() {
+        return scopes;
     }
 
     /**
