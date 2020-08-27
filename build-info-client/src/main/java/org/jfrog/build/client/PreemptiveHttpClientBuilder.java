@@ -11,9 +11,11 @@ import org.apache.http.client.utils.DateUtils;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.socket.ConnectionSocketFactory;
+import org.apache.http.conn.socket.PlainConnectionSocketFactory;
+import org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.conn.util.PublicSuffixMatcher;
 import org.apache.http.conn.util.PublicSuffixMatcherLoader;
 import org.apache.http.cookie.CookieSpecProvider;
@@ -26,36 +28,37 @@ import org.apache.http.impl.cookie.DefaultCookieSpecProvider;
 import org.apache.http.impl.cookie.IgnoreSpecProvider;
 import org.apache.http.impl.cookie.NetscapeDraftSpecProvider;
 import org.apache.http.impl.cookie.RFC6265CookieSpecProvider;
-import org.apache.http.ssl.SSLContextBuilder;;import javax.net.ssl.HostnameVerifier;
+import org.apache.http.ssl.SSLContextBuilder;
+import org.apache.http.ssl.TrustStrategy;
+import org.jfrog.build.api.util.Log;
+
+import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
+import java.security.GeneralSecurityException;
 import java.util.Properties;
-
-import org.jfrog.build.api.util.Log;
-
 
 public class PreemptiveHttpClientBuilder {
 
     public static final int CONNECTION_POOL_SIZE = 10;
     private static final String CLIENT_VERSION;
 
-    private int timeout = 0;
-    private int connectionRetries = 0;
-    private boolean insecureTls = false;
+    protected final BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+    protected PoolingHttpClientConnectionManager connectionManager;
+    protected AuthCache authCache = new BasicAuthCache();
+    protected String accessToken = StringUtils.EMPTY;
+    protected int connectionRetries;
+    protected Log log;
+
+    private ProxyConfiguration proxyConfiguration;
+    private String userAgent = StringUtils.EMPTY;
     private String userName = StringUtils.EMPTY;
     private String password = StringUtils.EMPTY;
-    private String accessToken = StringUtils.EMPTY;
-    private Log log;
-    private ProxyConfiguration proxyConfiguration = null;
-
-    private PoolingHttpClientConnectionManager connectionManager;
-    private HttpHost proxy = null;
-    private BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-    private AuthCache authCache = new BasicAuthCache();
+    private SSLContext sslContext;
+    private boolean insecureTls;
+    private HttpHost proxy;
+    private int timeout;
 
     static {
         // initialize client version
@@ -66,6 +69,11 @@ public class PreemptiveHttpClientBuilder {
             // ignore, use the default value
         }
         CLIENT_VERSION = properties.getProperty("client.version", "unknown");
+    }
+
+    public PreemptiveHttpClientBuilder setUserAgent(String userAgent) {
+        this.userAgent = userAgent;
+        return this;
     }
 
     public PreemptiveHttpClientBuilder setUserName(String userName) {
@@ -90,7 +98,9 @@ public class PreemptiveHttpClientBuilder {
 
     public PreemptiveHttpClientBuilder setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
         this.proxyConfiguration = proxyConfiguration;
-        this.proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
+        if (proxyConfiguration != null) {
+            this.proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
+        }
         return this;
     }
 
@@ -109,6 +119,11 @@ public class PreemptiveHttpClientBuilder {
         return this;
     }
 
+    public PreemptiveHttpClientBuilder setSslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+        return this;
+    }
+
     public PreemptiveHttpClient build() {
         buildConnectionManager();
         HttpClientBuilder httpClientBuilder = createHttpClientBuilder();
@@ -116,8 +131,10 @@ public class PreemptiveHttpClientBuilder {
         return new PreemptiveHttpClient(connectionManager, credentialsProvider, accessToken, authCache, httpClientBuilder, connectionRetries, log);
     }
 
-    private void createCredentialsAndAuthCache() {
-
+    /**
+     * Create the credentials provider and the auth cache from username and password.
+     */
+    protected void createCredentialsAndAuthCache() {
         if (proxyConfiguration != null && proxyConfiguration.username != null) {
             credentialsProvider.setCredentials(new AuthScope(proxyConfiguration.host, proxyConfiguration.port),
                     new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
@@ -139,33 +156,25 @@ public class PreemptiveHttpClientBuilder {
         }
     }
 
-    private void buildConnectionManager() {
-        connectionManager = insecureTls ? createInsecureTlsConnectionManager() : new PoolingHttpClientConnectionManager();
+    /**
+     * Create and configure the connections manager.
+     */
+    protected void buildConnectionManager() {
+        try {
+            connectionManager = createConnectionManager();
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
         connectionManager.setMaxTotal(CONNECTION_POOL_SIZE);
         connectionManager.setDefaultMaxPerRoute(CONNECTION_POOL_SIZE);
     }
 
-    private PoolingHttpClientConnectionManager createInsecureTlsConnectionManager() {
-        try {
-            // Use the TrustSelfSignedStrategy to allow Self Signed Certificates.
-            SSLContext sslContext = SSLContextBuilder
-                    .create()
-                    .loadTrustMaterial(new TrustSelfSignedStrategy())
-                    .build();
-            // Disable hostname verification.
-            HostnameVerifier allowAllHosts = new NoopHostnameVerifier();
-            // Create an SSL Socket Factory to use the SSLContext with the trust self signed certificate strategy.
-            SSLConnectionSocketFactory connectionFactory = new SSLConnectionSocketFactory(sslContext, allowAllHosts);
-            Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder
-                    .<ConnectionSocketFactory>create().register("https", connectionFactory)
-                    .build();
-            return new PoolingHttpClientConnectionManager(socketFactoryRegistry);
-        } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
-           throw new RuntimeException(e);
-        }
-    }
-
-    private HttpClientBuilder createHttpClientBuilder() {
+    /**
+     * Create and configure an http client builder.
+     *
+     * @return HttpClientBuilder
+     */
+    protected HttpClientBuilder createHttpClientBuilder() {
         int timeoutMilliSeconds = timeout * 1000;
         RequestConfig requestConfig = RequestConfig
                 .custom()
@@ -183,12 +192,44 @@ public class PreemptiveHttpClientBuilder {
         builder.addInterceptorFirst(new PreemptiveHttpClient.PreemptiveAuth());
 
         // Set the following user agent with each request
-        String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
+        String userAgent = StringUtils.defaultIfEmpty(this.userAgent, "ArtifactoryBuildClient/" + CLIENT_VERSION);
         builder.setUserAgent(userAgent);
 
         setDefaultCookieSpecRegistry(builder);
         builder.setProxy(proxy);
         return builder;
+    }
+
+    /**
+     * Create the pooling connection manager. Use one of the following 3 strategies:
+     * 1. Default - Check all certificates and use the default trust manager.
+     * 2. Insecure TLS - Trust all certifications, including self signed.
+     * 3. Custom SSL context - Use custom trust manager strategy.
+     *
+     * @return PoolingHttpClientConnectionManager
+     * @throws GeneralSecurityException - In case of an error during the creation of the SSL context of the insecure TLS strategy
+     */
+    private PoolingHttpClientConnectionManager createConnectionManager() throws GeneralSecurityException {
+        if (!insecureTls && sslContext == null) {
+            // Return default connection manager
+            return new PoolingHttpClientConnectionManager();
+        }
+        SSLConnectionSocketFactory sslConnectionSocketFactory;
+        HostnameVerifier hostnameVerifier = new DefaultHostnameVerifier();
+        SSLContext sslContext = this.sslContext;
+        if (insecureTls) {
+            TrustStrategy strategy = TrustAllStrategy.INSTANCE;
+            sslContext = SSLContextBuilder.create().loadTrustMaterial(strategy).build();
+            // Disable hostname verification.
+            hostnameVerifier = NoopHostnameVerifier.INSTANCE;
+        }
+
+        sslConnectionSocketFactory = new SSLConnectionSocketFactory(sslContext, hostnameVerifier);
+        Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", PlainConnectionSocketFactory.getSocketFactory())
+                .register("https", sslConnectionSocketFactory)
+                .build();
+        return new PoolingHttpClientConnectionManager(socketFactoryRegistry);
     }
 
     /**
