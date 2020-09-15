@@ -20,10 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -55,6 +52,7 @@ public class BuildDeploymentHelper {
                         File                           basedir ) {
 
         Map<String, Set<DeployDetails>> deployableArtifactsByModule = prepareDeployableArtifacts(build, deployableArtifactBuilders);
+        HashSet<String> repositories = new HashSet<>(Arrays.asList(clientConf.resolver.getDownloadSnapshotRepoKey(),clientConf.resolver.getRepoKey()));
 
         logger.debug("Build Info Recorder: deploy artifacts: " + clientConf.publisher.isPublishArtifacts());
         logger.debug("Build Info Recorder: publication fork count: " + clientConf.publisher.getPublishForkCount());
@@ -62,12 +60,12 @@ public class BuildDeploymentHelper {
 
 
         if (clientConf.publisher.isPublishBuildInfo() || StringUtils.isNotBlank(clientConf.info.getGeneratedBuildInfoFilePath())) {
-            saveBuildInfoToFile(build, clientConf, basedir);
+            saveBuildInfoToFile(build, clientConf, basedir,repositories);
         }
 
         if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
             try {
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
+                BuildInfoExtractorUtils.savePartialBuildInfoToFile(PartialBuildInfo.FromBuildInfo(build,repositories), new File(clientConf.info.getGeneratedBuildInfoFilePath()));
             } catch (Exception e) {
                 logger.error("Failed writing build info to file: " , e);
                 throw new RuntimeException("Failed writing build info to file", e);
@@ -130,7 +128,7 @@ public class BuildDeploymentHelper {
         return true;
     }
 
-    private void saveBuildInfoToFile(Build build, ArtifactoryClientConfiguration clientConf, File basedir) {
+    private void saveBuildInfoToFile(Build build, ArtifactoryClientConfiguration clientConf, File basedir,HashSet<String> repositories) {
         String outputFile = clientConf.getExportFile();
         File buildInfoFile = StringUtils.isBlank(outputFile) ? new File(basedir, "target/build-info.json" ) :
                 new File(outputFile);
@@ -139,7 +137,7 @@ public class BuildDeploymentHelper {
         logger.info("Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
 
         try {
-            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile.getCanonicalFile());
+            BuildInfoExtractorUtils.savePartialBuildInfoToFile(PartialBuildInfo.FromBuildInfo(build,repositories), buildInfoFile.getCanonicalFile());
         } catch (IOException e) {
             throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
         }

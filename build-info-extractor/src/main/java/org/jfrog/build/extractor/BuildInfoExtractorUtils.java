@@ -32,6 +32,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.PartialBuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -222,6 +223,17 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
+        String buildInfoJson = buildInfoToJsonString(build);
+        if (!toFile.getParentFile().exists()) {
+            toFile.getParentFile().mkdirs();
+        }
+        if (!toFile.exists()) {
+            toFile.createNewFile();
+        }
+        Files.write(buildInfoJson, toFile, Charsets.UTF_8);
+    }
+
+    public static void savePartialBuildInfoToFile(PartialBuildInfo build, File toFile) throws IOException {
         String buildInfoJson = buildInfoToJsonString(build);
         if (!toFile.getParentFile().exists()) {
             toFile.getParentFile().mkdirs();

@@ -17,6 +17,7 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
+import org.jfrog.build.api.PartialBuildInfo;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -40,7 +41,7 @@ import java.util.concurrent.*;
 public class DeployTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(DeployTask.class);
-    
+
     private List<ModuleInfoFileProducer> moduleInfoFileProducers = Lists.newArrayList();
 
     @TaskAction
@@ -112,10 +113,11 @@ public class DeployTask extends DefaultTask {
                 configRetriesParams(accRoot, client);
                 GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
                 Build build = gbie.extract(getProject().getRootProject());
-                exportBuildInfo(build, getExportFile(accRoot));
+                HashSet<String> repositories = new HashSet<>(Arrays.asList(accRoot.resolver.getDownloadSnapshotRepoKey(),accRoot.resolver.getRepoKey()));
+                exportBuildInfo(build,repositories, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory
-                    exportBuildInfo(build, getExportFile(accRoot));
+                    exportBuildInfo(build,repositories, getExportFile(accRoot));
                     if (accRoot.info.isIncremental()) {
                         log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
                         client.sendModuleInfo(build);
@@ -126,7 +128,7 @@ public class DeployTask extends DefaultTask {
                 }
                 if (isGenerateBuildInfoToFile(accRoot)) {
                     try {
-                        exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
+                        exportBuildInfo(build,repositories, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
                     } catch (Exception e) {
                         log.error("Failed writing build info to file: ", e);
                         throw new IOException("Failed writing build info to file", e);
@@ -234,9 +236,9 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void exportBuildInfo(Build build, File toFile) throws IOException {
+    private void exportBuildInfo(Build build,HashSet<String> repositories, File toFile) throws IOException {
         log.debug("Exporting generated build info to '{}'", toFile.getAbsolutePath());
-        BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
+        BuildInfoExtractorUtils.savePartialBuildInfoToFile(PartialBuildInfo.FromBuildInfo(build,repositories), toFile);
     }
 
     private void exportDeployableArtifacts(Map<String, Set<DeployDetails>> allDeployDetails, File toFile, boolean exportBackwardCompatibleDeployableArtifacts) throws IOException {
