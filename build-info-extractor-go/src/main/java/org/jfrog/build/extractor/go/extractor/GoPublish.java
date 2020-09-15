@@ -173,6 +173,7 @@ public class GoPublish extends GoCommand {
         Artifact deployedArtifact =  new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .remotePath(deploymentRepo + "/" + deployDetails.getArtifactPath())
                 .build();
 
         return deployedArtifact;

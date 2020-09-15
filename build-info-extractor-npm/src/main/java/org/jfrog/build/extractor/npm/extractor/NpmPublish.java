@@ -137,6 +137,7 @@ public class NpmPublish extends NpmCommand {
         deployedArtifact = new ArtifactBuilder(npmPackageInfo.getModuleId())
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .remotePath(repo + "/" + npmPackageInfo.getDeployPath())
                 .build();
     }
 

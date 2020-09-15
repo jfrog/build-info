@@ -148,7 +148,7 @@ public class DockerImage implements Serializable {
             }
             HttpResponse httpResponse = propertyChangeClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
             validateResponse(httpResponse);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).remotePath(layer.getFullPath()).build();
             artifacts.add(artifact);
         }
         buildInfoModule.setArtifacts(new ArrayList<>(artifacts));
