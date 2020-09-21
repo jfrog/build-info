@@ -117,8 +117,9 @@ node('java') {
                 error("No projects were selected for Release Staging.")
             }
             bumpVersion(buildProjList, projectsConfig, latestReleaseVersion, 'releaseVersion')
-            sh 'git commit -am "[artifactory-release] Release version"'
+            
             wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
+                sh 'git commit -am "[artifactory-release] Release version"'
                 sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
             }
 
