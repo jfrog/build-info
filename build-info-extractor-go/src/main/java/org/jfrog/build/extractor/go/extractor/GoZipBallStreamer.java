@@ -34,17 +34,18 @@
 
 package org.jfrog.build.extractor.go.extractor;
 
-import org.jfrog.build.api.util.Log;
 import com.google.common.collect.Sets;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
-import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.util.Log;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.io.File;
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -120,9 +121,6 @@ public class GoZipBallStreamer implements Closeable {
                     if (!excludeEntry(zipEntry.getName())) {
                         ZipArchiveEntry correctedEntry = getCorrectedEntryName(zipEntry.getName(), zipEntry.getSize());
                         writeEntry(zipEntry, correctedEntry);
-                        //log.trace("Entry: " + zipEntry.getName() + " - was included and renamed to " + correctedEntry);
-                    } else {
-                        //log.trace("Entry: " + zipEntry.getName() + " - was excluded");
                     }
                 } catch (IOException e) {
                     log.error("Could not read or write entity from zip for Go package " + projectName, e);
@@ -148,7 +146,7 @@ public class GoZipBallStreamer implements Closeable {
      */
     private ZipArchiveEntry getCorrectedEntryName(String entryName, long entryLength) {
         String subPath = stripFirstPathElement(entryName);
-        if (shouldPackSubModule() && subPath.startsWith(subModuleName + "/")) {
+        if (subPath.startsWith(subModuleName + "/")) {
             subPath = subPath.replace(subModuleName + '/', "");
         }
         String correctedEntryName = String.join("/", projectName + "@" + version, subPath);
@@ -159,8 +157,10 @@ public class GoZipBallStreamer implements Closeable {
 
     /**
      * Following the go client implementation:
-     * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch/coderepo.go
-     * 1. Excluding specific files, vendored packages and submodules (submodule = Each directory with go.mod file, except the one that we are packing)
+     * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch
+     * /coderepo.go
+     * 1. Excluding specific files, vendored packages and submodules (submodule = Each directory with go.mod file,
+     * except the one that we are packing)
      * 2. If there is a LICENSE file in the root directory, it should be included in the submodule output .zip file
      *
      * @return True if we should exclude this file from the output .zip file
@@ -176,12 +176,11 @@ public class GoZipBallStreamer implements Closeable {
             String trimmedPrefix = entryName.substring(0, entryName.lastIndexOf('/'));
             if (shouldPackSubModule()) {
                 String rootPath = trimmedPrefix.split('/' + subModuleName, 2)[0];
-                excludedDirectories.remove(rootPath);
                 if (rootPath.equals(trimmedPrefix)) {
                     return !entryName.endsWith("LICENSE");
                 }
             }
-            return (excludedDirectories.stream().anyMatch(trimmedPrefix::startsWith));
+            return excludedDirectories.contains(trimmedPrefix);
         }
         return false;
     }
@@ -192,25 +191,58 @@ public class GoZipBallStreamer implements Closeable {
     private void scanEntries() {
         Enumeration<? extends ZipEntry> entries = zipFile.getEntries();
         ZipEntry zipEntry;
+        Set<String> allDirectories = Sets.newHashSet();
         while (entries.hasMoreElements()) {
             zipEntry = entries.nextElement();
             if (!zipEntry.isDirectory() && isSubModule(zipEntry.getName())) {
                 String subModulePath = zipEntry.getName().replace(MOD_FILE, "");
                 excludedDirectories.add(subModulePath);
+            } else {
+                allDirectories.add(GoVersionUtils.getParent(zipEntry.getName()));
             }
+        }
+
+        if (!excludedDirectories.isEmpty()) {
+            String moduleRootDir = allDirectories.stream().
+                    filter(dir -> dir.endsWith(subModuleName)).findFirst().orElse("");
+            allDirectories.stream().filter(dir -> shouldExcludeDirectory(moduleRootDir, dir))
+                    .forEach(excludedDirectories::add);
         }
     }
 
     /**
-     * @param entryName
+     * @return True if the given directory should be excluded from the final module .zip file
+     */
+    private boolean shouldExcludeDirectory(String moduleRootDir, String directory) {
+        return !(directory.startsWith(moduleRootDir) && !isSubFolderOfAnotherModule(moduleRootDir, directory));
+    }
+
+    /**
+     * @return True if the given directory does not belong to another submodule in the original .zip file
+     */
+    private boolean isSubFolderOfAnotherModule(String moduleRootDir, String directory) {
+        String currentDir = directory;
+        while (StringUtils.isNotEmpty(currentDir)) {
+            if (currentDir.equals(moduleRootDir)) {
+                return false;
+            }
+            if (excludedDirectories.contains(currentDir)) {
+                return true;
+            }
+            currentDir = GoVersionUtils.getParent(currentDir);
+        }
+        return false;
+    }
+
+    /**
      * @return True if the entry is a go.mod file which doesn't belong to the project we are packing
      */
     private boolean isSubModule(String entryName) {
         if (entryName.endsWith(MOD_FILE)) {
             if (shouldPackSubModule()) {
-                return (!entryName.substring(entryName.indexOf('/') + 1).contains(subModuleName + MOD_FILE));
+                return (!entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE));
             } else {
-                return entryName.substring(entryName.indexOf('/') + 1).contains(MOD_FILE);
+                return entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE);
             }
         }
         return false;
@@ -218,9 +250,9 @@ public class GoZipBallStreamer implements Closeable {
 
     /**
      * Based on the original go client behaviour:
-     * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch/coderepo.go
+     * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch
+     * /coderepo.go
      *
-     * @param entryName
      * @return True if the entry belongs to a vendor package
      */
     private boolean isVendorPackage(String entryName) {
@@ -236,11 +268,10 @@ public class GoZipBallStreamer implements Closeable {
      * False - in order to pack the root project in the .zip file
      */
     private boolean shouldPackSubModule() {
-        return subModuleName != null;
+        return StringUtils.isNotEmpty(subModuleName);
     }
 
     /**
-     * @param path
      * @return First path element
      */
     private static String stripFirstPathElement(String path) {
