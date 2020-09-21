@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.go.extractor;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,12 +98,27 @@ public class GoVersionUtils {
      */
     public static String getSubModule(String projectName) {
         if (StringUtils.isBlank(projectName)) {
-            return null;
+            return StringUtils.EMPTY;
         }
         String[] parts = projectName.split("/", 4);
         if (parts.length >= 4) {
             return parts[3];
         }
-        return null;
+        return StringUtils.EMPTY;
+    }
+
+    /**
+     * @param path A file path
+     * @return Parent path of the input path as if it was a file. Empty string if the path has no parent.
+     */
+    public static String getParent(String path) {
+        if (StringUtils.isEmpty(path)) {
+            return StringUtils.EMPTY;
+        }
+        String parentPath = new File(path).getParent();
+        if (StringUtils.isNotEmpty(parentPath)) {
+            return parentPath.replace('\\', '/');
+        }
+        return StringUtils.EMPTY;
     }
 }
