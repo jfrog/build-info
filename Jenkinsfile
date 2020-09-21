@@ -81,7 +81,7 @@ node('java') {
 
     // Set gradle configurations.
     def deployServer = Artifactory.server 'oss.jfrog.org'
-    def resolveServer = Artifactory.server 'repo.artifactoryonline.com'
+    def resolveServer = Artifactory.server 'oss.jfrog.org'
     def rtGradle = Artifactory.newGradleBuild()
     rtGradle.usesPlugin = true
     rtGradle.useWrapper = true
