@@ -5,7 +5,10 @@ import org.jfrog.build.api.Build;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -29,14 +32,13 @@ public class Promotion implements Serializable {
     private Set<String> scopes;
     private Map<String, Collection<String>> properties;
     private boolean failFast = true;
-    private List<BuildArtifactsMapping> mappings;
 
     public Promotion() {
     }
 
     public Promotion(String status, String comment, String ciUser, String timestamp, boolean dryRun, String targetRepo,
                      String sourceRepo, boolean copy, boolean artifacts, boolean dependencies, Set<String> scopes,
-            Map<String, Collection<String>> properties, boolean failFast, List<BuildArtifactsMapping> mappings) {
+            Map<String, Collection<String>> properties, boolean failFast) {
         this.status = status;
         this.comment = comment;
         this.ciUser = ciUser;
@@ -50,7 +52,6 @@ public class Promotion implements Serializable {
         this.scopes = scopes;
         this.properties = properties;
         this.failFast = failFast;
-        this.mappings = mappings;
     }
 
     public String getStatus() {
@@ -159,14 +160,6 @@ public class Promotion implements Serializable {
 
     public void setFailFast(boolean failFast) {
         this.failFast = failFast;
-    }
-
-    public List<BuildArtifactsMapping> getMappings() {
-        return mappings;
-    }
-
-    public void setMappings(List<BuildArtifactsMapping> mappings) {
-        this.mappings = mappings;
     }
 
     private Date getTimestampAsDate(String timestamp) {
