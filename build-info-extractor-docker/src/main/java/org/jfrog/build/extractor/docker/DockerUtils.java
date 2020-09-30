@@ -229,7 +229,7 @@ public class DockerUtils {
         return indexOfFirstSlash < indexOfLastColon;
     }
 
-    // Docker-Java uses the temp dir to Exe binaries, in some cases the default temp dir(especially in Linux os)
+    // Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
     // might have a NONEXE flag, therefore we override it with our build info extractor dir.
     public static void initTempDir(File path) {
         // Extract the dir path.
