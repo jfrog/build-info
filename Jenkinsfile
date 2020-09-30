@@ -50,6 +50,14 @@ node('java') {
             buildName: 'EcoSystemRelease :: build-info-nuget-extractor',
             tagName: 'build-info-nuget-extractor'
         ],
+         "build-info-extractor-docker": [
+            releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
+            nextVersion: "${EXTRACTOR_NEXT_VERSION}",
+            buildTasks: 'build-info-extractor-docker:clean build-info-extractor-docker:artifactoryPublish -x test',
+            releaseTasks: '-PextractorRelease=true  build-info-extractor-docker:clean build-info-extractor-docker:artifactoryPublish -x test',
+            buildName: 'EcoSystemRelease :: build-info-docker-extractor',
+            tagName: 'build-info-docker-extractor'
+        ],
         "build-info-extractor-maven3": [
             releaseVersion: "${EXTRACTOR_RELEASE_VERSION}",
             nextVersion: "${EXTRACTOR_NEXT_VERSION}",
