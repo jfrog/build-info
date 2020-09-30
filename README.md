@@ -13,7 +13,6 @@ Build Info is Artifactory's open integration layer for the CI servers and build 
 export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
 export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
-export BITESTS_ARTIFACTORY_REPO=tests
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
 * Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
