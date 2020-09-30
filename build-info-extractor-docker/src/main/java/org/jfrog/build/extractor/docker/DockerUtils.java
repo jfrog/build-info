@@ -14,8 +14,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -225,5 +227,14 @@ public class DockerUtils {
         int indexOfFirstSlash = imageTag.indexOf("/");
         int indexOfLastColon = imageTag.lastIndexOf(":");
         return indexOfFirstSlash < indexOfLastColon;
+    }
+
+    // Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
+    // might have a NONEXE flag, therefore we override it with our build info extractor dir.
+    public static void initTempDir(File path) {
+        // Extract the dir path.
+        String pathDir = path.getAbsoluteFile().getParent();
+        // Set the Java temp dir system property. As a result, java will create it for us.
+        System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
     }
 }
