@@ -14,8 +14,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -225,5 +227,12 @@ public class DockerUtils {
         int indexOfFirstSlash = imageTag.indexOf("/");
         int indexOfLastColon = imageTag.lastIndexOf(":");
         return indexOfFirstSlash < indexOfLastColon;
+    }
+
+    // Set the Java temp dir system property. As a result, java will create it for us.
+    public static void initTempDir(File path) {
+        // Extract the dir path.
+        String pathDir = path.getAbsoluteFile().getParent();
+        System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
     }
 }

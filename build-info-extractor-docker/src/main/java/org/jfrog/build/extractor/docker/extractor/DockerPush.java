@@ -13,11 +13,14 @@ import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.docker.types.DockerImage;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends PackageManagerExtractor {
@@ -82,6 +85,7 @@ public class DockerPush extends PackageManagerExtractor {
                     clientConfiguration.publisher.getPassword(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties());
+            initTempDir(new File(clientConfiguration.info.getGeneratedBuildInfoFilePath()));
             dockerPush.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
