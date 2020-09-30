@@ -229,10 +229,12 @@ public class DockerUtils {
         return indexOfFirstSlash < indexOfLastColon;
     }
 
-    // Set the Java temp dir system property. As a result, java will create it for us.
+    // Docker-Java uses the temp dir to Exe binaries, in some cases the default temp dir(especially in Linux os)
+    // might have a NONEXE flag, therefore we override it with our build info extractor dir.
     public static void initTempDir(File path) {
         // Extract the dir path.
         String pathDir = path.getAbsoluteFile().getParent();
+        // Set the Java temp dir system property. As a result, java will create it for us.
         System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
     }
 }
