@@ -82,7 +82,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
 ```
 
 #### NuGet tests
-* Add Nuget executable to the system search path (PATH environment variable).
+* Add Nuget & Dotnet executable to the system search path (PATH environment variable).
 ```
 > ./gradlew clean build-info-extractor-nuget:test
 ```
@@ -96,9 +96,14 @@ When running on a unix machine, provide the path to the 'bin' directory.
   export BITESTS_ARTIFACTORY_DOCKER_REPO=build-info-tests-docker
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
+ * For OSX agents, run a Socat container:
+ ```
+ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
+ ```
  ```
 > ./gradlew clean build-info-extractor-docker:test
 ```
+
 * Before running the tests, please make sure you have a local docker repository named *build-info-tests-docker* in Artifactory.
 
 ###  Testing on Artifactory OSS
