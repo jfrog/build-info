@@ -421,6 +421,7 @@ project('build-info-extractor-npm') {
 
     dependencies {
         testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }
@@ -431,6 +432,7 @@ project('build-info-extractor-docker') {
 
     dependencies {
         testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
         compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.2'
     }
@@ -452,6 +454,7 @@ project('build-info-extractor-pip') {
 
     dependencies {
         testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }
