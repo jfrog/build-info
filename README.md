@@ -97,7 +97,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
   export BITESTS_ARTIFACTORY_DOCKER_REPO=build-info-tests-docker
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
- * For OSX Agents, Run a Socat Container:
+ * For OSX agents, run a Socat container:
  ```
  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
  ```
