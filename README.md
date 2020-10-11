@@ -108,6 +108,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
 
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
+test 
 
 On Artifactory pro, the tests infrastructure will create the test repositories by REST API.
 To run the tests on Artifactory OSS, you should create the Gradle repositories by yourself.
