@@ -20,18 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.BlackDuckProperties;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.Governance;
-import org.jfrog.build.api.Issue;
-import org.jfrog.build.api.IssueTracker;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.LicenseControl;
-import org.jfrog.build.api.MatrixParameter;
-import org.jfrog.build.api.Vcs;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
@@ -99,14 +88,16 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         bib.durationMillis(durationMillis);
 
         Set<File> moduleFilesWithModules = moduleInfoFileProducers.stream()
-            .filter(ModuleInfoFileProducer::hasModules)
-            .flatMap(moduleInfoFileProducer -> moduleInfoFileProducer.getModuleInfoFiles().getFiles().stream())
-            .collect(Collectors.toSet());
+                .filter(ModuleInfoFileProducer::hasModules)
+                .flatMap(moduleInfoFileProducer -> moduleInfoFileProducer.getModuleInfoFiles().getFiles().stream())
+                .collect(Collectors.toSet());
 
         moduleFilesWithModules.forEach(moduleFile -> {
             try {
                 Module module = ModuleExtractorUtils.readModuleFromFile(moduleFile);
-                if (!module.getArtifacts().isEmpty() || !module.getDependencies().isEmpty()) {
+                List<Artifact> artifacts = module.getArtifacts();
+                List<Dependency> dependencies = module.getDependencies();
+                if ((artifacts != null && !artifacts.isEmpty()) || (dependencies != null && !dependencies.isEmpty())) {
                     bib.addModule(module);
                 }
             } catch (IOException e) {
@@ -132,7 +123,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         bib.artifactoryPrincipal(artifactoryPrincipal);
 
         String artifactoryPluginVersion = clientConf.info.getArtifactoryPluginVersion();
-        if (StringUtils.isBlank(artifactoryPluginVersion)){
+        if (StringUtils.isBlank(artifactoryPluginVersion)) {
             artifactoryPluginVersion = "Unknown";
         }
         bib.artifactoryPluginVersion(artifactoryPluginVersion);
