@@ -124,4 +124,4 @@ To run Gradle tests on Artifactory OSS:
 * Run tests `./gradlew build-info-extractor-gradle:test`
 
 ## More about build-info
-Read more about build-info in the [Build Integration documentation](https://www.jfrog.com/confluence/display/JFROG/Build+Integration)
+Read more about build-info in the [Build Integration documentation](https://www.jfrog.com/confluence/display/JFROG/Build+Integration).
