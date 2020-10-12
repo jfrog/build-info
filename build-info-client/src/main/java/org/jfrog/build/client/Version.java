@@ -23,7 +23,7 @@ public class Version implements Serializable {
     }
 
     public boolean isNotFound() {
-        return NOT_FOUND.equals(this);
+        return NOT_FOUND.version.equals(this.version);
     }
 
     public boolean isAtLeast(Version atLeast) {
