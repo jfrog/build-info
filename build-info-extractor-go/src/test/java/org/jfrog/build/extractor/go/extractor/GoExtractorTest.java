@@ -6,10 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -40,7 +37,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    private Map<String, String> env = new TreeMap<>();
+    private final Map<String, String> env = new TreeMap<>();
 
     public GoExtractorTest() {
         localRepo = GO_LOCAL_REPO;
@@ -58,11 +55,11 @@ public class GoExtractorTest extends IntegrationTestsBase {
         PROJECT_1("project1", "jfrog-dependency", "github.com/jfrog/dependency", "1.0.0", SAMPLER.getDependencyId(), TEXT.getDependencyId(), QUOTE.getDependencyId()),
         PROJECT_2("project2", "jfrog-project", "github.com/jfrog/project", "1.0.0", SAMPLER.getDependencyId(), TEXT.getDependencyId(), QUOTE.getDependencyId(), PROJECT_1.getDependencyId());
 
-        private File projectOrigin;
-        private String targetDir;
-        private String name;
-        private String version;
-        private Set<String> dependencies;
+        private final File projectOrigin;
+        private final String targetDir;
+        private final String name;
+        private final String version;
+        private final Set<String> dependencies;
 
         Project(String projectDir, String targetDir, String name, String version, String... dependencies) {
             this.projectOrigin = PROJECTS_ROOT.resolve(projectDir).toFile();
@@ -84,8 +81,12 @@ public class GoExtractorTest extends IntegrationTestsBase {
             return version;
         }
 
-        private String getTargetPath(String extention) {
-            return String.format("%s/@v/v%s.%s", name, version, extention);
+        private String getRemotePath() {
+            return String.format("%s/@v", name);
+        }
+
+        private String getTargetPath(String extension) {
+            return String.format("%s/v%s.%s", getRemotePath(), version, extension);
         }
 
         private Set<String> getArtifactSet() {
@@ -142,9 +143,8 @@ public class GoExtractorTest extends IntegrationTestsBase {
         };
     }
 
-    @SuppressWarnings("unused")
     @Test(dataProvider = "goRunProvider")
-    private void goRunTest(Project project, String args, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo) {
+    public void goRunTest(Project project, String args, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo) {
         Path projectDir = null;
         try {
             // Run Go build
@@ -155,6 +155,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             assertNotNull(build);
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
+            assertEquals(module.getType(), "go");
             assertEquals(module.getId(), project.getModuleId());
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, project.dependencies);
@@ -173,7 +174,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
      * 3. Build project2 with Artifactory for resolution.
      */
     @Test
-    private void goRunPublishTest() {
+    public void goRunPublishTest() {
         Path projectDir = null;
         ArrayListMultimap<String, String> properties = ArrayListMultimap.create();
         try {
@@ -185,7 +186,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Check successful execution
             assertNotNull(project1Build);
             // Publish project1 to Artifactory
-            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo, projectDir, project.getVersion(),null, getLog());
+            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo, projectDir, project.getVersion(), null, getLog());
             Build publishBuild = goPublish.execute();
             // Check successful execution
             assertNotNull(publishBuild);
@@ -193,13 +194,17 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Check correctness of the module, dependencies and artifacts
             assertEquals(project1Build.getModules().size(), 1);
             Module module = project1Build.getModules().get(0);
+            assertEquals(module.getType(), "go");
             assertEquals(module.getId(), project.getModuleId());
+            assertEquals(module.getRepository(), localRepo);
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, project.dependencies);
             Set<String> moduleArtifacts = module.getArtifacts().stream().map(Artifact::getName).collect(Collectors.toSet());
             assertEquals(moduleArtifacts, project.getArtifactSet());
+            String expectedRemotePath = project.getRemotePath();
+            module.getArtifacts().stream().map(BaseBuildFileBean::getRemotePath).forEach(remotePath -> assertEquals(remotePath, expectedRemotePath));
 
-            // Run Go build on project2 using Artifctory for resolution
+            // Run Go build on project2 using Artifactory for resolution
             project = Project.PROJECT_2;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             goRun = new GoRun(GO_BUILD_CMD, projectDir, null, buildInfoClientBuilder, virtualRepo, getUsername(), getPassword(), getLog(), env);

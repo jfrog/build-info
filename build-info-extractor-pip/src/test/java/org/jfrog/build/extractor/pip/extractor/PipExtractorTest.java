@@ -128,6 +128,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
             // Validate produced build-info.
             Module module = build.getModules().get(0);
+            assertEquals(module.getType(), "pip");
             assertEquals(module.getId(), project.moduleId);
             assertEquals(module.getDependencies().size(), project.expectedDependencies);
 

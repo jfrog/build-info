@@ -17,11 +17,10 @@
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -35,7 +34,15 @@ import static org.jfrog.build.api.BuildBean.MODULE;
 @XStreamAlias(MODULE)
 public class Module extends BaseBuildBean {
 
+    private String type;
+
     private String id;
+
+    private String repository;
+
+    private String md5;
+
+    private String sha1;
 
     @XStreamAlias(ARTIFACTS)
     private List<Artifact> artifacts;
@@ -45,6 +52,24 @@ public class Module extends BaseBuildBean {
 
     @XStreamAlias(DEPENDENCIES)
     private List<Dependency> dependencies;
+
+    /**
+     * Returns the type of the module
+     *
+     * @return Module type
+     */
+    public String getType() {
+        return type;
+    }
+
+    /**
+     * Sets the type of the module
+     *
+     * @param type Module type
+     */
+    public void setType(String type) {
+        this.type = type;
+    }
 
     /**
      * Returns the ID of the module
@@ -62,6 +87,60 @@ public class Module extends BaseBuildBean {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * Sets the repository of the module
+     *
+     * @param repository Module repository
+     */
+    public void setRepository(String repository) {
+        this.repository = repository;
+    }
+
+    /**
+     * Returns the repository of the module
+     *
+     * @return Module repository
+     */
+    public String getRepository() {
+        return repository;
+    }
+
+    /**
+     * Sets the sha1 of the module
+     *
+     * @param sha1 Module sha1
+     */
+    public void setSha1(String sha1) {
+        this.sha1 = sha1;
+    }
+
+    /**
+     * Returns the sha1 of the module
+     *
+     * @return Module sha1
+     */
+    public String getSha1() {
+        return sha1;
+    }
+
+    /**
+     * Sets the md5 of the module
+     *
+     * @param md5 Module md5
+     */
+    public void setMd5(String md5) {
+        this.md5 = md5;
+    }
+
+    /**
+     * Returns the md5 of the module
+     *
+     * @return Module md5
+     */
+    public String getMd5() {
+        return md5;
     }
 
     /**
@@ -127,6 +206,10 @@ public class Module extends BaseBuildBean {
         artifacts = appendBuildFileLists(artifacts, other.getArtifacts());
         excludedArtifacts = appendBuildFileLists(excludedArtifacts, other.getExcludedArtifacts());
         dependencies = appendBuildFileLists(dependencies, other.getDependencies());
+        type = StringUtils.defaultIfEmpty(type, other.type);
+        repository = StringUtils.defaultIfEmpty(repository, other.repository);
+        md5 = StringUtils.defaultIfEmpty(md5, other.md5);
+        sha1 = StringUtils.defaultIfEmpty(sha1, other.sha1);
     }
 
     private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
@@ -141,26 +224,27 @@ public class Module extends BaseBuildBean {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Module module = (Module) o;
 
-        if (getId() != null ? !getId().equals(module.getId()) : module.getId() != null) return false;
-        if (getArtifacts() != null ? !getArtifacts().equals(module.getArtifacts()) : module.getArtifacts() != null)
-            return false;
-        if (getExcludedArtifacts() != null ? !getExcludedArtifacts().equals(module.getExcludedArtifacts()) : module.getExcludedArtifacts() != null)
-            return false;
-        return getDependencies() != null ? getDependencies().equals(module.getDependencies()) : module.getDependencies() == null;
-
+        return StringUtils.equals(getType(), module.getType()) &&
+                StringUtils.equals(getId(), module.getId()) &&
+                StringUtils.equals(getRepository(), module.getRepository()) &&
+                StringUtils.equals(getSha1(), module.getSha1()) &&
+                StringUtils.equals(getMd5(), module.getMd5()) &&
+                ArrayUtils.isEquals(getArtifacts(), module.getArtifacts()) &&
+                ArrayUtils.isEquals(getExcludedArtifacts(), module.getExcludedArtifacts()) &&
+                ArrayUtils.isEquals(getDependencies(), module.getDependencies());
     }
 
     @Override
     public int hashCode() {
-        int result = getId() != null ? getId().hashCode() : 0;
-        result = 31 * result + (getArtifacts() != null ? getArtifacts().hashCode() : 0);
-        result = 31 * result + (getExcludedArtifacts() != null ? getExcludedArtifacts().hashCode() : 0);
-        result = 31 * result + (getDependencies() != null ? getDependencies().hashCode() : 0);
-        return result;
+        return Objects.hash(getType(), getId(), getRepository(), getSha1(), getMd5(), getArtifacts(), getExcludedArtifacts(), getDependencies());
     }
 }

@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.docker.types;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
@@ -11,6 +12,8 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
@@ -33,9 +36,8 @@ public class DockerImage implements Serializable {
     // Properties to be attached to the docker layers deployed to Artifactory.
     private final ArtifactoryVersion VIRTUAL_REPOS_SUPPORTED_VERSION = new ArtifactoryVersion("4.8.1");
     private String manifest;
-    private String agentName = "";
     // List of properties added to the build-info generated for this docker image.
-    private Properties buildInfoModuleProps = new Properties();
+    private final Properties buildInfoModuleProps = new Properties();
     private String imagePath;
 
     public DockerImage(String imageId, String imageTag, String targetRepo) {
@@ -47,11 +49,6 @@ public class DockerImage implements Serializable {
     /**
      * Check if the provided manifestPath is correct.
      * Set the manifest and imagePath in case of the correct manifest.
-     *
-     * @param manifestPath
-     * @param candidateImagePath
-     * @param dependenciesClient
-     * @throws IOException
      */
     private void checkAndSetManifestAndImagePathCandidates(String manifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
         String candidateManifest = getManifestFromArtifactory(dependenciesClient, manifestPath);
@@ -66,7 +63,7 @@ public class DockerImage implements Serializable {
         HttpResponse res = null;
         try {
             res = dependenciesClient.downloadArtifact(manifestPath);
-            return IOUtils.toString(res.getEntity().getContent());
+            return IOUtils.toString(res.getEntity().getContent(), Charsets.UTF_8);
         } finally {
             if (res != null) {
                 EntityUtils.consume(res.getEntity());
@@ -74,10 +71,10 @@ public class DockerImage implements Serializable {
         }
     }
 
-    private void setBuildInfoModuleProps(Module buildInfoModule) {
+    private void setBuildInfoModuleProps(ModuleBuilder moduleBuilder) {
         buildInfoModuleProps.setProperty("docker.image.id", DockerUtils.getShaValue(imageId));
         buildInfoModuleProps.setProperty("docker.captured.image", imageTag);
-        buildInfoModule.setProperties(buildInfoModuleProps);
+        moduleBuilder.properties(buildInfoModuleProps);
     }
 
     private DockerLayers createLayers(ArtifactoryDependenciesClient dependenciesClient, String aql) throws IOException {
@@ -107,15 +104,8 @@ public class DockerImage implements Serializable {
     /**
      * Search the docker image in Artifactory and update each layer's properties with artifactsPropsStr.
      * Add all artifacts & dependencies into Module.
-     *
-     * @param buildInfoModule
-     * @param properties
-     * @param artifactsPropsStr
-     * @param dependenciesClient
-     * @param propertyChangeClient
-     * @throws IOException
      */
-    private void setDependenciesAndArtifacts(Module buildInfoModule, Properties properties, String artifactsPropsStr, ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient propertyChangeClient) throws IOException {
+    private void setDependenciesAndArtifacts(ModuleBuilder moduleBuilder, Properties properties, String artifactsPropsStr, ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient propertyChangeClient) throws IOException {
         String aql = getAqlQuery(propertyChangeClient);
         DockerLayers layers = createLayers(dependenciesClient, aql);
         DockerLayer historyLayer = layers.getByDigest(imageId);
@@ -136,10 +126,10 @@ public class DockerImage implements Serializable {
             validateResponse(httpResponse);
             Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
             dependencies.add(dependency);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).remotePath(layer.getPath()).build();
             artifacts.add(artifact);
         }
-        buildInfoModule.setDependencies(new ArrayList<>(dependencies));
+        moduleBuilder.dependencies(new ArrayList<>(dependencies));
         while (it.hasNext()) {
             String digest = it.next();
             DockerLayer layer = layers.getByDigest(digest);
@@ -148,30 +138,26 @@ public class DockerImage implements Serializable {
             }
             HttpResponse httpResponse = propertyChangeClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
             validateResponse(httpResponse);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).build();
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).addProperties(properties).remotePath(layer.getPath()).build();
             artifacts.add(artifact);
         }
-        buildInfoModule.setArtifacts(new ArrayList<>(artifacts));
+        moduleBuilder.artifacts(new ArrayList<>(artifacts));
     }
 
     /**
      * Prepare AQL query to get all the manifest layers from Artifactory.
      * Needed for build-info sha1/md5 checksum for each artifact and dependency.
-     *
-     * @return
-     * @throws IOException
      */
     private String getAqlQuery(ArtifactoryBuildInfoClient propertyChangeClient) throws IOException {
         boolean includeVirtualRepos = propertyChangeClient.getArtifactoryVersion().isAtLeast(VIRTUAL_REPOS_SUPPORTED_VERSION);
         List<String> layersDigest = DockerUtils.getLayersDigests(manifest);
         StringBuilder aqlRequestForDockerSha = new StringBuilder("items.find({")
                 .append("\"path\":\"").append(imagePath).append("\",\"$or\":[");
-        List<String> layersQuery = new ArrayList<String>();
+        List<String> layersQuery = new ArrayList<>();
         for (String digest : layersDigest) {
             String shaVersion = DockerUtils.getShaVersion(digest);
             String singleFileQuery;
             if (StringUtils.equalsIgnoreCase(shaVersion, "sha1")) {
-                ;
                 singleFileQuery = String.format("{\"actual_sha1\": \"%s\"}", DockerUtils.getShaValue(digest));
             } else {
                 singleFileQuery = String.format("{\"name\": \"%s\"}", DockerUtils.digestToFileName(digest));
@@ -192,8 +178,10 @@ public class DockerImage implements Serializable {
         String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build();
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
-            Module buildInfoModule = new Module();
-            buildInfoModule.setId(imageTag.substring(imageTag.indexOf("/") + 1));
+            ModuleBuilder moduleBuilder = new ModuleBuilder()
+                    .type(ModuleType.DOCKER)
+                    .id(imageTag.substring(imageTag.indexOf("/") + 1))
+                    .repository(targetRepo);
             try {
                 findAndSetManifestFromArtifactory(dependenciesClient.getArtifactoryUrl(), dependenciesClient, logger);
             } catch (IOException e) {
@@ -204,22 +192,18 @@ public class DockerImage implements Serializable {
                 // This can happen if two parallel jobs build the same image. In that case, the build-info
                 // for this build will be empty.
                 logger.error("The manifest could not be fetched from Artifactory.");
-                return buildInfoModule;
+                return moduleBuilder.build();
             }
             logger.info("Fetching details of published docker layers from Artifactory...");
-            setDependenciesAndArtifacts(buildInfoModule, buildInfoItemsProps, artifactsPropsStr,
-                    dependenciesClient, buildInfoClient);
-            setBuildInfoModuleProps(buildInfoModule);
-            return buildInfoModule;
+            setDependenciesAndArtifacts(moduleBuilder, buildInfoItemsProps, artifactsPropsStr, dependenciesClient, buildInfoClient);
+            setBuildInfoModuleProps(moduleBuilder);
+            return moduleBuilder.build();
         }
     }
 
     /**
      * Find and validate manifest.json file in Artifactory for the current image.
      * Since provided imageTag differs between reverse-proxy and proxy-less configuration, try to build the correct manifest path.
-     *
-     * @return
-     * @throws IOException
      */
     private void findAndSetManifestFromArtifactory(String url, ArtifactoryDependenciesClient dependenciesClient, Log logger) throws IOException {
         // Try to get manifest, assuming reverse proxy

@@ -6,6 +6,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
@@ -75,21 +76,6 @@ abstract class GoCommand implements Serializable {
         if (!client.isRepoExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");
         }
-    }
-
-    protected Build createBuild(List<Artifact> artifacts, List<Dependency> dependencies) {
-        String moduleId = StringUtils.isNotBlank(buildInfoModuleId) ? buildInfoModuleId : moduleName;
-        ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
-        if (artifacts != null) {
-            moduleBuilder.artifacts(artifacts);
-        }
-        if (dependencies != null) {
-            moduleBuilder.dependencies(dependencies);
-        }
-        List<Module> modules = Arrays.asList(moduleBuilder.build());
-        Build build = new Build();
-        build.setModules(modules);
-        return build;
     }
 
     protected String getModFilePath() {

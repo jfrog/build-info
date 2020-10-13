@@ -31,7 +31,11 @@ import java.util.Properties;
  */
 public class ModuleBuilder {
 
+    private ModuleType type;
     private String id;
+    private String repository;
+    private String sha1;
+    private String md5;
     private List<Artifact> artifacts;
     private List<Artifact> excludedArtifacts;
     private List<Dependency> dependencies;
@@ -47,12 +51,29 @@ public class ModuleBuilder {
             throw new IllegalArgumentException("Cannot build module entity without Module ID value");
         }
         Module module = new Module();
+        if (type != null) {
+            module.setType(type.name().toLowerCase());
+        }
         module.setId(id.trim());
+        module.setRepository(repository);
+        module.setSha1(sha1);
+        module.setMd5(md5);
         module.setArtifacts(artifacts);
         module.setDependencies(dependencies);
         module.setProperties(properties);
         module.setExcludedArtifacts(excludedArtifacts);
         return module;
+    }
+
+    /**
+     * Sets the type of the module
+     *
+     * @param type Module type
+     * @return Builder instance
+     */
+    public ModuleBuilder type(ModuleType type) {
+        this.type = type;
+        return this;
     }
 
     /**
@@ -63,6 +84,39 @@ public class ModuleBuilder {
      */
     public ModuleBuilder id(String id) {
         this.id = id;
+        return this;
+    }
+
+    /**
+     * Sets the repository of the module
+     *
+     * @param repository Module repository
+     * @return Builder instance
+     */
+    public ModuleBuilder repository(String repository) {
+        this.repository = repository;
+        return this;
+    }
+
+    /**
+     * Sets sha1 of the module
+     *
+     * @param sha1 Module sha1
+     * @return Builder instance
+     */
+    public ModuleBuilder sha1(String sha1) {
+        this.sha1 = sha1;
+        return this;
+    }
+
+    /**
+     * Sets md5 of the module
+     *
+     * @param md5 Module md5
+     * @return Builder instance
+     */
+    public ModuleBuilder md5(String md5) {
+        this.md5 = md5;
         return this;
     }
 

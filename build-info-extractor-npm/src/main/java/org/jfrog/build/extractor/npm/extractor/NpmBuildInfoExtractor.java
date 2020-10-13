@@ -7,6 +7,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -258,7 +259,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private Build createBuild(List<Dependency> dependencies, String moduleId) {
-        Module module = new ModuleBuilder().id(moduleId).dependencies(dependencies).build();
+        Module module = new ModuleBuilder().type(ModuleType.NPM).id(moduleId).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();

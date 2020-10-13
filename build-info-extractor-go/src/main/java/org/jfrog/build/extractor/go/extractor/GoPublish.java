@@ -3,9 +3,13 @@ package org.jfrog.build.extractor.go.extractor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
@@ -64,7 +68,7 @@ public class GoPublish extends GoCommand {
         try (ArtifactoryBuildInfoClient artifactoryClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
             preparePrerequisites(deploymentRepo, artifactoryClient);
             publishPkg(artifactoryClient);
-            return createBuild(artifactList, null);
+            return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -73,9 +77,9 @@ public class GoPublish extends GoCommand {
 
     /**
      * The deployment of a Go package requires 3 files:
-     *     1. zip file of source files.
-     *     2. go.mod file.
-     *     3. go.info file.
+     * 1. zip file of source files.
+     * 2. go.mod file.
+     * 3. go.info file.
      */
     private void publishPkg(ArtifactoryBuildInfoClient client) throws Exception {
         createAndDeployZip(client);
@@ -136,10 +140,10 @@ public class GoPublish extends GoCommand {
 
     /**
      * pkg info is a json file containing:
-     *      1. The package's version.
-     *      2. The package creation timestamp.
+     * 1. The package's version.
+     * 2. The package creation timestamp.
      */
-    private File writeInfoFile(String localInfoPath) throws IOException{
+    private File writeInfoFile(String localInfoPath) throws IOException {
         File infoFile = new File(localInfoPath);
         ObjectMapper mapper = new ObjectMapper();
         Map<String, String> infoMap = new HashMap();
@@ -159,22 +163,35 @@ public class GoPublish extends GoCommand {
     private Artifact deploy(ArtifactoryBuildInfoClient client, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
         Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5, SHA1);
+        String remotePath = moduleName + "/@v";
         DeployDetails deployDetails = new DeployDetails.Builder()
                 .file(deployedFile)
                 .targetRepository(deploymentRepo)
                 .addProperties(properties)
-                .artifactPath(moduleName + "/@v/" + artifactName)
+                .artifactPath(remotePath + "/" + artifactName)
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
                 .packageType(DeployDetails.PackageType.GO)
                 .build();
 
         ArtifactoryUploadResponse response = client.deployArtifact(deployDetails);
 
-        Artifact deployedArtifact =  new ArtifactBuilder(moduleName + ":" + artifactName)
+        return new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .remotePath(remotePath)
                 .build();
+    }
 
-        return deployedArtifact;
+    private Build createBuild() {
+        Build build = new Build();
+        String moduleId = StringUtils.defaultIfBlank(buildInfoModuleId, moduleName);
+        Module module = new ModuleBuilder()
+                .type(ModuleType.GO)
+                .id(moduleId)
+                .repository(deploymentRepo)
+                .artifacts(artifactList)
+                .build();
+        build.setModules(Collections.singletonList(module));
+        return build;
     }
 }

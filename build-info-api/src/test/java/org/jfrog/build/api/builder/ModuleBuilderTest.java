@@ -25,6 +25,7 @@ import org.testng.annotations.Test;
 import java.util.List;
 import java.util.Properties;
 
+import static org.jfrog.build.api.builder.ModuleType.BUILD;
 import static org.testng.Assert.*;
 
 /**
@@ -42,8 +43,11 @@ public class ModuleBuilderTest {
         Module module = new ModuleBuilder().id("test").build();
 
         assertEquals(module.getId(), "test", "Default module ID cannot be null.");
+        assertNull(module.getType(), "Default module type should be null.");
         assertNull(module.getArtifacts(), "Default module artifacts list should be null.");
         assertNull(module.getDependencies(), "Default module dependencies list should be null.");
+        assertNull(module.getSha1(), "Default module sha1 should be null.");
+        assertNull(module.getMd5(), "Default module md5 should be null.");
         assertNull(module.getProperties(), "Default module properties should be null.");
     }
 
@@ -62,17 +66,25 @@ public class ModuleBuilderTest {
      */
     public void testBuilderSetters() {
         String id = "moo";
+        String repo = "test-repo";
+        String sha1 = "abcd";
+        String md5 = "efgh";
         List<Artifact> artifacts = Lists.newArrayList();
         List<Dependency> dependencies = Lists.newArrayList();
         Properties properties = new Properties();
 
-        Module module = new ModuleBuilder().id(id).artifacts(artifacts).dependencies(dependencies).
-                properties(properties).build();
+        Module module = new ModuleBuilder()
+                .type(BUILD).id(id).repository(repo).artifacts(artifacts).dependencies(dependencies)
+                .sha1(sha1).md5(md5).properties(properties).build();
+        assertEquals(module.getType(), "build", "Unexpected module type.");
         assertEquals(module.getId(), id, "Unexpected module ID.");
+        assertEquals(module.getRepository(), repo, "Unexpected module repository.");
         assertEquals(module.getArtifacts(), artifacts, "Unexpected module artifacts.");
         assertTrue(module.getArtifacts().isEmpty(), "Module artifacts list should not have been populated.");
         assertEquals(module.getDependencies(), dependencies, "Unexpected module dependencies.");
         assertTrue(module.getDependencies().isEmpty(), "Module dependencies list should not have been populated.");
+        assertEquals(module.getSha1(), sha1, "Unexpected module sha1.");
+        assertEquals(module.getMd5(), md5, "Unexpected module md5.");
         assertEquals(module.getProperties(), properties, "Unexpected module properties.");
         assertTrue(module.getProperties().isEmpty(), "Module properties list should not have been populated.");
     }

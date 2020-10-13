@@ -16,6 +16,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.ModuleExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -60,9 +61,15 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
             }
             gradleDeployDetails = artifactoryTask.deployDetails;
         }
+        String repo = gradleDeployDetails.stream()
+                .map(GradleDeployDetails::getDeployDetails)
+                .map(DeployDetails::getTargetRepository)
+                .findAny()
+                .orElse("");
         ModuleBuilder builder = new ModuleBuilder()
-                .id(getModuleIdString(project.getGroup().toString(),
-                        artifactName, project.getVersion().toString()));
+                .type(ModuleType.GRADLE)
+                .id(getModuleIdString(project.getGroup().toString(), artifactName, project.getVersion().toString()))
+                .repository(repo);
         try {
             ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getPublisherHandler(project);
             if (publisher != null) {
@@ -70,14 +77,14 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         publisher.getIncludePatterns(),
                         publisher.getExcludePatterns());
-                Iterable<GradleDeployDetails> deployExcludeDetails = null;
-                Iterable<GradleDeployDetails> deployIncludeDetails = null;
+                Iterable<GradleDeployDetails> deployExcludeDetails;
+                Iterable<GradleDeployDetails> deployIncludeDetails;
                 if (excludeArtifactsFromBuild) {
                     deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
                     deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
                 } else {
                     deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
-                    deployExcludeDetails = new ArrayList<GradleDeployDetails>();
+                    deployExcludeDetails = new ArrayList<>();
                 }
                 builder.artifacts(calculateArtifacts(deployIncludeDetails))
                         .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
@@ -92,16 +99,16 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
     }
 
     private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) {
-        return newArrayList(StreamSupport.stream(deployDetails.spliterator(), false).map(from -> {
+        return StreamSupport.stream(deployDetails.spliterator(), false).map(from -> {
             PublishArtifactInfo publishArtifact = from.getPublishArtifact();
             DeployDetails deployDetails1 = from.getDeployDetails();
             String artifactPath = deployDetails1.getArtifactPath();
             int index = artifactPath.lastIndexOf('/');
             return new ArtifactBuilder(artifactPath.substring(index + 1))
-                .type(getTypeString(publishArtifact.getType(),
-                    publishArtifact.getClassifier(), publishArtifact.getExtension()))
-                .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).remotePath(deployDetails1.getTargetRepository() + "/" + artifactPath).build();
-        }).collect(Collectors.toList()));
+                    .type(getTypeString(publishArtifact.getType(),
+                            publishArtifact.getClassifier(), publishArtifact.getExtension()))
+                    .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).remotePath(artifactPath).build();
+        }).collect(Collectors.toList());
     }
 
     private List<Dependency> calculateDependencies(Project project) throws Exception {

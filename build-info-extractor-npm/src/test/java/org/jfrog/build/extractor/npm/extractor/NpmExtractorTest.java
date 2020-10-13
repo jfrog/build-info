@@ -91,8 +91,12 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             return String.format("%s-%s.tgz", name, version);
         }
 
+        private String getRemotePath() {
+            return String.format("%s/-", name);
+        }
+
         private String getTargetPath() {
-            return String.format("%s/-/%s", name, getPackedFileName());
+            return String.format("%s/%s", getRemotePath(), getPackedFileName());
         }
     }
 
@@ -146,7 +150,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    private void npmInstallTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    public void npmInstallTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
         Path projectDir = null;
         try {
             // Run npm install
@@ -157,6 +161,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
             // Check correctness of the module and dependencies
+            assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, expectedDependencies);
@@ -183,7 +188,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    private void npmPublishTest(Project project, ArrayListMultimap<String, String> props, String targetPath, String packageName) {
+    public void npmPublishTest(Project project, ArrayListMultimap<String, String> props, String targetPath, String packageName) {
         Path projectDir = null;
         try {
             // Run npm publish
@@ -195,9 +200,12 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Module module = build.getModules().get(0);
 
             // Check correctness of the module and the artifact
+            assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
+            assertEquals(module.getRepository(), virtualRepo);
             assertEquals(module.getArtifacts().size(), 1);
             assertEquals(module.getArtifacts().get(0).getName(), project.getModuleId());
+            assertEquals(module.getArtifacts().get(0).getRemotePath(), project.getRemotePath());
 
             // Download the artifact and check for its properties
             StringJoiner propertiesBuilder = new StringJoiner(";");

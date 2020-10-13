@@ -11,6 +11,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -26,18 +27,21 @@ import static org.testng.Assert.fail;
 @Test
 public class DockerExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
+    private static final String SHORT_IMAGE_NAME = "jfrog_artifactory_buildinfo_tests";
+    private static final String SHORT_IMAGE_TAG = "2";
+    private static final String EXPECTED_REMOTE_PATH = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG;
+
+    private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private String domainName;
     private String repo;
     private String host;
     private String imageTag;
-    private ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
 
     public DockerExtractorTest() {
         localRepo = "";
         virtualRepo = "";
-        artifactProperties.put("build.name", "docker-push-test");
         artifactProperties.putAll(ImmutableMultimap.<String, String>builder()
                 .put("build.name", "docker-push-test")
                 .put("build.number", "1")
@@ -60,7 +64,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         if (!StringUtils.endsWith(domainName, "/")) {
             domainName += "/";
         }
-        imageTag = domainName + "jfrog_artifactory_buildinfo_tests:2";
+        imageTag = domainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG;
         host = System.getenv("BITESTS_ARTIFACTORY_DOCKER_HOST");
     }
 
@@ -68,8 +72,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     @SuppressWarnings("unused")
     private void dockerPushTest() {
         if (isWindows()) {
-            getLog().info("Skipping Docker tests on Windows OS");
-            return;
+            throw new SkipException("Skipping Docker tests on Windows OS");
         }
         try {
             if (StringUtils.isBlank(domainName)) {
@@ -86,7 +89,10 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
 
+            assertEquals(module.getType(), "docker");
+            assertEquals(module.getRepository(), repo);
             assertEquals(7, module.getArtifacts().size());
+            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH));
             assertEquals(5, module.getDependencies().size());
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
