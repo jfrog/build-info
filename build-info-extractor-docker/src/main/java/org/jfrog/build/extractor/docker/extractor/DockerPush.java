@@ -3,14 +3,19 @@ package org.jfrog.build.extractor.docker.extractor;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.HttpResponse;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
+import org.jfrog.build.extractor.docker.DockerUtils;
 import org.jfrog.build.extractor.docker.types.DockerImage;
+import org.jfrog.build.extractor.docker.types.DockerLayer;
+import org.jfrog.build.extractor.docker.types.DockerLayers;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.File;
@@ -21,20 +26,21 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
+import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends PackageManagerExtractor {
-    ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    String imageTag;
-    String deploymentRepository;
-    String host;
-    Log logger;
-    private Map<String, String> env;
-    private ArrayListMultimap<String, String> artifactProperties;
-    private String username;
-    private String password;
-    private List<Module> modulesList = new ArrayList<>();
+    private final ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private final ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private final Map<String, String> env;
+    private final ArrayListMultimap<String, String> artifactProperties;
+    private final String username;
+    private final String password;
+    private final List<Module> modulesList = new ArrayList<>();
+    private final String imageTag;
+    private final String deploymentRepository;
+    private final String host;
+    private final Log logger;
 
     /**
      * @param buildInfoClientBuilder    - Build Info client builder.
@@ -48,7 +54,9 @@ public class DockerPush extends PackageManagerExtractor {
      * @param artifactProperties        - Properties to be attached to the docker layers deployed to Artifactory.
      * @param env                       - Environment variables to use during docker push execution.
      */
-    public DockerPush(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, String imageTag, String host, ArrayListMultimap<String, String> artifactProperties, String deploymentRepository, String username, String password, Log logger, Map<String, String> env) {
+    public DockerPush(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder,
+                      String imageTag, String host, ArrayListMultimap<String, String> artifactProperties, String deploymentRepository, String username,
+                      String password, Log logger, Map<String, String> env) {
         this.buildInfoClientBuilder = buildInfoClientBuilder;
         this.dependenciesClientBuilder = dependenciesClientBuilder;
         this.deploymentRepository = deploymentRepository;
@@ -64,7 +72,7 @@ public class DockerPush extends PackageManagerExtractor {
     /**
      * Allow running docker push using a new Java process.
      *
-     * @param ignored
+     * @param ignored ignores input incoming params.
      */
     public static void main(String[] ignored) {
         try {
@@ -86,6 +94,7 @@ public class DockerPush extends PackageManagerExtractor {
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties());
             initTempDir(new File(clientConfiguration.info.getGeneratedBuildInfoFilePath()));
+            // Exe docker push & collect build info.
             dockerPush.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -103,11 +112,12 @@ public class DockerPush extends PackageManagerExtractor {
         try {
             DockerJavaWrapper.pushImage(imageTag, username, password, host, env, logger);
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
-            DockerImage image = new DockerImage(imageId, imageTag, deploymentRepository);
-            Module module = image.generateBuildInfoModule(buildInfoClientBuilder, dependenciesClientBuilder, logger, artifactProperties);
+            DockerImage image = new DockerImage(imageId, imageTag, deploymentRepository, buildInfoClientBuilder, dependenciesClientBuilder, "", "");
+            Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
             if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");
             }
+            setImageLayersProps(image.getLayers(), artifactProperties, buildInfoClientBuilder);
             Build build = new Build();
             modulesList.add(module);
             build.setModules(modulesList);
@@ -116,6 +126,27 @@ public class DockerPush extends PackageManagerExtractor {
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Update each layer's properties with artifactProperties.
+     */
+    private void setImageLayersProps(DockerLayers layers, ArrayListMultimap<String, String> artifactProperties, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder) throws IOException {
+        String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
+        try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
+            for (DockerLayer layer : layers.getLayers()) {
+                HttpResponse httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
+                validateResponse(httpResponse);
+            }
+        }
+    }
+
+    private void validateResponse(HttpResponse httpResponse) throws IOException {
+        int code = httpResponse.getStatusLine().getStatusCode();
+        if (code != 204) {
+            String response = DockerUtils.entityToString(httpResponse.getEntity());
+            throw new IOException("Failed while trying to set properties on docker layer: " + response);
         }
     }
 }

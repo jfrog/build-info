@@ -5,10 +5,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
 import com.google.common.hash.Hashing;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -20,7 +16,6 @@ import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DockerUtils {
     /**
@@ -47,6 +42,40 @@ public class DockerUtils {
     }
 
     /**
+     * Get the digest from fat-manifest according to os and arch.
+     *
+     * @param manifest fat-manifest.
+     * @param os       image os to search.
+     * @param arch     arch to search.
+     * @return digest related to os and arch. If not found return an empty string.
+     * @throws IOException fat-manifest has missing 'manifest' key.
+     */
+    public static String getImageDigestFromFatManifest(String manifest, String os, String arch) throws IOException {
+        JsonNode fatManifestTree = createMapper().readTree(manifest);
+        JsonNode manifests = fatManifestTree.get("manifests");
+        if (manifests == null) {
+            throw new IllegalStateException("Could not find 'manifests' in fat-manifest");
+        }
+        for (JsonNode manifestInfo : manifests) {
+            JsonNode manifestInfoPlatform = manifestInfo.get("platform");
+            if (manifestInfoPlatform == null) {
+                continue;
+            }
+
+            JsonNode currOs = manifestInfoPlatform.get("os");
+            JsonNode currArch = manifestInfoPlatform.get("architecture");
+            if (os == null || arch == null) {
+                continue;
+            }
+
+            if (os.equals(currOs.asText()) && arch.equals(currArch.asText())) {
+                return manifestInfo.get("digest").asText();
+            }
+        }
+        return "";
+    }
+
+    /**
      * Create an object mapper for serialization/deserializaion.
      * This mapper ignore unknown properties and null values.
      *
@@ -63,7 +92,7 @@ public class DockerUtils {
      * Get a list of layer digests from docker manifest.
      */
     public static List<String> getLayersDigests(String manifestContent) throws IOException {
-        List<String> dockerLayersDependencies = new ArrayList<String>();
+        List<String> dockerLayersDependencies = new ArrayList<>();
         JsonNode manifest = createMapper().readTree(manifestContent);
         JsonNode schemaVersion = manifest.get("schemaVersion");
         if (schemaVersion == null) {
@@ -221,7 +250,7 @@ public class DockerUtils {
     }
 
     /**
-     * Check for the version in docker image tag.
+     * Check for the version in docker image tag (used in Jenkins).
      */
     public static Boolean isImageVersioned(String imageTag) {
         int indexOfFirstSlash = imageTag.indexOf("/");
@@ -236,5 +265,10 @@ public class DockerUtils {
         String pathDir = path.getAbsoluteFile().getParent();
         // Set the Java temp dir system property. As a result, java will create it for us.
         System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
+    }
+
+    public enum CommandType {
+        Push,
+        Pull
     }
 }
