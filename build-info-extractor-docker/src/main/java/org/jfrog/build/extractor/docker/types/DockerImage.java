@@ -86,6 +86,9 @@ public class DockerImage implements Serializable {
             }
             res = dependenciesClient.downloadArtifact(manifestPath + "/list.manifest.json");
             String digestsFromfatManifest = DockerUtils.getImageDigestFromFatManifest(IOUtils.toString(res.getEntity().getContent()), this.os, this.architecture);
+            if (digestsFromfatManifest.isEmpty()) {
+                throw e;
+            }
             // Remove the tag from the pattern, and place the manifest digest instead.
             res = dependenciesClient.downloadArtifact(manifestPath.substring(0, manifestPath.lastIndexOf("/")) + "/" + digestsFromfatManifest.replace(":", "__") + "/manifest.json");
             return IOUtils.toString(res.getEntity().getContent());
