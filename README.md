@@ -92,8 +92,10 @@ When running on a unix machine, provide the path to the 'bin' directory.
 * In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
 
  ```
-  export BITESTS_ARTIFACTORY_DOCKER_DOMAIN='server-build-info-tests-docker.jfrog.io/'
-  export BITESTS_ARTIFACTORY_DOCKER_REPO=build-info-tests-docker
+  export BITESTS_ARTIFACTORY_DOCKER_PUSH_DOMAIN='push-server-build-info-tests-docker.jfrog.io/'
+  export BITESTS_ARTIFACTORY_DOCKER_PULL_DOMAIN='pull-server-build-info-tests-docker.jfrog.io/'
+  export BITESTS_ARTIFACTORY_DOCKER_PUSH_REPO=-pushbuild-info-tests-docker
+  export BITESTS_ARTIFACTORY_DOCKER_PULL_REPO=pull-build-info-tests-docker
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
  * For OSX agents, run a Socat container:

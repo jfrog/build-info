@@ -21,8 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class DockerExtractorTest extends IntegrationTestsBase {
@@ -34,10 +33,15 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    private String domainName;
-    private String repo;
+    private String pushDomainName;
+    private String pullDomainName;
+    private String pushRepo;
+    private String pullRepo;
     private String host;
     private String imageTag;
+    private String pushImageTag;
+    private String pullImageTag;
+    private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
 
     public DockerExtractorTest() {
         localRepo = "";
@@ -59,12 +63,16 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         // Get image name
-        domainName = System.getenv("BITESTS_ARTIFACTORY_DOCKER_DOMAIN");
-        repo = System.getenv("BITESTS_ARTIFACTORY_DOCKER_REPO");
-        if (!StringUtils.endsWith(domainName, "/")) {
-            domainName += "/";
+        pushDomainName = System.getenv("BITESTS_ARTIFACTORY_DOCKER_PUSH_DOMAIN");
+        pullDomainName = System.getenv("BITESTS_ARTIFACTORY_DOCKER_PULL_DOMAIN");
+        pushRepo = System.getenv("BITESTS_ARTIFACTORY_DOCKER_PUSH_REPO");
+        pullRepo = System.getenv("BITESTS_ARTIFACTORY_DOCKER_PULL_REPO");
+        if (!StringUtils.endsWith(pushDomainName, "/")) {
+            pushDomainName += "/";
         }
         imageTag = domainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG;
+        pushImageTag = pushDomainName + "jfrog_artifactory_buildinfo_tests:2";
+        pullImageTag = pullDomainName + "hello-world:latest";
         host = System.getenv("BITESTS_ARTIFACTORY_DOCKER_HOST");
     }
 
@@ -75,16 +83,16 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             throw new SkipException("Skipping Docker tests on Windows OS");
         }
         try {
-            if (StringUtils.isBlank(domainName)) {
-                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_DOMAIN environment variable is not set, failing docker tests.");
+            if (StringUtils.isBlank(pushDomainName)) {
+                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_PUSH_DOMAIN environment variable is not set, failing docker tests.");
             }
-            if (StringUtils.isBlank(repo)) {
-                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_REPO environment variable is not set, failing docker tests.");
+            if (StringUtils.isBlank(pushRepo)) {
+                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_PUSH_REPO environment variable is not set, failing docker tests.");
             }
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerJavaWrapper.buildImage(imageTag, host, Collections.emptyMap(), projectPath);
+            DockerJavaWrapper.buildImage(pushImageTag, host, Collections.emptyMap(), projectPath);
 
-            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, artifactProperties, repo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, pushImageTag, host, artifactProperties, pushRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -99,8 +107,35 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         }
     }
 
+    @Test
+    @SuppressWarnings("unused")
+    private void dockerPullTest() {
+        if (isWindows()) {
+            getLog().info("Skipping Docker tests on Windows OS");
+            return;
+        }
+        try {
+            if (StringUtils.isBlank(pullDomainName)) {
+                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_PULL_DOMAIN environment variable is not set, failing docker tests.");
+            }
+            if (StringUtils.isBlank(pullRepo)) {
+                throw new IOException("The BITESTS_ARTIFACTORY_DOCKER_PULL_REPO environment variable is not set, failing docker tests.");
+            }
+            DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageTag, host, pullRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            Build build = dockerPull.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
+
+            assertEquals(null, module.getArtifacts());
+            // Latest tag may change the number of dependencies in the future.
+            assertTrue( module.getDependencies().size() > 0);
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        }
+    }
+
     @AfterClass
     private void tearDown() throws IOException {
-        deleteContentFromRepo(repo);
+        deleteContentFromRepo(pushRepo);
     }
 }
