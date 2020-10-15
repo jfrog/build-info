@@ -195,7 +195,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Build jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        JsonParser parser = jsonFactory.createParser(new StringReader(json));
         return jsonFactory.getCodec().readValue(parser, Build.class);
     }
 
@@ -213,7 +213,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static <T extends Serializable> T jsonStringToGeneric(String json, Class<T> clazz) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createJsonParser(new StringReader(json));
+        JsonParser parser = jsonFactory.createParser(new StringReader(json));
         return jsonFactory.getCodec().readValue(parser, clazz);
     }
 
@@ -318,7 +318,7 @@ public abstract class BuildInfoExtractorUtils {
                 for (String key : keys) {
                     if (commandPart.startsWith("-D" + key)) {
                         additionalProps.put(key, StringUtils.split(commandPart, "=")[1].trim());
-                        log.debug(String.format("Adding property %s from the command property: %s", key, commandKey) );
+                        log.debug(String.format("Adding property %s from the command property: %s", key, commandKey));
                     }
                 }
             }

@@ -210,4 +210,18 @@ public class DependencyBuilder {
         properties.put(key, value);
         return this;
     }
+
+    /**
+     * Adds properties to the properties object
+     *
+     * @param properties Dependencies properties
+     * @return Builder instance
+     */
+    public DependencyBuilder addProperties(Properties properties) {
+        if (this.properties == null) {
+            this.properties = new Properties();
+        }
+        this.properties.putAll(properties);
+        return this;
+    }
 }

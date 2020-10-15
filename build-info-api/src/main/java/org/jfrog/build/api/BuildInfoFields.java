@@ -49,5 +49,8 @@ public interface BuildInfoFields {
     String INCREMENTAL = "incremental";
     String GENERATED_BUILD_INFO = "generated.build.info";
     String VCS = "vcs";
-    String DEPLOYABLE_ARTIFACTS = "deployable.artifacts";
+    String DEPLOYABLE_ARTIFACTS = "deployable.artifacts.map";
+    // Backward compatibility for pipelines using Gradle Artifactory Plugin with version bellow 4.15.1, or Jenkins Artifactory Plugin bellow 3.6.1
+    @Deprecated
+    String BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS = "deployable.artifacts";
 }

@@ -15,7 +15,9 @@
  */
 package org.jfrog.build.api;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
@@ -23,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 
 import static org.jfrog.build.api.BuildBean.ROOT;
 
@@ -32,6 +35,7 @@ import static org.jfrog.build.api.BuildBean.ROOT;
  * @author Noam Y. Tenne
  */
 @XStreamAlias(ROOT)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -39,8 +43,6 @@ public class Build extends BaseBuildBean {
     private String version = "1.0.1";
     private String name;
     private String number;
-    @Deprecated
-    private BuildType type;
     private BuildAgent buildAgent;
     private Agent agent;
     private String started;
@@ -52,17 +54,6 @@ public class Build extends BaseBuildBean {
     private String parentName;
     private String parentNumber;
     private List<Vcs> vcs;
-
-    /**
-     * @deprecated since 2.6.1 use vcs instead.
-     */
-    @Deprecated
-    private String vcsRevision;
-    /**
-     * @deprecated since 2.6.1 use vcs instead.
-     */
-    @Deprecated
-    private String vcsUrl;
 
     @Deprecated
     private String parentBuildId;
@@ -192,64 +183,6 @@ public class Build extends BaseBuildBean {
 
     public void setVcs(List<Vcs> vcs) {
         this.vcs = vcs;
-    }
-
-    /**
-     * Returns the vcs revision (format is vcs specific)
-     *
-     * @return The vcs revision
-     */
-    public String getVcsRevision() {
-        return vcsRevision;
-    }
-
-    /**
-     * Sets the vcs revision (format is vcs specific)
-     *
-     * @param vcsRevision The vcs revision
-     */
-    public void setVcsRevision(String vcsRevision) {
-        this.vcsRevision = vcsRevision;
-    }
-
-    /**
-     * Returns the vcs URL (format is vcs specific)
-     *
-     * @return The vcs URL
-     */
-    public String getVcsUrl() {
-        return vcsUrl;
-    }
-
-    /**
-     * Sets the vcs URL (format is vcs specific)
-     *
-     * @param vcsUrl The vcs URL
-     */
-    public void setVcsUrl(String vcsUrl) {
-        this.vcsUrl = vcsUrl;
-    }
-
-    /**
-     * Returns the type of the build
-     *
-     * @return Build type
-     * @deprecated Use {@link Build#getBuildAgent()} instead.
-     */
-    @Deprecated
-    public BuildType getType() {
-        return type;
-    }
-
-    /**
-     * Sets the type of the build
-     *
-     * @param type Build type
-     * @deprecated Use {@link Build#setBuildAgent(BuildAgent)} instead.
-     */
-    @Deprecated
-    public void setType(BuildType type) {
-        this.type = type;
     }
 
     /**
@@ -550,13 +483,76 @@ public class Build extends BaseBuildBean {
         this.governance = governance;
     }
 
+    public void append(Build other) {
+        if (buildAgent == null) {
+            setBuildAgent(other.buildAgent);
+        }
+
+        appendProperties(other);
+        appendModules(other);
+        appendBuildDependencies(other);
+        if (this.issues == null) {
+            this.issues = other.issues;
+            return;
+        }
+        this.issues.append(other.issues);
+    }
+
+    private void appendBuildDependencies(Build other) {
+        List<BuildDependency> buildDependencies = other.getBuildDependencies();
+        if (buildDependencies != null && buildDependencies.size() > 0) {
+            if (this.buildDependencies == null) {
+                this.setBuildDependencies(buildDependencies);
+            } else {
+                this.buildDependencies.addAll(buildDependencies);
+            }
+        }
+    }
+
+    private void appendModules(Build other) {
+        List<Module> modules = other.getModules();
+        if (modules != null && modules.size() > 0) {
+            if (this.getModules() == null) {
+                this.setModules(modules);
+            } else {
+                modules.forEach(this::addModule);
+            }
+        }
+    }
+
+    private void appendProperties(Build other) {
+        Properties properties = other.getProperties();
+        if (properties != null && properties.size() > 0) {
+            if (this.getProperties() == null) {
+                this.setProperties(properties);
+            } else {
+                this.getProperties().putAll(properties);
+            }
+        }
+    }
+
+    private void addModule(Module other) {
+        List<Module> modules = getModules();
+        Module currentModule = modules.stream()
+                // Check if there's already a module with the same name.
+                .filter(module -> StringUtils.equals(module.getId(), other.getId()))
+                .findAny()
+                .orElse(null);
+        if (currentModule == null) {
+            // Append new module.
+            modules.add(other);
+        } else {
+            // Append the other module into the existing module with the same name.
+            currentModule.append(other);
+        }
+    }
+
     @Override
     public String toString() {
         return "Build{" +
                 "version='" + version + '\'' +
                 ", name='" + name + '\'' +
                 ", number='" + number + '\'' +
-                ", type=" + type +
                 ", buildAgent=" + buildAgent +
                 ", agent=" + agent +
                 ", started='" + started + '\'' +
@@ -568,8 +564,6 @@ public class Build extends BaseBuildBean {
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +
                 ", vcs='" + vcs + '\'' +
-                ", vcsRevision='" + vcsRevision + '\'' +
-                ", vcsUrl='" + vcsUrl + '\'' +
                 ", parentBuildId='" + parentBuildId + '\'' +
                 ", licenseControl=" + licenseControl +
                 ", buildRetention=" + buildRetention +

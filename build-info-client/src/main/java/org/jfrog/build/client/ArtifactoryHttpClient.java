@@ -44,7 +44,7 @@ import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 /**
  * @author Noam Y. Tenne
  */
-public class ArtifactoryHttpClient {
+public class ArtifactoryHttpClient implements AutoCloseable {
 
     public static final ArtifactoryVersion UNKNOWN_PROPERTIES_TOLERANT_ARTIFACTORY_VERSION =
             new ArtifactoryVersion("2.2.3");
@@ -54,24 +54,34 @@ public class ArtifactoryHttpClient {
             new ArtifactoryVersion("5.2.1");
     public static final ArtifactoryVersion MINIMAL_ARTIFACTORY_VERSION = new ArtifactoryVersion("2.2.3");
     public static final String VERSION_INFO_URL = "/api/system/version";
-    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final int DEFAULT_CONNECTION_TIMEOUT_SECS = 300;    // 5 Minutes in seconds
     public static final int DEFAULT_CONNECTION_RETRY = 3;
     private final Log log;
     private final String artifactoryUrl;
     private final String username;
     private final String password;
+    private final String accessToken;
     private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT_SECS;
     private int connectionRetries = DEFAULT_CONNECTION_RETRY;
     private ProxyConfiguration proxyConfiguration;
+    private boolean insecureTls = false;
 
     private PreemptiveHttpClient deployClient;
 
-    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
+    private ArtifactoryHttpClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
         this.username = username;
         this.password = password;
+        this.accessToken = accessToken;
         this.log = log;
+    }
+
+    public ArtifactoryHttpClient(String artifactoryUrl, String username, String password, Log log) {
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+    }
+
+    public ArtifactoryHttpClient(String artifactoryUrl, String accessToken, Log log) {
+        this(artifactoryUrl, StringUtils.EMPTY, StringUtils.EMPTY, accessToken, log);
     }
 
     public static String encodeUrl(String unescaped) {
@@ -123,13 +133,22 @@ public class ArtifactoryHttpClient {
         this.connectionRetries = connectionRetries;
     }
 
+    public void setInsecureTls(boolean insecureTls) {
+        this.insecureTls = insecureTls;
+    }
+
     public int getConnectionRetries() {
         return connectionRetries;
+    }
+
+    public ProxyConfiguration getProxyConfiguration() {
+        return this.proxyConfiguration;
     }
 
     /**
      * Release all connection and cleanup resources.
      */
+    @Override
     public void close() {
         if (deployClient != null) {
             deployClient.close();
@@ -142,8 +161,20 @@ public class ArtifactoryHttpClient {
 
     public PreemptiveHttpClient getHttpClient(int connectionTimeout) {
         if (deployClient == null) {
-            deployClient = new PreemptiveHttpClient(username, password, connectionTimeout, proxyConfiguration, connectionRetries);
-            deployClient.setLog(log);
+            PreemptiveHttpClientBuilder clientBuilder = new PreemptiveHttpClientBuilder()
+                    .setConnectionRetries(connectionRetries)
+                    .setInsecureTls(insecureTls)
+                    .setTimeout(connectionTimeout)
+                    .setLog(log);
+            if (proxyConfiguration != null) {
+                clientBuilder.setProxyConfiguration(proxyConfiguration);
+            }
+            if (StringUtils.isNotEmpty(accessToken)) {
+                clientBuilder.setAccessToken(accessToken);
+            } else {
+                clientBuilder.setUserName(username).setPassword(password);
+            }
+            deployClient = clientBuilder.build();
         }
 
         return deployClient;
@@ -163,39 +194,21 @@ public class ArtifactoryHttpClient {
         HttpEntity httpEntity = response.getEntity();
         if (httpEntity != null) {
             try (InputStream content = httpEntity.getContent()) {
-                JsonNode result = getJsonNode(httpEntity, content);
+                JsonNode result = getJsonNode(content);
                 log.debug("Version result: " + result);
                 String version = result.get("version").asText();
                 JsonNode addonsNode = result.get("addons");
                 boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
                 return new ArtifactoryVersion(version, hasAddons);
+            } finally {
+                EntityUtils.consume(httpEntity);
             }
         }
         return ArtifactoryVersion.NOT_FOUND;
     }
 
-    public ItemLastModified getItemLastModified(String path) throws IOException {
-        String lastModifiedUrl = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
-        HttpResponse response = executeGetRequest(lastModifiedUrl);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != HttpStatus.SC_OK) {
-            throw new IOException("The path " + path + " returned " + response.getStatusLine().getStatusCode() + ":" + getMessageFromEntity(response.getEntity()));
-        }
-        HttpEntity httpEntity = response.getEntity();
-        if (httpEntity != null) {
-            try (InputStream content = httpEntity.getContent()) {
-                JsonNode result = getJsonNode(httpEntity, content);
-                String version = result.get("lastModified").asText();
-                String uri = result.get("uri").asText();
-                return new ItemLastModified(uri, version);
-            }
-        }
-        throw new IOException("The path " + path + " returned empty entity");
-    }
-
-    private JsonNode getJsonNode(HttpEntity httpEntity, InputStream content) throws IOException {
+    public JsonNode getJsonNode(InputStream content) throws IOException {
         JsonParser parser = createJsonParser(content);
-        EntityUtils.consume(httpEntity);
         return parser.readValueAsTree();
     }
 
@@ -214,12 +227,12 @@ public class ArtifactoryHttpClient {
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        return jsonFactory.createJsonParser(in);
+        return jsonFactory.createParser(in);
     }
 
     public JsonParser createJsonParser(String content) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        return jsonFactory.createJsonParser(content);
+        return jsonFactory.createParser(content);
     }
 
     public JsonFactory createJsonFactory() {

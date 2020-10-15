@@ -1,0 +1,9 @@
+{
+  "packageType": "nuget",
+  "repoLayoutRef": "nuget-default",
+  "url": "https://www.nuget.org/",
+  "v3FeedUrl":"https://api.nuget.org/v3/index.json",
+  "feedContextPath":"api/v2",
+  "downloadContextPath":"api/v2/package",
+  "rclass": "remote"
+}

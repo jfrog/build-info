@@ -35,7 +35,7 @@ public class BuildInfoModelPropertyResolver {
     public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
                 artifactoryPrincipal(clientConf.publisher.getName()).artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion()).
-                principal(clientConf.info.getPrincipal()).type(BuildType.MAVEN).parentName(
+                principal(clientConf.info.getPrincipal()).parentName(
                 clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber());
 

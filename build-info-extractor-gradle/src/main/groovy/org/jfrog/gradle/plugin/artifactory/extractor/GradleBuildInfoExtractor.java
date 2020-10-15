@@ -18,39 +18,23 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
-import org.gradle.api.Task;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ModuleVersionIdentifier;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.tasks.TaskState;
 import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.*;
+import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
-import org.jfrog.build.api.util.CommonUtils;
-import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
-import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
-import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
-import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
-import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
-import javax.annotation.Nullable;
 import java.io.File;
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
+import java.util.stream.Collectors;
 
 /**
  * An upload task uploads files to the repositories assigned to it.  The files that get uploaded are the artifacts of
@@ -61,23 +45,18 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     private static final Logger log = Logging.getLogger(GradleBuildInfoExtractor.class);
 
-    private static final String SHA1 = "sha1";
-    private static final String MD5 = "md5";
     private final ArtifactoryClientConfiguration clientConf;
-    private final Set<GradleDeployDetails> gradleDeployDetails;
+    private final List<ModuleInfoFileProducer> moduleInfoFileProducers;
 
-    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf,
-                                    Set<GradleDeployDetails> gradleDeployDetails) {
+    public GradleBuildInfoExtractor(ArtifactoryClientConfiguration clientConf, List<ModuleInfoFileProducer> moduleInfoFileProducers) {
         this.clientConf = clientConf;
-        this.gradleDeployDetails = gradleDeployDetails;
+        this.moduleInfoFileProducers = moduleInfoFileProducers;
     }
 
     @Override
     public Build extract(Project rootProject) {
         String buildName = clientConf.info.getBuildName();
         BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
-
-        bib.type(BuildType.GRADLE); //backward compat
 
         String buildNumber = clientConf.info.getBuildNumber();
         bib.number(buildNumber);
@@ -108,15 +87,24 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         long durationMillis = buildStartDate != null ? System.currentTimeMillis() - buildStartDate.getTime() : 0;
         bib.durationMillis(durationMillis);
 
-        Set<Project> allProjects = rootProject.getAllprojects();
-        for (Project project : allProjects) {
-            if(project.getState().getExecuted()) {
-                ArtifactoryTask buildInfoTask = getBuildInfoTask(project);
-                if (buildInfoTask != null && buildInfoTask.hasModules()) {
-                    bib.addModule(extractModule(project));
+        Set<File> moduleFilesWithModules = moduleInfoFileProducers.stream()
+                .filter(ModuleInfoFileProducer::hasModules)
+                .flatMap(moduleInfoFileProducer -> moduleInfoFileProducer.getModuleInfoFiles().getFiles().stream())
+                .collect(Collectors.toSet());
+
+        moduleFilesWithModules.forEach(moduleFile -> {
+            try {
+                Module module = ModuleExtractorUtils.readModuleFromFile(moduleFile);
+                List<Artifact> artifacts = module.getArtifacts();
+                List<Dependency> dependencies = module.getDependencies();
+                if ((artifacts != null && !artifacts.isEmpty()) || (dependencies != null && !dependencies.isEmpty())) {
+                    bib.addModule(module);
                 }
+            } catch (IOException e) {
+                throw new RuntimeException("Cannot load module info from file: " + moduleFile.getAbsolutePath(), e);
             }
-        }
+        });
+
         String parentName = clientConf.info.getParentBuildName();
         String parentNumber = clientConf.info.getParentBuildNumber();
         if (parentName != null && parentNumber != null) {
@@ -135,7 +123,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         bib.artifactoryPrincipal(artifactoryPrincipal);
 
         String artifactoryPluginVersion = clientConf.info.getArtifactoryPluginVersion();
-        if (StringUtils.isBlank(artifactoryPluginVersion)){
+        if (StringUtils.isBlank(artifactoryPluginVersion)) {
             artifactoryPluginVersion = "Unknown";
         }
         bib.artifactoryPluginVersion(artifactoryPluginVersion);
@@ -228,164 +216,5 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             build.setParentBuildId(parentName);
         }
         return build;
-    }
-
-    private ArtifactoryTask getBuildInfoTask(Project project) {
-        Set<Task> tasks = project.getTasksByName(ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME, false);
-        if (tasks.isEmpty()) {
-            return null;
-        }
-        ArtifactoryTask artifactoryTask = (ArtifactoryTask)tasks.iterator().next();
-        if (taskDidWork(artifactoryTask)) {
-            return artifactoryTask;
-        }
-        return null;
-    }
-
-    /**
-     * Determines if the task actually did any work.
-     * This methods wraps Gradle's task.getState().getDidWork().
-     * @param task  The ArtifactoryTask
-     * @return      true if the task actually did any work.
-     */
-    private boolean taskDidWork(ArtifactoryTask task) {
-        try {
-            return task.getState().getDidWork();
-        } catch (NoSuchMethodError error) {
-            // Compatibility with older versions of Gradle:
-            try {
-                Method m = task.getClass().getMethod("getState");
-                TaskState state = (TaskState)m.invoke(task);
-                return state.getDidWork();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    public Module extractModule(Project project) {
-        String artifactName = project.getName();
-        ArtifactoryTask task = getBuildInfoTask(project);
-        if (task != null) {
-            artifactName = project.getName();
-        }
-        ModuleBuilder builder = new ModuleBuilder()
-                .id(getModuleIdString(project.getGroup().toString(),
-                        artifactName, project.getVersion().toString()));
-        try {
-            ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getPublisherHandler(project);
-            if (publisher != null) {
-                boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
-                IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                        publisher.getIncludePatterns(),
-                        publisher.getExcludePatterns());
-                Iterable<GradleDeployDetails> deployExcludeDetails = null;
-                Iterable<GradleDeployDetails> deployIncludeDetails = null;
-                if (excludeArtifactsFromBuild) {
-                    deployIncludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
-                    deployExcludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
-                } else {
-                    deployIncludeDetails = CommonUtils.filterCollection(gradleDeployDetails, new ProjectPredicate(project));
-                    deployExcludeDetails = new ArrayList<GradleDeployDetails>();
-                }
-                builder.artifacts(calculateArtifacts(deployIncludeDetails))
-                        .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
-                        .dependencies(calculateDependencies(project));
-            } else {
-                log.warn("No publisher config found for project: " + project.getName());
-            }
-        } catch (Exception e) {
-            log.error("Error during extraction: ", e);
-        }
-        return builder.build();
-    }
-
-    private List<Artifact> calculateArtifacts(Iterable<GradleDeployDetails> deployDetails) throws Exception {
-        Function function = new Function<GradleDeployDetails, Artifact>() {
-            public Artifact apply(GradleDeployDetails from) {
-                PublishArtifactInfo publishArtifact = from.getPublishArtifact();
-                DeployDetails deployDetails = from.getDeployDetails();
-                String artifactPath = deployDetails.getArtifactPath();
-                int index = artifactPath.lastIndexOf('/');
-                return new ArtifactBuilder(artifactPath.substring(index + 1))
-                        .type(getTypeString(publishArtifact.getType(),
-                                publishArtifact.getClassifier(), publishArtifact.getExtension()))
-                        .md5(deployDetails.getMd5()).sha1(deployDetails.getSha1()).build();
-            }
-        };
-        return CommonUtils.transformList(deployDetails, function);
-    }
-
-    private List<Dependency> calculateDependencies(Project project) throws Exception {
-        Set<Configuration> configurationSet = project.getConfigurations();
-        List<Dependency> dependencies = new ArrayList<>();
-        for (Configuration configuration : configurationSet) {
-            if (configuration.getState() != Configuration.State.RESOLVED) {
-                log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
-                continue;
-            }
-            ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
-            Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
-            for (final ResolvedArtifact artifact : resolvedArtifactSet) {
-                File file = artifact.getFile();
-                if (file != null && file.exists()) {
-                    ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
-                    final String depId = getModuleIdString(id.getGroup(),
-                            id.getName(), id.getVersion());
-                    // if it's already in the dependencies list just add the current scope
-                    Dependency existingDependency = CommonUtils.getFirstSatisfying(dependencies, input -> input.getId().equals(depId), null);
-                    if (existingDependency != null) {
-                        Set<String> existingScopes = existingDependency.getScopes();
-                        existingScopes.add(configuration.getName());
-                        existingDependency.setScopes(existingScopes);
-                    } else {
-                        DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                                .type(getTypeString(artifact.getType(),
-                                        artifact.getClassifier(), artifact.getExtension()))
-                                .id(depId)
-                                .scopes(CommonUtils.newHashSet(configuration.getName()));
-                        if (file.isFile()) {
-                            // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
-                            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
-                            dependencyBuilder.md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
-                        }
-                        dependencies.add(dependencyBuilder.build());
-                    }
-                }
-            }
-        }
-        return dependencies;
-    }
-
-    private class ProjectPredicate implements Predicate<GradleDeployDetails> {
-        private final Project project;
-
-        private ProjectPredicate(Project project) {
-            this.project = project;
-        }
-
-        public boolean test(@Nullable GradleDeployDetails input) {
-            return input.getProject().equals(project);
-        }
-    }
-
-    private class IncludeExcludePredicate implements Predicate<GradleDeployDetails> {
-        private Project project;
-        private IncludeExcludePatterns patterns;
-        private boolean include;
-
-        public IncludeExcludePredicate(Project project, IncludeExcludePatterns patterns, boolean isInclude) {
-            this.project = project;
-            this.patterns = patterns;
-            include = isInclude;
-        }
-
-        public boolean test(@Nullable GradleDeployDetails input) {
-            if (include) {
-                return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
-            } else {
-                return input.getProject().equals(project) && PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
-            }
-        }
     }
 }

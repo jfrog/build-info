@@ -82,17 +82,6 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     /**
-     * Sets the type of the build
-     *
-     * @param type Build type
-     * @return Builder instance
-     */
-    public BuildInfoMavenBuilder type(BuildType type) {
-        super.type(type);
-        return this;
-    }
-
-    /**
      * Sets the agent of the build
      *
      * @param agent Build agent

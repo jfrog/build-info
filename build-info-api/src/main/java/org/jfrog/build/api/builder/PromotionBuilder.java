@@ -1,11 +1,15 @@
 package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.release.BuildArtifactsMapping;
 import org.jfrog.build.api.release.Promotion;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -25,7 +29,6 @@ public class PromotionBuilder {
     private Set<String> scopes;
     private Map<String, Collection<String>> properties;
     private boolean failFast = true;
-    private List<BuildArtifactsMapping> mappings;
 
     public PromotionBuilder() {
     }
@@ -128,13 +131,13 @@ public class PromotionBuilder {
         return this;
     }
 
-    public PromotionBuilder mappings(List<BuildArtifactsMapping> mappings) {
-        this.mappings = mappings;
-        return this;
-    }
-
     public Promotion build() {
         return new Promotion(status, comment, ciUser, timestamp, dryRun, targetRepo, sourceRepo, copy, artifacts, dependencies,
-                scopes, properties, failFast, mappings);
+                scopes, properties, failFast);
     }
+
+    public boolean isFailFast() {
+        return failFast;
+    }
+
 }

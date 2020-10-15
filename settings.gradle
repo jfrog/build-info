@@ -21,9 +21,10 @@ include 'build-info-vcs'
 include 'build-info-extractor-gradle'
 include 'build-info-extractor-ivy'
 include 'build-info-extractor-maven3'
-include 'build-info-extractor-maven3-plugin'
 include 'build-info-extractor-npm'
+include 'build-info-extractor-go'
+include 'build-info-extractor-pip'
+include 'build-info-extractor-nuget'
+include 'build-info-extractor-docker'
 
 rootProject.name = 'build-info'
-project( ':build-info-extractor-maven3-plugin' ).name = 'artifactory-maven-plugin'
-

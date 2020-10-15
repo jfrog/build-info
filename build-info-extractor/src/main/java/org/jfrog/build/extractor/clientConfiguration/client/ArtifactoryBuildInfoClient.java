@@ -40,14 +40,13 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ArtifactoryHttpClient;
-import org.jfrog.build.client.ArtifactoryUploadResponse;
-import org.jfrog.build.client.ArtifactoryVersion;
-import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.client.*;
 import org.jfrog.build.client.bintrayResponse.BintrayResponse;
 import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
+import org.jfrog.build.extractor.usageReport.UsageReporter;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
@@ -57,7 +56,6 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
@@ -79,6 +77,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
+    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
+    private static final String USAGE_API = "/api/system/usage";
+    private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -86,7 +87,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param artifactoryUrl Artifactory url in the form of: protocol://host[:port]/contextPath
      */
     public ArtifactoryBuildInfoClient(String artifactoryUrl, Log log) {
-        this(artifactoryUrl, null, null, log);
+        this(artifactoryUrl, StringUtils.EMPTY, StringUtils.EMPTY, StringUtils.EMPTY, log);
     }
 
     /**
@@ -96,10 +97,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param username       Authentication username
      * @param password       Authentication password
      */
-    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
-        super(artifactoryUrl, username, password, log);
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, String accessToken, Log log) {
+        super(artifactoryUrl, username, password, accessToken, log);
     }
 
+    public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+    }
     /**
      * @return A list of local repositories available for deployment.
      * @throws IOException On any connection error
@@ -183,7 +187,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
-        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, buildName, buildNumber);
+        // Only If the value of the buildNumber sent is "LATEST" or "LAST_RELEASE", replace the value with a specific build number.
+        buildNumber = getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+        if (buildNumber == null) {
+            return null;
+        }
+
+        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber));
         HttpGet httpGet = new HttpGet(url);
         try {
             HttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK);
@@ -192,6 +202,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         } catch (IOException e) {
             throw new IOException("Failed to get build info. " + e.getMessage(), e);
         }
+    }
+
+    private String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber) throws IOException {
+        ArtifactoryDependenciesClient dependenciesClient = new ArtifactoryDependenciesClient(artifactoryUrl, httpClient, log);
+        return dependenciesClient.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
     }
 
     public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
@@ -280,51 +295,42 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     private HttpResponse sendHttpRequest(HttpUriRequest request, int ... httpStatuses) throws IOException {
         HttpResponse httpResponse;
-        int connectionRetries = httpClient.getConnectionRetries();
-        try {
-            httpResponse = httpClient.getHttpClient().execute(request);
-            StatusLine statusLine = httpResponse.getStatusLine();
-            for (int status : httpStatuses) {
-                if (statusLine.getStatusCode() == status) {
-                    return httpResponse;
-                }
+        httpResponse = httpClient.getHttpClient().execute(request);
+        StatusLine statusLine = httpResponse.getStatusLine();
+        for (int status : httpStatuses) {
+            if (statusLine.getStatusCode() == status) {
+                return httpResponse;
             }
-
-            HttpEntity responseEntity = httpResponse.getEntity();
-            throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
-        } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
         }
+
+        HttpEntity responseEntity = httpResponse.getEntity();
+        throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
     }
 
-    public String getItemLastModified(String path) throws IOException, ParseException {
-        String url = artifactoryUrl + "/api/storage/" + path + "?lastModified&deep=1";
+    public ItemLastModified getItemLastModified(String path) throws IOException {
+        String url = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
         HttpGet get = new HttpGet(url);
         HttpResponse response = httpClient.getHttpClient().execute(get);
-
-        StatusLine statusLine = response.getStatusLine();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            HttpEntity entity = response.getEntity();
-            throw new IOException("Failed to obtain item info. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(entity));
-        } else {
-            HttpEntity entity = response.getEntity();
-            if (entity != null) {
-                InputStream content = entity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    JsonNode result = parser.readValueAsTree();
-                    return result.get("lastModified").asText();
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
-                    EntityUtils.consume(entity);
+        int statusCode = response.getStatusLine().getStatusCode();
+        if (statusCode != HttpStatus.SC_OK) {
+            throw new IOException("While requesting item info for path " + path + " received " + response.getStatusLine().getStatusCode() + ":" + httpClient.getMessageFromEntity(response.getEntity()));
+        }
+        HttpEntity httpEntity = response.getEntity();
+        if (httpEntity != null) {
+            try (InputStream content = httpEntity.getContent()) {
+                JsonNode result = httpClient.getJsonNode(content);
+                JsonNode lastModified = result.get("lastModified");
+                JsonNode uri = result.get("uri");
+                if (lastModified == null || uri == null) {
+                    throw new IOException("Unexpected JSON response when requesting info for path " + path + httpClient.getMessageFromEntity(response.getEntity()));
                 }
+
+                return new ItemLastModified(uri.asText(), lastModified.asText());
+            } finally {
+                EntityUtils.consume(httpEntity);
             }
         }
-        return null;
+        throw new IOException("The path " + path + " returned empty entity");
     }
 
     /**
@@ -341,7 +347,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     /**
      * Deploys the artifact to the destination repository, with addition of prefix to the printed log.
      *
-     * @param details Details about the deployed artifact
+     * @param details   Details about the deployed artifact
      * @param logPrefix Will be printed as a log-prefix
      * @return
      * @throws IOException On any connection error
@@ -361,7 +367,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return StringUtils.join(pathComponents, "/");
     }
 
-    private ArtifactoryUploadResponse doDeployArtifact(DeployDetails details, String deploymentPath) throws IOException{
+    private ArtifactoryUploadResponse doDeployArtifact(DeployDetails details, String deploymentPath) throws IOException {
         ArtifactoryUploadResponse response = uploadFile(details, deploymentPath);
         // Artifactory 2.3.2+ will take the checksum from the headers of the put request for the file
         if (!getArtifactoryVersion().isAtLeast(new ArtifactoryVersion("2.3.2"))) {
@@ -454,7 +460,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private BintrayResponse parseResponse(HttpResponse response) throws IOException {
         InputStream content = response.getEntity().getContent();
         int status = response.getStatusLine().getStatusCode();
-        JsonParser parser = httpClient.createJsonFactory().createJsonParser(content);
+        JsonParser parser = httpClient.createJsonFactory().createParser(content);
         BintrayResponse responseObject = BintrayResponseFactory.createResponse(status, parser);
         return responseObject;
     }
@@ -615,7 +621,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             buildInfo.setBuildAgent(null);
             buildInfo.setParentName(null);
             buildInfo.setParentNumber(null);
-            buildInfo.setVcsRevision(null);
         }
         //From Artifactory 2.2.4 we also handle non-numeric build numbers
         if (!version.isAtLeast(ArtifactoryHttpClient.NON_NUMERIC_BUILD_NUMBERS_TOLERANT_ARTIFACTORY_VERSION)) {
@@ -729,7 +734,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     private HttpPut createHttpPutMethod(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
-        deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.getProperties()));
+        deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader("X-Checksum-Sha1", details.getSha1());
         httpPut.addHeader("X-Checksum-Md5", details.getMd5());
@@ -743,7 +748,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         String sha1 = checksums.get("SHA1");
         if (StringUtils.isNotBlank(sha1)) {
             log.debug("Uploading SHA1 for file " + fileAbsolutePath + " : " + sha1);
-            String sha1Url = uploadUrl + ".sha1" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties());
+            String sha1Url = uploadUrl + ".sha1" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true);
             HttpPut putSha1 = new HttpPut(sha1Url);
             StringEntity sha1StringEntity = new StringEntity(sha1);
             ArtifactoryUploadResponse response = httpClient.upload(putSha1, sha1StringEntity);
@@ -758,7 +763,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         String md5 = checksums.get("MD5");
         if (StringUtils.isNotBlank(md5)) {
             log.debug("Uploading MD5 for file " + fileAbsolutePath + " : " + md5);
-            String md5Url = uploadUrl + ".md5" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties());
+            String md5Url = uploadUrl + ".md5" + DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true);
             HttpPut putMd5 = new HttpPut(md5Url);
             StringEntity md5StringEntity = new StringEntity(md5);
             ArtifactoryUploadResponse response = httpClient.upload(putMd5, md5StringEntity);
@@ -841,5 +846,38 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
         return builder.toString();
     }
-}
 
+    public void reportUsage(UsageReporter usageReporter) throws IOException {
+        // Check Artifactory supported version.
+        ArtifactoryVersion version = getArtifactoryVersion();
+        if (version.isNotFound()) {
+            throw new IOException("Could not get Artifactory version.");
+        }
+        if (!version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
+            throw new IOException("Usage report is not supported on targeted Artifactory server.");
+        }
+
+        // Create request.
+        String url = artifactoryUrl + USAGE_API;
+        String encodedUrl = ArtifactoryHttpClient.encodeUrl(url);
+        String requestBody = new JsonSerializer<UsageReporter>().toJSON(usageReporter);
+        StringEntity entity = new StringEntity(requestBody, "UTF-8");
+        entity.setContentType("application/json");
+        HttpPost request = new HttpPost(encodedUrl);
+        request.setEntity(entity);
+
+        // Send request
+        HttpResponse httpResponse = null;
+        try {
+            httpResponse = httpClient.getHttpClient().execute(request);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+                throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
+            }
+        } finally {
+            if (httpResponse != null) {
+                EntityUtils.consumeQuietly(httpResponse.getEntity());
+            }
+        }
+    }
+}

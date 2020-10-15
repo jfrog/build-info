@@ -231,33 +231,32 @@ public class TaskHelperConfigurations extends TaskHelper {
         return deployDetails;
     }
 
-    public boolean AddDefaultArchiveConfiguration(Project project) {
+    public void addDefaultArchiveConfiguration() {
         if (!hasConfigurations()) {
             if (publishConfigsSpecified) {
                 log.warn("None of the specified publish configurations matched for project '{}' - nothing to publish.",
-                        project.getPath());
-                return true;
-            } else {
-                Configuration archiveConfig = project.getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
-                if (archiveConfig != null) {
-                    log.info("No publish configurations specified for project '{}' - using the default '{}' " +
-                            "configuration.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    publishConfigurations.add(archiveConfig);
-                    checkDependsOnArtifactsToPublish();
-                } else {
-                    log.warn("No publish configurations specified for project '{}' and the default '{}' " +
-                            "configuration does not exist.", project.getPath(), Dependency.ARCHIVES_CONFIGURATION);
-                    return true;
-                }
+                        getProject().getPath());
+                return;
             }
+            Configuration archiveConfig = getProject().getConfigurations().findByName(Dependency.ARCHIVES_CONFIGURATION);
+            if (archiveConfig == null) {
+                log.warn("No publish configurations specified for project '{}' and the default '{}' " +
+                        "configuration does not exist.", getProject().getPath(), Dependency.ARCHIVES_CONFIGURATION);
+                return;
+            }
+            log.info("No publish configurations specified for project '{}' - using the default '{}' " +
+                    "configuration.", getProject().getPath(), Dependency.ARCHIVES_CONFIGURATION);
+            publishConfigurations.add(archiveConfig);
+            checkDependsOnArtifactsToPublish();
         }
-        return false;
     }
 
     private GradleDeployDetails getIvyDescriptorDeployDetails() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.ivyDescriptor);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(artifactoryTask.ivyDescriptor)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.ivyDescriptor, "MD5", "SHA1");
@@ -270,10 +269,12 @@ public class TaskHelperConfigurations extends TaskHelper {
         if (publisher.isM2Compatible()) {
             gid = gid.replace(".", "/");
         }
-        artifactBuilder.artifactPath(IvyPatternHelper
-                .substitute(publisher.getIvyPattern(), gid, getModuleName(),
-                        getProject().getVersion().toString(), null, "ivy", "xml"));
-        artifactBuilder.targetRepository(publisher.getRepoKey());
+        String artifactPath = IvyPatternHelper.substitute(
+                publisher.getIvyPattern(), gid, getModuleName(),
+                getProject().getVersion().toString(), null, "ivy", "xml");
+
+        artifactBuilder.artifactPath(artifactPath);
+        artifactBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.ivyDescriptor.getName(), "xml", "ivy", null,
                         artifactoryTask.ivyDescriptor);
@@ -285,7 +286,9 @@ public class TaskHelperConfigurations extends TaskHelper {
     private GradleDeployDetails getMavenDeployDetails() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
                 ArtifactoryPluginUtil.getPublisherHandler(getProject());
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(artifactoryTask.mavenDescriptor);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(artifactoryTask.mavenDescriptor)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.mavenDescriptor, "MD5", "SHA1");
@@ -295,10 +298,12 @@ public class TaskHelperConfigurations extends TaskHelper {
                     "Failed to calculate checksums for artifact: " + artifactoryTask.mavenDescriptor.getAbsolutePath(), e);
         }
         // for pom files always enforce the M2 pattern
-        artifactBuilder.artifactPath(IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
+        String artifactPath = IvyPatternHelper.substitute(LayoutPatterns.M2_PATTERN,
                 getProject().getGroup().toString().replace(".", "/"), getModuleName(),
-                getProject().getVersion().toString(), null, "pom", "pom"));
-        artifactBuilder.targetRepository(publisher.getRepoKey());
+                getProject().getVersion().toString(), null, "pom", "pom");
+
+        artifactBuilder.artifactPath(artifactPath);
+        artifactBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo =
                 new PublishArtifactInfo(artifactoryTask.mavenDescriptor.getName(), "pom", "pom", null, artifactoryTask.mavenDescriptor);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, null);
@@ -399,7 +404,9 @@ public class TaskHelperConfigurations extends TaskHelper {
             gid = gid.replace(".", "/");
         }
 
-        DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder().file(file);
+        DeployDetails.Builder deployDetailsBuilder = new DeployDetails.Builder()
+                .file(file)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
             deployDetailsBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
@@ -407,15 +414,15 @@ public class TaskHelperConfigurations extends TaskHelper {
             throw new GradleException("Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
         }
 
-        if (artifactPath != null) {
-            deployDetailsBuilder.artifactPath(artifactPath);
-        } else {
-            deployDetailsBuilder.artifactPath(IvyPatternHelper.substitute(pattern, gid, getModuleName(),
+        if (artifactPath == null) {
+            artifactPath = IvyPatternHelper.substitute(pattern, gid, getModuleName(),
                     revision, artifact.getName(), artifact.getType(),
                     artifact.getExtension(), configuration,
-                    extraTokens, null));
+                    extraTokens, null);
         }
-        deployDetailsBuilder.targetRepository(publisher.getRepoKey());
+        deployDetailsBuilder.artifactPath(artifactPath);
+
+        deployDetailsBuilder.targetRepository(getTargetRepository(artifactPath, publisher));
         PublishArtifactInfo artifactInfo = new PublishArtifactInfo(artifact);
         Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, configuration);
         deployDetailsBuilder.addProperties(propsToAdd);

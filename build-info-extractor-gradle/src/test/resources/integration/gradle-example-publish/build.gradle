@@ -1,0 +1,76 @@
+plugins {
+    id 'com.jfrog.artifactory' apply false
+}
+
+def javaProjects() {
+    subprojects.findAll { new File(it.projectDir, 'src').directory }
+}
+
+allprojects {
+    apply plugin: 'com.jfrog.artifactory'
+    group = 'org.jfrog.test.gradle.publish'
+    version = currentVersion
+    status = 'Integration'
+    repositories {
+        maven {
+            url "${System.env.BITESTS_ARTIFACTORY_URL}/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
+            credentials {
+                username "${System.env.BITESTS_ARTIFACTORY_USERNAME}"
+                password "${System.env.BITESTS_ARTIFACTORY_PASSWORD}"
+            }
+        }
+    }
+}
+
+artifactoryPublish.skip = true
+
+project('services') {
+    artifactoryPublish.skip = true
+}
+
+configure(javaProjects()) {
+    apply plugin: 'java'
+    apply plugin: 'maven-publish'
+    apply plugin: 'ivy-publish'
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                from components.java
+                artifact(file("$rootDir/gradle.properties"))
+            }
+            ivyJava(IvyPublication) {
+                from components.java
+            }
+        }
+    }
+}
+
+artifactoryPublish.skip = true
+
+artifactory {
+    clientConfig.setIncludeEnvVars(true)
+    clientConfig.info.addEnvironmentProperty('test.adding.dynVar', new java.util.Date().toString())
+
+    contextUrl = "$System.env.BITESTS_ARTIFACTORY_URL"
+    publish {
+        repository {
+            repoKey = "$System.env.BITESTS_ARTIFACTORY_LOCAL_REPO" // The Artifactory repository key to publish to
+            username = "$System.env.BITESTS_ARTIFACTORY_USERNAME" // The publisher user name
+            password = "$System.env.BITESTS_ARTIFACTORY_PASSWORD" // The publisher password
+            // This is an optional section for configuring Ivy publication (when publishIvy = true).
+            ivy {
+                ivyLayout = '[organization]/[module]/ivy-[revision].xml'
+                artifactLayout = '[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]'
+                mavenCompatible = true
+            }
+        }
+        defaults {
+            publications('mavenJava', 'ivyJava')
+            publishArtifacts = true
+            // Properties to be attached to the published artifacts.
+            publishPom = true // Publish generated POM files to Artifactory (true by default)
+            publishIvy = true // Publish generated Ivy descriptor files to Artifactory (true by default)
+        }
+    }
+}

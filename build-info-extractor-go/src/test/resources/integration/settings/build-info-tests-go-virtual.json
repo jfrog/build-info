@@ -1,0 +1,9 @@
+{
+  "rclass": "virtual",
+  "packageType": "go",
+  "repositories": [
+    "build-info-tests-go-local",
+    "build-info-tests-go-remote"
+  ],
+  "defaultDeploymentRepo": "build-info-tests-go-local"
+}

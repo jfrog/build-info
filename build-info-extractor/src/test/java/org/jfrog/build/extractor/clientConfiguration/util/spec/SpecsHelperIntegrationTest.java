@@ -3,11 +3,9 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
-import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -15,10 +13,12 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Integration tests for the SpecHelper.
@@ -29,13 +29,10 @@ import java.util.*;
 public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String TEST_SPACE = "bi_specs_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
-    private SpecsHelper specsHelper = new SpecsHelper(log);
+    private final SpecsHelper specsHelper = new SpecsHelper(log);
 
     private static final String INTEGRATION_TESTS = "/integration/tests";
     private static final String DEFAULT_SPEC_PATH = "/integration/default";
-    private static final String UPLOAD_SPEC = "upload.json";
-    private static final String DOWNLOAD_SPEC = "download.json";
-    private static final String EXPECTED = "expected.json";
 
     @BeforeMethod
     @AfterMethod
@@ -45,36 +42,20 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "testCases")
-    public void integrationTests(String testName, String uploadSpec, String downloadSpec, Expected expected) throws Exception {
-        Reporter.log("Running test: " + testName, true);
+    public void integrationTests(SingleSpecTest specTest) throws Exception {
+        Reporter.log("Running test: " + specTest.testPath, false);
 
         // Upload artifacts.
         File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<String, String>(), buildInfoClientBuilder);
-        Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(specTest.uploadSpec, uploadFromPath, new HashMap<>(), buildInfoClientBuilder);
+        Reporter.log("Uploaded " + uploaded.size() + " artifacts", false);
 
         // Download artifacts to compare against the expected result.
-        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
-        Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(specTest.downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        Reporter.log("Downloaded " + downloaded.size() + " artifacts", false);
 
         // Verify expected results
-        verifyExpected(expected);
-    }
-
-    private void verifyExpected(Expected expected) {
-        // Verify tempWorkspace exists
-        Assert.assertTrue(tempWorkspace.exists(), "The path: '" + tempWorkspace.getPath() + "' does not exist");
-        // Verify expected results
-        Collection<File> downloadedFiles = FileUtils.listFiles(tempWorkspace, null, true);
-        for (String path : expected.getFiles()) {
-            File f = new File(tempWorkspace, path);
-            Assert.assertTrue(downloadedFiles.contains(f), "Missing file: '" + path + "'.");
-            downloadedFiles.remove(f);
-        }
-
-        for (File f : downloadedFiles) {
-            Assert.fail("Unexpected file: '" + f.getPath() + "'.");
-        }
+        verifyExpected(specTest.expected, tempWorkspace);
     }
 
     /**
@@ -82,7 +63,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
      * and an 'expected' json file that lists all the expected downloaded files.
      * If the current case is missing a download or upload fileSpec, the corresponding default fileSpec ("resources/integration/default/") is used instead.
      * The created triplets are then provided to 'integrationTests' for testing.
-     * */
+     */
     @DataProvider
     private Object[][] testCases() throws IOException, URISyntaxException {
         ObjectMapper mapper = new ObjectMapper();
@@ -90,30 +71,30 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Get default upload, download specs.
         File defaultSpecPath = new File(this.getClass().getResource(DEFAULT_SPEC_PATH).toURI()).getCanonicalFile();
-        String defaultUpload = readSpec(new File(defaultSpecPath, UPLOAD_SPEC));
-        String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC));
+        String defaultUpload = readSpec(new File(defaultSpecPath, UPLOAD_SPEC), tempWorkspace.getPath());
+        String defaultDownload = readSpec(new File(defaultSpecPath, DOWNLOAD_SPEC), tempWorkspace.getPath());
 
         File searchPath = new File(this.getClass().getResource(INTEGRATION_TESTS).toURI()).getCanonicalFile();
         Set<String> testPaths = new HashSet<>();
         listTestPaths(searchPath, testPaths);
 
-        Object[][] tests = new Object[testPaths.size()][4];
+        SingleSpecTest[][] tests = new SingleSpecTest[testPaths.size()][4];
         int i = 0;
         for (String testPath : testPaths) {
             String uploadSpec = defaultUpload;
             File uploadSpecFile = new File(testPath, UPLOAD_SPEC);
             if (uploadSpecFile.exists()) {
-                uploadSpec = readSpec(uploadSpecFile);
+                uploadSpec = readSpec(uploadSpecFile, tempWorkspace.getPath());
             }
 
             String downloadSpec = defaultDownload;
             File downloadSpecFile = new File(testPath, DOWNLOAD_SPEC);
             if (downloadSpecFile.exists()) {
-                downloadSpec = readSpec(downloadSpecFile);
+                downloadSpec = readSpec(downloadSpecFile, tempWorkspace.getPath());
             }
             try {
                 Expected expected = mapper.readValue(new File(testPath, EXPECTED), Expected.class);
-                tests[i] = new Object[]{testPath, uploadSpec, downloadSpec, expected};
+                tests[i] = new SingleSpecTest[]{new SingleSpecTest(testPath, uploadSpec, downloadSpec, expected)};
             } catch (IOException e) {
                 throw new IOException("Caught error during parsing expected results at path: " + testPath, e);
             }
@@ -123,22 +104,16 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     /**
-     * Add all paths containing tests to testPaths from the provided path
+     * Add all paths containing tests to testPaths from the provided path.
      *
-     * @param path
-     * @param testPaths
-     * @throws IOException
+     * @param path      - The search path
+     * @param testPaths - The results
      */
-    private void listTestPaths(File path, Set<String> testPaths) throws IOException {
+    private void listTestPaths(File path, Set<String> testPaths) {
         if (path == null) {
             return;
         }
-        File[] files = path.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.isDirectory();
-            }
-        });
+        File[] files = path.listFiles(File::isDirectory);
 
         if (files == null) {
             return;
@@ -153,33 +128,24 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     }
 
     /**
-     * Read spec file and replace the placeholder test data.
-     *
-     * @param specFile
-     * @return
-     * @throws IOException
+     * This class represents a single SpecsHelper integration test
      */
-    private String readSpec(File specFile) throws IOException {
-        String spec = FileUtils.readFileToString(specFile);
-        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
-        spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
-        spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, tempWorkspace.getPath());
-        return StringUtils.replace(spec, "${WORKSPACE}", tempWorkspace.getPath());
-    }
+    private static class SingleSpecTest {
+        private final String testPath;
+        private final String uploadSpec;
+        private final String downloadSpec;
+        private final Expected expected;
 
-    /**
-     * Expected inner class for testing proposes.
-     * Contains the local files expected to be found after successful download.
-     */
-    private static class Expected {
-        private List<String> files;
-
-        public List<String> getFiles() {
-            return files;
+        private SingleSpecTest(String testPath, String uploadSpec, String downloadSpec, Expected expected) {
+            this.testPath = testPath;
+            this.uploadSpec = uploadSpec;
+            this.downloadSpec = downloadSpec;
+            this.expected = expected;
         }
 
-        public void setFiles(List<String> files) {
-            this.files = files;
+        @Override
+        public String toString() {
+            return testPath;
         }
     }
 }

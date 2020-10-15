@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,6 +20,11 @@ public class FileSpec {
     private String build;
     private String explode;
     private String[] excludePatterns;
+    private String[] sortBy;
+    private String sortOrder;
+    private String limit;
+    private String offset;
+
 
     public enum SpecType {
         BUILD,
@@ -117,6 +123,41 @@ public class FileSpec {
         this.excludePatterns[index] = excludePattern;
     }
 
+    public String[] getSortBy() {
+        if (sortBy != null) {
+            return sortBy;
+        }
+        return ArrayUtils.EMPTY_STRING_ARRAY;
+    }
+
+    public void setSortBy(String[] sortBy) {
+        this.sortBy = sortBy;
+    }
+
+    public String getSortOrder() {
+        return sortOrder;
+    }
+
+    public void setSortOrder(String sortOrder) {
+        this.sortOrder = sortOrder;
+    }
+
+    public String getOffset() {
+        return offset;
+    }
+
+    public void setOffset(String offset) {
+        this.offset = offset;
+    }
+
+    public String getLimit() {
+        return limit;
+    }
+
+    public void setLimit(String resultLimit) {
+        this.limit = resultLimit;
+    }
+
     @Override
     public String toString() {
         return "FileSpec{" +
@@ -130,6 +171,10 @@ public class FileSpec {
                 ", build='" + build + '\'' +
                 ", explode='" + explode + '\'' +
                 ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
+                ", sortBy='" + Arrays.toString(sortBy) + '\'' +
+                ", sortOrder='" + sortOrder + '\'' +
+                ", offset='" + offset + '\'' +
+                ", limit='" + limit + '\'' +
                 '}';
     }
 

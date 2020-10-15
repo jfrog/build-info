@@ -66,10 +66,10 @@ public abstract class DeploymentUrlUtils {
         String matrixParams = null;
         if (index != -1) {
             path = unescaped.substring(0, index);
-            if (index == unescaped.length()-1) {
+            if (index == unescaped.length() - 1) {
                 matrixParams = "";
             } else {
-                matrixParams = unescaped.substring(index+1);
+                matrixParams = unescaped.substring(index + 1);
             }
         }
 
@@ -87,14 +87,14 @@ public abstract class DeploymentUrlUtils {
         return escaped;
     }
 
-    public static String buildMatrixParamsString(ArrayListMultimap<String, String> matrixParams)
+    public static String buildMatrixParamsString(ArrayListMultimap<String, String> matrixParams, boolean encodeProperties)
             throws UnsupportedEncodingException {
         StringBuilder matrix = new StringBuilder();
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
                 for (String propertyValue : matrixParams.get(propertyKey)) {
-                    matrix.append(";").append(encode(propertyKey))
-                        .append("=").append(encode(propertyValue));
+                    matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey)
+                            .append("=").append(encodeProperties ? encode(propertyValue) : propertyValue);
                 }
             }
         }
@@ -103,7 +103,7 @@ public abstract class DeploymentUrlUtils {
 
     private static String encode(String s) throws UnsupportedEncodingException {
         if (s != null) {
-            return URLEncoder.encode(s, "UTF-8").replace("%2F","/");
+            return URLEncoder.encode(s, "UTF-8").replace("%2F", "/");
         }
         return null;
     }

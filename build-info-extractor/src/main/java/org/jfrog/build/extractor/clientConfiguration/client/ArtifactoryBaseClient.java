@@ -28,9 +28,19 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
      */
     private ArtifactoryVersion artifactoryVersion;
 
-    public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, Log logger) {
+    public ArtifactoryBaseClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
         this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
-        httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, logger);
+        if (StringUtils.isNotEmpty(accessToken)) {
+            httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, accessToken, logger);
+        } else {
+            httpClient = new ArtifactoryHttpClient(this.artifactoryUrl, username, password, logger);
+        }
+        this.log = logger;
+    }
+
+    public ArtifactoryBaseClient(String artifactoryUrl, ArtifactoryHttpClient httpClient, Log logger) {
+        this.artifactoryUrl = StringUtils.stripEnd(artifactoryUrl, "/");
+        this.httpClient = httpClient;
         this.log = logger;
     }
 
@@ -90,6 +100,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         httpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
     }
 
+    public ProxyConfiguration getProxyConfiguration() {
+        return httpClient.getProxyConfiguration();
+    }
+
     /**
      * Log setter for the PreemptiveHttpClient for jobs like the Jenkins Generic job that uses NullLog by default.
      *
@@ -97,6 +111,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
      */
     public void setLog(Log log) {
         httpClient.getHttpClient().setLog(log);
+    }
+
+    public void setInsecureTls(boolean insecureTls) {
+        httpClient.setInsecureTls(insecureTls);
     }
 
     public String getArtifactoryUrl() {
@@ -119,7 +137,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpGet(encodedUrl);
         HttpResponse httpResponse = null;
-        int connectionRetries = httpClient.getConnectionRetries();
         try {
             httpResponse = httpClient.getHttpClient().execute(httpRequest);
             StatusLine statusLine = httpResponse.getStatusLine();
@@ -127,8 +144,6 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
                 return false;
             }
         } finally {
-            // We are using the same client for multiple operations therefore we need to restore the connectionRetries configuration.
-            httpClient.setConnectionRetries(connectionRetries);
             if (httpResponse != null) {
                 EntityUtils.consumeQuietly(httpResponse.getEntity());
             }

@@ -526,9 +526,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 if (moduleArtifact.equals(project.getArtifact())) {
                     artifactFile = project.getFile();   // project.getFile() returns the project pom file
                 }
-            } else if (moduleArtifact.getMetadataList().size() > 0) {
-                nonPomArtifact = moduleArtifact;
-                pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
+            } else {
+                for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
+                    if (metadata instanceof ProjectArtifactMetadata) {
+                        nonPomArtifact = moduleArtifact;
+                        pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
+                    }
+                }
             }
 
             org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
@@ -605,7 +609,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         String targetRepository = getTargetRepository(deploymentPath);
 
         DeployDetails deployable = new DeployDetails.Builder().artifactPath(deploymentPath).file(artifactFile).
-                targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams()).build();
+                targetRepository(targetRepository).addProperties(conf.publisher.getMatrixParams())
+                .packageType(DeployDetails.PackageType.MAVEN).build();
         String myArtifactId = BuildInfoExtractorUtils.getArtifactId(currentModule.get().build().getId(),
                 artifact.getName());
 

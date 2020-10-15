@@ -27,7 +27,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import static org.jfrog.build.api.BuildType.GRADLE;
 import static org.testng.Assert.*;
 
 /**
@@ -45,7 +44,6 @@ public class BuildInfoBuilderTest {
         Build build = new BuildInfoBuilder("test").number("4").started("test").build();
         assertEquals(build.getVersion(), "1.0.1", "Unexpected default build version.");
         assertEquals(build.getNumber(), "4", "Unexpected default build number.");
-        assertNull(build.getType(), "Default build type should be null.");
 
         assertNull(build.getAgent(), "Default build agent should be null.");
 
@@ -58,8 +56,6 @@ public class BuildInfoBuilderTest {
         assertNull(build.getParentNumber(), "Default build parent build number should be null.");
         assertNull(build.getModules(), "Default build modules should be null.");
         assertNull(build.getProperties(), "Default properties should be null.");
-        assertNull(build.getVcsRevision(), "Default vcs revision should be null.");
-        assertNull(build.getVcsUrl(), "Default vcs url should be null.");
     }
 
     /**
@@ -69,7 +65,6 @@ public class BuildInfoBuilderTest {
         String version = "1.2.0";
         String name = "moo";
         String number = "15";
-        BuildType buildType = GRADLE;
         Agent agent = new Agent("pop", "1.6");
         BuildAgent buildAgent = new BuildAgent("rock", "2.6");
         long durationMillis = 6L;
@@ -83,7 +78,7 @@ public class BuildInfoBuilderTest {
         Properties properties = new Properties();
         List<MatrixParameter> runParameters = new ArrayList<>();
 
-        Build build = new BuildInfoBuilder(name).started("test").version(version).number(number).type(buildType)
+        Build build = new BuildInfoBuilder(name).started("test").version(version).number(number)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
                 .modules(modules).properties(properties).buildAgent(buildAgent).buildRunParameters(runParameters)
@@ -92,7 +87,6 @@ public class BuildInfoBuilderTest {
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
         assertEquals(build.getNumber(), number, "Unexpected build number.");
-        assertEquals(build.getType(), buildType, "Unexpected build type.");
         assertEquals(build.getAgent(), agent, "Unexpected build agent.");
         assertEquals(build.getBuildAgent(), buildAgent, "Unexpected build agent.");
         assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");

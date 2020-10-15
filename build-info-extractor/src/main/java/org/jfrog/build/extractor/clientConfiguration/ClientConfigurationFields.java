@@ -30,17 +30,23 @@ public interface ClientConfigurationFields {
     String IVY_ART_PATTERN = "ivy.artPattern";
     String IVY_REPO_DEFINED = "ivy.repo.defined";
     String IVY_IVY_PATTERN = "ivy.ivyPattern";
+    String PACKAGE_MANAGER_ARGS = "package.manager.args";
+    String PACKAGE_MANAGER_PATH = "package.manager.path"; // Path to package-manager execution dir
+    String PACKAGE_MANAGER_MODULE = "package.manager.module"; // Custom module name for the build-info
+    String PIP_ENV_ACTIVATION = "pip.env.activation";
+    String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
+    String DOCKER_IMAGE_TAG = "docker.image.tag";
+    String DOCKER_HOST = "docker.host";
     String URL = "url";
     String REPO_KEY = "repoKey";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
     // Publish fields
-    String AGGREGATE_ARTIFACTS = "aggregate";   // String  - directory where artifacts should be aggregated
-    String PUBLISH_AGGREGATED_ARTIFACTS = "aggregated"; // Boolean - whether or not aggregated artifacts should be published
-    String COPY_AGGREGATED_ARTIFACTS = "copy.aggregated"; // Boolean - whether or not aggregated artifacts should be published
     String PUBLISH_ARTIFACTS = "artifacts";
     String PUBLISH_BUILD_INFO = "buildInfo";
+    String PUBLISH_FORK_COUNT = "forkCount";
     String RECORD_ALL_DEPENDENCIES = "record.all.dependencies";
     String SNAPSHOT_REPO_KEY = "snapshot.repoKey";
+    String RELEASE_REPO_KEY = "release.repoKey";
     String MATRIX = "matrix";
     String ARTIFACT_SPECS = "artifactSpecs";
     String INCLUDE_PATTERNS = "includePatterns";
@@ -48,4 +54,5 @@ public interface ClientConfigurationFields {
     String FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD = "filterExcludedArtifactsFromBuild";
     String EVEN_UNSTABLE = "unstable";
     String CONTEXT_URL = "contextUrl";
+    String PUBLICATIONS = "publications";
 }

@@ -48,9 +48,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
-    private NpmDriver driver = new NpmDriver("", null);
+    private NpmDriver driver = new NpmDriver(null);
 
     public NpmExtractorTest() {
         localRepo = NPM_LOCAL_REPO;
@@ -112,6 +111,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                     .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
                     .targetRepository(localRepo)
                     .artifactPath(project.getTargetPath())
+                    .packageType(DeployDetails.PackageType.NPM)
                     .build();
             buildInfoClient.deployArtifact(deployDetails);
         }
@@ -139,7 +139,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                 {Project.B, Collections.emptySet(), "--production", false},
                 {Project.C, Project.C.dependencies, "", true},
                 {Project.C, Project.B.dependencies, "--only=development", false},
-                {Project.C, Project.A.dependencies, "--only=production", true}
+                {Project.C, Project.A.dependencies, "--only=production", true},
+                {Project.C, Project.C.dependencies, "--verbose", true}
         };
     }
 
@@ -151,7 +152,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm install
             projectDir = createProjectDir(project);
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
-            NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, null, log, path, null);
+            NpmInstall npmInstall = new NpmInstall(dependenciesClientBuilder, virtualRepo, args, log, path, null, null);
             Build build = npmInstall.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -188,7 +189,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, null, path, virtualRepo, log, null);
+            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, path, virtualRepo, log, null, null);
             Build build = npmPublish.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);

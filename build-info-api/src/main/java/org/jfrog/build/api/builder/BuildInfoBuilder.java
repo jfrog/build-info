@@ -39,7 +39,6 @@ public class BuildInfoBuilder {
     protected String started;
     protected String number;
     protected String artifactoryPluginVersion;
-    protected BuildType type;
     protected Agent agent;
     protected BuildAgent buildAgent;
     protected long durationMillis;
@@ -86,7 +85,6 @@ public class BuildInfoBuilder {
         }
         build.setName(name);
         build.setNumber(number);
-        build.setType(type);
         build.setAgent(agent);
         build.setBuildAgent(buildAgent);
         build.setStarted(started);
@@ -101,12 +99,6 @@ public class BuildInfoBuilder {
         build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
         build.setStatuses(statuses);
         build.setProperties(properties);
-        if (!StringUtils.isEmpty(vcsRevision)) {
-            build.setVcsRevision(vcsRevision);
-        }
-        if (!StringUtils.isEmpty(vcsUrl)) {
-            build.setVcsUrl(vcsUrl);
-        }
         build.setVcs(vcs);
         build.setLicenseControl(licenseControl);
         build.setBuildRetention(buildRetention);
@@ -145,17 +137,6 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder number(String number) {
         this.number = number;
-        return this;
-    }
-
-    /**
-     * Sets the type of the build
-     *
-     * @param type Build type
-     * @return Builder instance
-     */
-    public BuildInfoBuilder type(BuildType type) {
-        this.type = type;
         return this;
     }
 

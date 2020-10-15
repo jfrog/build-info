@@ -1,0 +1,16 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true",
+      "sortBy": [
+        "path"
+      ],
+      "sortOrder": "asc",
+      "limit": 3,
+      "offset": 6
+    }
+  ]
+}

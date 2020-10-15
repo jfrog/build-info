@@ -18,31 +18,41 @@ package org.jfrog.gradle.plugin.artifactory
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.file.FileCollection
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
+import org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
+import org.jfrog.gradle.plugin.artifactory.task.ExtractModuleTask
+import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.ARTIFACTORY_PUBLISH_TASK_NAME
 import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.DEPLOY_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask.EXTRACT_MODULE_TASK_NAME
+import static org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask.DISTRIBUTE_TASK_NAME
 
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
     public static final String PUBLISH_TASK_GROUP = "publishing"
 
-    def void apply(Project project) {
+    void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
             log.debug("Artifactory Plugin disabled for ${project.path}")
             return
         }
         // Add an Artifactory plugin convention to all the project modules
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
-        // Then add the build info task
-        addArtifactoryPublishTask(project)
+        // Then add the artifactory publish task
+        ArtifactoryTask artifactoryTask = addArtifactoryPublishTask(project)
+        // Add the module info producer task
+        addModuleInfoTask(artifactoryTask)
+
         if (isRootProject(project)) {
             addDeployTask(project)
+            addDistributeBuildTask(project)
         } else {
             // Makes sure the plugin is applied in the root project
             project.rootProject.getPluginManager().apply(ArtifactoryPlugin.class)
@@ -57,8 +67,10 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     protected abstract ArtifactoryTask createArtifactoryPublishTask(Project project)
+    protected abstract DistributeBuildTask createArtifactoryDistributeBuildTask(Project project)
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
     protected abstract DeployTask createArtifactoryDeployTask(Project project);
+    protected abstract ExtractModuleTask createExtractModuleTask(Project project);
 
     /**
      *  Set the plugin convention closure object
@@ -78,7 +90,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     /**
-     * Add the "ArtifactoryPublish" gradle task (under "publishing" task group)
+     * Add the "artifactoryPublish" gradle task (under "publishing" task group)
      */
     private ArtifactoryTask addArtifactoryPublishTask(Project project) {
         ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
@@ -90,6 +102,37 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         artifactoryTask
     }
 
+    /**
+     * Add the "artifactoryDistribute" gradle task (under "publishing" task group)
+     */
+    private DistributeBuildTask addDistributeBuildTask(Project project) {
+        DistributeBuildTask distributeBuildTask = project.tasks.findByName(DISTRIBUTE_TASK_NAME)
+        if (distributeBuildTask == null) {
+            log.debug("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            distributeBuildTask = createArtifactoryDistributeBuildTask(project)
+            distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
+        }
+        distributeBuildTask
+    }
+
+    private ExtractModuleTask addModuleInfoTask(ArtifactoryTask artifactoryTask) {
+        Project project = artifactoryTask.project
+        ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
+        if (extractModuleTask == null) {
+            log.debug("Configuring extractModuleInfo task for project ${project.path}")
+            extractModuleTask = createExtractModuleTask(project)
+        }
+        extractModuleTask.outputs.upToDateWhen { false }
+        extractModuleTask.moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
+        extractModuleTask.mustRunAfter(project.tasks.withType(ArtifactoryTask.class))
+
+        project.rootProject.tasks.withType(DeployTask).configureEach { deployTask ->
+            deployTask.registerModuleInfoProducer(new DefaultModuleInfoFileProducer(artifactoryTask, extractModuleTask))
+        }
+
+        return extractModuleTask
+    }
+
     private DeployTask addDeployTask(Project project) {
         DeployTask deployTask = project.tasks.findByName(DEPLOY_TASK_NAME)
         if (deployTask == null) {
@@ -98,5 +141,28 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
             deployTask.setGroup(PUBLISH_TASK_GROUP)
         }
         deployTask
+    }
+
+    private static class DefaultModuleInfoFileProducer implements ModuleInfoFileProducer {
+        private final ArtifactoryTask artifactoryTask
+        private final ExtractModuleTask extractModuleTask
+
+        DefaultModuleInfoFileProducer(ArtifactoryTask artifactoryTask, ExtractModuleTask extractModuleTask) {
+            this.artifactoryTask = artifactoryTask
+            this.extractModuleTask = extractModuleTask
+        }
+
+        @Override
+        boolean hasModules() {
+            if (artifactoryTask != null && artifactoryTask.project.getState().getExecuted()) {
+                return artifactoryTask.hasModules();
+            }
+            return false;
+        }
+
+        @Override
+        FileCollection getModuleInfoFiles() {
+            return extractModuleTask.outputs.files
+        }
     }
 }

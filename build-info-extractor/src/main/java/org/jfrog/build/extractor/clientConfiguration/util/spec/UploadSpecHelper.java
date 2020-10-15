@@ -59,7 +59,8 @@ public class UploadSpecHelper {
                 .targetRepository(getRepositoryKey(uploadTarget))
                 .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
                 .explode(BooleanUtils.toBoolean(explode))
-                .addProperties(SpecsHelper.getPropertiesMap(props));
+                .addProperties(SpecsHelper.getPropertiesMap(props))
+                .packageType(DeployDetails.PackageType.GENERIC);
         if (buildProperties != null && !buildProperties.isEmpty()) {
             builder.addProperties(buildProperties);
         }

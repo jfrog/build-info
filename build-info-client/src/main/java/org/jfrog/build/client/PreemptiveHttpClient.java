@@ -21,25 +21,23 @@ import org.apache.http.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.AuthState;
 import org.apache.http.auth.Credentials;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.ServiceUnavailableRetryStrategy;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.*;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.*;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 
-import javax.net.ssl.SSLException;
+import javax.net.ssl.*;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -47,107 +45,58 @@ import java.util.Set;
  *
  * @author Yossi Shaul
  */
-public class PreemptiveHttpClient {
+public class PreemptiveHttpClient implements AutoCloseable {
 
-    private final static String CLIENT_VERSION;
-    private final boolean requestSentRetryEnabled = true;
+    private static final boolean REQUEST_SENT_RETRY_ENABLED = true;
+    /**
+     * Used for storing the original host name, before a redirect to a new URL, on the request context.
+     */
+    private static final String ORIGINAL_HOST_CONTEXT_PARAM = "original.host.context.param";
+
+    private PoolingHttpClientConnectionManager connectionManager;
+    private BasicCredentialsProvider basicCredentialsProvider;
+    private String accessToken;
+    private AuthCache authCache;
     private CloseableHttpClient httpClient;
-    private HttpClientContext localContext = HttpClientContext.create();
-    private BasicCredentialsProvider basicCredentialsProvider = new BasicCredentialsProvider();
     private int connectionRetries;
     private Log log;
 
-    static {
-        // initialize client version
-        Properties properties = new Properties();
-        InputStream is = PreemptiveHttpClient.class.getResourceAsStream("/bi.client.properties");
-        if (is != null) {
-            try {
-                properties.load(is);
-                is.close();
-            } catch (IOException e) {
-                // ignore, use the default value
-            }
-        }
-        CLIENT_VERSION = properties.getProperty("client.version", "unknown");
-    }
+    public PreemptiveHttpClient(PoolingHttpClientConnectionManager connectionManager, BasicCredentialsProvider credentialsProvider, String accessToken, AuthCache authCache, HttpClientBuilder clientBuilder, int connectionRetries, Log log) {
+        this.connectionManager = connectionManager;
+        this.basicCredentialsProvider = credentialsProvider;
+        this.accessToken = accessToken;
+        this.authCache = authCache;
+        this.connectionRetries = connectionRetries;
+        this.log = log;
 
-    public PreemptiveHttpClient(String userName, String password, int timeout, ProxyConfiguration proxyConfiguration, int connectionRetries) {
-        HttpClientBuilder httpClientBuilder = createHttpClientBuilder(userName, password, timeout, connectionRetries);
-        if (proxyConfiguration != null) {
-            setProxyConfiguration(httpClientBuilder, proxyConfiguration);
-        }
-        httpClient = httpClientBuilder.build();
-    }
-
-    private void setProxyConfiguration(HttpClientBuilder httpClientBuilder, ProxyConfiguration proxyConfiguration) {
-        HttpHost proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
-        httpClientBuilder.setProxy(proxy);
-
-        if (proxyConfiguration.username != null) {
-            basicCredentialsProvider.setCredentials(new AuthScope(proxyConfiguration.host, proxyConfiguration.port),
-                    new UsernamePasswordCredentials(proxyConfiguration.username, proxyConfiguration.password));
-            localContext.setCredentialsProvider(basicCredentialsProvider);
-            // Create AuthCache instance
-            AuthCache authCache = new BasicAuthCache();
-            // Generate BASIC scheme object and add it to the local auth cache
-            BasicScheme basicAuth = new BasicScheme();
-            authCache.put(proxy, basicAuth);
-            localContext.setAuthCache(authCache);
-        }
+        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
+        clientBuilder.setRetryHandler(new PreemptiveHttpClient.PreemptiveRetryHandler(retryCount));
+        clientBuilder.setServiceUnavailableRetryStrategy(new PreemptiveHttpClient.PreemptiveRetryStrategy());
+        clientBuilder.setRedirectStrategy(new PreemptiveHttpClient.PreemptiveRedirectStrategy());
+        this.httpClient = clientBuilder.build();
     }
 
     public HttpResponse execute(HttpUriRequest request) throws IOException {
-        if (localContext != null) {
-            return httpClient.execute(request, localContext);
+        HttpClientContext clientContext = HttpClientContext.create();
+        if (StringUtils.isNotEmpty(accessToken)) {
+            clientContext.setUserToken(accessToken);
         } else {
-            return httpClient.execute(request);
+            clientContext.setCredentialsProvider(basicCredentialsProvider);
         }
+        if (authCache != null) {
+            clientContext.setAuthCache(authCache);
+        }
+        return httpClient.execute(request, clientContext);
     }
 
-    private HttpClientBuilder createHttpClientBuilder(String userName, String password, int timeout, int connectionRetries) {
-        this.connectionRetries = connectionRetries;
-        int timeoutMilliSeconds = timeout * 1000;
-        RequestConfig requestConfig = RequestConfig
-                .custom()
-                .setSocketTimeout(timeoutMilliSeconds)
-                .setConnectTimeout(timeoutMilliSeconds)
-                .setCircularRedirectsAllowed(true)
-                .build();
-
-        HttpClientBuilder builder = HttpClientBuilder
-                .create()
-                .setDefaultRequestConfig(requestConfig);
-
-        if (StringUtils.isEmpty(userName)) {
-            userName = "anonymous";
-            password = "";
-        }
-
-        basicCredentialsProvider.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                new UsernamePasswordCredentials(userName, password));
-        localContext.setCredentialsProvider(basicCredentialsProvider);
-
-        // Add as the first request interceptor
-        builder.addInterceptorFirst(new PreemptiveAuth());
-
-        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
-        builder.setRetryHandler(new PreemptiveRetryHandler(retryCount));
-        builder.setServiceUnavailableRetryStrategy(new PreemptiveRetryStrategy());
-        builder.setRedirectStrategy(new PreemptiveRedirectStrategy());
-
-        // set the following user agent with each request
-        String userAgent = "ArtifactoryBuildClient/" + CLIENT_VERSION;
-        builder.setUserAgent(userAgent);
-        return builder;
-    }
-
+    @Override
     public void close() {
         try {
             httpClient.close();
         } catch (IOException e) {
             // Do nothing
         }
+        connectionManager.close();
     }
 
     public void setLog(Log log) {
@@ -160,27 +109,58 @@ public class PreemptiveHttpClient {
      * @return set of Exceptions that will not be retired
      */
     private Set<Class<? extends IOException>> getNonRetriableClasses() {
-        Set<Class<? extends IOException>> classSet = new HashSet<Class<? extends IOException>>();
+        Set<Class<? extends IOException>> classSet = new HashSet<>();
         classSet.add(SSLException.class);
         return classSet;
     }
 
     static class PreemptiveAuth implements HttpRequestInterceptor {
-        public void process(final HttpRequest request, final HttpContext context) throws HttpException, IOException {
+        public void process(final HttpRequest request, final HttpContext context) throws HttpException {
+            if (!shouldSetAuthScheme(request, context)) {
+                return;
+            }
+
             HttpClientContext finalContext = (HttpClientContext) context;
             AuthState authState = finalContext.getTargetAuthState();
             // If no auth scheme available yet, try to initialize it preemptively
             if (authState.getAuthScheme() == null) {
-                CredentialsProvider credsProvider = finalContext.getCredentialsProvider();
-                HttpHost targetHost = finalContext.getTargetHost();
-                Credentials creds = credsProvider.getCredentials(
-                        new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-                if (creds == null) {
-                    throw new HttpException("No credentials for preemptive authentication");
+                String accessToken = finalContext.getUserToken(String.class);
+                if (StringUtils.isNotEmpty(accessToken)) {
+                    request.addHeader("Authorization", "Bearer " + accessToken);
+                } else {
+                    CredentialsProvider credsProvider = finalContext.getCredentialsProvider();
+                    HttpHost targetHost = finalContext.getTargetHost();
+                    Credentials creds = credsProvider.getCredentials(
+                            new AuthScope(targetHost.getHostName(), targetHost.getPort()));
+                    if (creds == null) {
+                        throw new HttpException("No credentials for preemptive authentication");
+                    }
+                    BasicScheme authScheme = new BasicScheme();
+                    authState.update(authScheme, creds);
                 }
-                BasicScheme authScheme = new BasicScheme();
-                authState.update(authScheme, creds);
             }
+        }
+
+        /**
+         * Used to determine whether preemptive authentication should be performed.
+         * In the case of a redirect to a different host, preemptive authentication should not be performed.
+         */
+        private boolean shouldSetAuthScheme(final HttpRequest request, final HttpContext context) {
+            // Get the original host name (before the redirect).
+            String originalHost = (String)context.getAttribute(ORIGINAL_HOST_CONTEXT_PARAM);
+            if (originalHost == null) {
+                // No redirect was performed.
+                return true;
+            }
+            String host;
+            try {
+                // In case of a redirect, get the new target host.
+                host = new URI(((HttpRequestWrapper) request).getOriginal().getRequestLine().getUri()).getHost();
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            // Return true if the original host and the target host are identical.
+            return host.equals(originalHost);
         }
     }
 
@@ -220,7 +200,7 @@ public class PreemptiveHttpClient {
     private class PreemptiveRetryHandler extends DefaultHttpRequestRetryHandler {
 
         PreemptiveRetryHandler(int connectionRetries) {
-            super(connectionRetries, requestSentRetryEnabled, getNonRetriableClasses());
+            super(connectionRetries, REQUEST_SENT_RETRY_ENABLED, getNonRetriableClasses());
         }
 
         @Override
@@ -259,9 +239,22 @@ public class PreemptiveHttpClient {
 
         @Override
         public HttpUriRequest getRedirect(HttpRequest request, HttpResponse response, HttpContext context) throws ProtocolException {
+            // Get the original host name (before the redirect) and save it on the context.
+            String originalHost = getHost(request);
+            context.setAttribute(ORIGINAL_HOST_CONTEXT_PARAM, originalHost);
             URI uri = getLocationURI(request, response, context);
             log.debug("Redirecting to " + uri);
             return RequestBuilder.copy(request).setUri(uri).build();
+        }
+
+        private String getHost(HttpRequest request) {
+            URI uri;
+            try {
+                uri = new URI(request.getRequestLine().getUri());
+            } catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+            return uri.getHost();
         }
 
         @Override

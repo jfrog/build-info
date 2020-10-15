@@ -1,0 +1,5 @@
+{
+  "packageType": "nuget",
+  "repoLayoutRef": "nuget-default",
+  "rclass": "local"
+}

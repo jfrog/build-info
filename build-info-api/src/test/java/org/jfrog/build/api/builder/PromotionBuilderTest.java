@@ -1,11 +1,14 @@
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.release.BuildArtifactsMapping;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.testng.Assert.*;
 
@@ -30,21 +33,15 @@ public class PromotionBuilderTest {
         assertNull(promotion.getScopes(), "Unexpected default scopes.");
         assertNull(promotion.getProperties(), "Unexpected default properties.");
         assertTrue(promotion.isFailFast(), "Unexpected default fail-fast state.");
-        assertNull(promotion.getMappings(), "Unexpected default mappings.");
     }
 
     public void testNormalValues() {
         Set<String> scopes = new HashSet<>();
         Map<String, Collection<String>> properties = new HashMap<>();
 
-        BuildArtifactsMapping mapping = new BuildArtifactsMapping();
-        mapping.setInput("maven-repo-local1");
-        mapping.setOutput("maven-repo-local2");
-
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
                 timestamp("timestamp").dryRun(true).targetRepo("targetRepo").sourceRepo("sourceRepo").copy(false).
-                artifacts(true).dependencies(false).scopes(scopes).properties(properties).failFast(false).
-                mappings(Collections.singletonList(mapping)).build();
+                artifacts(true).dependencies(false).scopes(scopes).properties(properties).failFast(false).build();
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -59,8 +56,6 @@ public class PromotionBuilderTest {
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
         assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
-        assertEquals(promotion.getMappings().get(0).getInput(), mapping.getInput(), "Unexpected mapping input");
-        assertEquals(promotion.getMappings().get(0).getOutput(), mapping.getOutput(), "Unexpected mapping output");
     }
 
     public void testAddScopesAndPropertiesToEmptyDefaults() {

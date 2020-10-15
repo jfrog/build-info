@@ -1,11 +1,15 @@
 package org.jfrog.build.api;
 
-import org.jfrog.build.api.release.BuildArtifactsMapping;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static org.testng.Assert.*;
 
@@ -34,11 +38,9 @@ public class PromotionTest {
     public void testConstructor() {
         Set<String> scopes = new HashSet<>();
         Map<String, Collection<String>> properties = new HashMap<>();
-        BuildArtifactsMapping mapping = createMapping();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
-                true, "targetRepo", "sourceRepo", false, true, false, scopes, properties, false,
-                Collections.singletonList(mapping));
+                true, "targetRepo", "sourceRepo", false, true, false, scopes, properties, false);
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -53,14 +55,11 @@ public class PromotionTest {
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
         assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
-        assertEquals(promotion.getMappings().get(0).getInput(), mapping.getInput(), "Unexpected mapping input.");
-        assertEquals(promotion.getMappings().get(0).getOutput(), mapping.getOutput(), "Unexpected mapping output.");
     }
 
     public void testSetters() {
         Set<String> scopes = new HashSet<>();
         Map<String, Collection<String>> properties = new HashMap<>();
-        BuildArtifactsMapping mapping = createMapping();
 
         Promotion promotion = new Promotion();
         promotion.setStatus(Promotion.ROLLED_BACK);
@@ -76,7 +75,6 @@ public class PromotionTest {
         promotion.setScopes(scopes);
         promotion.setProperties(properties);
         promotion.setFailFast(false);
-        promotion.setMappings(Collections.singletonList(mapping));
 
         assertEquals(promotion.getStatus(), Promotion.ROLLED_BACK, "Unexpected status.");
         assertEquals(promotion.getComment(), "comment", "Unexpected comment.");
@@ -91,19 +89,10 @@ public class PromotionTest {
         assertEquals(promotion.getScopes(), scopes, "Unexpected scopes.");
         assertEquals(promotion.getProperties(), properties, "Unexpected properties.");
         assertFalse(promotion.isFailFast(), "Unexpected fail-fast state.");
-        assertEquals(promotion.getMappings().get(0).getInput(), mapping.getInput(), "Unexpected mapping input.");
-        assertEquals(promotion.getMappings().get(0).getOutput(), mapping.getOutput(), "Unexpected mapping output.");
-    }
-
-    BuildArtifactsMapping createMapping() {
-        BuildArtifactsMapping mapping = new BuildArtifactsMapping();
-        mapping.setInput("maven-repo-local1");
-        mapping.setOutput("maven-repo-local2");
-        return mapping;
     }
 
     public void testNullTimestampDateGetter() {
-        Promotion promotion = new Promotion(null, null, null, null, true, null, null, true, true, true, null, null, false, null);
+        Promotion promotion = new Promotion(null, null, null, null, true, null, null, true, true, true, null, null, false);
         assertNull(promotion.getTimestampDate(), "No timestamp was set. Should have received null");
     }
 
@@ -113,7 +102,7 @@ public class PromotionTest {
         Date timestampDate = new Date();
 
         Promotion promotion = new Promotion(null, null, null, format.format(timestampDate), true, null, null, true, true,
-                true, null, null, false, null);
+                true, null, null, false);
         assertEquals(promotion.getTimestampDate(), timestampDate, "Unexpected timestamp date.");
     }
 }

@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
@@ -9,7 +10,7 @@ import java.io.Serializable;
 /**
  * @author Yahav Itzhak
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings({"unused", "WeakerAccess", "UnusedReturnValue"})
 public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBuilderBase<T>> implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -19,6 +20,7 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
     protected String artifactoryUrl;
     protected String username;
     protected String password;
+    protected String accessToken;
     protected Log log;
 
     public T setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
@@ -51,11 +53,50 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
         return self();
     }
 
+    public T setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
+        return self();
+    }
+
     public T setLog(Log log) {
         this.log = log;
         return self();
     }
 
+    /**
+     * Set a complete client configuration from ArtifactoryClientConfiguration.
+     *
+     * @param clientConfiguration     - The client configuration
+     * @param repositoryConfiguration - Deployer or resolver configuration
+     * @return self
+     */
+    public T setClientConfiguration(ArtifactoryClientConfiguration clientConfiguration,
+                                    ArtifactoryClientConfiguration.RepositoryConfiguration repositoryConfiguration) {
+        setArtifactoryUrl(repositoryConfiguration.getContextUrl());
+        setUsername(repositoryConfiguration.getUsername());
+        setPassword(repositoryConfiguration.getPassword());
+        setLog(repositoryConfiguration.getLog());
+
+        ArtifactoryClientConfiguration.ProxyHandler proxyHandler = clientConfiguration.proxy;
+        if (proxyHandler != null && StringUtils.isNotBlank(proxyHandler.getHost())) {
+            ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
+            proxyConfiguration.host = proxyHandler.getHost();
+            proxyConfiguration.port = proxyHandler.getPort();
+            proxyConfiguration.username = proxyHandler.getUsername();
+            proxyConfiguration.password = proxyHandler.getPassword();
+            setProxyConfiguration(proxyConfiguration);
+        }
+
+        if (clientConfiguration.getConnectionRetries() != null) {
+            setConnectionRetry(clientConfiguration.getConnectionRetries());
+        }
+
+        if (clientConfiguration.getTimeout() != null) {
+            setConnectionTimeout(clientConfiguration.getTimeout());
+        }
+
+        return self();
+    }
 
     protected ArtifactoryBaseClient build(ArtifactoryBaseClient client) {
         if (proxyConfiguration != null) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.HttpPost;
@@ -44,7 +45,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
     private static final int HTTP_CLIENT_RETRIES = 0;
 
     public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
-        super(artifactoryUrl, username, password, logger);
+        super(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
         setConnectionRetries(HTTP_CLIENT_RETRIES);
     }
 
@@ -55,6 +56,15 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
 
         String scanUrl = artifactoryUrl + SCAN_BUILD_URL;
         HttpPost httpPost = new HttpPost(scanUrl);
+
+        // The scan build operation can take a long time to finish.
+        // To keep the connection open, when Xray starts scanning the build, it starts sending new-lines
+        // on the open channel. This tells the client that the operation is still in progress and the
+        // connection does not get timed out.
+        // We need make sure the new-lines are not buffered on the nginx and are flushed
+        // as soon as Xray sends them.
+        httpPost.addHeader("X-Accel-Buffering", "no");
+
         httpPost.setEntity(entity);
         return execute(httpPost);
     }

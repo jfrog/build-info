@@ -1,0 +1,6 @@
+{
+  "rclass": "virtual",
+  "packageType": "gradle",
+  "repositories": ["build-info-tests-gradle-local", "build-info-tests-gradle-remote"],
+  "defaultDeploymentRepo": "build-info-tests-gradle-local"
+}

@@ -16,6 +16,8 @@
 
 package org.jfrog.build.api;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 /**
@@ -30,6 +32,8 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
     protected String sha256;
     protected String md5;
     protected String localPath;
+
+    @JsonProperty("path")
     protected String remotePath;
 
     public String getType() {

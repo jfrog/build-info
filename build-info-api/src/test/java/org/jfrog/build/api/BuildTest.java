@@ -26,9 +26,12 @@ import org.testng.annotations.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Properties;
 
-import static org.jfrog.build.api.BuildType.GRADLE;
 import static org.testng.Assert.*;
 
 /**
@@ -48,7 +51,6 @@ public class BuildTest {
         assertEquals(build.getVersion(), "1.0.1", "Unexpected default build version.");
         assertNull(build.getName(), "Build name should have not been initialized.");
         assertNull(build.getNumber(), "Build number should have not been initialized.");
-        assertNull(build.getType(), "Build type should have not been initialized.");
         assertNull(build.getAgent(), "Build agent should have not been initialized.");
         assertNull(build.getStarted(), "Build started should have not been initialized.");
         assertEquals(build.getDurationMillis(), 0, "Build duration should have not been initialized.");
@@ -69,7 +71,6 @@ public class BuildTest {
         String version = "1.2.0";
         String name = "moo";
         String number = "15";
-        BuildType buildType = GRADLE;
         Agent agent = new Agent("pop", "1.6");
         long durationMillis = 6L;
         String principal = "bob";
@@ -78,7 +79,10 @@ public class BuildTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        String vcsRevision = "2421";
+        List<Vcs> vcsList = Arrays.asList(
+                new Vcs(url, "2421")
+        );
+
         List<Module> modules = new ArrayList<>();
         List<PromotionStatus> statuses = new ArrayList<>();
         List<BuildDependency> buildDependencies = Arrays.asList(
@@ -91,7 +95,6 @@ public class BuildTest {
         build.setVersion(version);
         build.setName(name);
         build.setNumber(number);
-        build.setType(buildType);
         build.setAgent(agent);
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
@@ -103,13 +106,12 @@ public class BuildTest {
         build.setModules(modules);
         build.setStatuses(statuses);
         build.setProperties(properties);
-        build.setVcsRevision(vcsRevision);
+        build.setVcs(vcsList);
         build.setBuildDependencies(buildDependencies);
 
         assertEquals(build.getVersion(), version, "Unexpected build version.");
         assertEquals(build.getName(), name, "Unexpected build name.");
         assertEquals(build.getNumber(), number, "Unexpected build number.");
-        assertEquals(build.getType(), buildType, "Unexpected build type.");
         assertEquals(build.getAgent(), agent, "Unexpected build agent.");
         assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");
         assertEquals(build.getPrincipal(), principal, "Unexpected build principal.");
@@ -118,7 +120,7 @@ public class BuildTest {
         assertEquals(build.getUrl(), url, "Unexpected build URL.");
         assertEquals(build.getParentName(), parentName, "Unexpected build parent build name.");
         assertEquals(build.getParentNumber(), parentNumber, "Unexpected build parent build number.");
-        assertEquals(build.getVcsRevision(), vcsRevision, "Unexpected build vcs revision.");
+        assertEquals(build.getVcs(), vcsList, "Unexpected build vcs revision.");
         assertEquals(build.getModules(), modules, "Unexpected build modules.");
         assertTrue(build.getModules().isEmpty(), "Build modules list should not have been populated.");
         assertEquals(build.getStatuses(), statuses, "Unexpected build statuses.");

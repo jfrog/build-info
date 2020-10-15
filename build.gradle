@@ -18,14 +18,14 @@
 buildscript {
     repositories {
         jcenter()
-        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.0.0' }
+        dependencies { classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:4.10.0' }
     }
 }
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
 
-boolean excludeMavenPluginBuild = project.hasProperty('excludeMavenPluginBuild') && project.property('excludeMavenPluginBuild')
+String testNgVersion = '6.10'
 
 // Root project version should not be used
 project.version = '2'
@@ -87,8 +87,8 @@ subprojects {
     dependencies {
         compile group: 'commons-lang', name: 'commons-lang', version: '2.4'
         compile group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
-        compile group: 'commons-io', name: 'commons-io', version: '2.2'
-        testCompile group: 'org.testng', name: 'testng', version: '6.10'
+        compile group: 'commons-io', name: 'commons-io', version: '2.7'
+        testCompile group: 'org.testng', name: 'testng', version: testNgVersion
     }
 
     // From the install task of the maven plugin (an upload task), take the RepositoryHandler (repositories) and for the
@@ -166,7 +166,7 @@ configure(baseProjects()) {
     status = version.status
     dependencies {
         compile group: 'com.google.guava', name: 'guava', 'version': '27.0.1-jre'
-        compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.10'
+        compile group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.11.1'
 
     }
 
@@ -251,9 +251,6 @@ configure(extractorProjects()) {
     artifactoryPublish {
         properties {
             all 'org.jfrog.buildinfo:build-info-*:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
-            if (!excludeMavenPluginBuild) {
-                all 'org.jfrog.buildinfo:artifactory-maven-plugin:*:*@*', 'bintray.package': project.name.toString(), 'bintray.version': project.version.toString()
-            }
         }
     }
 }
@@ -264,9 +261,9 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.8'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
-        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.18'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5'
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
+        compile group: 'org.apache.commons', name: 'commons-compress', version: '1.19'
     }
 }
 
@@ -274,12 +271,12 @@ project('build-info-client') {
     description = 'JFrog Build-Info Client'
     dependencies {
         compile project(':build-info-api')
-        compile("org.apache.httpcomponents:httpclient:4.5.2") {
+        compile("org.apache.httpcomponents:httpclient:4.5.12") {
             exclude module: "commons-codec"
         }
         compile 'org.apache.httpcomponents:httpcore:4.4.5'
-        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.9.8'
-        compile "commons-codec:commons-codec:1.8"
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
+        compile "commons-codec:commons-codec:1.13"
     }
     sourceSets {
         main {
@@ -298,10 +295,12 @@ project('build-info-client') {
 }
 
 project('build-info-extractor') {
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Extractor'
     dependencies {
         compile project(':build-info-client')
         testCompile "org.easymock:easymockclassextension:2.5.2"
+        testFixturesApi group: 'org.testng', name: 'testng', version: testNgVersion
     }
 }
 
@@ -334,9 +333,16 @@ project('build-info-extractor-ivy') {
 
 project('build-info-extractor-gradle') {
     apply plugin: 'groovy'
+    apply plugin: 'java-gradle-plugin'
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Gradle Extractor'
 
     println description
+
+    sourceSets.test.resources {
+        srcDir file('build/pluginUnderTestMetadata')
+    }
+
     dependencies {
         compile gradleApi()
         compile fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar') //workaround for GRADLE-1699
@@ -344,17 +350,8 @@ project('build-info-extractor-gradle') {
                 "com.google.code.findbugs:jsr305:1.3.9"
         uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
         compile localGroovy()
-        testCompile(group: 'org.spockframework', name: 'spock-core', version: '0.7-groovy-2.0') {
-            transitive = false
-        }
-        testCompile(group: 'net.java.dev.jna', name: 'jna', version: '3.2.2')
-    }
-
-    test {
-        //Spock runs with JUnit
-        test.useJUnit()
-        systemProperties['buildInfoConfig.propertiesFile'] = ''
-        environment['buildInfoConfig.propertiesFile'] = ''
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        testCompile gradleTestKit()
     }
 
     configure(install.repositories.mavenInstaller) {
@@ -365,6 +362,14 @@ project('build-info-extractor-gradle') {
             }
         }
     }
+    gradlePlugin {
+        testSourceSets sourceSets.test
+    }
+
+    // Generate "build/pluginUnderTestMetadata/plugin-under-test-metadata.properties"
+    tasks.test.dependsOn("pluginUnderTestMetadata")
+    // Generate "build/libs/*"
+    tasks.test.dependsOn("assemble")
 }
 
 project('build-info-extractor-maven3') {
@@ -411,108 +416,57 @@ project('build-info-extractor-maven3') {
 }
 
 project('build-info-extractor-npm') {
+    apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info npm Extractor'
 
     dependencies {
-        testCompile project(':build-info-extractor').sourceSets.test.output
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
         compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
     }
 }
 
-if (!excludeMavenPluginBuild) {
-    project('artifactory-maven-plugin') {
-        Project p ->
-            apply plugin: 'groovy'
-            description = 'JFrog Build-Info Maven 3 Plugin'
+project('build-info-extractor-docker') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info Docker Extractor'
 
-            dependencies {
-                compile project(':build-info-api'),
-                        'org.apache.maven.plugin-tools:maven-plugin-annotations:3.5',
-                        'org.gcontracts:gcontracts-core:1.2.12',
-                        'org.codehaus.plexus:plexus-utils:3.0.13',
-                        'org.apache.ant:ant:1.9.2'
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+        compile group: 'com.github.docker-java', name: 'docker-java', version: '3.1.2'
+    }
+}
 
-                compile(project(':build-info-extractor-maven3')) { exclude group: 'org.jdom', module: 'jdom' }
-                compile('org.codehaus.gmaven:gmaven-mojo:1.5') {
-                    exclude group: 'org.codehaus.groovy', module: 'groovy-all-minimal'
-                }
+project('build-info-extractor-go') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info Go Extractor'
 
-                testCompile 'org.spockframework:spock-core:0.7-groovy-2.0'
-                provided    'org.apache.maven:maven-core:3.3.3',
-                        'org.apache.maven:maven-project:3.0-alpha-2'
-            }
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
+}
 
-            clean { delete('pom.xml') }
+project('build-info-extractor-pip') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info Pip Extractor'
 
-            task pluginDescriptor(type: Exec) {
-                // http://www.gradle.org/docs/current/dsl/org.gradle.api.tasks.Exec.html
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    }
+}
 
-                final mvn = project.hasProperty('mvn') ? project.mvn :
-                        !System.getProperty('os.name')?.toLowerCase()?.contains('win') ? 'mvn' :
-                                 new File('mvn.cmd').exists() ? 'mvn.cmd' : 'mvn.bat'
-				final mvnArgs = project.hasProperty('mvnArgs') ? project.mvnArgs : ''
-                final File pom = project.file("$buildDir/pom.xml")
-                final allArgs = ['-e', '-B', '-f', pom.canonicalPath, mvnArgs, 'org.apache.maven.plugins:maven-plugin-plugin:3.5:descriptor'].grep()
+project('build-info-extractor-nuget') {
+    apply plugin: 'java-test-fixtures'
+    description = 'JFrog Build-Info NuGet Extractor'
 
-                executable mvn
-                args allArgs
-
-                doFirst {
-                    assert project.compileGroovy.destinationDir.directory
-                    install.repositories.mavenInstaller.pom.writeTo(pom)
-                    assert pom.file, "[$pom.canonicalPath] was not generated"
-                    println "POM is generated at file:$pom.canonicalPath"
-
-                    pom.text = pom.text.
-                            replace('<groupId>unknown</groupId>', "<groupId>${project.group}</groupId>").
-                            replace('<artifactId>empty-project</artifactId>', "<artifactId>${project.name}</artifactId>").
-                            replace('<version>0</version>', """
-                                                                   |<version>${version}</version>
-                                                                   |  <packaging>maven-plugin</packaging>
-                                                                   |  <build>
-                                                                   |    <directory>${project.buildDir.canonicalPath}</directory>
-                                                                   |    <outputDirectory>${
-                                project.compileGroovy.destinationDir.canonicalPath
-                            }</outputDirectory>
-                                                                   |  </build>""".stripMargin().trim())
-
-                    println "Running '$mvn' with arguments $allArgs"
-                }
-                doLast {
-                    final pluginDescriptor = new File((File) project.compileGroovy.destinationDir, 'META-INF/maven/plugin.xml')
-                    assert pluginDescriptor.file, "[$pluginDescriptor.canonicalPath] was not created"
-                    println "Plugin descriptor file:$pluginDescriptor.canonicalPath is created"
-                }
-            }
-
-            /**
-             * We need to ensure all other sub-projects are installed for 'mvn' to find their artifacts
-             */
-            p.rootProject.subprojects.findAll { it.hasProperty('install') && (it.name != p.name) }.
-                    each { pluginDescriptor.dependsOn(it.install) }
-            p.jar.dependsOn(pluginDescriptor)
-
-        configure(install.repositories.mavenInstaller) {
-            pom.project {
-                issueManagement {
-                    system 'jira'
-                    url 'http://issues.jfrog.org/jira/browse/MAP'
-                }
-                repositories {
-                    for (String repoUrl in project.repositories*.url.toSet()) {
-                        repository {
-                            id repoUrl.toString().replaceAll(~/[^\w]/, '_')
-                            url repoUrl
-                        }
-                    }
-                }
-            }
-        }
-
-            test{
-                //Spock runs with JUnit
-                test.useJUnit()
-            }
+    dependencies {
+        testImplementation(testFixtures(project(':build-info-extractor')))
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+        compile group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: '2.11.1'
     }
 }
 
@@ -535,8 +489,4 @@ idea {
                 provider.node.component.first().appendNode('orderEntry', [type: 'library', name: 'Groovy', level: 'application'])
         }
     }
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.4'
 }

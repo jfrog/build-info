@@ -1,0 +1,7 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/*3.in"
+    }
+  ]
+}

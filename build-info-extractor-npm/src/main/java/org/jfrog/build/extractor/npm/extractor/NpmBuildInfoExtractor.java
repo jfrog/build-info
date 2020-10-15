@@ -8,6 +8,7 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -30,6 +31,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
+
 /**
  * @author Yahav Itzhak
  */
@@ -42,12 +45,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
+    private String npmProxy;
+    private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger) {
+    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger, String module) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
+        this.module = module;
     }
 
     @Override
@@ -62,13 +68,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         restoreNpmrc(workingDir);
 
         List<Dependency> dependencies = collectDependencies(workingDir);
-        return createBuild(dependencies);
+        String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
+        return createBuild(dependencies, moduleId);
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             setNpmAuth(dependenciesClient);
             setRegistryUrl(dependenciesClient, resolutionRepository);
+            setNpmProxy(dependenciesClient);
         }
         readPackageInfoFromPackageJson(workingDir);
         backupProjectNpmrc(workingDir);
@@ -84,6 +92,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             npmRegistry += "/";
         }
         npmRegistry += "api/npm/" + resolutionRepository;
+    }
+
+    private void setNpmProxy(ArtifactoryDependenciesClient dependenciesClient) {
+        ProxyConfiguration proxyConfiguration = dependenciesClient.getProxyConfiguration();
+        if (proxyConfiguration == null || StringUtils.isBlank(proxyConfiguration.host)) {
+            return;
+        }
+        npmProxy = "http://";
+        String username = proxyConfiguration.username;
+        String password = proxyConfiguration.password;
+        if (StringUtils.isNoneBlank(username) && StringUtils.isNotBlank(password)) {
+            npmProxy += username + ":" + password + "@";
+        }
+        npmProxy += proxyConfiguration.host + ":" + proxyConfiguration.port;
     }
 
     private void readPackageInfoFromPackageJson(Path workingDir) throws IOException {
@@ -116,6 +138,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
+        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
+        // We will get json output only if it was explicitly required in the installation arguments.
+        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(installationArgs)));
 
         // Save npm auth
         npmrcProperties.putAll(npmAuth);
@@ -123,6 +148,11 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         // Save registry
         npmrcProperties.setProperty("registry", npmRegistry);
         npmrcProperties.remove("metrics-registry");
+
+        // Save npm proxy
+        if (StringUtils.isNotBlank(npmProxy)) {
+            npmrcProperties.setProperty("proxy", npmProxy);
+        }
 
         // Write npmrc file
         StringBuilder stringBuffer = new StringBuilder();
@@ -133,6 +163,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             bufferedWriter.write(stringBuffer.toString());
             bufferedWriter.flush();
         }
+    }
+
+    /**
+     * Boolean argument can be provided in one of the following ways:
+     * 1. --arg - which infers true
+     * 2. --arg=value (true/false)
+     * 3. --arg value (true/false)
+     */
+    static boolean isJsonOutputRequired(List<String> installationArgs) {
+        int jsonIndex = installationArgs.indexOf("--json");
+        if (jsonIndex > -1) {
+            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
+        }
+        return installationArgs.contains("--json=true");
     }
 
     /**
@@ -150,7 +194,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private void runInstall(Path workingDir, List<String> installationArgs) throws IOException {
-        npmDriver.install(workingDir.toFile(), installationArgs);
+        logger.info(npmDriver.install(workingDir.toFile(), installationArgs, logger));
     }
 
     private void restoreNpmrc(Path workingDir) throws IOException {
@@ -176,12 +220,15 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private List<Dependency> collectDependencies(Path workingDir) throws Exception {
         Map<String, Dependency> dependencies = new ConcurrentHashMap<>();
         List<NpmScope> scopes = getNpmScopes();
-        for (NpmScope scope : scopes) {
-            List<String> extraListArgs = new ArrayList<>();
-            extraListArgs.add("--only=" + scope);
-            JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-            populateDependenciesMap(dependencies, scope, jsonNode);
+        if (scopes.isEmpty()) {
+            return new ArrayList<>();
         }
+        List<String> extraListArgs = new ArrayList<>();
+        if (scopes.size() == 1) {
+            extraListArgs.add("--only=" + scopes.get(0));
+        }
+        JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
+        populateDependenciesMap(dependencies, jsonNode);
 
         return new ArrayList<>(dependencies.values());
     }
@@ -210,8 +257,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return scopes;
     }
 
-    private Build createBuild(List<Dependency> dependencies) {
-        Module module = new ModuleBuilder().id(npmPackageInfo.toString()).dependencies(dependencies).build();
+    private Build createBuild(List<Dependency> dependencies, String moduleId) {
+        Module module = new ModuleBuilder().id(moduleId).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();
@@ -224,24 +271,21 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, NpmScope scope, JsonNode npmDependenciesTree) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, JsonNode npmDependenciesTree) throws Exception {
         // Set of packages that could not be found in Artifactory
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(scope, npmDependenciesTree);
-        try (ArtifactoryDependenciesClient client1 = dependenciesClientBuilder.build();
-             ArtifactoryDependenciesClient client2 = dependenciesClientBuilder.build();
-             ArtifactoryDependenciesClient client3 = dependenciesClientBuilder.build()
-        ) {
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(npmDependenciesTree);
+        try (ArtifactoryDependenciesClient client = dependenciesClientBuilder.build()) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new NpmExtractorConsumer(client1, dependencies, badPackages),
-                    new NpmExtractorConsumer(client2, dependencies, badPackages),
-                    new NpmExtractorConsumer(client3, dependencies, badPackages)
+                    new NpmExtractorConsumer(client, dependencies, badPackages),
+                    new NpmExtractorConsumer(client, dependencies, badPackages),
+                    new NpmExtractorConsumer(client, dependencies, badPackages)
             };
             // Create the deployment executor
-            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, 10);
+            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
             deploymentExecutor.start();
             if (!badPackages.isEmpty()) {
                 logger.info((Arrays.toString(badPackages.toArray())));

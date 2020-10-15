@@ -23,15 +23,15 @@ import org.gradle.api.GradleException;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
+import org.gradle.api.publish.PublicationArtifact;
 import org.gradle.api.publish.PublishingExtension;
+import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
-import org.gradle.api.publish.ivy.IvyArtifactSet;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.ivy.internal.publication.IvyPublicationInternal;
 import org.gradle.api.publish.ivy.internal.publisher.IvyNormalizedPublication;
 import org.gradle.api.publish.ivy.internal.publisher.IvyPublicationIdentity;
 import org.gradle.api.publish.maven.MavenArtifact;
-import org.gradle.api.publish.maven.MavenArtifactSet;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.publish.maven.internal.publication.MavenPublicationInternal;
 import org.gradle.api.publish.maven.internal.publisher.MavenNormalizedPublication;
@@ -48,7 +48,13 @@ import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Callable;
 
 
 /**
@@ -56,6 +62,8 @@ import java.util.*;
  */
 public class TaskHelperPublications extends TaskHelper {
     private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
+    public static final String MAVEN_JAVA = "mavenJava";
+    public static final String IVY_JAVA = "ivyJava";
     private Set<IvyPublication> ivyPublications = new HashSet<>();
     private Set<MavenPublication> mavenPublications = new HashSet<>();
     private Set<Object> publications = new HashSet<>();
@@ -74,8 +82,8 @@ public class TaskHelperPublications extends TaskHelper {
         for (Object publication : publications) {
             if (publication instanceof CharSequence) {
                 Publication publicationObj = getProject().getExtensions()
-                    .getByType(PublishingExtension.class)
-                    .getPublications().findByName(publication.toString());
+                        .getByType(PublishingExtension.class)
+                        .getPublications().findByName(publication.toString());
 
                 if (publicationObj != null) {
                     addPublication(publicationObj);
@@ -131,31 +139,37 @@ public class TaskHelperPublications extends TaskHelper {
         }
         for (IvyPublication ivyPublication : ivyPublications) {
             if (!(ivyPublication instanceof IvyPublicationInternal)) {
-                // TODO: Check how the output files can be extracted without using getPublishableFiles
                 log.warn("Ivy publication name '{}' is of unsupported type '{}'!",
                         ivyPublication.getName(), ivyPublication.getClass());
                 continue;
             }
-            dependsOn(((IvyPublicationInternal) ivyPublication).getPublishableFiles());
+            dependOn(ivyPublication);
             String capitalizedPublicationName = ivyPublication.getName().substring(0, 1).toUpperCase() + ivyPublication.getName().substring(1);
             dependsOn(String.format("%s:generateDescriptorFileFor%sPublication",
-                getProject().getPath(), capitalizedPublicationName));
+                    getProject().getPath(), capitalizedPublicationName));
         }
         // This makes the artifactoryPublish task to be depended on
         // the 'generate Pom file' task
         for (MavenPublication mavenPublication : mavenPublications) {
             if (!(mavenPublication instanceof MavenPublicationInternal)) {
-                // TODO: Check how the output files can be extracted without using getPublishableFiles
                 log.warn("Maven publication name '{}' is of unsupported type '{}'!",
-                    mavenPublication.getName(), mavenPublication.getClass());
+                        mavenPublication.getName(), mavenPublication.getClass());
                 continue;
             }
-            dependsOn(((MavenPublicationInternal) mavenPublication).getPublishableFiles());
+            dependOn(mavenPublication);
             String capitalizedPublicationName = mavenPublication.getName().substring(0, 1).toUpperCase() +
-                mavenPublication.getName().substring(1);
+                    mavenPublication.getName().substring(1);
             dependsOn(String.format("%s:generatePomFileFor%sPublication",
-                getProject().getPath(), capitalizedPublicationName));
+                    getProject().getPath(), capitalizedPublicationName));
         }
+    }
+
+    private void dependOn(Publication publication) {
+        // TODO: Check how we can find the artifact dependencies without using internal api's.
+        // Based on org.gradle.plugins.signing.Sign#sign
+        PublicationInternal<?> publicationInternal = (PublicationInternal<?>) publication;
+        dependsOn((Callable<Set<? extends PublicationArtifact>>) publicationInternal::getPublishableArtifacts);
+        publicationInternal.allPublishableArtifacts(this::dependsOn);
     }
 
     public void collectDescriptorsAndArtifactsForUpload() throws IOException {
@@ -188,19 +202,22 @@ public class TaskHelperPublications extends TaskHelper {
             Map<QName, String> extraInfo = ivyPublication.getDescriptor().getExtraInfo().asMap();
 
             // First adding the Ivy descriptor (if the build is configured to add it):
+            File ivyFile = getIvyDescriptorFile(ivyNormalizedPublication);
             if (isPublishIvy()) {
-                File file = getIvyDescriptorFile(ivyNormalizedPublication);
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(ivyFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, file);
+                            projectIdentity.getModule(), "xml", "ivy", null, extraInfo, ivyFile);
                     addIvyArtifactToDeployDetails(deployDetails, publicationName, projectIdentity, builder, artifactInfo);
                 }
             }
 
-            IvyArtifactSet artifacts = ivyPublication.getArtifacts();
+            // Second adding all artifacts, skipping the ivy file
+            Set<IvyArtifact> artifacts = ivyNormalizedPublication.getAllArtifacts();
             for (IvyArtifact artifact : artifacts) {
                 File file = artifact.getFile();
+                // Skip the ivy file
+                if (file.equals(ivyFile)) continue;
                 DeployDetails.Builder builder = createBuilder(file, publicationName);
                 if (builder == null) continue;
                 PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
@@ -222,29 +239,81 @@ public class TaskHelperPublications extends TaskHelper {
             MavenNormalizedPublication mavenNormalizedPublication = mavenPublicationInternal.asNormalisedPublication();
 
             // First adding the Maven descriptor (if the build is configured to add it):
+            File pomFile = mavenNormalizedPublication.getPomArtifact().getFile();
             if (isPublishMaven()) {
-                File file = mavenNormalizedPublication.getPomFile();
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
+                DeployDetails.Builder builder = createBuilder(pomFile, publicationName);
                 if (builder != null) {
                     PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                            mavenPublication.getArtifactId(), "pom", "pom", null, file);
+                            mavenPublication.getArtifactId(), "pom", "pom", null, pomFile);
                     addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
                 }
             }
 
-            MavenArtifactSet artifacts = mavenPublication.getArtifacts();
+            boolean legacy = false;
+            Set<MavenArtifact> artifacts;
+            try {
+                // Gradle 5.0 and above:
+                artifacts = mavenNormalizedPublication.getAdditionalArtifacts();
+                // Second adding the main artifact of the publication, if present
+                if (mavenNormalizedPublication.getMainArtifact() != null) {
+                    createPublishArtifactInfoAndAddToDeployDetails(mavenNormalizedPublication.getMainArtifact(), deployDetails, mavenPublication, publicationName);
+                }
+            } catch (NoSuchMethodError error) {
+                // Compatibility with older versions of Gradle:
+                artifacts = mavenNormalizedPublication.getAllArtifacts();
+                legacy = true;
+            }
+
+            // Third adding all additional artifacts - includes Gradle Module Metadata when produced
             for (MavenArtifact artifact : artifacts) {
-                File file = artifact.getFile();
-                DeployDetails.Builder builder = createBuilder(file, publicationName);
-                if (builder == null) continue;
-                PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
-                        mavenPublication.getArtifactId(), artifact.getExtension(),
-                        artifact.getExtension(), artifact.getClassifier(),
-                        file);
-                addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
+                if (legacy && artifact.getFile().equals(pomFile)) {
+                    // Need to skip the POM file for Gradle < 5.0
+                    continue;
+                }
+                createPublishArtifactInfoAndAddToDeployDetails(artifact, deployDetails, mavenPublication, publicationName);
             }
         }
         return deployDetails;
+    }
+
+    public void addDefaultPublications() {
+        if (!hasPublications()) {
+            if (publishPublicationsSpecified) {
+                log.warn("None of the specified publications matched for project '{}' - nothing to publish.",
+                        getProject().getPath());
+                return;
+            }
+            PublishingExtension publishingExtension = (PublishingExtension) getProject().getExtensions().findByName("publishing");
+            if (publishingExtension == null) {
+                log.warn("None of the specified publications matched for project '{}' - nothing to publish.",
+                        getProject().getPath());
+                return;
+            }
+            Publication mavenJavaPublication = publishingExtension.getPublications().findByName(MAVEN_JAVA);
+            if (mavenJavaPublication != null) {
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
+                        getProject().getPath(), MAVEN_JAVA);
+                addPublication(mavenJavaPublication);
+            }
+            Publication ivyJavaPublication = publishingExtension.getPublications().findByName(IVY_JAVA);
+            if (ivyJavaPublication != null) {
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
+                        getProject().getPath(), IVY_JAVA);
+                addPublication(ivyJavaPublication);
+            }
+            checkDependsOnArtifactsToPublish();
+        }
+    }
+
+    private void createPublishArtifactInfoAndAddToDeployDetails(MavenArtifact artifact, Set<GradleDeployDetails> deployDetails, MavenPublication mavenPublication, String publicationName) {
+        File file = artifact.getFile();
+        DeployDetails.Builder builder = createBuilder(file, publicationName);
+        if (builder == null) return;
+        PublishArtifactInfo artifactInfo = new PublishArtifactInfo(
+                mavenPublication.getArtifactId(), artifact.getExtension(),
+                artifact.getExtension(), artifact.getClassifier(),
+                file);
+        addMavenArtifactToDeployDetails(deployDetails, publicationName, builder, artifactInfo, mavenPublication);
     }
 
     private File getIvyDescriptorFile(IvyNormalizedPublication ivy) {
@@ -254,7 +323,7 @@ public class TaskHelperPublications extends TaskHelper {
             // Compatibility with older versions of Gradle:
             try {
                 Method m = ivy.getClass().getMethod("getDescriptorFile");
-                return (File)m.invoke(ivy);
+                return (File) m.invoke(ivy);
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -278,7 +347,9 @@ public class TaskHelperPublications extends TaskHelper {
                     " does not exist, and need to be published from publication " + publicationName);
         }
 
-        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder().file(file);
+        DeployDetails.Builder artifactBuilder = new DeployDetails.Builder()
+                .file(file)
+                .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
@@ -312,7 +383,7 @@ public class TaskHelperPublications extends TaskHelper {
                                                IvyPublicationIdentity projectIdentity, DeployDetails.Builder builder,
                                                PublishArtifactInfo artifactInfo) {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher == null) {
             return;
         }
@@ -330,34 +401,36 @@ public class TaskHelperPublications extends TaskHelper {
 
         // TODO: Gradle should support multi params
         Map<String, String> extraTokens = getExtraTokens(artifactInfo);
-        builder.artifactPath(IvyPatternHelper.substitute(
+        String artifactPath = IvyPatternHelper.substitute(
                 pattern, gid, projectIdentity.getModule(),
                 projectIdentity.getRevision(), artifactInfo.getName(), artifactInfo.getType(),
                 artifactInfo.getExtension(), publicationName,
-                extraTokens, null));
-        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo);
+                extraTokens, null);
+        builder.artifactPath(artifactPath);
+        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo, artifactPath);
     }
 
     private void addMavenArtifactToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
                                                  DeployDetails.Builder builder,
                                                  PublishArtifactInfo artifactInfo, MavenPublication mavenPublication) {
         Map<String, String> extraTokens = getExtraTokens(artifactInfo);
-        builder.artifactPath(IvyPatternHelper.substitute(
+        String artifactPath = IvyPatternHelper.substitute(
                 LayoutPatterns.M2_PATTERN, mavenPublication.getGroupId().replace(".", "/"),
                 mavenPublication.getArtifactId(),
                 mavenPublication.getVersion(),
                 artifactInfo.getName(), artifactInfo.getType(),
                 artifactInfo.getExtension(), publicationName,
-                extraTokens, null));
-        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo);
+                extraTokens, null);
+        builder.artifactPath(artifactPath);
+        addArtifactInfoToDeployDetails(deployDetails, publicationName, builder, artifactInfo, artifactPath);
     }
 
     private void addArtifactInfoToDeployDetails(Set<GradleDeployDetails> deployDetails, String publicationName,
-                                                DeployDetails.Builder builder, PublishArtifactInfo artifactInfo) {
+                                                DeployDetails.Builder builder, PublishArtifactInfo artifactInfo, String artifactPath) {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher != null) {
-            builder.targetRepository(publisher.getRepoKey());
+            builder.targetRepository(getTargetRepository(artifactPath, publisher));
             Map<String, String> propsToAdd = getPropsToAdd(artifactInfo, publicationName);
             builder.addProperties(propsToAdd);
             DeployDetails details = builder.build();

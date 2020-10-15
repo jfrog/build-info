@@ -5,7 +5,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
@@ -27,6 +26,8 @@ import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+
+import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
 /**
  * Created by diman on 24/08/2016.
@@ -62,7 +63,6 @@ public class SpecsHelper {
     /**
      * Upload artifacts according to a given spec, return a list describing the deployed items.
      *
-     *
      * @param uploadSpec      The required spec represented as String
      * @param workspace       File object that represents the workspace
      * @param buildProperties Upload properties
@@ -95,18 +95,16 @@ public class SpecsHelper {
                                                 ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
         Spec spec = this.getSpecFromString(uploadSpec, new UploadSpecValidator());
 
-        try (BuildInfoClientsArray clients = new BuildInfoClientsArray(numberOfThreads, clientBuilder)) {
-            // Build the buildInfoClient's
-            clients.buildBuildInfoClients();
+        try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
             // Create consumer Runnables
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[numberOfThreads];
-            for (int i = 0; i < clients.buildInfoClients.length; i++) {
-                consumerRunnables[i] = new SpecDeploymentConsumer(clients.buildInfoClients[i]);
+            for (int i = 0; i < numberOfThreads; i++) {
+                consumerRunnables[i] = new SpecDeploymentConsumer(client);
             }
             // Create the deployment executor
-            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, 10);
+            ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
 
             deploymentExecutor.start();
             Set<DeployDetails> deployedArtifacts = ((SpecDeploymentProducer) producerRunnable[0]).getDeployedArtifacts();
@@ -127,8 +125,8 @@ public class SpecsHelper {
      * The artifacts will be downloaded using the provided client.
      * In case of relative path the artifacts will be downloaded to the targetDirectory.
      *
-     * @param spec the spec to use for download.
-     * @param client the client to use for download.
+     * @param spec            the spec to use for download.
+     * @param client          the client to use for download.
      * @param targetDirectory the target directory in case of relative path in the spec
      * @return A list of the downloaded dependencies.
      * @throws IOException in case of IOException
@@ -184,7 +182,7 @@ public class SpecsHelper {
                 fileSpec.setPattern(fileSpec.getPattern().replaceAll(separator, "/"));
             }
             if (fileSpec.getExcludePatterns() != null) {
-                for (int i = 0 ; i < fileSpec.getExcludePatterns().length ; i ++) {
+                for (int i = 0; i < fileSpec.getExcludePatterns().length; i++) {
                     if (StringUtils.isNotBlank(fileSpec.getExcludePattern(i))) {
                         fileSpec.setExcludePattern(fileSpec.getExcludePattern(i).replaceAll(separator, "/"), i);
                     }
@@ -193,12 +191,9 @@ public class SpecsHelper {
         }
     }
 
-    public static String getExcludePatternsLogStr(String[] excludePatterns) {
-        return !ArrayUtils.isEmpty(excludePatterns) ? " with exclude patterns: " + Arrays.toString(excludePatterns) : "";
-    }
-
     /**
      * Builds a map representing Spec's properties
+     *
      * @param props Spec's properties
      * @return created properties map
      */
@@ -229,33 +224,10 @@ public class SpecsHelper {
                     .sha1(detail.getSha1())
                     .type(ext)
                     .localPath(detail.getFile().getAbsolutePath())
-                    .remotePath(detail.getTargetRepository() + detail.getArtifactPath())
+                    .remotePath(detail.getTargetRepository() + "/" + detail.getArtifactPath())
                     .build();
             result.add(artifactBuilder.build());
         }
         return result;
-    }
-
-    private class BuildInfoClientsArray implements AutoCloseable {
-        private ArtifactoryBuildInfoClientBuilder clientBuilder;
-        private ArtifactoryBuildInfoClient[] buildInfoClients;
-
-        private BuildInfoClientsArray(int numOfThreads, ArtifactoryBuildInfoClientBuilder clientBuilder) {
-            this.clientBuilder = clientBuilder;
-            this.buildInfoClients = new ArtifactoryBuildInfoClient[numOfThreads];
-        }
-
-        private void buildBuildInfoClients() {
-            for (int i = 0; i < buildInfoClients.length; i++) {
-                buildInfoClients[i] = clientBuilder.build();
-            }
-        }
-
-        @Override
-        public void close() {
-            for (ArtifactoryBuildInfoClient client : buildInfoClients) {
-                client.close();
-            }
-        }
     }
 }

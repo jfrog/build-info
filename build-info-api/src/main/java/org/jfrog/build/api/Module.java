@@ -130,8 +130,12 @@ public class Module extends BaseBuildBean {
     }
 
     private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
+        if (a == null && b == null) {
+            return null;
+        }
         return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
                 .flatMap(Collection::stream)
+                .distinct()
                 .collect(Collectors.toList());
     }
 

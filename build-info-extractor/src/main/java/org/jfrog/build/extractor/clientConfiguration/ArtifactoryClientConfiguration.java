@@ -29,10 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
@@ -42,8 +39,10 @@ import static org.jfrog.build.api.BuildInfoProperties.*;
 import static org.jfrog.build.api.IssuesTrackerFields.*;
 import static org.jfrog.build.api.LicenseControlFields.AUTO_DISCOVER;
 import static org.jfrog.build.api.LicenseControlFields.VIOLATION_RECIPIENTS;
+import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
+
 /**
  * @author freds
  */
@@ -52,7 +51,11 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
-    private final PrefixPropertyHandler root;
+    public final PackageManagerHandler packageManagerHandler;
+    public final PipHandler pipHandler;
+    public final DotnetHandler dotnetHandler;
+    public final DockerHandler dockerHandler;
+    public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
      */
@@ -65,6 +68,10 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
+        this.packageManagerHandler = new PackageManagerHandler();
+        this.pipHandler = new PipHandler();
+        this.dotnetHandler = new DotnetHandler();
+        this.dockerHandler = new DockerHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -79,6 +86,7 @@ public class ArtifactoryClientConfiguration {
 
     /**
      * Add properties to the client configuration.
+     *
      * @param props The properties to be added.
      */
     public void fillFromProperties(Properties props) {
@@ -87,16 +95,17 @@ public class ArtifactoryClientConfiguration {
 
     /**
      * Add properties to the client configuration, excluding specific properties, if they already exist in the client configuration.
-     * @param props The properties to be added to the client configuration.
-     * @param excludeIfAlreadyExists    A collection of property names which will not be added to the client configuration
-     *                                  if they already exist in it.
+     *
+     * @param props                  The properties to be added to the client configuration.
+     * @param excludeIfAlreadyExists A collection of property names which will not be added to the client configuration
+     *                               if they already exist in it.
      */
     public void fillFromProperties(Properties props, Set<String> excludeIfAlreadyExists) {
         for (Map.Entry<Object, Object> entry : props.entrySet()) {
             String key = (String) entry.getKey();
             if (excludeIfAlreadyExists == null ||
                     !excludeIfAlreadyExists.contains(key) || root.getStringValue(key) == null) {
-                root.setStringValue(key, (String)entry.getValue());
+                root.setStringValue(key, (String) entry.getValue());
             }
         }
     }
@@ -133,8 +142,8 @@ public class ArtifactoryClientConfiguration {
 
     public static Map<String, String> filterMapNullValues(Map<String, String> map) {
         Map<String, String> result = new HashMap<String, String>();
-        for (Map.Entry<String, String> entry: map.entrySet()) {
-            if(StringUtils.isNotBlank(entry.getValue())) {
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            if (StringUtils.isNotBlank(entry.getValue())) {
                 result.put(entry.getKey(), entry.getValue());
             }
         }
@@ -171,6 +180,10 @@ public class ArtifactoryClientConfiguration {
 
     public Integer getConnectionRetries() {
         return root.getIntegerValue(PROP_CONNECTION_RETRIES);
+    }
+
+    public boolean getInsecureTls() {
+        return root.getBooleanValue(PROP_INSECURE_TLS, false);
     }
 
     public Integer getSocketTimeout() {
@@ -327,28 +340,12 @@ public class ArtifactoryClientConfiguration {
             setStringValue(SNAPSHOT_REPO_KEY, repoKey);
         }
 
-        public String getAggregateArtifacts() {
-            return getStringValue(AGGREGATE_ARTIFACTS);
+        public String getReleaseRepoKey() {
+            return getStringValue(RELEASE_REPO_KEY);
         }
 
-        public void setAggregateArtifacts(String path) {
-            setStringValue(AGGREGATE_ARTIFACTS, path);
-        }
-
-        public void setCopyAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(COPY_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public void setPublishAggregatedArtifacts(Boolean enabled) {
-            setBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, enabled);
-        }
-
-        public Boolean isCopyAggregatedArtifacts() {
-            return getBooleanValue(COPY_AGGREGATED_ARTIFACTS, false);
-        }
-
-        public Boolean isPublishAggregatedArtifacts() {
-            return getBooleanValue(PUBLISH_AGGREGATED_ARTIFACTS, false);
+        public void setReleaseRepoKey(String repoKey) {
+            setStringValue(RELEASE_REPO_KEY, repoKey);
         }
 
         public void setPublishArtifacts(Boolean enabled) {
@@ -365,6 +362,14 @@ public class ArtifactoryClientConfiguration {
 
         public Boolean isPublishBuildInfo() {
             return getBooleanValue(PUBLISH_BUILD_INFO, true);
+        }
+
+        public void setPublishForkCount(int value) {
+            setIntegerValue(PUBLISH_FORK_COUNT, value);
+        }
+
+        public Integer getPublishForkCount() {
+            return getIntegerValue(PUBLISH_FORK_COUNT, DEFAULT_DEPLOYMENT_THREADS);
         }
 
         public boolean isRecordAllDependencies() {
@@ -428,6 +433,14 @@ public class ArtifactoryClientConfiguration {
         public void setArtifactSpecs(String artifactSpecs) {
             setStringValue(ARTIFACT_SPECS, artifactSpecs);
         }
+
+        public String getPublications() {
+            return getStringValue(PUBLICATIONS);
+        }
+
+        public void setPublications(String publications) {
+            setStringValue(PUBLICATIONS, publications);
+        }
     }
 
     public class ProxyHandler extends AuthenticationConfiguration {
@@ -451,6 +464,89 @@ public class ArtifactoryClientConfiguration {
 
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
+        }
+    }
+
+    // Used by other build tools (npm, pip...).
+    public class PackageManagerHandler extends PrefixPropertyHandler {
+
+        public PackageManagerHandler() {
+            super(root, PROP_PACKAGE_MANAGER_PREFIX);
+        }
+
+        public String getArgs() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_ARGS);
+        }
+
+        public void setArgs(String packageManagerArgs) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_ARGS, packageManagerArgs);
+        }
+
+        public String getPath() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_PATH);
+        }
+
+        public void setPath(String packageManagerPath) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_PATH, packageManagerPath);
+        }
+
+        public String getModule() {
+            return rootConfig.getStringValue(PACKAGE_MANAGER_MODULE);
+        }
+
+        public void setModule(String packageManagerModule) {
+            rootConfig.setStringValue(PACKAGE_MANAGER_MODULE, packageManagerModule);
+        }
+    }
+
+    public class PipHandler extends PrefixPropertyHandler {
+
+        public PipHandler() {
+            super(root, PROP_PIP_PREFIX);
+        }
+
+        public String getEnvActivation() {
+            return rootConfig.getStringValue(PIP_ENV_ACTIVATION);
+        }
+
+        public void setEnvActivation(String envActivation) {
+            rootConfig.setStringValue(PIP_ENV_ACTIVATION, envActivation);
+        }
+    }
+
+    public class DotnetHandler extends PrefixPropertyHandler {
+        public DotnetHandler() {
+            super(root, PROP_DOTNET_PREFIX);
+        }
+
+        public boolean useDotnetCoreCli() {
+            return rootConfig.getBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, false);
+        }
+
+        public void setUseDotnetCli(boolean useDotnetCli) {
+            rootConfig.setBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, useDotnetCli);
+        }
+    }
+
+    public class DockerHandler extends PrefixPropertyHandler {
+        public DockerHandler() {
+            super(root, PROP_DOCKER_PREFIX);
+        }
+
+        public String getImageTag() {
+            return rootConfig.getStringValue(DOCKER_IMAGE_TAG);
+        }
+
+        public void setImageTag(String imageTag) {
+            rootConfig.setStringValue(DOCKER_IMAGE_TAG, imageTag);
+        }
+
+        public String getHost() {
+            return rootConfig.getStringValue(DOCKER_HOST);
+        }
+
+        public void setHost(String host) {
+            rootConfig.setStringValue(DOCKER_HOST, host);
         }
     }
 
@@ -914,10 +1010,13 @@ public class ArtifactoryClientConfiguration {
             setStringValue(PRINCIPAL, principal);
         }
 
-        public String getArtifactoryPluginVersion(){ return getStringValue(ARTIFACTORY_PLUGIN_VERSION);}
+        public String getArtifactoryPluginVersion() {
+            return getStringValue(ARTIFACTORY_PLUGIN_VERSION);
+        }
 
         public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
-            setStringValue(ARTIFACTORY_PLUGIN_VERSION, artifactoryPluginVersion);}
+            setStringValue(ARTIFACTORY_PLUGIN_VERSION, artifactoryPluginVersion);
+        }
 
         public String getBuildUrl() {
             return getStringValue(BUILD_URL);
@@ -1085,8 +1184,18 @@ public class ArtifactoryClientConfiguration {
             setStringValue(DEPLOYABLE_ARTIFACTS, deployableArtifacts);
         }
 
+        @Deprecated
+        public void setBackwardCompatibleDeployableArtifactsFilePath(String deployableArtifacts) {
+            setStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS, deployableArtifacts);
+        }
+
         public String getDeployableArtifactsFilePath() {
-            return getStringValue(DEPLOYABLE_ARTIFACTS);
+            String path = getStringValue(DEPLOYABLE_ARTIFACTS);
+            return StringUtils.isNotEmpty(path) ? path : getStringValue(BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS);
+        }
+
+        public boolean isBackwardCompatibleDeployableArtifacts() {
+            return StringUtils.isEmpty(getStringValue(DEPLOYABLE_ARTIFACTS));
         }
 
         public void addBuildVariables(Map<String, String> buildVariables, IncludeExcludePatterns patterns) {
@@ -1104,8 +1213,8 @@ public class ArtifactoryClientConfiguration {
         }
 
         /*
-        * Use for Multi-configuration/Matrix builds
-        */
+         * Use for Multi-configuration/Matrix builds
+         */
         public void addRunParameters(String key, String value) {
             setStringValue(RUN_PARAMETERS + key, value);
         }

@@ -1,0 +1,2 @@
+- [ ] All [tests](https://ci.appveyor.com/project/jfrog-ecosystem/build-info) passed. If this feature is not already covered by the tests, I added new tests.
+-----
