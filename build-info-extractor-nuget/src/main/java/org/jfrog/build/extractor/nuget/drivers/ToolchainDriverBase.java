@@ -69,7 +69,7 @@ abstract public class ToolchainDriverBase implements Serializable {
                 .setHost(rtUrl.getHost())
                 .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo);
         int port = rtUrl.getPort();
-        if (port != 0){
+        if (port != -1){
             sourceUrlBuilder.setPort(port);
         }
         return sourceUrlBuilder.build().toURL().toString();
