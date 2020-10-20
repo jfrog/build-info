@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
@@ -17,6 +16,7 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -49,7 +49,7 @@ public class ArtifactoryEclipseResolversHelper {
      */
     List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories == null) {
-            List<RemoteRepository> tempRepositories = Lists.newArrayList();
+            List<RemoteRepository> tempRepositories = new ArrayList<>();
             initResolutionHelper(session);
 
             String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
@@ -114,7 +114,7 @@ public class ArtifactoryEclipseResolversHelper {
 
     List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
         if (resolutionPluginRepositories == null) {
-            List<ArtifactRepository> tempRepositories = Lists.newArrayList();
+            List<ArtifactRepository> tempRepositories = new ArrayList<>();
             initResolutionHelper(session);
 
             String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();

@@ -6,7 +6,6 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenc
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 class ArtifactorySearcher {

@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
@@ -12,6 +11,7 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
 
 import javax.inject.Named;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -98,7 +98,7 @@ public class ArtifactorySonatypeResolversHelper {
                 releaseRepository.setPolicy(true, snapshotPolicy);
             }
 
-            List<RemoteRepository> tempRepositories = Lists.newArrayList();
+            List<RemoteRepository> tempRepositories = new ArrayList<>();
             if (releaseRepository != null) {
                 tempRepositories.add(releaseRepository);
             }

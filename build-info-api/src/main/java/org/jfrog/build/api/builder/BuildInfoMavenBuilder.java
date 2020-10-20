@@ -16,11 +16,10 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
+import org.jfrog.build.api.util.CommonUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -361,11 +360,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     private Artifact findArtifact(List<Artifact> existingArtifacts, final String artifactKey) {
-        return Iterables.find(existingArtifacts, new Predicate<Artifact>() {
-            public boolean apply(Artifact input) {
-                return input.getName().equals(artifactKey);
-            }
-        }, null);
+        return CommonUtils.getFirstSatisfying(existingArtifacts, input -> input.getName().equals(artifactKey), null);
     }
 
     private void mergeModuleDependencies(Module existingModule, Module moduleToMerge) {
@@ -393,11 +388,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     private Dependency findDependency(List<Dependency> existingDependencies, final String dependencyId) {
-        return Iterables.find(existingDependencies, new Predicate<Dependency>() {
-            public boolean apply(Dependency input) {
-                return input.getId().equals(dependencyId);
-            }
-        }, null);
+        return CommonUtils.getFirstSatisfying(existingDependencies, input -> input.getId().equals(dependencyId), null);
     }
 
 }

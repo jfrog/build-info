@@ -21,10 +21,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -41,6 +37,7 @@ import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.release.BintrayUploadInfoOverride;
 import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.api.release.Promotion;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.*;
@@ -122,14 +119,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public List<String> getLocalAndCacheRepositoriesKeys() throws IOException {
         List<String> localRepositoriesKeys = getLocalRepositoriesKeys();
         List<String> remoteRepositories = getRemoteRepositoriesKeys();
-        List<String> cacheRepositories = Lists.transform(remoteRepositories, new Function<String, String>() {
-            @Override
-            public String apply(String repoKey) {
-                return repoKey + "-cache";
-            }
-        });
+        List<String> cacheRepositories = CommonUtils.transformList(remoteRepositories, repoKey -> repoKey + "-cache");
 
-        return Lists.newArrayList(Iterables.concat(localRepositoriesKeys, cacheRepositories));
+        return CommonUtils.concatLists(localRepositoriesKeys, cacheRepositories);
     }
 
     /**
@@ -541,7 +533,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 }
             }
         }
-        return Maps.newHashMap();
+        return new HashMap<>();
     }
 
     public HttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
@@ -578,7 +570,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 }
             }
         }
-        return Maps.newHashMap();
+        return new HashMap<>();
     }
 
     public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
@@ -786,9 +778,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     private Map<String, String> getChecksumMap(DeployDetails details) throws IOException {
-        Map<String, String> checksums = Maps.newHashMap();
+        Map<String, String> checksums = new HashMap<>();
 
-        List<String> checksumTypeList = Lists.newArrayList();
+        List<String> checksumTypeList = new ArrayList<>();
 
         if (StringUtils.isBlank(details.getMd5())) {
             checksumTypeList.add("MD5");

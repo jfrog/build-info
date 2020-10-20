@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -26,10 +24,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SearchBasedSpecValidator;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -76,7 +71,7 @@ public class DependenciesDownloaderHelper {
         ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.getClient(), log);
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
-        List<Dependency> resolvedDependencies = Lists.newArrayList();
+        List<Dependency> resolvedDependencies = new ArrayList<>();
         new SearchBasedSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
@@ -112,7 +107,7 @@ public class DependenciesDownloaderHelper {
      * Converts the found results to DownloadableArtifact types before downloading.
      */
     private Set<DownloadableArtifact> fetchDownloadableArtifactsFromResult(List<AqlSearchResult.SearchEntry> searchResults, boolean explode, String target) {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
             String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
             DownloadableArtifact downloadableArtifact = new DownloadableArtifact(StringUtils.stripEnd(downloader.getClient().getArtifactoryUrl(), "/") + "/" +
@@ -125,8 +120,8 @@ public class DependenciesDownloaderHelper {
 
     public List<Dependency> downloadDependencies(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
         log.info("Beginning to resolve Build Info published dependencies.");
-        List<Dependency> dependencies = Lists.newArrayList();
-        Set<DownloadableArtifact> downloadedArtifacts = Sets.newHashSet();
+        List<Dependency> dependencies = new ArrayList<>();
+        Set<DownloadableArtifact> downloadedArtifacts = new HashSet<>();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             Dependency dependency = downloadArtifact(downloadableArtifact);
             if (dependency != null) {
@@ -157,8 +152,8 @@ public class DependenciesDownloaderHelper {
     }
 
     private void removeUnusedArtifactsFromLocal(Set<DownloadableArtifact> downloadableArtifacts) throws IOException {
-        Set<String> forDeletionFiles = Sets.newHashSet();
-        Set<String> allResolvesFiles = Sets.newHashSet();
+        Set<String> forDeletionFiles = new HashSet<>();
+        Set<String> allResolvesFiles = new HashSet<>();
         for (DownloadableArtifact downloadableArtifact : downloadableArtifacts) {
             String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
                     downloadableArtifact.getRelativeDirPath());

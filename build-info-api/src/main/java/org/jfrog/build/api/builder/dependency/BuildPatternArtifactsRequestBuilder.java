@@ -16,10 +16,10 @@
 
 package org.jfrog.build.api.builder.dependency;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.Pattern;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public class BuildPatternArtifactsRequestBuilder {
         private List<Pattern> patterns;
 
     public BuildPatternArtifactsRequestBuilder() {
-        patterns = Lists.newArrayList();
+        patterns = new ArrayList<>();
     }
 
     public BuildPatternArtifactsRequest build(){

@@ -1,7 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
-import com.google.common.collect.Sets;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -13,7 +11,6 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -40,8 +37,8 @@ import java.util.concurrent.*;
 public class DeployTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(DeployTask.class);
-    
-    private List<ModuleInfoFileProducer> moduleInfoFileProducers = Lists.newArrayList();
+
+    private List<ModuleInfoFileProducer> moduleInfoFileProducers = new ArrayList<>();
 
     @TaskAction
     public void taskAction() throws IOException {
@@ -191,7 +188,7 @@ public class DeployTask extends DefaultTask {
                     }
 
                     if (!artifactoryTask.deployDetails.isEmpty()) {
-                        Set<DeployDetails> deployDetailsSet = Sets.newLinkedHashSet();
+                        Set<DeployDetails> deployDetailsSet = new LinkedHashSet<>();
                         for (GradleDeployDetails details : artifactoryTask.deployDetails) {
                             deployDetailsSet.add(details.getDeployDetails());
                         }

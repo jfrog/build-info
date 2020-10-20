@@ -15,14 +15,14 @@
 
 package org.jfrog.build.extractor.release;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import org.apache.commons.io.IOUtils;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.EolDetectingInputStream;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
@@ -89,7 +89,7 @@ public class PropertiesTransformer {
         if (modified) {
             propertiesFile.delete();
             String toWrite = resultBuilder.toString();
-            Files.write(toWrite, propertiesFile, Charsets.UTF_8);
+            CommonUtils.writeByCharset(toWrite, propertiesFile, StandardCharsets.UTF_8);
         }
 
         return modified;

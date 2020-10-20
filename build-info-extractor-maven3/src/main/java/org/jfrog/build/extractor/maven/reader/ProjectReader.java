@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.reader;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
@@ -9,6 +8,7 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,7 +38,7 @@ public class ProjectReader {
      * @throws IOException Thrown in case of an error occurring while reading the pom.
      */
     public Map<ModuleName, File> read() throws IOException {
-        Map<ModuleName, File> result = Maps.newHashMap();
+        Map<ModuleName, File> result = new HashMap<>();
         readRecursive(result, rootPom);
         return result;
     }

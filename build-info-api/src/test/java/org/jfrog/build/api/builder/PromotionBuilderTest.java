@@ -1,11 +1,12 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.Promotion;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -35,8 +36,8 @@ public class PromotionBuilderTest {
     }
 
     public void testNormalValues() {
-        Set<String> scopes = Sets.newHashSet();
-        Map<String, Collection<String>> properties = Maps.newHashMap();
+        Set<String> scopes = new HashSet<>();
+        Map<String, Collection<String>> properties = new HashMap<>();
 
         Promotion promotion = new PromotionBuilder().status(Promotion.ROLLED_BACK).comment("comment").ciUser("ciUser").
                 timestamp("timestamp").dryRun(true).targetRepo("targetRepo").sourceRepo("sourceRepo").copy(false).
@@ -74,9 +75,9 @@ public class PromotionBuilderTest {
     }
 
     public void testAddScopesAndPropertiesToExistingCollections() {
-        Set<String> initialScopes = Sets.newHashSet("koko");
-        Map<String, Collection<String>> initialProperties = Maps.newHashMap();
-        initialProperties.put("momo", Sets.<String>newHashSet("popo"));
+        Set<String> initialScopes = CommonUtils.newHashSet("koko");
+        Map<String, Collection<String>> initialProperties = new HashMap<>();
+        initialProperties.put("momo", CommonUtils.newHashSet("popo"));
 
         Promotion build = new PromotionBuilder().properties(initialProperties).addProperty("jojo", "lolo").
                 scopes(initialScopes).addScope("bobo").build();

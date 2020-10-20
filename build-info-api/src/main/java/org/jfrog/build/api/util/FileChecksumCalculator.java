@@ -16,13 +16,12 @@
 
 package org.jfrog.build.api.util;
 
-import com.google.common.collect.Maps;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -66,7 +65,7 @@ public abstract class FileChecksumCalculator {
         }
 
         if (algorithms.length == 0) {
-            return Maps.newHashMap();
+            return new HashMap<>();
         }
 
         return calculate(fileToCalculate, algorithms);
@@ -85,8 +84,8 @@ public abstract class FileChecksumCalculator {
      */
     private static Map<String, String> calculate(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
-        Map<String, MessageDigest> digestMap = Maps.newHashMap();
-        Map<String, String> checksumMap = Maps.newHashMap();
+        Map<String, MessageDigest> digestMap = new HashMap<>();
+        Map<String, String> checksumMap = new HashMap<>();
 
         for (String algorithm : algorithms) {
             digestMap.put(algorithm, MessageDigest.getInstance(algorithm));

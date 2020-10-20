@@ -1,9 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -11,13 +7,12 @@ import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.dependency.pattern.BuildDependencyPattern;
 import org.jfrog.build.api.dependency.pattern.DependencyPattern;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Helper class for parsing custom resolved dependencies
@@ -55,7 +50,7 @@ public class AntPatternsDependenciesHelper {
 
     private Set<DownloadableArtifact> collectArtifactsToDownload(List<String> patternLines)
             throws IOException, InterruptedException {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         for (String patternLine : patternLines) {
             DependencyPattern dependencyPattern = PatternFactory.create(patternLine);
             if (!(dependencyPattern instanceof BuildDependencyPattern)) {
@@ -82,7 +77,7 @@ public class AntPatternsDependenciesHelper {
     }
 
     private Set<DownloadableArtifact> performPropertySearch(DependencyPattern dependencyPattern) throws IOException {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         String pattern = dependencyPattern.getPattern();
         String matrixParams = dependencyPattern.getMatrixParams();
         PropertySearchResult propertySearchResult = downloader.getClient().searchArtifactsByProperties(matrixParams);
@@ -101,16 +96,11 @@ public class AntPatternsDependenciesHelper {
     private List<PropertySearchResult.SearchEntry> filterResultEntries(List<PropertySearchResult.SearchEntry> results,
                                                                        String pattern) {
         final String patternStr = pattern.replaceFirst(":", "/");
-        return Lists.newArrayList(Iterables.filter(results, new Predicate<PropertySearchResult.SearchEntry>() {
-            @Override
-            public boolean apply(PropertySearchResult.SearchEntry input) {
-                return PatternMatcher.match(patternStr, input.getRepoPath(), false);
-            }
-        }));
+        return new ArrayList<>(CommonUtils.filterCollection(results, result -> PatternMatcher.match(patternStr, result.getRepoPath(),false)));
     }
 
     private Set<DownloadableArtifact> performPatternSearch(DependencyPattern dependencyPattern) throws IOException {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         String pattern = dependencyPattern.getPattern();
         PatternResultFileSet fileSet = downloader.getClient().searchArtifactsByPattern(pattern);
         Set<String> filesToDownload = fileSet.getFiles();

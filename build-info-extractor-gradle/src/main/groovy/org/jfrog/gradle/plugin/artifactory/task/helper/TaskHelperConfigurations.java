@@ -16,8 +16,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.tools.ant.util.FileUtils;
@@ -45,10 +43,7 @@ import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Fred Simon
@@ -217,13 +212,13 @@ public class TaskHelperConfigurations extends TaskHelper {
 
     protected Set<GradleDeployDetails> getArtifactDeployDetails() {
 
-        Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
+        Set<GradleDeployDetails> deployDetails = new LinkedHashSet<>();
         if (!hasConfigurations()) {
             log.info("No configurations to publish for project '{}'.", getProject().getPath());
             return deployDetails;
         }
 
-        Set<String> processedFiles = Sets.newHashSet();
+        Set<String> processedFiles = new HashSet<>();
         for (Configuration configuration : publishConfigurations) {
             PublishArtifactSet artifacts = configuration.getAllArtifacts();
             for (PublishArtifact artifact : artifacts) {
@@ -399,7 +394,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         }
 
         String revision = getProject().getVersion().toString();
-        Map<String, String> extraTokens = Maps.newHashMap();
+        Map<String, String> extraTokens = new HashMap<>();
         if (StringUtils.isNotBlank(artifact.getClassifier())) {
             extraTokens.put("classifier", artifact.getClassifier());
         }

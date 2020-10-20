@@ -16,12 +16,12 @@
 
 package org.jfrog.build.api.builder.dependency;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.PatternResult;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -37,7 +37,7 @@ public class BuildPatternArtifactsBuilder {
     private List<PatternResult> patternResults;
 
     public BuildPatternArtifactsBuilder() {
-        patternResults = Lists.newArrayList();
+        patternResults = new ArrayList<>();
     }
 
     public BuildPatternArtifacts build() {

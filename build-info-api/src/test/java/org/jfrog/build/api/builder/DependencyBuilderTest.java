@@ -16,11 +16,11 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -57,11 +57,11 @@ public class DependencyBuilderTest {
     public void testBuilderSetters() {
         String id = "moo";
         String type = "bob";
-        Set<String> scopes = Sets.newHashSet("mitzi");
+        Set<String> scopes = CommonUtils.newHashSet("mitzi");
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        List<String> requiredBy = Lists.newArrayList("pitzi");
+        List<String> requiredBy = Collections.singletonList("pitzi");
         Properties properties = new Properties();
 
         Dependency dependency = new DependencyBuilder().id(id).type(type).scopes(scopes).sha1(sha1).md5(md5).sha256(sha256)

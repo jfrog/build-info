@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -10,6 +9,7 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -80,7 +80,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             this.targetDir = targetDir;
             this.name = name;
             this.version = version;
-            this.dependencies = Sets.newHashSet(dependencies);
+            this.dependencies = CommonUtils.newHashSet(dependencies);
         }
 
         private String getModuleId() {

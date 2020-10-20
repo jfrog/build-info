@@ -1,9 +1,8 @@
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
 import java.text.ParseException;
@@ -65,7 +64,7 @@ public class BuildInfoMavenBuilderTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        List<Module> modules = Lists.newArrayList();
+        List<Module> modules = new ArrayList<>();
         Properties properties = new Properties();
 
         Build build = new BuildInfoBuilder(name).started("test").version(version).number(number)
@@ -188,12 +187,12 @@ public class BuildInfoMavenBuilderTest {
      */
     public void testDuplicateModuleDependencies() {
         ModuleBuilder module1 = new ModuleBuilder().id("id");
-        module1.addDependency(new DependencyBuilder().id("dep1").scopes(Sets.newHashSet("compile")).build());
-        module1.addDependency(new DependencyBuilder().id("dep2").scopes(Sets.newHashSet("compile")).build());
+        module1.addDependency(new DependencyBuilder().id("dep1").scopes(CommonUtils.newHashSet("compile")).build());
+        module1.addDependency(new DependencyBuilder().id("dep2").scopes(CommonUtils.newHashSet("compile")).build());
 
         ModuleBuilder module2 = new ModuleBuilder().id("id");
-        module2.addDependency(new DependencyBuilder().id("dep1").scopes(Sets.newHashSet("compile", "test")).build());
-        module2.addDependency(new DependencyBuilder().id("dep2").scopes(Sets.newHashSet("compile", "test")).build());
+        module2.addDependency(new DependencyBuilder().id("dep1").scopes(CommonUtils.newHashSet("compile", "test")).build());
+        module2.addDependency(new DependencyBuilder().id("dep2").scopes(CommonUtils.newHashSet("compile", "test")).build());
 
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());

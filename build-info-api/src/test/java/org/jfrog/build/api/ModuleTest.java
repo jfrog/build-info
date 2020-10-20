@@ -16,9 +16,9 @@
 
 package org.jfrog.build.api;
 
-import com.google.common.collect.Lists;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.testng.Assert.*;
@@ -47,8 +47,8 @@ public class ModuleTest {
      */
     public void testSetters() {
         String id = "moo";
-        List<Artifact> artifacts = Lists.newArrayList();
-        List<Dependency> dependencies = Lists.newArrayList();
+        List<Artifact> artifacts = new ArrayList<>();
+        List<Dependency> dependencies = new ArrayList<>();
 
         Module module = new Module();
         module.setId(id);

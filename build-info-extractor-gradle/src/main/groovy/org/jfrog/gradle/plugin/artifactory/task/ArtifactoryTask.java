@@ -1,9 +1,7 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
@@ -30,9 +28,11 @@ import org.jfrog.gradle.plugin.artifactory.task.helper.TaskHelperPublications;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Lior Hasson
@@ -47,17 +47,17 @@ public class ArtifactoryTask extends DefaultTask {
     private boolean evaluated = false;
 
     private static final Logger log = Logging.getLogger(ArtifactoryTask.class);
-    private final Map<String, Boolean> flags = Maps.newHashMap();
+    private final Map<String, Boolean> flags = new HashMap<>();
 
     public File ivyDescriptor;
 
     public File mavenDescriptor;
 
-    public Set<Configuration> publishConfigs = Sets.newHashSet();
+    public Set<Configuration> publishConfigs = new HashSet<>();
 
-    public Set<IvyPublication> ivyPublications = Sets.newHashSet();
+    public Set<IvyPublication> ivyPublications = new HashSet<>();
 
-    public Set<MavenPublication> mavenPublications = Sets.newHashSet();
+    public Set<MavenPublication> mavenPublications = new HashSet<>();
 
     private boolean ciServerBuild = false;
     public TaskHelperConfigurations helperConfigurations = new TaskHelperConfigurations(this);
@@ -162,7 +162,7 @@ public class ArtifactoryTask extends DefaultTask {
         this.ciServerBuild = true;
     }
 
-    public final Set<GradleDeployDetails> deployDetails = Sets.newTreeSet();
+    public final Set<GradleDeployDetails> deployDetails = new TreeSet<>();
 
     private final Multimap<String, CharSequence> properties = ArrayListMultimap.create();
 

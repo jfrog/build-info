@@ -15,13 +15,12 @@
  */
 package org.jfrog.build.extractor.clientConfiguration;
 
-import com.google.common.base.Predicate;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Maps;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.*;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 
@@ -32,6 +31,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.function.Predicate;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.api.BuildInfoFields.*;
@@ -759,7 +759,7 @@ public class ArtifactoryClientConfiguration {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
-            Map<String, String> result = Maps.newHashMap();
+            Map<String, String> result = new HashMap<>();
             String matrixPrefix = getMatrixParamPrefix();
             for (Map.Entry<String, String> entry : props.entrySet()) {
                 if (entry.getKey().startsWith(matrixPrefix)) {
@@ -962,16 +962,8 @@ public class ArtifactoryClientConfiguration {
 
         public BuildInfoHandler() {
             super(root, BUILD_INFO_PREFIX);
-            buildVariablesPredicate = new Predicate<String>() {
-                public boolean apply(String input) {
-                    return input.startsWith(BUILD_INFO_PREFIX + ENVIRONMENT_PREFIX);
-                }
-            };
-            buildRunParametersPredicate = new Predicate<String>() {
-                public boolean apply(String input) {
-                    return input.startsWith(BUILD_INFO_PREFIX + RUN_PARAMETERS);
-                }
-            };
+            buildVariablesPredicate = input -> input.startsWith(BUILD_INFO_PREFIX + ENVIRONMENT_PREFIX);
+            buildRunParametersPredicate = input -> input.startsWith(BUILD_INFO_PREFIX + RUN_PARAMETERS);
         }
 
         public String getBuildName() {
@@ -1228,8 +1220,8 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Map<String, String> getRunParameters() {
-            Map<String, String> tempMap = Maps.filterKeys(props, buildRunParametersPredicate);
-            Map<String, String> runParameters = Maps.newHashMap();
+            Map<String, String> tempMap = CommonUtils.filterMapKeys(props, buildRunParametersPredicate);
+            Map<String, String> runParameters = new HashMap<>();
             for (Map.Entry<String, String> param : tempMap.entrySet()) {
                 runParameters.put(param.getKey().replace(BUILD_INFO_PREFIX + RUN_PARAMETERS, StringUtils.EMPTY),
                         param.getValue());
