@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.nuget.drivers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;

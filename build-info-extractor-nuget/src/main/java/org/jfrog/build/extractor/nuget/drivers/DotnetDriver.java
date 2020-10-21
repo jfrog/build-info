@@ -36,7 +36,7 @@ public class DotnetDriver extends ToolchainDriverBase {
         List<String> args = new ArrayList<>();
         args.add(GLOBAL_PACKAGES_ARG);
         args.add(getFlagSyntax(LIST_FLAG));
-        String output = runCommand(new String[]{"nuget", LOCALS_ARG, }, args);
+        String output = runCommand(new String[]{"nuget", LOCALS_ARG,}, args);
         return output.replaceFirst(GLOBAL_PACKAGES_REGEX, "").trim();
     }
 
