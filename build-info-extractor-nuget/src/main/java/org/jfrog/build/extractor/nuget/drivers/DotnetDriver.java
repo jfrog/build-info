@@ -27,7 +27,7 @@ public class DotnetDriver extends ToolchainDriverBase {
             extraArgs.addAll(Arrays.asList(FLAG_PREFIX + CONFIG_FILE_FLAG, configPath, FLAG_PREFIX + NAME_FLAG, sourceName, FLAG_PREFIX + USERNAME_FLAG, username, FLAG_PREFIX + PASSWORD_FLAG, password, CLEAR_TEXT_PASSWORD_FLAG));
             return runCommand(new String[]{"nuget", "add", "source", sourceUrl}, extraArgs);
         } catch (Exception e) {
-            throw new IOException("dotnet nuget add source failed: " + e.getMessage() + ". Validate .NET Core 3.1.200 SDK  or above is installed.", e);
+            throw new IOException("dotnet nuget add source failed: " + e.getMessage() + ". Please make sure .NET Core 3.1.200 SDK or above is installed.", e);
         }
     }
 

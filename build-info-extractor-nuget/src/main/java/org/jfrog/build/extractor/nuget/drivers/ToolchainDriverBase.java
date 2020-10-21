@@ -35,7 +35,6 @@ abstract public class ToolchainDriverBase implements Serializable {
     private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
     private static final long serialVersionUID = 1L;
 
-    protected static ObjectReader jsonReader = new ObjectMapper().reader();
     protected CommandExecutor commandExecutor;
     protected File workingDirectory;
     protected Log logger;
@@ -71,11 +70,8 @@ abstract public class ToolchainDriverBase implements Serializable {
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())
-                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo);
-        int port = rtUrl.getPort();
-        if (port != -1) {
-            sourceUrlBuilder.setPort(port);
-        }
+                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo)
+                .setPort(rtUrl.getPort());
         return sourceUrlBuilder.build().toURL().toString();
     }
 
