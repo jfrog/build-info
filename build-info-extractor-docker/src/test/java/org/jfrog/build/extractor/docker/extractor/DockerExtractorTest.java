@@ -77,8 +77,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     }
 
     @Test
-    @SuppressWarnings("unused")
-    private void dockerPushTest() {
+    public void dockerPushTest() {
         if (isWindows()) {
             throw new SkipException("Skipping Docker tests on Windows OS");
         }
@@ -108,8 +107,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     }
 
     @Test
-    @SuppressWarnings("unused")
-    private void dockerPullTest() {
+    public void dockerPullTest() {
         if (isWindows()) {
             getLog().info("Skipping Docker tests on Windows OS");
             return;

@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
@@ -20,13 +21,12 @@ import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
+import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends PackageManagerExtractor {
@@ -137,12 +137,14 @@ public class DockerPush extends PackageManagerExtractor {
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
                 HttpResponse httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
-                validateResponse(httpResponse);
+                validateSetImageLayersResponse(httpResponse);
+                EntityUtils.consume(httpResponse.getEntity());
+
             }
         }
     }
 
-    private void validateResponse(HttpResponse httpResponse) throws IOException {
+    private void validateSetImageLayersResponse(HttpResponse httpResponse) throws IOException {
         int code = httpResponse.getStatusLine().getStatusCode();
         if (code != 204) {
             String response = DockerUtils.entityToString(httpResponse.getEntity());

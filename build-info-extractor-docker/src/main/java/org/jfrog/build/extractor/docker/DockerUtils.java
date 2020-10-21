@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
+import com.google.common.base.Strings;
 import com.google.common.hash.Hashing;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,13 +46,16 @@ public class DockerUtils {
     /**
      * Get the digest from fat-manifest according to os and arch.
      *
-     * @param manifest fat-manifest.
-     * @param os       image os to search.
-     * @param arch     arch to search.
+     * @param manifest - fat-manifest.
+     * @param os       -      image os to search.
+     * @param arch     -    arch to search.
      * @return digest related to os and arch. If not found return an empty string.
      * @throws IOException fat-manifest has missing 'manifest' key.
      */
     public static String getImageDigestFromFatManifest(String manifest, String os, String arch) throws IOException {
+        if (Strings.isNullOrEmpty(os) || Strings.isNullOrEmpty(arch)) {
+            return "";
+        }
         JsonNode fatManifestTree = createMapper().readTree(manifest);
         JsonNode manifests = fatManifestTree.get("manifests");
         if (manifests == null) {
@@ -62,13 +67,13 @@ public class DockerUtils {
                 continue;
             }
 
-            JsonNode currOs = manifestInfoPlatform.get("os");
-            JsonNode currArch = manifestInfoPlatform.get("architecture");
-            if (os == null || arch == null) {
+            JsonNode manifestOs = manifestInfoPlatform.get("os");
+            JsonNode manifestArch = manifestInfoPlatform.get("architecture");
+            if (manifestOs == null || manifestArch == null) {
                 continue;
             }
 
-            if (os.equals(currOs.asText()) && arch.equals(currArch.asText())) {
+            if (os.equals(manifestOs.asText()) && arch.equals(manifestArch.asText())) {
                 return manifestInfo.get("digest").asText();
             }
         }
@@ -76,7 +81,7 @@ public class DockerUtils {
     }
 
     /**
-     * Create an object mapper for serialization/deserializaion.
+     * Create an object mapper for serialization/deserialization.
      * This mapper ignore unknown properties and null values.
      *
      * @return a new object mapper
@@ -252,6 +257,7 @@ public class DockerUtils {
     /**
      * Check for the version in docker image tag (used in Jenkins).
      */
+    @SuppressWarnings("unused")
     public static Boolean isImageVersioned(String imageTag) {
         int indexOfFirstSlash = imageTag.indexOf("/");
         int indexOfLastColon = imageTag.lastIndexOf(":");
@@ -265,6 +271,15 @@ public class DockerUtils {
         String pathDir = path.getAbsoluteFile().getParent();
         // Set the Java temp dir system property. As a result, java will create it for us.
         System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
+    }
+
+    public static String toNoneMarkerLayer(String markerLayerName) {
+        return markerLayerName.substring(0, markerLayerName.length() - ".marker".length());
+    }
+
+    public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
+        String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
+        dependenciesClient.getArtifactMetadata(url);
     }
 
     public enum CommandType {

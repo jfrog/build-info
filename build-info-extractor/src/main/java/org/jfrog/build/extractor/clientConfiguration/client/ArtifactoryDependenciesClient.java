@@ -34,7 +34,7 @@ import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
-import org.jfrog.build.api.repository.RepositoryResult;
+import org.jfrog.build.api.repository.RepositoryConfig;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
@@ -204,20 +204,11 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         String url = artifactoryUrl + "/api/repositories/" + repo;
         HttpGet httpGet = new HttpGet(url);
         InputStream responseStream = getResponseStream(client.execute(httpGet), "Failed to retrieve repository configuration '" + repo + "'");
-        RepositoryResult repoDetails = readJsonResponse(responseStream,
-                new TypeReference<RepositoryResult>() {
+        RepositoryConfig repoDetails = readJsonResponse(responseStream,
+                new TypeReference<RepositoryConfig>() {
                 },
                 true);
         return "remote".equals(repoDetails.getRclass());
-    }
-
-    public void downloadMarkerLayer(String repo, String imageName, String ImageMarkerName) throws IOException {
-        String url = artifactoryUrl + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + toNoneMarkerLayer(ImageMarkerName);
-        this.getArtifactMetadata(url);
-    }
-
-    private String toNoneMarkerLayer(String markerLayerName) {
-        return markerLayerName.substring(0, markerLayerName.length() - ".marker".length());
     }
 
     private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {

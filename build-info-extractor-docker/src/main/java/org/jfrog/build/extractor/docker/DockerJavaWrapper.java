@@ -78,7 +78,7 @@ public class DockerJavaWrapper {
      * Get image Id from imageTag using DockerClient.
      *
      * @param imageTag - Docker image tag.
-     * @param host     Docker daemon ip.
+     * @param host     - Docker daemon ip.
      * @param envVars  - System env variables.
      * @return - Docker image tag
      */
@@ -90,7 +90,7 @@ public class DockerJavaWrapper {
      * Get image Architecture from imageTag using DockerClient.
      *
      * @param imageTag - Docker image tag.
-     * @param host     Docker daemon ip.
+     * @param host     - Docker daemon ip.
      * @param envVars  - System env variables.
      * @return tuple of [Image-Architecture, Image-OS]
      */
@@ -104,7 +104,7 @@ public class DockerJavaWrapper {
      * Get image Id from imageTag using DockerClient.
      *
      * @param imageTag - Docker image tag.
-     * @param host     Docker daemon ip.
+     * @param host     - Docker daemon ip.
      * @param envVars  - System env variables.
      * @return - Docker image tag
      */
