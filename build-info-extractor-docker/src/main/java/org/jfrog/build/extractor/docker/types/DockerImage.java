@@ -99,12 +99,12 @@ public class DockerImage implements Serializable {
                 throw e;
             }
             res = dependenciesClient.downloadArtifact(manifestPath + "/list.manifest.json");
-            String digestsFromfatManifest = DockerUtils.getImageDigestFromFatManifest(IOUtils.toString(res.getEntity().getContent()), this.os, this.architecture);
-            if (digestsFromfatManifest.isEmpty()) {
+            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(IOUtils.toString(res.getEntity().getContent()), this.os, this.architecture);
+            if (digestsFromFatManifest.isEmpty()) {
                 throw e;
             }
             // Remove the tag from the pattern, and place the manifest digest instead.
-            res = dependenciesClient.downloadArtifact(manifestPath.substring(0, manifestPath.lastIndexOf("/")) + "/" + digestsFromfatManifest.replace(":", "__") + "/manifest.json");
+            res = dependenciesClient.downloadArtifact(manifestPath.substring(0, manifestPath.lastIndexOf("/")) + "/" + digestsFromFatManifest.replace(":", "__") + "/manifest.json");
             return IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
         } finally {
             if (res != null) {
@@ -270,7 +270,6 @@ public class DockerImage implements Serializable {
     private void findAndSetManifestFromArtifactory(String url, ArtifactoryDependenciesClient dependenciesClient, Log logger, DockerUtils.CommandType cmdType) throws IOException {
         // Try to get manifest, assuming reverse proxy
         String proxyImagePath = DockerUtils.getImagePath(imageTag);
-        //String searchableRepo = getSearchableRepo(targetRepo,dependenciesClient);
         boolean isRemoteRepo = dependenciesClient.isRemoteRepo(targetRepo);
         String proxyManifestPath = StringUtils.join(new String[]{url, targetRepo, proxyImagePath}, "/");
         try {

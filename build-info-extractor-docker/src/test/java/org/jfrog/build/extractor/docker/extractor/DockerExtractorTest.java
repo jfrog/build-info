@@ -71,6 +71,9 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             pushDomainName += "/";
         }
         imageTag = domainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG;
+        if (!StringUtils.endsWith(pullDomainName, "/")) {
+            pullDomainName += "/";
+        }
         pushImageTag = pushDomainName + "jfrog_artifactory_buildinfo_tests:2";
         pullImageTag = pullDomainName + "hello-world:latest";
         host = System.getenv("BITESTS_ARTIFACTORY_DOCKER_HOST");
