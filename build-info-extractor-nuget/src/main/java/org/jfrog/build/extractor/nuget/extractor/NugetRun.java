@@ -10,7 +10,6 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -19,6 +18,7 @@ import org.jfrog.build.extractor.nuget.drivers.NugetDriver;
 import org.jfrog.build.extractor.nuget.drivers.ToolchainDriverBase;
 import org.jfrog.build.extractor.nuget.types.NugetPackgesConfig;
 import org.jfrog.build.extractor.nuget.types.NugetProjectAssets;
+import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -41,7 +41,7 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String NUGET_CONFIG_FILE_PREFIX = TEMP_DIR_PREFIX + ".nuget.config";
     private static final String PACKAGES_CONFIG = "packages.config";
     private static final String PROJECT_ASSETS = "project.assets.json";
-    private static final String CONFIG_FILE_TEMPLATE =  "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+    private static final String CONFIG_FILE_TEMPLATE = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
             + "<configuration>\n"
             + "\t<packageSources>\n\t</packageSources>\n"
             + "\t<packageSourceCredentials>\n\t</packageSourceCredentials>\n"
@@ -72,12 +72,12 @@ public class NugetRun extends PackageManagerExtractor {
     /**
      * Install npm package.
      *
-     * @param clientBuilder        - Build Info client builder.
+     * @param clientBuilder  - Build Info client builder.
      * @param resolutionRepo - The repository it'll resolve from.
-     * @param nugetCmdArgs          - nuget exec args.
-     * @param logger               - The logger.
-     * @param path                 - Path to directory contains package.json or path to '.tgz' file.
-     * @param env                  - Environment variables to use during npm execution.
+     * @param nugetCmdArgs   - nuget exec args.
+     * @param logger         - The logger.
+     * @param path           - Path to directory contains package.json or path to '.tgz' file.
+     * @param env            - Environment variables to use during npm execution.
      */
 
     public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
@@ -88,9 +88,68 @@ public class NugetRun extends PackageManagerExtractor {
         this.path = path;
         this.resolutionRepo = resolutionRepo;
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
-        this.username =  username;
+        this.username = username;
         this.password = password;
         this.module = module;
+    }
+
+    private static String removeQuotes(String str) {
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
+    }
+
+    /**
+     * NuGet allows the version include/exclude unnecessary zeros.
+     * For example the alternative versions of "1.0.0" are: "1","1.0" and "1.0.0.0".
+     * This method will return a list of the possible alternative versions.
+     */
+    protected static List<String> createAlternativeVersionForms(String originalVersion) {
+        List<String> alternativeVersions = new ArrayList<>();
+        List<String> versionParts = new ArrayList<>();
+        Collections.addAll(versionParts, originalVersion.split("\\."));
+
+        while (versionParts.size() < 4) {
+            versionParts.add("0");
+        }
+
+        for (int i = 4; i > 0; i--) {
+            String version = String.join(".", versionParts.subList(0, i));
+            if (!version.equals(originalVersion)) {
+                alternativeVersions.add(version);
+            }
+            if (!version.endsWith(".0")) {
+                return alternativeVersions;
+            }
+        }
+        return alternativeVersions;
+    }
+
+    /**
+     * Allow running nuget restore using a new Java process.
+     * Used only in Jenkins to allow running 'rtNuget run' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
+            NugetRun nugetRun = new NugetRun(clientBuilder,
+                    clientConfiguration.resolver.getRepoKey(),
+                    clientConfiguration.dotnetHandler.useDotnetCoreCli(),
+                    handler.getArgs(),
+                    clientConfiguration.getLog(),
+                    Paths.get(handler.getPath() != null ? handler.getPath() : "."),
+                    clientConfiguration.getAllProperties(),
+                    handler.getModule(),
+                    clientConfiguration.resolver.getUsername(),
+                    clientConfiguration.resolver.getPassword());
+            nugetRun.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
     }
 
     @Override
@@ -107,6 +166,7 @@ public class NugetRun extends PackageManagerExtractor {
             build.setModules(modulesList);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
         return build;
     }
@@ -143,13 +203,13 @@ public class NugetRun extends PackageManagerExtractor {
     /**
      * projectPath specifies the location of a solution or a packages.config/.csproj file.
      * The operation mode of the restore command is determined as follows:
-     *  1. projectPath is a folder - NuGet looks for a .sln file and uses that if found.
-     *  2. projectPath is a .sln file - Restore packages identified by the solution.
-     *  3. projectPath is a packages.config/.csproj file - Restore packages listed in the file.
-     *
-     *  if projectPath not specified:
-     *      NuGet looks for solution files in the current folder (single file is expected),
-     *      if there are no such files, NuGet looks for a packages.config/.csproj file
+     * 1. projectPath is a folder - NuGet looks for a .sln file and uses that if found.
+     * 2. projectPath is a .sln file - Restore packages identified by the solution.
+     * 3. projectPath is a packages.config/.csproj file - Restore packages listed in the file.
+     * <p>
+     * if projectPath not specified:
+     * NuGet looks for solution files in the current folder (single file is expected),
+     * if there are no such files, NuGet looks for a packages.config/.csproj file
      *
      * @return string that represent the projectPath or EMPTY in case of non existing path.
      */
@@ -175,10 +235,10 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     private File findProjectPathInDir(File projectPathRoot) {
-       File[] slnFiles = projectPathRoot.listFiles((dir, name) -> name.toLowerCase().endsWith(".sln"));
-       if (slnFiles.length == 1) {
-           return slnFiles[0];
-       }
+        File[] slnFiles = projectPathRoot.listFiles((dir, name) -> name.toLowerCase().endsWith(".sln"));
+        if (slnFiles.length == 1) {
+            return slnFiles[0];
+        }
         File[] pkgsConfig = projectPathRoot.listFiles((dir, name) -> name.toLowerCase().endsWith(PACKAGES_CONFIG));
         if (pkgsConfig.length == 1) {
             return pkgsConfig[0];
@@ -192,8 +252,8 @@ public class NugetRun extends PackageManagerExtractor {
 
     /**
      * NuGet dependencies can be declared in one of the following methods:
-     *  1. Using packages.config xml file
-     *  2. in <project-name>.project.assets.json file
+     * 1. Using packages.config xml file
+     * 2. in <project-name>.project.assets.json file
      * We search for all these files under the solution root dir, and later will match each project with its dependencies source file.
      */
     private List<String> findDependenciesSources(Path rootDir) {
@@ -232,7 +292,8 @@ public class NugetRun extends PackageManagerExtractor {
                     throw new RuntimeException(e.getMessage());
                 }
             });
-        };
+        }
+        ;
     }
 
     private void collectDependenciesFromProjectDir(File projectRoot) throws Exception {
@@ -256,7 +317,7 @@ public class NugetRun extends PackageManagerExtractor {
             return;
         }
         // We build a full path for the csproj file for single-project solutions.
-        String csprojFullPath = (new File(slnRootDir,csprojPath)).getPath();
+        String csprojFullPath = (new File(slnRootDir, csprojPath)).getPath();
         singleProjectHandler(projectName, csprojFullPath, globalCachePath);
     }
 
@@ -295,13 +356,6 @@ public class NugetRun extends PackageManagerExtractor {
             }
         }
         return StringUtils.EMPTY;
-    }
-
-    private static String removeQuotes(String str) {
-        if (str.startsWith("\"") && str.endsWith("\"")) {
-            return str.substring(1, str.length() - 1);
-        }
-        return str;
     }
 
     private List<Dependency> collectDependenciesFromPackagesConfig(String packagesConfigPath, String globalCachePath) throws Exception {
@@ -352,33 +406,7 @@ public class NugetRun extends PackageManagerExtractor {
     private File createNupkgFile(String id, String version, String cachePath) {
         String nupkgFileName = id + "." + version + ".nupkg";
         String nupkgBasePath = FilenameUtils.concat(FilenameUtils.concat(cachePath, id), version);
-        return new File (nupkgBasePath,nupkgFileName);
-    }
-
-    /**
-     * NuGet allows the version include/exclude unnecessary zeros.
-     * For example the alternative versions of "1.0.0" are: "1","1.0" and "1.0.0.0".
-     * This method will return a list of the possible alternative versions.
-     */
-    protected static List<String> createAlternativeVersionForms(String originalVersion) {
-        List<String> alternativeVersions = new ArrayList<>();
-        List<String> versionParts = new ArrayList<>();
-        Collections.addAll(versionParts, originalVersion.split("\\."));
-
-        while (versionParts.size() < 4) {
-            versionParts.add("0");
-        }
-
-        for (int i = 4; i > 0; i--) {
-            String version = String.join(".", versionParts.subList(0, i));
-            if (!version.equals(originalVersion)) {
-                alternativeVersions.add(version);
-            }
-            if (!version.endsWith(".0")) {
-                return alternativeVersions;
-            }
-        }
-        return alternativeVersions;
+        return new File(nupkgBasePath, nupkgFileName);
     }
 
     private List<Dependency> collectDependenciesFromProjectAssets(String projectAssetsPath) throws Exception {
@@ -427,31 +455,5 @@ public class NugetRun extends PackageManagerExtractor {
             }
         }
         return false;
-    }
-
-    /**
-     * Allow running nuget restore using a new Java process.
-     * Used only in Jenkins to allow running 'rtNuget run' in a docker container.
-     */
-    public static void main(String[] ignored) {
-        try {
-            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
-            NugetRun nugetRun = new NugetRun(clientBuilder,
-                    clientConfiguration.resolver.getRepoKey(),
-                    clientConfiguration.dotnetHandler.useDotnetCoreCli(),
-                    handler.getArgs(),
-                    clientConfiguration.getLog(),
-                    Paths.get(handler.getPath() != null ? handler.getPath() : "."),
-                    clientConfiguration.getAllProperties(),
-                    handler.getModule(),
-                    clientConfiguration.resolver.getUsername(),
-                    clientConfiguration.resolver.getPassword());
-            nugetRun.executeAndSaveBuildInfo(clientConfiguration);
-        } catch (RuntimeException e) {
-            ExceptionUtils.printRootCauseStackTrace(e, System.out);
-            System.exit(1);
-        }
     }
 }
