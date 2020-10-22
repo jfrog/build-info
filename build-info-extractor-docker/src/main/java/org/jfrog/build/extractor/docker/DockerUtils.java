@@ -4,18 +4,21 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
-import com.google.common.hash.Hashing;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
+import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,9 +116,19 @@ public class DockerUtils {
         }
         dockerLayersDependencies.add(getConfigDigest(manifestContent));
         //Add manifest sha1
-        String manifestSha1 = Hashing.sha1().hashString(manifestContent, Charsets.UTF_8).toString();
+        String manifestSha1 = toSha1(manifestContent);
         dockerLayersDependencies.add("sha1:" + manifestSha1);
         return dockerLayersDependencies;
+    }
+
+    private static String toSha1(String data) {
+        try {
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(data.getBytes("UTF-8"), 0, data.length());
+            return DatatypeConverter.printHexBinary(msdDigest.digest()).toLowerCase();
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            throw new IllegalStateException("Could not calculate manifest.json into SHA1.");
+        }
     }
 
     /**
@@ -184,8 +197,6 @@ public class DockerUtils {
 
     /**
      * Returns number of dependencies layers in the image.
-     *
-     * @throws IOException
      */
     public static int getNumberOfDependentLayers(String imageContent) throws IOException {
         JsonNode history = createMapper().readTree(imageContent).get("history");
@@ -216,13 +227,11 @@ public class DockerUtils {
 
     /**
      * Converts the http entity to string. If entity is null, returns empty string.
-     *
-     * @throws IOException
      */
     public static String entityToString(HttpEntity entity) throws IOException {
         if (entity != null) {
             InputStream is = entity.getContent();
-            return IOUtils.toString(is, "UTF-8");
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
         }
         return "";
     }

@@ -123,7 +123,7 @@ public class DockerPush extends PackageManagerExtractor {
             build.setModules(modulesList);
             logger.info("Successfully pushed docker image: " + imageTag);
             return build;
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }

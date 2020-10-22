@@ -29,14 +29,14 @@ public class DockerJavaWrapper {
      * @param host     - Docker daemon ip.
      * @param envVars  - Environment variables to use during docker push execution.
      */
-    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
+    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) throws InterruptedException {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
-            dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitSuccess();
+            dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitCompletion();
         } finally {
             closeQuietly(dockerClient, logger);
         }
@@ -137,14 +137,14 @@ public class DockerJavaWrapper {
      * @param host     - Docker daemon ip.
      * @param envVars  - Environment variables to use during docker pull execution.
      */
-    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
+    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) throws InterruptedException {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
-            dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitSuccess();
+            dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitCompletion();
         } finally {
             closeQuietly(dockerClient, logger);
         }
