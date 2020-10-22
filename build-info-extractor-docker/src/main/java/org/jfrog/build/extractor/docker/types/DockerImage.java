@@ -63,8 +63,8 @@ public class DockerImage implements Serializable {
      * Check if the provided manifestPath is correct.
      * Set the manifest and imagePath in case of the correct manifest.
      */
-    private void checkAndSetManifestAndImagePathCandidates(String manifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient, boolean isRemoteRepo) throws IOException {
-        String candidateManifest = getManifestFromArtifactory(dependenciesClient, manifestPath, isRemoteRepo);
+    private void checkAndSetManifestAndImagePathCandidates(String manifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient, boolean isLocalRepo) throws IOException {
+        String candidateManifest = getManifestFromArtifactory(dependenciesClient, manifestPath, isLocalRepo);
         String imageDigest = DockerUtils.getConfigDigest(candidateManifest);
         if (imageDigest.equals(imageId)) {
             manifest = candidateManifest;
@@ -73,29 +73,25 @@ public class DockerImage implements Serializable {
         }
     }
 
-    // Searching for image's manifest in Artifactory. For remote repositories, fat-manifest can be found instead,
-    // therefore, we must compare the fat-manifest against our image architecture to find the right digest(represent our image's manifest digest).
-    // Using the correct digest from the fat-manifest, we are able to build the path toward manifest.json in Artifactory.
-
     /**
      * Search for 'manifest.json' at 'manifestPath' in artifactory and return its content.
-     * If 'isRemoteRepo' is true, , fat-manifest can be found instead, which is a list of 'manifest.json' digest for one or more platforms.
+     * If the target repository is not local type , fat-manifest can be found instead, which is a list of 'manifest.json' digest for one or more platforms.
      * In order to find the right digest, we read and iterate on each digest and search for the one with the same os and arch.
      * Using the correct digest from the fat-manifest, we are able to build the path toward manifest.json in Artifactory.
      *
      * @param dependenciesClient - Dependencies client builder.
      * @param manifestPath       - Path to manifest in Artifactory.
-     * @param isRemoteRepo       - Indicates if the search is against a remote repository.
+     * @param isLocalRepo        - Indicates if the search is against a local repository.
      * @return The manifest content, otherwise throw an error.
      * @throws IOException fail to search for manifest json in manifestPath.
      */
-    private String getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath, boolean isRemoteRepo) throws IOException {
+    private String getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath, boolean isLocalRepo) throws IOException {
         HttpResponse res = null;
         try {
             res = dependenciesClient.downloadArtifact(manifestPath + "/manifest.json");
             return IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            if (!isRemoteRepo) {
+            if (isLocalRepo) {
                 throw e;
             }
             res = dependenciesClient.downloadArtifact(manifestPath + "/list.manifest.json");
@@ -270,11 +266,11 @@ public class DockerImage implements Serializable {
     private void findAndSetManifestFromArtifactory(String url, ArtifactoryDependenciesClient dependenciesClient, Log logger, DockerUtils.CommandType cmdType) throws IOException {
         // Try to get manifest, assuming reverse proxy
         String proxyImagePath = DockerUtils.getImagePath(imageTag);
-        boolean isRemoteRepo = dependenciesClient.isRemoteRepo(targetRepo);
+        boolean isLocalRepo = dependenciesClient.isLocalRepo(targetRepo);
         String proxyManifestPath = StringUtils.join(new String[]{url, targetRepo, proxyImagePath}, "/");
         try {
             logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration.");
-            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isRemoteRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isLocalRepo);
             return;
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
@@ -285,7 +281,7 @@ public class DockerImage implements Serializable {
         String proxyLessManifestPath = StringUtils.join(new String[]{url, targetRepo, proxyLessImagePath}, "/");
         logger.info("Trying to fetch manifest from Artifactory, assuming proxy-less configuration.");
         try {
-            checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isRemoteRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isLocalRepo);
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming proxy-lessess configuration - " + e.getMessage());
             // If image path includes more than 3 slashes, Artifactory doesn't store this image under 'library',
@@ -299,13 +295,13 @@ public class DockerImage implements Serializable {
         proxyManifestPath = StringUtils.join(new String[]{url, targetRepo, "library", proxyImagePath}, "/");
         try {
             logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration. This time with 'library' as part of the path");
-            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isRemoteRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isLocalRepo);
             return;
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
         }
         // Assume proxy-less - this time with 'library' as part of the path.
         proxyLessManifestPath = StringUtils.join(new String[]{url, targetRepo, "library", proxyLessImagePath}, "/");
-        checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isRemoteRepo);
+        checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isLocalRepo);
     }
 }

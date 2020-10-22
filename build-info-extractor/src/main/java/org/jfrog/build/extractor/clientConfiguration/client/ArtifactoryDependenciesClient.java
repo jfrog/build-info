@@ -199,7 +199,15 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         return !httpClient.getVersion().hasAddons();
     }
 
+    public boolean isLocalRepo(String repo) throws IOException {
+        return "local".equals(getRepoType(repo));
+    }
+
     public boolean isRemoteRepo(String repo) throws IOException {
+        return "remote".equals(getRepoType(repo));
+    }
+
+    private String getRepoType(String repo) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
         String url = artifactoryUrl + "/api/repositories/" + repo;
         HttpGet httpGet = new HttpGet(url);
@@ -208,7 +216,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
                 new TypeReference<RepositoryConfig>() {
                 },
                 true);
-        return "remote".equals(repoDetails.getRclass());
+        return repoDetails.getRclass();
     }
 
     private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
