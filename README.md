@@ -92,10 +92,12 @@ When running on a unix machine, provide the path to the 'bin' directory.
 * In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
 
  ```
-  export BITESTS_ARTIFACTORY_DOCKER_PUSH_DOMAIN=localhost:8081/build-info-tests-docker-local
-  export BITESTS_ARTIFACTORY_DOCKER_PULL_DOMAIN=localhost:8081/build-info-tests-docker-local
-  export BITESTS_ARTIFACTORY_DOCKER_PUSH_REPO=build-info-tests-docker-local
-  export BITESTS_ARTIFACTORY_DOCKER_PULL_REPO=build-info-tests-docker-remote
+  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN=localhost:8081/build-info-tests-docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN=localhost:8081/build-info-tests-docker-remote
+  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN=localhost:8081/build-info-tests-docker-virtual
+  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_REPO=build-info-tests-docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_REPO=build-info-tests-docker-remote
+  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO=build-info-tests-docker-virtual
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
  * For OSX agents, run a Socat container:
