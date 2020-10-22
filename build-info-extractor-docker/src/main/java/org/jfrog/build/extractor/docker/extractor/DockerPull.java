@@ -11,29 +11,16 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClie
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.docker.DockerUtils;
 import org.jfrog.build.extractor.docker.types.DockerImage;
-import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
-public class DockerPull extends PackageManagerExtractor {
-    private final ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private final ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    private final Map<String, String> env;
-    private final String username;
-    private final String password;
-    private final List<Module> modulesList = new ArrayList<>();
-    private final String imageTag;
-    private final String host;
-    private final String targetRepository;
-    private final Log logger;
-
+public class DockerPull extends DockerCommand {
     /**
      * Docker pull.
      *
@@ -46,15 +33,7 @@ public class DockerPull extends PackageManagerExtractor {
      */
     public DockerPull(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder,
                       String imageTag, String host, String targetRepository, String username, String password, Log logger, Map<String, String> env) {
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
-        this.targetRepository = targetRepository;
-        this.logger = logger;
-        this.imageTag = imageTag;
-        this.host = host;
-        this.username = username;
-        this.password = password;
-        this.env = env;
+        super(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, targetRepository, username, password, logger, env);
     }
 
     /**

@@ -17,35 +17,23 @@ import org.jfrog.build.extractor.docker.DockerUtils;
 import org.jfrog.build.extractor.docker.types.DockerImage;
 import org.jfrog.build.extractor.docker.types.DockerLayer;
 import org.jfrog.build.extractor.docker.types.DockerLayers;
-import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
 import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
-public class DockerPush extends PackageManagerExtractor {
-    private final ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
-    private final ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private final Map<String, String> env;
+public class DockerPush extends DockerCommand {
     private final ArrayListMultimap<String, String> artifactProperties;
-    private final String username;
-    private final String password;
-    private final List<Module> modulesList = new ArrayList<>();
-    private final String imageTag;
-    private final String deploymentRepository;
-    private final String host;
-    private final Log logger;
+
 
     /**
      * @param buildInfoClientBuilder    - Build Info client builder.
      * @param dependenciesClientBuilder - Dependencies client builder.
-     * @param deploymentRepository      - The repository it'll deploy to.
+     * @param targetRepository          - The repository it'll deploy to.
      * @param imageTag                  - Image tag to push.
      * @param logger                    - The logger.
      * @param username                  - Artifactory user name
@@ -55,17 +43,9 @@ public class DockerPush extends PackageManagerExtractor {
      * @param env                       - Environment variables to use during docker push execution.
      */
     public DockerPush(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder,
-                      String imageTag, String host, ArrayListMultimap<String, String> artifactProperties, String deploymentRepository, String username,
+                      String imageTag, String host, ArrayListMultimap<String, String> artifactProperties, String targetRepository, String username,
                       String password, Log logger, Map<String, String> env) {
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.deploymentRepository = deploymentRepository;
-        this.logger = logger;
-        this.imageTag = imageTag;
-        this.host = host;
-        this.username = username;
-        this.password = password;
-        this.env = env;
+        super(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, targetRepository, username, password, logger, env);
         this.artifactProperties = artifactProperties;
     }
 
@@ -112,7 +92,7 @@ public class DockerPush extends PackageManagerExtractor {
         try {
             DockerJavaWrapper.pushImage(imageTag, username, password, host, env, logger);
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
-            DockerImage image = new DockerImage(imageId, imageTag, deploymentRepository, buildInfoClientBuilder, dependenciesClientBuilder, "", "");
+            DockerImage image = new DockerImage(imageId, imageTag, targetRepository, buildInfoClientBuilder, dependenciesClientBuilder, "", "");
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
             if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");
