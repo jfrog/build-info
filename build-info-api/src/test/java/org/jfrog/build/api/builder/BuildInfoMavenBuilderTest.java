@@ -5,7 +5,6 @@ import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -94,7 +93,7 @@ public class BuildInfoMavenBuilderTest {
     /**
      * Validates the build start time values after using the builder setters
      */
-    public void testStartedSetters() throws ParseException {
+    public void testStartedSetters() {
         String started = "192-1212-1";
         Build build = new BuildInfoBuilder("test").number("4").started(started).build();
         assertEquals(build.getStarted(), started, "Unexpected build started.");
@@ -134,8 +133,8 @@ public class BuildInfoMavenBuilderTest {
      * Validates adding duplicate modules, the builder should container only unique ones
      */
     public void testDuplicateModules() {
-        Module module1 = new ModuleBuilder().id("id").build();
-        Module module2 = new ModuleBuilder().id("id").build();
+        Module module1 = new ModuleBuilder().type(ModuleType.MAVEN).id("id").build();
+        Module module2 = new ModuleBuilder().type(ModuleType.MAVEN).id("id").build();
 
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1);
@@ -146,17 +145,18 @@ public class BuildInfoMavenBuilderTest {
         assertFalse(modules.isEmpty(), "A build module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
+        assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");
     }
 
     /**
      * Validates adding same artifacts to different modules
      */
     public void testDuplicateModuleArtifacts() {
-        ModuleBuilder module1 = new ModuleBuilder().id("id");
+        ModuleBuilder module1 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
         module1.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
         module1.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
 
-        ModuleBuilder module2 = new ModuleBuilder().id("id");
+        ModuleBuilder module2 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
         module2.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
         module2.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
 
@@ -169,6 +169,7 @@ public class BuildInfoMavenBuilderTest {
         assertFalse(modules.isEmpty(), "A build module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
+        assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");
 
         List<Artifact> artifacts = modules.get(0).getArtifacts();
         assertEquals(artifacts.size(), 2, "Expected to find only 2 artifacts.");
@@ -186,11 +187,11 @@ public class BuildInfoMavenBuilderTest {
      * Validates adding same dependencies with different scopes to different modules
      */
     public void testDuplicateModuleDependencies() {
-        ModuleBuilder module1 = new ModuleBuilder().id("id");
+        ModuleBuilder module1 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
         module1.addDependency(new DependencyBuilder().id("dep1").scopes(CommonUtils.newHashSet("compile")).build());
         module1.addDependency(new DependencyBuilder().id("dep2").scopes(CommonUtils.newHashSet("compile")).build());
 
-        ModuleBuilder module2 = new ModuleBuilder().id("id");
+        ModuleBuilder module2 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
         module2.addDependency(new DependencyBuilder().id("dep1").scopes(CommonUtils.newHashSet("compile", "test")).build());
         module2.addDependency(new DependencyBuilder().id("dep2").scopes(CommonUtils.newHashSet("compile", "test")).build());
 
@@ -203,6 +204,7 @@ public class BuildInfoMavenBuilderTest {
         assertFalse(modules.isEmpty(), "A build module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
+        assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");
 
         List<Dependency> dependencies = modules.get(0).getDependencies();
         assertEquals(dependencies.size(), 2, "Expected to find only 2 dependencies.");

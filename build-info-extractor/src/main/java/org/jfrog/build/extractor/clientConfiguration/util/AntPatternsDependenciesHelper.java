@@ -96,7 +96,7 @@ public class AntPatternsDependenciesHelper {
     private List<PropertySearchResult.SearchEntry> filterResultEntries(List<PropertySearchResult.SearchEntry> results,
                                                                        String pattern) {
         final String patternStr = pattern.replaceFirst(":", "/");
-        return new ArrayList<>(CommonUtils.filterCollection(results, result -> PatternMatcher.match(patternStr, result.getRepoPath(),false)));
+        return new ArrayList<>(CommonUtils.filterCollection(results, result -> PatternMatcher.match(patternStr, result.getRepoPath(), false)));
     }
 
     private Set<DownloadableArtifact> performPatternSearch(DependencyPattern dependencyPattern) throws IOException {

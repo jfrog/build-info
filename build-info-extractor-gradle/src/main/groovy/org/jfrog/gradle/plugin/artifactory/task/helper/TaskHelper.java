@@ -30,7 +30,7 @@ public abstract class TaskHelper {
 
     protected Map<String, String> defaultProps;
 
-    public Project getProject(){
+    public Project getProject() {
         return artifactoryTask.getProject();
     }
 
@@ -44,6 +44,7 @@ public abstract class TaskHelper {
 
     /**
      * Collects the list of publications and configurations.
+     *
      * @param objects - The publication/configuration
      */
     public abstract void addCollection(Object... objects);
@@ -55,7 +56,7 @@ public abstract class TaskHelper {
             addProps(defaultProps, artifactoryTask.getProperties());
             // Add the publisher properties
             ArtifactoryClientConfiguration.PublisherHandler publisher =
-                ArtifactoryPluginUtil.getPublisherHandler(project);
+                    ArtifactoryPluginUtil.getPublisherHandler(project);
             if (publisher != null) {
                 defaultProps.putAll(publisher.getMatrixParams());
             }
@@ -92,7 +93,7 @@ public abstract class TaskHelper {
     @Nonnull
     protected Boolean isPublishMaven() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher == null) {
             return false;
         }

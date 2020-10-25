@@ -218,7 +218,7 @@ public class BuildInfoBuilder {
         return this;
     }
 
-    public BuildInfoBuilder artifactoryPluginVersion(String artifactoryPluginVersion){
+    public BuildInfoBuilder artifactoryPluginVersion(String artifactoryPluginVersion) {
         this.artifactoryPluginVersion = artifactoryPluginVersion;
         return this;
     }
@@ -309,7 +309,7 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder modules(List<Module> modules) {
         ConcurrentHashMap<String, Module> modulesMap = new ConcurrentHashMap<String, Module>();
-        for(Module module : modules) {
+        for (Module module : modules) {
             modulesMap.put(module.getId(), module);
         }
 
@@ -386,7 +386,7 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder addModule(Module module) {
         if (modules == null) {
-            synchronized(this) {
+            synchronized (this) {
                 if (modules == null) {
                     modules = new ConcurrentHashMap<String, Module>();
                 }

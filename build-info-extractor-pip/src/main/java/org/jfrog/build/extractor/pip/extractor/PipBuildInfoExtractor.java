@@ -6,6 +6,7 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -119,7 +120,7 @@ public class PipBuildInfoExtractor {
     }
 
     private Build createBuild(List<Dependency> dependenciesList, String moduleName) {
-        Module module = new ModuleBuilder().id(moduleName).dependencies(dependenciesList).build();
+        Module module = new ModuleBuilder().type(ModuleType.PYPI).id(moduleName).dependencies(dependenciesList).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();

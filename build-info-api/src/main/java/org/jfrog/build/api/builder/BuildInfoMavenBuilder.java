@@ -160,10 +160,11 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
 
     /**
      * Sets the Artifactory plugin version of the build
+     *
      * @param artifactoryPluginVersion Build Artifactory plugin version
      * @return Builder instance
      */
-    public BuildInfoMavenBuilder artifactoryPluginVersion(String artifactoryPluginVersion){
+    public BuildInfoMavenBuilder artifactoryPluginVersion(String artifactoryPluginVersion) {
         super.artifactoryPluginVersion(artifactoryPluginVersion);
         return this;
     }

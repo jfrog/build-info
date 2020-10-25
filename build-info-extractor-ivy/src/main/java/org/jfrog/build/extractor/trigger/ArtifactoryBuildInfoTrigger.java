@@ -23,6 +23,7 @@ import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.context.BuildContext;
@@ -295,7 +296,10 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
         String moduleId = getModuleIdString(org, moduleName, attributes.get("revision"));
         Module module = findModule(modules, moduleKey);
         if (module == null) {
-            ModuleBuilder moduleBuilder = new ModuleBuilder().id(moduleId);
+            ModuleBuilder moduleBuilder = new ModuleBuilder()
+                    .type(ModuleType.IVY)
+                    .id(moduleId)
+                    .repository(ctx.getClientConf().publisher.getRepoKey());
             module = moduleBuilder.build();
             modules.add(module);
         } else {

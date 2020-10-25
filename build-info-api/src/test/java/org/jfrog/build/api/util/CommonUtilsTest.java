@@ -17,12 +17,12 @@ import static org.testng.Assert.*;
 public class CommonUtilsTest {
 
     public void testFilterMapValues() {
-        Map<String,String> expectedMap = new HashMap<>();
-        expectedMap.put("first","good");
-        expectedMap.put("second","good");
-        Map<String,String> filterMap = new HashMap<>(expectedMap);
-        filterMap.put("third","bad");
-        filterMap.put("forth","bad");
+        Map<String, String> expectedMap = new HashMap<>();
+        expectedMap.put("first", "good");
+        expectedMap.put("second", "good");
+        Map<String, String> filterMap = new HashMap<>(expectedMap);
+        filterMap.put("third", "bad");
+        filterMap.put("forth", "bad");
 
         assertNotEquals(filterMap, expectedMap, "Unexpected maps initializing.");
         filterMap = CommonUtils.filterMapValues(filterMap, value -> value.equals("good"));
@@ -50,12 +50,12 @@ public class CommonUtilsTest {
     }
 
     public void testFilterMapKeys() {
-        Map<String,Integer> expectedMap = new HashMap<>();
-        expectedMap.put("goodOne",1);
-        expectedMap.put("goodTwo",2);
-        Map<String,Integer> filterMap = new HashMap<>(expectedMap);
-        filterMap.put("badOne",1);
-        filterMap.put("badTwo",2);
+        Map<String, Integer> expectedMap = new HashMap<>();
+        expectedMap.put("goodOne", 1);
+        expectedMap.put("goodTwo", 2);
+        Map<String, Integer> filterMap = new HashMap<>(expectedMap);
+        filterMap.put("badOne", 1);
+        filterMap.put("badTwo", 2);
 
         assertEquals(new HashMap<>(), CommonUtils.filterMapKeys(new HashMap<>(), key -> key.equals("good")),
                 "Unexpected empty map filtering.");
@@ -82,15 +82,15 @@ public class CommonUtilsTest {
     }
 
     public void testEntriesOnlyOnLeftMap() {
-        Map<String,Integer> baseMap = new HashMap<>();
-        baseMap.put("badOne",1);
-        baseMap.put("badTwo",2);
-        Map<String,Integer> expectedMap = new HashMap<>();
-        expectedMap.put("left",1);
+        Map<String, Integer> baseMap = new HashMap<>();
+        baseMap.put("badOne", 1);
+        baseMap.put("badTwo", 2);
+        Map<String, Integer> expectedMap = new HashMap<>();
+        expectedMap.put("left", 1);
 
-        Map<String,Integer> leftMap = new HashMap<>(baseMap);
+        Map<String, Integer> leftMap = new HashMap<>(baseMap);
         leftMap.put("left", expectedMap.get("left"));
-        Map<String,Integer> rightMap = new HashMap<>(baseMap);
+        Map<String, Integer> rightMap = new HashMap<>(baseMap);
         rightMap.put("right", expectedMap.get("left"));
 
         assertEquals(CommonUtils.entriesOnlyOnLeftMap(leftMap, rightMap), expectedMap, "Unexpected entries on left map.");
@@ -128,19 +128,19 @@ public class CommonUtilsTest {
         List<Integer> integers = Arrays.asList(435, 345, 22, 4346, 333);
         Integer first = CommonUtils.getFirstSatisfying(integers, i -> i > 5000, 5555);
         Integer expected = 5555;
-        assertEquals(first, expected,"Expected to get the default value when no element is satisfying.");
+        assertEquals(first, expected, "Expected to get the default value when no element is satisfying.");
 
         List<Integer> empty = new ArrayList<>();
         first = CommonUtils.getFirstSatisfying(empty, i -> i > 1, 0);
         expected = 0;
-        assertEquals(first, expected,"Expected to get the default value when list is empty.");
+        assertEquals(first, expected, "Expected to get the default value when list is empty.");
 
         // Function should filter null elements
         try {
             List<Integer> withNull = Arrays.asList(3, null, 4);
             first = CommonUtils.getFirstSatisfying(withNull, i -> i % 2 == 0, 0);
             expected = 4;
-            assertEquals(first, expected,"Unexpected first satisfying element.");
+            assertEquals(first, expected, "Unexpected first satisfying element.");
         } catch (NullPointerException e) {
             throw new TestException("Unexpected NullPointerException. Function should filter null elements.");
         }
@@ -213,12 +213,12 @@ public class CommonUtilsTest {
         assertThrows(IllegalArgumentException.class, () -> CommonUtils.getOnlyElement(two));
     }
 
-    public void testWriteReadByCharset() throws IOException  {
+    public void testWriteReadByCharset() throws IOException {
         File file = File.createTempFile("temp", "write-read-test");
         String expected = "Please Check\rThis\rOut\n";
         CommonUtils.writeByCharset(expected, file, Charset.forName("utf-8"));
         String output = CommonUtils.readByCharset(file, Charset.forName("utf-8"));
-        assertEquals(expected, output,"Unexpected string read from file");
+        assertEquals(expected, output, "Unexpected string read from file");
     }
 
     public void testNewHashSet() {

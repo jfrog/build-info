@@ -124,6 +124,10 @@ public class BuildInfoBuilderTest {
     public void testBuilderAddMethod() {
         Module module = new Module();
         module.setId("module-id");
+        module.setRepository("libs-cow");
+        module.setMd5("moo22");
+        module.setSha1("moo33");
+        module.setType("mammals");
         String propertyKey = "key";
         String propertyValue = "value";
         PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();

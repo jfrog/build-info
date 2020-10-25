@@ -158,7 +158,7 @@ public class BuildDeploymentHelper {
                     if (deployable != null) {
                         File file = deployable.getFile();
                         setArtifactChecksums(file, artifact);
-                        artifact.setRemotePath(deployable.getTargetRepository() + "/" + deployable.getArtifactPath());
+                        artifact.setRemotePath(deployable.getArtifactPath());
                         moduleDeployableArtifacts.add(new DeployDetails.Builder().
                                 artifactPath(deployable.getArtifactPath()).
                                 file(file).

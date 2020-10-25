@@ -11,7 +11,7 @@ import java.io.IOException;
 
 /**
  * Consumer object to use with the ProducerConsumerExecutor during artifact deployment by FileSpec operation.
- *
+ * <p>
  * Created by Bar Belity on 27/03/2018.
  */
 public class SpecDeploymentConsumer extends ConsumerRunnableBase {
@@ -20,7 +20,7 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
     private Log log;
     private ArtifactoryBuildInfoClient client;
 
-    public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client){
+    public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client) {
         this.client = client;
     }
 

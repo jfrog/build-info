@@ -90,7 +90,7 @@ public class DependenciesDownloaderHelper {
     private void replaceTargetPlaceholders(String searchPattern, Set<DownloadableArtifact> downloadableArtifacts, String target) {
         searchPattern = StringUtils.substringAfter(searchPattern, "/");
         Pattern pattern = Pattern.compile(PathsUtils.pathToRegExp(searchPattern));
-        target = StringUtils.defaultIfEmpty(target , "");
+        target = StringUtils.defaultIfEmpty(target, "");
         for (DownloadableArtifact artifact : downloadableArtifacts) {
             if (StringUtils.isEmpty(target) || target.endsWith("/")) {
                 artifact.setTargetDirPath(PathsUtils.reformatRegexp(artifact.getFilePath(), target, pattern));

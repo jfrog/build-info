@@ -224,7 +224,7 @@ public class SpecsHelper {
                     .sha1(detail.getSha1())
                     .type(ext)
                     .localPath(detail.getFile().getAbsolutePath())
-                    .remotePath(detail.getTargetRepository() + "/" + detail.getArtifactPath())
+                    .remotePath(detail.getArtifactPath())
                     .build();
             result.add(artifactBuilder.build());
         }

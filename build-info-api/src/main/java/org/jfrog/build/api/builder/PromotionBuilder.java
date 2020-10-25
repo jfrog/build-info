@@ -4,12 +4,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.Promotion;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Noam Y. Tenne

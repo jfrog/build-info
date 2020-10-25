@@ -77,7 +77,7 @@ public class UploadSpecHelper {
      */
     public static String wildcardCalculateTargetPath(String targetPattern, File artifactFile) {
         if (targetPattern.endsWith("/") || targetPattern.equals("")) {
-            return targetPattern + calculateTargetRelativePath(artifactFile);
+            return StringUtils.removeStart(targetPattern + calculateTargetRelativePath(artifactFile), "/");
         }
         return targetPattern;
     }

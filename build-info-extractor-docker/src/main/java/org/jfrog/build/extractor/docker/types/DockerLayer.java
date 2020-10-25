@@ -6,11 +6,11 @@ import org.jfrog.build.extractor.docker.DockerUtils;
 import java.io.Serializable;
 
 public class DockerLayer implements Serializable {
-    private String repo;
-    private String path;
-    private String fileName;
-    private String sha1;
-    private String digest;
+    private final String repo;
+    private final String path;
+    private final String fileName;
+    private final String sha1;
+    private final String digest;
 
     public DockerLayer(AqlSearchResult.SearchEntry entry) {
         this.repo = entry.getRepo();
@@ -26,6 +26,10 @@ public class DockerLayer implements Serializable {
 
     public String getFullPath() {
         return repo + "/" + path + "/" + fileName;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     public String getFileName() {

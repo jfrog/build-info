@@ -21,6 +21,7 @@ import java.util.Set;
 public abstract class ZipUtils {
 
     private static final Set<String> SUPPORTED_EXTENSIONS = CommonUtils.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
+
     /**
      * Extracts the given archive file into the given directory
      *

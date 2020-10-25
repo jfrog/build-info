@@ -31,6 +31,7 @@ import java.util.*;
 /**
  * Helper class for parsing build dependencies property.
  * Used only for legacy patterns in Jenkins, TeamCity and Bamboo.
+ *
  * @author Evgeny Goldin
  */
 public class BuildDependenciesHelper {

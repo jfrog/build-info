@@ -308,14 +308,16 @@ public class Build extends BaseBuildBean {
      *
      * @return Artifactory plugin version
      */
-    public String getArtifactoryPluginVersion() {return artifactoryPluginVersion;}
+    public String getArtifactoryPluginVersion() {
+        return artifactoryPluginVersion;
+    }
 
     /**
      * Sets the Artifactory plugin version of the build
      *
      * @param artifactoryPluginVersion Artifactory plugin version
      */
-    public void setArtifactoryPluginVersion (String artifactoryPluginVersion){
+    public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
         this.artifactoryPluginVersion = artifactoryPluginVersion;
     }
 
@@ -559,7 +561,7 @@ public class Build extends BaseBuildBean {
                 ", durationMillis=" + durationMillis +
                 ", principal='" + principal + '\'' +
                 ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
-                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\''+
+                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\'' +
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +

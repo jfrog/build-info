@@ -38,6 +38,8 @@ public class ArtifactBuilderTest {
         Artifact artifact = new ArtifactBuilder("name").build();
 
         assertEquals(artifact.getName(), "name", "Unexpected artifact name.");
+        assertNull(artifact.getLocalPath(), "Default artifact local path should be null");
+        assertNull(artifact.getRemotePath(), "Default artifact remote path should be null");
         assertNull(artifact.getType(), "Default artifact type.");
         assertNull(artifact.getSha1(), "Default artifact SHA1 checksum should be null.");
         assertNull(artifact.getSha256(), "Default artifact SHA256 checksum should be null.");
@@ -54,9 +56,12 @@ public class ArtifactBuilderTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
+        String localPath = "blip";
+        String remotePath = "blop";
         Properties properties = new Properties();
 
-        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).sha256(sha256).md5(md5).properties(properties)
+        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).sha256(sha256).md5(md5).localPath(localPath)
+                .remotePath(remotePath).properties(properties)
                 .build();
 
         assertEquals(artifact.getName(), name, "Unexpected artifact ID.");
@@ -64,6 +69,8 @@ public class ArtifactBuilderTest {
         assertEquals(artifact.getSha1(), sha1, "Unexpected artifact SHA1 checksum.");
         assertEquals(artifact.getSha256(), sha256, "Unexpected artifact SHA256 checksum.");
         assertEquals(artifact.getMd5(), md5, "Unexpected artifact SHA1 checksum.");
+        assertEquals(artifact.getLocalPath(), localPath, "Unexpected artifact local path.");
+        assertEquals(artifact.getRemotePath(), remotePath, "Unexpected artifact remote path.");
         assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
         assertTrue(artifact.getProperties().isEmpty(), "Artifact properties list should not have been populated.");
     }

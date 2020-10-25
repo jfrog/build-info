@@ -33,7 +33,7 @@ import org.apache.http.protocol.HttpContext;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 
-import javax.net.ssl.*;
+import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -147,7 +147,7 @@ public class PreemptiveHttpClient implements AutoCloseable {
          */
         private boolean shouldSetAuthScheme(final HttpRequest request, final HttpContext context) {
             // Get the original host name (before the redirect).
-            String originalHost = (String)context.getAttribute(ORIGINAL_HOST_CONTEXT_PARAM);
+            String originalHost = (String) context.getAttribute(ORIGINAL_HOST_CONTEXT_PARAM);
             if (originalHost == null) {
                 // No redirect was performed.
                 return true;

@@ -87,8 +87,8 @@ public class DeployTask extends DefaultTask {
             try {
                 ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
                 CompletableFuture<Void> allUploads = CompletableFuture.allOf(orderedTasks.stream()
-                    .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, "[" + Thread.currentThread().getName() + "]"), executor))
-                    .toArray(CompletableFuture[]::new));
+                        .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, "[" + Thread.currentThread().getName() + "]"), executor))
+                        .toArray(CompletableFuture[]::new));
                 allUploads.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -150,7 +150,7 @@ public class DeployTask extends DefaultTask {
         try {
             if (artifactoryTask.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
-                    ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
+                        ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
 
                 if (publisher != null && publisher.getContextUrl() != null) {
                     Map<String, String> moduleProps = new HashMap<String, String>(propsRoot);
@@ -170,12 +170,12 @@ public class DeployTask extends DefaultTask {
                         ArtifactoryBuildInfoClient client = null;
                         try {
                             client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
-                                new GradleClientLogger(log));
+                                    new GradleClientLogger(log));
 
                             log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                                publisher.getIncludePatterns(),
-                                publisher.getExcludePatterns());
+                                    publisher.getIncludePatterns(),
+                                    publisher.getExcludePatterns());
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
@@ -288,7 +288,7 @@ public class DeployTask extends DefaultTask {
         List<ArtifactoryTask> tasks = new ArrayList<ArtifactoryTask>();
         for (Task task : graph.getAllTasks()) {
             if (task instanceof ArtifactoryTask) {
-                tasks.add(((ArtifactoryTask)task));
+                tasks.add(((ArtifactoryTask) task));
             }
         }
         return tasks;

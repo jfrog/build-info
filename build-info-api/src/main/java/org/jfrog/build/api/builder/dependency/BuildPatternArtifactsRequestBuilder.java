@@ -29,15 +29,15 @@ import java.util.List;
 public class BuildPatternArtifactsRequestBuilder {
 
     private String buildName;
-        private String buildNumber;
-        private boolean transitive;
-        private List<Pattern> patterns;
+    private String buildNumber;
+    private boolean transitive;
+    private List<Pattern> patterns;
 
     public BuildPatternArtifactsRequestBuilder() {
         patterns = new ArrayList<>();
     }
 
-    public BuildPatternArtifactsRequest build(){
+    public BuildPatternArtifactsRequest build() {
         if (buildName == null) {
             throw new IllegalArgumentException("BuildPatternArtifactsRequest must have a build name.");
         }
@@ -51,18 +51,18 @@ public class BuildPatternArtifactsRequestBuilder {
         return request;
     }
 
-    public BuildPatternArtifactsRequestBuilder buildName(String buildName){
+    public BuildPatternArtifactsRequestBuilder buildName(String buildName) {
         this.buildName = buildName;
         return this;
     }
 
-    public BuildPatternArtifactsRequestBuilder buildNumber(String buildNumber){
+    public BuildPatternArtifactsRequestBuilder buildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
         return this;
     }
     //no support for transitivity
 
-    public BuildPatternArtifactsRequestBuilder pattern(String pattern){
+    public BuildPatternArtifactsRequestBuilder pattern(String pattern) {
         patterns.add(new Pattern(pattern));
         return this;
     }

@@ -13,6 +13,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.ivy.IvyPublication;
 import org.gradle.api.publish.maven.MavenPublication;
+import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
@@ -28,11 +29,7 @@ import org.jfrog.gradle.plugin.artifactory.task.helper.TaskHelperPublications;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * @author Lior Hasson

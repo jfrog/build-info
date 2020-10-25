@@ -11,6 +11,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
@@ -37,10 +38,10 @@ import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.creat
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
-    private ArrayListMultimap<String, String> properties;
+    private final ArrayListMultimap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
-    private String module;
+    private final String module;
 
     /**
      * Publish npm package.
@@ -137,6 +138,7 @@ public class NpmPublish extends NpmCommand {
         deployedArtifact = new ArtifactBuilder(npmPackageInfo.getModuleId())
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .remotePath(StringUtils.substringBeforeLast(npmPackageInfo.getDeployPath(), "/"))
                 .build();
     }
 
@@ -147,7 +149,7 @@ public class NpmPublish extends NpmCommand {
     private Build createBuild() {
         String moduleID = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         List<Artifact> artifactList = Collections.singletonList(deployedArtifact);
-        Module module = new ModuleBuilder().id(moduleID).artifacts(artifactList).build();
+        Module module = new ModuleBuilder().type(ModuleType.NPM).id(moduleID).repository(repo).artifacts(artifactList).build();
         List<Module> modules = Collections.singletonList(module);
         Build build = new Build();
         build.setModules(modules);

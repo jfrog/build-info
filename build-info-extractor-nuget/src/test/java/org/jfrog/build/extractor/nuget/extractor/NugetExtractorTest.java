@@ -47,8 +47,8 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         // Test projects
         PACKAGESCONFIG("packagesconfig", "NugetExtractorTest-PackagesConfig", new String[]{"packagesconfig"}, 6),
         REFERENCE("reference", "NugetExtractorTest-Reference", new String[]{"reference"}, 6),
-        MULTIPACKAGESCONFIG("multipackagesconfig", "NugetExtractorTest-MultiPackagesConfig", new String[]{"proj1", "proj2"}, 4,3),
-        MULTIREFERENCE("multireference", "NugetExtractorTest-MultiReference", new String[]{"proj1", "proj2"}, 5,3);
+        MULTIPACKAGESCONFIG("multipackagesconfig", "NugetExtractorTest-MultiPackagesConfig", new String[]{"proj1", "proj2"}, 4, 3),
+        MULTIREFERENCE("multireference", "NugetExtractorTest-MultiReference", new String[]{"proj1", "proj2"}, 5, 3);
 
         private File projectOrigin;
         private String targetDir;
@@ -79,10 +79,10 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     Object[][] referenceTestsInfo = new Object[][]{
             {Project.REFERENCE, "restore", null, Project.PACKAGESCONFIG.REFERENCE.moduleNames, 6},
-            {Project.MULTIREFERENCE, "restore", null, Project.PACKAGESCONFIG.MULTIREFERENCE.moduleNames,5, 3},
-            {Project.MULTIREFERENCE, "restore", CUSTOM_MODULE, new String[]{CUSTOM_MODULE},6},
-            {Project.MULTIREFERENCE, "restore src/multireference.proj1/proj1.csproj", null, new String[]{"proj1"},5},
-            {Project.MULTIREFERENCE, "restore ./multireference.sln", CUSTOM_MODULE, new String[]{CUSTOM_MODULE},6},
+            {Project.MULTIREFERENCE, "restore", null, Project.PACKAGESCONFIG.MULTIREFERENCE.moduleNames, 5, 3},
+            {Project.MULTIREFERENCE, "restore", CUSTOM_MODULE, new String[]{CUSTOM_MODULE}, 6},
+            {Project.MULTIREFERENCE, "restore src/multireference.proj1/proj1.csproj", null, new String[]{"proj1"}, 5},
+            {Project.MULTIREFERENCE, "restore ./multireference.sln", CUSTOM_MODULE, new String[]{CUSTOM_MODULE}, 6},
     };
 
     @DataProvider
@@ -90,9 +90,8 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         return ArrayUtils.addAll(packagesConfigTestsInfo, referenceTestsInfo);
     }
 
-    @SuppressWarnings("unused")
     @Test(dataProvider = "nugetRunProvider")
-    private void nugetRunTest(Project project, String args, String moduleName, String[] expectedModules, int... expectedDependencies) {
+    public void nugetRunTest(Project project, String args, String moduleName, String[] expectedModules, int... expectedDependencies) {
         Path projectDir = null;
         try {
             // Run nuget restore install
@@ -113,9 +112,8 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         return referenceTestsInfo;
     }
 
-    @SuppressWarnings("unused")
     @Test(dataProvider = "dotnetCliRunProvider")
-    private void dotnetCliRunTest(Project project, String args, String moduleName, String[] expectedModules, int... expectedDependencies) {
+    public void dotnetCliRunTest(Project project, String args, String moduleName, String[] expectedModules, int... expectedDependencies) {
         Path projectDir = null;
         try {
             // Run nuget restore install
@@ -133,10 +131,12 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     private void executeAndAssertBuildInfo(NugetRun nugetRun, String[] expectedModules, int... expectedDependencies) {
         Build build = nugetRun.execute();
+        assertNotNull(build);
         assertEquals(build.getModules().size(), expectedModules.length);
         for (int i = 0; i < expectedModules.length; i++) {
             Module module = build.getModules().get(i);
             // Check correctness of the module and dependencies
+            assertEquals(module.getType(), "nuget");
             assertEquals(module.getId(), expectedModules[i]);
             assertTrue(module.getDependencies().size() > 0);
         }

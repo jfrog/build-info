@@ -8,6 +8,7 @@ import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -158,7 +159,7 @@ public class NugetRun extends PackageManagerExtractor {
         try {
             prepareAndRunCmd();
             if (!StringUtils.isBlank(module)) {
-                ModuleBuilder builder = new ModuleBuilder().id(module);
+                ModuleBuilder builder = new ModuleBuilder().type(ModuleType.NUGET).id(module);
                 modulesList.add(builder.build());
             }
             collectDependencies();
@@ -293,7 +294,6 @@ public class NugetRun extends PackageManagerExtractor {
                 }
             });
         }
-        ;
     }
 
     private void collectDependenciesFromProjectDir(File projectRoot) throws Exception {

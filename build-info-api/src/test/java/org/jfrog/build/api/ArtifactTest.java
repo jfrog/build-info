@@ -38,6 +38,8 @@ public class ArtifactTest {
     public void testEmptyConstructor() {
         Artifact artifact = new Artifact();
         assertNull(artifact.getName(), "Artifact name should have not been initialized.");
+        assertNull(artifact.getLocalPath(), "Artifact local should have not been initialized.");
+        assertNull(artifact.getRemotePath(), "Artifact remote path should have not been initialized.");
         assertNull(artifact.getType(), "Artifact type should have not been initialized.");
         assertNull(artifact.getSha1(), "Artifact SHA1 checksum should have not been initialized.");
         assertNull(artifact.getSha256(), "Artifact SHA256 checksum should have not been initialized.");
@@ -53,6 +55,8 @@ public class ArtifactTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "gog";
+        String localPath = "blip";
+        String remotePath = "blop";
         Properties properties = new Properties();
 
         Artifact artifact = new Artifact();
@@ -61,6 +65,8 @@ public class ArtifactTest {
         artifact.setSha1(sha1);
         artifact.setSha256(sha256);
         artifact.setMd5(md5);
+        artifact.setLocalPath(localPath);
+        artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
 
         Assert.assertEquals(artifact.getName(), name, "Unexpected artifact name.");
@@ -68,6 +74,8 @@ public class ArtifactTest {
         Assert.assertEquals(artifact.getSha1(), sha1, "Unexpected artifact SHA1 checksum.");
         Assert.assertEquals(artifact.getSha256(), sha256, "Unexpected artifact SHA256 checksum.");
         Assert.assertEquals(artifact.getMd5(), md5, "Unexpected artifact MD5 checksum.");
+        Assert.assertEquals(artifact.getLocalPath(), localPath, "Unexpected artifact local path.");
+        Assert.assertEquals(artifact.getRemotePath(), remotePath, "Unexpected artifact remote path.");
         Assert.assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
     }
 
@@ -100,7 +108,7 @@ public class ArtifactTest {
         artifact3.setProperties(properties);
 
         Assert.assertEquals(artifact1, artifact2, "Expected equals == true for equivalent artifacts");
-        Assert.assertTrue(!artifact1.equals(artifact3), "Expected equals == false for non-equivalent artifacts");
+        Assert.assertFalse(artifact1.equals(artifact3), "Expected equals == false for non-equivalent artifacts");
 
         HashMap<Artifact, String> testMap = new HashMap<>();
         testMap.put(artifact1, "1");

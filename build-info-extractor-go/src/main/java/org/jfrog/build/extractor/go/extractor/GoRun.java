@@ -1,8 +1,12 @@
 package org.jfrog.build.extractor.go.extractor;
 
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
@@ -18,6 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +85,7 @@ public class GoRun extends GoCommand {
             goDriver.version(true);
             goDriver.runCmd(goCmdArgs, true);
             collectDependencies();
-            return createBuild(null, dependenciesList);
+            return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
@@ -188,5 +193,17 @@ public class GoRun extends GoCommand {
                     .build();
             dependenciesList.add(dependency);
         }
+    }
+
+    private Build createBuild() {
+        Build build = new Build();
+        String moduleId = StringUtils.defaultIfBlank(buildInfoModuleId, moduleName);
+        Module module = new ModuleBuilder()
+                .type(ModuleType.GO)
+                .id(moduleId)
+                .dependencies(dependenciesList)
+                .build();
+        build.setModules(Collections.singletonList(module));
+        return build;
     }
 }

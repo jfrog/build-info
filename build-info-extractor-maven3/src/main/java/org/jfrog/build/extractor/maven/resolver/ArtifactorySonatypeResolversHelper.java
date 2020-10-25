@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Properties;
 
 @Named
-@Component( role = ArtifactorySonatypeResolversHelper.class )
+@Component(role = ArtifactorySonatypeResolversHelper.class)
 public class ArtifactorySonatypeResolversHelper {
 
     @Requirement
@@ -37,6 +37,7 @@ public class ArtifactorySonatypeResolversHelper {
      * Create a list containing one release and one snapshot resolution repositories, according to the configuration in the Artifactory plugin.
      * The list is used to override Maven's default or configured repositories, so that the build dependencies are resolved from Artifactory.
      * The list is saved and reused for further invokations to this method.
+     *
      * @param session
      * @return
      */

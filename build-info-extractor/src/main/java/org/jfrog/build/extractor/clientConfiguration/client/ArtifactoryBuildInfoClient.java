@@ -104,6 +104,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
         this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
     }
+
     /**
      * @return A list of local repositories available for deployment.
      * @throws IOException On any connection error
@@ -293,7 +294,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         sendHttpRequest(request, HttpStatus.SC_CREATED, HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT);
     }
 
-    private HttpResponse sendHttpRequest(HttpUriRequest request, int ... httpStatuses) throws IOException {
+    private HttpResponse sendHttpRequest(HttpUriRequest request, int... httpStatuses) throws IOException {
         HttpResponse httpResponse;
         httpResponse = httpClient.getHttpClient().execute(request);
         StatusLine statusLine = httpResponse.getStatusLine();
