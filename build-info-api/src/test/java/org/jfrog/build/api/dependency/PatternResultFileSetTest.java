@@ -1,6 +1,6 @@
 package org.jfrog.build.api.dependency;
 
-import com.google.common.collect.Sets;
+import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
 import java.util.Set;
@@ -30,7 +30,7 @@ public class PatternResultFileSetTest {
     }
 
     public void testInitFullConstructor() {
-        Set<String> files = Sets.newHashSet("bob");
+        Set<String> files = CommonUtils.newHashSet("bob");
 
         PatternResultFileSet fileSet = new PatternResultFileSet("repoUri", "sourcePattern", files);
         assertEquals(fileSet.getRepoUri(), "repoUri", "Unexpected repo URI.");
@@ -39,7 +39,7 @@ public class PatternResultFileSetTest {
     }
 
     public void testSetterMethods() {
-        Set<String> files = Sets.newHashSet("bob");
+        Set<String> files = CommonUtils.newHashSet("bob");
 
         PatternResultFileSet fileSet = new PatternResultFileSet();
         fileSet.setRepoUri("repoUri");

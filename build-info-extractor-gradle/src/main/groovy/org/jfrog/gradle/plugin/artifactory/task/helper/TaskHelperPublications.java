@@ -17,8 +17,6 @@
 
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.gradle.api.GradleException;
@@ -50,10 +48,7 @@ import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 
@@ -182,7 +177,7 @@ public class TaskHelperPublications extends TaskHelper {
     }
 
     public Set<GradleDeployDetails> getArtifactDeployDetails() {
-        Set<GradleDeployDetails> deployDetails = Sets.newLinkedHashSet();
+        Set<GradleDeployDetails> deployDetails = new LinkedHashSet<>();
         if (!hasPublications()) {
             log.info("No publications to publish for project '{}'.", getProject().getPath());
             return deployDetails;
@@ -362,7 +357,7 @@ public class TaskHelperPublications extends TaskHelper {
     }
 
     private Map<String, String> getExtraTokens(PublishArtifactInfo artifactInfo) {
-        Map<String, String> extraTokens = Maps.newHashMap();
+        Map<String, String> extraTokens = new HashMap<>();
         if (StringUtils.isNotBlank(artifactInfo.getClassifier())) {
             extraTokens.put("classifier", artifactInfo.getClassifier());
         }

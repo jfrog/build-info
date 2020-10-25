@@ -16,13 +16,13 @@
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -308,14 +308,16 @@ public class Build extends BaseBuildBean {
      *
      * @return Artifactory plugin version
      */
-    public String getArtifactoryPluginVersion() {return artifactoryPluginVersion;}
+    public String getArtifactoryPluginVersion() {
+        return artifactoryPluginVersion;
+    }
 
     /**
      * Sets the Artifactory plugin version of the build
      *
      * @param artifactoryPluginVersion Artifactory plugin version
      */
-    public void setArtifactoryPluginVersion (String artifactoryPluginVersion){
+    public void setArtifactoryPluginVersion(String artifactoryPluginVersion) {
         this.artifactoryPluginVersion = artifactoryPluginVersion;
     }
 
@@ -431,7 +433,7 @@ public class Build extends BaseBuildBean {
 
     public void addStatus(PromotionStatus promotionStatus) {
         if (statuses == null) {
-            statuses = Lists.newArrayList();
+            statuses = new ArrayList<>();
         }
 
         statuses.add(promotionStatus);
@@ -462,7 +464,7 @@ public class Build extends BaseBuildBean {
      */
     public void addBuildDependency(BuildDependency buildDependency) {
         if (buildDependencies == null) {
-            buildDependencies = Lists.newArrayList();
+            buildDependencies = new ArrayList<>();
         }
         buildDependencies.add(buildDependency);
     }
@@ -559,7 +561,7 @@ public class Build extends BaseBuildBean {
                 ", durationMillis=" + durationMillis +
                 ", principal='" + principal + '\'' +
                 ", artifactoryPrincipal='" + artifactoryPrincipal + '\'' +
-                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\''+
+                ", artifactoryPluginVersion='" + artifactoryPluginVersion + '\'' +
                 ", url='" + url + '\'' +
                 ", parentName='" + parentName + '\'' +
                 ", parentNumber='" + parentNumber + '\'' +

@@ -16,8 +16,7 @@
 
 package org.jfrog.build.api.dependency;
 
-import com.google.common.collect.Sets;
-
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -27,7 +26,7 @@ public class PatternResultFileSet {
 
     private String repoUri;
     private String sourcePattern;
-    private Set<String> files = Sets.newHashSet();
+    private Set<String> files = new HashSet<>();
 
     public PatternResultFileSet() {
     }
@@ -69,7 +68,7 @@ public class PatternResultFileSet {
 
     public void addFile(String fileRelativePath) {
         if (files == null) {
-            files = Sets.newHashSet();
+            files = new HashSet<>();
         }
 
         files.add(fileRelativePath);

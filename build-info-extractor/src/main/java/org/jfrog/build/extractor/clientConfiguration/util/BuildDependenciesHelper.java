@@ -16,9 +16,6 @@
 
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
 import org.jfrog.build.api.builder.dependency.BuildPatternArtifactsRequestBuilder;
@@ -28,15 +25,13 @@ import org.jfrog.build.api.dependency.pattern.DependencyPattern;
 import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 
 /**
  * Helper class for parsing build dependencies property.
  * Used only for legacy patterns in Jenkins, TeamCity and Bamboo.
+ *
  * @author Evgeny Goldin
  */
 public class BuildDependenciesHelper {
@@ -66,15 +61,15 @@ public class BuildDependenciesHelper {
         List<BuildPatternArtifactsRequest> artifactsRequests = toArtifactsRequests(buildDependencies);
         List<BuildPatternArtifacts> artifactsResponses = downloader.getClient().retrievePatternArtifacts(
                 artifactsRequests);
-        Set<BuildDependency> result = Sets.newHashSet();
+        Set<BuildDependency> result = new HashSet<>();
         downloader.download(collectArtifactsToDownload(buildDependencies, artifactsRequests, artifactsResponses, result));
         log.info("Finished resolving Build Info build dependencies.");
 
-        return Lists.newArrayList(result);
+        return new ArrayList<>(result);
     }
 
     private Map<String, Map<String, List<BuildDependencyPattern>>> getBuildDependencies(List<String> patternLines) {
-        Map<String, Map<String, List<BuildDependencyPattern>>> buildsMap = Maps.newHashMap();
+        Map<String, Map<String, List<BuildDependencyPattern>>> buildsMap = new HashMap<>();
         for (String patternLine : patternLines) {
             DependencyPattern dependencyPattern = PatternFactory.create(patternLine);
             if (dependencyPattern instanceof BuildDependencyPattern) {
@@ -82,14 +77,14 @@ public class BuildDependenciesHelper {
                 String buildName = buildDependencyPattern.getBuildName();
                 Map<String, List<BuildDependencyPattern>> numbersMap = buildsMap.get(buildName);
                 if (numbersMap == null) {
-                    buildsMap.put(buildName, Maps.<String, List<BuildDependencyPattern>>newHashMap());
+                    buildsMap.put(buildName, new HashMap<>());
                     numbersMap = buildsMap.get(buildName);
                 }
 
                 String buildNumber = buildDependencyPattern.getBuildNumber();
                 List<BuildDependencyPattern> dependencyPatternList = numbersMap.get(buildNumber);
                 if (dependencyPatternList == null) {
-                    numbersMap.put(buildNumber, Lists.<BuildDependencyPattern>newLinkedList());
+                    numbersMap.put(buildNumber, new LinkedList<>());
                     dependencyPatternList = numbersMap.get(buildNumber);
                 }
                 dependencyPatternList.add(buildDependencyPattern);
@@ -102,7 +97,7 @@ public class BuildDependenciesHelper {
 
     private List<BuildPatternArtifactsRequest> toArtifactsRequests(
             Map<String, Map<String, List<BuildDependencyPattern>>> dependencyPatterns) {
-        List<BuildPatternArtifactsRequest> artifactsRequests = Lists.newLinkedList();
+        List<BuildPatternArtifactsRequest> artifactsRequests = new LinkedList<>();
         for (String buildName : dependencyPatterns.keySet()) {
             Map<String, List<BuildDependencyPattern>> buildNumbers = dependencyPatterns.get(buildName);
             for (String buildNumber : buildNumbers.keySet()) {
@@ -123,7 +118,7 @@ public class BuildDependenciesHelper {
             Map<String, Map<String, List<BuildDependencyPattern>>> dependencyPatterns,
             List<BuildPatternArtifactsRequest> artifactsRequests, List<BuildPatternArtifacts> artifactsResponses,
             Set<BuildDependency> buildDependencies) {
-        Set<DownloadableArtifact> downloadableArtifacts = Sets.newHashSet();
+        Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         verifySameSize(artifactsRequests, artifactsResponses);
 
         for (int i = 0; i < artifactsRequests.size(); i++) {

@@ -16,12 +16,12 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.testng.annotations.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -69,8 +69,8 @@ public class ModuleBuilderTest {
         String repo = "test-repo";
         String sha1 = "abcd";
         String md5 = "efgh";
-        List<Artifact> artifacts = Lists.newArrayList();
-        List<Dependency> dependencies = Lists.newArrayList();
+        List<Artifact> artifacts = new ArrayList<>();
+        List<Dependency> dependencies = new ArrayList<>();
         Properties properties = new Properties();
 
         Module module = new ModuleBuilder()

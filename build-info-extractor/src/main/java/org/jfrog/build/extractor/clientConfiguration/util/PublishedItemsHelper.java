@@ -17,7 +17,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
@@ -86,7 +85,7 @@ public class PublishedItemsHelper {
             throw new IllegalArgumentException("Cannot parse null pattern.");
         }
 
-        List<String> patterns = Lists.newArrayList();
+        List<String> patterns = new ArrayList<>();
 
         if (StringUtils.isEmpty(publishedItemsPropertyValue)) {
             return patterns;

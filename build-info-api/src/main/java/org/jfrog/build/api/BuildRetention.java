@@ -1,10 +1,10 @@
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.google.common.collect.Lists;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class BuildRetention implements Serializable {
 
     private boolean deleteBuildArtifacts;
 
-    private List<String> buildNumbersNotToBeDiscarded = Lists.newArrayList();
+    private List<String> buildNumbersNotToBeDiscarded = new ArrayList<>();
 
     // for json instantiation
     public BuildRetention() {
@@ -60,7 +60,7 @@ public class BuildRetention implements Serializable {
 
     public void setBuildNumbersNotToBeDiscarded(List<String> buildNumbersNotToBeDiscarded) {
         if (buildNumbersNotToBeDiscarded == null) {
-            this.buildNumbersNotToBeDiscarded = Lists.newArrayList();
+            this.buildNumbersNotToBeDiscarded = new ArrayList<>();
             return;
         }
         this.buildNumbersNotToBeDiscarded = buildNumbersNotToBeDiscarded;

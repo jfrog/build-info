@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
@@ -164,7 +163,7 @@ public class PatternAqlHelper extends AqlHelperBase {
         if (excludePatterns == null) {
             return "";
         }
-        List<PathFilePair> excludePairs = Lists.newArrayList();
+        List<PathFilePair> excludePairs = new ArrayList<>();
         for (String excludePattern : excludePatterns) {
             excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
         }

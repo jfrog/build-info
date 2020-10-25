@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.nuget.drivers;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
@@ -14,13 +12,14 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 abstract public class ToolchainDriverBase implements Serializable {
-    private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
-    private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
     public static final String CONFIG_FILE_FLAG = "configfile";
     public static final String SOURCE_FLAG = "source";
     protected static final String NAME_FLAG = "name";
@@ -30,10 +29,10 @@ abstract public class ToolchainDriverBase implements Serializable {
     protected static final String LOCALS_ARG = "locals";
     protected static final String GLOBAL_PACKAGES_ARG = "global-packages";
     protected static final String GLOBAL_PACKAGES_REGEX = "^global-packages:";
-
+    private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
+    private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
     private static final long serialVersionUID = 1L;
 
-    protected static ObjectReader jsonReader = new ObjectMapper().reader();
     protected CommandExecutor commandExecutor;
     protected File workingDirectory;
     protected Log logger;
@@ -55,7 +54,9 @@ abstract public class ToolchainDriverBase implements Serializable {
     }
 
     abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException;
+
     abstract public String globalPackagesCache() throws IOException, InterruptedException;
+
     abstract public String getFlagSyntax(String flagName);
 
     public String help() throws IOException, InterruptedException {
@@ -67,7 +68,8 @@ abstract public class ToolchainDriverBase implements Serializable {
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())
-                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo);
+                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo)
+                .setPort(rtUrl.getPort());
         return sourceUrlBuilder.build().toURL().toString();
     }
 
@@ -82,6 +84,7 @@ abstract public class ToolchainDriverBase implements Serializable {
     protected String runCommand(String[] args, List<String> extraArgs) throws IOException, InterruptedException {
         return runCommand(args, extraArgs, null);
     }
+
     private String runCommand(String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
         CommandResults nugetCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);

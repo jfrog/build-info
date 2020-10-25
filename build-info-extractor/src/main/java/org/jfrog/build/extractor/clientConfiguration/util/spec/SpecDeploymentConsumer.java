@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
@@ -11,7 +11,7 @@ import java.io.IOException;
 
 /**
  * Consumer object to use with the ProducerConsumerExecutor during artifact deployment by FileSpec operation.
- *
+ * <p>
  * Created by Bar Belity on 27/03/2018.
  */
 public class SpecDeploymentConsumer extends ConsumerRunnableBase {
@@ -20,7 +20,7 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
     private Log log;
     private ArtifactoryBuildInfoClient client;
 
-    public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client){
+    public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client) {
         this.client = client;
     }
 

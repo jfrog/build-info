@@ -16,7 +16,6 @@
 
 package org.jfrog.build.api;
 
-import com.google.common.collect.Maps;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -111,7 +110,7 @@ public class ArtifactTest {
         Assert.assertEquals(artifact1, artifact2, "Expected equals == true for equivalent artifacts");
         Assert.assertFalse(artifact1.equals(artifact3), "Expected equals == false for non-equivalent artifacts");
 
-        HashMap<Artifact, String> testMap = Maps.newHashMap();
+        HashMap<Artifact, String> testMap = new HashMap<>();
         testMap.put(artifact1, "1");
         testMap.put(artifact2, "2");
         Assert.assertEquals(testMap.size(), 1, "Expected same hashcode for equal artifacts");

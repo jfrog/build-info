@@ -1,6 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.Project;
@@ -14,6 +13,7 @@ import org.jfrog.gradle.plugin.artifactory.extractor.PublishArtifactInfo;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import javax.annotation.Nonnull;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,7 +30,7 @@ public abstract class TaskHelper {
 
     protected Map<String, String> defaultProps;
 
-    public Project getProject(){
+    public Project getProject() {
         return artifactoryTask.getProject();
     }
 
@@ -44,6 +44,7 @@ public abstract class TaskHelper {
 
     /**
      * Collects the list of publications and configurations.
+     *
      * @param objects - The publication/configuration
      */
     public abstract void addCollection(Object... objects);
@@ -51,17 +52,17 @@ public abstract class TaskHelper {
     protected Map<String, String> getPropsToAdd(PublishArtifactInfo artifact, String publicationName) {
         Project project = getProject();
         if (defaultProps == null) {
-            defaultProps = Maps.newHashMap();
+            defaultProps = new HashMap<>();
             addProps(defaultProps, artifactoryTask.getProperties());
             // Add the publisher properties
             ArtifactoryClientConfiguration.PublisherHandler publisher =
-                ArtifactoryPluginUtil.getPublisherHandler(project);
+                    ArtifactoryPluginUtil.getPublisherHandler(project);
             if (publisher != null) {
                 defaultProps.putAll(publisher.getMatrixParams());
             }
         }
 
-        Map<String, String> propsToAdd = Maps.newHashMap(defaultProps);
+        Map<String, String> propsToAdd = new HashMap<>(defaultProps);
         //Apply artifact-specific props from the artifact specs
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration(publicationName)
@@ -92,7 +93,7 @@ public abstract class TaskHelper {
     @Nonnull
     protected Boolean isPublishMaven() {
         ArtifactoryClientConfiguration.PublisherHandler publisher =
-            ArtifactoryPluginUtil.getPublisherHandler(getProject());
+                ArtifactoryPluginUtil.getPublisherHandler(getProject());
         if (publisher == null) {
             return false;
         }

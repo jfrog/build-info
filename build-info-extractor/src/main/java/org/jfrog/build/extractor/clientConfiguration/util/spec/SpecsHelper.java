@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -26,10 +25,7 @@ import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
@@ -219,7 +215,7 @@ public class SpecsHelper {
     }
 
     private List<Artifact> convertDeployDetailsToArtifacts(Set<DeployDetails> details) {
-        List<Artifact> result = Lists.newArrayList();
+        List<Artifact> result = new ArrayList<>();
         for (DeployDetails detail : details) {
             String ext = FilenameUtils.getExtension(detail.getFile().getName());
             ArtifactBuilder artifactBuilder = new ArtifactBuilder(detail.getFile().getName());

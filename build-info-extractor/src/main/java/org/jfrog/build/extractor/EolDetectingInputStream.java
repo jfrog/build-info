@@ -1,9 +1,8 @@
 package org.jfrog.build.extractor;
 
-import com.google.common.primitives.Bytes;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 /**
@@ -114,6 +113,8 @@ public class EolDetectingInputStream extends InputStream {
     }
 
     private boolean isByteEol(byte[] bytesToCheck, byte[] eolType) {
-        return Bytes.indexOf(bytesToCheck, eolType) != -1;
+        String strCheck = new String(bytesToCheck, StandardCharsets.UTF_8);
+        String strEOL = new String(eolType, StandardCharsets.UTF_8);
+        return strCheck.contains(strEOL);
     }
 }

@@ -16,9 +16,8 @@
 
 package org.jfrog.build.api.dependency;
 
-import com.google.common.collect.Lists;
-
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -33,7 +32,7 @@ public class PatternResult implements Serializable {
     private List<PatternArtifact> patternArtifacts;
 
     public PatternResult() {
-        patternArtifacts = Lists.newArrayList();
+        patternArtifacts = new ArrayList<>();
     }
 
     public PatternResult(List<PatternArtifact> patternArtifacts) {
@@ -50,7 +49,7 @@ public class PatternResult implements Serializable {
 
     public void addArtifact(PatternArtifact patternArtifact) {
         if (patternArtifacts == null) {
-            patternArtifacts = Lists.newArrayList();
+            patternArtifacts = new ArrayList<>();
         }
         patternArtifacts.add(patternArtifact);
     }

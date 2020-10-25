@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.*;
@@ -14,6 +13,8 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -43,14 +44,14 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
         final String BUILD_NAME = "ArtifactoryBuildInfoClientTest";
         final String BUILD_NUMBER = "13";
         final Date STARTED = new Date();
-        final List<Vcs> VCS = Lists.newArrayList(new Vcs("foo", "1"),
+        final List<Vcs> VCS = Arrays.asList(new Vcs("foo", "1"),
                 new Vcs("bar", "2"),
                 new Vcs("baz", "3"));
-        final List<MatrixParameter> RUN_PARAMETERS = Lists.newArrayList(new MatrixParameter("a", "b"), new MatrixParameter("c", "d"));
+        final List<MatrixParameter> RUN_PARAMETERS = Arrays.asList(new MatrixParameter("a", "b"), new MatrixParameter("c", "d"));
         final Module module = new Module();
         module.setId("foo");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
-        final List<PromotionStatus> STATUSES = Lists.newArrayList(new PromotionStatus("a", "b", "c", simpleDateFormat.format(STARTED), "e", "f"));
+        final List<PromotionStatus> STATUSES = Arrays.asList(new PromotionStatus("a", "b", "c", simpleDateFormat.format(STARTED), "e", "f"));
 
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
                 .number(BUILD_NUMBER)
@@ -68,7 +69,7 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
                 .licenseControl(new LicenseControl(false))
                 .buildRetention(new BuildRetention(true))
                 .buildRunParameters(RUN_PARAMETERS)
-                .modules(Lists.newArrayList(module))
+                .modules(Collections.singletonList(module))
                 .statuses(STATUSES)
                 .issues(new Issues());
         Build buildInfoToSend = buildInfoBuilder.build();

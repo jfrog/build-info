@@ -16,11 +16,11 @@
 
 package org.jfrog.build.api.builder;
 
-import com.google.common.collect.Lists;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
@@ -150,7 +150,7 @@ public class ModuleBuilder {
      */
     public ModuleBuilder addArtifact(Artifact artifact) {
         if (this.artifacts == null) {
-            artifacts = Lists.newArrayList();
+            artifacts = new ArrayList<>();
         }
         artifacts.add(artifact);
         return this;
@@ -164,7 +164,7 @@ public class ModuleBuilder {
      */
     public ModuleBuilder addExcludedArtifact(Artifact artifact) {
         if (this.excludedArtifacts == null) {
-            excludedArtifacts = Lists.newArrayList();
+            excludedArtifacts = new ArrayList<>();
         }
         excludedArtifacts.add(artifact);
         return this;
@@ -189,7 +189,7 @@ public class ModuleBuilder {
      */
     public ModuleBuilder addDependency(Dependency dependency) {
         if (this.dependencies == null) {
-            dependencies = Lists.newArrayList();
+            dependencies = new ArrayList<>();
         }
         dependencies.add(dependency);
         return this;

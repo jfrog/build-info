@@ -1,7 +1,5 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
-import com.google.common.collect.Sets;
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -13,7 +11,6 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
@@ -40,8 +37,8 @@ import java.util.concurrent.*;
 public class DeployTask extends DefaultTask {
 
     private static final Logger log = Logging.getLogger(DeployTask.class);
-    
-    private List<ModuleInfoFileProducer> moduleInfoFileProducers = Lists.newArrayList();
+
+    private List<ModuleInfoFileProducer> moduleInfoFileProducers = new ArrayList<>();
 
     @TaskAction
     public void taskAction() throws IOException {
@@ -90,8 +87,8 @@ public class DeployTask extends DefaultTask {
             try {
                 ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
                 CompletableFuture<Void> allUploads = CompletableFuture.allOf(orderedTasks.stream()
-                    .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, "[" + Thread.currentThread().getName() + "]"), executor))
-                    .toArray(CompletableFuture[]::new));
+                        .map(t -> CompletableFuture.runAsync(() -> deployArtifacts(accRoot, propsRoot, allDeployDetails, t, "[" + Thread.currentThread().getName() + "]"), executor))
+                        .toArray(CompletableFuture[]::new));
                 allUploads.get();
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
@@ -153,7 +150,7 @@ public class DeployTask extends DefaultTask {
         try {
             if (artifactoryTask.getDidWork()) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher =
-                    ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
+                        ArtifactoryPluginUtil.getPublisherHandler(artifactoryTask.getProject());
 
                 if (publisher != null && publisher.getContextUrl() != null) {
                     Map<String, String> moduleProps = new HashMap<String, String>(propsRoot);
@@ -173,12 +170,12 @@ public class DeployTask extends DefaultTask {
                         ArtifactoryBuildInfoClient client = null;
                         try {
                             client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
-                                new GradleClientLogger(log));
+                                    new GradleClientLogger(log));
 
                             log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
-                                publisher.getIncludePatterns(),
-                                publisher.getExcludePatterns());
+                                    publisher.getIncludePatterns(),
+                                    publisher.getExcludePatterns());
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
@@ -191,7 +188,7 @@ public class DeployTask extends DefaultTask {
                     }
 
                     if (!artifactoryTask.deployDetails.isEmpty()) {
-                        Set<DeployDetails> deployDetailsSet = Sets.newLinkedHashSet();
+                        Set<DeployDetails> deployDetailsSet = new LinkedHashSet<>();
                         for (GradleDeployDetails details : artifactoryTask.deployDetails) {
                             deployDetailsSet.add(details.getDeployDetails());
                         }
@@ -291,7 +288,7 @@ public class DeployTask extends DefaultTask {
         List<ArtifactoryTask> tasks = new ArrayList<ArtifactoryTask>();
         for (Task task : graph.getAllTasks()) {
             if (task instanceof ArtifactoryTask) {
-                tasks.add(((ArtifactoryTask)task));
+                tasks.add(((ArtifactoryTask) task));
             }
         }
         return tasks;

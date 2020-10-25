@@ -1,6 +1,5 @@
 package org.jfrog.build.api.util;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -21,7 +20,8 @@ import java.util.Set;
  */
 public abstract class ZipUtils {
 
-    private static final Set<String> SUPPORTED_EXTENSIONS = Sets.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
+    private static final Set<String> SUPPORTED_EXTENSIONS = CommonUtils.newHashSet("zip", "tar", "tar.gz", "gz", "tgz");
+
     /**
      * Extracts the given archive file into the given directory
      *

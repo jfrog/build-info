@@ -1,11 +1,10 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -118,10 +117,7 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
     }
 
     private boolean isResolvedOrParentOfResolvedFile(Set<String> resolvedFiles, final String path) {
-        return Iterables.any(resolvedFiles, new Predicate<String>() {
-            public boolean apply(String filePath) {
-                return StringUtils.equals(filePath, path) || StringUtils.startsWith(filePath, path);
-            }
-        });
+        return CommonUtils.isAnySatisfying(resolvedFiles,
+                filePath -> (StringUtils.equals(filePath, path) || StringUtils.startsWith(filePath, path)));
     }
 }

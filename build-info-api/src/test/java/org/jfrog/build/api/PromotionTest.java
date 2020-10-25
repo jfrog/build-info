@@ -1,15 +1,10 @@
 package org.jfrog.build.api;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.testng.Assert.*;
 
@@ -36,8 +31,8 @@ public class PromotionTest {
     }
 
     public void testConstructor() {
-        Set<String> scopes = Sets.newHashSet();
-        Map<String, Collection<String>> properties = Maps.newHashMap();
+        Set<String> scopes = new HashSet<>();
+        Map<String, Collection<String>> properties = new HashMap<>();
 
         Promotion promotion = new Promotion(Promotion.ROLLED_BACK, "comment", "ciUser", "timestamp",
                 true, "targetRepo", "sourceRepo", false, true, false, scopes, properties, false);
@@ -58,8 +53,8 @@ public class PromotionTest {
     }
 
     public void testSetters() {
-        Set<String> scopes = Sets.newHashSet();
-        Map<String, Collection<String>> properties = Maps.newHashMap();
+        Set<String> scopes = new HashSet<>();
+        Map<String, Collection<String>> properties = new HashMap<>();
 
         Promotion promotion = new Promotion();
         promotion.setStatus(Promotion.ROLLED_BACK);

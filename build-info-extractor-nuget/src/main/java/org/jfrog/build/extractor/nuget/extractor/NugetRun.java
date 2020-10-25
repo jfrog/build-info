@@ -94,6 +94,65 @@ public class NugetRun extends PackageManagerExtractor {
         this.module = module;
     }
 
+    private static String removeQuotes(String str) {
+        if (str.startsWith("\"") && str.endsWith("\"")) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
+    }
+
+    /**
+     * NuGet allows the version include/exclude unnecessary zeros.
+     * For example the alternative versions of "1.0.0" are: "1","1.0" and "1.0.0.0".
+     * This method will return a list of the possible alternative versions.
+     */
+    protected static List<String> createAlternativeVersionForms(String originalVersion) {
+        List<String> alternativeVersions = new ArrayList<>();
+        List<String> versionParts = new ArrayList<>();
+        Collections.addAll(versionParts, originalVersion.split("\\."));
+
+        while (versionParts.size() < 4) {
+            versionParts.add("0");
+        }
+
+        for (int i = 4; i > 0; i--) {
+            String version = String.join(".", versionParts.subList(0, i));
+            if (!version.equals(originalVersion)) {
+                alternativeVersions.add(version);
+            }
+            if (!version.endsWith(".0")) {
+                return alternativeVersions;
+            }
+        }
+        return alternativeVersions;
+    }
+
+    /**
+     * Allow running nuget restore using a new Java process.
+     * Used only in Jenkins to allow running 'rtNuget run' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
+            NugetRun nugetRun = new NugetRun(clientBuilder,
+                    clientConfiguration.resolver.getRepoKey(),
+                    clientConfiguration.dotnetHandler.useDotnetCoreCli(),
+                    handler.getArgs(),
+                    clientConfiguration.getLog(),
+                    Paths.get(handler.getPath() != null ? handler.getPath() : "."),
+                    clientConfiguration.getAllProperties(),
+                    handler.getModule(),
+                    clientConfiguration.resolver.getUsername(),
+                    clientConfiguration.resolver.getPassword());
+            nugetRun.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
+    }
+
     @Override
     public Build execute() {
         Build build = null;
@@ -108,6 +167,7 @@ public class NugetRun extends PackageManagerExtractor {
             build.setModules(modulesList);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
         return build;
     }
@@ -298,13 +358,6 @@ public class NugetRun extends PackageManagerExtractor {
         return StringUtils.EMPTY;
     }
 
-    private static String removeQuotes(String str) {
-        if (str.startsWith("\"") && str.endsWith("\"")) {
-            return str.substring(1, str.length() - 1);
-        }
-        return str;
-    }
-
     private List<Dependency> collectDependenciesFromPackagesConfig(String packagesConfigPath, String globalCachePath) throws Exception {
         File packagesConfig = new File(packagesConfigPath);
         NugetPackgesConfig config = new NugetPackgesConfig();
@@ -356,32 +409,6 @@ public class NugetRun extends PackageManagerExtractor {
         return new File(nupkgBasePath, nupkgFileName);
     }
 
-    /**
-     * NuGet allows the version include/exclude unnecessary zeros.
-     * For example the alternative versions of "1.0.0" are: "1","1.0" and "1.0.0.0".
-     * This method will return a list of the possible alternative versions.
-     */
-    protected static List<String> createAlternativeVersionForms(String originalVersion) {
-        List<String> alternativeVersions = new ArrayList<>();
-        List<String> versionParts = new ArrayList<>();
-        Collections.addAll(versionParts, originalVersion.split("\\."));
-
-        while (versionParts.size() < 4) {
-            versionParts.add("0");
-        }
-
-        for (int i = 4; i > 0; i--) {
-            String version = String.join(".", versionParts.subList(0, i));
-            if (!version.equals(originalVersion)) {
-                alternativeVersions.add(version);
-            }
-            if (!version.endsWith(".0")) {
-                return alternativeVersions;
-            }
-        }
-        return alternativeVersions;
-    }
-
     private List<Dependency> collectDependenciesFromProjectAssets(String projectAssetsPath) throws Exception {
         File projectAssets = new File(projectAssetsPath);
         List<Dependency> dependenciesList = new ArrayList<>();
@@ -428,31 +455,5 @@ public class NugetRun extends PackageManagerExtractor {
             }
         }
         return false;
-    }
-
-    /**
-     * Allow running nuget restore using a new Java process.
-     * Used only in Jenkins to allow running 'rtNuget run' in a docker container.
-     */
-    public static void main(String[] ignored) {
-        try {
-            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
-            NugetRun nugetRun = new NugetRun(clientBuilder,
-                    clientConfiguration.resolver.getRepoKey(),
-                    clientConfiguration.dotnetHandler.useDotnetCoreCli(),
-                    handler.getArgs(),
-                    clientConfiguration.getLog(),
-                    Paths.get(handler.getPath() != null ? handler.getPath() : "."),
-                    clientConfiguration.getAllProperties(),
-                    handler.getModule(),
-                    clientConfiguration.resolver.getUsername(),
-                    clientConfiguration.resolver.getPassword());
-            nugetRun.executeAndSaveBuildInfo(clientConfiguration);
-        } catch (RuntimeException e) {
-            ExceptionUtils.printRootCauseStackTrace(e, System.out);
-            System.exit(1);
-        }
     }
 }
