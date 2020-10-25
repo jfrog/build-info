@@ -335,7 +335,7 @@ public class NugetRun extends PackageManagerExtractor {
         } else if (dependenciesSource.endsWith(PROJECT_ASSETS)) {
             dependencies = collectDependenciesFromProjectAssets(dependenciesSource);
         }
-        Module projectModule = (new ModuleBuilder().id(projectName).dependencies(dependencies)).build();
+        Module projectModule = new ModuleBuilder().type(ModuleType.NUGET).id(projectName).dependencies(dependencies).build();
         if (StringUtils.isBlank(module)) {
             modulesList.add(projectModule);
         } else {
