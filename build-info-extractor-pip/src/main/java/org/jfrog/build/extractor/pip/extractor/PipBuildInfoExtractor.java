@@ -120,7 +120,7 @@ public class PipBuildInfoExtractor {
     }
 
     private Build createBuild(List<Dependency> dependenciesList, String moduleName) {
-        Module module = new ModuleBuilder().type(ModuleType.PIP).id(moduleName).dependencies(dependenciesList).build();
+        Module module = new ModuleBuilder().type(ModuleType.PYPI).id(moduleName).dependencies(dependenciesList).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
         Build build = new Build();
