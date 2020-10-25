@@ -129,7 +129,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
             }
             DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledBuild(dockerPull.execute());
+            validatePulledDockerImage(dockerPull.execute());
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
@@ -149,17 +149,17 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
             }
             DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledBuild(dockerPull.execute());
+            validatePulledDockerImage(dockerPull.execute());
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
     }
 
-    private void validatePulledBuild(Build build) {
+    private void validatePulledDockerImage(Build build) {
         assertEquals(build.getModules().size(), 1);
         Module module = build.getModules().get(0);
 
-        assertEquals(null, module.getArtifacts());
+        assertNull(module.getArtifacts());
         // Latest tag may change the number of dependencies in the future.
         assertTrue(module.getDependencies().size() > 0);
     }

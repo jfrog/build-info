@@ -5,16 +5,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
@@ -124,10 +125,10 @@ public class DockerUtils {
     private static String toSha1(String data) {
         try {
             MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
-            msdDigest.update(data.getBytes("UTF-8"), 0, data.length());
-            return DatatypeConverter.printHexBinary(msdDigest.digest()).toLowerCase();
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
-            throw new IllegalStateException("Could not calculate manifest.json into SHA1.");
+            msdDigest.update(data.getBytes(StandardCharsets.UTF_8));
+            return Hex.encodeHexString(msdDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Failed to convert manifest.json content to SHA1.");
         }
     }
 
@@ -273,8 +274,12 @@ public class DockerUtils {
         return indexOfFirstSlash < indexOfLastColon;
     }
 
-    // Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
-    // might have a NONEXE flag, therefore we override it with our build info extractor dir.
+    /**
+     * Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
+     * might have a NONEXE flag, therefore we override it with our build info extractor dir.
+     *
+     * @param path - Local path to create temp dir.
+     */
     public static void initTempDir(File path) {
         // Extract the dir path.
         String pathDir = path.getAbsoluteFile().getParent();
@@ -282,13 +287,19 @@ public class DockerUtils {
         System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
     }
 
-    public static String toNoneMarkerLayer(String markerLayerName) {
-        return markerLayerName.substring(0, markerLayerName.length() - ".marker".length());
-    }
-
+    /**
+     * Download meta data from .marker layer in Artifactory.
+     * As a result, the marker layer will transform to a regular docker layer (required to collect build info such as sha1, etc.).
+     *
+     * @param repo               - Repository from which to download the layer
+     * @param imageName-         Image name to download
+     * @param imageDigests       - image diegest to download
+     * @param dependenciesClient - Dependencies client
+     */
     public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
         String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
-        dependenciesClient.getArtifactMetadata(url);
+        HttpResponse response = dependenciesClient.getArtifactMetadata(url);
+        EntityUtils.consume(response.getEntity());
     }
 
     public enum CommandType {

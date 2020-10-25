@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
@@ -14,7 +15,6 @@ import org.jfrog.build.extractor.docker.types.DockerImage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
@@ -78,8 +78,8 @@ public class DockerPull extends DockerCommand {
         try {
             DockerJavaWrapper.pullImage(imageTag, username, password, host, env, logger);
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
-            List<String> archDetails = DockerJavaWrapper.getImageArch(imageTag, host, env, logger);
-            DockerImage image = new DockerImage(imageId, imageTag, targetRepository, buildInfoClientBuilder, dependenciesClientBuilder, archDetails.get(0), archDetails.get(1));
+            Pair<String, String> archDetails = DockerJavaWrapper.getImageArch(imageTag, host, env, logger);
+            DockerImage image = new DockerImage(imageId, imageTag, targetRepository, buildInfoClientBuilder, dependenciesClientBuilder, archDetails.getLeft(), archDetails.getRight());
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Pull);
             if (module.getDependencies() == null || module.getDependencies().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");

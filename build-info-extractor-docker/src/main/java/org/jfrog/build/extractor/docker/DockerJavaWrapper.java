@@ -12,11 +12,14 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
 
 public class DockerJavaWrapper {
 
@@ -94,10 +97,11 @@ public class DockerJavaWrapper {
      * @param envVars  - System env variables.
      * @return tuple of [Image-Architecture, Image-OS]
      */
-    public static List<String> getImageArch(String imageTag, String host, Map<String, String> envVars, Log logger) {
-        String imageArch = DockerJavaWrapper.InspectImage(imageTag, host, envVars, logger).getArch();
-        String imageOs = DockerJavaWrapper.InspectImage(imageTag, host, envVars, logger).getOs();
-        return Arrays.asList(imageArch, imageOs);
+    public static Pair<String, String> getImageArch(String imageTag, String host, Map<String, String> envVars, Log logger) {
+        InspectImageResponse response = DockerJavaWrapper.InspectImage(imageTag, host, envVars, logger);
+        String imageArch = response.getArch();
+        String imageOs = response.getOs();
+        return Pair.of(imageArch, imageOs);
     }
 
     /**

@@ -116,10 +116,15 @@ public class DockerPush extends DockerCommand {
         String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
-                HttpResponse httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
-                validateSetImageLayersResponse(httpResponse);
-                EntityUtils.consume(httpResponse.getEntity());
-
+                HttpResponse httpResponse = null;
+                try {
+                    httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
+                    validateSetImageLayersResponse(httpResponse);
+                } finally {
+                    if (httpResponse != null) {
+                        EntityUtils.consume(httpResponse.getEntity());
+                    }
+                }
             }
         }
     }

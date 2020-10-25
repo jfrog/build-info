@@ -29,6 +29,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jfrog.build.extractor.docker.DockerUtils.entityToString;
+
 public class DockerImage implements Serializable {
     private final String imageId;
     private final String imageTag;
@@ -77,7 +79,7 @@ public class DockerImage implements Serializable {
      * Search for 'manifest.json' at 'manifestPath' in artifactory and return its content.
      * If the target repository is not local type , fat-manifest can be found instead, which is a list of 'manifest.json' digest for one or more platforms.
      * In order to find the right digest, we read and iterate on each digest and search for the one with the same os and arch.
-     * Using the correct digest from the fat-manifest, we are able to build the path toward manifest.json in Artifactory.
+     * By using the correct digest from the fat-manifest, we are able to build the path toward manifest.json in Artifactory.
      *
      * @param dependenciesClient - Dependencies client builder.
      * @param manifestPath       - Path to manifest in Artifactory.
@@ -95,12 +97,12 @@ public class DockerImage implements Serializable {
                 throw e;
             }
             res = dependenciesClient.downloadArtifact(manifestPath + "/list.manifest.json");
-            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(IOUtils.toString(res.getEntity().getContent()), this.os, this.architecture);
+            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(res.getEntity()), os, architecture);
             if (digestsFromFatManifest.isEmpty()) {
                 throw e;
             }
             // Remove the tag from the pattern, and place the manifest digest instead.
-            res = dependenciesClient.downloadArtifact(manifestPath.substring(0, manifestPath.lastIndexOf("/")) + "/" + digestsFromFatManifest.replace(":", "__") + "/manifest.json");
+            res = dependenciesClient.downloadArtifact(StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__") + "/manifest.json");
             return IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
         } finally {
             if (res != null) {
@@ -137,7 +139,7 @@ public class DockerImage implements Serializable {
             throw new IllegalStateException("Could not find the history docker layer: " + imageId + " for image: " + imageTag + " in Artifactory.");
         }
         HttpResponse res = dependenciesClient.downloadArtifact(dependenciesClient.getArtifactoryUrl() + "/" + historyLayer.getFullPath());
-        int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(DockerUtils.entityToString(res.getEntity()));
+        int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(entityToString(res.getEntity()));
         LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
         LinkedHashSet<Artifact> artifacts = new LinkedHashSet<>();
         // Filter out duplicate layers from manifest by using HashSet.
@@ -239,9 +241,11 @@ public class DockerImage implements Serializable {
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             layers = getLayers(dependenciesClient, buildInfoClient);
             List<DockerLayer> markerLayers = layers.getLayers().stream().filter(layer -> layer.getFileName().endsWith(".marker")).collect(Collectors.toList());
+            // Transform all marker layers into regular layer.
             if (markerLayers.size() > 0) {
                 for (DockerLayer markerLayer : markerLayers) {
-                    String imageDigests = DockerUtils.toNoneMarkerLayer(markerLayer.getDigest());
+                    // Get image name without '.marker' suffix.
+                    String imageDigests = StringUtils.removeEnd(markerLayer.getDigest(), ".marker");
                     String imageName = StringUtils.substringBetween(imageTag, "/", ":");
                     DockerUtils.downloadMarkerLayer(targetRepo, imageName, imageDigests, dependenciesClient);
                 }
