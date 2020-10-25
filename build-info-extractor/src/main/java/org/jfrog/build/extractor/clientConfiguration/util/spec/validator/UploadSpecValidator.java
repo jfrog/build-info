@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec.validator;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 
@@ -13,13 +14,14 @@ import java.io.IOException;
 public class UploadSpecValidator extends SpecsValidator {
 
     @Override
-    public void validate(Spec spec) throws IOException {
+    public void validate(Spec spec, Log log) throws IOException {
         if (ArrayUtils.isEmpty(spec.getFiles())) {
             throw new IllegalArgumentException("Spec must contain at least one fileSpec.");
         }
         for (FileSpec fileSpec : spec.getFiles()) {
             boolean isAql = StringUtils.isNotBlank(fileSpec.getAql());
             boolean isPattern = StringUtils.isNotBlank(fileSpec.getPattern());
+            boolean isExcludePatterns = !ArrayUtils.isEmpty(fileSpec.getExcludePatterns());
 
             if (!isAql && !isPattern) {
                 throw new IllegalArgumentException("Upload Spec must contain AQL or Pattern key");
@@ -31,6 +33,11 @@ public class UploadSpecValidator extends SpecsValidator {
                 throw new IllegalArgumentException("The argument 'pattern' is missing from the upload spec.");
             }
             validateQueryInputs(fileSpec);
+
+            if (isExcludePatterns) {
+                log.warn("The 'excludePatterns' File Spec property is deprecated.\n" +
+                        "Please use the 'exclusions' File Spec property instead.");
+            }
         }
     }
 }

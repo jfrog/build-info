@@ -6,7 +6,6 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SearchBasedSpecValidator;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,7 +30,6 @@ public class EditPropertiesHelper {
         ArtifactorySearcher searcher = new ArtifactorySearcher(client, log);
         // Here to mark that at least one action has been successfully made. Needed for the failNoOp flag.
         boolean propertiesSet = false;
-        new SearchBasedSpecValidator().validate(spec);
 
         for (FileSpec file : spec.getFiles()) {
             log.debug("Editing properties using spec: \n" + file.toString());

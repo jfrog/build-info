@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO}/a/*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true",
+      "exclusions": ["*/a2.in"]
+    },
+    {
+      "pattern": "${LOCAL_REPO2}*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true",
+      "exclusions": ["*/*a*b1.in", "*b2.i*"]
+    },
+    {
+      "pattern": "${LOCAL_REPO1_REPO2}/*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true",
+      "exclusions": ["${LOCAL_REPO1_REPO2}"]
+    }
+  ]
+}

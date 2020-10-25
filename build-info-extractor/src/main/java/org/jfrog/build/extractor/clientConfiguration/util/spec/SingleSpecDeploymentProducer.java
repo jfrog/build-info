@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.google.common.collect.Multimap;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -121,8 +122,12 @@ public class SingleSpecDeploymentProducer {
         // Calculate pattern for path
         pathPattern = Pattern.compile(patternForPath);
         // Calculate exclude pattern
-        String[] excludePatterns = spec.getExcludePatterns();
-        String excludePattern = UploadSpecHelper.prepareExcludePattern(excludePatterns, !isRegexp, isRecursive);
+        String[] exclusions = spec.getExclusions();
+        if (ArrayUtils.isEmpty(exclusions)) {
+            // Support legacy exclude patterns. 'Exclude patterns' are deprecated and replaced by 'exclusions'.
+            exclusions = spec.getExcludePatterns();
+        }
+        String excludePattern = UploadSpecHelper.prepareExcludePattern(exclusions, !isRegexp, isRecursive);
         regexpExcludePattern = StringUtils.isBlank(excludePattern) ? null : Pattern.compile(excludePattern);
         // Calculate base directory
         baseDirFile = new File(baseDir);

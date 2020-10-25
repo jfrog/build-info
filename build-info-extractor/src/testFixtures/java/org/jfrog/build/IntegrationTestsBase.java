@@ -44,8 +44,10 @@ public abstract class IntegrationTestsBase {
     private String password;
     private String url;
     protected String localRepo = "build-info-tests-local";
+    protected String localRepo2 = "build-info-tests-local2";
     protected String remoteRepo;
     protected String virtualRepo = "build-info-tests-virtual";
+    protected String localRepositoriesWildcard = "build-info-tests-local*";
     protected ArtifactoryBuildInfoClient buildInfoClient;
     protected ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     protected ArtifactoryDependenciesClient dependenciesClient;
@@ -54,8 +56,10 @@ public abstract class IntegrationTestsBase {
     private PreemptiveHttpClient preemptiveHttpClient;
 
     protected static final String LOCAL_REPO_PLACEHOLDER = "${LOCAL_REPO}";
+    protected static final String LOCAL_REPO2_PLACEHOLDER = "${LOCAL_REPO2}";
     protected static final String VIRTUAL_REPO_PLACEHOLDER = "${VIRTUAL_REPO}";
     protected static final String TEMP_FOLDER_PLACEHOLDER = "${TEMP_FOLDER}";
+    protected static final String LOCAL_REPOSITORIES_WILDCARD_PLACEHOLDER = "${LOCAL_REPO1_REPO2}";
     protected static final String UPLOAD_SPEC = "upload.json";
     protected static final String DOWNLOAD_SPEC = "download.json";
     protected static final String EXPECTED = "expected.json";
@@ -181,7 +185,7 @@ public abstract class IntegrationTestsBase {
      * @param repo - repository name
      * @throws IOException
      */
-    private void createTestRepo(String repo) throws IOException {
+    protected void createTestRepo(String repo) throws IOException {
         if (StringUtils.isBlank(repo) || isRepoExists(repo)) {
             return;
         }
@@ -209,7 +213,7 @@ public abstract class IntegrationTestsBase {
      * @param repo - repository name
      * @throws IOException
      */
-    private void deleteTestRepo(String repo) throws IOException {
+    protected void deleteTestRepo(String repo) throws IOException {
         if (StringUtils.isBlank(repo)) {
             return;
         }
@@ -241,8 +245,10 @@ public abstract class IntegrationTestsBase {
     protected String readSpec(File specFile, String workSpacePath) throws IOException {
         String spec = FileUtils.readFileToString(specFile);
         spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
+        spec = StringUtils.replace(spec, LOCAL_REPO2_PLACEHOLDER, localRepo2);
         spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
         spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, workSpacePath);
+        spec = StringUtils.replace(spec, LOCAL_REPOSITORIES_WILDCARD_PLACEHOLDER, localRepositoriesWildcard);
         return StringUtils.replace(spec, "${WORKSPACE}", workSpacePath);
     }
 

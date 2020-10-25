@@ -194,7 +194,8 @@ public class SpecsHelperTest {
                 {NEGATIVE_FILE_SPEC[1]},
                 {NEGATIVE_FILE_SPEC[2]},
                 {NEGATIVE_FILE_SPEC[3]},
-                {NEGATIVE_FILE_SPEC[4]}
+                {NEGATIVE_FILE_SPEC[4]},
+                {NEGATIVE_FILE_SPEC[5]}
         };
     }
 
@@ -218,6 +219,7 @@ public class SpecsHelperTest {
                 {"{ \"files\": []}"},
                 {"{ \"files\": [{\"target\": \"foo\", \"pattern\": \"  \"}]}"},
                 {"{ \"files\": [{\"target\": \"foo\", \"pattern\": \"bar\", \"aql\": \"bar\"}]}"},
+                {"{ \"files\": [{\"target\": \"foo\", \"pattern\": \"bar\", \"excludePatterns\": [\"bar\"], \"exclusions\": [\"foo\"]}]}"}
         };
     }
 
@@ -295,7 +297,8 @@ public class SpecsHelperTest {
                 "negativeDownloadUploadSpecTest2.json",
                 "negativeDownloadUploadSpecTest3.json",
                 "negativeDownloadUploadSpecTest4.json",
-                "negativeDownloadUploadSpecTest5.json"
+                "negativeDownloadUploadSpecTest5.json",
+                "negativeDownloadUploadSpecTest6.json"
         };
     }
 }

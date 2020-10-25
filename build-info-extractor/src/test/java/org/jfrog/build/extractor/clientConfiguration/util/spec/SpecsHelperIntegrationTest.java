@@ -7,10 +7,7 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.testng.Reporter;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,11 +31,28 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     private static final String INTEGRATION_TESTS = "/integration/tests";
     private static final String DEFAULT_SPEC_PATH = "/integration/default";
 
+    @BeforeClass
+    public void init() throws IOException {
+        super.init();
+        if (!dependenciesClient.isArtifactoryOSS()) {
+            createTestRepo(localRepo2);
+        }
+    }
+
+    @AfterClass
+    protected void terminate() throws IOException {
+        if (!dependenciesClient.isArtifactoryOSS()) {
+            deleteTestRepo(localRepo2);
+        }
+        super.terminate();
+    }
+
     @BeforeMethod
     @AfterMethod
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);
         deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo2);
     }
 
     @Test(dataProvider = "testCases")
