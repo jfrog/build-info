@@ -268,11 +268,11 @@ public class DockerImage implements Serializable {
         }
         // Try to get manifest, assuming proxy-less
         String proxyLessImagePath = proxyImagePath.substring(proxyImagePath.indexOf("/") + 1);
-        logger.info("Trying to fetch manifest from Artifactory, assuming proxy-less configuration.");
+        logger.info("Trying to fetch manifest from Artifactory, assuming proxy-less.");
         try {
             checkAndSetManifestAndImagePathCandidates(proxyLessImagePath, proxyLessImagePath, dependenciesClient);
         } catch (IOException e) {
-            logger.error("The manifest could not be fetched from Artifactory, assuming proxy-lessess configuration - " + e.getMessage());
+            logger.error("The manifest could not be fetched from Artifactory - " + e.getMessage());
             // If image path includes more than 3 slashes, Artifactory doesn't store this image under 'library',
             // thus we should not look further.
             int totalSlash = StringUtils.countMatches(proxyImagePath, "/");
@@ -287,9 +287,10 @@ public class DockerImage implements Serializable {
             checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient);
             return;
         } catch (IOException e) {
-            logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
+            logger.error("The manifest could not be fetched from Artifactory - " + e.getMessage());
         }
         // Assume proxy-less - this time with 'library' as part of the path.
+        logger.info("Assume proxy-less - this time with 'library' as part of the path");
         String proxyLessManifestPath = StringUtils.join(new String[]{"library", proxyLessImagePath}, "/");
         checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient);
     }

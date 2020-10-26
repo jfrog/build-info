@@ -4,10 +4,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Strings;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
@@ -57,8 +56,8 @@ public class DockerUtils {
      * @throws IOException fat-manifest has missing 'manifest' key.
      */
     public static String getImageDigestFromFatManifest(String manifest, String os, String arch) throws IOException {
-        if (Strings.isNullOrEmpty(os) || Strings.isNullOrEmpty(arch)) {
-            return "";
+        if (StringUtils.isAnyBlank(os, arch)) {
+            return StringUtils.EMPTY;
         }
         JsonNode fatManifestTree = createMapper().readTree(manifest);
         JsonNode manifests = fatManifestTree.get("manifests");

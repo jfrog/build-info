@@ -199,12 +199,12 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         Module module = build.getModules().get(0);
         assertEquals(module.getType(), "docker");
         List<Dependency> dependencies = module.getDependencies();
-        validateImageDepedencies(dependencies, image);
+        validateImageDependencies(dependencies, image);
     }
 
-    private void validateImageDepedencies(List<Dependency> deps, String image) {
+    private void validateImageDependencies(List<Dependency> deps, String image) {
         // Latest tag may change the number of dependencies in the future.
-        assertTrue(deps.size() > 0);
+        assertFalse(deps.isEmpty());
         String imageDigest = getImageId(image);
         assertTrue(deps.stream().anyMatch(dep -> dep.getId().equals(imageDigest)));
     }
@@ -215,14 +215,13 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     }
 
     private String getImageId(String image) {
-        return DockerJavaWrapper.InspectImage(image, host, Collections.emptyMap(), getLog()).getId().replace(":", "__");
+        String id = DockerJavaWrapper.InspectImage(image, host, Collections.emptyMap(), getLog()).getId();
+        assertNotNull(id);
+        return id.replace(":", "__");
     }
 
     private String validateDomainSuffix(String domain) {
-        if (!StringUtils.endsWith(domain, "/")) {
-            domain += "/";
-        }
-        return domain;
+        return StringUtils.appendIfMissing(domain, "/");
     }
 
     @AfterClass

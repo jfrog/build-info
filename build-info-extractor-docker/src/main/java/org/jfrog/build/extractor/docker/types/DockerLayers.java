@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DockerLayers implements Serializable {
-    Map<String, DockerLayer> digestToLayer = new HashMap<String, DockerLayer>();
-    List<DockerLayer> layers = new ArrayList<DockerLayer>();
+    Map<String, DockerLayer> digestToLayer = new HashMap<>();
+    List<DockerLayer> layers = new ArrayList<>();
 
     public void addLayer(DockerLayer layer) {
         digestToLayer.put(layer.getDigest(), layer);
