@@ -27,8 +27,10 @@ import static org.testng.Assert.*;
 public class DockerExtractorTest extends IntegrationTestsBase {
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
     private static final String SHORT_IMAGE_NAME = "jfrog_artifactory_buildinfo_tests";
-    private static final String SHORT_IMAGE_TAG = "2";
-    private static final String EXPECTED_REMOTE_PATH = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG;
+    private static final String SHORT_IMAGE_TAG_LOCAL = "2";
+    private static final String SHORT_IMAGE_TAG_VIRTUAL = "3";
+    private static final String EXPECTED_REMOTE_PATH_LOCAL = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG_LOCAL;
+    private static final String EXPECTED_REMOTE_PATH_VIRTUAL = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG_VIRTUAL;
 
     private static final String LOCAL_DOMAIN = "BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN";
     private static final String REMOTE_DOMAIN = "BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN";
@@ -49,7 +51,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private String dockerVirtualRepo;
     private String host;
     private String imageTag;
-    private String pushImageTag;
+    private String imageTagVirtual;
     private String pullImageFromRemote;
 
     public DockerExtractorTest() {
@@ -79,14 +81,14 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         dockerRemoteRepo = System.getenv(DOCKER_REMOTE_REPO);
         dockerVirtualRepo = System.getenv(DOCKER_VIRTUAL_REPO);
         host = System.getenv(DOCKER_HOST);
-        imageTag = domainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG;
-        pushImageTag = localDomainName + "jfrog_artifactory_buildinfo_tests:2";
+        imageTag = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
+        imageTagVirtual = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
         pullImageFromRemote = remoteDomainName + "hello-world:latest";
         pullImageFromVirtual = virtualDomainName + "hello-world:latest";
     }
 
     @Test
-    public void dockerPushTest() {
+    public void dockerPushFromLocalTest() {
         if (isWindows()) {
             throw new SkipException("Skipping Docker tests on Windows OS");
         }
@@ -98,17 +100,47 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_LOCAL_REPO + " environment variable is not set, failing docker tests.");
             }
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerJavaWrapper.buildImage(pushImageTag, host, Collections.emptyMap(), projectPath);
+            DockerJavaWrapper.buildImage(imageTag, host, Collections.emptyMap(), projectPath);
 
-            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, pushImageTag, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
 
             assertEquals(module.getType(), "docker");
-            assertEquals(module.getRepository(), repo);
+            assertEquals(module.getRepository(), dockerLocalRepo);
             assertEquals(7, module.getArtifacts().size());
-            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH));
+            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_LOCAL));
+            assertEquals(5, module.getDependencies().size());
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        }
+    }
+
+    @Test
+    public void dockerPushFromVirtualTest() {
+        if (isWindows()) {
+            throw new SkipException("Skipping Docker tests on Windows OS");
+        }
+        try {
+            if (StringUtils.isBlank(virtualDomainName)) {
+                throw new IOException("The " + LOCAL_DOMAIN + " environment variable is not set, failing docker tests.");
+            }
+            if (StringUtils.isBlank(dockerVirtualRepo)) {
+                throw new IOException("The " + DOCKER_LOCAL_REPO + " environment variable is not set, failing docker tests.");
+            }
+            String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
+            DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), projectPath);
+
+            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            Build build = dockerPush.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
+
+            assertEquals(module.getType(), "docker");
+            assertEquals(module.getRepository(), dockerVirtualRepo);
+            assertEquals(7, module.getArtifacts().size());
+            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_VIRTUAL));
             assertEquals(5, module.getDependencies().size());
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));

@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor.docker.types;
 
-import com.google.common.base.Charsets;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Sets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Artifact;
@@ -65,13 +63,15 @@ public class DockerImage implements Serializable {
      * Check if the provided manifestPath is correct.
      * Set the manifest and imagePath in case of the correct manifest.
      */
-    private void checkAndSetManifestAndImagePathCandidates(String manifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient, boolean isLocalRepo) throws IOException {
-        String candidateManifest = getManifestFromArtifactory(dependenciesClient, manifestPath, isLocalRepo);
-        String imageDigest = DockerUtils.getConfigDigest(candidateManifest);
+    private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
+        Pair<String, String> candidateDetails = getManifestFromArtifactory(dependenciesClient, candidateManifestPath);
+        String manifestContent = candidateDetails.getLeft();
+        String manifestPath = candidateDetails.getRight();
+        String imageDigest = DockerUtils.getConfigDigest(manifestContent);
         if (imageDigest.equals(imageId)) {
-            manifest = candidateManifest;
+            manifest = manifestContent;
             imagePath = candidateImagePath;
-            loadLayers();
+            loadLayers(manifestPath);
         }
     }
 
@@ -83,27 +83,28 @@ public class DockerImage implements Serializable {
      *
      * @param dependenciesClient - Dependencies client builder.
      * @param manifestPath       - Path to manifest in Artifactory.
-     * @param isLocalRepo        - Indicates if the search is against a local repository.
-     * @return The manifest content, otherwise throw an error.
+     * @return A pair of (manifest content, path to manifest).
      * @throws IOException fail to search for manifest json in manifestPath.
      */
-    private String getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath, boolean isLocalRepo) throws IOException {
+    private Pair<String, String> getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath) throws IOException {
         HttpResponse res = null;
+        String artRepoUrl = StringUtils.join(new String[]{dependenciesClient.getArtifactoryUrl(), targetRepo}, '/') + '/';
         try {
-            res = dependenciesClient.downloadArtifact(manifestPath + "/manifest.json");
-            return IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
+            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/manifest.json");
+            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), manifestPath);
         } catch (Exception e) {
-            if (isLocalRepo) {
+            if (dependenciesClient.isLocalRepo(targetRepo)) {
                 throw e;
             }
-            res = dependenciesClient.downloadArtifact(manifestPath + "/list.manifest.json");
+            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/list.manifest.json");
             String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(res.getEntity()), os, architecture);
             if (digestsFromFatManifest.isEmpty()) {
                 throw e;
             }
             // Remove the tag from the pattern, and place the manifest digest instead.
-            res = dependenciesClient.downloadArtifact(StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__") + "/manifest.json");
-            return IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8);
+            manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
+            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/manifest.json");
+            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), manifestPath);
         } finally {
             if (res != null) {
                 EntityUtils.consume(res.getEntity());
@@ -166,7 +167,7 @@ public class DockerImage implements Serializable {
         moduleBuilder.artifacts(new ArrayList<>(artifacts));
     }
 
-    private void setDependencies(Module buildInfoModule) throws IOException {
+    private void setDependencies(ModuleBuilder moduleBuilder) throws IOException {
         LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
         // Filter out duplicate layers from manifest by using HashSet.
         // Docker manifest may hold 'empty layers', as a result, docker promote will fail to promote the same layer more than once.
@@ -175,34 +176,21 @@ public class DockerImage implements Serializable {
             Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).build();
             dependencies.add(dependency);
         }
-        buildInfoModule.setDependencies(new ArrayList<>(dependencies));
+        moduleBuilder.dependencies(new ArrayList<>(dependencies));
     }
 
     /**
      * Prepare AQL query to get all the manifest layers from Artifactory.
      * Needed for build-info sha1/md5 checksum for each artifact and dependency.
      */
-    private String getAqlQuery(boolean includeVirtualRepos, String Repo) throws IOException {
-        List<String> layersDigest = DockerUtils.getLayersDigests(manifest);
+    private String getAqlQuery(boolean includeVirtualRepos, String Repo, String manifestPath) {
         StringBuilder aqlRequestForDockerSha = new StringBuilder("items.find({")
-                .append("\"repo\":\"").append(Repo).append("\",\"$or\":[");
-        List<String> layersQuery = new ArrayList<>();
-        for (String digest : layersDigest) {
-            String shaVersion = DockerUtils.getShaVersion(digest);
-            String singleFileQuery;
-            if (StringUtils.equalsIgnoreCase(shaVersion, "sha1")) {
-                singleFileQuery = String.format("{\"actual_sha1\":\"%s\"}", DockerUtils.getShaValue(digest));
-            } else {
-                // Use wildcard pattern to collect layers with '.marker' suffix at the end.
-                singleFileQuery = String.format("{\"name\":{\"$match\":\"%s*\"}}", DockerUtils.digestToFileName(digest));
-            }
-            layersQuery.add(singleFileQuery);
-        }
-        aqlRequestForDockerSha.append(StringUtils.join(layersQuery, ","));
+                .append("\"path\":\"").append(manifestPath).append("\",")
+                .append("\"repo\":\"").append(Repo).append("\"})");
         if (includeVirtualRepos) {
-            aqlRequestForDockerSha.append("]}).include(\"name\",\"repo\",\"path\",\"actual_sha1\",\"virtual_repos\")");
+            aqlRequestForDockerSha.append(".include(\"name\",\"repo\",\"path\",\"actual_sha1\",\"virtual_repos\")");
         } else {
-            aqlRequestForDockerSha.append("]}).include(\"name\",\"repo\",\"path\",\"actual_sha1\")");
+            aqlRequestForDockerSha.append(".include(\"name\",\"repo\",\"path\",\"actual_sha1\")");
         }
         return aqlRequestForDockerSha.toString();
     }
@@ -210,11 +198,11 @@ public class DockerImage implements Serializable {
     public Module generateBuildInfoModule(Log logger, DockerUtils.CommandType cmdType) throws IOException {
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             ModuleBuilder moduleBuilder = new ModuleBuilder()
-            .type(ModuleType.DOCKER)
-            .id(imageTag.substring(imageTag.indexOf("/") + 1))
-            .repository(targetRepo);
+                    .type(ModuleType.DOCKER)
+                    .id(imageTag.substring(imageTag.indexOf("/") + 1))
+                    .repository(targetRepo);
             try {
-                findAndSetManifestFromArtifactory(dependenciesClient.getArtifactoryUrl(), dependenciesClient, logger, cmdType);
+                findAndSetManifestFromArtifactory(dependenciesClient, logger, cmdType);
             } catch (IOException e) {
                 // The manifest could not be found in Artifactory.
                 // Yet, we do not fail the build, but return an empty build-info instead.
@@ -236,10 +224,10 @@ public class DockerImage implements Serializable {
         }
     }
 
-    private void loadLayers() throws IOException {
+    private void loadLayers(String manifestPath) throws IOException {
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build();
              ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
-            layers = getLayers(dependenciesClient, buildInfoClient);
+            layers = getLayers(dependenciesClient, buildInfoClient, manifestPath);
             List<DockerLayer> markerLayers = layers.getLayers().stream().filter(layer -> layer.getFileName().endsWith(".marker")).collect(Collectors.toList());
             // Transform all marker layers into regular layer.
             if (markerLayers.size() > 0) {
@@ -249,17 +237,17 @@ public class DockerImage implements Serializable {
                     String imageName = StringUtils.substringBetween(imageTag, "/", ":");
                     DockerUtils.downloadMarkerLayer(targetRepo, imageName, imageDigests, dependenciesClient);
                 }
-                layers = getLayers(dependenciesClient, buildInfoClient);
+                layers = getLayers(dependenciesClient, buildInfoClient, manifestPath);
             }
         }
     }
 
-    private DockerLayers getLayers(ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient buildInfoClient) throws IOException {
+    private DockerLayers getLayers(ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient buildInfoClient, String manifestPath) throws IOException {
         String searchableRepo = targetRepo;
         if (dependenciesClient.isRemoteRepo(targetRepo)) {
             searchableRepo += "-cache";
         }
-        String aql = getAqlQuery(buildInfoClient.getArtifactoryVersion().isAtLeast(VIRTUAL_REPOS_SUPPORTED_VERSION), searchableRepo);
+        String aql = getAqlQuery(buildInfoClient.getArtifactoryVersion().isAtLeast(VIRTUAL_REPOS_SUPPORTED_VERSION), searchableRepo, manifestPath);
         return createLayers(dependenciesClient, aql);
     }
 
@@ -267,14 +255,12 @@ public class DockerImage implements Serializable {
      * Find and validate manifest.json file in Artifactory for the current image.
      * Since provided imageTag differs between reverse-proxy and proxy-less configuration, try to build the correct manifest path.
      */
-    private void findAndSetManifestFromArtifactory(String url, ArtifactoryDependenciesClient dependenciesClient, Log logger, DockerUtils.CommandType cmdType) throws IOException {
+    private void findAndSetManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, Log logger, DockerUtils.CommandType cmdType) throws IOException {
         // Try to get manifest, assuming reverse proxy
         String proxyImagePath = DockerUtils.getImagePath(imageTag);
-        boolean isLocalRepo = dependenciesClient.isLocalRepo(targetRepo);
-        String proxyManifestPath = StringUtils.join(new String[]{url, targetRepo, proxyImagePath}, "/");
         try {
             logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration.");
-            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isLocalRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyImagePath, proxyImagePath, dependenciesClient);
             return;
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
@@ -282,10 +268,9 @@ public class DockerImage implements Serializable {
         }
         // Try to get manifest, assuming proxy-less
         String proxyLessImagePath = proxyImagePath.substring(proxyImagePath.indexOf("/") + 1);
-        String proxyLessManifestPath = StringUtils.join(new String[]{url, targetRepo, proxyLessImagePath}, "/");
         logger.info("Trying to fetch manifest from Artifactory, assuming proxy-less configuration.");
         try {
-            checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isLocalRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyLessImagePath, proxyLessImagePath, dependenciesClient);
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming proxy-lessess configuration - " + e.getMessage());
             // If image path includes more than 3 slashes, Artifactory doesn't store this image under 'library',
@@ -296,16 +281,16 @@ public class DockerImage implements Serializable {
             }
         }
         // Assume proxy-less - this time with 'library' as part of the path.
-        proxyManifestPath = StringUtils.join(new String[]{url, targetRepo, "library", proxyImagePath}, "/");
+        String proxyManifestPath = StringUtils.join(new String[]{"library", proxyImagePath}, "/");
         try {
             logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration. This time with 'library' as part of the path");
-            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient, isLocalRepo);
+            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient);
             return;
         } catch (IOException e) {
             logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
         }
         // Assume proxy-less - this time with 'library' as part of the path.
-        proxyLessManifestPath = StringUtils.join(new String[]{url, targetRepo, "library", proxyLessImagePath}, "/");
-        checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient, isLocalRepo);
+        String proxyLessManifestPath = StringUtils.join(new String[]{"library", proxyLessImagePath}, "/");
+        checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient);
     }
 }
