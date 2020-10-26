@@ -1,18 +1,6 @@
 stack: jdk 8, node 8, go 1.13, python 3.7.7
 skip_tags: true
 environment:
-
-  BITESTS_ARTIFACTORY_URL:
-    secure: RIh0gGFDn2JAnLUEEqLsQm0ihToJ6/4LiR411QpvqDgYYE7Y4Eif2e+wYndvHXnW
-  BITESTS_ARTIFACTORY_USERNAME:
-    secure: YEB5Wiv9a2vNpUhy+MfL+A==
-  BITESTS_ARTIFACTORY_PASSWORD:
-    secure: Um8o75MQIieSavIemF4ySA==
-  BITESTS_ARTIFACTORY_DOCKER_DOMAIN:
-    secure: AoaKTKtH3eL36SmENsm51eRFVLU/BGIK+CrBvmsCqO35j3xM9++4E01YWs5CsfXy
-  BITESTS_ARTIFACTORY_DOCKER_REPO:
-    secure: KL72XB/1EBaModiGGpJF9Ge+wdbLmrDwT1lmy28YRiM=
-
   matrix:
     # Extractor Tests
     - job_name: extractor_win

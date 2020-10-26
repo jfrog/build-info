@@ -34,6 +34,7 @@ import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
+import org.jfrog.build.api.repository.RepositoryConfig;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryHttpClient;
@@ -44,11 +45,11 @@ import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Arrays;
-import java.io.UnsupportedEncodingException;
 
 import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
@@ -88,7 +89,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         post.setEntity(stringEntity);
         InputStream responseStream = getResponseStream(httpClient.getHttpClient().execute(post), "Failed to retrieve build artifacts report");
         return readJsonResponse(responseStream,
-                new TypeReference<List<BuildPatternArtifacts>>() {},
+                new TypeReference<List<BuildPatternArtifacts>>() {
+                },
                 false);
     }
 
@@ -97,7 +99,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         String url = artifactoryUrl + "/api/search/pattern?pattern=" + pattern;
         InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the pattern '" + pattern + "'");
         return readJsonResponse(responseStream,
-                new TypeReference<PatternResultFileSet>() {},
+                new TypeReference<PatternResultFileSet>() {
+                },
                 false);
     }
 
@@ -107,7 +110,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
         InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the properties '" + properties + "'");
         return readJsonResponse(responseStream,
-                new TypeReference<PropertySearchResult>() {},
+                new TypeReference<PropertySearchResult>() {
+                },
                 false);
     }
 
@@ -119,7 +123,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         httpPost.setEntity(entity);
         InputStream responseStream = getResponseStream(client.execute(httpPost), "Failed to search artifact by the aql '" + aql + "'");
         return readJsonResponse(responseStream,
-                new TypeReference<AqlSearchResult>() {},
+                new TypeReference<AqlSearchResult>() {
+                },
                 true);
     }
 
@@ -192,6 +197,26 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
 
     public boolean isArtifactoryOSS() throws IOException {
         return !httpClient.getVersion().hasAddons();
+    }
+
+    public boolean isLocalRepo(String repo) throws IOException {
+        return "local".equals(getRepoType(repo));
+    }
+
+    public boolean isRemoteRepo(String repo) throws IOException {
+        return "remote".equals(getRepoType(repo));
+    }
+
+    private String getRepoType(String repo) throws IOException {
+        PreemptiveHttpClient client = httpClient.getHttpClient();
+        String url = artifactoryUrl + "/api/repositories/" + repo;
+        HttpGet httpGet = new HttpGet(url);
+        InputStream responseStream = getResponseStream(client.execute(httpGet), "Failed to retrieve repository configuration '" + repo + "'");
+        RepositoryConfig repoDetails = readJsonResponse(responseStream,
+                new TypeReference<RepositoryConfig>() {
+                },
+                true);
+        return repoDetails.getRclass();
     }
 
     private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {

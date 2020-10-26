@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.docker;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.BuildImageCmd;
+import com.github.dockerjava.api.command.InspectImageResponse;
 import com.github.dockerjava.api.model.AuthConfig;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import com.github.dockerjava.core.DockerClientBuilder;
@@ -11,11 +12,12 @@ import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
 import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.util.Log;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -28,16 +30,16 @@ public class DockerJavaWrapper {
      * @param username - The username to the docker registry.
      * @param password - The username to the docker registry.
      * @param host     - Docker daemon ip.
-     * @param envVars - Environment variables to use during docker push execution.
+     * @param envVars  - Environment variables to use during docker push execution.
      */
-    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
+    public static void pushImage(String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) throws InterruptedException {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
-            dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitSuccess();
+            dockerClient.pushImageCmd(imageTag).withAuthConfig(authConfig).exec(new PushImageResultCallback()).awaitCompletion();
         } finally {
             closeQuietly(dockerClient, logger);
         }
@@ -79,15 +81,42 @@ public class DockerJavaWrapper {
      * Get image Id from imageTag using DockerClient.
      *
      * @param imageTag - Docker image tag.
-     * @param host  Docker daemon ip.
-     * @param envVars - System env variables.
+     * @param host     - Docker daemon ip.
+     * @param envVars  - System env variables.
      * @return - Docker image tag
      */
     public static String getImageIdFromTag(String imageTag, String host, Map<String, String> envVars, Log logger) {
+        return DockerJavaWrapper.InspectImage(imageTag, host, envVars, logger).getId();
+    }
+
+    /**
+     * Get image Architecture from imageTag using DockerClient.
+     *
+     * @param imageTag - Docker image tag.
+     * @param host     - Docker daemon ip.
+     * @param envVars  - System env variables.
+     * @return tuple of [Image-Architecture, Image-OS]
+     */
+    public static Pair<String, String> getImageArch(String imageTag, String host, Map<String, String> envVars, Log logger) {
+        InspectImageResponse response = DockerJavaWrapper.InspectImage(imageTag, host, envVars, logger);
+        String imageArch = response.getArch();
+        String imageOs = response.getOs();
+        return Pair.of(imageArch, imageOs);
+    }
+
+    /**
+     * Get image Id from imageTag using DockerClient.
+     *
+     * @param imageTag - Docker image tag.
+     * @param host     - Docker daemon ip.
+     * @param envVars  - System env variables.
+     * @return - Docker image tag
+     */
+    public static InspectImageResponse InspectImage(String imageTag, String host, Map<String, String> envVars, Log logger) {
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
-            return dockerClient.inspectImageCmd(imageTag).exec().getId();
+            return dockerClient.inspectImageCmd(imageTag).exec();
         } finally {
             closeQuietly(dockerClient, logger);
         }
@@ -110,16 +139,16 @@ public class DockerJavaWrapper {
      * @param username - The username to the docker registry.
      * @param password - The username to the docker registry.
      * @param host     - Docker daemon ip.
-     * @param envVars - Environment variables to use during docker pull execution.
+     * @param envVars  - Environment variables to use during docker pull execution.
      */
-    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) {
+    public static void pullImage(final String imageTag, String username, String password, String host, Map<String, String> envVars, Log logger) throws InterruptedException {
         final AuthConfig authConfig = new AuthConfig();
         authConfig.withUsername(username);
         authConfig.withPassword(password);
         DockerClient dockerClient = null;
         try {
             dockerClient = getDockerClient(host, envVars);
-            dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitSuccess();
+            dockerClient.pullImageCmd(imageTag).withAuthConfig(authConfig).exec(new PullImageResultCallback()).awaitCompletion();
         } finally {
             closeQuietly(dockerClient, logger);
         }
@@ -136,7 +165,7 @@ public class DockerJavaWrapper {
     public static void buildImage(String imageName, String host, Map<String, String> envVars, String projectPath) {
         DockerClient dockerClient = DockerJavaWrapper.getDockerClient(host, envVars);
         // Build the docker image with the name provided from env.
-        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(Paths.get(projectPath).toFile()).withTags(new HashSet<>(Arrays.asList(imageName)));
+        BuildImageCmd buildImageCmd = dockerClient.buildImageCmd(Paths.get(projectPath).toFile()).withTags(new HashSet<>(Collections.singletonList(imageName)));
         buildImageCmd.exec(new BuildImageResultCallback()).awaitImageId();
     }
 }

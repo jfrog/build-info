@@ -4,23 +4,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.ImmutableSetMultimap;
-import com.google.common.hash.Hashing;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class DockerUtils {
     /**
@@ -47,7 +47,44 @@ public class DockerUtils {
     }
 
     /**
-     * Create an object mapper for serialization/deserializaion.
+     * Get the digest from fat-manifest according to os and arch.
+     *
+     * @param manifest - fat-manifest.
+     * @param os       -      image os to search.
+     * @param arch     -    arch to search.
+     * @return digest related to os and arch. If not found return an empty string.
+     * @throws IOException fat-manifest has missing 'manifest' key.
+     */
+    public static String getImageDigestFromFatManifest(String manifest, String os, String arch) throws IOException {
+        if (StringUtils.isAnyBlank(os, arch)) {
+            return StringUtils.EMPTY;
+        }
+        JsonNode fatManifestTree = createMapper().readTree(manifest);
+        JsonNode manifests = fatManifestTree.get("manifests");
+        if (manifests == null) {
+            throw new IllegalStateException("Could not find 'manifests' in fat-manifest");
+        }
+        for (JsonNode manifestInfo : manifests) {
+            JsonNode manifestInfoPlatform = manifestInfo.get("platform");
+            if (manifestInfoPlatform == null) {
+                continue;
+            }
+
+            JsonNode manifestOs = manifestInfoPlatform.get("os");
+            JsonNode manifestArch = manifestInfoPlatform.get("architecture");
+            if (manifestOs == null || manifestArch == null) {
+                continue;
+            }
+
+            if (os.equals(manifestOs.asText()) && arch.equals(manifestArch.asText())) {
+                return manifestInfo.get("digest").asText();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Create an object mapper for serialization/deserialization.
      * This mapper ignore unknown properties and null values.
      *
      * @return a new object mapper
@@ -63,7 +100,7 @@ public class DockerUtils {
      * Get a list of layer digests from docker manifest.
      */
     public static List<String> getLayersDigests(String manifestContent) throws IOException {
-        List<String> dockerLayersDependencies = new ArrayList<String>();
+        List<String> dockerLayersDependencies = new ArrayList<>();
         JsonNode manifest = createMapper().readTree(manifestContent);
         JsonNode schemaVersion = manifest.get("schemaVersion");
         if (schemaVersion == null) {
@@ -79,9 +116,19 @@ public class DockerUtils {
         }
         dockerLayersDependencies.add(getConfigDigest(manifestContent));
         //Add manifest sha1
-        String manifestSha1 = Hashing.sha1().hashString(manifestContent, Charsets.UTF_8).toString();
+        String manifestSha1 = toSha1(manifestContent);
         dockerLayersDependencies.add("sha1:" + manifestSha1);
         return dockerLayersDependencies;
+    }
+
+    private static String toSha1(String data) {
+        try {
+            MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");
+            msdDigest.update(data.getBytes(StandardCharsets.UTF_8));
+            return Hex.encodeHexString(msdDigest.digest());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("Failed to convert manifest.json content to SHA1.");
+        }
     }
 
     /**
@@ -150,8 +197,6 @@ public class DockerUtils {
 
     /**
      * Returns number of dependencies layers in the image.
-     *
-     * @throws IOException
      */
     public static int getNumberOfDependentLayers(String imageContent) throws IOException {
         JsonNode history = createMapper().readTree(imageContent).get("history");
@@ -182,13 +227,11 @@ public class DockerUtils {
 
     /**
      * Converts the http entity to string. If entity is null, returns empty string.
-     *
-     * @throws IOException
      */
     public static String entityToString(HttpEntity entity) throws IOException {
         if (entity != null) {
             InputStream is = entity.getContent();
-            return IOUtils.toString(is, "UTF-8");
+            return IOUtils.toString(is, StandardCharsets.UTF_8);
         }
         return "";
     }
@@ -221,20 +264,45 @@ public class DockerUtils {
     }
 
     /**
-     * Check for the version in docker image tag.
+     * Check for the version in docker image tag (used in Jenkins).
      */
+    @SuppressWarnings("unused")
     public static Boolean isImageVersioned(String imageTag) {
         int indexOfFirstSlash = imageTag.indexOf("/");
         int indexOfLastColon = imageTag.lastIndexOf(":");
         return indexOfFirstSlash < indexOfLastColon;
     }
 
-    // Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
-    // might have a NONEXE flag, therefore we override it with our build info extractor dir.
+    /**
+     * Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
+     * might have a NONEXE flag, therefore we override it with our build info extractor dir.
+     *
+     * @param path - Local path to create temp dir.
+     */
     public static void initTempDir(File path) {
         // Extract the dir path.
         String pathDir = path.getAbsoluteFile().getParent();
         // Set the Java temp dir system property. As a result, java will create it for us.
         System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
+    }
+
+    /**
+     * Download meta data from .marker layer in Artifactory.
+     * As a result, the marker layer will transform to a regular docker layer (required to collect build info such as sha1, etc.).
+     *
+     * @param repo               - Repository from which to download the layer
+     * @param imageName-         Image name to download
+     * @param imageDigests       - image diegest to download
+     * @param dependenciesClient - Dependencies client
+     */
+    public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
+        String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
+        HttpResponse response = dependenciesClient.getArtifactMetadata(url);
+        EntityUtils.consume(response.getEntity());
+    }
+
+    public enum CommandType {
+        Push,
+        Pull
     }
 }
