@@ -6,7 +6,9 @@ import com.google.common.collect.ImmutableMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
@@ -20,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.List;
 
 import static org.testng.Assert.*;
 
@@ -50,7 +53,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private String dockerRemoteRepo;
     private String dockerVirtualRepo;
     private String host;
-    private String imageTag;
+    private String imageTagLocal;
     private String imageTagVirtual;
     private String pullImageFromRemote;
 
@@ -81,7 +84,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         dockerRemoteRepo = System.getenv(DOCKER_REMOTE_REPO);
         dockerVirtualRepo = System.getenv(DOCKER_VIRTUAL_REPO);
         host = System.getenv(DOCKER_HOST);
-        imageTag = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
+        imageTagLocal = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
         imageTagVirtual = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
         pullImageFromRemote = remoteDomainName + "hello-world:latest";
         pullImageFromVirtual = virtualDomainName + "hello-world:latest";
@@ -100,16 +103,18 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_LOCAL_REPO + " environment variable is not set, failing docker tests.");
             }
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerJavaWrapper.buildImage(imageTag, host, Collections.emptyMap(), projectPath);
+            DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), projectPath);
 
-            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTag, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
 
             assertEquals(module.getType(), "docker");
             assertEquals(module.getRepository(), dockerLocalRepo);
-            assertEquals(7, module.getArtifacts().size());
+            List<Artifact> artifacts = module.getArtifacts();
+            validateImageArtifacts(artifacts, imageTagLocal);
+            assertEquals(7, artifacts.size());
             module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_LOCAL));
             assertEquals(5, module.getDependencies().size());
         } catch (Exception e) {
@@ -139,7 +144,9 @@ public class DockerExtractorTest extends IntegrationTestsBase {
 
             assertEquals(module.getType(), "docker");
             assertEquals(module.getRepository(), dockerVirtualRepo);
-            assertEquals(7, module.getArtifacts().size());
+            List<Artifact> artifacts = module.getArtifacts();
+            validateImageArtifacts(artifacts, imageTagVirtual);
+            assertEquals(7, artifacts.size());
             module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_VIRTUAL));
             assertEquals(5, module.getDependencies().size());
         } catch (Exception e) {
@@ -161,7 +168,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
             }
             DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledDockerImage(dockerPull.execute());
+            validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
@@ -181,19 +188,34 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
             }
             DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledDockerImage(dockerPull.execute());
+            validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         }
     }
 
-    private void validatePulledDockerImage(Build build) {
+    private void validatePulledDockerImage(Build build, String image) {
         assertEquals(build.getModules().size(), 1);
         Module module = build.getModules().get(0);
+        assertEquals(module.getType(), "docker");
+        List<Dependency> dependencies = module.getDependencies();
+        validateImageDepedencies(dependencies, image);
+    }
 
-        assertNull(module.getArtifacts());
+    private void validateImageDepedencies(List<Dependency> deps, String image) {
         // Latest tag may change the number of dependencies in the future.
-        assertTrue(module.getDependencies().size() > 0);
+        assertTrue(deps.size() > 0);
+        String imageDigest = getImageId(image);
+        assertTrue(deps.stream().anyMatch(dep -> dep.getId().equals(imageDigest)));
+    }
+
+    private void validateImageArtifacts(List<Artifact> arts, String image) {
+        String imageDigest = getImageId(image);
+        assertTrue(arts.stream().anyMatch(art -> art.getName().equals(imageDigest)));
+    }
+
+    private String getImageId(String image) {
+        return DockerJavaWrapper.InspectImage(image, host, Collections.emptyMap(), getLog()).getId().replace(":", "__");
     }
 
     private String validateDomainSuffix(String domain) {
