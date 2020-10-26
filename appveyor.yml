@@ -1,9 +1,6 @@
 stack: jdk 8, node 8, go 1.13, python 3.7.7
 skip_tags: true
 environment:
-
-
-
   matrix:
     # Extractor Tests
     - job_name: extractor_win
