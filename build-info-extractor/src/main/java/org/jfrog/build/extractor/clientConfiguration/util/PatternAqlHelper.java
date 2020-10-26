@@ -84,13 +84,13 @@ public class PatternAqlHelper extends AqlHelperBase {
                 String repo = searchPattern.substring(0, asteriskIndex + 1); // '<repo>*'
                 String newPattern = searchPattern.substring(asteriskIndex);  // '*<pattern>'
 
-                // If slashCount or asterixCount are 1 or less, don't trim prefix of '*/' to allow specific-name enforce in triple.
+                // If slashCount or asteriskCount are 1 or less, don't trim prefix of '*/' to allow specific-name enforce in triple.
                 // For example, in case of pattern '*/a1.in', the calculated triple should contain 'a1.in' as the 'file'.
                 int slashCount = StringUtils.countMatches(newPattern, "/");
                 int asterixCount = StringUtils.countMatches(newPattern, "*");
                 if (slashCount > 1 || asterixCount > 1) {
                     // Remove '/' character as the pattern precedes it may be the repository name.
-                    // Leaving the '/' forces another hierarchy in the 'path' of the triple, which isn't correct.
+                    // Leaving the '/' causes forcing another hierarchy in the 'path' of the triple, which isn't correct.
                     newPattern = newPattern.replaceFirst("^\\*/", "");
                     if (!newPattern.startsWith("*")) {
                         newPattern = "*" + newPattern;
