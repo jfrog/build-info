@@ -44,9 +44,13 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
      */
     private static final int HTTP_CLIENT_RETRIES = 0;
 
-    public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
-        super(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
+    public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
+        super(artifactoryUrl, username, password, accessToken, logger);
         setConnectionRetries(HTTP_CLIENT_RETRIES);
+    }
+
+    public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
+        this(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
     }
 
     public ArtifactoryXrayResponse xrayScanBuild(String buildName, String buildNumber, String context) throws IOException, InterruptedException {
