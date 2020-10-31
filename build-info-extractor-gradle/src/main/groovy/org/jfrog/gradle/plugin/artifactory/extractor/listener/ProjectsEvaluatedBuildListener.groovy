@@ -11,6 +11,7 @@ import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.publish.Publication
+import org.gradle.api.publish.PublicationContainer
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.IvyPublication
 import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin
@@ -116,7 +117,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                 String publicationsNames = clientConfig.publisher.getPublications()
                 if (publishingExtension != null && StringUtils.isNotBlank(publicationsNames)) {
                     addPublications(artifactoryTask, publishingExtension, publicationsNames)
-                } else if (isJava(artifactoryTask.project)) {
+                } else {
                     addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension);
                 }
             }
@@ -161,9 +162,18 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      */
     private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask, @Nullable PublishingExtension publishingExtension) {
         if (publishingExtension != null) {
-            addMavenJavaPublication(publishingExtension, artifactoryTask.project)
-            addIvyJavaPublication(publishingExtension, artifactoryTask.project)
-            artifactoryTask.addDefaultPublications()
+            // Add existing publications
+            PublicationContainer currentPublications = publishingExtension.getPublications()
+            if (!currentPublications.isEmpty()) {
+                artifactoryTask.publications(currentPublications.toArray())
+            }
+
+            // Java projects - add default Maven and Ivy publications
+            if (isJava(artifactoryTask.project)) {
+                addMavenJavaPublication(publishingExtension, artifactoryTask.project)
+                addIvyJavaPublication(publishingExtension, artifactoryTask.project)
+                artifactoryTask.addDefaultPublications()
+            }
         } else {
             artifactoryTask.addDefaultArchiveConfiguration()
         }
