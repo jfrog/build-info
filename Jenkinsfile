@@ -81,11 +81,8 @@ node('java') {
     def jdktool = tool name: "jdk-8u111-linux-x64-jce-unlimited-policy"
     env.JAVA_HOME = jdktool
 
-    // Get selected projects to build.
-    def buildProjList = getProjectsToBuild(BUILD_PROJECTS)
-    if (!buildProjList) {
-        error("No projects were selected for build.")
-    }
+    // Get selected projects to build or release.
+    def selectedProjects = getSelectedProjects(BUILD_PROJECTS)
 
     // Set gradle configurations.
     def deployServer = Artifactory.server 'oss.jfrog.org'
@@ -106,7 +103,10 @@ node('java') {
             rtGradle.resolver server: resolveServer, repo: 'remote-repos'
             rtGradle.deployer.deployIvyDescriptors = false
 
-            buildProjList.each { proj ->
+            // If no project is selected - build all of them.
+            // This functionality is important in order to allow triggering by SCM.
+            def projectsToBuild = selectedProjects ?: projectsConfig.keySet()
+            projectsToBuild.each { proj ->
                 stage("Building ${proj}") {
                     def buildConfig = projectsConfig[proj]
                     buildProject(deployServer, rtGradle, buildConfig.buildName, buildConfig.buildTasks)
@@ -121,11 +121,11 @@ node('java') {
             def latestNextVersion = "${EXTRACTOR_LATEST_NEXT_VERSION}"
 
             echo "Bump release version"
-            if (!buildProjList) {
+            if (!selectedProjects) {
                 error("No projects were selected for Release Staging.")
             }
-            bumpVersion(buildProjList, projectsConfig, latestReleaseVersion, 'releaseVersion')
-            
+            bumpVersion(selectedProjects, projectsConfig, latestReleaseVersion, 'releaseVersion')
+
             sh 'git config user.name "${GITHUB_USERNAME}"'
             sh 'git config user.email "eyalb@jfrog.com"'
 
@@ -139,7 +139,7 @@ node('java') {
             rtGradle.resolver server: resolveServer, repo: 'remote-repos'
             rtGradle.deployer.deployIvyDescriptors = false
 
-            buildProjList.each { proj ->
+            selectedProjects.each { proj ->
                 stage ("Building ${proj}") {
                     // Build project.
                     def buildConfig = projectsConfig[proj]
@@ -154,7 +154,7 @@ node('java') {
             }
 
             echo "Bump development version"
-            bumpVersion(buildProjList, projectsConfig, latestNextVersion, 'nextVersion')
+            bumpVersion(selectedProjects, projectsConfig, latestNextVersion, 'nextVersion')
             sh 'git commit -am "[artifactory-release] Next development version"'
             wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
                 sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
@@ -163,7 +163,7 @@ node('java') {
     }
 }
 
-def getProjectsToBuild(projects) {
+def getSelectedProjects(projects) {
     def buildProjArr
     if (projects?.trim()) {
         buildProjArr = "$BUILD_PROJECTS".split(',') as String[]
