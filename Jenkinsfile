@@ -103,7 +103,7 @@ node('java') {
             rtGradle.resolver server: resolveServer, repo: 'remote-repos'
             rtGradle.deployer.deployIvyDescriptors = false
 
-            // If not project selected - build all of them.
+            // If no project is selected - build all of them.
             // This functionality is important in order to allow triggering by SCM.
             def projectsToBuild = selectedProjects ?: projectsConfig.keySet()
             projectsToBuild.each { proj ->
