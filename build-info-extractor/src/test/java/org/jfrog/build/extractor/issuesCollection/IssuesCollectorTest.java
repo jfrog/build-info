@@ -63,7 +63,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
     }
 
     private IssuesCollectionConfig parseConfigFromPath(IssuesCollector collector, String path) throws IOException {
-        String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, path));
+        String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, path), "UTF-8");
         return collector.parseConfig(successfulConfig);
     }
 
@@ -101,7 +101,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         publishBuildInfoWithVcs(vcs);
 
         // Get config
-        String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, "issues_config_full_test.json"));
+        String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, "issues_config_full_test.json"), "UTF-8");
 
         Issues issues = collector.collectIssues(dotGitPath, getLog(), successfulConfig, buildInfoClientBuilder, BUILD_NAME, vcs.get(0));
 
@@ -125,7 +125,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
     @BeforeMethod
     @AfterMethod
     protected void cleanup() throws IOException {
-        deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo1);
         FileUtils.deleteDirectory(dotGitPath);
     }
 }

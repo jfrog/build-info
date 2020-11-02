@@ -51,7 +51,7 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     @AfterMethod
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);
-        deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo1);
         deleteContentFromRepo(localRepo2);
     }
 

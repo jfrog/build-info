@@ -32,7 +32,7 @@ public class SearchBasedSpecValidator extends SpecsValidator {
             if (isExcludePatterns) {
                 log.warn("The 'excludePatterns' File Spec property is deprecated.\n" +
                         "Please use the 'exclusions' File Spec property instead.\n" +
-                        "Unlike exclude-patterns, exclusions take into account the repository as part of the pattern.\n" +
+                        "Unlike excludePatterns, exclusions take into account the repository as part of the pattern.\n" +
                         "For example: \n" +
                         "\"excludePatterns\": [\"a.zip\"]\n" +
                         "can be translated to\n" +

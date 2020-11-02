@@ -32,7 +32,7 @@ public class PatternAqlHelper extends AqlHelperBase {
         boolean includeRoot = StringUtils.countMatches(searchPattern, "/") < 2;
         int triplesSize = repoPathFileTriples.size();
 
-        // Build  query.
+        // Build query.
         String excludeQuery = buildExcludeQuery(excludePatterns, exclusions,triplesSize == 0 || recursive, recursive);
         String nePath = buildNePathQuery(triplesSize == 0 || includeRoot);
         String json = String.format("{%s\"$or\":[", buildPropsQuery(props) + nePath + excludeQuery);
@@ -170,6 +170,12 @@ public class PatternAqlHelper extends AqlHelperBase {
             return triples;
         }
 
+        populateTriplesWithRepoPathFile(triples, repo, path, name);
+
+        return triples;
+    }
+
+    private static void populateTriplesWithRepoPathFile(List<RepoPathFile> triples, String repo, String path, String name) {
         String[] nameSplit = name.split("\\*", -1);
         for (int i = 0; i < nameSplit.length - 1; i++) {
             String str = "";
@@ -195,8 +201,6 @@ public class PatternAqlHelper extends AqlHelperBase {
             }
             triples.add(new RepoPathFile(repo, path + filePath, fileName));
         }
-
-        return triples;
     }
 
     private static String getDefaultPath(boolean recursive) {

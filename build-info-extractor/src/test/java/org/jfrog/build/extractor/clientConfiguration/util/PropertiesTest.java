@@ -33,7 +33,7 @@ public class PropertiesTest extends IntegrationTestsBase {
     @AfterMethod
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);
-        deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo1);
     }
 
     @Test

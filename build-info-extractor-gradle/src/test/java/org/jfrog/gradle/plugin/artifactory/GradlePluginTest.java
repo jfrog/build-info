@@ -25,7 +25,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     final private Map<String, String> envVars;
 
     public GradlePluginTest() {
-        localRepo = GRADLE_LOCAL_REPO;
+        localRepo1 = GRADLE_LOCAL_REPO;
         remoteRepo = GRADLE_REMOTE_REPO;
         virtualRepo = GRADLE_VIRTUAL_REPO;
 
@@ -34,7 +34,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "URL", getUrl());
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "USERNAME", getUsername());
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PASSWORD", getPassword());
-            putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "LOCAL_REPO", localRepo);
+            putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "LOCAL_REPO", localRepo1);
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "VIRTUAL_REPO", virtualRepo);
         }};
     }
@@ -43,7 +43,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     @AfterMethod
     protected void cleanup() throws IOException {
         deleteTestDir();
-        deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo1);
     }
 
     @DataProvider
@@ -58,7 +58,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, false, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, false, getUrl(), localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -68,34 +68,34 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
     public void ciServerTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo, virtualRepo, "");
+        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo1, virtualRepo, "");
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
     public void ciServerPublicationsTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo, virtualRepo, "mavenJava,customIvyPublication");
+        generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo1, virtualRepo, "mavenJava,customIvyPublication");
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo);
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
     }
 }

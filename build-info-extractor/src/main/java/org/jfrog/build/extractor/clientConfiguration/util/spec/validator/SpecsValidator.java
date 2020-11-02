@@ -24,10 +24,10 @@ public abstract class SpecsValidator {
             throw new IllegalArgumentException("Spec can't contain both AQL and Pattern keys");
         }
         if (isAql && (isExcludePattern || isExclusion)) {
-            throw new IllegalArgumentException("Spec can't contain both AQL and Exclude-Patterns or Exclusions keys");
+            throw new IllegalArgumentException("Spec can't contain both AQL and ExcludePatterns or Exclusions keys");
         }
         if (isExcludePattern && isExclusion) {
-            throw new IllegalArgumentException("Spec can't contain both Exclusions and Exclude-Patterns keys");
+            throw new IllegalArgumentException("Spec can't contain both Exclusions and ExcludePatterns keys");
         }
     }
 }

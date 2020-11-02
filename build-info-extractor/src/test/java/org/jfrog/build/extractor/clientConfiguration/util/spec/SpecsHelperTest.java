@@ -46,7 +46,7 @@ public class SpecsHelperTest {
                                                                  String props, String recursive, String flat, String regexp,
                                                                  String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
-        String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName));
+        String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName), "UTF-8");
         FileSpec spec = specsHelper.getSpecFromString(specString, downloadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }
@@ -59,7 +59,7 @@ public class SpecsHelperTest {
                                                    String props, String recursive, String flat, String regexp,
                                                    String build) throws IOException {
         SpecsHelper specsHelper = new SpecsHelper(new NullLog());
-        String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName));
+        String specString = FileUtils.readFileToString(getFileFromResources("positiveTestSpecs/" + specFileName), "UTF-8");
         FileSpec spec = specsHelper.getSpecFromString(specString, uploadSpecValidator).getFiles()[0];
         assertSpecParams(aql, pattern, target, props, recursive, flat, regexp, build, spec);
     }

@@ -43,7 +43,7 @@ public abstract class IntegrationTestsBase {
     private String username;
     private String password;
     private String url;
-    protected String localRepo = "build-info-tests-local";
+    protected String localRepo1 = "build-info-tests-local";
     protected String localRepo2 = "build-info-tests-local2";
     protected String remoteRepo;
     protected String virtualRepo = "build-info-tests-virtual";
@@ -91,7 +91,7 @@ public abstract class IntegrationTestsBase {
         dependenciesClient = createDependenciesClient();
 
         if (!dependenciesClient.isArtifactoryOSS()) {
-            createTestRepo(localRepo);
+            createTestRepo(localRepo1);
             createTestRepo(remoteRepo);
             createTestRepo(virtualRepo);
         }
@@ -103,7 +103,7 @@ public abstract class IntegrationTestsBase {
             // Delete the virtual first.
             deleteTestRepo(virtualRepo);
             deleteTestRepo(remoteRepo);
-            deleteTestRepo(localRepo);
+            deleteTestRepo(localRepo1);
         }
         preemptiveHttpClient.close();
         buildInfoClient.close();
@@ -160,7 +160,7 @@ public abstract class IntegrationTestsBase {
         }
 
         if (!(200 <= statusCode && statusCode < 300)) {
-            throw new IOException("Error deleting " + localRepo + ". Code: " + statusCode + " Message: " +
+            throw new IOException("Error deleting " + localRepo1 + ". Code: " + statusCode + " Message: " +
                     statusLine.getReasonPhrase());
         }
     }
@@ -243,8 +243,8 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     protected String readSpec(File specFile, String workSpacePath) throws IOException {
-        String spec = FileUtils.readFileToString(specFile);
-        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo);
+        String spec = FileUtils.readFileToString(specFile, "UTF-8");
+        spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo1);
         spec = StringUtils.replace(spec, LOCAL_REPO2_PLACEHOLDER, localRepo2);
         spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
         spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, workSpacePath);

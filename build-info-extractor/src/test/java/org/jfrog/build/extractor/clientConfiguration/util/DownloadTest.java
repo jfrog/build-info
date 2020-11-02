@@ -39,7 +39,7 @@ public class DownloadTest extends IntegrationTestsBase {
     @Test(dataProvider = "testDownloadFilesProvider")
     public void testBulkAndConcurrentDownload(Map<String, String> uploadedChecksum, String fileName, long fileSize)
             throws Exception {
-        String uriWithParams = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH + "/" + fileName;
+        String uriWithParams = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH + "/" + fileName;
         String fileDestination =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar + fileName;
 
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(dependenciesClient, tempWorkspace.getPath(), log);
@@ -71,7 +71,7 @@ public class DownloadTest extends IntegrationTestsBase {
             throws Exception {
         DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
 
-        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH;
+        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH;
         String targetDirPath =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
         String url = repoUrl + "/" + fileName;
 
@@ -93,7 +93,7 @@ public class DownloadTest extends IntegrationTestsBase {
             throws Exception {
         DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
 
-        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo + "/" + TEST_REPO_PATH;
+        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH;
         String targetDirPath =  tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
         String url = repoUrl + "/" + fileName;
 
@@ -137,7 +137,7 @@ public class DownloadTest extends IntegrationTestsBase {
                 DeployDetails deployDetails = new DeployDetails.Builder()
                         .file(file)
                         .artifactPath(TEST_REPO_PATH + "/" + fileName)
-                        .targetRepository(localRepo)
+                        .targetRepository(localRepo1)
                         .md5(checksum.get(MD5_ALGORITHM_NAME))
                         .sha1(checksum.get(SHA1_ALGORITHM_NAME))
                         .explode(false)
@@ -177,6 +177,6 @@ public class DownloadTest extends IntegrationTestsBase {
     @AfterClass
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);
-        deleteContentFromRepo(localRepo);
+        deleteContentFromRepo(localRepo1);
     }
 }

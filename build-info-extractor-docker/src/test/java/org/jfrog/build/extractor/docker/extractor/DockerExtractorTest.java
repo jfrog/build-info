@@ -58,7 +58,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private String pullImageFromRemote;
 
     public DockerExtractorTest() {
-        localRepo = "";
+        localRepo1 = "";
         virtualRepo = "";
         artifactProperties.putAll(ImmutableMultimap.<String, String>builder()
                 .put("build.name", "docker-push-test")

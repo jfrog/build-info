@@ -145,7 +145,7 @@ public class SpecsHelper {
      * @throws IOException in case of IO problem
      */
     public Spec getSpecFromFile(File specFile, SpecsValidator specsValidator) throws IOException {
-        return getSpecFromString(FileUtils.readFileToString(specFile), specsValidator);
+        return getSpecFromString(FileUtils.readFileToString(specFile, "UTF-8"), specsValidator);
     }
 
     /**
