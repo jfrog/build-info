@@ -59,6 +59,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE;
 
 /**
  * Artifactory client to perform build info related tasks.
@@ -73,13 +74,14 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
-    private static final int CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
     public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final String USAGE_API = "/api/system/usage";
     private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
+
+    private int checksumDeployMinFileSize = DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE;
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -111,6 +113,14 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      */
     public List<String> getLocalRepositoriesKeys() throws IOException {
         return getRepositoriesList(LOCAL_REPOS_REST_URL);
+    }
+
+    /**
+     * Set min file size for checksum deployment.
+     * @param checksumDeployMinFileSize - file size
+     */
+    public void setChecksumDeployMinFileSize(int checksumDeployMinFileSize) {
+        this.checksumDeployMinFileSize = checksumDeployMinFileSize;
     }
 
     /**
@@ -693,9 +703,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     private ArtifactoryUploadResponse tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
-        // Try checksum deploy only on file size greater than CHECKSUM_DEPLOY_MIN_FILE_SIZE
+        // Try checksum deploy only on file size equal or greater than 'checksumDeployMinFileSize'
         long fileLength = details.getFile().length();
-        if (fileLength < CHECKSUM_DEPLOY_MIN_FILE_SIZE) {
+        if (fileLength < checksumDeployMinFileSize) {
             log.debug("Skipping checksum deploy of file size " + fileLength + " , falling back to regular deployment.");
             return null;
         }

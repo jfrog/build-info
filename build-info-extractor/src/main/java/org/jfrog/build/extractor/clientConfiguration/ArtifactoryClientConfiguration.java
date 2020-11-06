@@ -50,6 +50,8 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
  * @author freds
  */
 public class ArtifactoryClientConfiguration {
+    public static final transient int DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE = 10240; // Try checksum deploy of files greater than 10KB
+
     public final ResolverHandler resolver;
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
@@ -443,6 +445,14 @@ public class ArtifactoryClientConfiguration {
 
         public void setPublications(String publications) {
             setStringValue(PUBLICATIONS, publications);
+        }
+
+        public int getChecksumDeployMinFileSize() {
+            return getIntegerValue(CHECKSUM_DEPLOY_MIN_FILE_SIZE, DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE);
+        }
+
+        public void setChecksumDeployMinFileSize(int checksumDeployMinSize) {
+            setIntegerValue(CHECKSUM_DEPLOY_MIN_FILE_SIZE, checksumDeployMinSize);
         }
     }
 
