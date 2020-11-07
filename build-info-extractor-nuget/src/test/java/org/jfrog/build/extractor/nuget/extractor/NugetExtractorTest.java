@@ -38,7 +38,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     private Map<String, String> env = new HashMap<>();
 
     public NugetExtractorTest() {
-        localRepo = NUGET_LOCAL_REPO;
+        localRepo1 = NUGET_LOCAL_REPO;
         remoteRepo = NUGET_REMOTE_REPO;
         virtualRepo = NUGET_VIRTUAL_REPO;
     }

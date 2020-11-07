@@ -52,7 +52,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private NpmDriver driver = new NpmDriver(null);
 
     public NpmExtractorTest() {
-        localRepo = NPM_LOCAL_REPO;
+        localRepo1 = NPM_LOCAL_REPO;
         remoteRepo = NPM_REMOTE_REPO;
         virtualRepo = NPM_VIRTUAL_REPO;
     }
@@ -113,7 +113,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             driver.pack(project.projectOrigin, Collections.emptyList());
             DeployDetails deployDetails = new DeployDetails.Builder()
                     .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
-                    .targetRepository(localRepo)
+                    .targetRepository(localRepo1)
                     .artifactPath(project.getTargetPath())
                     .packageType(DeployDetails.PackageType.NPM)
                     .build();
@@ -212,7 +212,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             props.entries().forEach(property -> propertiesBuilder.add(property.getKey() + "=" + property.getValue()));
             FileSpec fileSpec = new FileSpec();
             fileSpec.setProps(propertiesBuilder.toString());
-            fileSpec.setPattern(localRepo + "/" + targetPath);
+            fileSpec.setPattern(localRepo1 + "/" + targetPath);
             fileSpec.setTarget(projectDir.toString());
 
             Spec spec = new Spec();

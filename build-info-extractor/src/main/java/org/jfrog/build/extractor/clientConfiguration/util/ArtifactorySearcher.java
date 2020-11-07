@@ -18,7 +18,7 @@ class ArtifactorySearcher {
     }
 
     List<AqlSearchResult.SearchEntry> SearchByFileSpec(FileSpec file) throws IOException {
-        List<AqlSearchResult.SearchEntry> results = null;
+        List<AqlSearchResult.SearchEntry> results;
         AqlHelperBase aqlHelper = null;
         log.info("Searching for artifacts...");
         switch (file.getSpecType()) {

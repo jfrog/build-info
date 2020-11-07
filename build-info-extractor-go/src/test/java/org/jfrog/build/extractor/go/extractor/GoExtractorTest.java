@@ -40,7 +40,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private final Map<String, String> env = new TreeMap<>();
 
     public GoExtractorTest() {
-        localRepo = GO_LOCAL_REPO;
+        localRepo1 = GO_LOCAL_REPO;
         remoteRepo = GO_REMOTE_REPO;
         virtualRepo = GO_VIRTUAL_REPO;
     }
@@ -112,7 +112,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
                     continue;
                 DeployDetails deployDetails = new DeployDetails.Builder()
                         .file(pkgFile)
-                        .targetRepository(localRepo)
+                        .targetRepository(localRepo1)
                         .artifactPath(project.getTargetPath(ext))
                         .packageType(DeployDetails.PackageType.GO)
                         .build();
@@ -139,7 +139,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private Object[][] goRunProvider() {
         return new Object[][]{
                 {Project.PROJECT_1, GO_BUILD_CMD, null, StringUtils.EMPTY},
-                {Project.PROJECT_1, GO_BUILD_CMD, buildInfoClientBuilder, localRepo},
+                {Project.PROJECT_1, GO_BUILD_CMD, buildInfoClientBuilder, localRepo1},
         };
     }
 
@@ -186,7 +186,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Check successful execution
             assertNotNull(project1Build);
             // Publish project1 to Artifactory
-            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo, projectDir, project.getVersion(), null, getLog());
+            GoPublish goPublish = new GoPublish(buildInfoClientBuilder, properties, localRepo1, projectDir, project.getVersion(), null, getLog());
             Build publishBuild = goPublish.execute();
             // Check successful execution
             assertNotNull(publishBuild);
@@ -196,7 +196,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             Module module = project1Build.getModules().get(0);
             assertEquals(module.getType(), "go");
             assertEquals(module.getId(), project.getModuleId());
-            assertEquals(module.getRepository(), localRepo);
+            assertEquals(module.getRepository(), localRepo1);
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, project.dependencies);
             Set<String> moduleArtifacts = module.getArtifacts().stream().map(Artifact::getName).collect(Collectors.toSet());

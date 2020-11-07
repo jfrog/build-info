@@ -1,0 +1,10 @@
+{
+  "files": [
+    {
+      "pattern": "${LOCAL_REPO1_REPO2}/*",
+      "target": "",
+      "flat": "true",
+      "recursive": "true"
+    }
+  ]
+}

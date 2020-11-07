@@ -1,5 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
@@ -7,6 +9,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class PatternAqlHelper extends AqlHelperBase {
     PatternAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
@@ -17,172 +20,229 @@ public class PatternAqlHelper extends AqlHelperBase {
     public void convertFileSpecToAql(FileSpec file) throws IOException {
         super.buildQueryAdditionalParts(file);
         boolean recursive = !"false".equalsIgnoreCase(file.getRecursive());
-        this.queryBody = buildAqlSearchQuery(file.getPattern(), file.getExcludePatterns(), recursive, file.getProps());
+        this.queryBody = buildAqlSearchQuery(file.getPattern(), file.getExcludePatterns(), file.getExclusions(), recursive, file.getProps());
     }
 
-    private String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, boolean recursive, String props) {
-        StringBuilder aqlQuery = new StringBuilder();
-        searchPattern = prepareSearchPattern(searchPattern, true);
-        int repoIndex = searchPattern.indexOf("/");
-        String repo = searchPattern.substring(0, repoIndex);
-        searchPattern = searchPattern.substring(repoIndex + 1);
+    static String buildAqlSearchQuery(String searchPattern, String[] excludePatterns, String[] exclusions, boolean recursive, String props) {
+        // Prepare.
+        searchPattern = prepareSearchPattern(searchPattern);
 
-        List<PathFilePair> pathFilePairs = createPathFilePairs(searchPattern, recursive);
-        int pathFilePairsSize = pathFilePairs.size();
+        // Create triples.
+        List<RepoPathFile> repoPathFileTriples = createRepoPathFileTriples(searchPattern, recursive);
+        boolean includeRoot = StringUtils.countMatches(searchPattern, "/") < 2;
+        int triplesSize = repoPathFileTriples.size();
 
-        String excludeQuery = buildExcludeQuery(excludePatterns, pathFilePairsSize == 0 || recursive, recursive);
-        String nePath = buildNePathQuery(pathFilePairsSize == 0 || !searchPattern.contains("/"));
-        aqlQuery.append("{\"repo\": \"").append(repo).append("\",").append(buildPropsQuery(props)).append(nePath).append(excludeQuery).append("\"$or\": [");
-        if (pathFilePairsSize == 0) {
-            aqlQuery.append(buildInnerQuery(".", searchPattern));
-        } else {
-            for (PathFilePair pair : pathFilePairs) {
-                aqlQuery.append(buildInnerQuery(pair.getPath(), pair.getFile())).append(",");
+        // Build query.
+        String excludeQuery = buildExcludeQuery(excludePatterns, exclusions,triplesSize == 0 || recursive, recursive);
+        String nePath = buildNePathQuery(triplesSize == 0 || includeRoot);
+        String json = String.format("{%s\"$or\":[", buildPropsQuery(props) + nePath + excludeQuery);
+        StringBuilder aqlQuery = new StringBuilder(json);
+        aqlQuery.append(handleRepoPathFileTriples(repoPathFileTriples, triplesSize)).append("]}");
+
+        return aqlQuery.toString();
+    }
+
+    static String handleRepoPathFileTriples(List<RepoPathFile> repoPathFiles, int repoPathFileSize) {
+        String query = "";
+        for (int i = 0; i < repoPathFileSize; i++) {
+            query += buildInnerQuery(repoPathFiles.get(i));
+
+            if (i + 1 < repoPathFileSize) {
+                query += ",";
             }
-            aqlQuery.deleteCharAt(aqlQuery.length() - 1);
         }
-        return aqlQuery.append("]}").toString();
+        return query;
     }
 
-    private String prepareSearchPattern(String pattern, boolean startsWithRepo) {
-        if (startsWithRepo && !pattern.contains("/")) {
-            pattern += "/";
-        }
+    private static String prepareSearchPattern(String pattern) {
         if (pattern.endsWith("/")) {
             pattern += "*";
         }
         return pattern.replaceAll("[()]", "");
     }
 
+    private static boolean isSlashPrecedeAsterisk(int asteriskIndex, int slashIndex) {
+        return slashIndex < asteriskIndex && slashIndex >= 0;
+    }
+
+    static List<RepoPathFile> createRepoPathFileTriples(String searchPattern, boolean recursive) {
+        int firstSlashIndex = searchPattern.indexOf("/");
+        List<Integer> asteriskIndices = new ArrayList<>();
+        for (int i = 0; i < searchPattern.length(); i++) {
+            if (searchPattern.charAt(i) == '*') {
+                asteriskIndices.add(i);
+            }
+        }
+
+        if (!asteriskIndices.isEmpty() && !isSlashPrecedeAsterisk(asteriskIndices.get(0), firstSlashIndex)) {
+            List<RepoPathFile> triples = new ArrayList<>();
+            int lastRepoAsteriskIndex = 0;
+            for (int asteriskIndex : asteriskIndices) {
+                if (isSlashPrecedeAsterisk(asteriskIndex, firstSlashIndex)) {
+                    break;
+                }
+                String repo = searchPattern.substring(0, asteriskIndex + 1); // '<repo>*'
+                String newPattern = searchPattern.substring(asteriskIndex);  // '*<pattern>'
+
+                // If slashCount or asteriskCount are 1 or less, don't trim prefix of '*/' to allow specific-name enforce in triple.
+                // For example, in case of pattern '*/a1.in', the calculated triple should contain 'a1.in' as the 'file'.
+                int slashCount = StringUtils.countMatches(newPattern, "/");
+                int asterixCount = StringUtils.countMatches(newPattern, "*");
+                if (slashCount > 1 || asterixCount > 1) {
+                    // Remove '/' character as the pattern precedes it may be the repository name.
+                    // Leaving the '/' causes forcing another hierarchy in the 'path' of the triple, which isn't correct.
+                    newPattern = newPattern.replaceFirst("^\\*/", "");
+                    if (!newPattern.startsWith("*")) {
+                        newPattern = "*" + newPattern;
+                    }
+                }
+
+                triples.addAll(createPathFilePairs(repo, newPattern, recursive));
+                lastRepoAsteriskIndex = asteriskIndex + 1;
+            }
+
+            // Handle characters between last asterisk before first slash: "a*handle-it/".
+            if (lastRepoAsteriskIndex < firstSlashIndex) {
+                String repo = searchPattern.substring(0, firstSlashIndex);        // '<repo>*'
+                String newPattern = searchPattern.substring(firstSlashIndex + 1); // '*<pattern>'
+                triples.addAll(createPathFilePairs(repo, newPattern, recursive));
+            } else if (firstSlashIndex < 0 && !StringUtils.endsWith(searchPattern, "*")) {
+                // Handle characters after last asterisk "a*handle-it".
+                triples.addAll(createPathFilePairs(searchPattern, "*", recursive));
+            }
+
+            return triples;
+        }
+
+        if (firstSlashIndex < 0) {
+            return createPathFilePairs(searchPattern, "*", recursive);
+        }
+        String repo = searchPattern.substring(0, firstSlashIndex);
+        String pattern = searchPattern.substring(firstSlashIndex + 1);
+        return createPathFilePairs(repo, pattern, recursive);
+    }
+
+
     // We need to translate the provided pattern to an AQL query.
     // In Artifactory, for each artifact the name and path of the artifact are saved separately.
-    // We therefore need to build an AQL query that covers all possible paths and names the provided
+    // We therefore need to build an AQL query that covers all possible repositories, paths and names the provided
     // pattern can include.
-    // For example, the pattern a/* can include the two following files:
-    // a/file1.tgz and also a/b/file2.tgz
+    // For example, the pattern repo/a/* can include the two following files:
+    // repo/a/file1.tgz and also repo/a/b/file2.tgz
     // To achieve that, this function parses the pattern by splitting it by its * characters.
-    // The end result is a list of PathFilePair structs.
-    // Each struct represent a possible path and file name pair to be included in AQL query with an "or" relationship.
-    private List<PathFilePair> createPathFilePairs(String pattern, boolean recursive) {
-        String defaultPath;
-        if (recursive) {
-            defaultPath = "*";
-        } else {
-            defaultPath = ".";
-        }
-
-        List<PathFilePair> pairs = new ArrayList<PathFilePair>();
+    // The end result is a list of RepoPathFilePair objects.
+    // Each object represent a possible repository, path and file name triple to be included in AQL query with an "or" relationship.
+    static List<RepoPathFile> createPathFilePairs(String repo, String pattern, boolean recursive) {
+        List<RepoPathFile> res = new ArrayList<>();
         if (pattern.equals("*")) {
-            pairs.add(new PathFilePair(defaultPath, "*"));
-            return pairs;
+            res.add(new RepoPathFile(repo, getDefaultPath(recursive), "*"));
+            return res;
         }
 
-        int slashIndex = pattern.lastIndexOf("/");
         String path;
         String name;
+        List<RepoPathFile> triples = new ArrayList<>();
+
+        // Handle non-recursive triples.
+        int slashIndex = pattern.lastIndexOf("/");
         if (slashIndex < 0) {
-            pairs.add(new PathFilePair(".", pattern));
-            path = "";
-            name = pattern;
+            // Optimization - If pattern starts with '*', we'll have a triple with <repo>*<file>.
+            // In that case we'd prefer to avoid <repo>.<file>.
+            if (recursive && pattern.startsWith("*")) {
+                path = "";
+                name = pattern;
+            } else {
+                path = "";
+                name = pattern;
+                triples.add(new RepoPathFile(repo, ".", pattern));
+            }
         } else {
             path = pattern.substring(0, slashIndex);
             name = pattern.substring(slashIndex + 1);
-            pairs.add(new PathFilePair(path, name));
+            triples.add(new RepoPathFile(repo, path, name));
         }
+
         if (!recursive) {
-            return pairs;
+            return triples;
         }
         if (name.equals("*")) {
-            path += "/*";
-            pairs.add(new PathFilePair(path, "*"));
-            return pairs;
+            triples.add(new RepoPathFile(repo, path + "/*", "*"));
+            return triples;
         }
-        pattern = name;
 
-        String[] sections = pattern.split("\\*", -1);
-        int size = sections.length;
-        for (int i = 0; i < size; i++) {
-            List<String> options = new ArrayList<String>();
-            if (i + 1 < size) {
-                options.add(sections[i] + "*/");
-            }
-            for (String option : options) {
-                String str = "";
-                for (int j = 0; j < size; j++) {
-                    if (j > 0) {
-                        str += "*";
-                    }
-                    if (j == i) {
-                        str += option;
-                    } else {
-                        str += sections[j];
-                    }
-                }
-                String[] split = str.split("/", -1);
-                String filePath = split[0];
-                String fileName = split[1];
-                if (fileName.equals("")) {
-                    fileName = "*";
-                }
-                if (!path.equals("") && !path.endsWith("/")) {
-                    path += "/";
-                }
-                pairs.add(new PathFilePair(path + filePath, fileName));
-            }
-        }
-        return pairs;
+        populateTriplesWithRepoPathFile(triples, repo, path, name);
+
+        return triples;
     }
 
-    private class PathFilePair {
-        private String path;
-        private String file;
-
-        private PathFilePair(String path, String file) {
-            this.path = path;
-            this.file = file;
-        }
-
-        public String getPath() {
-            return path;
-        }
-
-        public void setPath(String path) {
-            this.path = path;
-        }
-
-        public String getFile() {
-            return file;
-        }
-
-        public void setFile(String file) {
-            this.file = file;
+    private static void populateTriplesWithRepoPathFile(List<RepoPathFile> triples, String repo, String path, String name) {
+        String[] nameSplit = name.split("\\*", -1);
+        for (int i = 0; i < nameSplit.length - 1; i++) {
+            String str = "";
+            for (int j = 0; j < nameSplit.length; j++) {
+                String namePart = nameSplit[j];
+                if (j > 0) {
+                    str += "*";
+                }
+                if (j == i) {
+                    str += nameSplit[i] + "*/";
+                } else {
+                    str += namePart;
+                }
+            }
+            String[] slashSplit = str.split("/", -1);
+            String filePath = slashSplit[0];
+            String fileName = slashSplit[1];
+            if (fileName.equals("")) {
+                fileName = "*";
+            }
+            if (!path.equals("") && !path.endsWith("/")) {
+                path += "/";
+            }
+            triples.add(new RepoPathFile(repo, path + filePath, fileName));
         }
     }
 
-    private String buildExcludeQuery(String[] excludePatterns, boolean useLocalPath, boolean recursive) {
-        if (excludePatterns == null) {
+    private static String getDefaultPath(boolean recursive) {
+        if (recursive) {
+            return "*";
+        }
+        return ".";
+    }
+
+    private static String buildExcludeQuery(String[] excludePatterns, String[] exclusions, boolean useLocalPath, boolean recursive) {
+        if (ArrayUtils.isEmpty(exclusions) && ArrayUtils.isEmpty(excludePatterns)) {
             return "";
         }
-        List<PathFilePair> excludePairs = new ArrayList<>();
-        for (String excludePattern : excludePatterns) {
-            excludePairs.addAll(createPathFilePairs(prepareSearchPattern(excludePattern, false), recursive));
+        List<RepoPathFile> excludeTriples = new ArrayList<>();
+        if (exclusions != null && exclusions.length > 0) {
+            for (String exclusion : exclusions) {
+                excludeTriples.addAll(createRepoPathFileTriples(prepareSearchPattern(exclusion), recursive));
+            }
+        } else {
+            // Support legacy exclude patterns. 'Exclude patterns' are deprecated and replaced by 'exclusions'.
+            for (String excludePattern : excludePatterns) {
+                excludeTriples.addAll(createPathFilePairs("", prepareSearchPattern(excludePattern), recursive));
+            }
         }
-        StringBuilder excludeQuery = new StringBuilder();
-        for (PathFilePair singleExcludePattern : excludePairs) {
-            String excludePath = singleExcludePattern.getPath();
-            if (!useLocalPath && ".".equals(excludePath)) {
+
+        String excludeQuery = "";
+        for (RepoPathFile excludeTriple : excludeTriples) {
+            String excludePath = excludeTriple.getPath();
+            if (!useLocalPath && excludePath.equals(".")) {
                 excludePath = "*";
             }
-            excludeQuery.append(String.format("\"$or\": [{\"path\": {\"$nmatch\": \"%s\"}, \"name\": {\"$nmatch\": \"%s\"}}],", excludePath, singleExcludePattern.getFile()));
+            String excludeRepoStr = "";
+            if (StringUtils.isNotEmpty(excludeTriple.getRepo())) {
+                excludeRepoStr = String.format("\"repo\":{\"$nmatch\":\"%s\"},", excludeTriple.getRepo());
+            }
+            excludeQuery += String.format("\"$or\":[{%s\"path\":{\"$nmatch\":\"%s\"},\"name\":{\"$nmatch\":\"%s\"}}],",
+                    excludeRepoStr, excludePath, excludeTriple.getFile());
         }
-        return excludeQuery.toString();
+        return excludeQuery;
     }
 
-    private String buildNePathQuery(boolean includeRoot) {
-        return includeRoot ? "" : "\"path\": {\"$ne\": \".\"}, ";
-    }
-
-    private String buildPropsQuery(String props) {
+    private static String buildPropsQuery(String props) {
         if (props == null || props.equals("")) {
             return "";
         }
@@ -200,11 +260,84 @@ public class PatternAqlHelper extends AqlHelperBase {
         return query.toString();
     }
 
-    private String buildInnerQuery(String path, String name) {
+    private static String buildInnerQuery(RepoPathFile triple) {
         return String.format(
-                "{\"$and\": [{" +
-                        "\"path\": { \"$match\": \"%s\"}," +
-                        "\"name\": { \"$match\": \"%s\"}" +
-                        "}]}", path, name);
+                "{\"$and\":[{" +
+                        "\"repo\":%s," +
+                        "\"path\":%s," +
+                        "\"name\":%s" +
+                        "}]}",
+                getAqlValue(triple.getRepo()), getAqlValue(triple.getPath()), getAqlValue(triple.getFile()));
+    }
+
+    // Optimization - If value is wildcard pattern, return '{"$match":"value"}'.
+    // Otherwise, return '"value"'.
+    private static String getAqlValue(String value) {
+        String aqlValuePattern;
+        if (value.contains("*")) {
+            aqlValuePattern = "{\"$match\":\"%s\"}";
+        } else {
+            aqlValuePattern = "\"%s\"";
+        }
+        return String.format(aqlValuePattern, value);
+    }
+
+    private static String buildNePathQuery(boolean includeRoot) {
+        return includeRoot ? "" : "\"path\":{\"$ne\":\".\"},";
+    }
+
+    static class RepoPathFile {
+        private String repo;
+        private String path;
+        private String file;
+
+        RepoPathFile(String repo, String path, String file) {
+            this.repo = repo;
+            this.path = path;
+            this.file = file;
+        }
+
+        public String getRepo() {
+            return repo;
+        }
+
+        public void setRepo(String repo) {
+            this.repo = repo;
+        }
+
+        public String getPath() {
+            return path;
+        }
+
+        public void setPath(String path) {
+            this.path = path;
+        }
+
+        public String getFile() {
+            return file;
+        }
+
+        public void setFile(String file) {
+            this.file = file;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (!(o instanceof RepoPathFile)) return false;
+            RepoPathFile that = (RepoPathFile) o;
+            return Objects.equals(repo, that.repo) &&
+                    Objects.equals(path, that.path) &&
+                    Objects.equals(file, that.file);
+        }
+
+        @Override
+        public String toString() {
+            return "RepoPathFile{" +
+                    "repo='" + repo + '\'' +
+                    ", path='" + path + '\'' +
+                    ", file='" + file + '\'' +
+                    '}';
+        }
     }
 }

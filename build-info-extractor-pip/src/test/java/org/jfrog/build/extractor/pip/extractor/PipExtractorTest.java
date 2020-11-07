@@ -41,7 +41,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
     private Path projectDir = null;
 
     public PipExtractorTest() {
-        localRepo = PIP_LOCAL_REPO;
+        localRepo1 = PIP_LOCAL_REPO;
         remoteRepo = PIP_REMOTE_REPO;
         virtualRepo = PIP_VIRTUAL_REPO;
     }

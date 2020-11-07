@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -19,12 +19,13 @@ public class FileSpec {
     private String regexp;
     private String build;
     private String explode;
+    // Deprecated, Use Exclusions instead.
     private String[] excludePatterns;
+    private String[] exclusions;
     private String[] sortBy;
     private String sortOrder;
     private String limit;
     private String offset;
-
 
     public enum SpecType {
         BUILD,
@@ -107,18 +108,28 @@ public class FileSpec {
         this.explode = explode;
     }
 
+    /**
+     * @deprecated Use {@link org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec#getExclusions()} instead.
+     */
+    @Deprecated
     public String[] getExcludePatterns() {
         return excludePatterns;
     }
 
+    /**
+     * @deprecated Use {@link org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec#setExclusions(String[] exclusions)} instead.
+     */
+    @Deprecated
     public void setExcludePatterns(String[] excludePatterns) {
         this.excludePatterns = excludePatterns;
     }
 
+    @Deprecated
     public String getExcludePattern(int index) {
         return excludePatterns[index];
     }
 
+    @Deprecated
     public void setExcludePattern(String excludePattern, int index) {
         this.excludePatterns[index] = excludePattern;
     }
@@ -128,6 +139,18 @@ public class FileSpec {
             return sortBy;
         }
         return ArrayUtils.EMPTY_STRING_ARRAY;
+    }
+
+    public String[] getExclusions() {
+        return exclusions;
+    }
+
+    public void setExclusions(String[] exclusions) {
+        this.exclusions = exclusions;
+    }
+
+    public String getExclusion(int index) {
+        return exclusions[index];
     }
 
     public void setSortBy(String[] sortBy) {
@@ -171,6 +194,7 @@ public class FileSpec {
                 ", build='" + build + '\'' +
                 ", explode='" + explode + '\'' +
                 ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
+                ", exclusions='" + Arrays.toString(exclusions) + '\'' +
                 ", sortBy='" + Arrays.toString(sortBy) + '\'' +
                 ", sortOrder='" + sortOrder + '\'' +
                 ", offset='" + offset + '\'' +

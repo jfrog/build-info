@@ -5,6 +5,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
@@ -144,7 +145,7 @@ public class SpecsHelper {
      * @throws IOException in case of IO problem
      */
     public Spec getSpecFromFile(File specFile, SpecsValidator specsValidator) throws IOException {
-        return getSpecFromString(FileUtils.readFileToString(specFile), specsValidator);
+        return getSpecFromString(FileUtils.readFileToString(specFile, "UTF-8"), specsValidator);
     }
 
     /**
@@ -159,7 +160,7 @@ public class SpecsHelper {
         // When mapping the spec from String to Spec one backslash is being removed, multiplying the backslashes solves this.
         specStr = specStr.replace("\\", "\\\\");
         Spec spec = mapper.readValue(specStr, Spec.class);
-        specsValidator.validate(spec);
+        specsValidator.validate(spec, log);
         pathToUnixFormat(spec);
         return spec;
     }
@@ -181,14 +182,20 @@ public class SpecsHelper {
             if (fileSpec.getPattern() != null) {
                 fileSpec.setPattern(fileSpec.getPattern().replaceAll(separator, "/"));
             }
-            if (fileSpec.getExcludePatterns() != null) {
-                for (int i = 0; i < fileSpec.getExcludePatterns().length; i++) {
-                    if (StringUtils.isNotBlank(fileSpec.getExcludePattern(i))) {
-                        fileSpec.setExcludePattern(fileSpec.getExcludePattern(i).replaceAll(separator, "/"), i);
-                    }
-                }
+            if (!ArrayUtils.isEmpty(fileSpec.getExclusions())) {
+                fileSpec.setExclusions(fixExclusionsPathToUnixFormat(fileSpec.getExclusions(), separator));
+            } else if (!ArrayUtils.isEmpty(fileSpec.getExcludePatterns())) {
+                fileSpec.setExcludePatterns(fixExclusionsPathToUnixFormat(fileSpec.getExcludePatterns(), separator));
             }
         }
+    }
+
+    private String[] fixExclusionsPathToUnixFormat(String[] exclusions, String separator) {
+        for (int i = 0; i < exclusions.length; i++) {
+            String exclusion = exclusions[i];
+            exclusions[i] = exclusion.replaceAll(separator, "/");
+        }
+        return exclusions;
     }
 
     /**

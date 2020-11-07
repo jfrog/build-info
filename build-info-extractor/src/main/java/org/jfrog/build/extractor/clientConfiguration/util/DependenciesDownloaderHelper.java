@@ -21,7 +21,6 @@ import org.jfrog.build.api.util.ZipUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.validator.SearchBasedSpecValidator;
 
 import java.io.*;
 import java.util.*;
@@ -72,7 +71,6 @@ public class DependenciesDownloaderHelper {
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
         List<Dependency> resolvedDependencies = new ArrayList<>();
-        new SearchBasedSpecValidator().validate(downloadSpec);
 
         for (FileSpec file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
