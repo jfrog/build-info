@@ -262,13 +262,13 @@ public class DockerImage implements Serializable {
         String ImagePath = DockerUtils.getImagePath(imageTag);
         ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));
         logger.info("Trying to fetch manifest from Artifactory.");
-        int listLen = manifestPathCandidate.toArray().length;
+        int listLen = manifestPathCandidate.size();
         for (int i = 0; i < listLen; i++) {
             try {
                 checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient);
                 return;
             } catch (IOException e) {
-                // Ignore - unless we have no search path.
+                // Throw the exception only if we reached the end of the loop, which means we tried all options.
                 if (i == listLen - 1) {
                     throw e;
                 }
