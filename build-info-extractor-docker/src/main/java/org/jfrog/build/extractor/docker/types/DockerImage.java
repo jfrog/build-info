@@ -63,14 +63,14 @@ public class DockerImage implements Serializable {
      * Check if the provided manifestPath is correct.
      * Set the manifest and imagePath in case of the correct manifest.
      */
-    private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, String candidateImagePath, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
+    private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
         Pair<String, String> candidateDetails = getManifestFromArtifactory(dependenciesClient, candidateManifestPath);
         String manifestContent = candidateDetails.getLeft();
         String manifestPath = candidateDetails.getRight();
         String imageDigest = DockerUtils.getConfigDigest(manifestContent);
         if (imageDigest.equals(imageId)) {
             manifest = manifestContent;
-            imagePath = candidateImagePath;
+            imagePath = manifestPath;
             loadLayers(manifestPath);
         }
     }
@@ -88,23 +88,25 @@ public class DockerImage implements Serializable {
      */
     private Pair<String, String> getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath) throws IOException {
         HttpResponse res = null;
-        String artRepoUrl = StringUtils.join(new String[]{dependenciesClient.getArtifactoryUrl(), targetRepo}, '/') + '/';
+        String artUrl = dependenciesClient.getArtifactoryUrl() + "/";
+        String pathWithoutRepo = StringUtils.substringAfter(manifestPath,"/");
         try {
-            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/manifest.json");
-            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), manifestPath);
+            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json");
+            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
         } catch (Exception e) {
             if (dependenciesClient.isLocalRepo(targetRepo)) {
                 throw e;
             }
-            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/list.manifest.json");
+            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/list.manifest.json");
             String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(res.getEntity()), os, architecture);
             if (digestsFromFatManifest.isEmpty()) {
                 throw e;
             }
             // Remove the tag from the pattern, and place the manifest digest instead.
             manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
-            res = dependenciesClient.downloadArtifact(artRepoUrl + manifestPath + "/manifest.json");
-            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), manifestPath);
+            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json");
+            pathWithoutRepo = StringUtils.substringAfter(manifestPath,"/");
+            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
         } finally {
             if (res != null) {
                 EntityUtils.consume(res.getEntity());
@@ -257,41 +259,20 @@ public class DockerImage implements Serializable {
      */
     private void findAndSetManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, Log logger, DockerUtils.CommandType cmdType) throws IOException {
         // Try to get manifest, assuming reverse proxy
-        String proxyImagePath = DockerUtils.getImagePath(imageTag);
-        try {
-            logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration.");
-            checkAndSetManifestAndImagePathCandidates(proxyImagePath, proxyImagePath, dependenciesClient);
-            return;
-        } catch (IOException e) {
-            logger.error("The manifest could not be fetched from Artifactory, assuming reverse proxy configuration - " + e.getMessage());
-            // Ignore - Artifactory may have a proxy-less setup. Let's try that.
-        }
-        // Try to get manifest, assuming proxy-less
-        String proxyLessImagePath = proxyImagePath.substring(proxyImagePath.indexOf("/") + 1);
-        logger.info("Trying to fetch manifest from Artifactory, assuming proxy-less.");
-        try {
-            checkAndSetManifestAndImagePathCandidates(proxyLessImagePath, proxyLessImagePath, dependenciesClient);
-        } catch (IOException e) {
-            logger.error("The manifest could not be fetched from Artifactory - " + e.getMessage());
-            // If image path includes more than 3 slashes, Artifactory doesn't store this image under 'library',
-            // thus we should not look further.
-            int totalSlash = StringUtils.countMatches(proxyImagePath, "/");
-            if (cmdType == DockerUtils.CommandType.Push || totalSlash > 3) {
-                throw e;
+        String ImagePath = DockerUtils.getImagePath(imageTag);
+        ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));
+        logger.info("Trying to fetch manifest from Artifactory.");
+        int listLen = manifestPathCandidate.toArray().length;
+        for (int i = 0; i < listLen; i++) {
+            try {
+                checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient);
+                return;
+            } catch (IOException e) {
+                // Ignore - unless we have no search path.
+                if (i == listLen - 1) {
+                    throw e;
+                }
             }
         }
-        // Assume proxy-less - this time with 'library' as part of the path.
-        String proxyManifestPath = StringUtils.join(new String[]{"library", proxyImagePath}, "/");
-        try {
-            logger.info("Trying to fetch manifest from Artifactory, assuming reverse proxy configuration. This time with 'library' as part of the path");
-            checkAndSetManifestAndImagePathCandidates(proxyManifestPath, proxyImagePath, dependenciesClient);
-            return;
-        } catch (IOException e) {
-            logger.error("The manifest could not be fetched from Artifactory - " + e.getMessage());
-        }
-        // Assume proxy-less - this time with 'library' as part of the path.
-        logger.info("Assume proxy-less - this time with 'library' as part of the path");
-        String proxyLessManifestPath = StringUtils.join(new String[]{"library", proxyLessImagePath}, "/");
-        checkAndSetManifestAndImagePathCandidates(proxyLessManifestPath, proxyLessImagePath, dependenciesClient);
     }
 }

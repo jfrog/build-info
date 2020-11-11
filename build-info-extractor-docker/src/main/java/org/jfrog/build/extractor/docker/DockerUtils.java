@@ -301,6 +301,34 @@ public class DockerUtils {
         EntityUtils.consume(response.getEntity());
     }
 
+    /**
+     * @param imagePath - path to an image in artifactory without proxy e.g. image/image-tag
+     * @param repo - target repo to search
+     * @param cmd - docker push cmd/ docker pull cmd
+     * @return All possible paths in Artifactory in order to find image manifest using proxy.
+     */
+    public static List<String> getArtManifestPath(String imagePath, String repo, CommandType cmd) {
+        ArrayList<String> paths = new ArrayList<>();
+        // Assuming reverse proxy e.g. ecosysjfrog-docker-local.jfrog.io.
+        paths.add(repo + "/" + imagePath);
+
+        // Assuming proxy-less e.g. orgab.jfrog.team/docker-local.
+        paths.add(imagePath);
+
+        int totalSlash = org.apache.commons.lang.StringUtils.countMatches(imagePath, "/");
+        if (cmd == CommandType.Push || totalSlash > 3) {
+            return paths;
+        }
+        // Assume reverse proxy - this time with 'library' as part of the path.
+        paths.add(repo + "/library/" + imagePath);
+
+        // Assume proxy-less - this time with 'library' as part of the path.
+        int secondSlash = StringUtils.ordinalIndexOf(imagePath, "/", 2);
+        paths.add(repo + "/library/" + imagePath.substring(secondSlash + 1));
+
+        return paths;
+    }
+
     public enum CommandType {
         Push,
         Pull
