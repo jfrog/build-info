@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Map;
 
 /**
- * Base class for npm install and npm publish commands.
+ * Base class for npm commands.
  *
  * @author Yahav Itzhak
  */

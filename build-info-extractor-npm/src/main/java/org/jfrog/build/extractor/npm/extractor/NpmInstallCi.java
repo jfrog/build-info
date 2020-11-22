@@ -22,25 +22,27 @@ import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.creat
  * @author Yahav Itzhak
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class NpmInstall extends NpmCommand {
+public class NpmInstallCi extends NpmCommand {
 
     NpmBuildInfoExtractor buildInfoExtractor;
-    List<String> installArgs;
+    List<String> commandArgs;
+    boolean isCiCommand;
 
     /**
-     * Install npm package.
+     * Run npm install or npm ci commands.
      *
      * @param clientBuilder        - Build Info client builder.
      * @param resolutionRepository - The repository it'll resolve from.
-     * @param installArgs          - Npm install args.
+     * @param commandArgs          - Npm command args.
      * @param logger               - The logger.
      * @param path                 - Path to directory contains package.json or path to '.tgz' file.
      * @param env                  - Environment variables to use during npm execution.
      */
-    public NpmInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, Log logger, Path path, Map<String, String> env, String module) {
+    public NpmInstallCi(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, boolean isCiCommand) {
         super(clientBuilder, resolutionRepository, logger, path, env);
         buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, npmDriver, logger, module);
-        this.installArgs = StringUtils.isBlank(installArgs) ? new ArrayList<>() : Arrays.asList(installArgs.trim().split("\\s+"));
+        this.commandArgs = StringUtils.isBlank(commandArgs) ? new ArrayList<>() : Arrays.asList(commandArgs.trim().split("\\s+"));
+        this.isCiCommand = isCiCommand;
     }
 
     @Override
@@ -52,7 +54,7 @@ public class NpmInstall extends NpmCommand {
             validateNpmVersion();
             validateRepoExists(client, repo, "Source repo must be specified");
 
-            NpmProject npmProject = new NpmProject(installArgs, repo, workingDir);
+            NpmProject npmProject = new NpmProject(commandArgs, repo, workingDir, isCiCommand);
             return buildInfoExtractor.extract(npmProject);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -69,13 +71,14 @@ public class NpmInstall extends NpmCommand {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
             ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
-            NpmInstall npmInstall = new NpmInstall(clientBuilder,
+            NpmInstallCi npmInstall = new NpmInstallCi(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     npmHandler.getArgs(),
                     clientConfiguration.getLog(),
                     Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    npmHandler.getModule());
+                    npmHandler.getModule(),
+                    clientConfiguration.npmHandler.isCiCommand());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
