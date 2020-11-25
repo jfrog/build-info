@@ -6,6 +6,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class NugetPackgesConfig implements Serializable {
@@ -61,7 +62,7 @@ public class NugetPackgesConfig implements Serializable {
     private String inputStreamToString(InputStream is) throws IOException {
         StringBuilder sb = new StringBuilder();
         String line;
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
             while ((line = br.readLine()) != null) {
                 sb.append(line);
             }
