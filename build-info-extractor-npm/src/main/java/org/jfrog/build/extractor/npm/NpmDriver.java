@@ -47,6 +47,14 @@ public class NpmDriver implements Serializable {
         }
     }
 
+    public String ci(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
+        try {
+            return runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
+        } catch (IOException | InterruptedException e) {
+            throw new IOException("npm ci failed: " + e.getMessage(), e);
+        }
+    }
+
     public String pack(File workingDirectory, List<String> extraArgs) throws IOException {
         try {
             return runCommand(workingDirectory, new String[]{"pack"}, extraArgs);

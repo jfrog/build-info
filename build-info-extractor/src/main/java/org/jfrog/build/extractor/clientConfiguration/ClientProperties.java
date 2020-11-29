@@ -44,6 +44,8 @@ public interface ClientProperties {
 
     String PROP_PACKAGE_MANAGER_PREFIX = ARTIFACTORY_PREFIX + "package.manager.";
 
+    String PROP_NPM_PREFIX = ARTIFACTORY_PREFIX + "npm.";
+
     String PROP_PIP_PREFIX = ARTIFACTORY_PREFIX + "pip.";
 
     String PROP_DOTNET_PREFIX = ARTIFACTORY_PREFIX + "dotnet.";

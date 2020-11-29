@@ -11,14 +11,16 @@ import java.util.List;
  */
 public class NpmProject {
 
-    private List<String> installationArgs;
+    private List<String> commandArgs;
     private String resolutionRepository;
     private Path workingDir;
+    private boolean ciCommand;
 
-    public NpmProject(List<String> installationArgs, String resolutionRepository, Path workingDir) {
-        this.installationArgs = installationArgs;
+    public NpmProject(List<String> commandArgs, String resolutionRepository, Path workingDir, boolean ciCommand) {
+        this.commandArgs = commandArgs;
         this.resolutionRepository = resolutionRepository;
         this.workingDir = workingDir;
+        this.ciCommand = ciCommand;
     }
 
     public String getResolutionRepository() {
@@ -29,7 +31,11 @@ public class NpmProject {
         return workingDir;
     }
 
-    public List<String> getInstallationArgs() {
-        return installationArgs;
+    public List<String> getCommandArgs() {
+        return commandArgs;
+    }
+
+    public boolean isCiCommand() {
+        return ciCommand;
     }
 }

@@ -60,14 +60,17 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     @Override
     public Build extract(NpmProject npmProject) throws Exception {
         String resolutionRepository = npmProject.getResolutionRepository();
-        List<String> installationArgs = npmProject.getInstallationArgs();
+        List<String> commandArgs = npmProject.getCommandArgs();
         Path workingDir = npmProject.getWorkingDir();
 
         preparePrerequisites(resolutionRepository, workingDir);
-        createTempNpmrc(workingDir, installationArgs);
-        runInstall(workingDir, installationArgs);
+        createTempNpmrc(workingDir, commandArgs);
+        if (npmProject.isCiCommand()) {
+            runCi(workingDir, commandArgs);
+        } else {
+            runInstall(workingDir, commandArgs);
+        }
         restoreNpmrc(workingDir);
-
         List<Dependency> dependencies = collectDependencies(workingDir);
         String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         return createBuild(dependencies, moduleId);
@@ -128,10 +131,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         Files.copy(npmrcPath, npmrcBackupPath, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    private void createTempNpmrc(Path workingDir, List<String> installationArgs) throws IOException, InterruptedException {
+    private void createTempNpmrc(Path workingDir, List<String> commandArgs) throws IOException, InterruptedException {
         Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
         Files.deleteIfExists(npmrcPath); // Delete old npmrc file
-        final String configList = npmDriver.configList(workingDir.toFile(), installationArgs);
+        final String configList = npmDriver.configList(workingDir.toFile(), commandArgs);
 
         Properties npmrcProperties = new Properties();
 
@@ -140,8 +143,8 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         JsonNode manifestTree = mapper.readTree(configList);
         manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
         // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
-        // We will get json output only if it was explicitly required in the installation arguments.
-        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(installationArgs)));
+        // We will get json output only if it was explicitly required in the command arguments.
+        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(commandArgs)));
 
         // Save npm auth
         npmrcProperties.putAll(npmAuth);
@@ -172,12 +175,12 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 2. --arg=value (true/false)
      * 3. --arg value (true/false)
      */
-    static boolean isJsonOutputRequired(List<String> installationArgs) {
-        int jsonIndex = installationArgs.indexOf("--json");
+    static boolean isJsonOutputRequired(List<String> commandArgs) {
+        int jsonIndex = commandArgs.indexOf("--json");
         if (jsonIndex > -1) {
-            return jsonIndex == installationArgs.size() - 1 || !installationArgs.get(jsonIndex + 1).equals("false");
+            return jsonIndex == commandArgs.size() - 1 || !commandArgs.get(jsonIndex + 1).equals("false");
         }
-        return installationArgs.contains("--json=true");
+        return commandArgs.contains("--json=true");
     }
 
     /**
@@ -196,6 +199,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
     private void runInstall(Path workingDir, List<String> installationArgs) throws IOException {
         logger.info(npmDriver.install(workingDir.toFile(), installationArgs, logger));
+    }
+
+    private void runCi(Path workingDir, List<String> installationArgs) throws IOException {
+        logger.info(npmDriver.ci(workingDir.toFile(), installationArgs, logger));
     }
 
     private void restoreNpmrc(Path workingDir) throws IOException {

@@ -55,6 +55,7 @@ public class ArtifactoryClientConfiguration {
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
     public final PackageManagerHandler packageManagerHandler;
+    public final NpmHandler npmHandler;
     public final PipHandler pipHandler;
     public final DotnetHandler dotnetHandler;
     public final DockerHandler dockerHandler;
@@ -72,6 +73,7 @@ public class ArtifactoryClientConfiguration {
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
         this.packageManagerHandler = new PackageManagerHandler();
+        this.npmHandler = new NpmHandler();
         this.pipHandler = new PipHandler();
         this.dotnetHandler = new DotnetHandler();
         this.dockerHandler = new DockerHandler();
@@ -502,8 +504,21 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    public class PipHandler extends PrefixPropertyHandler {
+    public class NpmHandler extends PrefixPropertyHandler {
+        public NpmHandler() {
+            super(root, PROP_NPM_PREFIX);
+        }
 
+        public boolean isCiCommand() {
+            return rootConfig.getBooleanValue(NPM_CI_COMMAND, false);
+        }
+
+        public void setCiCommand(boolean ciCommand) {
+            rootConfig.setBooleanValue(NPM_CI_COMMAND, ciCommand);
+        }
+    }
+
+    public class PipHandler extends PrefixPropertyHandler {
         public PipHandler() {
             super(root, PROP_PIP_PREFIX);
         }
