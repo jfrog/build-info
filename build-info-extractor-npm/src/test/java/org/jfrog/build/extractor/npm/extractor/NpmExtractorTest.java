@@ -151,27 +151,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
     public void npmInstallTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
-        Path projectDir = null;
-        try {
-            // Run npm install
-            projectDir = createProjectDir(project);
-            Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
-            NpmInstallCi npmInstall = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false);
-            Build build = npmInstall.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
-            // Check correctness of the module and dependencies
-            assertEquals(module.getType(), "npm");
-            assertEquals(module.getId(), project.getModuleId());
-            Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
-            assertEquals(moduleDependencies, expectedDependencies);
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
-        } finally {
-            if (projectDir != null) {
-                FileUtils.deleteQuietly(projectDir.toFile());
-            }
-        }
+        runNpmTest(project, expectedDependencies, args, packageJsonPath, false);
     }
 
     @DataProvider
@@ -189,21 +169,32 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmCiProvider")
     public void npmCiTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+        runNpmTest(project, expectedDependencies, args, packageJsonPath, true);
+    }
+
+    private void runNpmTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath, boolean isNpmCi) {
         Path projectDir = null;
         try {
             // Prepare.
             projectDir = createProjectDir(project);
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
-            // Run npm-install to generate package-lock.json file.
-            NpmInstallCi npmInstall = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false);
-            npmInstall.execute();
+            if (isNpmCi) {
+                // Run npm install to generate package-lock.json file.
+                new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false).execute();
+            }
 
-            // Run npm-ci command.
-            NpmInstallCi npmCi = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, true);
-            Build build = npmCi.execute();
+            // Execute command.
+            NpmInstallCi buildExecutor;
+            if (isNpmCi) {
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, true);
+            } else {
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false);
+            }
+            Build build = buildExecutor.execute();
+
+            // Validate.
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
-            // Check correctness of the module and dependencies
             assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());

@@ -510,11 +510,11 @@ public class ArtifactoryClientConfiguration {
         }
 
         public boolean isCiCommand() {
-            return rootConfig.getBooleanValue(NPM_IS_CI_COMMAND, false);
+            return rootConfig.getBooleanValue(NPM_CI_COMMAND, false);
         }
 
-        public void setIsCiCommand(boolean isCiCommand) {
-            rootConfig.setBooleanValue(NPM_IS_CI_COMMAND, isCiCommand);
+        public void setCiCommand(boolean ciCommand) {
+            rootConfig.setBooleanValue(NPM_CI_COMMAND, ciCommand);
         }
     }
 
