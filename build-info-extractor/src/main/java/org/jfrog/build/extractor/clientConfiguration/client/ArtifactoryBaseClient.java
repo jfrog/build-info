@@ -18,6 +18,9 @@ import java.io.IOException;
  * Created by Tamirh on 21/04/2016.
  */
 public abstract class ArtifactoryBaseClient implements AutoCloseable {
+    public static final String SHA1_HEADER_NAME = "X-Checksum-Sha1";
+    public static final String MD5_HEADER_NAME = "X-Checksum-Md5";
+
     private static final String API_REPOSITORIES = "/api/repositories";
 
     protected String artifactoryUrl;
