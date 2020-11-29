@@ -26,6 +26,9 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient.MD5_HEADER_NAME;
+import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient.SHA1_HEADER_NAME;
+
 /**
  * Helper class for downloading dependencies
  *
@@ -33,12 +36,11 @@ import java.util.regex.Pattern;
  */
 public class DependenciesDownloaderHelper {
 
-    private DependenciesDownloader downloader;
-    private Log log;
-    private static final String MD5_HEADER_NAME = "X-Checksum-Md5";
-    private static final String SHA1_HEADER_NAME = "X-Checksum-Sha1";
-    public static final String MD5_ALGORITHM_NAME = "md5";
     public static final String SHA1_ALGORITHM_NAME = "sha1";
+    public static final String MD5_ALGORITHM_NAME = "md5";
+
+    private final DependenciesDownloader downloader;
+    private final Log log;
     /**
      * Number of threads to use when downloading an artifact concurrently
      */

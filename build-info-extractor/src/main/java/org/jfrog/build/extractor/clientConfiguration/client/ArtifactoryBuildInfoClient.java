@@ -737,8 +737,8 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StringBuilder deploymentPathBuilder = new StringBuilder().append(uploadUrl);
         deploymentPathBuilder.append(DeploymentUrlUtils.buildMatrixParamsString(details.getProperties(), true));
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
-        httpPut.addHeader("X-Checksum-Sha1", details.getSha1());
-        httpPut.addHeader("X-Checksum-Md5", details.getMd5());
+        httpPut.addHeader(SHA1_HEADER_NAME, details.getSha1());
+        httpPut.addHeader(MD5_HEADER_NAME, details.getMd5());
         log.debug("Full Artifact Http path: " + httpPut.toString() + "\n@Http Headers: " + Arrays.toString(httpPut.getAllHeaders()));
         return httpPut;
     }
