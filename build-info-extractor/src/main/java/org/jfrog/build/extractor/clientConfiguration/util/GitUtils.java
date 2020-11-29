@@ -47,7 +47,7 @@ public class GitUtils {
     }
 
     /**
-     * A submodule's .git is a file, referencing to the actual path of the .git directory of the submodule.
+     * A submodule's .git is a file, referencing the actual path of the .git directory of the submodule.
      * The actual .git directory is under the parent project's .git/modules directory.
      *
      * @param dotGit The .git file of the submodule
