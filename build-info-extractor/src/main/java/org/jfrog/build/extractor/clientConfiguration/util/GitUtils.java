@@ -34,10 +34,45 @@ public class GitUtils {
             log.debug("Could not find the .git directory.");
             return new Vcs();
         }
+
+        if (dotGit.isFile()) {
+            // dotGit is a file and not a directory, assume submodule.
+            dotGit = getSubmoduleDotGit(dotGit);
+        }
+
         Vcs vcs = new Vcs();
         vcs.setRevision(extractVcsRevision(dotGit, log));
         vcs.setUrl(extractVcsUrl(dotGit, log));
         return vcs;
+    }
+
+    /**
+     * A submodule's .git is a file, referencing the actual path of the .git directory of the submodule.
+     * The actual .git directory is under the parent project's .git/modules directory.
+     *
+     * @param dotGit The .git file of the submodule
+     * @return File representing the actual .git directory of the submodule
+     * @throws IOException If fails to find the submodule's .gir directory
+     */
+    private static File getSubmoduleDotGit(File dotGit) throws IOException {
+        String dotGitRelativePathString = extractSubmoduleDotGitPath(dotGit);
+        String dotGitAbsolutePathString = dotGit.getParent() + File.separator + dotGitRelativePathString;
+        File dotGitFile = new File(dotGitAbsolutePathString);
+        if (!dotGitFile.exists()) {
+            throw new IOException("Could not find the .git directory of a submodule.");
+        }
+        return dotGitFile;
+    }
+
+    private static String extractSubmoduleDotGitPath(File dotGit) throws IOException {
+        // Read .git file - the first row is the path to the actual submodule's .git.
+        try (BufferedReader br = new BufferedReader(new FileReader(dotGit))) {
+            String line = br.readLine();
+            if (line != null && line.startsWith("gitdir: ")) {
+                return line.substring(line.indexOf(":") + 1).trim();
+            }
+        }
+        throw new IOException("Failed to parse .git path for submodule.");
     }
 
     private static String extractVcsUrl(File dotGit, Log log) throws IOException {
