@@ -509,6 +509,14 @@ public class ArtifactoryClientConfiguration {
             super(root, PROP_NPM_PREFIX);
         }
 
+        public String getBuildName() {
+            return rootConfig.getStringValue(NPM_BUILD_NAME);
+        }
+
+        public void setBuildName(String buildName) {
+            rootConfig.setStringValue(NPM_BUILD_NAME, buildName);
+        }
+
         public boolean isCiCommand() {
             return rootConfig.getBooleanValue(NPM_CI_COMMAND, false);
         }

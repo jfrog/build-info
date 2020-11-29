@@ -65,9 +65,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         SVARTALFHEIM("svartalfheim", "jfrog-svartalfheim", "jfrog-svartalfheim", "0.5.0"),
 
         // Test projects
-        A("a", "NpmExtractorTest Project A", "package-name1", "0.0.1", ASGARD.getPackedFileName(), SVARTALFHEIM.getPackedFileName()),
-        B("b", "NpmExtractorTest-Project-B", "package-name2", "0.0.2", ASGARD.getPackedFileName(), MIDGARD.getPackedFileName(), ALFHEIM.getPackedFileName()),
-        C("c", "NpmExtractorTestProjectC", "package-name3", "0.0.3", ASGARD.getPackedFileName(), MIDGARD.getPackedFileName(), ALFHEIM.getPackedFileName(), SVARTALFHEIM.getPackedFileName());
+        A("a", "NpmExtractorTest Project A", "package-name1", "0.0.1", ASGARD.getDependencyId(), SVARTALFHEIM.getDependencyId()),
+        B("b", "NpmExtractorTest-Project-B", "package-name2", "0.0.2", ASGARD.getDependencyId(), MIDGARD.getDependencyId(), ALFHEIM.getDependencyId()),
+        C("c", "NpmExtractorTestProjectC", "package-name3", "0.0.3", ASGARD.getDependencyId(), MIDGARD.getDependencyId(), ALFHEIM.getDependencyId(), SVARTALFHEIM.getDependencyId());
 
         private File projectOrigin;
         private String targetDir;
@@ -89,6 +89,10 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
         private String getPackedFileName() {
             return String.format("%s-%s.tgz", name, version);
+        }
+
+        private String getDependencyId() {
+            return String.format("%s:%s", name, version);
         }
 
         private String getRemotePath() {
@@ -180,15 +184,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             if (isNpmCi) {
                 // Run npm install to generate package-lock.json file.
-                new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false).execute();
+                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null,false).execute();
             }
 
             // Execute command.
             NpmInstallCi buildExecutor;
             if (isNpmCi) {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, true);
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, true);
             } else {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, virtualRepo, args, log, path, null, null, false);
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false);
             }
             Build build = buildExecutor.execute();
 

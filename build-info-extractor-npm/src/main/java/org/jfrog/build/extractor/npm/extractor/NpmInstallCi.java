@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
@@ -31,16 +32,17 @@ public class NpmInstallCi extends NpmCommand {
     /**
      * Run npm install or npm ci commands.
      *
-     * @param clientBuilder        - Build Info client builder.
-     * @param resolutionRepository - The repository it'll resolve from.
-     * @param commandArgs          - Npm command args.
-     * @param logger               - The logger.
-     * @param path                 - Path to directory contains package.json or path to '.tgz' file.
-     * @param env                  - Environment variables to use during npm execution.
+     * @param dependenciesClientBuilder - Dependencies client builder.
+     * @param buildInfoClientBuilder    - Build Info client builder.
+     * @param resolutionRepository      - The repository it'll resolve from.
+     * @param commandArgs               - Npm command args.
+     * @param logger                    - The logger.
+     * @param path                      - Path to directory contains package.json or path to '.tgz' file.
+     * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmInstallCi(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, boolean isCiCommand) {
-        super(clientBuilder, resolutionRepository, logger, path, env);
-        buildInfoExtractor = new NpmBuildInfoExtractor(clientBuilder, npmDriver, logger, module);
+    public NpmInstallCi(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand) {
+        super(dependenciesClientBuilder, resolutionRepository, logger, path, env);
+        buildInfoExtractor = new NpmBuildInfoExtractor(dependenciesClientBuilder, buildInfoClientBuilder, npmDriver, logger, module, buildName);
         this.commandArgs = StringUtils.isBlank(commandArgs) ? new ArrayList<>() : Arrays.asList(commandArgs.trim().split("\\s+"));
         this.isCiCommand = isCiCommand;
     }
@@ -69,16 +71,20 @@ public class NpmInstallCi extends NpmCommand {
     public static void main(String[] ignored) {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
-            NpmInstallCi npmInstall = new NpmInstallCi(clientBuilder,
+            ArtifactoryDependenciesClientBuilder dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryClientConfiguration.PackageManagerHandler packageManagerHandler = clientConfiguration.packageManagerHandler;
+            ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
+            NpmInstallCi npmInstall = new NpmInstallCi(dependenciesClientBuilder,
+                    buildInfoClientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
-                    npmHandler.getArgs(),
+                    packageManagerHandler.getArgs(),
                     clientConfiguration.getLog(),
-                    Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
+                    Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
-                    npmHandler.getModule(),
-                    clientConfiguration.npmHandler.isCiCommand());
+                    packageManagerHandler.getModule(),
+                    npmHandler.getBuildName(),
+                    npmHandler.isCiCommand());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
