@@ -50,7 +50,7 @@ public interface BuildInfoFields {
     String GENERATED_BUILD_INFO = "generated.build.info";
     String VCS = "vcs";
     String DEPLOYABLE_ARTIFACTS = "deployable.artifacts.map";
-    String CHECKSUM_DEPLOY_MIN_FILE_SIZE = "checksumDeployMinFileSize";
+    String MIN_CHECKSUM_DEPLOY_SIZE_KB = "minChecksumDeploySizeKb";
     // Backward compatibility for pipelines using Gradle Artifactory Plugin with version bellow 4.15.1, or Jenkins Artifactory Plugin bellow 3.6.1
     @Deprecated
     String BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS = "deployable.artifacts";

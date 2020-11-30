@@ -59,7 +59,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
-import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB;
 
 /**
  * Artifactory client to perform build info related tasks.
@@ -81,7 +81,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String USAGE_API = "/api/system/usage";
     private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
-    private int checksumDeployMinFileSize = DEFAULT_CHECKSUM_DEPLOY_MIN_FILE_SIZE;
+    private int minChecksumDeploySizeKb = DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB;
 
     /**
      * Creates a new client for the given Artifactory url.
@@ -117,10 +117,10 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     /**
      * Set min file size for checksum deployment.
-     * @param checksumDeployMinFileSize - file size
+     * @param minChecksumDeploySizeKb - file size in KB
      */
-    public void setChecksumDeployMinFileSize(int checksumDeployMinFileSize) {
-        this.checksumDeployMinFileSize = checksumDeployMinFileSize;
+    public void setMinChecksumDeploySizeKb(int minChecksumDeploySizeKb) {
+        this.minChecksumDeploySizeKb = minChecksumDeploySizeKb;
     }
 
     /**
@@ -705,8 +705,8 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private ArtifactoryUploadResponse tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
         // Try checksum deploy only on file size equal or greater than 'checksumDeployMinFileSize'
         long fileLength = details.getFile().length();
-        if (fileLength < checksumDeployMinFileSize) {
-            log.debug("Skipping checksum deploy of file size " + fileLength + " , falling back to regular deployment.");
+        if (fileLength < minChecksumDeploySizeKb * 1024) {
+            log.debug("Skipping checksum deploy of file size " + fileLength + " bytes, falling back to regular deployment.");
             return null;
         }
 

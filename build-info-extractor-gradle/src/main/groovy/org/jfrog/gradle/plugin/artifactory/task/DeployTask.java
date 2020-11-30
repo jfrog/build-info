@@ -176,7 +176,7 @@ public class DeployTask extends DefaultTask {
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
-                            client.setChecksumDeployMinFileSize(publisher.getChecksumDeployMinFileSize());
+                            client.setMinChecksumDeploySizeKb(publisher.getMinChecksumDeploySizeKb());
                             deployArtifacts(artifactoryTask.deployDetails, client, patterns, logPrefix);
                         }
                     }
