@@ -13,11 +13,9 @@ import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.docker.DockerUtils;
 import org.jfrog.build.extractor.docker.types.DockerImage;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPull extends DockerCommand {
@@ -58,8 +56,7 @@ public class DockerPull extends DockerCommand {
                     clientConfiguration.resolver.getPassword(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties());
-            // Init temp dir.
-            initTempDir(new File(clientConfiguration.info.getGeneratedBuildInfoFilePath()));
+
             // Exe docker pull & collect build info.
             dockerPush.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
