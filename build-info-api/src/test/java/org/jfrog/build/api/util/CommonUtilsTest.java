@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 import static org.testng.Assert.*;
 
@@ -230,5 +231,15 @@ public class CommonUtilsTest {
         assertEquals(set, expected, "Unexpected set construction");
 
         assertEquals(CommonUtils.newHashSet(), new HashSet<>(), "Unexpected set construction");
+    }
+
+    public void testEmptyIfNull() {
+        Iterable<String> itr = CommonUtils.emptyIfNull(null);
+        assertNotNull(itr);
+        assertEquals(StreamSupport.stream(itr.spliterator(), false).count(), 0);
+
+        itr = CommonUtils.emptyIfNull(Collections.singletonList("fgf"));
+        assertNotNull(itr);
+        assertEquals(StreamSupport.stream(itr.spliterator(), false).count(), 1);
     }
 }
