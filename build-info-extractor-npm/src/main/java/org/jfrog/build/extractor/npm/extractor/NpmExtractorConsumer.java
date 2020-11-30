@@ -27,15 +27,18 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
                     "\"@npm.name\": \"%s\"," +
                     "\"@npm.version\": \"%s\"" +
                     "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
+    private Map<String, Dependency> previousBuildDependencies;
     private ArtifactoryDependenciesClient client;
     private Map<String, Dependency> dependencies;
     private ProducerConsumerExecutor executor;
     private Set<NpmPackageInfo> badPackages;
     private Log log;
 
-    NpmExtractorConsumer(ArtifactoryDependenciesClient client, Map<String, Dependency> dependencies, Set<NpmPackageInfo> badPackages) {
+    NpmExtractorConsumer(ArtifactoryDependenciesClient client, Map<String, Dependency> dependencies,
+                         Map<String, Dependency> previousBuildDependencies, Set<NpmPackageInfo> badPackages) {
         this.client = client;
         this.dependencies = dependencies;
+        this.previousBuildDependencies = previousBuildDependencies;
         this.badPackages = badPackages;
     }
 
@@ -61,12 +64,52 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
     }
 
     /**
+     * If package is included in the dependencies map, add the current scope for the dependency.
+     * Otherwise, retrieve sha1 and md5 from Artifactory and add the dependency to the dependencies map.
+     *
+     * @param npmPackageInfo - The npm package information.
+     * @return True if the package is legal. False in case of an error such as an absence in Artifactory's cache.
+     */
+    private boolean appendDependency(NpmPackageInfo npmPackageInfo) {
+        String id = npmPackageInfo.getName() + ":" + npmPackageInfo.getVersion();
+        Dependency dependency = dependencies.get(id);
+        if (dependency == null) {
+            dependency = createDependency(npmPackageInfo, id);
+            if (dependency == null) {
+                return false;
+            }
+            dependencies.put(id, dependency);
+        } else {
+            dependency.getScopes().add(npmPackageInfo.getScope());
+        }
+        return true;
+    }
+
+    /**
+     * Create a Dependency for the provided NpmPackageInfo.
+     * If the dependency exists in the previous build's dependencies - take the required info from it.
+     * Otherwise - fetch the information from Artifactory.
+     *
+     * @param npmPackageInfo - The npm package information.
+     * @param id             - The id of the dependency to create.
+     * @return Dependency populated with {name, scope, version, sha1 and md5} or null in case of {error or absence in Artifactory's case}.
+     */
+    private Dependency createDependency(NpmPackageInfo npmPackageInfo, String id) {
+        Dependency previousDependency = previousBuildDependencies.get(id);
+        if (previousDependency != null) {
+            return createDependencyFromPreviousBuild(npmPackageInfo, previousDependency);
+        }
+        return createDependencyFromAqlResult(npmPackageInfo, id);
+    }
+
+    /**
      * Create 'Dependency' from name and version of 'npmPackageInfo'. Try to retrieve sha1 and md5 from Artifactory.
      *
      * @param npmPackageInfo - The npm package information.
-     * @return Dependency populated with {name, scope, version, sha1 and md5} or null in case of {error or absence in Artifactory's case}.
+     * @param id             - The id of the dependency to create.
+     * @return Dependency or null in case of an exception, or in case the dependency does not exist in Artifactory.
      */
-    private Dependency createDependency(NpmPackageInfo npmPackageInfo) {
+    private Dependency createDependencyFromAqlResult(NpmPackageInfo npmPackageInfo, String id) {
         String aql = String.format(NPM_AQL_FORMAT, npmPackageInfo.getName(), npmPackageInfo.getVersion());
         AqlSearchResult searchResult;
         try {
@@ -76,7 +119,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
             }
             DependencyBuilder builder = new DependencyBuilder();
             AqlSearchResult.SearchEntry searchEntry = searchResult.getResults().get(0);
-            return builder.id(searchEntry.getName())
+            return builder.id(id)
                     .addScope(npmPackageInfo.getScope())
                     .md5(searchEntry.getActualMd5())
                     .sha1(searchEntry.getActualSha1())
@@ -88,24 +131,18 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
     }
 
     /**
-     * If package contained in the dependencies map, add the current scope for the dependency.
-     * Otherwise, retrieve sha1 and md5 from Artifactory and add the dependency to the dependencies map.
+     * Create a dependency using the information fetched from a previously published build.
      *
-     * @param npmPackageInfo - The npm package information.
-     * @return True if the package is legal. False in case of an error such as an absence in Artifactory's cache.
+     * @param npmPackageInfo     - The npm package information.
+     * @param previousDependency - Dependency from previous build.
+     * @return Dependency populated with {name, scope, version, sha1 and md5}.
      */
-    private boolean appendDependency(NpmPackageInfo npmPackageInfo) {
-        String id = npmPackageInfo.getName() + ":" + npmPackageInfo.getVersion();
-        if (!dependencies.containsKey(id)) {
-            Dependency dependency = createDependency(npmPackageInfo);
-            if (dependency == null) {
-                return false;
-            }
-            dependencies.put(id, dependency);
-        } else {
-            dependencies.get(id).getScopes().add(npmPackageInfo.getScope());
-        }
-        return true;
+    private Dependency createDependencyFromPreviousBuild(NpmPackageInfo npmPackageInfo, Dependency previousDependency) {
+        return new DependencyBuilder().id(previousDependency.getId())
+                .sha1(previousDependency.getSha1())
+                .md5(previousDependency.getMd5())
+                .addScope(npmPackageInfo.getScope())
+                .build();
     }
 
     @Override

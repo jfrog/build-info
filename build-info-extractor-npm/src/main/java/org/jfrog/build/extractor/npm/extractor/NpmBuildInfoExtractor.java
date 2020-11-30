@@ -11,7 +11,9 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
@@ -42,19 +44,24 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
+    private String buildName;
     private String npmProxy;
     private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, NpmDriver npmDriver, Log logger, String module) {
+    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,
+                          NpmDriver npmDriver, Log logger, String module, String buildName) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
+        this.buildInfoClientBuilder = buildInfoClientBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
         this.module = module;
+        this.buildName = buildName;
     }
 
     @Override
@@ -236,7 +243,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             extraListArgs.add("--only=" + scopes.get(0));
         }
         JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-        populateDependenciesMap(dependencies, jsonNode);
+        populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode);
 
         return new ArrayList<>(dependencies.values());
     }
@@ -279,20 +286,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, JsonNode npmDependenciesTree) throws Exception {
-        // Set of packages that could not be found in Artifactory
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependenciesTree) throws Exception {
+        // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(npmDependenciesTree);
-        try (ArtifactoryDependenciesClient client = dependenciesClientBuilder.build()) {
-            // Create producer Runnable
+        try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
+            // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
-            // Create consumer Runnables
+            // Create consumer Runnables.
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new NpmExtractorConsumer(client, dependencies, badPackages),
-                    new NpmExtractorConsumer(client, dependencies, badPackages),
-                    new NpmExtractorConsumer(client, dependencies, badPackages)
+                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages)
             };
-            // Create the deployment executor
+            // Create the deployment executor.
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
             deploymentExecutor.start();
             if (!badPackages.isEmpty()) {
@@ -302,5 +309,33 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
                         "Deleting the local cache will force populating Artifactory with these dependencies.");
             }
         }
+    }
+
+    private Map<String, Dependency> getDependenciesMapFromLatestBuild() throws IOException {
+        if (StringUtils.isBlank(buildName)) {
+            return Collections.emptyMap();
+        }
+        try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
+            // Get previous build's dependencies.
+            Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST");
+            if (previousBuildInfo == null) {
+                return Collections.emptyMap();
+            }
+
+            return getDependenciesMapFromBuild(previousBuildInfo);
+        }
+    }
+
+    static Map<String, Dependency> getDependenciesMapFromBuild(Build build) {
+        Map<String, Dependency> previousBuildDependencies = new ConcurrentHashMap<>();
+        // Iterate over all modules and extract dependencies.
+        List<Module> modules = build.getModules();
+        for (Module module : modules) {
+            List<Dependency> dependencies = module.getDependencies();
+            for (Dependency dependency : dependencies) {
+                previousBuildDependencies.put(dependency.getId(), dependency);
+            }
+        }
+        return previousBuildDependencies;
     }
 }
