@@ -10,6 +10,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 
+import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
+
 /**
  * Created by Bar Belity on 12/07/2020.
  */
@@ -26,6 +28,7 @@ public abstract class PackageManagerExtractor implements Serializable {
      * @throws RuntimeException in case of any error.
      */
     public void executeAndSaveBuildInfo(ArtifactoryClientConfiguration clientConfiguration) throws RuntimeException {
+        handleJavaTmpdirProperty();
         Build build = execute();
         if (build == null) {
             return;

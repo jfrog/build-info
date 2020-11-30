@@ -18,12 +18,10 @@ import org.jfrog.build.extractor.docker.types.DockerImage;
 import org.jfrog.build.extractor.docker.types.DockerLayer;
 import org.jfrog.build.extractor.docker.types.DockerLayers;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
-import static org.jfrog.build.extractor.docker.DockerUtils.initTempDir;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends DockerCommand {
@@ -73,7 +71,7 @@ public class DockerPush extends DockerCommand {
                     clientConfiguration.publisher.getPassword(),
                     clientConfiguration.getLog(),
                     clientConfiguration.getAllProperties());
-            initTempDir(new File(clientConfiguration.info.getGeneratedBuildInfoFilePath()));
+
             // Exe docker push & collect build info.
             dockerPush.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {

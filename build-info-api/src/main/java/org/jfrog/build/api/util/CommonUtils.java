@@ -1,10 +1,15 @@
 package org.jfrog.build.api.util;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.SystemUtils;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -151,5 +156,36 @@ public class CommonUtils {
      */
     public static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
         return iterable == null ? Collections.emptyList() : iterable;
+    }
+
+    /**
+     * Handle 'java.io.tmpdir' system property.
+     * If not defined in POSIX compliant systems - use '/tmp' folder.
+     * If defined but directory does not exist - try to create it.
+     *
+     * @throws RuntimeException if case of missing 'java.io.tmpdir' is missing in Windows or the path is not accessible.
+     */
+    public static void handleJavaTmpdirProperty() {
+        String tmpDirPath = FileUtils.getTempDirectoryPath();
+
+        if (StringUtils.isNotBlank(tmpDirPath)) {
+            // java.io.tmpdir is defined.
+            if (FileUtils.getTempDirectory().exists()) {
+                return;
+            }
+            // java.io.tmpdir is defined, but the directory doesn't exist.
+            try {
+                Files.createDirectories(Paths.get(tmpDirPath));
+            } catch (IOException e) {
+                throw new RuntimeException("The directory defined in the system property 'java.io.tmpdir' (" + tmpDirPath + ") doesn't exit. " +
+                        "An attempt to create a directory in this path failed: ", e);
+            }
+        } else if (SystemUtils.IS_OS_UNIX) {
+            // java.io.tmpdir is not defined and the OS is POSIX compliant system.
+            System.setProperty("java.io.tmpdir", "/tmp");
+        } else {
+            // java.io.tmpdir is not defined and the OS is not POSIX compliant system.
+            throw new RuntimeException("java.io.tmpdir system property is missing!");
+        }
     }
 }

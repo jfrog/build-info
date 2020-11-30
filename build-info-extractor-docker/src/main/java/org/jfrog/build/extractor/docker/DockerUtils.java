@@ -12,11 +12,9 @@ import org.apache.http.HttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -271,19 +269,6 @@ public class DockerUtils {
         int indexOfFirstSlash = imageTag.indexOf("/");
         int indexOfLastColon = imageTag.lastIndexOf(":");
         return indexOfFirstSlash < indexOfLastColon;
-    }
-
-    /**
-     * Docker-Java uses the temp dir to execute binaries, in some cases the default temp dir (especially on Linux OS)
-     * might have a NONEXE flag, therefore we override it with our build info extractor dir.
-     *
-     * @param path - Local path to create temp dir.
-     */
-    public static void initTempDir(File path) {
-        // Extract the dir path.
-        String pathDir = path.getAbsoluteFile().getParent();
-        // Set the Java temp dir system property. As a result, java will create it for us.
-        System.setProperty("java.io.tmpdir", Paths.get(pathDir, "DockerJavaTemp").toString());
     }
 
     /**

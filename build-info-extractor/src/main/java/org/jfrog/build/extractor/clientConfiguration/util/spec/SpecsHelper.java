@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
 import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
 
 /**
@@ -133,6 +134,7 @@ public class SpecsHelper {
      * @throws IOException in case of IOException
      */
     public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
+        handleJavaTmpdirProperty();
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
         return helper.downloadDependencies(getSpecFromString(spec, new SearchBasedSpecValidator()));
     }
