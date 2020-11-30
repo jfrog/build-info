@@ -28,6 +28,7 @@ public abstract class PackageManagerExtractor implements Serializable {
      * @throws RuntimeException in case of any error.
      */
     public void executeAndSaveBuildInfo(ArtifactoryClientConfiguration clientConfiguration) throws RuntimeException {
+        // During build extractor's job, temp directories are created. This will make sure 'java.io.tmpdir' property is defined in Unix.
         handleJavaTmpdirProperty();
         Build build = execute();
         if (build == null) {

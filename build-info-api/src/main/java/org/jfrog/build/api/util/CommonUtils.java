@@ -163,7 +163,7 @@ public class CommonUtils {
      * If not defined in POSIX compliant systems - use '/tmp' folder.
      * If defined but directory does not exist - try to create it.
      *
-     * @throws RuntimeException if case of missing 'java.io.tmpdir' is missing in Windows or the path is not accessible.
+     * @throws RuntimeException if 'java.io.tmpdir' property is missing in Windows or the path is not accessible.
      */
     public static void handleJavaTmpdirProperty() {
         String tmpDirPath = FileUtils.getTempDirectoryPath();
@@ -177,7 +177,7 @@ public class CommonUtils {
             try {
                 Files.createDirectories(Paths.get(tmpDirPath));
             } catch (IOException e) {
-                throw new RuntimeException("The directory defined in the system property 'java.io.tmpdir' (" + tmpDirPath + ") doesn't exit. " +
+                throw new RuntimeException("The directory defined by the system property 'java.io.tmpdir' (" + tmpDirPath + ") doesn't exit. " +
                         "An attempt to create a directory in this path failed: ", e);
             }
         } else if (SystemUtils.IS_OS_UNIX) {

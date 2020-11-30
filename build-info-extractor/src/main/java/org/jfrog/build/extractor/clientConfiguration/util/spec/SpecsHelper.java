@@ -134,6 +134,7 @@ public class SpecsHelper {
      * @throws IOException in case of IOException
      */
     public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
+        // During download, temp directories are created. This will make sure 'java.io.tmpdir' property is defined in Unix.
         handleJavaTmpdirProperty();
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
         return helper.downloadDependencies(getSpecFromString(spec, new SearchBasedSpecValidator()));
