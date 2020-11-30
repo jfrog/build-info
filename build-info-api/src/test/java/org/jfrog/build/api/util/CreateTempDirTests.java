@@ -41,7 +41,7 @@ public class CreateTempDirTests {
     public void createTempDirMissingProperty() {
         System.setProperty(JAVA_IO_TMPDIR_PROP, "");
         if (SystemUtils.IS_OS_WINDOWS) {
-            assertThrows(IOException.class, CommonUtils::handleJavaTmpdirProperty);
+            assertThrows(RuntimeException.class, CommonUtils::handleJavaTmpdirProperty);
             return;
         }
         try {
