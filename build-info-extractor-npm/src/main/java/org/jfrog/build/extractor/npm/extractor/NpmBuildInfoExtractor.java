@@ -49,9 +49,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
+    private String buildName;
     private String npmProxy;
     private String module;
-    private String buildName;
     private Log logger;
 
     NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,

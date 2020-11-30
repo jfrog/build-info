@@ -36,6 +36,8 @@ public class NpmInstallCi extends NpmCommand {
      * @param buildInfoClientBuilder    - Build Info client builder.
      * @param resolutionRepository      - The repository it'll resolve from.
      * @param commandArgs               - Npm command args.
+     * @param buildName                 - The build's name.
+     * @param module                    - The build's module.
      * @param logger                    - The logger.
      * @param path                      - Path to directory contains package.json or path to '.tgz' file.
      * @param env                       - Environment variables to use during npm execution.

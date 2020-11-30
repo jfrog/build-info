@@ -27,9 +27,9 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
                     "\"@npm.name\": \"%s\"," +
                     "\"@npm.version\": \"%s\"" +
                     "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
+    private Map<String, Dependency> previousBuildDependencies;
     private ArtifactoryDependenciesClient client;
     private Map<String, Dependency> dependencies;
-    private Map<String, Dependency> previousBuildDependencies;
     private ProducerConsumerExecutor executor;
     private Set<NpmPackageInfo> badPackages;
     private Log log;
