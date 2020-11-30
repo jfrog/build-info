@@ -83,7 +83,7 @@ public class NpmInstallCi extends NpmCommand {
                     Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : "."),
                     clientConfiguration.getAllProperties(),
                     packageManagerHandler.getModule(),
-                    npmHandler.getBuildName(),
+                    clientConfiguration.info.getBuildName(),
                     npmHandler.isCiCommand());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {

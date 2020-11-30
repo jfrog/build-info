@@ -64,7 +64,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
     }
 
     /**
-     * If package contained in the dependencies map, add the current scope for the dependency.
+     * If package is included in the dependencies map, add the current scope for the dependency.
      * Otherwise, retrieve sha1 and md5 from Artifactory and add the dependency to the dependencies map.
      *
      * @param npmPackageInfo - The npm package information.
@@ -72,14 +72,15 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
      */
     private boolean appendDependency(NpmPackageInfo npmPackageInfo) {
         String id = npmPackageInfo.getName() + ":" + npmPackageInfo.getVersion();
-        if (!dependencies.containsKey(id)) {
-            Dependency dependency = createDependency(npmPackageInfo, id);
+        Dependency dependency = dependencies.get(id);
+        if (dependency == null) {
+            dependency = createDependency(npmPackageInfo, id);
             if (dependency == null) {
                 return false;
             }
             dependencies.put(id, dependency);
         } else {
-            dependencies.get(id).getScopes().add(npmPackageInfo.getScope());
+            dependency.getScopes().add(npmPackageInfo.getScope());
         }
         return true;
     }
@@ -94,8 +95,9 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
      * @return Dependency populated with {name, scope, version, sha1 and md5} or null in case of {error or absence in Artifactory's case}.
      */
     private Dependency createDependency(NpmPackageInfo npmPackageInfo, String id) {
-        if (previousBuildDependencies.containsKey(id)) {
-            return createDependencyFromPreviousBuild(npmPackageInfo, id);
+        Dependency previousDependency = previousBuildDependencies.get(id);
+        if (previousDependency != null) {
+            return createDependencyFromPreviousBuild(npmPackageInfo, previousDependency);
         }
         return createDependencyFromAqlResult(npmPackageInfo, id);
     }
@@ -105,7 +107,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
      *
      * @param npmPackageInfo - The npm package information.
      * @param id             - The id of the dependency to create.
-     * @return Dependency or null in case of {error or absence in Artifactory's case}.
+     * @return Dependency or null in case of an exception, or in case the dependency does not exist in Artifactory.
      */
     private Dependency createDependencyFromAqlResult(NpmPackageInfo npmPackageInfo, String id) {
         String aql = String.format(NPM_AQL_FORMAT, npmPackageInfo.getName(), npmPackageInfo.getVersion());
@@ -131,13 +133,12 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
     /**
      * Create a dependency using the information fetched from a previously published build.
      *
-     * @param npmPackageInfo - The npm package information.
-     * @param id             - The id of the dependency to create.
+     * @param npmPackageInfo     - The npm package information.
+     * @param previousDependency - Dependency from previous build.
      * @return Dependency populated with {name, scope, version, sha1 and md5}.
      */
-    private Dependency createDependencyFromPreviousBuild(NpmPackageInfo npmPackageInfo, String id) {
-        Dependency previousDependency = previousBuildDependencies.get(id);
-        return new DependencyBuilder().id(id)
+    private Dependency createDependencyFromPreviousBuild(NpmPackageInfo npmPackageInfo, Dependency previousDependency) {
+        return new DependencyBuilder().id(previousDependency.getId())
                 .sha1(previousDependency.getSha1())
                 .md5(previousDependency.getMd5())
                 .addScope(npmPackageInfo.getScope())

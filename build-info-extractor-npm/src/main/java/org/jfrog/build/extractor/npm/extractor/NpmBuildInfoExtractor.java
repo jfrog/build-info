@@ -330,9 +330,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             for (Module module : modules) {
                 List<Dependency> dependencies = module.getDependencies();
                 for (Dependency dependency : dependencies) {
-                    if (!previousBuildDependencies.containsKey(dependency.getId())) {
-                        previousBuildDependencies.put(dependency.getId(), dependency);
-                    }
+                    previousBuildDependencies.put(dependency.getId(), dependency);
                 }
             }
 

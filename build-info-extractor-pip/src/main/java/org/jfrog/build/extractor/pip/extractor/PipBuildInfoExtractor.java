@@ -61,6 +61,7 @@ public class PipBuildInfoExtractor {
         Map<String, Dependency> dependenciesMap = new HashMap<>();
         DependenciesCache dependenciesCache = DependenciesCache.getProjectDependenciesCache(executionPath, logger);
 
+        // Mapping an actual downloaded file -> package name, contains all files to get its checksums from Artifactory.
         Map<String, String> getFromArtifactoryMap = new HashMap<>();
         for (String pkgName : downloadedDependencies.keySet()) {
             String fileName = downloadedDependencies.get(pkgName);
@@ -76,10 +77,7 @@ public class PipBuildInfoExtractor {
         }
 
         // Get dependencies from Artifactory.
-        Map<String, Dependency> dependenciesFromArtifactory = getDependenciesFromArtifactory(getFromArtifactoryMap, repository, client, logger);
-        if (dependenciesFromArtifactory != null) {
-            dependenciesMap.putAll(dependenciesFromArtifactory);
-        }
+        dependenciesMap.putAll(getDependenciesFromArtifactory(getFromArtifactoryMap, repository, client, logger));
 
         // Prompt missing dependencies.
         Set<String> missingDeps = downloadedDependencies.keySet().stream()
@@ -92,7 +90,9 @@ public class PipBuildInfoExtractor {
     }
 
     /**
-     * Fetch required files-data from Artifactory and create its corresponding Dependency object.
+     * Create Dependency objects for the files in 'fileToPackageMap'.
+     * Get Dependencies information from Artifactory by running AQL to get the checksums.
+     *
      * @param fileToPackageMap - Mapping between a downloaded file to its package name.
      * @param repository - Resolution repository.
      * @param client - Artifactory client for fetching artifacts data.
@@ -103,11 +103,14 @@ public class PipBuildInfoExtractor {
     private Map<String, Dependency> getDependenciesFromArtifactory(Map<String, String> fileToPackageMap, String repository,
                                                                    ArtifactoryDependenciesClient client, Log logger) throws IOException {
         if (fileToPackageMap.isEmpty()) {
-            return null;
+            return Collections.emptyMap();
         }
+        AqlSearchResult searchResult = runAqlQueries(createAqlQueries(fileToPackageMap, repository), client);
+        return createDependenciesFromAqlResult(searchResult, fileToPackageMap, logger);
+    }
 
-        // Create queries.
-        List<String> aqlQueries = new ArrayList<>();
+    private List<String> createAqlQueries(Map<String, String> fileToPackageMap, String repository) {
+        List<String> aqlQueries =  new ArrayList<>();
         StringBuilder filesQueryPartBuilder = new StringBuilder();
         int filesCounter = 0;
         for (String file : fileToPackageMap.keySet()) {
@@ -122,12 +125,7 @@ public class PipBuildInfoExtractor {
         if (filesQueryPartBuilder.length() > 0) {
             aqlQueries.add(getPipDependenciesAql(filesQueryPartBuilder, repository));
         }
-
-        // Perform queries and create Dependency objects.
-        AqlSearchResult searchResult = runAqlQueries(aqlQueries, client);
-        Map<String, Dependency> dependenciesMap = createDependenciesFromAqlResult(searchResult, fileToPackageMap, logger);
-
-        return dependenciesMap;
+        return aqlQueries;
     }
 
     private String getPipDependenciesAql(StringBuilder filesQueryPartBuilder, String repository) {
@@ -152,13 +150,12 @@ public class PipBuildInfoExtractor {
 
     private Map<String, Dependency> createDependenciesFromAqlResult(AqlSearchResult searchResult, Map<String, String> fileToPackage, Log logger) {
         if (searchResult.getResults().isEmpty()) {
-            return null;
+            return Collections.emptyMap();
         }
 
         Map<String, Dependency> dependenciesMap = new HashMap<>();
         for (AqlSearchResult.SearchEntry searchEntry : searchResult.getResults()) {
-            if (StringUtils.isBlank(searchEntry.getName()) || StringUtils.isBlank(searchEntry.getActualMd5())
-                    || StringUtils.isBlank(searchEntry.getActualSha1())) {
+            if (!isResultComplete(searchEntry)) {
                 continue;
             }
             // Avoid adding duplicated dependencies.
@@ -166,9 +163,13 @@ public class PipBuildInfoExtractor {
                 continue;
             }
 
-            Dependency curDep = new DependencyBuilder().id(searchEntry.getName()).md5(searchEntry.getActualMd5())
-                    .sha1(searchEntry.getActualSha1()).build();
-            if (fileToPackage.containsKey(curDep.getId())) {
+            // Add a new dependency only if searchEntry represents a package downloaded in this build execution.
+            if (fileToPackage.containsKey(searchEntry.getName())) {
+                Dependency curDep = new DependencyBuilder()
+                        .id(searchEntry.getName())
+                        .md5(searchEntry.getActualMd5())
+                        .sha1(searchEntry.getActualSha1())
+                        .build();
                 dependenciesMap.put(fileToPackage.get(searchEntry.getName()), curDep);
             }
         }
@@ -179,6 +180,11 @@ public class PipBuildInfoExtractor {
         promptMissingChecksumFromArtifactory(missingFiles, logger);
 
         return dependenciesMap;
+    }
+
+    private boolean isResultComplete(AqlSearchResult.SearchEntry searchEntry) {
+        return StringUtils.isNotBlank(searchEntry.getName()) && StringUtils.isNotBlank(searchEntry.getActualMd5())
+                && StringUtils.isNotBlank(searchEntry.getActualSha1());
     }
 
     private void promptMissingDeps(Set<String> missingDeps, Log logger) {
