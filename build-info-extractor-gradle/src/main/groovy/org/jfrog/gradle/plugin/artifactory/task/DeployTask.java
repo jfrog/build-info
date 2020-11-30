@@ -167,11 +167,8 @@ public class DeployTask extends DefaultTask {
                     }
 
                     if (publisher.isPublishArtifacts()) {
-                        ArtifactoryBuildInfoClient client = null;
-                        try {
-                            client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
-                                    new GradleClientLogger(log));
-
+                        try (ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
+                                new GradleClientLogger(log))) {
                             log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                                     publisher.getIncludePatterns(),
@@ -179,11 +176,8 @@ public class DeployTask extends DefaultTask {
                             configureProxy(accRoot, client);
                             configConnectionTimeout(accRoot, client);
                             configRetriesParams(accRoot, client);
+                            client.setMinChecksumDeploySizeKb(publisher.getMinChecksumDeploySizeKb());
                             deployArtifacts(artifactoryTask.deployDetails, client, patterns, logPrefix);
-                        } finally {
-                            if (client != null) {
-                                client.close();
-                            }
                         }
                     }
 

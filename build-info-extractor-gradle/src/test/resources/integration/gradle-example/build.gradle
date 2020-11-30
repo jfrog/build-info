@@ -20,6 +20,9 @@ allprojects {
             }
         }
     }
+    artifactoryPublish {
+        clientConfig.publisher.minChecksumDeploySizeKb = 0
+    }
 }
 
 artifactoryPublish.skip = true
