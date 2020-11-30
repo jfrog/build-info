@@ -243,7 +243,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             extraListArgs.add("--only=" + scopes.get(0));
         }
         JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-        populateDependenciesMap(dependencies, jsonNode);
+        populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode);
 
         return new ArrayList<>(dependencies.values());
     }
@@ -286,13 +286,11 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, JsonNode npmDependenciesTree) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependenciesTree) throws Exception {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(npmDependenciesTree);
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
-            // Get previous build dependencies.
-            Map<String, Dependency> previousBuildDependencies = getDependenciesMapFromPreviousBuild();
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables.
@@ -313,28 +311,31 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
     }
 
-    private Map<String, Dependency> getDependenciesMapFromPreviousBuild() throws IOException {
-        Map<String, Dependency> previousBuildDependencies = new ConcurrentHashMap<>();
+    private Map<String, Dependency> getDependenciesMapFromLatestBuild() throws IOException {
         if (StringUtils.isBlank(buildName)) {
-            return previousBuildDependencies;
+            return Collections.emptyMap();
         }
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             // Get previous build's dependencies.
             Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST");
             if (previousBuildInfo == null) {
-                return previousBuildDependencies;
+                return Collections.emptyMap();
             }
 
-            // Iterate over all modules and extract dependencies.
-            List<Module> modules = previousBuildInfo.getModules();
-            for (Module module : modules) {
-                List<Dependency> dependencies = module.getDependencies();
-                for (Dependency dependency : dependencies) {
-                    previousBuildDependencies.put(dependency.getId(), dependency);
-                }
-            }
-
-            return previousBuildDependencies;
+            return getDependenciesMapFromBuild(previousBuildInfo);
         }
+    }
+
+    static Map<String, Dependency> getDependenciesMapFromBuild(Build build) {
+        Map<String, Dependency> previousBuildDependencies = new ConcurrentHashMap<>();
+        // Iterate over all modules and extract dependencies.
+        List<Module> modules = build.getModules();
+        for (Module module : modules) {
+            List<Dependency> dependencies = module.getDependencies();
+            for (Dependency dependency : dependencies) {
+                previousBuildDependencies.put(dependency.getId(), dependency);
+            }
+        }
+        return previousBuildDependencies;
     }
 }

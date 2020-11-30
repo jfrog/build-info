@@ -105,18 +105,18 @@ public class PipBuildInfoExtractor {
         if (fileToPackageMap.isEmpty()) {
             return Collections.emptyMap();
         }
-        AqlSearchResult searchResult = runAqlQueries(createAqlQueries(fileToPackageMap, repository), client);
+        AqlSearchResult searchResult = runAqlQueries(createAqlQueries(fileToPackageMap, repository, PIP_AQL_BULK_SIZE), client);
         return createDependenciesFromAqlResult(searchResult, fileToPackageMap, logger);
     }
 
-    private List<String> createAqlQueries(Map<String, String> fileToPackageMap, String repository) {
+    static List<String> createAqlQueries(Map<String, String> fileToPackageMap, String repository, int bulkSize) {
         List<String> aqlQueries =  new ArrayList<>();
         StringBuilder filesQueryPartBuilder = new StringBuilder();
         int filesCounter = 0;
         for (String file : fileToPackageMap.keySet()) {
             filesCounter++;
             filesQueryPartBuilder.append(String.format(PIP_AQL_FILE_PART, file));
-            if (filesCounter == PIP_AQL_BULK_SIZE) {
+            if (filesCounter == bulkSize) {
                 aqlQueries.add(getPipDependenciesAql(filesQueryPartBuilder, repository));
                 filesCounter = 0;
                 filesQueryPartBuilder.setLength(0);
@@ -128,7 +128,7 @@ public class PipBuildInfoExtractor {
         return aqlQueries;
     }
 
-    private String getPipDependenciesAql(StringBuilder filesQueryPartBuilder, String repository) {
+    static String getPipDependenciesAql(StringBuilder filesQueryPartBuilder, String repository) {
         filesQueryPartBuilder.setLength(filesQueryPartBuilder.length() - 1);
         return String.format(PIP_AQL_FORMAT, repository, filesQueryPartBuilder.toString());
     }
