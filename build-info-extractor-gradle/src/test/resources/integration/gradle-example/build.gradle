@@ -21,7 +21,7 @@ allprojects {
         }
     }
     artifactoryPublish {
-        clientConfig.publisher.checksumDeployMinFileSize = 0
+        clientConfig.publisher.minChecksumDeploySizeKb = 0
     }
 }
 

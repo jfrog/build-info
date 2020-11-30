@@ -703,7 +703,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     private ArtifactoryUploadResponse tryChecksumDeploy(DeployDetails details, String uploadUrl) throws UnsupportedEncodingException {
-        // Try checksum deploy only on file size equal or greater than 'checksumDeployMinFileSize'
+        // Try checksum deploy only on file size equal or greater than 'minChecksumDeploySizeKb'
         long fileLength = details.getFile().length();
         if (fileLength < minChecksumDeploySizeKb * 1024) {
             log.debug("Skipping checksum deploy of file size " + fileLength + " bytes, falling back to regular deployment.");
