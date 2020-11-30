@@ -1,4 +1,4 @@
-stack: jdk 8, node 8, go 1.13, python 3.7.7
+stack: jdk 8, node 8, go 1.13, python 3.7.9
 skip_tags: true
 environment:
   matrix:
@@ -78,7 +78,7 @@ environment:
     - job_name: pip_extractor_linux
       job_group: pip
       appveyor_build_worker_image: Ubuntu
-      PYTHON: $HOME/venv3.7.7
+      PYTHON: $HOME/venv3.7.9
       BITESTS_ARTIFACTORY_PIP_ENV: /home/appveyor/projects/build-info/pip-venv/bin
       TEST_SUIT:
         "./gradlew clean build-info-extractor-pip:test"

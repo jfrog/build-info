@@ -144,4 +144,12 @@ public class CommonUtils {
     public static <E> HashSet<E> newHashSet(E... elements) {
         return new HashSet<>(Arrays.asList(elements));
     }
+
+    /**
+     * Returns an empty iterable if a null is passed.
+     * Useful for wrapping collections in foreach loops.
+     */
+    public static <T> Iterable<T> emptyIfNull(Iterable<T> iterable) {
+        return iterable == null ? Collections.emptyList() : iterable;
+    }
 }
