@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.xrayScanViolationsTable;
+package org.jfrog.build.extractor.buildScanTable;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -7,7 +7,7 @@ import java.util.Objects;
 /***
  * Struct to hold a vulnerability table element.
  */
-public class ViolationTableElement {
+public class BuildScanTableElement {
     private final String fileDisplayName;
     private final String issueType;
     // Following fields are for the set's uniqueness only:
@@ -15,7 +15,7 @@ public class ViolationTableElement {
     private final String issueSummary;
     private final String issueDescription;
 
-    public ViolationTableElement(String fileDisplayName, String fileSha256, String issueType,
+    public BuildScanTableElement(String fileDisplayName, String fileSha256, String issueType,
                                  String issueSummary, String issueDescription) {
         this.fileDisplayName = fileDisplayName;
         this.fileSha256 = fileSha256;
@@ -36,7 +36,7 @@ public class ViolationTableElement {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ViolationTableElement that = (ViolationTableElement) o;
+        BuildScanTableElement that = (BuildScanTableElement) o;
         return Objects.equals(fileDisplayName, that.fileDisplayName) &&
                 Objects.equals(issueType, that.issueType) &&
                 Objects.equals(fileSha256, that.fileSha256) &&

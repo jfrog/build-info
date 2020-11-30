@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.xrayScanViolationsTable;
+package org.jfrog.build.extractor.buildScanTable;
 
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.artifactoryXrayResponse.*;
@@ -9,17 +9,17 @@ import java.util.*;
 import static org.jfrog.build.api.util.CommonUtils.emptyIfNull;
 
 /***
- * Helper for printing Xray scan results as a violations table to log.
+ * Helper for printing build scan results as a violations table to log.
  */
 @SuppressWarnings("unused")
-public class XrayViolationsTableHelper {
+public class BuildScanTableHelper {
     private ArtifactoryXrayResponse scanResult;
-    private Map<Severity, Set<ViolationTableElement>> table;
+    private Map<Severity, Set<BuildScanTableElement>> table;
     private Log log;
     private int longestDisplayName = 0;
     private String tableFormat = "";
-    String TABLE_HEADLINE = "Xray Scan Results - Violations Summary:";
-    List<String> TABLE_HEADERS = Arrays.asList("#", "Component", "Severity", "Type");
+    public String TABLE_HEADLINE = "Xray Scan Summary:";
+    public List<String> TABLE_HEADERS = Arrays.asList("#", "Component", "Severity", "Type");
 
     @SuppressWarnings("unused")
     public void PrintTable(ArtifactoryXrayResponse scanResult, Log log) {
@@ -31,7 +31,7 @@ public class XrayViolationsTableHelper {
     }
 
     /***
-     * Prints the generated violations table to log.
+     * Prints the generated build scan table to log.
      * Table is rendered with the table format.
      */
     private void print() {
@@ -43,14 +43,14 @@ public class XrayViolationsTableHelper {
         // Print column headers.
         printLine(TABLE_HEADERS.toArray());
 
-        // Print lines of violations by severity descending.
+        // Print lines of violations by descending severity.
         for (int i = severities.length - 1; i >= 0; i--) {
             Severity severity = severities[i];
-            Set<ViolationTableElement> elements = table.get(severity);
+            Set<BuildScanTableElement> elements = table.get(severity);
             if (elements == null) {
                 continue;
             }
-            for (ViolationTableElement element : elements) {
+            for (BuildScanTableElement element : elements) {
                 printLine(line, element.getFileDisplayName(), severity.getSeverityName(), element.getIssueType());
                 line++;
             }
@@ -69,13 +69,13 @@ public class XrayViolationsTableHelper {
      */
     private void updateTableFormat() {
         // Index (assuming 5 digits is sufficient).
-        tableFormat = "%-6s";
-        // Display name (plus space).
-        tableFormat += "%-" + (longestDisplayName + 5) + "s";
-        // Severity (Longest is 'Information').
-        tableFormat += "%-15s";
-        // Type (Longest is 'Security').
-        tableFormat += "%-10s";
+        tableFormat = "%-6s"
+                // Display name (plus space).
+                + "%-" + (longestDisplayName + 5) + "s"
+                // Severity (Longest is 'Information').
+                + "%-15s"
+                // Type (Longest is 'Security').
+                + "%-10s";
     }
 
     /***
@@ -97,15 +97,15 @@ public class XrayViolationsTableHelper {
     private void addElement(Issue issue, InfectedFile infectedFile) {
         // Create table element.
         Severity severity = Severity.FromString(issue.getSeverity());
-        ViolationTableElement violationTableElement = new ViolationTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
+        BuildScanTableElement buildScanTableElement = new BuildScanTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
                 issue.getType(), issue.getSummary(), issue.getDescription());
 
         // Add element to table.
-        Set<ViolationTableElement> elements = table.get(severity);
+        Set<BuildScanTableElement> elements = table.get(severity);
         if (elements == null) {
             elements = new HashSet<>();
         }
-        elements.add(violationTableElement);
+        elements.add(buildScanTableElement);
         table.put(severity, elements);
 
         // Update longest display name if longer.

@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.xrayScanViolationsTable;
+package org.jfrog.build.extractor.buildScanTable;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,9 +13,9 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class XrayViolationsTableHelperTest {
-    private static final String BASE_CONFIG_PATH = "/xrayScanViolationsTable/scanResult.json";
-    private final XrayViolationsTableHelper tableHelper = new XrayViolationsTableHelper();
+public class BuildScanTableHelperTest {
+    private static final String BASE_CONFIG_PATH = "/buildScanTable/scanResult.json";
+    private final BuildScanTableHelper tableHelper = new BuildScanTableHelper();
 
     @Test
     public void testPrintTable() throws IOException, URISyntaxException {
