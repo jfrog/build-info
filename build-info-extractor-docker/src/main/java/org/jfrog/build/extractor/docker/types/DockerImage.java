@@ -64,8 +64,8 @@ public class DockerImage implements Serializable {
      * Check if the provided manifestPath is correct.
      * Set the manifest and imagePath in case of the correct manifest.
      */
-    private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
-        Pair<String, String> candidateDetails = getManifestFromArtifactory(dependenciesClient, candidateManifestPath);
+    private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, ArtifactoryDependenciesClient dependenciesClient, Log logger) throws IOException {
+        Pair<String, String> candidateDetails = getManifestFromArtifactory(dependenciesClient, candidateManifestPath, logger);
         String manifestContent = candidateDetails.getLeft();
         String manifestPath = candidateDetails.getRight();
         String imageDigest = DockerUtils.getConfigDigest(manifestContent);
@@ -91,7 +91,9 @@ public class DockerImage implements Serializable {
         String artUrl = dependenciesClient.getArtifactoryUrl() + "/";
         String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
         HttpEntity entity = null;
-        try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json")) {
+        String downloadUrl = artUrl + manifestPath + "/manifest.json";
+        logger.info("Trying to download  manifest from " + downloadUrl);
+        try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
             entity = response.getEntity();
             return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
         } catch (Exception e) {
@@ -100,12 +102,15 @@ public class DockerImage implements Serializable {
             }
             EntityUtils.consume(entity);
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/list.manifest.json")) {
+                logger.info("Fallback for local/virtual repository. Trying to download  manifest from " + downloadUrl);
                 entity = response.getEntity();
                 String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
                 if (digestsFromFatManifest.isEmpty()) {
+                    logger.info("Fallback step, Failed to get image digest from fat manifest" );
                     throw e;
                 }
                 // Remove the tag from the pattern, and place the manifest digest instead.
+                logger.info("Found image digest from fat manifest, trying to download the resulted manifest from path: "+manifestPath);
                 manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
             }
 
@@ -273,14 +278,16 @@ public class DockerImage implements Serializable {
         // Try to get manifest, assuming reverse proxy
         String ImagePath = DockerUtils.getImagePath(imageTag);
         ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));
-        logger.info("Trying to fetch manifest from Artifactory.");
+        logger.info("Search manifest for image \""+imageTag+"\" in \""+dependenciesClient.getArtifactoryUrl()+"\" under \"" +targetRepo +  "\" repository");
         int listLen = manifestPathCandidate.size();
         for (int i = 0; i < listLen; i++) {
             try {
-                checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient);
+                logger.info("Searching manifest in " + manifestPathCandidate.get(i)+" path.");
+                checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient,logger);
                 return;
             } catch (IOException e) {
                 // Throw the exception only if we reached the end of the loop, which means we tried all options.
+                logger.info("The search failed for \""+ e.getMessage()+"\".");
                 if (i == listLen - 1) {
                     throw e;
                 }
