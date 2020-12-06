@@ -136,11 +136,10 @@ public class CommandExecutor implements Serializable {
         if (isWindows()) {
             args.add(0, "cmd");
             args.add(1, "/c");
-        } else
-        if (isMac()) {
+        } else if (isMac()) {
             args.add(0, "/bin/sh");
             args.add(1, "-c");
-        };
+        }
         if (logger != null) {
             logger.info("Executing command: " + UrlUtils.maskCredentialsInUrl(String.join(" ", args)));
         }
