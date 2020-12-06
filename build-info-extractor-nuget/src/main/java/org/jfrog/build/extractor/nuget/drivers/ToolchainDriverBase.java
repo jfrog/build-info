@@ -60,7 +60,7 @@ abstract public class ToolchainDriverBase implements Serializable {
     abstract public String getFlagSyntax(String flagName);
 
     public String help() throws IOException, InterruptedException {
-        return runCommand(new String[]{"help"}, Collections.emptyList());
+        return runCommand(new String[]{"help"}, Collections.emptyList(), logger);
     }
 
     protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
@@ -81,11 +81,7 @@ abstract public class ToolchainDriverBase implements Serializable {
         }
     }
 
-    protected String runCommand(String[] args, List<String> extraArgs) throws IOException, InterruptedException {
-        return runCommand(args, extraArgs, null);
-    }
-
-    private String runCommand(String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
+    protected String runCommand(String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
         CommandResults nugetCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);
         if (!nugetCommandRes.isOk()) {

@@ -21,7 +21,7 @@ public class NugetDriver extends ToolchainDriverBase {
             String sourceUrl = buildNugetSourceUrl(client, repo);
             List<String> extraArgs = new ArrayList<>();
             extraArgs.addAll(Arrays.asList(FLAG_PREFIX + CONFIG_FILE_FLAG, configPath, FLAG_PREFIX + SOURCE_FLAG, sourceUrl, FLAG_PREFIX + NAME_FLAG, sourceName, FLAG_PREFIX + USERNAME_FLAG, username, FLAG_PREFIX + PASSWORD_FLAG, password));
-            return runCommand(new String[]{"sources", "add"}, extraArgs);
+            return runCommand(new String[]{"sources", "add"}, extraArgs, logger);
         } catch (Exception e) {
             throw new IOException("nuget sources add failed: " + e.getMessage(), e);
         }
@@ -32,7 +32,7 @@ public class NugetDriver extends ToolchainDriverBase {
         List<String> args = new ArrayList<>();
         args.add(GLOBAL_PACKAGES_ARG);
         args.add(getFlagSyntax(LIST_FLAG));
-        String output = runCommand(new String[]{LOCALS_ARG, }, args);
+        String output = runCommand(new String[]{LOCALS_ARG, }, args, logger);
         return output.replaceFirst(GLOBAL_PACKAGES_REGEX, "").trim();
     }
 

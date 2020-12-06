@@ -133,18 +133,16 @@ public class CommandExecutor implements Serializable {
     }
 
     private static Process runProcess(File execDir, List<String> args, String[] env, Log logger) throws IOException {
-        String strArgs = String.join(" ", args);
-        if (logger != null) {
-            logger.info("Executing command: " + UrlUtils.maskCredentialsInUrl(strArgs));
-        }
         if (isWindows()) {
-            return Runtime.getRuntime().exec(new String[]{"cmd", "/c", strArgs}, env, execDir);
+            args.add(0, "cmd");
+            args.add(1, "/c");
+        } else if (isMac()) {
+            args.add(0, "/bin/sh");
+            args.add(1, "-c");
         }
-        if (isMac()) {
-            return Runtime.getRuntime().exec(new String[]{"/bin/sh", "-c", strArgs}, env, execDir);
+        if (logger != null) {
+            logger.info("Executing command: " + UrlUtils.maskCredentialsInUrl(String.join(" ", args)));
         }
-        // Linux
         return Runtime.getRuntime().exec(args.toArray(new String[0]), env, execDir);
     }
-
 }

@@ -25,7 +25,7 @@ public class DotnetDriver extends ToolchainDriverBase {
             String sourceUrl = buildNugetSourceUrl(client, repo);
             List<String> extraArgs = new ArrayList<>();
             extraArgs.addAll(Arrays.asList(FLAG_PREFIX + CONFIG_FILE_FLAG, configPath, FLAG_PREFIX + NAME_FLAG, sourceName, FLAG_PREFIX + USERNAME_FLAG, username, FLAG_PREFIX + PASSWORD_FLAG, password, CLEAR_TEXT_PASSWORD_FLAG));
-            return runCommand(new String[]{"nuget", "add", "source", sourceUrl}, extraArgs);
+            return runCommand(new String[]{"nuget", "add", "source", sourceUrl}, extraArgs, logger);
         } catch (Exception e) {
             throw new IOException("dotnet nuget add source failed: " + e.getMessage() + ". Please make sure .NET Core 3.1.200 SDK or above is installed.", e);
         }
@@ -36,7 +36,7 @@ public class DotnetDriver extends ToolchainDriverBase {
         List<String> args = new ArrayList<>();
         args.add(GLOBAL_PACKAGES_ARG);
         args.add(getFlagSyntax(LIST_FLAG));
-        String output = runCommand(new String[]{"nuget", LOCALS_ARG,}, args);
+        String output = runCommand(new String[]{"nuget", LOCALS_ARG,}, args, logger);
         return output.replaceFirst(GLOBAL_PACKAGES_REGEX, "").trim();
     }
 
