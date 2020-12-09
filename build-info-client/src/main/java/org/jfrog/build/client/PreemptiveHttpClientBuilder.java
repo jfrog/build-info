@@ -142,7 +142,6 @@ public class PreemptiveHttpClientBuilder {
             authCache = new BasicAuthCache();
             // Generate BASIC scheme object and add it to the local auth cache
             authCache.put(proxy, new BasicScheme());
-            return;
         }
 
         if (StringUtils.isEmpty(accessToken)) {
