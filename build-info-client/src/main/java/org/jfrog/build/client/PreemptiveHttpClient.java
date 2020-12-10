@@ -52,13 +52,12 @@ public class PreemptiveHttpClient implements AutoCloseable {
      * Used for storing the original host name, before a redirect to a new URL, on the request context.
      */
     private static final String ORIGINAL_HOST_CONTEXT_PARAM = "original.host.context.param";
-
-    private PoolingHttpClientConnectionManager connectionManager;
-    private BasicCredentialsProvider basicCredentialsProvider;
-    private String accessToken;
-    private AuthCache authCache;
-    private CloseableHttpClient httpClient;
-    private int connectionRetries;
+    BasicCredentialsProvider basicCredentialsProvider;
+    private final PoolingHttpClientConnectionManager connectionManager;
+    private final String accessToken;
+    private final AuthCache authCache;
+    private final CloseableHttpClient httpClient;
+    private final int connectionRetries;
     private Log log;
 
     public PreemptiveHttpClient(PoolingHttpClientConnectionManager connectionManager, BasicCredentialsProvider credentialsProvider, String accessToken, AuthCache authCache, HttpClientBuilder clientBuilder, int connectionRetries, Log log) {
@@ -230,7 +229,7 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     private class PreemptiveRedirectStrategy extends DefaultRedirectStrategy {
 
-        private Set<String> redirectableMethods = CommonUtils.newHashSet(
+        private final Set<String> redirectableMethods = CommonUtils.newHashSet(
                 HttpGet.METHOD_NAME.toLowerCase(),
                 HttpPost.METHOD_NAME.toLowerCase(),
                 HttpHead.METHOD_NAME.toLowerCase(),
