@@ -1,15 +1,10 @@
 package org.jfrog.build;
 
-import com.google.common.io.Closeables;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.util.EntityUtils;
@@ -143,6 +138,7 @@ public abstract class IntegrationTestsBase {
 
     /**
      * Delete all content from the given repository.
+     *
      * @param repo - repository name
      * @throws IOException
      */
@@ -151,17 +147,16 @@ public abstract class IntegrationTestsBase {
         String itemUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpDelete(itemUrl);
 
-        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
-        StatusLine statusLine = response.getStatusLine();
-        EntityUtils.consumeQuietly(response.getEntity());
-        int statusCode = statusLine.getStatusCode();
-        if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
-            throw new FileNotFoundException("Bad credentials for username: " + username);
-        }
-
-        if (!(200 <= statusCode && statusCode < 300)) {
-            throw new IOException("Error deleting " + localRepo1 + ". Code: " + statusCode + " Message: " +
-                    statusLine.getReasonPhrase());
+        try (CloseableHttpResponse response = preemptiveHttpClient.execute(httpRequest)) {
+            EntityUtils.consumeQuietly(response.getEntity());
+            StatusLine statusLine = response.getStatusLine();
+            int statusCode = statusLine.getStatusCode();
+            if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
+                throw new FileNotFoundException("Bad credentials for username: " + username);
+            }
+            if (statusCode < 200 || statusCode >= 300) {
+                throw new IOException("Error deleting " + localRepo1 + ". Code: " + statusCode + " Message: " + statusLine.getReasonPhrase());
+            }
         }
     }
 
@@ -174,9 +169,10 @@ public abstract class IntegrationTestsBase {
      */
     private boolean isRepoExists(String repo) throws IOException {
         HttpRequestBase httpRequest = new HttpGet(getRepoApiUrl(repo));
-        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
-        EntityUtils.consumeQuietly(response.getEntity());
-        return response.getStatusLine().getStatusCode() == HttpStatus.SC_OK;
+        try (CloseableHttpResponse response = preemptiveHttpClient.execute(httpRequest)) {
+            EntityUtils.consumeQuietly(response.getEntity());
+            return response.getStatusLine().getStatusCode() == HttpStatus.SC_OK;
+        }
     }
 
     /**
@@ -190,20 +186,16 @@ public abstract class IntegrationTestsBase {
             return;
         }
         HttpPut httpRequest = new HttpPut(getRepoApiUrl(repo));
-        InputStream repoConfigInputStream = this.getClass().getResourceAsStream("/integration/settings/" + repo + ".json");
-        InputStreamEntity repoConfigEntity = new InputStreamEntity(repoConfigInputStream, ContentType.create("application/json"));
-        httpRequest.setEntity(repoConfigEntity);
-
-        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
-        try {
-            int statusCode = response.getStatusLine().getStatusCode();
-            if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
-                throw new IOException("Error creating repository: " + repo + ". Code: " + statusCode + " Message: " +
-                        response.getStatusLine().getReasonPhrase());
+        try (InputStream repoConfigInputStream = this.getClass().getResourceAsStream("/integration/settings/" + repo + ".json")) {
+            InputStreamEntity repoConfigEntity = new InputStreamEntity(repoConfigInputStream, ContentType.create("application/json"));
+            httpRequest.setEntity(repoConfigEntity);
+            try (CloseableHttpResponse response = preemptiveHttpClient.execute(httpRequest)) {
+                EntityUtils.consumeQuietly(response.getEntity());
+                int statusCode = response.getStatusLine().getStatusCode();
+                if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
+                    throw new IOException("Error creating repository: " + repo + ". Code: " + statusCode + " Message: " + response.getStatusLine().getReasonPhrase());
+                }
             }
-        } finally {
-            EntityUtils.consumeQuietly(response.getEntity());
-            Closeables.closeQuietly(repoConfigInputStream);
         }
     }
 
@@ -218,15 +210,12 @@ public abstract class IntegrationTestsBase {
             return;
         }
         HttpRequestBase httpRequest = new HttpDelete(getRepoApiUrl(repo));
-        HttpResponse response = preemptiveHttpClient.execute(httpRequest);
-        try {
+        try (CloseableHttpResponse response = preemptiveHttpClient.execute(httpRequest)) {
+            EntityUtils.consumeQuietly(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                throw new IOException("Error deleting repository" + repo + ". Code: " + statusCode + " Message: " +
-                        response.getStatusLine().getReasonPhrase());
+                throw new IOException("Error deleting repository" + repo + ". Code: " + statusCode + " Message: " + response.getStatusLine().getReasonPhrase());
             }
-        } finally {
-            EntityUtils.consumeQuietly(response.getEntity());
         }
     }
 

@@ -6,8 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -118,12 +120,12 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         PreemptiveHttpClient client = httpClient.getHttpClient(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
-        HttpResponse response = null;
+        HttpEntity entity = null;
         while (true) {
-            try {
+            try (CloseableHttpResponse response = client.execute(httpRequest)){
+                entity = response.getEntity();
                 lastConnectionAttemptMillis = System.currentTimeMillis();
                 retryNum++;
-                response = client.execute(httpRequest);
                 return parseXrayScanResponse(response);
             } catch (XrayErrorException e) {
                 handleException(retryNum, e);
@@ -138,19 +140,13 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
                 }
                 handleException(retryNum, e);
             } finally {
-                releaseResponse(httpRequest, response);
+                releaseResponse(httpRequest, entity);
             }
         }
     }
 
-    private void releaseResponse(HttpRequestBase httpRequest, HttpResponse response) {
-        if (response != null) {
-            try {
-                EntityUtils.consume(response.getEntity());
-            } catch (IOException e) {
-                // Ignore
-            }
-        }
+    private void releaseResponse(HttpRequestBase httpRequest, HttpEntity entity) {
+        EntityUtils.consumeQuietly(entity);
         httpRequest.releaseConnection();
     }
 

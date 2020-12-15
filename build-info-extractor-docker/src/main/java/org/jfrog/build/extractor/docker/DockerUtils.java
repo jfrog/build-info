@@ -8,7 +8,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
@@ -276,20 +276,21 @@ public class DockerUtils {
      * As a result, the marker layer will transform to a regular docker layer (required to collect build info such as sha1, etc.).
      *
      * @param repo               - Repository from which to download the layer
-     * @param imageName-         Image name to download
-     * @param imageDigests       - image diegest to download
+     * @param imageName          - Image name to download
+     * @param imageDigests       - image digest to download
      * @param dependenciesClient - Dependencies client
      */
     public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
         String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
-        HttpResponse response = dependenciesClient.getArtifactMetadata(url);
+        CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url);
         EntityUtils.consume(response.getEntity());
+        response.close();
     }
 
     /**
      * @param imagePath - path to an image in artifactory without proxy e.g. image/image-tag
-     * @param repo - target repo to search
-     * @param cmd - docker push cmd/ docker pull cmd
+     * @param repo      - target repo to search
+     * @param cmd       - docker push cmd/ docker pull cmd
      * @return All possible paths in Artifactory in order to find image manifest using proxy.
      */
     public static List<String> getArtManifestPath(String imagePath, String repo, CommandType cmd) {
