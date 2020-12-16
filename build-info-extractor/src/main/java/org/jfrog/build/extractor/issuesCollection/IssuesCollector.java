@@ -139,7 +139,7 @@ public class IssuesCollector implements Serializable {
             args.add(previousVcsRevision + "..");
         }
         CommandExecutor commandExecutor = new CommandExecutor("git", null);
-        CommandResults res = commandExecutor.exeCommand(execDir, args, logger);
+        CommandResults res = commandExecutor.exeCommand(execDir, args, null, logger);
         if (!res.isOk()) {
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git log command failed: " + res.getErr());
         }
