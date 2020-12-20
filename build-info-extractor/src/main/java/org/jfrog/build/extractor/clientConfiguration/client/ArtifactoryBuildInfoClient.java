@@ -395,7 +395,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         try {
             version = httpClient.getVersion();
         } catch (IOException e) {
-            throw new VersionException("Error occurred while requesting version information: " + e.getMessage(), e,
+            throw new VersionException("Error occurred while requesting version information: " + e, e,
                     VersionCompatibilityType.NOT_FOUND);
         }
         if (version.isNotFound()) {
