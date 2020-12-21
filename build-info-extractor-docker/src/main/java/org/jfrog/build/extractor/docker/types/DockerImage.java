@@ -116,7 +116,7 @@ public class DockerImage implements Serializable {
                 return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
             }
         } finally {
-            EntityUtils.consume(entity);
+            EntityUtils.consumeQuietly(entity);
         }
     }
 
