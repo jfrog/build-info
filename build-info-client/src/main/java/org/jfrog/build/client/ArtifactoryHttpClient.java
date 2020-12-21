@@ -26,9 +26,8 @@ import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.util.EntityUtils;
@@ -37,6 +36,7 @@ import org.jfrog.build.util.URI;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
@@ -182,17 +182,21 @@ public class ArtifactoryHttpClient implements AutoCloseable {
 
     public ArtifactoryVersion getVersion() throws IOException {
         String versionUrl = artifactoryUrl + VERSION_INFO_URL;
-        HttpResponse response = executeGetRequest(versionUrl);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            consumeEntity(response);
-            return ArtifactoryVersion.NOT_FOUND;
-        }
-        if (statusCode != HttpStatus.SC_OK) {
-            throw new IOException(getMessageFromEntity(response.getEntity()));
-        }
-        HttpEntity httpEntity = response.getEntity();
-        if (httpEntity != null) {
+        try (CloseableHttpResponse response = executeGetRequest(versionUrl)) {
+            HttpEntity httpEntity = response.getEntity();
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == HttpStatus.SC_NOT_FOUND) {
+                EntityUtils.consumeQuietly(httpEntity);
+                return ArtifactoryVersion.NOT_FOUND;
+            }
+            if (statusCode != HttpStatus.SC_OK) {
+                String message = getMessageFromEntity(httpEntity);
+                EntityUtils.consumeQuietly(httpEntity);
+                throw new IOException(message);
+            }
+            if (httpEntity == null) {
+                return ArtifactoryVersion.NOT_FOUND;
+            }
             try (InputStream content = httpEntity.getContent()) {
                 JsonNode result = getJsonNode(content);
                 log.debug("Version result: " + result);
@@ -200,11 +204,8 @@ public class ArtifactoryHttpClient implements AutoCloseable {
                 JsonNode addonsNode = result.get("addons");
                 boolean hasAddons = (addonsNode != null) && addonsNode.iterator().hasNext();
                 return new ArtifactoryVersion(version, hasAddons);
-            } finally {
-                EntityUtils.consume(httpEntity);
             }
         }
-        return ArtifactoryVersion.NOT_FOUND;
     }
 
     public JsonNode getJsonNode(InputStream content) throws IOException {
@@ -212,17 +213,10 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         return parser.readValueAsTree();
     }
 
-    private HttpResponse executeGetRequest(String lastModifiedUrl) throws IOException {
+    private CloseableHttpResponse executeGetRequest(String lastModifiedUrl) throws IOException {
         PreemptiveHttpClient client = getHttpClient();
         HttpGet httpGet = new HttpGet(lastModifiedUrl);
         return client.execute(httpGet);
-    }
-
-    private void consumeEntity(HttpResponse response) throws IOException {
-        HttpEntity httpEntity = response.getEntity();
-        if (httpEntity != null) {
-            EntityUtils.consume(httpEntity);
-        }
     }
 
     public JsonParser createJsonParser(InputStream in) throws IOException {
@@ -250,45 +244,41 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     }
 
     public ArtifactoryUploadResponse execute(HttpPut httpPut) throws IOException {
-        HttpResponse response = getHttpClient().execute(httpPut);
-
-        ArtifactoryUploadResponse artifactoryResponse = null;
-        if (response.getEntity() != null && response.getEntity().getContent() != null) {
-            InputStream in = response.getEntity().getContent();
-            String content = IOUtils.toString(in, "UTF-8");
-            if (StringUtils.isNotEmpty(content)) {
+        ArtifactoryUploadResponse artifactoryResponse = new ArtifactoryUploadResponse();
+        try (CloseableHttpResponse response = getHttpClient().execute(httpPut)) {
+            artifactoryResponse.setStatusLine(response.getStatusLine());
+            if (response.getEntity() == null || response.getEntity().getContent() == null) {
+                return artifactoryResponse;
+            }
+            try (InputStream in = response.getEntity().getContent()) {
+                String content = IOUtils.toString(in, StandardCharsets.UTF_8);
+                if (StringUtils.isEmpty(content)) {
+                    return artifactoryResponse;
+                }
                 try {
                     JsonParser parser = createJsonParser(content);
                     artifactoryResponse = parser.readValueAs(ArtifactoryUploadResponse.class);
+                    artifactoryResponse.setStatusLine(response.getStatusLine());
                 } catch (Exception e) {
                     // Displays the response received from the client and the stacktrace in case an Exception caught.
                     log.info("Response received: \n\n" + content + "\n\n");
                     log.error("Failed while reading the response from: " + httpPut, e);
-                } finally {
-                    in.close();
                 }
             }
+            return artifactoryResponse;
         }
-
-        if (artifactoryResponse == null) {
-            artifactoryResponse = new ArtifactoryUploadResponse();
-        }
-        StatusLine statusLine = response.getStatusLine();
-        artifactoryResponse.setStatusLine(statusLine);
-        return artifactoryResponse;
     }
 
     /**
-     * @param entity the entity to retrive the message from.
+     * @param entity the entity to retrieve the message from.
      * @return response entity content.
-     * @throws IOException
+     * @throws IOException if entity couldn't serialize
      */
 
     public String getMessageFromEntity(HttpEntity entity) throws IOException {
         String responseMessage = "";
         if (entity != null) {
             responseMessage = getResponseEntityContent(entity);
-            EntityUtils.consume(entity);
             if (StringUtils.isNotBlank(responseMessage)) {
                 responseMessage = " Response message: " + responseMessage;
             }
@@ -306,7 +296,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private String getResponseEntityContent(HttpEntity responseEntity) throws IOException {
         InputStream in = responseEntity.getContent();
         if (in != null) {
-            return IOUtils.toString(in, "UTF-8");
+            return IOUtils.toString(in, StandardCharsets.UTF_8);
         }
         return "";
     }

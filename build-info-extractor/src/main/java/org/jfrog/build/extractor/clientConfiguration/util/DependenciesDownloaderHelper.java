@@ -10,6 +10,7 @@ import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
@@ -228,15 +229,11 @@ public class DependenciesDownloaderHelper {
         }
     }
 
-    protected Map<String, String> downloadFile(String uriWithParams, String fileDestination)
-            throws IOException {
-        HttpResponse httpResponse = null;
-        try {
-            httpResponse = downloader.getClient().downloadArtifact(uriWithParams);
-            InputStream inputStream = httpResponse.getEntity().getContent();
-            return downloader.saveDownloadedFile(inputStream, fileDestination);
-        } finally {
-            consumeEntity(httpResponse);
+    protected Map<String, String> downloadFile(String uriWithParams, String fileDestination) throws IOException {
+        try (CloseableHttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams)) {
+            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
+                return downloader.saveDownloadedFile(inputStream, fileDestination);
+            }
         }
     }
 
@@ -254,16 +251,14 @@ public class DependenciesDownloaderHelper {
             throws Exception {
         String[] downloadedFilesPaths;
         File tempDir = Files.createTempDir();
-        InputStream inputStream = null;
+        String tempPath = tempDir.getPath() + File.separatorChar + filePath;
         try {
-            String tempPath = tempDir.getPath() + File.separatorChar + filePath;
             downloadedFilesPaths = doConcurrentDownload(fileSize, uriWithParams, tempPath);
-            inputStream = concatenateFilesToSingleStream(downloadedFilesPaths);
-
-            return downloader.saveDownloadedFile(inputStream, fileDestination);
+            try (InputStream inputStream = concatenateFilesToSingleStream(downloadedFilesPaths)) {
+                return downloader.saveDownloadedFile(inputStream, fileDestination);
+            }
         } finally {
             FileUtils.deleteDirectory(tempDir);
-            IOUtils.closeQuietly(inputStream);
         }
     }
 
@@ -320,13 +315,10 @@ public class DependenciesDownloaderHelper {
      * @param headers         additional headers for the request
      */
     private void saveRequestToFile(String uriWithParams, String fileDestination, Map<String, String> headers) throws IOException {
-        HttpResponse httpResponse = null;
-        try {
-            httpResponse = downloader.getClient().downloadArtifact(uriWithParams, headers);
-            InputStream inputStream = httpResponse.getEntity().getContent();
-            saveInputStreamToFile(inputStream, fileDestination);
-        } finally {
-            consumeEntity(httpResponse);
+        try (CloseableHttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams, headers)) {
+            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
+                saveInputStreamToFile(inputStream, fileDestination);
+            }
         }
     }
 
@@ -338,7 +330,7 @@ public class DependenciesDownloaderHelper {
      * @return single InputStream of the downloaded file
      */
     private InputStream concatenateFilesToSingleStream(String[] downloadedFilesPaths) throws FileNotFoundException {
-        InputStream inputStream = new FileInputStream(new File(downloadedFilesPaths[0]));
+        InputStream inputStream = new FileInputStream(downloadedFilesPaths[0]);
         if (downloadedFilesPaths.length < 2) {
             return inputStream;
         }
@@ -346,7 +338,7 @@ public class DependenciesDownloaderHelper {
         for (int i = 1; i < downloadedFilesPaths.length; i++) {
             inputStream = new SequenceInputStream(
                     inputStream,
-                    new FileInputStream(new File(downloadedFilesPaths[i]))
+                    new FileInputStream(downloadedFilesPaths[i])
             );
         }
         return inputStream;
@@ -375,9 +367,8 @@ public class DependenciesDownloaderHelper {
     }
 
     protected ArtifactMetaData downloadArtifactMetaData(String url) throws IOException {
-        HttpResponse response = null;
-        try {
-            response = downloader.getClient().getArtifactMetadata(url);
+        try (CloseableHttpResponse response = downloader.getClient().getArtifactMetadata(url)) {
+            EntityUtils.consumeQuietly(response.getEntity());
             ArtifactMetaData artifactMetaData = new ArtifactMetaData();
             artifactMetaData.setMd5(getHeaderContentFromResponse(response, MD5_HEADER_NAME));
             artifactMetaData.setSha1(getHeaderContentFromResponse(response, SHA1_HEADER_NAME));
@@ -386,8 +377,6 @@ public class DependenciesDownloaderHelper {
             return artifactMetaData;
         } catch (NumberFormatException e) {
             throw new IOException(e);
-        } finally {
-            consumeEntity(response);
         }
     }
 
@@ -432,16 +421,6 @@ public class DependenciesDownloaderHelper {
                 .localPath(fileDestination)
                 .remotePath(remotePath)
                 .build();
-    }
-
-    private static void consumeEntity(HttpResponse response) {
-        if (response != null) {
-            try {
-                EntityUtils.consume(response.getEntity());
-            } catch (IOException e) {
-                // Ignore
-            }
-        }
     }
 
     public static File saveInputStreamToFile(InputStream inputStream, String filePath) throws IOException {

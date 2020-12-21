@@ -3,7 +3,8 @@ package org.jfrog.build.extractor.docker.types;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.HttpResponse;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
@@ -87,30 +88,35 @@ public class DockerImage implements Serializable {
      * @throws IOException fail to search for manifest json in manifestPath.
      */
     private Pair<String, String> getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath) throws IOException {
-        HttpResponse res = null;
         String artUrl = dependenciesClient.getArtifactoryUrl() + "/";
-        String pathWithoutRepo = StringUtils.substringAfter(manifestPath,"/");
-        try {
-            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json");
-            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
+        String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
+        HttpEntity entity = null;
+        try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json")) {
+            entity = response.getEntity();
+            return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
         } catch (Exception e) {
             if (dependenciesClient.isLocalRepo(targetRepo)) {
                 throw e;
             }
-            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/list.manifest.json");
-            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(res.getEntity()), os, architecture);
-            if (digestsFromFatManifest.isEmpty()) {
-                throw e;
+            EntityUtils.consume(entity);
+            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/list.manifest.json")) {
+                entity = response.getEntity();
+                String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
+                if (digestsFromFatManifest.isEmpty()) {
+                    throw e;
+                }
+                // Remove the tag from the pattern, and place the manifest digest instead.
+                manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
             }
-            // Remove the tag from the pattern, and place the manifest digest instead.
-            manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
-            res = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json");
-            pathWithoutRepo = StringUtils.substringAfter(manifestPath,"/");
-            return Pair.of(IOUtils.toString(res.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
+
+            EntityUtils.consume(entity);
+            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json")) {
+                entity = response.getEntity();
+                pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
+                return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
+            }
         } finally {
-            if (res != null) {
-                EntityUtils.consume(res.getEntity());
-            }
+            EntityUtils.consume(entity);
         }
     }
 
@@ -141,32 +147,38 @@ public class DockerImage implements Serializable {
         if (historyLayer == null) {
             throw new IllegalStateException("Could not find the history docker layer: " + imageId + " for image: " + imageTag + " in Artifactory.");
         }
-        HttpResponse res = dependenciesClient.downloadArtifact(dependenciesClient.getArtifactoryUrl() + "/" + historyLayer.getFullPath());
-        int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(entityToString(res.getEntity()));
-        LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
-        LinkedHashSet<Artifact> artifacts = new LinkedHashSet<>();
-        // Filter out duplicate layers from manifest by using HashSet.
-        // Docker manifest may hold 'empty layers', as a result, docker promote will fail to promote the same layer more than once.
-        Iterator<String> it = DockerUtils.getLayersDigests(manifest).iterator();
-        for (int i = 0; i < dependencyLayerNum; i++) {
-            String digest = it.next();
-            DockerLayer layer = layers.getByDigest(digest);
-            Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).build();
-            dependencies.add(dependency);
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
-            artifacts.add(artifact);
-        }
-        moduleBuilder.dependencies(new ArrayList<>(dependencies));
-        while (it.hasNext()) {
-            String digest = it.next();
-            DockerLayer layer = layers.getByDigest(digest);
-            if (layer == null) {
-                continue;
+        HttpEntity entity = null;
+        try (CloseableHttpResponse res = dependenciesClient.downloadArtifact(dependenciesClient.getArtifactoryUrl() + "/" + historyLayer.getFullPath())) {
+            entity = res.getEntity();
+            int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(entityToString(res.getEntity()));
+
+            LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
+            LinkedHashSet<Artifact> artifacts = new LinkedHashSet<>();
+            // Filter out duplicate layers from manifest by using HashSet.
+            // Docker manifest may hold 'empty layers', as a result, docker promote will fail to promote the same layer more than once.
+            Iterator<String> it = DockerUtils.getLayersDigests(manifest).iterator();
+            for (int i = 0; i < dependencyLayerNum; i++) {
+                String digest = it.next();
+                DockerLayer layer = layers.getByDigest(digest);
+                Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).build();
+                dependencies.add(dependency);
+                Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
+                artifacts.add(artifact);
             }
-            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
-            artifacts.add(artifact);
+            moduleBuilder.dependencies(new ArrayList<>(dependencies));
+            while (it.hasNext()) {
+                String digest = it.next();
+                DockerLayer layer = layers.getByDigest(digest);
+                if (layer == null) {
+                    continue;
+                }
+                Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
+                artifacts.add(artifact);
+            }
+            moduleBuilder.artifacts(new ArrayList<>(artifacts));
+        } finally {
+            EntityUtils.consume(entity);
         }
-        moduleBuilder.artifacts(new ArrayList<>(artifacts));
     }
 
     private void setDependencies(ModuleBuilder moduleBuilder) throws IOException {

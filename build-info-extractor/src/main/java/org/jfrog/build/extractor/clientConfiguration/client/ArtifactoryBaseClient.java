@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.util.EntityUtils;
@@ -139,16 +139,11 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
         String fullItemUrl = artifactoryUrl + API_REPOSITORIES + "/" + repo;
         String encodedUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpGet(encodedUrl);
-        HttpResponse httpResponse = null;
-        try {
-            httpResponse = httpClient.getHttpClient().execute(httpRequest);
+        try (CloseableHttpResponse httpResponse = httpClient.getHttpClient().execute(httpRequest)) {
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
             StatusLine statusLine = httpResponse.getStatusLine();
             if (statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
                 return false;
-            }
-        } finally {
-            if (httpResponse != null) {
-                EntityUtils.consumeQuietly(httpResponse.getEntity());
             }
         }
         return true;

@@ -3,7 +3,9 @@ package org.jfrog.build.extractor.docker.extractor;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
@@ -114,14 +116,12 @@ public class DockerPush extends DockerCommand {
         String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
-                HttpResponse httpResponse = null;
-                try {
-                    httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr);
+                HttpEntity entity = null;
+                try (CloseableHttpResponse httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr)) {
+                    entity = httpResponse.getEntity();
                     validateSetImageLayersResponse(httpResponse);
                 } finally {
-                    if (httpResponse != null) {
-                        EntityUtils.consume(httpResponse.getEntity());
-                    }
+                    EntityUtils.consume(entity);
                 }
             }
         }

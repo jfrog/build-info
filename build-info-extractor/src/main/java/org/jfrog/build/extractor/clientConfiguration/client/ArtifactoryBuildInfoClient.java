@@ -23,26 +23,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.*;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.FileEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildRetention;
-import org.jfrog.build.api.release.BintrayUploadInfoOverride;
 import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.*;
-import org.jfrog.build.client.bintrayResponse.BintrayResponse;
-import org.jfrog.build.client.bintrayResponse.BintrayResponseFactory;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
@@ -54,7 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
@@ -117,6 +112,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     /**
      * Set min file size for checksum deployment.
+     *
      * @param minChecksumDeploySizeKb - file size in KB
      */
     public void setMinChecksumDeploySizeKb(int minChecksumDeploySizeKb) {
@@ -152,34 +148,29 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     private List<String> getRepositoriesList(String restUrl) throws IOException {
-        List<String> repositories = new ArrayList<String>();
-        PreemptiveHttpClient client = httpClient.getHttpClient();
+        List<String> repositories = new ArrayList<>();
 
         String reposUrl = artifactoryUrl + restUrl;
         log.debug("Requesting repositories list from: " + reposUrl);
-        HttpGet httpget = new HttpGet(reposUrl);
-        HttpResponse response = client.execute(httpget);
-        StatusLine statusLine = response.getStatusLine();
-        HttpEntity entity = response.getEntity();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain list of repositories. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(entity));
-        } else {
-            if (entity != null) {
-                repositories = new ArrayList<String>();
-                InputStream content = entity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    JsonNode result = parser.readValueAsTree();
-                    log.debug("Repositories result = " + result);
-                    for (JsonNode jsonNode : result) {
-                        String repositoryKey = jsonNode.get("key").asText();
-                        repositories.add(repositoryKey);
-                    }
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
+        try (PreemptiveHttpClient client = httpClient.getHttpClient();
+             CloseableHttpResponse response = client.execute(new HttpGet(reposUrl))) {
+            StatusLine statusLine = response.getStatusLine();
+            HttpEntity entity = response.getEntity();
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+                String message = httpClient.getMessageFromEntity(entity);
+                EntityUtils.consumeQuietly(entity);
+                throw new IOException("Failed to obtain list of repositories. Status code: " + statusLine.getStatusCode() + message);
+            }
+            if (entity == null) {
+                return repositories;
+            }
+            try (InputStream content = entity.getContent()) {
+                JsonParser parser = httpClient.createJsonParser(content);
+                JsonNode result = parser.readValueAsTree();
+                log.debug("Repositories result = " + result);
+                for (JsonNode jsonNode : result) {
+                    String repositoryKey = jsonNode.get("key").asText();
+                    repositories.add(repositoryKey);
                 }
             }
         }
@@ -206,9 +197,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
         String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber));
         HttpGet httpGet = new HttpGet(url);
-        try {
-            HttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK);
-            String buildInfoJson = EntityUtils.toString(httpResponse.getEntity(), "UTF-8");
+        try (CloseableHttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK)) {
+            String buildInfoJson = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
             return getBuildFromJson(buildInfoJson);
         } catch (IOException e) {
             throw new IOException("Failed to get build info. " + e.getMessage(), e);
@@ -301,12 +292,13 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         StringEntity stringEntity = new StringEntity(content, "UTF-8");
         stringEntity.setContentType(contentType);
         request.setEntity(stringEntity);
-        sendHttpRequest(request, HttpStatus.SC_CREATED, HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT);
+        try (CloseableHttpResponse response = sendHttpRequest(request, HttpStatus.SC_CREATED, HttpStatus.SC_OK, HttpStatus.SC_NO_CONTENT)) {
+            EntityUtils.consumeQuietly(response.getEntity());
+        }
     }
 
-    private HttpResponse sendHttpRequest(HttpUriRequest request, int... httpStatuses) throws IOException {
-        HttpResponse httpResponse;
-        httpResponse = httpClient.getHttpClient().execute(request);
+    private CloseableHttpResponse sendHttpRequest(HttpUriRequest request, int... httpStatuses) throws IOException {
+        CloseableHttpResponse httpResponse = httpClient.getHttpClient().execute(request);
         StatusLine statusLine = httpResponse.getStatusLine();
         for (int status : httpStatuses) {
             if (statusLine.getStatusCode() == status) {
@@ -314,20 +306,32 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             }
         }
 
-        HttpEntity responseEntity = httpResponse.getEntity();
-        throw new IOException(statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
+        HttpEntity responseEntity = null;
+        try {
+            responseEntity = httpResponse.getEntity();
+            String message = httpClient.getMessageFromEntity(responseEntity);
+            throw new IOException(statusLine.getStatusCode() + ": " + message);
+        } finally {
+            EntityUtils.consumeQuietly(responseEntity);
+            httpResponse.close();
+        }
     }
 
     public ItemLastModified getItemLastModified(String path) throws IOException {
         String url = artifactoryUrl + ITEM_LAST_MODIFIED + path + "?lastModified";
-        HttpGet get = new HttpGet(url);
-        HttpResponse response = httpClient.getHttpClient().execute(get);
-        int statusCode = response.getStatusLine().getStatusCode();
-        if (statusCode != HttpStatus.SC_OK) {
-            throw new IOException("While requesting item info for path " + path + " received " + response.getStatusLine().getStatusCode() + ":" + httpClient.getMessageFromEntity(response.getEntity()));
-        }
-        HttpEntity httpEntity = response.getEntity();
-        if (httpEntity != null) {
+
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(new HttpGet(url))) {
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode != HttpStatus.SC_OK) {
+                String message = httpClient.getMessageFromEntity(response.getEntity());
+                EntityUtils.consumeQuietly(response.getEntity());
+                throw new IOException("While requesting item info for path " + path + " received " + statusCode + ":" + message);
+            }
+            HttpEntity httpEntity = response.getEntity();
+            if (httpEntity == null) {
+                throw new IOException("The path " + path + " returned empty entity");
+            }
+
             try (InputStream content = httpEntity.getContent()) {
                 JsonNode result = httpClient.getJsonNode(content);
                 JsonNode lastModified = result.get("lastModified");
@@ -335,13 +339,9 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 if (lastModified == null || uri == null) {
                     throw new IOException("Unexpected JSON response when requesting info for path " + path + httpClient.getMessageFromEntity(response.getEntity()));
                 }
-
                 return new ItemLastModified(uri.asText(), lastModified.asText());
-            } finally {
-                EntityUtils.consume(httpEntity);
             }
         }
-        throw new IOException("The path " + path + " returned empty entity");
     }
 
     /**
@@ -412,71 +412,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return version;
     }
 
-    /**
-     * Push build to bintray
-     *
-     * @param buildName         name of the build to push
-     * @param buildNumber       number of the build to push
-     * @param signMethod        flags if this artifacts should be signed or not
-     * @param passphrase        passphrase in case that the artifacts should be signed
-     * @param bintrayUploadInfo request body which contains the upload info
-     * @return http Response with the response outcome
-     * @throws IOException On any connection error
-     */
-    public BintrayResponse pushToBintray(String buildName, String buildNumber, String signMethod, String passphrase,
-                                         BintrayUploadInfoOverride bintrayUploadInfo) throws IOException, URISyntaxException {
-        if (StringUtils.isBlank(buildName)) {
-            throw new IllegalArgumentException("Build name is required for promotion.");
-        }
-        if (StringUtils.isBlank(buildNumber)) {
-            throw new IllegalArgumentException("Build number is required for promotion.");
-        }
-
-        String requestUrl = createRequestUrl(buildName, buildNumber, signMethod, passphrase);
-        String requestBody = createJsonRequestBody(bintrayUploadInfo);
-        HttpPost httpPost = new HttpPost(requestUrl);
-        StringEntity entity = new StringEntity(requestBody);
-        entity.setContentType("application/json");
-        httpPost.setEntity(entity);
-        HttpResponse response = httpClient.getHttpClient().execute(httpPost);
-        return parseResponse(response);
-    }
-
-    // create pushToBintray request Url
-    private String createRequestUrl(String buildName, String buildNumber, String signMethod, String passphrase) throws URISyntaxException {
-        URIBuilder urlBuilder = new URIBuilder();
-        urlBuilder.setPath(artifactoryUrl + PUSH_TO_BINTRAY_REST_URL + buildName + "/" + buildNumber);
-
-        if (StringUtils.isNotEmpty(passphrase)) {
-            urlBuilder.setParameter("gpgPassphrase", passphrase);
-        }
-        if (!StringUtils.equals(signMethod, "descriptor")) {
-            urlBuilder.setParameter("gpgSign", signMethod);
-        }
-        return urlBuilder.toString();
-    }
-
-    // create pushToBintray request body
-    private String createJsonRequestBody(BintrayUploadInfoOverride info) throws IOException {
-        String bintrayInfoJson;
-        if (!info.isValid()) {
-            // empty json body to use the descriptor file if exists
-            bintrayInfoJson = "{}";
-        } else {
-            bintrayInfoJson = toJsonString(info);
-        }
-        return bintrayInfoJson;
-    }
-
-    private BintrayResponse parseResponse(HttpResponse response) throws IOException {
-        InputStream content = response.getEntity().getContent();
-        int status = response.getStatusLine().getStatusCode();
-        JsonParser parser = httpClient.createJsonFactory().createParser(content);
-        BintrayResponse responseObject = BintrayResponseFactory.createResponse(status, parser);
-        return responseObject;
-    }
-
-    public HttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
+    public CloseableHttpResponse stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for promotion.");
         }
@@ -499,7 +435,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return httpClient.getHttpClient().execute(httpPost);
     }
 
-    public HttpResponse distributeBuild(String buildName, String buildNumber, Distribution promotion) throws IOException {
+    public CloseableHttpResponse distributeBuild(String buildName, String buildNumber, Distribution promotion) throws IOException {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for distribution.");
         }
@@ -523,31 +459,27 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public Map<String, List<Map>> getUserPluginInfo() throws IOException {
-        String url = new StringBuilder(artifactoryUrl).append("/api/plugins").toString();
-        HttpGet getPlugins = new HttpGet(url);
-        HttpResponse getResponse = httpClient.getHttpClient().execute(getPlugins);
-        StatusLine statusLine = getResponse.getStatusLine();
-        HttpEntity responseEntity = getResponse.getEntity();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain user plugin information. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
-        } else {
-            if (responseEntity != null) {
-                InputStream content = responseEntity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    return parser.readValueAs(Map.class);
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
-                }
+        HttpGet getPlugins = new HttpGet(artifactoryUrl + "/api/plugins");
+        try (CloseableHttpResponse getResponse = httpClient.getHttpClient().execute(getPlugins)) {
+            StatusLine statusLine = getResponse.getStatusLine();
+            HttpEntity responseEntity = getResponse.getEntity();
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+                String message = httpClient.getMessageFromEntity(responseEntity);
+                EntityUtils.consumeQuietly(responseEntity);
+                throw new IOException("Failed to obtain user plugin information. Status code: " + statusLine.getStatusCode() + ": " + message);
+            }
+            if (responseEntity == null) {
+                return new HashMap<>();
+            }
+
+            try (InputStream content = responseEntity.getContent()) {
+                JsonParser parser = httpClient.createJsonParser(content);
+                return parser.readValueAs(Map.class);
             }
         }
-        return new HashMap<>();
     }
 
-    public HttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
+    public CloseableHttpResponse executeUserPlugin(String executionName, Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/execute/")
                 .append(executionName).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
@@ -562,30 +494,27 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 .append(encodeUrl(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         HttpGet getRequest = new HttpGet(urlBuilder.toString());
-        HttpResponse response = httpClient.getHttpClient().execute(getRequest);
-        StatusLine statusLine = response.getStatusLine();
-        HttpEntity responseEntity = response.getEntity();
-        if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Failed to obtain staging strategy. Status code: " + statusLine.getStatusCode() + httpClient.getMessageFromEntity(responseEntity));
-        } else {
-            if (responseEntity != null) {
-                InputStream content = responseEntity.getContent();
-                JsonParser parser;
-                try {
-                    parser = httpClient.createJsonParser(content);
-                    return parser.readValueAs(Map.class);
-                } finally {
-                    if (content != null) {
-                        content.close();
-                    }
-                }
+
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(getRequest)) {
+            StatusLine statusLine = response.getStatusLine();
+            HttpEntity responseEntity = response.getEntity();
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+                String message = httpClient.getMessageFromEntity(responseEntity);
+                EntityUtils.consumeQuietly(responseEntity);
+                throw new IOException("Failed to obtain staging strategy. Status code: " + statusLine.getStatusCode() + message);
+            }
+            if (responseEntity == null) {
+                return new HashMap<>();
+            }
+            try (InputStream content = responseEntity.getContent()) {
+                JsonParser parser = httpClient.createJsonParser(content);
+                return parser.readValueAs(Map.class);
             }
         }
-        return new HashMap<>();
     }
 
-    public HttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
-                                                   Map<String, String> requestParams) throws IOException {
+    public CloseableHttpResponse executePromotionUserPlugin(String promotionName, String buildName, String buildNumber,
+                                                            Map<String, String> requestParams) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/plugins/build/promote/")
                 .append(promotionName).append("/").append(encodeUrl(buildName)).append("/")
                 .append(encodeUrl(buildNumber)).append("?");
@@ -594,7 +523,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return httpClient.getHttpClient().execute(postRequest);
     }
 
-    public HttpResponse executeUpdateFileProperty(String itemPath, String properties) throws IOException {
+    public CloseableHttpResponse executeUpdateFileProperty(String itemPath, String properties) throws IOException {
         StringBuilder urlBuilder = new StringBuilder(artifactoryUrl).append("/api/storage/")
                 .append(encodeUrl(itemPath)).append("?").append("properties=").append(encodeUrl(properties));
 
@@ -878,16 +807,11 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         request.setEntity(entity);
 
         // Send request
-        HttpResponse httpResponse = null;
-        try {
-            httpResponse = httpClient.getHttpClient().execute(request);
+        try (CloseableHttpResponse httpResponse = httpClient.getHttpClient().execute(request)) {
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
             StatusLine statusLine = httpResponse.getStatusLine();
             if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
                 throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
-            }
-        } finally {
-            if (httpResponse != null) {
-                EntityUtils.consumeQuietly(httpResponse.getEntity());
             }
         }
     }

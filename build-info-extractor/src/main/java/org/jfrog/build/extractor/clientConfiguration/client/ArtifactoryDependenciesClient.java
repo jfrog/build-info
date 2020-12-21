@@ -21,7 +21,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -45,8 +44,6 @@ import org.jfrog.build.extractor.clientConfiguration.util.JsonSerializer;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -87,53 +84,54 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         StringEntity stringEntity = new StringEntity(json);
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         post.setEntity(stringEntity);
-        InputStream responseStream = getResponseStream(httpClient.getHttpClient().execute(post), "Failed to retrieve build artifacts report");
-        return readJsonResponse(responseStream,
-                new TypeReference<List<BuildPatternArtifacts>>() {
-                },
-                false);
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(post);
+             InputStream responseStream = getResponseStream(response, "Failed to retrieve build artifacts report")) {
+            return readJsonResponse(responseStream, new TypeReference<List<BuildPatternArtifacts>>() {
+            }, false);
+        }
+
     }
 
     public PatternResultFileSet searchArtifactsByPattern(String pattern) throws IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         String url = artifactoryUrl + "/api/search/pattern?pattern=" + pattern;
-        InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the pattern '" + pattern + "'");
-        return readJsonResponse(responseStream,
-                new TypeReference<PatternResultFileSet>() {
-                },
-                false);
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(new HttpGet(url));
+             InputStream responseStream = getResponseStream(response, "Failed to search artifact by the pattern '" + pattern + "'")) {
+            return readJsonResponse(responseStream, new TypeReference<PatternResultFileSet>() {
+            }, false);
+        }
     }
 
     public PropertySearchResult searchArtifactsByProperties(String properties) throws IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         String replacedProperties = StringUtils.replaceEach(properties, new String[]{";", "+"}, new String[]{"&", ""});
         String url = artifactoryUrl + "/api/search/prop?" + replacedProperties;
-        InputStream responseStream = getResponseStream(client.execute(new HttpGet(url)), "Failed to search artifact by the properties '" + properties + "'");
-        return readJsonResponse(responseStream,
-                new TypeReference<PropertySearchResult>() {
-                },
-                false);
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(new HttpGet(url));
+             InputStream responseStream = getResponseStream(response, "Failed to search artifact by the properties '" + properties + "'")) {
+            return readJsonResponse(responseStream, new TypeReference<PropertySearchResult>() {
+            }, false);
+        }
     }
 
     public AqlSearchResult searchArtifactsByAql(String aql) throws IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         String url = artifactoryUrl + "/api/search/aql";
         HttpPost httpPost = new HttpPost(url);
         StringEntity entity = new StringEntity(aql);
         httpPost.setEntity(entity);
-        InputStream responseStream = getResponseStream(client.execute(httpPost), "Failed to search artifact by the aql '" + aql + "'");
-        return readJsonResponse(responseStream,
-                new TypeReference<AqlSearchResult>() {
-                },
-                true);
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(httpPost);
+             InputStream responseStream = getResponseStream(response, "Failed to search artifact by the aql '" + aql + "'")) {
+            return readJsonResponse(responseStream, new TypeReference<AqlSearchResult>() {
+            }, true);
+        }
     }
 
     public Properties getNpmAuth() throws IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         String url = artifactoryUrl + "/api/npm/auth";
         HttpGet httpGet = new HttpGet(url);
-        InputStream responseStream = getResponseStream(client.execute(httpGet), "npm Auth request failed");
-        return readPropertiesResponse(responseStream);
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(httpGet);
+             InputStream responseStream = getResponseStream(response, "npm Auth request failed")) {
+            Properties properties = new Properties();
+            properties.load(responseStream);
+            return properties;
+        }
     }
 
     private InputStream getResponseStream(HttpResponse response, String errorMessage) throws IOException {
@@ -143,11 +141,8 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
                 return null;
             }
             return entity.getContent();
-        } else {
-            HttpEntity httpEntity = response.getEntity();
-            EntityUtils.consume(httpEntity);
-            throw new IOException(errorMessage + ": " + response.getStatusLine());
         }
+        throw new IOException(errorMessage + ": " + response.getStatusLine());
     }
 
     /**
@@ -161,37 +156,22 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
      */
     private <T> T readJsonResponse(InputStream responseStream, TypeReference<T> valueType, boolean ignoreMissingFields)
             throws IOException {
-        try {
-            JsonParser parser = httpClient.createJsonParser(responseStream);
-            if (ignoreMissingFields) {
-                ((ObjectMapper) parser.getCodec()).configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
-            }
-            // http://wiki.fasterxml.com/JacksonDataBinding
-            return parser.readValueAs(valueType);
-        } finally {
-            IOUtils.closeQuietly(responseStream);
+        JsonParser parser = httpClient.createJsonParser(responseStream);
+        if (ignoreMissingFields) {
+            ((ObjectMapper) parser.getCodec()).configure(FAIL_ON_UNKNOWN_PROPERTIES, false);
         }
+        return parser.readValueAs(valueType);
     }
 
-    private Properties readPropertiesResponse(InputStream responseStream) throws IOException {
-        try {
-            Properties properties = new Properties();
-            properties.load(responseStream);
-            return properties;
-        } finally {
-            IOUtils.closeQuietly(responseStream);
-        }
-    }
-
-    public HttpResponse downloadArtifact(String downloadUrl) throws IOException {
+    public CloseableHttpResponse downloadArtifact(String downloadUrl) throws IOException {
         return executeDownload(downloadUrl, false, null);
     }
 
-    public HttpResponse downloadArtifact(String downloadUrl, Map<String, String> headers) throws IOException {
+    public CloseableHttpResponse downloadArtifact(String downloadUrl, Map<String, String> headers) throws IOException {
         return executeDownload(downloadUrl, false, headers);
     }
 
-    public HttpResponse getArtifactMetadata(String artifactUrl) throws IOException {
+    public CloseableHttpResponse getArtifactMetadata(String artifactUrl) throws IOException {
         return executeDownload(artifactUrl, true, null);
     }
 
@@ -208,18 +188,17 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     }
 
     private String getRepoType(String repo) throws IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         String url = artifactoryUrl + "/api/repositories/" + repo;
         HttpGet httpGet = new HttpGet(url);
-        InputStream responseStream = getResponseStream(client.execute(httpGet), "Failed to retrieve repository configuration '" + repo + "'");
-        RepositoryConfig repoDetails = readJsonResponse(responseStream,
-                new TypeReference<RepositoryConfig>() {
-                },
-                true);
-        return repoDetails.getRclass();
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(httpGet);
+             InputStream responseStream = getResponseStream(response, "Failed to retrieve repository configuration '" + repo + "'")) {
+            RepositoryConfig repoDetails = readJsonResponse(responseStream, new TypeReference<RepositoryConfig>() {
+            }, true);
+            return repoDetails.getRclass();
+        }
     }
 
-    private HttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
+    private CloseableHttpResponse executeDownload(String artifactUrl, boolean isHead, Map<String, String> headers) throws IOException {
         PreemptiveHttpClient client = httpClient.getHttpClient();
 
         artifactUrl = ArtifactoryHttpClient.encodeUrl(artifactUrl);
@@ -234,7 +213,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
             }
         }
 
-        HttpResponse response = client.execute(httpRequest);
+        CloseableHttpResponse response = client.execute(httpRequest);
         StatusLine statusLine = response.getStatusLine();
         int statusCode = statusLine.getStatusCode();
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
@@ -242,7 +221,7 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
         }
 
         if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_PARTIAL_CONTENT) {
-            EntityUtils.consume(response.getEntity());
+            EntityUtils.consumeQuietly(response.getEntity());
             throw new IOException("Error downloading " + artifactUrl + ". Code: " + statusCode + " Message: " +
                     statusLine.getReasonPhrase());
         }
@@ -252,14 +231,15 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
     public void setProperties(String urlPath, String props) throws IOException {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=");
         url += DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(props), true);
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpPut httpPut = new HttpPut(url);
-        checkNoContent(client.execute(httpPut), "Failed to set properties to '" + urlPath + "'");
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(httpPut)) {
+            checkNoContent(response, "Failed to set properties to '" + urlPath + "'");
+        }
     }
 
-    private ArrayListMultimap<String, String> mapPropsString(String props) throws UnsupportedEncodingException {
+    private ArrayListMultimap<String, String> mapPropsString(String props) {
         ArrayListMultimap<String, String> propsMap = ArrayListMultimap.create();
-        List<String> propsList = Arrays.asList(props.split(";"));
+        String[] propsList = props.split(";");
         for (String prop : propsList) {
             String[] propParts = prop.split("=");
             propsMap.put(propParts[0], propParts[1]);
@@ -269,15 +249,14 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
 
     public void deleteProperties(String urlPath, String props) throws IOException {
         String url = ArtifactoryHttpClient.encodeUrl(urlPath + "?properties=" + props);
-        PreemptiveHttpClient client = httpClient.getHttpClient();
         HttpDelete httpDelete = new HttpDelete(url);
-        checkNoContent(client.execute(httpDelete), "Failed to delete properties to '" + urlPath + "'");
+        try (CloseableHttpResponse response = httpClient.getHttpClient().execute(httpDelete)) {
+            checkNoContent(response, "Failed to delete properties to '" + urlPath + "'");
+        }
     }
 
     private void checkNoContent(HttpResponse response, String errorMessage) throws IOException {
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
-            HttpEntity httpEntity = response.getEntity();
-            EntityUtils.consume(httpEntity);
             throw new IOException(errorMessage + ": " + response.getStatusLine());
         }
     }
