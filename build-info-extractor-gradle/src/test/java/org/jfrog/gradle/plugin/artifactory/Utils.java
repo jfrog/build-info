@@ -5,6 +5,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
@@ -120,8 +121,9 @@ public class Utils {
         // Check that all expected artifacts uploaded to Artifactory
         String[] expectedArtifacts = expectModuleArtifacts ? EXPECTED_MODULE_ARTIFACTS : EXPECTED_ARTIFACTS;
         for (String expectedArtifact : expectedArtifacts) {
-            CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url + localRepo + ARTIFACTS_GROUP_ID + expectedArtifact);
-            response.close();
+            try (CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url + localRepo + ARTIFACTS_GROUP_ID + expectedArtifact)) {
+                EntityUtils.consume(response.getEntity());
+            }
         }
 
         // Check build info

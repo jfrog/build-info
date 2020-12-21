@@ -282,9 +282,9 @@ public class DockerUtils {
      */
     public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
         String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
-        CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url);
-        EntityUtils.consume(response.getEntity());
-        response.close();
+        try (CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url)) {
+            EntityUtils.consume(response.getEntity());
+        }
     }
 
     /**
