@@ -33,7 +33,7 @@ public class GitUtilsTest {
 
     private String getGitFieldWithExecutor(File execDir, Log log, List<String> args) throws IOException, InterruptedException {
         CommandExecutor executor = new CommandExecutor("git", null);
-        CommandResults res = executor.exeCommand(execDir, args, log);
+        CommandResults res = executor.exeCommand(execDir, args, null, log);
         Assert.assertTrue(res.isOk());
         return res.getRes().trim();
     }

@@ -48,7 +48,7 @@ public class PipDriver implements Serializable {
     }
 
     public String runCommand(File workingDirectory, List<String> args, Log logger) throws IOException, InterruptedException {
-        CommandResults pipCommandRes = commandExecutor.exeCommand(workingDirectory, args, logger);
+        CommandResults pipCommandRes = commandExecutor.exeCommand(workingDirectory, args, null, logger);
         if (!pipCommandRes.isOk()) {
             throw new IOException(pipCommandRes.getErr() + pipCommandRes.getRes());
         }

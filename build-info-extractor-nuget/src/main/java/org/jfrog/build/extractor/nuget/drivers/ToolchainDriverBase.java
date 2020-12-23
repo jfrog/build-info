@@ -60,7 +60,7 @@ abstract public class ToolchainDriverBase implements Serializable {
     abstract public String getFlagSyntax(String flagName);
 
     public String help() throws IOException, InterruptedException {
-        return runCommand(new String[]{"help"}, Collections.emptyList(), logger);
+        return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
     protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
@@ -73,17 +73,28 @@ abstract public class ToolchainDriverBase implements Serializable {
         return sourceUrlBuilder.build().toURL().toString();
     }
 
-    public void runCmd(String args, List<String> extraArgs, boolean prompt) throws IOException, InterruptedException {
+    public void runCmd(String args, List<String> extraArgs, List<String> credentials, boolean prompt) throws IOException, InterruptedException {
         Log logger = prompt ? this.logger : null;
-        String cmdOutput = runCommand(args.split(" "), extraArgs, logger);
+        String cmdOutput = runCommand(args.split(" "), extraArgs, credentials, logger);
         if (prompt) {
             logger.info(cmdOutput);
         }
     }
 
-    protected String runCommand(String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
+    /**
+     * Run .NET/Nuget command.
+     *
+     * @param args        - Base args, such as "nuget add source source-url"
+     * @param extraArgs   - Extra args, such as "--config=config-path --name=source-name"
+     * @param credentials - Credentials, such as "--username=username --password=password"
+     * @param logger      - The logger of the command
+     * @return the output.
+     * @throws IOException          if the command execution returned an error.
+     * @throws InterruptedException if the command execution interrupted.
+     */
+    protected String runCommand(String[] args, List<String> extraArgs, List<String> credentials, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
-        CommandResults nugetCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);
+        CommandResults nugetCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, credentials, logger);
         if (!nugetCommandRes.isOk()) {
             throw new IOException(nugetCommandRes.getErr() + nugetCommandRes.getRes());
         }

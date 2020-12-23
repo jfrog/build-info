@@ -127,7 +127,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         List<String> goCleanArgs = new ArrayList<>();
         goCleanArgs.add("clean");
         goCleanArgs.add("-modcache");
-        goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goCleanArgs, log);
+        goCommandExecutor.exeCommand(PROJECTS_ROOT.toFile(), goCleanArgs, null, log);
         env.clear();
         // Since we are handling dummy projects, we want to avoid package validation against Go's checksum DB.
         env.put("GONOSUMDB", "github.com/jfrog");
