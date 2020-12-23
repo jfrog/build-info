@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 import static org.testng.Assert.fail;
@@ -76,7 +75,7 @@ public abstract class IntegrationTestsBase {
             inputStream.close();
         }
 
-        url = Optional.ofNullable(readParam(props, "url")).orElse("");
+        url = readParam(props, "url");
         if (!url.endsWith("/")) {
             url += "/";
         }
