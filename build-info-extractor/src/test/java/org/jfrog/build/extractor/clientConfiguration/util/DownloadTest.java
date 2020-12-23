@@ -33,7 +33,7 @@ public class DownloadTest extends IntegrationTestsBase {
     /**
      * Tests download of files - both bulk and concurrently.
      *
-     * @param uploadedChecksum checksums of the artifact uploaded to Artifactory, used to compare with the downloaded artifact.
+     * @param uploadedChecksum - checksums of the artifact uploaded to Artifactory, used to compare with the downloaded artifact.
      * @param fileName         - artifact name to download.
      * @param fileSize         - artifact size to download.
      */
