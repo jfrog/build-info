@@ -160,7 +160,7 @@ public abstract class IntegrationTestsBase {
                 throw new FileNotFoundException("Bad credentials for username: " + username);
             }
             if (statusCode < 200 || statusCode >= 300) {
-                throw new IOException(getRepositoryCustomErrorMessage(repo, false, statusCode, statusLine.getReasonPhrase()));
+                throw new IOException(getRepositoryCustomErrorMessage(repo, false, statusLine));
             }
         }
     }
@@ -198,7 +198,7 @@ public abstract class IntegrationTestsBase {
                 EntityUtils.consumeQuietly(response.getEntity());
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
-                    throw new IOException(getRepositoryCustomErrorMessage(repo, true, statusCode, response.getStatusLine().getReasonPhrase()));
+                    throw new IOException(getRepositoryCustomErrorMessage(repo, true, response.getStatusLine()));
                 }
             }
         }
@@ -219,7 +219,7 @@ public abstract class IntegrationTestsBase {
             EntityUtils.consumeQuietly(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                throw new IOException(getRepositoryCustomErrorMessage(repo, false, statusCode, response.getStatusLine().getReasonPhrase()));
+                throw new IOException(getRepositoryCustomErrorMessage(repo, false, response.getStatusLine()));
             }
         }
     }
@@ -315,19 +315,18 @@ public abstract class IntegrationTestsBase {
      * Returns a custom exception error to be thrown when repository creation/deletion fails.
      * @param repo - repo name.
      * @param creating - creation or deletion failed.
-     * @param statusCode - status code returned.
-     * @param reason - reason returned.
+     * @param statusLine - status returned.
      * @return - custom error message.
      */
-    private String getRepositoryCustomErrorMessage(String repo, boolean creating, int statusCode, String reason) {
+    private String getRepositoryCustomErrorMessage(String repo, boolean creating, StatusLine statusLine) {
         StringBuilder builder = new StringBuilder()
                 .append("Error ")
                 .append(creating ? "creating" : "deleting")
                 .append(" '").append(repo).append("'. ")
-                .append("Code: ").append(statusCode);
-        if (reason != null) {
+                .append("Code: ").append(statusLine.getStatusCode());
+        if (statusLine.getReasonPhrase() != null) {
             builder.append(" Message: ")
-                    .append(reason);
+                    .append(statusLine.getReasonPhrase());
         }
         return builder.toString();
     }
