@@ -22,7 +22,7 @@ import static java.lang.String.join;
 public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final int TIMEOUT_EXIT_VALUE = 124;
-    private static final int TIMEOUT_SECONDS = 10;
+    private static final int TIMEOUT_SECONDS = 30;
 
     private final String[] env;
     private final String executablePath;
