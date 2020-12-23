@@ -13,11 +13,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static java.lang.String.format;
+import static java.lang.String.join;
+
 /**
  * @author Yahav Itzhak
  */
 public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
+    private static final int TIMEOUT_EXIT_VALUE = 124;
+    private static final int TIMEOUT_SECONDS = 10;
 
     private final String[] env;
     private final String executablePath;
@@ -81,7 +86,7 @@ public class CommandExecutor implements Serializable {
             String newPart = startPart + endPart.replaceAll(":", ";");
             newPathParts[index] = newPart;
         }
-        return String.join(";", newPathParts);
+        return join(";", newPathParts);
     }
 
     /**
@@ -96,7 +101,7 @@ public class CommandExecutor implements Serializable {
             return command;
         }
         // The mask pattern is a regex, which is used to mask all credentials
-        String maskPattern = String.join("|", credentials);
+        String maskPattern = join("|", credentials);
         return command.replaceAll(maskPattern, "***");
     }
 
@@ -114,7 +119,6 @@ public class CommandExecutor implements Serializable {
         args.add(0, executablePath);
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
-            CommandResults commandRes = new CommandResults();
             Process process = runProcess(execDir, args, credentials, env, logger);
             // The output stream is not necessary in non-interactive scenarios, therefore we can close it now.
             process.getOutputStream().close();
@@ -126,18 +130,25 @@ public class CommandExecutor implements Serializable {
                 service.submit(errorStreamReader);
                 process.waitFor();
                 service.shutdown();
-                boolean terminatedProperly = service.awaitTermination(10, TimeUnit.SECONDS);
-                if (!terminatedProperly && logger != null) {
-                    logger.error("Process '" + String.join(" ", args) + "' had been terminated forcibly after timeout of 10 seconds.");
-                }
-                commandRes.setRes(inputStreamReader.getOutput());
-                commandRes.setErr(errorStreamReader.getOutput());
-                commandRes.setExitValue(process.exitValue());
-                return commandRes;
+                boolean terminatedProperly = service.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
             }
         } finally {
             service.shutdownNow();
         }
+    }
+
+    private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue) {
+        CommandResults commandRes = new CommandResults();
+        if (!terminatedProperly) {
+            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d seconds.",
+                    join(" ", args), TIMEOUT_SECONDS);
+            exitValue = TIMEOUT_EXIT_VALUE;
+        }
+        commandRes.setRes(output);
+        commandRes.setErr(error);
+        commandRes.setExitValue(exitValue);
+        return commandRes;
     }
 
     private static Process runProcess(File execDir, List<String> args, List<String> credentials, String[] env, Log logger) throws IOException {
@@ -148,7 +159,7 @@ public class CommandExecutor implements Serializable {
             args.addAll(0, Arrays.asList("cmd", "/c"));
         } else if (SystemUtils.IS_OS_MAC) {
             // In MacOS, the arguments for '/bin/sh -c' must be a single string. For example "/bin/sh","-c", "npm i".
-            String strArgs = String.join(" ", args);
+            String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
                 add("-c");
@@ -164,7 +175,7 @@ public class CommandExecutor implements Serializable {
             return;
         }
         // Mask credentials in URL
-        String output = UrlUtils.maskCredentialsInUrl(String.join(" ", args));
+        String output = UrlUtils.maskCredentialsInUrl(join(" ", args));
 
         // Mask credentials arguments
         output = maskCredentials(output, credentials);
