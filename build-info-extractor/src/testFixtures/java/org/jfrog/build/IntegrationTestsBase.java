@@ -23,6 +23,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
@@ -143,6 +144,9 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     protected void deleteContentFromRepo(String repo) throws IOException {
+        if (!isRepoExists(repo)) {
+            return;
+        }
         String fullItemUrl = url + repo + "/";
         String itemUrl = ArtifactoryHttpClient.encodeUrl(fullItemUrl);
         HttpRequestBase httpRequest = new HttpDelete(itemUrl);
@@ -155,7 +159,7 @@ public abstract class IntegrationTestsBase {
                 throw new FileNotFoundException("Bad credentials for username: " + username);
             }
             if (statusCode < 200 || statusCode >= 300) {
-                throw new IOException("Error deleting " + localRepo1 + ". Code: " + statusCode + " Message: " + statusLine.getReasonPhrase());
+                throw new IOException(getRepositoryCustomErrorMessage(repo, false, statusLine));
             }
         }
     }
@@ -193,7 +197,7 @@ public abstract class IntegrationTestsBase {
                 EntityUtils.consumeQuietly(response.getEntity());
                 int statusCode = response.getStatusLine().getStatusCode();
                 if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_CREATED) {
-                    throw new IOException("Error creating repository: " + repo + ". Code: " + statusCode + " Message: " + response.getStatusLine().getReasonPhrase());
+                    throw new IOException(getRepositoryCustomErrorMessage(repo, true, response.getStatusLine()));
                 }
             }
         }
@@ -214,7 +218,7 @@ public abstract class IntegrationTestsBase {
             EntityUtils.consumeQuietly(response.getEntity());
             int statusCode = response.getStatusLine().getStatusCode();
             if (statusCode != HttpStatus.SC_OK) {
-                throw new IOException("Error deleting repository" + repo + ". Code: " + statusCode + " Message: " + response.getStatusLine().getReasonPhrase());
+                throw new IOException(getRepositoryCustomErrorMessage(repo, false, response.getStatusLine()));
             }
         }
     }
@@ -232,7 +236,7 @@ public abstract class IntegrationTestsBase {
      * @throws IOException
      */
     protected String readSpec(File specFile, String workSpacePath) throws IOException {
-        String spec = FileUtils.readFileToString(specFile, "UTF-8");
+        String spec = FileUtils.readFileToString(specFile, StandardCharsets.UTF_8);
         spec = StringUtils.replace(spec, LOCAL_REPO_PLACEHOLDER, localRepo1);
         spec = StringUtils.replace(spec, LOCAL_REPO2_PLACEHOLDER, localRepo2);
         spec = StringUtils.replace(spec, VIRTUAL_REPO_PLACEHOLDER, virtualRepo);
@@ -306,4 +310,23 @@ public abstract class IntegrationTestsBase {
         }
     }
 
+    /***
+     * Returns a custom exception error to be thrown when repository creation/deletion fails.
+     * @param repo - repo name.
+     * @param creating - creation or deletion failed.
+     * @param statusLine - status returned.
+     * @return - custom error message.
+     */
+    private String getRepositoryCustomErrorMessage(String repo, boolean creating, StatusLine statusLine) {
+        StringBuilder builder = new StringBuilder()
+                .append("Error ")
+                .append(creating ? "creating" : "deleting")
+                .append(" '").append(repo).append("'. ")
+                .append("Code: ").append(statusLine.getStatusCode());
+        if (statusLine.getReasonPhrase() != null) {
+            builder.append(" Message: ")
+                    .append(statusLine.getReasonPhrase());
+        }
+        return builder.toString();
+    }
 }
