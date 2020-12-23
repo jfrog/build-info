@@ -141,7 +141,7 @@ public class CommandExecutor implements Serializable {
             args.add(1, "-c");
         }
         if (logger != null) {
-            logger.info("Executing command: " + UrlUtils.maskCredentialsInUrl(String.join(" ", args)));
+            logger.info("Executing command: " + UrlUtils.removeCredentialsFromUrl(String.join(" ", args)));
         }
         return Runtime.getRuntime().exec(args.toArray(new String[0]), env, execDir);
     }

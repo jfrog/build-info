@@ -10,21 +10,22 @@ import java.util.regex.Pattern;
  */
 public class UrlUtils {
 
-    private static Pattern CredentialsInUrlRegexpPattern = Pattern.compile("((http|https):\\/\\/.+:.*@)");
+    private static final Pattern CREDENTIALS_IN_URL_REGEX = Pattern.compile("(http|https|git)://.+@");
 
     /**
-     * Mask the credentials information from a given line (log, url...).
-     * The credentials are presented as user:password.
-     * @param lineWithCredentials - Line for masking url with credentials.
+     * Remove URL credentials information from a given line (log, URL...).
+     * The credentials are presented as 'user:password' or a token.
+     *
+     * @param lineWithCredentials - Line for masking URL with credentials.
      * @return The line with masked credentials.
      */
-    public static String maskCredentialsInUrl(String lineWithCredentials) {
-        Matcher matcher = CredentialsInUrlRegexpPattern.matcher(lineWithCredentials);
+    public static String removeCredentialsFromUrl(String lineWithCredentials) {
+        Matcher matcher = CREDENTIALS_IN_URL_REGEX.matcher(lineWithCredentials);
         if (!matcher.find()) {
             return lineWithCredentials;
         }
         String credentialsPart = matcher.group();
-        String[] split = credentialsPart.split("//");
-        return StringUtils.replace(lineWithCredentials, credentialsPart, split[0] + "//***.***@", 1);
+        String protocol = matcher.group(1);
+        return StringUtils.replace(lineWithCredentials, credentialsPart, protocol + "://");
     }
 }

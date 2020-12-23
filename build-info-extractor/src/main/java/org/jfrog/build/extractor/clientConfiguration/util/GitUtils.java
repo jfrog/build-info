@@ -104,7 +104,7 @@ public class GitUtils {
             originalUrl += ".git";
         }
 
-        String maskedUrl = UrlUtils.maskCredentialsInUrl(originalUrl);
+        String maskedUrl = UrlUtils.removeCredentialsFromUrl(originalUrl);
         log.debug("Fetched url from git config: " + maskedUrl);
         return maskedUrl;
     }
