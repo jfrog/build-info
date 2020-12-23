@@ -95,6 +95,7 @@ public class CommandExecutor implements Serializable {
         if (credentials == null || credentials.isEmpty()) {
             return command;
         }
+        // The mask pattern is a regex, which is used to mask all credentials
         String maskPattern = String.join("|", credentials);
         return command.replaceAll(maskPattern, "***");
     }
@@ -115,7 +116,7 @@ public class CommandExecutor implements Serializable {
         try {
             CommandResults commandRes = new CommandResults();
             Process process = runProcess(execDir, args, credentials, env, logger);
-            // The output stream is not necessary in non-interactive scenarios
+            // The output stream is not necessary in non-interactive scenarios, therefore we can close it now.
             process.getOutputStream().close();
             try (InputStream inputStream = process.getInputStream();
                  InputStream errorStream = process.getErrorStream()) {
@@ -169,6 +170,5 @@ public class CommandExecutor implements Serializable {
         output = maskCredentials(output, credentials);
 
         logger.info("Executing command: " + output);
-
     }
 }
