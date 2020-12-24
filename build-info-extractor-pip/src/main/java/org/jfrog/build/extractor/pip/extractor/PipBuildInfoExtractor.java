@@ -23,9 +23,9 @@ public class PipBuildInfoExtractor {
 
     private static final String PIP_AQL_FORMAT =
             "items.find({" +
-                    "\"repo\": \"%s\"," +
-                    "\"$or\": [%s]" +
-                    "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
+                    "\"repo\":\"%s\"," +
+                    "\"$or\":[%s]" +
+                    "}).include(\"name\",\"repo\",\"path\",\"actual_sha1\",\"actual_md5\")";
     private static final String PIP_AQL_FILE_PART = "{\"name\":\"%s\"},";
     private static final int PIP_AQL_BULK_SIZE = 3;
 
