@@ -175,7 +175,7 @@ public class CommandExecutor implements Serializable {
             return;
         }
         // Mask credentials in URL
-        String output = UrlUtils.maskCredentialsInUrl(join(" ", args));
+        String output = UrlUtils.removeCredentialsFromUrl(join(" ", args));
 
         // Mask credentials arguments
         output = maskCredentials(output, credentials);
