@@ -23,15 +23,11 @@ public class PipBuildInfoExtractor {
 
     private static final String PIP_AQL_FORMAT =
             "items.find({" +
-                    "\"repo\": \"%s\"," +
-                    "\"$or\": [%s]" +
-                    "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
-    private static final String PIP_AQL_FILE_PART =
-            "{\"$and\":[{" +
-                    "\"path\":{\"$match\":\"*\"}," +
-                    "\"name\":{\"$match\":\"%s\"}" +
-                    "}]},";
-    private static final int PIP_AQL_BULK_SIZE = 100;
+                    "\"repo\":\"%s\"," +
+                    "\"$or\":[%s]" +
+                    "}).include(\"name\",\"repo\",\"path\",\"actual_sha1\",\"actual_md5\")";
+    private static final String PIP_AQL_FILE_PART = "{\"name\":\"%s\"},";
+    private static final int PIP_AQL_BULK_SIZE = 3;
 
     Build extract(ArtifactoryDependenciesClient client, String repository, String installationLog, Path executionPath, String module, Log logger) throws IOException {
         // Parse logs and create dependency list of <pkg-name, pkg-file>
@@ -94,9 +90,9 @@ public class PipBuildInfoExtractor {
      * Get Dependencies information from Artifactory by running AQL to get the checksums.
      *
      * @param fileToPackageMap - Mapping between a downloaded file to its package name.
-     * @param repository - Resolution repository.
-     * @param client - Artifactory client for fetching artifacts data.
-     * @param logger - The logger.
+     * @param repository       - Resolution repository.
+     * @param client           - Artifactory client for fetching artifacts data.
+     * @param logger           - The logger.
      * @return Mapping of a package-name and its Dependency object.
      * @throws IOException
      */
@@ -110,7 +106,7 @@ public class PipBuildInfoExtractor {
     }
 
     static List<String> createAqlQueries(Map<String, String> fileToPackageMap, String repository, int bulkSize) {
-        List<String> aqlQueries =  new ArrayList<>();
+        List<String> aqlQueries = new ArrayList<>();
         StringBuilder filesQueryPartBuilder = new StringBuilder();
         int filesCounter = 0;
         for (String file : fileToPackageMap.keySet()) {

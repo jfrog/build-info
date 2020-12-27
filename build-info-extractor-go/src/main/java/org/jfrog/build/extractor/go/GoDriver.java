@@ -44,7 +44,7 @@ public class GoDriver implements Serializable {
     public CommandResults runCmd(List<String> args, boolean prompt) throws IOException {
         CommandResults goCmdResult;
         try {
-            goCmdResult = commandExecutor.exeCommand(workingDirectory, args, logger);
+            goCmdResult = commandExecutor.exeCommand(workingDirectory, args, null, logger);
         } catch (IOException | InterruptedException e) {
             throw new IOException("Go execution failed", e);
         }

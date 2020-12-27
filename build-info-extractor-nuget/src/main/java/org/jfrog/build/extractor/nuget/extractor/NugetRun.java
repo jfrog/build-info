@@ -180,7 +180,7 @@ public class NugetRun extends PackageManagerExtractor {
                 String configPath = configFile.getAbsolutePath();
                 extraArgs = StringUtils.isBlank(configPath) ? null : Arrays.asList(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG), configPath);
             }
-            toolchainDriver.runCmd(nugetCmdArgs, extraArgs, true);
+            toolchainDriver.runCmd(nugetCmdArgs, extraArgs, null, true);
         }
     }
 

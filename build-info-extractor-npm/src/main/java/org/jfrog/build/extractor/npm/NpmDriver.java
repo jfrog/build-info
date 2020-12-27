@@ -70,7 +70,7 @@ public class NpmDriver implements Serializable {
         args.add("--long");
         args.addAll(extraArgs);
         try {
-            CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null);
+            CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null, null);
             String res = StringUtils.isBlank(npmCommandRes.getRes()) ? "{}" : npmCommandRes.getRes();
             JsonNode npmLsResults = jsonReader.readTree(res);
             if (!npmCommandRes.isOk() && !npmLsResults.has("problems")) {
@@ -100,7 +100,7 @@ public class NpmDriver implements Serializable {
 
     private String runCommand(File workingDirectory, String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
-        CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, logger);
+        CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, null, logger);
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr() + npmCommandRes.getRes());
         }
