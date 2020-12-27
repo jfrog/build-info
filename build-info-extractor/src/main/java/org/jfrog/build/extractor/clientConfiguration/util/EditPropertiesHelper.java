@@ -16,9 +16,9 @@ public class EditPropertiesHelper {
         DELETE
     }
 
-    private ArtifactoryDependenciesClient client;
-    private Log log;
-    private String artifactoryEditPropsUrl;
+    private final ArtifactoryDependenciesClient client;
+    private final Log log;
+    private final String artifactoryEditPropsUrl;
 
     public EditPropertiesHelper(ArtifactoryDependenciesClient client, Log log) {
         this.client = client;
@@ -34,9 +34,9 @@ public class EditPropertiesHelper {
         for (FileSpec file : spec.getFiles()) {
             log.debug("Editing properties using spec: \n" + file.toString());
             if (editType == EditPropertiesActionType.SET) {
-                propertiesSet = propertiesSet || setPropertiesOnResults(searcher.SearchByFileSpec(file), props);
+                propertiesSet = setPropertiesOnResults(searcher.SearchByFileSpec(file), props) || propertiesSet;
             } else {
-                propertiesSet = propertiesSet || deletePropertiesOnResults(searcher.SearchByFileSpec(file), props);
+                propertiesSet = deletePropertiesOnResults(searcher.SearchByFileSpec(file), props) || propertiesSet;
             }
 
         }
@@ -49,7 +49,7 @@ public class EditPropertiesHelper {
         validateSetProperties(props);
         for (AqlSearchResult.SearchEntry result : searchResults) {
             String url = buildEntryUrl(result);
-            log.info(String.format("Setting the properties: \'%s\', on artifact: %s", props, url));
+            log.info(String.format("Setting the properties: '%s', on artifact: %s", props, url));
             client.setProperties(url, props);
             propertiesSet = true;
         }
@@ -62,7 +62,7 @@ public class EditPropertiesHelper {
         log.info("Deleting properties...");
         for (AqlSearchResult.SearchEntry result : searchResults) {
             String url = buildEntryUrl(result);
-            log.info(String.format("Deleting the properties: \'%s\', on artifact: %s", props, url));
+            log.info(String.format("Deleting the properties: '%s', on artifact: %s", props, url));
             client.deleteProperties(url, props);
             propertiesSet = true;
         }
@@ -74,6 +74,7 @@ public class EditPropertiesHelper {
         String path = result.getPath().equals(".") ? "" : result.getPath() + "/";
         return artifactoryEditPropsUrl + result.getRepo() + "/" + path + result.getName();
     }
+
     private void validateSetProperties(String props) throws IOException {
         for (String prop : props.trim().split(";")) {
             if (prop.isEmpty()) {

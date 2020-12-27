@@ -5,8 +5,7 @@
       "exclusions": ["*a1.in"]
     },
     {
-      "pattern": "${LOCAL_REPO}/*3.in",
-      "exclusions": ["*b3.in"]
+      "pattern": "${LOCAL_REPO}/a3.in"
     }
   ]
 }
