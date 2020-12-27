@@ -105,7 +105,7 @@ node('java') {
 
             // If no project is selected - build all of them.
             // This functionality is important in order to allow triggering by SCM.
-            def projectsToBuild = selectedProjects ?: projectsConfig.keySet()
+            def projectsToBuild = (selectedProjects && !selectedProjects.contains('ALL')) ?: projectsConfig.keySet()
             projectsToBuild.each { proj ->
                 stage("Building ${proj}") {
                     def buildConfig = projectsConfig[proj]
