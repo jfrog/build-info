@@ -92,7 +92,7 @@ public class DockerImage implements Serializable {
         String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
         HttpEntity entity = null;
         String downloadUrl = artUrl + manifestPath + "/manifest.json";
-        logger.info("Trying to download  manifest from " + downloadUrl);
+        logger.info("Trying to download manifest from " + downloadUrl);
         try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
             entity = response.getEntity();
             return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
@@ -102,22 +102,23 @@ public class DockerImage implements Serializable {
             }
             EntityUtils.consume(entity);
             downloadUrl = artUrl + manifestPath + "/list.manifest.json";
-            logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
+            logger.info("Fallback for remote/virtual repository. Trying to download fat-manifest from " + downloadUrl);
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
-                logger.info("Fallback for local/virtual repository. Trying to download  manifest from " + downloadUrl);
                 entity = response.getEntity();
                 String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
                 if (digestsFromFatManifest.isEmpty()) {
-                    logger.info("Fallback step, Failed to get image digest from fat manifest");
+                    logger.info("Failed to get image digest from fat manifest");
                     throw e;
                 }
+                logger.info("Found image digest from fat manifest. Trying to download the resulted manifest from path: " + manifestPath);
                 // Remove the tag from the pattern, and place the manifest digest instead.
-                logger.info("Found image digest from fat manifest, trying to download the resulted manifest from path: " + manifestPath);
                 manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
             }
 
             EntityUtils.consume(entity);
-            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/manifest.json")) {
+            downloadUrl = artUrl + manifestPath + "/manifest.json";
+            logger.info("Trying to download manifest from " + downloadUrl);
+            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
                 entity = response.getEntity();
                 pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
                 return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
