@@ -102,13 +102,12 @@ public class DockerImage implements Serializable {
             }
             EntityUtils.consume(entity);
             downloadUrl = artUrl + manifestPath + "/list.manifest.json";
-            logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
+            logger.info("Fallback for remote/virtual repository. Trying to download fat-manifest from " + downloadUrl);
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
-                logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
                 entity = response.getEntity();
                 String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
                 if (digestsFromFatManifest.isEmpty()) {
-                    logger.info("Fallback step, Failed to get image digest from fat manifest");
+                    logger.info("Failed to get image digest from fat manifest");
                     throw e;
                 }
                 // Remove the tag from the pattern, and place the manifest digest instead.
