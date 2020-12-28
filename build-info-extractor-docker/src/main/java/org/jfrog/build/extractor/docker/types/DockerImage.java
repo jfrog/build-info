@@ -112,7 +112,7 @@ public class DockerImage implements Serializable {
                     throw e;
                 }
                 // Remove the tag from the pattern, and place the manifest digest instead.
-                logger.info("Found image digest from fat manifest, trying to download the resulted manifest from path: "+manifestPath);
+                logger.info("Found image digest from fat manifest, trying to download the resulted manifest from path: " + manifestPath);
                 manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
             }
 
@@ -280,16 +280,16 @@ public class DockerImage implements Serializable {
         // Try to get manifest, assuming reverse proxy
         String ImagePath = DockerUtils.getImagePath(imageTag);
         ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));
-        logger.info("Searching manifest for image \""+imageTag+"\" in \""+dependenciesClient.getArtifactoryUrl()+"\" under \"" +targetRepo +  "\" repository");
+        logger.info("Searching manifest for image \"" + imageTag + "\" in \"" + dependenciesClient.getArtifactoryUrl() + "\" under \"" + targetRepo + "\" repository");
         int listLen = manifestPathCandidate.size();
         for (int i = 0; i < listLen; i++) {
             try {
                 logger.info("Searching manifest in path: " + manifestPathCandidate.get(i));
-                checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient,logger);
+                checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient, logger);
                 return;
             } catch (IOException e) {
                 // Throw the exception only if we reached the end of the loop, which means we tried all options.
-                logger.info("The search failed with \""+ e.getMessage()+"\".");
+                logger.info("The search failed with \"" + e.getMessage() + "\".");
                 if (i == listLen - 1) {
                     throw e;
                 }
