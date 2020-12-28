@@ -87,7 +87,7 @@ public class DockerImage implements Serializable {
      * @return A pair of (manifest content, path to manifest).
      * @throws IOException fail to search for manifest json in manifestPath.
      */
-    private Pair<String, String> getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath) throws IOException {
+    private Pair<String, String> getManifestFromArtifactory(ArtifactoryDependenciesClient dependenciesClient, String manifestPath, Log logger) throws IOException {
         String artUrl = dependenciesClient.getArtifactoryUrl() + "/";
         String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
         HttpEntity entity = null;
@@ -101,7 +101,7 @@ public class DockerImage implements Serializable {
                 throw e;
             }
             EntityUtils.consume(entity);
-            String downloadUrl = artUrl + manifestPath + "/list.manifest.json";
+            downloadUrl = artUrl + manifestPath + "/list.manifest.json";
             logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
                 logger.info("Fallback for local/virtual repository. Trying to download  manifest from " + downloadUrl);
