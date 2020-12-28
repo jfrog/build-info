@@ -101,12 +101,14 @@ public class DockerImage implements Serializable {
                 throw e;
             }
             EntityUtils.consume(entity);
-            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(artUrl + manifestPath + "/list.manifest.json")) {
+            String downloadUrl = artUrl + manifestPath + "/list.manifest.json";
+            logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
+            try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
                 logger.info("Fallback for local/virtual repository. Trying to download  manifest from " + downloadUrl);
                 entity = response.getEntity();
                 String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
                 if (digestsFromFatManifest.isEmpty()) {
-                    logger.info("Fallback step, Failed to get image digest from fat manifest" );
+                    logger.info("Fallback step, Failed to get image digest from fat manifest");
                     throw e;
                 }
                 // Remove the tag from the pattern, and place the manifest digest instead.
@@ -278,16 +280,16 @@ public class DockerImage implements Serializable {
         // Try to get manifest, assuming reverse proxy
         String ImagePath = DockerUtils.getImagePath(imageTag);
         ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));
-        logger.info("Search manifest for image \""+imageTag+"\" in \""+dependenciesClient.getArtifactoryUrl()+"\" under \"" +targetRepo +  "\" repository");
+        logger.info("Searching manifest for image \""+imageTag+"\" in \""+dependenciesClient.getArtifactoryUrl()+"\" under \"" +targetRepo +  "\" repository");
         int listLen = manifestPathCandidate.size();
         for (int i = 0; i < listLen; i++) {
             try {
-                logger.info("Searching manifest in " + manifestPathCandidate.get(i)+" path.");
+                logger.info("Searching manifest in path: " + manifestPathCandidate.get(i));
                 checkAndSetManifestAndImagePathCandidates(manifestPathCandidate.get(i), dependenciesClient,logger);
                 return;
             } catch (IOException e) {
                 // Throw the exception only if we reached the end of the loop, which means we tried all options.
-                logger.info("The search failed for \""+ e.getMessage()+"\".");
+                logger.info("The search failed with \""+ e.getMessage()+"\".");
                 if (i == listLen - 1) {
                     throw e;
                 }
