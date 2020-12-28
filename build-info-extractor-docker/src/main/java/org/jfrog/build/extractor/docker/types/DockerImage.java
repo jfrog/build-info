@@ -92,7 +92,7 @@ public class DockerImage implements Serializable {
         String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
         HttpEntity entity = null;
         String downloadUrl = artUrl + manifestPath + "/manifest.json";
-        logger.info("Trying to download  manifest from " + downloadUrl);
+        logger.info("Trying to download manifest from " + downloadUrl);
         try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
             entity = response.getEntity();
             return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
@@ -104,7 +104,7 @@ public class DockerImage implements Serializable {
             downloadUrl = artUrl + manifestPath + "/list.manifest.json";
             logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
-                logger.info("Fallback for local/virtual repository. Trying to download  manifest from " + downloadUrl);
+                logger.info("Fallback for local/virtual repository. Trying to download manifest from " + downloadUrl);
                 entity = response.getEntity();
                 String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(entityToString(response.getEntity()), os, architecture);
                 if (digestsFromFatManifest.isEmpty()) {
@@ -112,7 +112,7 @@ public class DockerImage implements Serializable {
                     throw e;
                 }
                 // Remove the tag from the pattern, and place the manifest digest instead.
-                logger.info("Found image digest from fat manifest, trying to download the resulted manifest from path: " + manifestPath);
+                logger.info("Found image digest from fat manifest. Trying to download the resulted manifest from path: " + manifestPath);
                 manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
             }
 
