@@ -82,7 +82,7 @@ node('java') {
     env.JAVA_HOME = jdktool
 
     // Get selected projects to build or release.
-    def selectedProjects = getSelectedProjects(BUILD_PROJECTS)
+    def selectedProjects = getSelectedProjects(BUILD_PROJECTS, projectsConfig)
 
     // Set gradle configurations.
     def deployServer = Artifactory.server 'oss.jfrog.org'
@@ -105,7 +105,7 @@ node('java') {
 
             // If no project is selected - build all of them.
             // This functionality is important in order to allow triggering by SCM.
-            def projectsToBuild = (selectedProjects && !selectedProjects.contains('ALL')) ?: projectsConfig.keySet()
+            def projectsToBuild = selectedProjects ?: projectsConfig.keySet()
             projectsToBuild.each { proj ->
                 stage("Building ${proj}") {
                     def buildConfig = projectsConfig[proj]
@@ -127,7 +127,7 @@ node('java') {
             bumpVersion(selectedProjects, projectsConfig, latestReleaseVersion, 'releaseVersion')
 
             sh 'git config user.name "${GITHUB_USERNAME}"'
-            sh 'git config user.email "eyalb@jfrog.com"'
+            sh 'git config user.email "eco-system@jfrog.com"'
 
             sh 'git commit -am "[artifactory-release] Release version"'
             wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
@@ -163,10 +163,13 @@ node('java') {
     }
 }
 
-def getSelectedProjects(projects) {
+def getSelectedProjects(projects, projectsConfig) {
     def buildProjArr
     if (projects?.trim()) {
-        buildProjArr = "$BUILD_PROJECTS".split(',') as String[]
+        buildProjArr = projects.split(',') as String[]
+        if (buildProjArr.contains('ALL')) {
+            buildProjArr = projectsConfig.keySet()
+        }
         return buildProjArr.toList()
     }
 }
