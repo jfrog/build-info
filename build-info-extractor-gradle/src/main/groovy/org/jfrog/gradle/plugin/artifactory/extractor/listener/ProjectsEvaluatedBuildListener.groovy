@@ -11,6 +11,7 @@ import org.gradle.api.artifacts.repositories.IvyArtifactRepository
 import org.gradle.api.component.SoftwareComponent
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.publish.Publication
+import org.gradle.api.publish.PublicationContainer
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.ivy.IvyPublication
 import org.gradle.api.publish.ivy.plugins.IvyPublishPlugin
@@ -131,8 +132,16 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      * @param publicationsNames - Publications names separated by commas
      */
     private static void addPublications(ArtifactoryTask artifactoryTask, PublishingExtension publishingExtension, String publicationsNames) {
+        PublicationContainer container = publishingExtension.getPublications();
         for (publicationName in publicationsNames.split(",")) {
-            Publication publication = publishingExtension.getPublications().findByName(publicationName);
+            // If ALL_PUBLICATIONS parameter was provided, add all publications and return.
+            if (publicationName == TaskHelperPublications.ALL_PUBLICATIONS) {
+                for (publication in container) {
+                    artifactoryTask.publications(publication)
+                }
+                return
+            }
+            Publication publication = container.findByName(publicationName);
             artifactoryTask.publications(publication)
         }
     }
