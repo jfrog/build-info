@@ -132,15 +132,22 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      * @param publicationsNames - Publications names separated by commas
      */
     private static void addPublications(ArtifactoryTask artifactoryTask, PublishingExtension publishingExtension, String publicationsNames) {
-        PublicationContainer container = publishingExtension.getPublications();
-        for (publicationName in publicationsNames.split(",")) {
-            // If ALL_PUBLICATIONS parameter was provided, add all publications and return.
-            if (publicationName == TaskHelperPublications.ALL_PUBLICATIONS) {
-                for (publication in container) {
-                    artifactoryTask.publications(publication)
-                }
-                return
+        if (StringUtils.isEmpty(publicationsNames)) {
+            return
+        }
+
+        PublicationContainer container = publishingExtension.getPublications()
+        Collection<String> ciPublications = publicationsNames.split(",")
+
+        // If ALL_PUBLICATIONS parameter was provided, add all publications and return.
+        if (ciPublications.contains(TaskHelperPublications.ALL_PUBLICATIONS)) {
+            for (publication in container) {
+                artifactoryTask.publications(publication)
             }
+            return
+        }
+        // Add specified publications.
+        for (publicationName in ciPublications) {
             Publication publication = container.findByName(publicationName);
             artifactoryTask.publications(publication)
         }
