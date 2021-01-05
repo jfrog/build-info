@@ -24,6 +24,7 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.publish.Publication;
 import org.gradle.api.publish.PublicationArtifact;
+import org.gradle.api.publish.PublicationContainer;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.internal.PublicationInternal;
 import org.gradle.api.publish.ivy.IvyArtifact;
@@ -46,7 +47,6 @@ import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import javax.xml.namespace.QName;
 import java.io.File;
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -56,12 +56,13 @@ import java.util.concurrent.Callable;
  * @author Fred Simon
  */
 public class TaskHelperPublications extends TaskHelper {
-    private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
     public static final String MAVEN_JAVA = "mavenJava";
     public static final String IVY_JAVA = "ivyJava";
-    private Set<IvyPublication> ivyPublications = new HashSet<>();
-    private Set<MavenPublication> mavenPublications = new HashSet<>();
-    private Set<Object> publications = new HashSet<>();
+    public static final String ALL_PUBLICATIONS = "ALL_PUBLICATIONS";
+    private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
+    private final Set<IvyPublication> ivyPublications;
+    private final Set<MavenPublication> mavenPublications;
+    private final Set<Object> publications = new HashSet<>();
     private boolean publishPublicationsSpecified;
 
     public TaskHelperPublications(ArtifactoryTask artifactoryTask) {
@@ -71,28 +72,36 @@ public class TaskHelperPublications extends TaskHelper {
     }
 
     public void publications() {
-        if (publications == null || publications.size() == 0) {
+        if (publications.size() == 0) {
             return;
         }
         for (Object publication : publications) {
             if (publication instanceof CharSequence) {
-                Publication publicationObj = getProject().getExtensions()
+                PublicationContainer container = getProject().getExtensions()
                         .getByType(PublishingExtension.class)
-                        .getPublications().findByName(publication.toString());
-
-                if (publicationObj != null) {
-                    addPublication(publicationObj);
+                        .getPublications();
+                if (publication.toString().equals(ALL_PUBLICATIONS)) {
+                    addAllPublications(container);
                 } else {
-                    logPublicationNotFound(publication);
+                    Publication publicationObj = container.findByName(publication.toString());
+                    if (publicationObj != null) {
+                        addPublication(publicationObj);
+                    } else {
+                        logPublicationNotFound(publication);
+                    }
                 }
             } else if (publication instanceof Publication) {
                 addPublication((Publication) publication);
             } else {
                 log.error("Publication type '{}' not supported in task '{}'.",
-                        new Object[]{publication.getClass().getName(), getPath()});
+                        publication.getClass().getName(), getPath());
             }
         }
         publishPublicationsSpecified = true;
+    }
+
+    private void addAllPublications(PublicationContainer container) {
+        container.forEach(this::addPublication);
     }
 
     public void addCollection(Object... publications) {
@@ -167,7 +176,7 @@ public class TaskHelperPublications extends TaskHelper {
         publicationInternal.allPublishableArtifacts(this::dependsOn);
     }
 
-    public void collectDescriptorsAndArtifactsForUpload() throws IOException {
+    public void collectDescriptorsAndArtifactsForUpload() {
         Set<GradleDeployDetails> deployDetailsFromProject = getArtifactDeployDetails();
         artifactoryTask.deployDetails.addAll(deployDetailsFromProject);
     }
