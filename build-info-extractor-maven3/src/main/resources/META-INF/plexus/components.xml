@@ -180,7 +180,8 @@
         <component>
             <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver</role>
             <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver</implementation>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeMetadataResolver
+            </implementation>
             <requirements>
                 <requirement>
                     <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
@@ -296,7 +297,8 @@
         <component>
             <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver</role>
             <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver</implementation>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeArtifactResolver
+            </implementation>
             <requirements>
                 <requirement>
                     <role>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeResolversHelper</role>
@@ -350,7 +352,8 @@
         <component>
             <role>org.eclipse.aether.RepositoryListener</role>
             <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseRepositoryListener</implementation>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseRepositoryListener
+            </implementation>
             <requirements>
                 <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
@@ -397,7 +400,8 @@
         <component>
             <role>org.sonatype.aether.RepositoryListener</role>
             <role-hint>default</role-hint>
-            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeRepositoryListener</implementation>
+            <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactorySonatypeRepositoryListener
+            </implementation>
             <requirements>
                 <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
@@ -446,6 +450,19 @@
                     <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
                     <role-hint>default</role-hint>
                     <field-name>recorder</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <component>
+            <role>org.apache.maven.eventspy.EventSpy</role>
+            <implementation>org.jfrog.build.extractor.maven.DependencyResolutionSpy</implementation>
+            <role-hint>default</role-hint>
+            <isolated-realm>false</isolated-realm>
+            <requirements>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
+                    <role-hint>default</role-hint>
+                    <field-name>buildInfoRecorder</field-name>
                 </requirement>
             </requirements>
         </component>
