@@ -96,7 +96,7 @@ public class BuildScanTableHelper {
 
     private void addElement(Issue issue, InfectedFile infectedFile) {
         // Create table element.
-        Severity severity = Severity.FromString(issue.getSeverity());
+        Severity severity = Severity.fromString(issue.getSeverity());
         BuildScanTableElement buildScanTableElement = new BuildScanTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
                 issue.getType(), issue.getSummary(), issue.getDescription());
 
