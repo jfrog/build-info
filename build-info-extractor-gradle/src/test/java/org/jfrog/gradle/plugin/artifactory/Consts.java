@@ -25,6 +25,7 @@ public class Consts {
     // Projects
     static final Path GRADLE_EXAMPLE = PROJECTS_ROOT.resolve("gradle-example");
     static final Path GRADLE_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-example-publish");
+    static final Path GRADLE_KTS_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-kts-example-publish");
     static final Path GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server");
 
     // CI example paths
