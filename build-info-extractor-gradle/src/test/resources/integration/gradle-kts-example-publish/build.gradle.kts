@@ -64,26 +64,26 @@ configure<org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention> {
     clientConfig.info.addEnvironmentProperty("test.adding.dynVar", java.util.Date().toString())
 
     setContextUrl(System.getenv("BITESTS_ARTIFACTORY_URL"))
-    publish(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.dsl.PublisherConfig> {
-        repository(delegateClosureOf<groovy.lang.GroovyObject> {
-            setProperty("repoKey", System.getenv("BITESTS_ARTIFACTORY_LOCAL_REPO")) // The Artifactory repository key to publish to
-            setProperty("username", System.getenv("BITESTS_ARTIFACTORY_USERNAME")) // The publisher user name
-            setProperty("password", System.getenv("BITESTS_ARTIFACTORY_PASSWORD")) // The publisher password
+    publish {
+        repository {
+            setRepoKey(System.getenv("BITESTS_ARTIFACTORY_LOCAL_REPO")) // The Artifactory repository key to publish to
+            setUsername(System.getenv("BITESTS_ARTIFACTORY_USERNAME")) // The publisher user name
+            setPassword(System.getenv("BITESTS_ARTIFACTORY_PASSWORD")) // The publisher password
             // This is an optional section for configuring Ivy publication (when publishIvy = true).
-            setProperty("ivy", delegateClosureOf<groovy.lang.GroovyObject> {
-                setProperty("ivyLayout", "[organization]/[module]/ivy-[revision].xml")
-                setProperty("artifactLayout", "[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]")
-                setProperty("mavenCompatible", true)
-            })
-        })
+            ivy {
+                setIvyLayout("[organization]/[module]/ivy-[revision].xml")
+                setArtifactLayout("[organization]/[module]/[revision]/[module]-[revision](-[classifier]).[ext]")
+                setMavenCompatible(true)
+            }
+        }
 
-        defaults(delegateClosureOf<org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask> {
+        defaults {
             publications("mavenJava", "ivyJava")
             setPublishArtifacts(true)
             // Properties to be attached to the published artifacts.
             setPublishPom(true) // Publish generated POM files to Artifactory (true by default)
             setPublishIvy(true) // Publish generated Ivy descriptor files to Artifactory (true by default)
-        })
-    })
+        }
+    }
 }
 

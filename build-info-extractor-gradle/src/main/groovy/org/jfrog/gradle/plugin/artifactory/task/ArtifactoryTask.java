@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import groovy.lang.Closure;
 import org.apache.commons.lang.StringUtils;
+import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -207,11 +208,13 @@ public class ArtifactoryTask extends DefaultTask {
                 artifactSpecs.clear();
                 artifactSpecs.addAll(acc.publisher.getArtifactSpecs());
 
-                // Configure the task using the "defaults" closure (delegate to the task)
+                // Configure the task using the "defaults" action (delegate to the task)
                 PublisherConfig config = convention.getPublisherConfig();
                 if (config != null) {
-                    Closure defaultsClosure = config.getDefaultsClosure();
-                    ConfigureUtil.configure(defaultsClosure, this);
+                    Action<ArtifactoryTask> defaultsAction = config.getDefaultsAction();
+                    if (defaultsAction != null) {
+                        defaultsAction.execute(this);
+                    }
                 }
             }
 
@@ -290,9 +293,13 @@ public class ArtifactoryTask extends DefaultTask {
     }
 
     public void properties(Closure closure) {
+        properties(ConfigureUtil.configureUsing(closure));
+    }
+
+    public void properties(Action<PropertiesConfig> propertiesAction) {
         Project project = getProject();
         PropertiesConfig propertiesConfig = new PropertiesConfig(project);
-        ConfigureUtil.configure(closure, propertiesConfig);
+        propertiesAction.execute(propertiesConfig);
         artifactSpecs.clear();
         artifactSpecs.addAll(propertiesConfig.getArtifactSpecs());
     }
