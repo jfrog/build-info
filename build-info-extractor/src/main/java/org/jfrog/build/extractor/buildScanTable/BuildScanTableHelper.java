@@ -109,7 +109,7 @@ public class BuildScanTableHelper {
         table.put(severity, elements);
 
         // Update longest display name if longer.
-        if (infectedFile.getDisplayName().length() > longestDisplayName) {
+        if (infectedFile.getDisplayName() != null && infectedFile.getDisplayName().length() > longestDisplayName) {
             longestDisplayName = infectedFile.getDisplayName().length();
         }
     }
