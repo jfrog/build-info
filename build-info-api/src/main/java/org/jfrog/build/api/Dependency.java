@@ -18,7 +18,8 @@ package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -33,7 +34,13 @@ public class Dependency extends BaseBuildFileBean {
 
     private String id;
     private Set<String> scopes;
-    private List<String> requiredBy;
+
+    /*
+     * ["parentIdA", "a1", "a2",... "moduleId"],
+     * ["parentIdB", "b1", "b2",... "moduleId"],
+     * ["parentIdC", "c1", "c2",... "moduleId"],
+     */
+    private String[][] requiredBy;
 
     /**
      * Returns the ID of the dependency
@@ -72,21 +79,21 @@ public class Dependency extends BaseBuildFileBean {
     }
 
     /**
-     * Returns an ID list of dependencies that directly depend on this dependency. Used for building the module's
-     * transitive dependency graph. Can be left empty if a root dependency.
+     * Returns path-to-root of lists of dependencies that directly depend on this dependency.
+     * Used for building the module's transitive dependency graph. Can be left empty if a root dependency.
      *
-     * @return Required dependency IDs list
+     * @return dependency path-to-root list.
      */
-    public List<String> getRequiredBy() {
+    public String[][] getRequiredBy() {
         return requiredBy;
     }
 
     /**
-     * Sets an ID list of dependencies that directly depend on this dependency.
+     * Sets path-to-root of lists of dependencies that directly depend on this dependency.
      *
-     * @param requiredBy Required dependency IDs list
+     * @param requiredBy dependency path-to-root list
      */
-    public void setRequiredBy(List<String> requiredBy) {
+    public void setRequiredBy(String[][] requiredBy) {
         this.requiredBy = requiredBy;
     }
 
@@ -103,24 +110,17 @@ public class Dependency extends BaseBuildFileBean {
         }
         Dependency that = (Dependency) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
+        if (!Objects.equals(id, that.id)) {
             return false;
         }
-        if (requiredBy != null ? !requiredBy.equals(that.requiredBy) : that.requiredBy != null) {
+        if (!Objects.equals(scopes, that.scopes)) {
             return false;
         }
-        if (scopes != null ? !scopes.equals(that.scopes) : that.scopes != null) {
-            return false;
-        }
-        return true;
+        return Arrays.deepEquals(requiredBy, that.requiredBy);
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (id != null ? id.hashCode() : 0);
-        result = 31 * result + (scopes != null ? scopes.hashCode() : 0);
-        result = 31 * result + (requiredBy != null ? requiredBy.hashCode() : 0);
-        return result;
+        return Objects.hash(id, scopes, Arrays.deepHashCode(requiredBy));
     }
 }

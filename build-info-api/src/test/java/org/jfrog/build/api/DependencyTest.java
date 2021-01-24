@@ -20,7 +20,9 @@ import org.jfrog.build.api.util.CommonUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Properties;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -58,7 +60,7 @@ public class DependencyTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        List<String> requiredBy = Collections.singletonList("pitzi");
+        String[][] requiredBy = new String[][]{{"pitzi"}};
 
         Dependency dependency = new Dependency();
         dependency.setId(id);
@@ -88,7 +90,7 @@ public class DependencyTest {
         dependency1.setSha1("111");
         dependency1.setSha256("11111");
         dependency1.setMd5("1111");
-        dependency1.setRequiredBy(Collections.singletonList("11111"));
+        dependency1.setRequiredBy(new String[][]{{"11111"}});
         dependency1.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency1.setProperties(properties);
 
@@ -98,7 +100,7 @@ public class DependencyTest {
         dependency2.setSha1("111");
         dependency2.setSha256("11111");
         dependency2.setMd5("1111");
-        dependency2.setRequiredBy(Collections.singletonList("11111"));
+        dependency2.setRequiredBy(new String[][]{{"11111"}});
         dependency2.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency2.setProperties(properties);
 
@@ -108,12 +110,12 @@ public class DependencyTest {
         dependency3.setSha1("333");
         dependency3.setSha256("33333");
         dependency3.setMd5("3333");
-        dependency3.setRequiredBy(Collections.singletonList("33333"));
+        dependency3.setRequiredBy(new String[][]{{"33333"}});
         dependency3.setScopes(CommonUtils.newHashSet("333333", "3333333"));
         dependency3.setProperties(properties);
 
         Assert.assertEquals(dependency1, dependency2, "Expected equals == true for equivalent artifacts");
-        Assert.assertTrue(!dependency1.equals(dependency3), "Expected equals == false for non-equivalent artifacts");
+        Assert.assertNotEquals(dependency3, dependency1, "Expected equals == false for non-equivalent artifacts");
 
         HashMap<Dependency, String> testMap = new HashMap<>();
         testMap.put(dependency1, "1");

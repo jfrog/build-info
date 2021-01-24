@@ -18,7 +18,10 @@ package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Dependency;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * A builder for the dependency class
@@ -35,7 +38,7 @@ public class DependencyBuilder {
     private String md5;
     private String localPath;
     private String remotePath;
-    private List<String> requiredBy;
+    private String[][] requiredBy;
     private Properties properties;
 
     /**
@@ -161,12 +164,12 @@ public class DependencyBuilder {
     }
 
     /**
-     * Sets an ID list of other dependencies required by this one
+     * Sets path-to-root of lists of dependencies that directly depend on this dependency.
      *
-     * @param requiredBy Required dependency IDs list
+     * @param requiredBy dependency path-to-root list
      * @return Builder instance
      */
-    public DependencyBuilder requiredBy(List<String> requiredBy) {
+    public DependencyBuilder requiredBy(String[][] requiredBy) {
         this.requiredBy = requiredBy;
         return this;
     }
@@ -174,14 +177,16 @@ public class DependencyBuilder {
     /**
      * Adds an ID of another dependency required by this one to the required dependencies list
      *
-     * @param requiredBy Required dependency ID
+     * @param pathToModuleRoot - path from parent dependency to the module ID
      * @return Builder instance
      */
-    public DependencyBuilder addRequiredBy(String requiredBy) {
-        if (this.requiredBy == null) {
-            this.requiredBy = new ArrayList<>();
+    public DependencyBuilder addRequiredBy(String[] pathToModuleRoot) {
+        if (requiredBy == null) {
+            requiredBy = new String[][]{pathToModuleRoot};
+        } else {
+            requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
+            requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
         }
-        this.requiredBy.add(requiredBy);
         return this;
     }
 
