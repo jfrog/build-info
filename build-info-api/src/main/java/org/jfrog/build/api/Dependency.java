@@ -97,6 +97,20 @@ public class Dependency extends BaseBuildFileBean {
         this.requiredBy = requiredBy;
     }
 
+    /**
+     * Adds an ID of another dependency required by this one to the required dependencies list
+     *
+     * @param pathToModuleRoot - path from parent dependency to the module ID
+     */
+    public void addRequiredBy(String[] pathToModuleRoot) {
+        if (requiredBy == null) {
+            requiredBy = new String[][]{pathToModuleRoot};
+            return;
+        }
+        requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
+        requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

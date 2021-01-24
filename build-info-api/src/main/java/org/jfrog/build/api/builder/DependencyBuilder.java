@@ -183,10 +183,10 @@ public class DependencyBuilder {
     public DependencyBuilder addRequiredBy(String[] pathToModuleRoot) {
         if (requiredBy == null) {
             requiredBy = new String[][]{pathToModuleRoot};
-        } else {
-            requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
-            requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
+            return this;
         }
+        requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
+        requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
         return this;
     }
 
