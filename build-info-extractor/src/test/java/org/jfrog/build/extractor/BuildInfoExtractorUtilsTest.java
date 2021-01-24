@@ -21,11 +21,14 @@ import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.Properties;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
@@ -44,6 +47,19 @@ public class BuildInfoExtractorUtilsTest {
     private static final String ENV_POPO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "popo";
     private static final String ENV_MOMO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "momo";
 
+    private File tempFile;
+
+    @BeforeMethod
+    private void setUp() throws IOException {
+        tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toFile();
+    }
+
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    @AfterMethod
+    private void tearDown() {
+        tempFile.delete();
+    }
+
     public void getBuildInfoPropertiesFromSystemProps() {
         System.setProperty(POPO_KEY, "buildname");
         System.setProperty(MOMO_KEY, "1");
@@ -58,14 +74,12 @@ public class BuildInfoExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
-        File propsFile = new File("tempPropFile");
-        assertTrue(propsFile.createNewFile());
         Properties props = new Properties();
         props.put(POPO_KEY, "buildname");
         props.put(MOMO_KEY, "1");
-        props.store(new FileOutputStream(propsFile), "");
+        props.store(new FileOutputStream(tempFile), "");
 
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.getAbsolutePath());
 
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties()),
@@ -75,21 +89,16 @@ public class BuildInfoExtractorUtilsTest {
         assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
 
-        assertTrue(propsFile.delete());
-
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
     }
 
     public void getBuildInfoProperties() throws IOException {
-        // create a property file
-        File propsFile = new File("tempPropFile");
-        assertTrue(propsFile.createNewFile());
         Properties props = new Properties();
         props.put(POPO_KEY, "buildname");
         props.put(MOMO_KEY, "1");
-        props.store(new FileOutputStream(propsFile), "");
+        props.store(new FileOutputStream(tempFile), "");
 
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.getAbsolutePath());
 
         // Put system properties
         String kokoKey = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "koko";
@@ -107,40 +116,34 @@ public class BuildInfoExtractorUtilsTest {
         assertEquals(buildInfoProperties.getProperty(kokoKey), "parent", "koko parent name property does not match");
         assertEquals(buildInfoProperties.getProperty(gogoKey), "2", "gogo parent number property does not match");
 
-        assertTrue(propsFile.delete());
+        assertTrue(tempFile.delete());
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         System.clearProperty(kokoKey);
         System.clearProperty(gogoKey);
     }
 
     public void getEnvPropertiesFromFile() throws IOException {
-        File propsFile = new File("tempPropFile");
-        assertTrue(propsFile.createNewFile());
         Properties props = new Properties();
         props.put(ENV_POPO_KEY, "buildname");
         props.put(ENV_MOMO_KEY, "1");
-        props.store(new FileOutputStream(propsFile), "");
+        props.store(new FileOutputStream(tempFile), "");
 
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.getAbsolutePath());
 
         Properties fileProps = getEnvProperties(new Properties(), null);
         assertEquals(fileProps.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(ENV_MOMO_KEY), "1", "momo property does not match");
 
-        assertTrue(propsFile.delete());
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
     }
 
     public void getEnvAndSysPropertiesFromFile() throws IOException {
-        // create a property file
-        File propsFile = new File("tempPropFile");
-        assertTrue(propsFile.createNewFile());
         Properties props = new Properties();
         props.put(ENV_POPO_KEY, "buildname");
         props.put(ENV_MOMO_KEY, "1");
-        props.store(new FileOutputStream(propsFile), "");
+        props.store(new FileOutputStream(tempFile), "");
 
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, propsFile.getAbsolutePath());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.getAbsolutePath());
 
         // Put system properties
         String kokoKey = "koko";
@@ -154,7 +157,6 @@ public class BuildInfoExtractorUtilsTest {
         assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
         assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
 
-        assertTrue(propsFile.delete());
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         System.clearProperty(kokoKey);
         System.clearProperty(gogoKey);
