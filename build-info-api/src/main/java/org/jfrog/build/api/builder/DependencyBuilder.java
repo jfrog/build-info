@@ -16,9 +16,12 @@
 
 package org.jfrog.build.api.builder;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.Dependency;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * A builder for the dependency class
@@ -35,7 +38,7 @@ public class DependencyBuilder {
     private String md5;
     private String localPath;
     private String remotePath;
-    private List<String> requiredBy;
+    private String[][] requiredBy;
     private Properties properties;
 
     /**
@@ -161,27 +164,24 @@ public class DependencyBuilder {
     }
 
     /**
-     * Sets an ID list of other dependencies required by this one
+     * Sets path-to-root dependency lists that directly depend on this dependency.
      *
-     * @param requiredBy Required dependency IDs list
+     * @param requiredBy dependency path-to-root lists
      * @return Builder instance
      */
-    public DependencyBuilder requiredBy(List<String> requiredBy) {
+    public DependencyBuilder requiredBy(String[][] requiredBy) {
         this.requiredBy = requiredBy;
         return this;
     }
 
     /**
-     * Adds an ID of another dependency required by this one to the required dependencies list
+     * Adds an ID of another dependency that requires this one to the requiredBy dependencies list.
      *
-     * @param requiredBy Required dependency ID
+     * @param pathToModuleRoot - path from parent dependency to the module ID, modules separated
      * @return Builder instance
      */
-    public DependencyBuilder addRequiredBy(String requiredBy) {
-        if (this.requiredBy == null) {
-            this.requiredBy = new ArrayList<>();
-        }
-        this.requiredBy.add(requiredBy);
+    public DependencyBuilder addRequiredBy(String[] pathToModuleRoot) {
+        this.requiredBy = (String[][]) ArrayUtils.add(requiredBy, pathToModuleRoot);
         return this;
     }
 

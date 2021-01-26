@@ -16,14 +16,15 @@
 
 package org.jfrog.build.api;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.util.CommonUtils;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Properties;
+import java.util.Set;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
+import static org.testng.Assert.*;
 
 /**
  * Tests the behavior of the dependency class
@@ -58,7 +59,7 @@ public class DependencyTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        List<String> requiredBy = Collections.singletonList("pitzi");
+        String[][] requiredBy = new String[][]{{"pitzi"}};
 
         Dependency dependency = new Dependency();
         dependency.setId(id);
@@ -78,6 +79,33 @@ public class DependencyTest {
         assertEquals(dependency.getRequiredBy(), requiredBy, "Unexpected dependency required by.");
     }
 
+    public void testAddRequiredBy() {
+        // Create a dependency
+        Dependency dependency = new Dependency();
+        assertTrue(ArrayUtils.isEmpty(dependency.getRequiredBy()));
+
+        // Add required by A
+        String[] parentA = new String[]{"a", "b", "c"};
+        dependency.addRequiredBy(parentA);
+        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 1);
+        assertEquals(dependency.getRequiredBy()[0], parentA);
+
+        // Add required by B
+        String[] parentB = new String[]{"b", "c", "d", "e"};
+        dependency.addRequiredBy(parentB);
+        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 2);
+        assertEquals(dependency.getRequiredBy()[0], parentA);
+        assertEquals(dependency.getRequiredBy()[1], parentB);
+
+        // Add required by C
+        String[] parentC = new String[]{"c", "d"};
+        dependency.addRequiredBy(parentC);
+        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 3);
+        assertEquals(dependency.getRequiredBy()[0], parentA);
+        assertEquals(dependency.getRequiredBy()[1], parentB);
+        assertEquals(dependency.getRequiredBy()[2], parentC);
+    }
+
     public void testEqualsAndHash() {
         //Properties are not included in equals\hash
         Properties properties = new Properties();
@@ -88,7 +116,7 @@ public class DependencyTest {
         dependency1.setSha1("111");
         dependency1.setSha256("11111");
         dependency1.setMd5("1111");
-        dependency1.setRequiredBy(Collections.singletonList("11111"));
+        dependency1.setRequiredBy(new String[][]{{"11111"}});
         dependency1.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency1.setProperties(properties);
 
@@ -98,7 +126,7 @@ public class DependencyTest {
         dependency2.setSha1("111");
         dependency2.setSha256("11111");
         dependency2.setMd5("1111");
-        dependency2.setRequiredBy(Collections.singletonList("11111"));
+        dependency2.setRequiredBy(new String[][]{{"11111"}});
         dependency2.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency2.setProperties(properties);
 
@@ -108,21 +136,21 @@ public class DependencyTest {
         dependency3.setSha1("333");
         dependency3.setSha256("33333");
         dependency3.setMd5("3333");
-        dependency3.setRequiredBy(Collections.singletonList("33333"));
+        dependency3.setRequiredBy(new String[][]{{"33333"}});
         dependency3.setScopes(CommonUtils.newHashSet("333333", "3333333"));
         dependency3.setProperties(properties);
 
-        Assert.assertEquals(dependency1, dependency2, "Expected equals == true for equivalent artifacts");
-        Assert.assertTrue(!dependency1.equals(dependency3), "Expected equals == false for non-equivalent artifacts");
+        assertEquals(dependency1, dependency2, "Expected equals == true for equivalent artifacts");
+        assertNotEquals(dependency3, dependency1, "Expected equals == false for non-equivalent artifacts");
 
         HashMap<Dependency, String> testMap = new HashMap<>();
         testMap.put(dependency1, "1");
         testMap.put(dependency2, "2");
-        Assert.assertEquals(testMap.size(), 1, "Expected same hashcode for equal artifacts");
-        Assert.assertEquals(testMap.values().iterator().next(), "2", "Expected insertion of equivalent artifact to" +
+        assertEquals(testMap.size(), 1, "Expected same hashcode for equal artifacts");
+        assertEquals(testMap.values().iterator().next(), "2", "Expected insertion of equivalent artifact to" +
                 " map to replace old one");
 
         testMap.put(dependency3, "3");
-        Assert.assertEquals(testMap.size(), 2, "Expected artifact to not overwrite existing non-equivalent artifact");
+        assertEquals(testMap.size(), 2, "Expected artifact to not overwrite existing non-equivalent artifact");
     }
 }

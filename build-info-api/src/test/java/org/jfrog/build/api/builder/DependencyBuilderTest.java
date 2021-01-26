@@ -16,12 +16,11 @@
 
 package org.jfrog.build.api.builder;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -61,7 +60,7 @@ public class DependencyBuilderTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        List<String> requiredBy = Collections.singletonList("pitzi");
+        String[][] requiredBy = new String[][]{{"pitzi"}};
         Properties properties = new Properties();
 
         Dependency dependency = new DependencyBuilder().id(id).type(type).scopes(scopes).sha1(sha1).md5(md5).sha256(sha256)
@@ -82,18 +81,22 @@ public class DependencyBuilderTest {
      * Validates the dependency values after using the builder add methods
      */
     public void testBuilderAddMethods() {
-        String requiredBy = "requiredMoo";
-        String propertyKey = "key";
-        String propertyValue = "value";
+        String propertyKey = "keyA";
+        String propertyValue = "valueA";
 
-        Dependency dependency = new DependencyBuilder().addRequiredBy(requiredBy).
-                addProperty(propertyKey, propertyValue).build();
-        List<String> requiredByList = dependency.getRequiredBy();
-        assertFalse(requiredByList.isEmpty(), "A dependency requirement should have been added.");
-        assertEquals(requiredByList.iterator().next(), requiredBy, "Unexpected dependency requirement.");
-        assertTrue(dependency.getProperties().containsKey(propertyKey),
-                "A dependency property should have been added.");
-        assertEquals(dependency.getProperties().get(propertyKey), propertyValue,
-                "Unexpected dependency property value.");
+        Dependency dependency = new DependencyBuilder().addProperty(propertyKey, propertyValue).build();
+        assertTrue(dependency.getProperties().containsKey(propertyKey), "A dependency property should have been added.");
+        assertEquals(dependency.getProperties().get(propertyKey), propertyValue, "Unexpected dependency property value.");
+    }
+
+    public void testBuilderAddRequiredBy() {
+        String[] requiredByA = {"A", "to", "module", "root", "moduleID"};
+        String[] requiredByB = {"B", "C", "to", "module", "root", "moduleID"};
+
+        Dependency dependency = new DependencyBuilder().addRequiredBy(requiredByA).addRequiredBy(requiredByB).build();
+        String[][] requiredByList = dependency.getRequiredBy();
+        assertEquals(ArrayUtils.getLength(requiredByList), 2);
+        assertEquals(requiredByList[0], requiredByA, "Unexpected dependency requirement.");
+        assertEquals(requiredByList[1], requiredByB, "Unexpected dependency requirement.");
     }
 }
