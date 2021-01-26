@@ -16,9 +16,9 @@
 
 package org.jfrog.build.api.builder;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.Dependency;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
@@ -164,9 +164,9 @@ public class DependencyBuilder {
     }
 
     /**
-     * Sets path-to-root of lists of dependencies that directly depend on this dependency.
+     * Sets path-to-root dependency lists that directly depend on this dependency.
      *
-     * @param requiredBy dependency path-to-root list
+     * @param requiredBy dependency path-to-root lists
      * @return Builder instance
      */
     public DependencyBuilder requiredBy(String[][] requiredBy) {
@@ -175,18 +175,13 @@ public class DependencyBuilder {
     }
 
     /**
-     * Adds an ID of another dependency required by this one to the required dependencies list
+     * Adds an ID of another dependency that requires this one to the requiredBy dependencies list.
      *
-     * @param pathToModuleRoot - path from parent dependency to the module ID
+     * @param pathToModuleRoot - path from parent dependency to the module ID, modules separated
      * @return Builder instance
      */
     public DependencyBuilder addRequiredBy(String[] pathToModuleRoot) {
-        if (requiredBy == null) {
-            requiredBy = new String[][]{pathToModuleRoot};
-            return this;
-        }
-        requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
-        requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
+        this.requiredBy = (String[][]) ArrayUtils.add(requiredBy, pathToModuleRoot);
         return this;
     }
 

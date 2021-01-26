@@ -91,14 +91,14 @@ public class DependencyTest {
         assertEquals(dependency.getRequiredBy()[0], parentA);
 
         // Add required by B
-        String[] parentB = new String[]{"b", "c", "d"};
+        String[] parentB = new String[]{"b", "c", "d", "e"};
         dependency.addRequiredBy(parentB);
         assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 2);
         assertEquals(dependency.getRequiredBy()[0], parentA);
         assertEquals(dependency.getRequiredBy()[1], parentB);
 
         // Add required by C
-        String[] parentC = new String[]{"c", "d", "e"};
+        String[] parentC = new String[]{"c", "d"};
         dependency.addRequiredBy(parentC);
         assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 3);
         assertEquals(dependency.getRequiredBy()[0], parentA);

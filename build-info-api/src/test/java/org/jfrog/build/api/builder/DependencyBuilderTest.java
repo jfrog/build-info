@@ -91,7 +91,7 @@ public class DependencyBuilderTest {
 
     public void testBuilderAddRequiredBy() {
         String[] requiredByA = {"A", "to", "module", "root", "moduleID"};
-        String[] requiredByB = {"B", "to", "module", "root", "moduleID"};
+        String[] requiredByB = {"B", "C", "to", "module", "root", "moduleID"};
 
         Dependency dependency = new DependencyBuilder().addRequiredBy(requiredByA).addRequiredBy(requiredByB).build();
         String[][] requiredByList = dependency.getRequiredBy();

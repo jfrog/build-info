@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.ArrayUtils;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -36,9 +37,10 @@ public class Dependency extends BaseBuildFileBean {
     private Set<String> scopes;
 
     /*
-     * ["parentIdA", "a1", "a2",... "moduleId"],
+     * [["parentIdA", "a1", "a2",... "moduleId"],
      * ["parentIdB", "b1", "b2",... "moduleId"],
      * ["parentIdC", "c1", "c2",... "moduleId"],
+     * ...]
      */
     private String[][] requiredBy;
 
@@ -79,36 +81,31 @@ public class Dependency extends BaseBuildFileBean {
     }
 
     /**
-     * Returns path-to-root of lists of dependencies that directly depend on this dependency.
+     * Returns path-to-root dependency lists that directly depend on this dependency.
      * Used for building the module's transitive dependency graph. Can be left empty if a root dependency.
      *
-     * @return dependency path-to-root list.
+     * @return dependency path-to-root lists.
      */
     public String[][] getRequiredBy() {
         return requiredBy;
     }
 
     /**
-     * Sets path-to-root of lists of dependencies that directly depend on this dependency.
+     * Sets path-to-root dependency lists that directly depend on this dependency.
      *
-     * @param requiredBy dependency path-to-root list
+     * @param requiredBy dependency path-to-root lists
      */
     public void setRequiredBy(String[][] requiredBy) {
         this.requiredBy = requiredBy;
     }
 
     /**
-     * Adds an ID of another dependency required by this one to the required dependencies list
+     * Adds an ID of another dependency required by this one to the required dependencies list.
      *
-     * @param pathToModuleRoot - path from parent dependency to the module ID
+     * @param pathToModuleRoot - path from parent dependency to the module ID, modules separated
      */
     public void addRequiredBy(String[] pathToModuleRoot) {
-        if (requiredBy == null) {
-            requiredBy = new String[][]{pathToModuleRoot};
-            return;
-        }
-        requiredBy = Arrays.copyOf(requiredBy, requiredBy.length + 1);
-        requiredBy[requiredBy.length - 1] = Arrays.copyOf(pathToModuleRoot, pathToModuleRoot.length);
+        this.requiredBy = (String[][]) ArrayUtils.add(requiredBy, pathToModuleRoot);
     }
 
     @Override
