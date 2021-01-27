@@ -26,11 +26,7 @@ import org.testng.annotations.Test;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 import static org.testng.Assert.*;
 
@@ -79,9 +75,7 @@ public class BuildTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        List<Vcs> vcsList = Arrays.asList(
-                new Vcs(url, "2421")
-        );
+        List<Vcs> vcsList = Collections.singletonList(new Vcs(url, "2421", "main"));
 
         List<Module> modules = new ArrayList<>();
         List<PromotionStatus> statuses = new ArrayList<>();
