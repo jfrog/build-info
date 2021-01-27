@@ -10,6 +10,7 @@ import java.util.Objects;
 @XStreamAlias(BuildInfoFields.VCS)
 public class Vcs implements Serializable {
     private String revision = "";
+    private String branch = "";
     private String url = "";
 
     public Vcs() {
@@ -20,12 +21,25 @@ public class Vcs implements Serializable {
         this.setRevision(vcsRevision);
     }
 
+    public Vcs(String vcsUrl, String vcsRevision, String branch) {
+        this(vcsUrl, vcsRevision);
+        this.branch = branch;
+    }
+
     public String getRevision() {
         return revision;
     }
 
     public void setRevision(String revision) {
         this.revision = revision;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     public String getUrl() {
@@ -38,7 +52,8 @@ public class Vcs implements Serializable {
 
     @Override
     public String toString() {
-        return "revision= '" + revision + '\'' +
+        return "revision='" + revision + '\'' +
+                ", branch='" + branch + '\'' +
                 ", url='" + url + '\'';
     }
 
@@ -52,18 +67,18 @@ public class Vcs implements Serializable {
         }
 
         Vcs that = (Vcs) o;
-        return Objects.equals(revision, that.revision) && Objects.equals(url, that.url);
+        return Objects.equals(revision, that.revision) &&
+                Objects.equals(branch, that.branch) &&
+                Objects.equals(url, that.url);
     }
 
     @Override
     public int hashCode() {
-        int result = (revision != null ? revision.hashCode() : 0);
-        result = 31 * result + (url != null ? url.hashCode() : 0);
-        return result;
+        return Objects.hash(revision, branch, url);
     }
 
     @JsonIgnore
     public boolean isEmpty() {
-        return StringUtils.isEmpty(this.getRevision()) && StringUtils.isEmpty(this.getUrl());
+        return StringUtils.isEmpty(getRevision()) && StringUtils.isEmpty(getBranch()) && StringUtils.isEmpty(getUrl());
     }
 }
