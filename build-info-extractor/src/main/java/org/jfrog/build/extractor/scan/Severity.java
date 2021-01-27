@@ -47,7 +47,7 @@ public enum Severity {
         return this.ordinal > other.getOrdinal();
     }
 
-    public static Severity FromString(String inputSeverity) {
+    public static Severity fromString(String inputSeverity) {
         for (Severity severity : NEW_SEVERITIES) {
             if (severity.getSeverityName().equals(inputSeverity)) {
                 return severity;

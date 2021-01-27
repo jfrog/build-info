@@ -96,7 +96,7 @@ public class BuildScanTableHelper {
 
     private void addElement(Issue issue, InfectedFile infectedFile) {
         // Create table element.
-        Severity severity = Severity.FromString(issue.getSeverity());
+        Severity severity = Severity.fromString(issue.getSeverity());
         BuildScanTableElement buildScanTableElement = new BuildScanTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
                 issue.getType(), issue.getSummary(), issue.getDescription());
 
@@ -109,7 +109,7 @@ public class BuildScanTableHelper {
         table.put(severity, elements);
 
         // Update longest display name if longer.
-        if (infectedFile.getDisplayName().length() > longestDisplayName) {
+        if (infectedFile.getDisplayName() != null && infectedFile.getDisplayName().length() > longestDisplayName) {
             longestDisplayName = infectedFile.getDisplayName().length();
         }
     }

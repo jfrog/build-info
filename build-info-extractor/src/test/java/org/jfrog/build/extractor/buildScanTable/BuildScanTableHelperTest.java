@@ -33,6 +33,17 @@ public class BuildScanTableHelperTest {
         Assert.assertEquals(logs.get(3).length(), logs.get(4).length());
     }
 
+    @Test
+    public void testPrintTableWithCorruptData() throws IOException, URISyntaxException {
+        TestsAggregationLog log = new TestsAggregationLog();
+        ArtifactoryXrayResponse result = getXrayResultResource();
+
+        // Create some broken data
+        result.getAlerts().get(0).getIssues().get(0).getImpactedArtifacts().get(0).setDisplayName(null);
+
+        tableHelper.PrintTable(result, log);
+    }
+
     private ArtifactoryXrayResponse getXrayResultResource() throws URISyntaxException, IOException {
         File testResourcesPath = new File(this.getClass().getResource(BASE_CONFIG_PATH).toURI()).getCanonicalFile();
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
