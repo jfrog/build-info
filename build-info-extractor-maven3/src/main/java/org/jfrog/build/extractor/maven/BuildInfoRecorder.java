@@ -16,7 +16,6 @@
 
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -89,7 +88,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private final ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<>();
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     // Map dependency GAV to parents GAV set.
-    private Map<String, Set<String>> requirementsMap;
+    private Map<String, String[][]> requirementsMap;
     private volatile boolean projectHasTestFailures;
     private BuildInfoMavenBuilder buildInfoBuilder;
     private ArtifactoryClientConfiguration conf;
@@ -118,7 +117,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         this.conf = conf;
     }
 
-    public void setRequirementsMap(Map<String, Set<String>> requirementsMap) {
+    public void setRequirementsMap(Map<String, String[][]> requirementsMap) {
         this.requirementsMap = requirementsMap;
     }
 
@@ -640,7 +639,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String gav = getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
                     .id(gav)
-                    .requiredBy(new ArrayList<>(requirementsMap.getOrDefault(gav, Sets.newHashSet())))
+                    .requiredBy(requirementsMap.get(gav))
                     .type(getTypeString(dependency.getType(),
                             dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
