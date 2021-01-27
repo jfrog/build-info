@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.npm.types.NpmScope;
 import org.jfrog.build.extractor.scan.DependenciesTree;
@@ -26,7 +27,7 @@ public class NpmDependencyTree {
      */
     public static DependenciesTree createDependenciesTree(JsonNode npmList) {
         DependenciesTree rootNode = new DependenciesTree();
-        populateDependenciesTree(rootNode, npmList.get("dependencies"));
+        populateDependenciesTree(rootNode, npmList.get("dependencies"), new String[]{npmList.get("name").asText() + ":" + npmList.get("version").asText()});
         for (DependenciesTree child : rootNode.getChildren()) {
             NpmPackageInfo packageInfo = (NpmPackageInfo) child.getUserObject();
             child.setScopes(getScopes(packageInfo.getName(), packageInfo.getScope()));
@@ -34,8 +35,8 @@ public class NpmDependencyTree {
         return rootNode;
     }
 
-    private static void populateDependenciesTree(DependenciesTree scanTreeNode, JsonNode dependencies) {
-        if (dependencies == null) {
+    private static void populateDependenciesTree(DependenciesTree scanTreeNode, JsonNode dependencies, String[] pathToRoot) {
+        if (dependencies == null || pathToRoot == null) {
             return;
         }
 
@@ -43,18 +44,18 @@ public class NpmDependencyTree {
             String name = stringJsonNodeEntry.getKey();
             JsonNode versionNode = stringJsonNodeEntry.getValue().get("version");
             if (versionNode != null) {
-                addSubtree(stringJsonNodeEntry, scanTreeNode, name, versionNode.asText()); // Mutual recursive call
+                addSubtree(stringJsonNodeEntry, scanTreeNode, name, versionNode.asText(), pathToRoot); // Mutual recursive call
             }
         });
     }
 
-    private static void addSubtree(Map.Entry<String, JsonNode> stringJsonNodeEntry, DependenciesTree node, String name, String version) {
+    private static void addSubtree(Map.Entry<String, JsonNode> stringJsonNodeEntry, DependenciesTree node, String name, String version, String[] pathToRoot) {
         JsonNode jsonNode = stringJsonNodeEntry.getValue();
         String devScope = (isDev(jsonNode) ? NpmScope.DEVELOPMENT : NpmScope.PRODUCTION).toString();
-        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, devScope);
+        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, devScope, pathToRoot);
         JsonNode childDependencies = jsonNode.get("dependencies");
         DependenciesTree childTreeNode = new DependenciesTree(npmPackageInfo);
-        populateDependenciesTree(childTreeNode, childDependencies); // Mutual recursive call
+        populateDependenciesTree(childTreeNode, childDependencies, ArrayUtils.insert(0, pathToRoot, npmPackageInfo.toString())); // Mutual recursive call
         node.add(childTreeNode);
     }
 

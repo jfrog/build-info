@@ -27,7 +27,7 @@ public class NpmPackageInfoTest {
 
     @Test(dataProvider = "moduleNamesProvider")
     public void testModuleNames(String scope, String name, String version, String expectedModuleId, String expectedPackedFileName, String expectedDeployPath) {
-        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, scope);
+        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, scope, null);
         assertEquals(npmPackageInfo.getModuleId(), expectedModuleId);
         assertEquals(npmPackageInfo.getExpectedPackedFileName(), expectedPackedFileName);
         assertEquals(npmPackageInfo.getDeployPath(), expectedDeployPath);
@@ -47,7 +47,7 @@ public class NpmPackageInfoTest {
 
     @Test(dataProvider = "removeVersionPrefixesProvider")
     public void testRemoveVersionPrefixes(String version, String expectedVersion) {
-        NpmPackageInfo npmPackageInfo = new NpmPackageInfo("", version, "");
+        NpmPackageInfo npmPackageInfo = new NpmPackageInfo("", version, "", null);
         npmPackageInfo.removeVersionPrefixes();
         assertEquals(npmPackageInfo.getVersion(), expectedVersion);
     }
@@ -68,7 +68,7 @@ public class NpmPackageInfoTest {
 
     @Test(dataProvider = "splitScopeFromNameProvider")
     public void testSplitScopeFromName(String scope, String name, String expectedScope, String expectedName) {
-        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, "", scope);
+        NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, "", scope, null);
         npmPackageInfo.splitScopeFromName();
         assertEquals(npmPackageInfo.getScope(), expectedScope);
         assertEquals(npmPackageInfo.getName(), expectedName);
@@ -91,13 +91,36 @@ public class NpmPackageInfoTest {
     @Test(dataProvider = "readPackageInfoProvider")
     public void readPackageInfoTest(String name, String version, String expectedScope, String expectedName, String expectedVersion) {
         ObjectMapper objectMapper = new ObjectMapper();
-        NpmPackageInfo inputPackageInfo = new NpmPackageInfo(name, version, "");
+        NpmPackageInfo inputPackageInfo = new NpmPackageInfo(name, version, "", null);
         try (InputStream is = new ByteArrayInputStream(objectMapper.writeValueAsBytes(inputPackageInfo))) {
             NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
             npmPackageInfo.readPackageInfo(is);
             assertEquals(npmPackageInfo.getScope(), expectedScope);
             assertEquals(npmPackageInfo.getName(), expectedName);
             assertEquals(npmPackageInfo.getVersion(), expectedVersion);
+        } catch (IOException e) {
+            fail(ExceptionUtils.getRootCauseMessage(e), e);
+        }
+    }
+
+    @DataProvider
+    private Object[][] readPackageInfoPathToRootProvider() {
+        return new Object[][]{
+                // name | version | pathToRoot
+                {"debug", "2.6.9", new String[]{"send:0.16.2", "npm-example:0.0.3"}},
+                {"debug", "4.3.1", new String[]{"npm-example:0.0.3"}},
+        };
+    }
+
+    @Test(dataProvider = "readPackageInfoPathToRootProvider")
+    public void readPackageInfoPathToRoot(String name, String version, String[] pathToRoot) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        NpmPackageInfo inputPackageInfo = new NpmPackageInfo(name, version, "", pathToRoot);
+        try (InputStream is = new ByteArrayInputStream(objectMapper.writeValueAsBytes(inputPackageInfo))) {
+            NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
+            npmPackageInfo.readPackageInfo(is);
+            assertEquals(npmPackageInfo.getPathToRoot(), pathToRoot);
+            assertEquals(npmPackageInfo.getName(), name);
         } catch (IOException e) {
             fail(ExceptionUtils.getRootCauseMessage(e), e);
         }
