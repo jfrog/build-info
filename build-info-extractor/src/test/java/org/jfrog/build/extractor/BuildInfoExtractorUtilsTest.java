@@ -206,9 +206,9 @@ public class BuildInfoExtractorUtilsTest {
     }
 
     public void testBuildToJson() throws IOException {
-        String[] requiredByA = new String[]{"parentA", "b", "moduleId"};
-        String[] requiredByB = new String[]{"parentB", "d", "moduleId"};
-        Dependency dependencyA = new DependencyBuilder().id("depA").addRequiredBy(requiredByA).addRequiredBy(requiredByB).build();
+        String[] requestedByA = new String[]{"parentA", "b", "moduleId"};
+        String[] requestedByB = new String[]{"parentB", "d", "moduleId"};
+        Dependency dependencyA = new DependencyBuilder().id("depA").addRequestedBy(requestedByA).addRequestedBy(requestedByB).build();
         Module module = new ModuleBuilder().id("moduleId").addDependency(dependencyA).build();
         Build build = new BuildInfoBuilder("buildId").number("12").started("34").addModule(module).build();
 
@@ -229,10 +229,10 @@ public class BuildInfoExtractorUtilsTest {
         Dependency actualDependency = actualModule.getDependencies().get(0);
         assertEquals(actualDependency.getId(), dependencyA.getId());
 
-        // Check requiredBy
-        String[][] requiredBy = actualDependency.getRequiredBy();
-        assertEquals(ArrayUtils.getLength(requiredBy), 2);
-        assertEquals(requiredBy[0], requiredByA);
-        assertEquals(requiredBy[1], requiredByB);
+        // Check requestedBy
+        String[][] requestedBy = actualDependency.getRequestedBy();
+        assertEquals(ArrayUtils.getLength(requestedBy), 2);
+        assertEquals(requestedBy[0], requestedByA);
+        assertEquals(requestedBy[1], requestedByB);
     }
 }
