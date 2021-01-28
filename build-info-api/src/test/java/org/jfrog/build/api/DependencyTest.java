@@ -46,7 +46,7 @@ public class DependencyTest {
         assertNull(dependency.getSha1(), "Dependency SHA1 checksum should have not been initialized.");
         assertNull(dependency.getSha256(), "Dependency SHA256 checksum should have not been initialized.");
         assertNull(dependency.getMd5(), "Dependency MD5 checksum should have not been initialized.");
-        assertNull(dependency.getRequiredBy(), "Dependency required by should have not been initialized.");
+        assertNull(dependency.getRequestedBy(), "Dependency requested by should have not been initialized.");
     }
 
     /**
@@ -59,7 +59,7 @@ public class DependencyTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        String[][] requiredBy = new String[][]{{"pitzi"}};
+        String[][] requestedBy = new String[][]{{"pitzi"}};
 
         Dependency dependency = new Dependency();
         dependency.setId(id);
@@ -68,7 +68,7 @@ public class DependencyTest {
         dependency.setSha1(sha1);
         dependency.setSha256(sha256);
         dependency.setMd5(md5);
-        dependency.setRequiredBy(requiredBy);
+        dependency.setRequestedBy(requestedBy);
 
         assertEquals(dependency.getId(), id, "Unexpected dependency ID.");
         assertEquals(dependency.getType(), type, "Unexpected dependency type.");
@@ -76,34 +76,34 @@ public class DependencyTest {
         assertEquals(dependency.getSha256(), sha256, "Unexpected dependency SHA256 checksum.");
         assertEquals(dependency.getMd5(), md5, "Unexpected dependency MD5 checksum.");
         assertEquals(dependency.getScopes(), scopes, "Unexpected dependency scopes.");
-        assertEquals(dependency.getRequiredBy(), requiredBy, "Unexpected dependency required by.");
+        assertEquals(dependency.getRequestedBy(), requestedBy, "Unexpected dependency requested by.");
     }
 
-    public void testAddRequiredBy() {
+    public void testAddRequestedBy() {
         // Create a dependency
         Dependency dependency = new Dependency();
-        assertTrue(ArrayUtils.isEmpty(dependency.getRequiredBy()));
+        assertTrue(ArrayUtils.isEmpty(dependency.getRequestedBy()));
 
-        // Add required by A
+        // Add requested by A
         String[] parentA = new String[]{"a", "b", "c"};
-        dependency.addRequiredBy(parentA);
-        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 1);
-        assertEquals(dependency.getRequiredBy()[0], parentA);
+        dependency.addRequestedBy(parentA);
+        assertEquals(ArrayUtils.getLength(dependency.getRequestedBy()), 1);
+        assertEquals(dependency.getRequestedBy()[0], parentA);
 
-        // Add required by B
+        // Add requested by B
         String[] parentB = new String[]{"b", "c", "d", "e"};
-        dependency.addRequiredBy(parentB);
-        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 2);
-        assertEquals(dependency.getRequiredBy()[0], parentA);
-        assertEquals(dependency.getRequiredBy()[1], parentB);
+        dependency.addRequestedBy(parentB);
+        assertEquals(ArrayUtils.getLength(dependency.getRequestedBy()), 2);
+        assertEquals(dependency.getRequestedBy()[0], parentA);
+        assertEquals(dependency.getRequestedBy()[1], parentB);
 
-        // Add required by C
+        // Add requested by C
         String[] parentC = new String[]{"c", "d"};
-        dependency.addRequiredBy(parentC);
-        assertEquals(ArrayUtils.getLength(dependency.getRequiredBy()), 3);
-        assertEquals(dependency.getRequiredBy()[0], parentA);
-        assertEquals(dependency.getRequiredBy()[1], parentB);
-        assertEquals(dependency.getRequiredBy()[2], parentC);
+        dependency.addRequestedBy(parentC);
+        assertEquals(ArrayUtils.getLength(dependency.getRequestedBy()), 3);
+        assertEquals(dependency.getRequestedBy()[0], parentA);
+        assertEquals(dependency.getRequestedBy()[1], parentB);
+        assertEquals(dependency.getRequestedBy()[2], parentC);
     }
 
     public void testEqualsAndHash() {
@@ -116,7 +116,7 @@ public class DependencyTest {
         dependency1.setSha1("111");
         dependency1.setSha256("11111");
         dependency1.setMd5("1111");
-        dependency1.setRequiredBy(new String[][]{{"11111"}});
+        dependency1.setRequestedBy(new String[][]{{"11111"}});
         dependency1.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency1.setProperties(properties);
 
@@ -126,7 +126,7 @@ public class DependencyTest {
         dependency2.setSha1("111");
         dependency2.setSha256("11111");
         dependency2.setMd5("1111");
-        dependency2.setRequiredBy(new String[][]{{"11111"}});
+        dependency2.setRequestedBy(new String[][]{{"11111"}});
         dependency2.setScopes(CommonUtils.newHashSet("1", "11"));
         dependency2.setProperties(properties);
 
@@ -136,7 +136,7 @@ public class DependencyTest {
         dependency3.setSha1("333");
         dependency3.setSha256("33333");
         dependency3.setMd5("3333");
-        dependency3.setRequiredBy(new String[][]{{"33333"}});
+        dependency3.setRequestedBy(new String[][]{{"33333"}});
         dependency3.setScopes(CommonUtils.newHashSet("333333", "3333333"));
         dependency3.setProperties(properties);
 

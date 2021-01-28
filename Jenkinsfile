@@ -106,6 +106,15 @@ node('java') {
             // If no project is selected - build all of them.
             // This functionality is important in order to allow triggering by SCM.
             def projectsToBuild = selectedProjects ?: projectsConfig.keySet()
+
+            // Build build-info first
+            if (projectsToBuild.contains("build-info")) {
+                stage("Building build-info") {
+                    def buildConfig = projectsConfig["build-info"]
+                    buildProject(deployServer, rtGradle, buildConfig.buildName, buildConfig.buildTasks)
+                    projectsToBuild -= "build-info"
+                }
+            }
             projectsToBuild.each { proj ->
                 stage("Building ${proj}") {
                     def buildConfig = projectsConfig[proj]
@@ -139,18 +148,13 @@ node('java') {
             rtGradle.resolver server: resolveServer, repo: 'remote-repos'
             rtGradle.deployer.deployIvyDescriptors = false
 
+            // Build build-info first
+            if (selectedProjects.contains("build-info")) {
+                buildAndTag("build-info", deployServer, rtGradle, projectsConfig)
+                selectedProjects -= "build-info"
+            }
             selectedProjects.each { proj ->
-                stage ("Building ${proj}") {
-                    // Build project.
-                    def buildConfig = projectsConfig[proj]
-                    buildProject(deployServer, rtGradle, buildConfig.buildName, buildConfig.releaseTasks)
-                    // Create tag.
-                    def tag = buildConfig.tagName + "-" + buildConfig.releaseVersion
-                    sh "git tag $tag"
-                    wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
-                        sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git --tags'
-                    }
-                }
+                buildAndTag(proj, deployServer, rtGradle, projectsConfig)
             }
 
             echo "Bump development version"
@@ -159,6 +163,20 @@ node('java') {
             wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
                 sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git'
             }
+        }
+    }
+}
+
+def buildAndTag(proj, deployServer, rtGradle, projectsConfig) {
+    stage ("Building ${proj}") {
+        // Build project.
+        def buildConfig = projectsConfig[proj]
+        buildProject(deployServer, rtGradle, buildConfig.buildName, buildConfig.releaseTasks)
+        // Create tag.
+        def tag = buildConfig.tagName + "-" + buildConfig.releaseVersion
+        sh "git tag $tag"
+        wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
+            sh 'git push https://${GITHUB_USERNAME}:${GITHUB_API_KEY}@github.com/jfrog/build-info.git --tags'
         }
     }
 }

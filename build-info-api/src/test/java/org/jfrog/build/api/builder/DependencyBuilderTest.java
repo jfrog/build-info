@@ -46,7 +46,7 @@ public class DependencyBuilderTest {
         assertNull(dependency.getSha1(), "Default dependency SHA1 checksum should be null.");
         assertNull(dependency.getSha256(), "Default dependency SHA256 checksum should be null.");
         assertNull(dependency.getMd5(), "Default dependency MD5 checksum should be null.");
-        assertNull(dependency.getRequiredBy(), "Default dependency required by should not have been initialized.");
+        assertNull(dependency.getRequestedBy(), "Default dependency requested by should not have been initialized.");
         assertNull(dependency.getProperties(), "Default dependency properties should be null.");
     }
 
@@ -60,11 +60,11 @@ public class DependencyBuilderTest {
         String sha1 = "pop";
         String sha256 = "lol";
         String md5 = "shmop";
-        String[][] requiredBy = new String[][]{{"pitzi"}};
+        String[][] requestedBy = new String[][]{{"pitzi"}};
         Properties properties = new Properties();
 
         Dependency dependency = new DependencyBuilder().id(id).type(type).scopes(scopes).sha1(sha1).md5(md5).sha256(sha256)
-                .requiredBy(requiredBy).properties(properties).build();
+                .requestedBy(requestedBy).properties(properties).build();
 
         assertEquals(dependency.getId(), id, "Unexpected dependency ID.");
         assertEquals(dependency.getType(), type, "Unexpected dependency type.");
@@ -72,7 +72,7 @@ public class DependencyBuilderTest {
         assertEquals(dependency.getSha1(), sha1, "Unexpected dependency SHA1 checksum.");
         assertEquals(dependency.getSha256(), sha256, "Unexpected dependency SHA256 checksum.");
         assertEquals(dependency.getMd5(), md5, "Unexpected dependency SHA1 checksum.");
-        assertEquals(dependency.getRequiredBy(), requiredBy, "Unexpected dependency required by.");
+        assertEquals(dependency.getRequestedBy(), requestedBy, "Unexpected dependency requested by.");
         assertEquals(dependency.getProperties(), properties, "Unexpected dependency properties.");
         assertTrue(dependency.getProperties().isEmpty(), "Dependency properties list should not have been populated.");
     }
@@ -89,14 +89,14 @@ public class DependencyBuilderTest {
         assertEquals(dependency.getProperties().get(propertyKey), propertyValue, "Unexpected dependency property value.");
     }
 
-    public void testBuilderAddRequiredBy() {
-        String[] requiredByA = {"A", "to", "module", "root", "moduleID"};
-        String[] requiredByB = {"B", "C", "to", "module", "root", "moduleID"};
+    public void testBuilderAddRequestedBy() {
+        String[] requestedByA = {"A", "to", "module", "root", "moduleID"};
+        String[] requestedByB = {"B", "C", "to", "module", "root", "moduleID"};
 
-        Dependency dependency = new DependencyBuilder().addRequiredBy(requiredByA).addRequiredBy(requiredByB).build();
-        String[][] requiredByList = dependency.getRequiredBy();
-        assertEquals(ArrayUtils.getLength(requiredByList), 2);
-        assertEquals(requiredByList[0], requiredByA, "Unexpected dependency requirement.");
-        assertEquals(requiredByList[1], requiredByB, "Unexpected dependency requirement.");
+        Dependency dependency = new DependencyBuilder().addRequestedBy(requestedByA).addRequestedBy(requestedByB).build();
+        String[][] requestedByList = dependency.getRequestedBy();
+        assertEquals(ArrayUtils.getLength(requestedByList), 2);
+        assertEquals(requestedByList[0], requestedByA, "Unexpected dependency requirement.");
+        assertEquals(requestedByList[1], requestedByB, "Unexpected dependency requirement.");
     }
 }

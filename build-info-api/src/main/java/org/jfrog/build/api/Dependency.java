@@ -42,7 +42,7 @@ public class Dependency extends BaseBuildFileBean {
      * ["parentIdC", "c1", "c2",... "moduleId"],
      * ...]
      */
-    private String[][] requiredBy;
+    private String[][] requestedBy;
 
     /**
      * Returns the ID of the dependency
@@ -86,26 +86,26 @@ public class Dependency extends BaseBuildFileBean {
      *
      * @return dependency path-to-root lists.
      */
-    public String[][] getRequiredBy() {
-        return requiredBy;
+    public String[][] getRequestedBy() {
+        return requestedBy;
     }
 
     /**
      * Sets path-to-root dependency lists that directly depend on this dependency.
      *
-     * @param requiredBy dependency path-to-root lists
+     * @param requestedBy dependency path-to-root lists
      */
-    public void setRequiredBy(String[][] requiredBy) {
-        this.requiredBy = requiredBy;
+    public void setRequestedBy(String[][] requestedBy) {
+        this.requestedBy = requestedBy;
     }
 
     /**
-     * Adds an ID of another dependency required by this one to the required dependencies list.
+     * Adds an ID of another dependency requested by this one to the required dependencies list.
      *
      * @param pathToModuleRoot - path from parent dependency to the module ID, modules separated
      */
-    public void addRequiredBy(String[] pathToModuleRoot) {
-        this.requiredBy = (String[][]) ArrayUtils.add(requiredBy, pathToModuleRoot);
+    public void addRequestedBy(String[] pathToModuleRoot) {
+        this.requestedBy = (String[][]) ArrayUtils.add(requestedBy, pathToModuleRoot);
     }
 
     @Override
@@ -127,11 +127,11 @@ public class Dependency extends BaseBuildFileBean {
         if (!Objects.equals(scopes, that.scopes)) {
             return false;
         }
-        return Arrays.deepEquals(requiredBy, that.requiredBy);
+        return Arrays.deepEquals(requestedBy, that.requestedBy);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, scopes, Arrays.deepHashCode(requiredBy));
+        return Objects.hash(id, scopes, Arrays.deepHashCode(requestedBy));
     }
 }

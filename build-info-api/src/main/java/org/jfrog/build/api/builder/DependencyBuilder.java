@@ -38,7 +38,7 @@ public class DependencyBuilder {
     private String md5;
     private String localPath;
     private String remotePath;
-    private String[][] requiredBy;
+    private String[][] requestedBy;
     private Properties properties;
 
     /**
@@ -56,7 +56,7 @@ public class DependencyBuilder {
         dependency.setMd5(md5);
         dependency.setLocalPath(localPath);
         dependency.setRemotePath(remotePath);
-        dependency.setRequiredBy(requiredBy);
+        dependency.setRequestedBy(requestedBy);
         dependency.setProperties(properties);
         return dependency;
     }
@@ -166,22 +166,22 @@ public class DependencyBuilder {
     /**
      * Sets path-to-root dependency lists that directly depend on this dependency.
      *
-     * @param requiredBy dependency path-to-root lists
+     * @param requestedBy dependency path-to-root lists
      * @return Builder instance
      */
-    public DependencyBuilder requiredBy(String[][] requiredBy) {
-        this.requiredBy = requiredBy;
+    public DependencyBuilder requestedBy(String[][] requestedBy) {
+        this.requestedBy = requestedBy;
         return this;
     }
 
     /**
-     * Adds an ID of another dependency that requires this one to the requiredBy dependencies list.
+     * Adds an ID of another dependency that requires this one to the requestedBy dependencies list.
      *
      * @param pathToModuleRoot - path from parent dependency to the module ID, modules separated
      * @return Builder instance
      */
-    public DependencyBuilder addRequiredBy(String[] pathToModuleRoot) {
-        this.requiredBy = (String[][]) ArrayUtils.add(requiredBy, pathToModuleRoot);
+    public DependencyBuilder addRequestedBy(String[] pathToModuleRoot) {
+        this.requestedBy = (String[][]) ArrayUtils.add(requestedBy, pathToModuleRoot);
         return this;
     }
 
