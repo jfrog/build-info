@@ -36,32 +36,32 @@ public class DependencyResolutionSpyTest {
      * Test module without dependencies.
      */
     @Test
-    public void emptyRequirementsMapTest() {
-        Map<String, String[][]> requirementMaps = dependencyResolutionSpy.createRequirementsMap(module);
-        assertEquals(requirementMaps.size(), 0);
+    public void emptyMapTest() {
+        Map<String, String[][]> dependencyParentsMap = dependencyResolutionSpy.createDependencyParentsMap(module);
+        assertEquals(dependencyParentsMap.size(), 0);
     }
 
     /**
      * Test module with 3 direct dependencies.
      */
     @Test
-    public void flatRequirementsMapTest() {
+    public void flatMapTest() {
         DependencyNode a = createDependencyNode(DEP_A_GAV);
         DependencyNode b = createDependencyNode(DEP_B_GAV);
         DependencyNode c = createDependencyNode(DEP_C_GAV);
         module.setChildren(Lists.newArrayList(a, b, c));
 
-        Map<String, String[][]> requirementMaps = dependencyResolutionSpy.createRequirementsMap(module);
-        assertEquals(requirementMaps.size(), 3);
-        assertEquals(requirementMaps.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV, DEP_C_GAV));
-        requirementMaps.values().forEach(parents -> comparePathToModule(parents, new String[][]{{MODULE_GAV}}));
+        Map<String, String[][]> dependencyParentsMap = dependencyResolutionSpy.createDependencyParentsMap(module);
+        assertEquals(dependencyParentsMap.size(), 3);
+        assertEquals(dependencyParentsMap.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV, DEP_C_GAV));
+        dependencyParentsMap.values().forEach(parents -> comparePathToModule(parents, new String[][]{{MODULE_GAV}}));
     }
 
     /**
      * Test module with 3 transitive dependencies: a->b->c
      */
     @Test
-    public void deepRequirementsMapTest() {
+    public void deepMapTest() {
         DependencyNode a = createDependencyNode(DEP_A_GAV);
         DependencyNode b = createDependencyNode(DEP_B_GAV);
         DependencyNode c = createDependencyNode(DEP_C_GAV);
@@ -69,12 +69,12 @@ public class DependencyResolutionSpyTest {
         a.setChildren(Lists.newArrayList(b));
         b.setChildren(Lists.newArrayList(c));
 
-        Map<String, String[][]> requirementMaps = dependencyResolutionSpy.createRequirementsMap(module);
-        assertEquals(requirementMaps.size(), 3);
-        assertEquals(requirementMaps.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV, DEP_C_GAV));
-        comparePathToModule(requirementMaps.get(DEP_A_GAV), new String[][]{{MODULE_GAV}});
-        comparePathToModule(requirementMaps.get(DEP_B_GAV), new String[][]{{DEP_A_GAV, MODULE_GAV}});
-        comparePathToModule(requirementMaps.get(DEP_C_GAV), new String[][]{{DEP_B_GAV, DEP_A_GAV, MODULE_GAV}});
+        Map<String, String[][]> dependencyParentsMap = dependencyResolutionSpy.createDependencyParentsMap(module);
+        assertEquals(dependencyParentsMap.size(), 3);
+        assertEquals(dependencyParentsMap.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV, DEP_C_GAV));
+        comparePathToModule(dependencyParentsMap.get(DEP_A_GAV), new String[][]{{MODULE_GAV}});
+        comparePathToModule(dependencyParentsMap.get(DEP_B_GAV), new String[][]{{DEP_A_GAV, MODULE_GAV}});
+        comparePathToModule(dependencyParentsMap.get(DEP_C_GAV), new String[][]{{DEP_B_GAV, DEP_A_GAV, MODULE_GAV}});
     }
 
     /**
@@ -88,11 +88,11 @@ public class DependencyResolutionSpyTest {
         module.setChildren(Lists.newArrayList(aDirect, b));
         b.setChildren(Lists.newArrayList(aTransitive));
 
-        Map<String, String[][]> requirementMaps = dependencyResolutionSpy.createRequirementsMap(module);
-        assertEquals(requirementMaps.size(), 2);
-        assertEquals(requirementMaps.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV));
-        comparePathToModule(requirementMaps.get(DEP_A_GAV), new String[][]{{MODULE_GAV}, {DEP_B_GAV, MODULE_GAV}});
-        comparePathToModule(requirementMaps.get(DEP_B_GAV), new String[][]{{MODULE_GAV}});
+        Map<String, String[][]> dependencyParentsMap = dependencyResolutionSpy.createDependencyParentsMap(module);
+        assertEquals(dependencyParentsMap.size(), 2);
+        assertEquals(dependencyParentsMap.keySet(), Sets.newHashSet(DEP_A_GAV, DEP_B_GAV));
+        comparePathToModule(dependencyParentsMap.get(DEP_A_GAV), new String[][]{{MODULE_GAV}, {DEP_B_GAV, MODULE_GAV}});
+        comparePathToModule(dependencyParentsMap.get(DEP_B_GAV), new String[][]{{MODULE_GAV}});
     }
 
     private DependencyNode createDependencyNode(String gav) {

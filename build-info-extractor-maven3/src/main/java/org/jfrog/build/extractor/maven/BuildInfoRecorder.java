@@ -88,7 +88,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private final ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<>();
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
     // Map dependency GAV to parents GAV set.
-    private Map<String, String[][]> requirementsMap;
+    private Map<String, String[][]> dependencyParentsMaps;
     private volatile boolean projectHasTestFailures;
     private BuildInfoMavenBuilder buildInfoBuilder;
     private ArtifactoryClientConfiguration conf;
@@ -117,8 +117,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         this.conf = conf;
     }
 
-    public void setRequirementsMap(Map<String, String[][]> requirementsMap) {
-        this.requirementsMap = requirementsMap;
+    public void setDependencyParentsMaps(Map<String, String[][]> dependencyParentsMaps) {
+        this.dependencyParentsMaps = dependencyParentsMaps;
     }
 
     /**
@@ -639,7 +639,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String gav = getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
                     .id(gav)
-                    .requiredBy(requirementsMap.get(gav))
+                    .requestedBy(dependencyParentsMaps.get(gav))
                     .type(getTypeString(dependency.getType(),
                             dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
