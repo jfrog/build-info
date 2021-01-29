@@ -251,7 +251,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
                 return artifactoryResponse;
             }
             try (InputStream in = response.getEntity().getContent()) {
-                String content = IOUtils.toString(in, StandardCharsets.UTF_8);
+                String content = IOUtils.toString(in, StandardCharsets.UTF_8.name());
                 if (StringUtils.isEmpty(content)) {
                     return artifactoryResponse;
                 }
@@ -296,7 +296,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private String getResponseEntityContent(HttpEntity responseEntity) throws IOException {
         InputStream in = responseEntity.getContent();
         if (in != null) {
-            return IOUtils.toString(in, StandardCharsets.UTF_8);
+            return IOUtils.toString(in, StandardCharsets.UTF_8.name());
         }
         return "";
     }
