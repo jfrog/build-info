@@ -158,6 +158,7 @@ node('java') {
             }
 
             echo "Bump development version"
+            selectedProjects = getSelectedProjects(BUILD_PROJECTS, projectsConfig)
             bumpVersion(selectedProjects, projectsConfig, latestNextVersion, 'nextVersion')
             sh 'git commit -am "[artifactory-release] Next development version"'
             wrap([$class: 'MaskPasswordsBuildWrapper', varPasswordPairs: [[password: 'GITHUB_API_KEY', var: 'SECRET']]]) {
