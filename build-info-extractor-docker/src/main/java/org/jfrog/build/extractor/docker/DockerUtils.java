@@ -229,7 +229,7 @@ public class DockerUtils {
     public static String entityToString(HttpEntity entity) throws IOException {
         if (entity != null) {
             InputStream is = entity.getContent();
-            return IOUtils.toString(is, StandardCharsets.UTF_8);
+            return IOUtils.toString(is, StandardCharsets.UTF_8.name());
         }
         return "";
     }

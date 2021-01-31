@@ -95,7 +95,7 @@ public class DockerImage implements Serializable {
         logger.info("Trying to download manifest from " + downloadUrl);
         try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
             entity = response.getEntity();
-            return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
+            return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8.name()), pathWithoutRepo);
         } catch (Exception e) {
             if (dependenciesClient.isLocalRepo(targetRepo)) {
                 throw e;
@@ -121,7 +121,7 @@ public class DockerImage implements Serializable {
             try (CloseableHttpResponse response = dependenciesClient.downloadArtifact(downloadUrl)) {
                 entity = response.getEntity();
                 pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
-                return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8), pathWithoutRepo);
+                return Pair.of(IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8.name()), pathWithoutRepo);
             }
         } finally {
             EntityUtils.consumeQuietly(entity);
