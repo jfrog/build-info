@@ -157,11 +157,10 @@ public class CommandExecutor implements Serializable {
         }
         if (SystemUtils.IS_OS_WINDOWS) {
             args.addAll(0, Arrays.asList("cmd", "/c"));
-        } else if (SystemUtils.IS_OS_MAC) {
-            // In MacOS, the arguments for '/bin/sh -c' must be a single string. For example "/bin/sh","-c", "npm i".
+        } else {
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
-                add("/bin/sh");
+                add("/bin/bash");
                 add("-c");
                 add(strArgs);
             }};
