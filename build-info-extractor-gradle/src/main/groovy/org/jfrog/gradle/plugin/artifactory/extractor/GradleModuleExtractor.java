@@ -23,7 +23,9 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
+import org.jfrog.gradle.plugin.artifactory.extractor.listener.ArtifactoryDependencyResolutionListener;
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 
 import javax.annotation.Nullable;
@@ -36,7 +38,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.google.common.collect.Iterables.*;
+import static com.google.common.collect.Iterables.any;
+import static com.google.common.collect.Iterables.find;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
@@ -66,9 +69,10 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                 .map(DeployDetails::getTargetRepository)
                 .findAny()
                 .orElse("");
+        String moduleId = getModuleIdString(project.getGroup().toString(), artifactName, project.getVersion().toString());
         ModuleBuilder builder = new ModuleBuilder()
                 .type(ModuleType.GRADLE)
-                .id(getModuleIdString(project.getGroup().toString(), artifactName, project.getVersion().toString()))
+                .id(moduleId)
                 .repository(repo);
         try {
             ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getPublisherHandler(project);
@@ -88,7 +92,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                 }
                 builder.artifacts(calculateArtifacts(deployIncludeDetails))
                         .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
-                        .dependencies(calculateDependencies(project));
+                        .dependencies(calculateDependencies(project, moduleId));
             } else {
                 log.warn("No publisher config found for project: " + project.getName());
             }
@@ -111,7 +115,11 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         }).collect(Collectors.toList());
     }
 
-    private List<Dependency> calculateDependencies(Project project) throws Exception {
+    private List<Dependency> calculateDependencies(Project project, String moduleId) throws Exception {
+        ArtifactoryDependencyResolutionListener artifactoryDependencyResolutionListener =
+                project.getPlugins().getPlugin(ArtifactoryPlugin.class).getArtifactoryDependencyResolutionListener();
+        Map<String, String[][]> requestedByMap = artifactoryDependencyResolutionListener.getModulesHierarchyMap().get(moduleId);
+
         Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = newArrayList();
         for (Configuration configuration : configurationSet) {
@@ -143,7 +151,8 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                                 .type(getTypeString(artifact.getType(),
                                         artifact.getClassifier(), artifact.getExtension()))
                                 .id(depId)
-                                .scopes(Sets.newHashSet(configuration.getName()));
+                                .scopes(Sets.newHashSet(configuration.getName()))
+                                .requestedBy(requestedByMap.get(depId));
                         if (file.isFile()) {
                             // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
                             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);

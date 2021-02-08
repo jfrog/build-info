@@ -10,10 +10,13 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,6 +24,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
 import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient.BUILD_BROWSE_URL;
 import static org.jfrog.gradle.plugin.artifactory.Consts.*;
 import static org.testng.Assert.*;
@@ -77,14 +81,15 @@ public class Utils {
     /**
      * Generate buildinfo.properties file with all details from user.
      *
-     * @param contextUrl  - Artifactory URL
-     * @param username    - Artifactory username
-     * @param password    - Artifactory password
-     * @param localRepo   - Gradle local repository
-     * @param virtualRepo - Gradle remote repository
+     * @param contextUrl       - Artifactory URL
+     * @param username         - Artifactory username
+     * @param password         - Artifactory password
+     * @param localRepo        - Gradle local repository
+     * @param virtualRepo      - Gradle remote repository
+     * @param publishBuildInfo - Publish build info
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications) throws IOException {
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo) throws IOException {
         String content = new String(Files.readAllBytes(BUILD_INFO_PROPERTIES_SOURCE), StandardCharsets.UTF_8);
         Map<String, String> valuesMap = new HashMap<String, String>() {{
             put("publications", publications);
@@ -93,6 +98,7 @@ public class Utils {
             put("password", password);
             put("localRepo", localRepo);
             put("virtualRepo", virtualRepo);
+            put("buildInfo", String.valueOf(publishBuildInfo));
         }};
         StrSubstitutor sub = new StrSubstitutor(valuesMap);
         content = sub.replace(content);
@@ -113,10 +119,7 @@ public class Utils {
      */
     static void checkBuildResults(ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient buildInfoClient, BuildResult buildResult, boolean expectModuleArtifacts, String url, String localRepo) throws IOException {
         // Assert all tasks ended with success outcome
-        assertSuccess(buildResult, ":api:artifactoryPublish");
-        assertSuccess(buildResult, ":shared:artifactoryPublish");
-        assertSuccess(buildResult, ":services:webservice:artifactoryPublish");
-        assertSuccess(buildResult, ":artifactoryPublish");
+        assertProjectsSuccess(buildResult);
 
         // Check that all expected artifacts uploaded to Artifactory
         String[] expectedArtifacts = expectModuleArtifacts ? EXPECTED_MODULE_ARTIFACTS : EXPECTED_ARTIFACTS;
@@ -130,6 +133,38 @@ public class Utils {
         Build buildInfo = getBuildInfo(buildInfoClient, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, expectModuleArtifacts);
+    }
+
+    static void assertProjectsSuccess(BuildResult buildResult) {
+        assertSuccess(buildResult, ":api:artifactoryPublish");
+        assertSuccess(buildResult, ":shared:artifactoryPublish");
+        assertSuccess(buildResult, ":services:webservice:artifactoryPublish");
+        assertSuccess(buildResult, ":artifactoryPublish");
+    }
+
+    static void checkRequestedBy(BuildResult buildResult, boolean expectModuleArtifacts, File buildInfoJson) throws IOException {
+        assertProjectsSuccess(buildResult);
+
+        // Assert build info contains requestedBy information.
+        assertTrue(buildInfoJson.exists());
+        Build buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
+        checkBuildInfoModules(buildInfo, expectModuleArtifacts);
+        assertRequestedBy(buildInfo);
+    }
+
+    private static void assertRequestedBy(Build buildInfo) {
+        List<Dependency> apiDependencies = buildInfo.getModule("org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT").getDependencies();
+        assertEquals(apiDependencies.size(), 5);
+        for (Dependency dependency : apiDependencies) {
+            if (dependency.getId().equals("commons-io:commons-io:1.2")) {
+                String[][] requestedBy = dependency.getRequestedBy();
+                assertNotNull(requestedBy);
+                assertEquals(requestedBy.length, 1);
+                assertEquals(requestedBy[0].length, 2);
+                assertEquals(requestedBy[0][0], "org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT");
+                assertEquals(requestedBy[0][1], "commons-lang:commons-lang:2.4");
+            }
+        }
     }
 
     /**
