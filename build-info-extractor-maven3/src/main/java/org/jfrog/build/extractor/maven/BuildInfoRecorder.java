@@ -16,7 +16,6 @@
 
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
@@ -38,7 +37,6 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -53,7 +51,10 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,18 +62,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
-/*
- * Will be called for every project/module in the Maven project.
- */
-
 /**
+ * Will be called for every project/module in the Maven project.
+ *
  * @author Noam Y. Tenne
  */
 @Component(role = BuildInfoRecorder.class)
 public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent> {
-
-    @Requirement
-    private Logger logger;
 
     @Requirement
     private BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
@@ -83,17 +79,25 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     @Requirement
     private ResolutionHelper resolutionHelper;
 
-    private ExecutionListener wrappedListener;
-    private BuildInfoMavenBuilder buildInfoBuilder;
-    private ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<ModuleBuilder>();
-    private ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<Set<Artifact>>();
-    private ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<Set<Artifact>>();
-    private volatile boolean projectHasTestFailures;
+    @Requirement
+    private Logger logger;
+
+    private final Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<>());
+    private final ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<>();
+    private final ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<>();
+    private final ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<>();
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
+    /*
+     * Key - dependency ID - group:artifact:version.
+     * Value - parents path-to-module. See requestedBy field in org.jfrog.build.api.Dependency.
+     */
+    private Map<String, String[][]> dependencyParentsMaps;
+    private volatile boolean projectHasTestFailures;
+    private BuildInfoMavenBuilder buildInfoBuilder;
     private ArtifactoryClientConfiguration conf;
-    private Map<String, String> matrixParams;
-    private Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<Artifact>());
-    private DocumentBuilder documentBuilder = null;
+    private ExecutionListener wrappedListener;
+    private DocumentBuilder documentBuilder;
+
     private final ThreadLocal<XPathExpression> xPathExpression = new ThreadLocal<XPathExpression>() {
         @Override
         protected XPathExpression initialValue() {
@@ -114,6 +118,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     public void setConfiguration(ArtifactoryClientConfiguration conf) {
         this.conf = conf;
+    }
+
+    public void setDependencyParentsMaps(Map<String, String[][]> dependencyParentsMaps) {
+        this.dependencyParentsMaps = dependencyParentsMaps;
     }
 
     /**
@@ -142,13 +150,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = new ConcurrentHashMap<>();
-            matrixParams = new ConcurrentHashMap<>();
-            Map<String, String> matrixParamProps = conf.publisher.getMatrixParams();
-            for (Map.Entry<String, String> matrixParamProp : matrixParamProps.entrySet()) {
-                String key = matrixParamProp.getKey();
-                key = StringUtils.removeStartIgnoreCase(key, ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
-                matrixParams.put(key, matrixParamProp.getValue());
-            }
 
             if (wrappedListener != null) {
                 wrappedListener.sessionStarted(event);
@@ -305,12 +306,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         File surefireDirectory = new File(new File(project.getFile().getParentFile(), "target"), "surefire-reports");
         String[] xmls;
         try {
-            xmls = surefireDirectory.list(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith("xml");
-                }
-            });
+            xmls = surefireDirectory.list((dir, name) -> name.endsWith("xml"));
         } catch (Exception e) {
             logger.error("Error occurred: " + e.getMessage() + " while retrieving surefire descriptors at: "
                     + surefireDirectory.getAbsolutePath(), e);
@@ -327,9 +323,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private boolean isTestsFailed(List<File> surefireReports) {
 
         for (File report : surefireReports) {
-            FileInputStream stream = null;
-            try {
-                stream = new FileInputStream(report);
+            try (FileInputStream stream = new FileInputStream(report)) {
                 Document doc = getDocumentBuilder().parse(new InputSource(stream));
                 Boolean evaluate = ((Boolean) xPathExpression.get().evaluate(doc, XPathConstants.BOOLEAN));
 
@@ -342,8 +336,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 logger.error("Expression '/testsuite/@failures>0 or /testsuite/@errors>0' is invalid.", e);
             } catch (Exception e) {
                 logger.error("Expression caught while checking build tests result.", e);
-            } finally {
-                IOUtils.closeQuietly(stream);
             }
         }
         return false;
@@ -374,8 +366,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
         currentModule.set(module);
 
-        currentModuleArtifacts.set(Collections.synchronizedSet(new HashSet<Artifact>()));
-        currentModuleDependencies.set(Collections.synchronizedSet(new HashSet<Artifact>()));
+        currentModuleArtifacts.set(Collections.synchronizedSet(new HashSet<>()));
+        currentModuleDependencies.set(Collections.synchronizedSet(new HashSet<>()));
     }
 
     private void extractArtifactsAndDependencies(MavenProject project) {
@@ -427,9 +419,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void extractModuleAttachedArtifacts(MavenProject project, Set<Artifact> artifacts) {
         List<Artifact> attachedArtifacts = project.getAttachedArtifacts();
         if (attachedArtifacts != null) {
-            for (Artifact attachedArtifact : attachedArtifacts) {
-                artifacts.add(attachedArtifact);
-            }
+            artifacts.addAll(attachedArtifacts);
         }
     }
 
@@ -529,6 +519,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                     if (metadata instanceof ProjectArtifactMetadata) {
                         nonPomArtifact = moduleArtifact;
                         pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
+                        break;
                     }
                 }
             }
@@ -648,9 +639,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         }
         for (Artifact dependency : moduleDependencies) {
             File depFile = dependency.getFile();
+            String gav = getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
             DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                    .id(getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(),
-                            dependency.getVersion()))
+                    .id(gav)
+                    .requestedBy(dependencyParentsMaps.get(gav))
                     .type(getTypeString(dependency.getType(),
                             dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
@@ -676,10 +668,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         return extension;
     }
 
-    private boolean isPomProject(Artifact moduleArtifact) {
-        return "pom".equals(moduleArtifact.getType());
-    }
-
     private void setDependencyChecksums(File dependencyFile, DependencyBuilder dependencyBuilder) {
         if ((dependencyFile != null) && (dependencyFile.isFile())) {
             try {
@@ -687,10 +675,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         = FileChecksumCalculator.calculateChecksums(dependencyFile, "md5", "sha1");
                 dependencyBuilder.md5(checksumsMap.get("md5"));
                 dependencyBuilder.sha1(checksumsMap.get("sha1"));
-            } catch (NoSuchAlgorithmException e) {
-                logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
-                        + e.getMessage(), e);
-            } catch (IOException e) {
+            } catch (NoSuchAlgorithmException | IOException e) {
                 logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
                         + e.getMessage(), e);
             }
