@@ -87,7 +87,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private final ThreadLocal<Set<Artifact>> currentModuleArtifacts = new ThreadLocal<>();
     private final ThreadLocal<ModuleBuilder> currentModule = new ThreadLocal<>();
     private Map<String, DeployDetails> deployableArtifactBuilderMap;
-    // Map dependency GAV to parents GAV set.
+    /*
+     * Key - dependency ID - group:artifact:version.
+     * Value - parents path-to-module. See requestedBy field in org.jfrog.build.api.Dependency.
+     */
     private Map<String, String[][]> dependencyParentsMaps;
     private volatile boolean projectHasTestFailures;
     private BuildInfoMavenBuilder buildInfoBuilder;

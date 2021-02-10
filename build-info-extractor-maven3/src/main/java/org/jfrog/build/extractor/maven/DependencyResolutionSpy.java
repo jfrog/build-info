@@ -14,7 +14,7 @@ import java.util.*;
 
 /**
  * Listen to DependencyResolutionResult events and populate parents map for each dependency of the current module.
- * Each parent is an array of strings contains the path from parent GAV to module GAV.
+ * Each parent is an array of strings, containing the path from parent GAV to module GAV.
  *
  * @author yahavi
  **/
@@ -35,9 +35,14 @@ public class DependencyResolutionSpy extends AbstractEventSpy {
 
     /**
      * Create a map of dependency to parents.
+     * Key - dependency ID - group:artifact:version.
+     * Value - parents path-to-module. For example:
+     * [["parentIdA", "a1", "a2",... "moduleId"]
+     * ["parentIdB", "b1", "b2",... "moduleId"]]
      *
      * @param dependencyNode - The root dependency node
      * @return map of dependency to parents.
+     * @see org.jfrog.build.api.Dependency#setRequestedBy(String[][])
      */
     Map<String, String[][]> createDependencyParentsMap(DependencyNode dependencyNode) {
         Map<String, String[][]> dependencyParentsMap = new HashMap<>();
