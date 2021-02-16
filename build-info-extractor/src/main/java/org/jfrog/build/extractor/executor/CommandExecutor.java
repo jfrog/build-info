@@ -160,7 +160,7 @@ public class CommandExecutor implements Serializable {
         } else {
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
-                add("/bin/bash");
+                add("/bin/sh");
                 add("-c");
                 add(strArgs);
             }};
