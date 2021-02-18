@@ -16,7 +16,6 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
-import org.jfrog.build.extractor.npm.NpmDriver;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -50,7 +49,6 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
-    private NpmDriver driver = new NpmDriver(null);
 
     public NpmExtractorTest() {
         localRepo1 = NPM_LOCAL_REPO;
@@ -141,7 +139,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private Object[][] npmInstallProvider() {
         Dependency[] expectedDepsStep1 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE)};
         Dependency[] expectedDepsStep2 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE)};
-        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}, {"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}, {"package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
         Dependency[] expectedDepsStep4 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE)};
         Dependency[] expectedDepsStep5 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
 
@@ -152,11 +150,10 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                 {Project.B, expectedDepsStep2, "", false},
                 {Project.B, expectedDepsStep2, "--only=dev", true},
                 {Project.B, new Dependency[]{}, "--production", false},
-                // TODO: Those will fail until we fix https://github.com/jfrog/build-info/issues/445
-                //{Project.C, expectedDepsStep3, "", true},
-                //{Project.C, expectedDepsStep4, "--only=development", false},
+                {Project.C, expectedDepsStep3, "", true},
+                {Project.C, expectedDepsStep4, "--only=development", false},
                 {Project.C, expectedDepsStep5, "--only=production", true},
-                //{Project.C, expectedDepsStep3, "--verbose", true}
+                {Project.C, expectedDepsStep3, "--verbose", true}
         };
     }
 
@@ -170,15 +167,14 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private Object[][] npmCiProvider() {
         Dependency[] expectedDepsStep1 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE)};
         Dependency[] expectedDepsStep2 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE)};
-        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}, {"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}, {"package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
         Dependency[] expectedDepsStep4 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
         return new Object[][]{
                 {Project.A, expectedDepsStep1, "", true},
                 {Project.A, new Dependency[]{}, "--only=dev", false},
                 {Project.B, expectedDepsStep2, "", true},
                 {Project.B, new Dependency[]{}, "--production", false},
-                // TODO: This will fail until we fix https://github.com/jfrog/build-info/issues/445
-                //{Project.C, expectedDepsStep3, "", true},
+                {Project.C, expectedDepsStep3, "", true},
                 {Project.C, expectedDepsStep4, "--only=production", true}
         };
     }
