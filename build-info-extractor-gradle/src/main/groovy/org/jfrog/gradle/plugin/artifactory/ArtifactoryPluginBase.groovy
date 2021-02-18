@@ -38,7 +38,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask.DISTR
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
     public static final String PUBLISH_TASK_GROUP = "publishing"
-    private ArtifactoryDependencyResolutionListener artifactoryDependencyResolutionListener
+    private ArtifactoryDependencyResolutionListener artifactoryDependencyResolutionListener = new ArtifactoryDependencyResolutionListener()
 
     void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -67,7 +67,6 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
         // Add a DependencyResolutionListener, to populate the dependency hierarchy map.
-        artifactoryDependencyResolutionListener = new ArtifactoryDependencyResolutionListener()
         project.getGradle().addListener(artifactoryDependencyResolutionListener)
     }
 

@@ -24,10 +24,9 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
 
     @Override
     void afterResolve(ResolvableDependencies dependencies) {
-        if (dependencies.getResolutionResult().getAllDependencies().isEmpty()) {
-            return
+        if (!dependencies.getResolutionResult().getAllDependencies().isEmpty()) {
+            updateModulesHierarchyMap(dependencies)
         }
-        updateModulesHierarchyMap(dependencies)
     }
 
     /**
@@ -40,9 +39,9 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
         Map<String, String[][]> hierarchyMap = (Map<String, String[][]>) modulesHierarchyMap.get(compId)
         if (hierarchyMap == null) {
             hierarchyMap = new HashMap<>()
+            modulesHierarchyMap.put(compId, hierarchyMap)
         }
         updateDependencyMap(hierarchyMap, dependencies.getResolutionResult().getAllDependencies())
-        modulesHierarchyMap.put(compId, hierarchyMap)
     }
 
     /**
@@ -73,14 +72,15 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
     private String[] getPathToRoot(ResolvedDependencyResult dependency) {
         ResolvedComponentResult from = dependency.getFrom()
         if (from.getDependents().isEmpty()) {
-            // If requested was requested by root, return an array with the root's GAV.
+            // If the dependency was requested by root, return an array with the root's GAV.
             if (from.getSelectionReason().isExpected()) {
                 return [getGav(from.getModuleVersion())]
             }
             // Unexpected result.
             return new RuntimeException("Failed populating dependency parents map: dependency has no dependents and is not root.")
         }
-        // Get parent's path to root, then add the parent's GAV. We assume the first parent in the list is the one that actually resolved.
+        // Get parent's path to root, then add the parent's GAV.
+        // We assume the first parent in the list, is the item that that triggered this dependency resolution.
         ResolvedDependencyResult parent = from.getDependents().iterator().next()
         List<String> dependants = getPathToRoot(parent)
         return dependants << getGav(parent.getSelected().getModuleVersion())
