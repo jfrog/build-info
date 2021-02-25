@@ -75,7 +75,7 @@ public class BuildTest {
         String url = "mitz";
         String parentName = "pooh";
         String parentNumber = "5";
-        List<Vcs> vcsList = Collections.singletonList(new Vcs(url, "2421", "main"));
+        List<Vcs> vcsList = Collections.singletonList(new Vcs(url, "2421", "main", "message"));
 
         List<Module> modules = new ArrayList<>();
         List<PromotionStatus> statuses = new ArrayList<>();
