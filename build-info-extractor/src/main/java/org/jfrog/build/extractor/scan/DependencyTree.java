@@ -1,38 +1,37 @@
 package org.jfrog.build.extractor.scan;
 
+import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
+
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Vector;
+import java.util.*;
 
 /**
- * Dependencies tree for Xray scan. Used in 'Eclipse' and 'Idea' Xray plugins.
+ * Dependency tree for Xray scan. Used in 'Eclipse' and 'Idea' Xray plugins.
  *
  * @author yahavi
  */
-public class DependenciesTree extends DefaultMutableTreeNode {
+public class DependencyTree extends DefaultMutableTreeNode implements ProducerConsumerItem {
 
-    private Set<Issue> issues = new HashSet<>();
     private Set<License> licenses = new HashSet<>();
+    private Set<Issue> issues = new HashSet<>();
     private Set<Scope> scopes = new HashSet<>();
-    private GeneralInfo generalInfo;
     private Issue topIssue = new Issue();
+    private GeneralInfo generalInfo;
 
-    public DependenciesTree() {
+    public DependencyTree() {
         super();
     }
 
-    public DependenciesTree(Object userObject) {
+    public DependencyTree(Object userObject) {
         super(userObject);
-    }
-
-    public void setIssues(Set<Issue> issues) {
-        this.issues = issues;
     }
 
     public void setLicenses(Set<License> licenses) {
         this.licenses = licenses;
+    }
+
+    public void setIssues(Set<Issue> issues) {
+        this.issues = issues;
     }
 
     public void setScopes(Set<Scope> scopes) {
@@ -45,20 +44,22 @@ public class DependenciesTree extends DefaultMutableTreeNode {
     }
 
     @SuppressWarnings("unused")
-    public GeneralInfo getGeneralInfo() {
-        return generalInfo;
+
+    public Set<License> getLicenses() {
+        return licenses;
     }
 
     public Set<Issue> getIssues() {
         return issues;
     }
 
-    public Set<License> getLicenses() {
-        return licenses;
-    }
-
     public Set<Scope> getScopes() {
         return scopes;
+    }
+
+    @SuppressWarnings("unused")
+    public GeneralInfo getGeneralInfo() {
+        return generalInfo;
     }
 
     /**
@@ -81,7 +82,7 @@ public class DependenciesTree extends DefaultMutableTreeNode {
      * @return Node's children
      */
     @SuppressWarnings({"WeakerAccess", "unchecked"})
-    public Vector<DependenciesTree> getChildren() {
+    public Vector<DependencyTree> getChildren() {
         return children != null ? children : new Vector<>();
     }
 
@@ -111,11 +112,11 @@ public class DependenciesTree extends DefaultMutableTreeNode {
 
     private void sortChildren() {
         getChildren().sort(Comparator
-                .comparing(DependenciesTree::getTopIssue, Comparator.comparing(Issue::getSeverity))
-                .thenComparing(DependenciesTree::getIssueCount)
-                .thenComparing(DependenciesTree::getChildCount)
+                .comparing(DependencyTree::getTopIssue, Comparator.comparing(Issue::getSeverity))
+                .thenComparing(DependencyTree::getIssueCount)
+                .thenComparing(DependencyTree::getChildCount)
                 .reversed()
-                .thenComparing(DependenciesTree::toString));
+                .thenComparing(DependencyTree::toString));
     }
 
     private void setTopIssue() {
@@ -128,4 +129,21 @@ public class DependenciesTree extends DefaultMutableTreeNode {
             }
         });
     }
+
+    /**
+     * Recursively, collect all scopes and licenses.
+     *
+     * @param allScopes   - Out - All dependency tree scopes
+     * @param allLicenses - Out - All dependency tree licenses
+     */
+    @SuppressWarnings("unused")
+    public void collectAllScopesAndLicenses(Set<Scope> allScopes, Set<License> allLicenses) {
+        Enumeration<?> enumeration = breadthFirstEnumeration();
+        while (enumeration.hasMoreElements()) {
+            DependencyTree child = (DependencyTree) enumeration.nextElement();
+            allScopes.addAll(child.getScopes());
+            allLicenses.addAll(child.getLicenses());
+        }
+    }
+
 }

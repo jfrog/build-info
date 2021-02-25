@@ -16,21 +16,21 @@ import static org.testng.AssertJUnit.assertEquals;
 /**
  * @author yahavi
  */
-public class DependenciesTreeTest {
+public class DependencyTreeTest {
 
-    private DependenciesTree root, one, two, three, four, five;
+    private DependencyTree root, one, two, three, four, five;
 
     /**
      * Build an empty tree with 5 nodes
      */
     @BeforeClass
     public void init() {
-        root = new DependenciesTree("0");
-        one = new DependenciesTree("1");
-        two = new DependenciesTree("2");
-        three = new DependenciesTree("3");
-        four = new DependenciesTree("4");
-        five = new DependenciesTree("5");
+        root = new DependencyTree("0");
+        one = new DependencyTree("1");
+        two = new DependencyTree("2");
+        three = new DependencyTree("3");
+        four = new DependencyTree("4");
+        five = new DependencyTree("5");
         root.add(one); // 0 -> 1
         root.add(two); // 0 -> 2
         two.add(three); // 2 -> 3
