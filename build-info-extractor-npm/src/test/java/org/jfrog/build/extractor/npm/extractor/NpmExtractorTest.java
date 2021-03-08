@@ -96,12 +96,12 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             return String.format("%s:%s", name, version);
         }
 
-        private Dependency toDependency(String[][] requiredBy, Set<String> scope) {
+        private Dependency toDependency(String[][] requestedBy, Set<String> scope) {
             return new DependencyBuilder().id(getDependencyId())
                     .sha1(sha1)
                     .md5(md5)
                     .scopes(scope)
-                    .requiredBy(requiredBy)
+                    .requestedBy(requestedBy)
                     .build();
         }
 
