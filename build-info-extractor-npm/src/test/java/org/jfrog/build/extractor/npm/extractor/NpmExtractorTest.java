@@ -9,15 +9,13 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
-import org.jfrog.build.extractor.npm.NpmDriver;
-import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -27,13 +25,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Set;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * @author Yahav Itzhak
@@ -44,12 +41,14 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     private static final String NPM_LOCAL_REPO = "build-info-tests-npm-local";
     private static final String NPM_REMOTE_REPO = "build-info-tests-npm-remote";
     private static final String NPM_VIRTUAL_REPO = "build-info-tests-npm-virtual";
+    private static final Set<String> DEV_SCOPE = Stream.of("development").collect(Collectors.toSet());
+    private static final Set<String> PROD_SCOPE = Stream.of("production").collect(Collectors.toSet());
+    private static final Set<String> DEV_PROD_SCOPE = Stream.of("production","development").collect(Collectors.toSet());
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
-    private NpmDriver driver = new NpmDriver(null);
 
     public NpmExtractorTest() {
         localRepo1 = NPM_LOCAL_REPO;
@@ -59,28 +58,30 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private enum Project {
         // Dependencies
-        ASGARD("asgard", "jfrog-asgard", "jfrog-asgard", "2.0.0"),
-        MIDGARD("midgard", "jfrog-midgard", "jfrog-midgard", "1.0.0"),
-        ALFHEIM("alfheim", "jfrog-alfheim", "jfrog-alfheim", "3.5.2"),
-        SVARTALFHEIM("svartalfheim", "jfrog-svartalfheim", "jfrog-svartalfheim", "0.5.0"),
+        ASGARD("asgard", "jfrog-asgard", "jfrog-asgard", "2.0.0", "a1fc28aa8733a161fa92d03379b71468d19292cd", "2fb7c420d2119831bc38559138d3444e"),
+        MIDGARD("midgard", "jfrog-midgard", "jfrog-midgard", "1.0.0", "547b8c7bb019863cc26438ef36e9b2d33668a626", "82f1558593727a7c89fb0b91859dab26"),
+        ALFHEIM("alfheim", "jfrog-alfheim", "jfrog-alfheim", "3.5.2", "f5592b523d2693649a94bbc2377cc653607a4053", "93e19985bb1c7c815abef052b67be244"),
+        SVARTALFHEIM("svartalfheim", "jfrog-svartalfheim", "jfrog-svartalfheim", "0.5.0", "473a5e001c67d716b8c9993245bd0ba2010c7374", "b1678118e32908b8e57f26fef1a23473"),
 
         // Test projects
-        A("a", "NpmExtractorTest Project A", "package-name1", "0.0.1", ASGARD.getDependencyId(), SVARTALFHEIM.getDependencyId()),
-        B("b", "NpmExtractorTest-Project-B", "package-name2", "0.0.2", ASGARD.getDependencyId(), MIDGARD.getDependencyId(), ALFHEIM.getDependencyId()),
-        C("c", "NpmExtractorTestProjectC", "package-name3", "0.0.3", ASGARD.getDependencyId(), MIDGARD.getDependencyId(), ALFHEIM.getDependencyId(), SVARTALFHEIM.getDependencyId());
+        A("a", "NpmExtractorTest Project A", "package-name1", "0.0.1", "", ""),
+        B("b", "NpmExtractorTest-Project-B", "package-name2", "0.0.2", "", ""),
+        C("c", "NpmExtractorTestProjectC", "package-name3", "0.0.3", "", "");
 
-        private File projectOrigin;
-        private String targetDir;
-        private String name;
-        private String version;
-        private Set<String> dependencies;
+        private final File projectOrigin;
+        private final String targetDir;
+        private final String name;
+        private final String version;
+        private final String sha1;
+        private final String md5;
 
-        Project(String sourceDir, String targetDir, String name, String version, String... dependencies) {
+        Project(String sourceDir, String targetDir, String name, String version, String sha1, String md5) {
             this.projectOrigin = PROJECTS_ROOT.resolve(sourceDir).toFile();
             this.targetDir = targetDir;
             this.name = name;
             this.version = version;
-            this.dependencies = CommonUtils.newHashSet(dependencies);
+            this.sha1 = sha1;
+            this.md5 = md5;
         }
 
         private String getModuleId() {
@@ -93,6 +94,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
         private String getDependencyId() {
             return String.format("%s:%s", name, version);
+        }
+
+        private Dependency toDependency(String[][] requiredBy, Set<String> scope) {
+            return new DependencyBuilder().id(getDependencyId())
+                    .sha1(sha1)
+                    .md5(md5)
+                    .scopes(scope)
+                    .requiredBy(requiredBy)
+                    .build();
         }
 
         private String getRemotePath() {
@@ -114,7 +124,6 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private void deployTestDependencies(Project... projects) throws IOException {
         for (Project project : projects) {
-            driver.pack(project.projectOrigin, Collections.emptyList());
             DeployDetails deployDetails = new DeployDetails.Builder()
                     .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
                     .targetRepository(localRepo1)
@@ -125,58 +134,58 @@ public class NpmExtractorTest extends IntegrationTestsBase {
         }
     }
 
-    @AfterClass
-    private void tearDown() throws IOException {
-        deletePackedFiles(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
-    }
-
-    private void deletePackedFiles(Project... projects) throws IOException {
-        for (Project project : projects) {
-            Files.deleteIfExists(project.projectOrigin.toPath().resolve(project.getPackedFileName()));
-        }
-    }
 
     @DataProvider
     private Object[][] npmInstallProvider() {
+        Dependency[] expectedDepsStep1 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep2 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE)};
+        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}, {"package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep4 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE)};
+        Dependency[] expectedDepsStep5 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
+
         return new Object[][]{
-                {Project.A, Project.A.dependencies, "", true},
-                {Project.A, Collections.emptySet(), "--only=dev", false},
-                {Project.A, Project.A.dependencies, "--only=prod", true},
-                {Project.B, Project.B.dependencies, "", false},
-                {Project.B, Project.B.dependencies, "--only=dev", true},
-                {Project.B, Collections.emptySet(), "--production", false},
-                {Project.C, Project.C.dependencies, "", true},
-                {Project.C, Project.B.dependencies, "--only=development", false},
-                {Project.C, Project.A.dependencies, "--only=production", true},
-                {Project.C, Project.C.dependencies, "--verbose", true}
+                {Project.A, expectedDepsStep1, "", true},
+                {Project.A, new Dependency[]{}, "--only=dev", false},
+                {Project.A, expectedDepsStep1, "--only=prod", true},
+                {Project.B, expectedDepsStep2, "", false},
+                {Project.B, expectedDepsStep2, "--only=dev", true},
+                {Project.B, new Dependency[]{}, "--production", false},
+                {Project.C, expectedDepsStep3, "", true},
+                {Project.C, expectedDepsStep4, "--only=development", false},
+                {Project.C, expectedDepsStep5, "--only=production", true},
+                {Project.C, expectedDepsStep3, "--verbose", true}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmInstallProvider")
-    public void npmInstallTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    public void npmInstallTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath) {
         runNpmTest(project, expectedDependencies, args, packageJsonPath, false);
     }
 
     @DataProvider
     private Object[][] npmCiProvider() {
+        Dependency[] expectedDepsStep1 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name1:0.0.1"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep2 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"@jscope/package-name2:0.0.2"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "@jscope/package-name2:0.0.2"}}, DEV_SCOPE)};
+        Dependency[] expectedDepsStep3 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}, {"package-name3:0.0.3"}}, DEV_PROD_SCOPE), Project.MIDGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, DEV_SCOPE), Project.ALFHEIM.toDependency(new String[][]{{"jfrog-midgard:1.0.0", "package-name3:0.0.3"}}, DEV_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
+        Dependency[] expectedDepsStep4 = new Dependency[]{Project.ASGARD.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE), Project.SVARTALFHEIM.toDependency(new String[][]{{"package-name3:0.0.3"}}, PROD_SCOPE)};
         return new Object[][]{
-                {Project.A, Project.A.dependencies, "", true},
-                {Project.A, Collections.emptySet(), "--only=dev", false},
-                {Project.B, Project.B.dependencies, "", true},
-                {Project.B, Collections.emptySet(), "--production", false},
-                {Project.C, Project.C.dependencies, "", true},
-                {Project.C, Project.A.dependencies, "--only=production", true}
+                {Project.A, expectedDepsStep1, "", true},
+                {Project.A, new Dependency[]{}, "--only=dev", false},
+                {Project.B, expectedDepsStep2, "", true},
+                {Project.B, new Dependency[]{}, "--production", false},
+                {Project.C, expectedDepsStep3, "", true},
+                {Project.C, expectedDepsStep4, "--only=production", true}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmCiProvider")
-    public void npmCiTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath) {
+    public void npmCiTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath) {
         runNpmTest(project, expectedDependencies, args, packageJsonPath, true);
     }
 
-    private void runNpmTest(Project project, Set<String> expectedDependencies, String args, boolean packageJsonPath, boolean isNpmCi) {
+    private void runNpmTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath, boolean isNpmCi) {
         Path projectDir = null;
         try {
             // Prepare.
@@ -184,7 +193,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             if (isNpmCi) {
                 // Run npm install to generate package-lock.json file.
-                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null,false).execute();
+                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false).execute();
             }
 
             // Execute command.
@@ -201,8 +210,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Module module = build.getModules().get(0);
             assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
-            Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
-            assertEquals(moduleDependencies, expectedDependencies);
+            assertEqualsNoOrder(module.getDependencies().toArray(), expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
         } finally {
