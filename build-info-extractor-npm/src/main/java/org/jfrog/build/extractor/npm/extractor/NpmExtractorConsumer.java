@@ -82,7 +82,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
         } else {
             dependency.getScopes().add(npmPackageInfo.getScope());
         }
-        dependency.addRequiredBy(npmPackageInfo.getPathToRoot());
+        dependency.addRequestedBy(npmPackageInfo.getPathToRoot());
         return true;
     }
 
