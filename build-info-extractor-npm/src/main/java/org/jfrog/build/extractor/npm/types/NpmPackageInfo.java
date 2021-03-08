@@ -17,6 +17,8 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     private String version;
     private String scope;
     /**
+     * A path-to-root dependency list that directly depends on this dependency.
+     * The structure of each dependency in the list is 'dependency-name:dependency-version'
      * Used for 'RequiredBy' in {@link org.jfrog.build.api.Dependency}.
      */
     private String[] pathToRoot;
