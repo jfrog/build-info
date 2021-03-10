@@ -141,6 +141,11 @@ public class IssuesCollector implements Serializable {
         CommandExecutor commandExecutor = new CommandExecutor("git", null);
         CommandResults res = commandExecutor.exeCommand(execDir, args, null, logger);
         if (!res.isOk()) {
+            Pattern pattern = Pattern.compile("fatal: Invalid revision range [a-fA-F0-9]+\\.\\.");
+            if (pattern.matcher(res.getErr()).find()) {
+                logger.info("Revision: " + previousVcsRevision + " that was fetched from latest build info does not exist in the git revision range. No new issues are added.");
+                return "";
+            }
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git log command failed: " + res.getErr());
         }
         return res.getRes();
