@@ -161,8 +161,8 @@ public class Utils {
                 assertNotNull(requestedBy);
                 assertEquals(requestedBy.length, 1);
                 assertEquals(requestedBy[0].length, 2);
-                assertEquals(requestedBy[0][0], "org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT");
-                assertEquals(requestedBy[0][1], "commons-lang:commons-lang:2.4");
+                assertEquals(requestedBy[0][0], "commons-lang:commons-lang:2.4");
+                assertEquals(requestedBy[0][1], "org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT");
             }
         }
     }

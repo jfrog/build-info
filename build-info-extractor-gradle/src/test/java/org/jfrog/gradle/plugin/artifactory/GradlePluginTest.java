@@ -103,7 +103,6 @@ public class GradlePluginTest extends IntegrationTestsBase {
 
     @Test(dataProvider = "gradleVersions")
     public void requestedByTest(String gradleVersion) throws IOException {
-
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
         generateBuildInfoProperties(getUrl(), getUsername(), getPassword(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", false);
@@ -112,7 +111,6 @@ public class GradlePluginTest extends IntegrationTestsBase {
         }};
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
-        Path buildInfo = TEST_DIR.toPath().resolve(Paths.get("build", "build-info.json"));
-        checkRequestedBy(buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, buildInfo.toFile());
+        checkRequestedBy(buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, BUILD_INFO_JSON.toFile());
     }
 }

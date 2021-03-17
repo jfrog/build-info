@@ -83,7 +83,9 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
         // We assume the first parent in the list, is the item that that triggered this dependency resolution.
         ResolvedDependencyResult parent = from.getDependents().iterator().next()
         List<String> dependants = getPathToRoot(parent)
-        return dependants << getGav(parent.getSelected().getModuleVersion())
+        // Add the current parent to the beginning of the list.
+        dependants.add(0, getGav(parent.getSelected().getModuleVersion()))
+        return dependants
     }
 
     private static String getGav(ModuleVersionIdentifier module) {
