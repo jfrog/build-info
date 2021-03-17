@@ -32,7 +32,16 @@ public class IssuesCollector implements Serializable {
     private static final String LATEST = "LATEST";
     private static final String GIT_LOG_LIMIT = "100";
 
+    public static Pattern REVISION_NOT_EXIST;
+
     public IssuesCollector() {
+    }
+
+    public static Pattern getRevisionNotExistPattern() {
+        if (REVISION_NOT_EXIST == null) {
+            REVISION_NOT_EXIST = Pattern.compile("fatal: Invalid revision range [a-fA-F0-9]+\\.\\.");
+        }
+        return REVISION_NOT_EXIST;
     }
 
     /**
@@ -141,6 +150,10 @@ public class IssuesCollector implements Serializable {
         CommandExecutor commandExecutor = new CommandExecutor("git", null);
         CommandResults res = commandExecutor.exeCommand(execDir, args, null, logger);
         if (!res.isOk()) {
+            if (getRevisionNotExistPattern().matcher(res.getErr()).find()) {
+                logger.info("Revision: " + previousVcsRevision + " that was fetched from latest build info does not exist in the git revision range. No new issues are added.");
+                return "";
+            }
             throw new IOException(ISSUES_COLLECTION_ERROR_PREFIX + "Git log command failed: " + res.getErr());
         }
         return res.getRes();

@@ -16,15 +16,22 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     private String name;
     private String version;
     private String scope;
+    /**
+     * A path-to-root dependency list that directly depends on this dependency.
+     * The structure of each dependency in the list is 'dependency-name:dependency-version'
+     * Used for 'RequestedBy' in {@link org.jfrog.build.api.Dependency}.
+     */
+    private String[] pathToRoot;
 
     @SuppressWarnings("unused")
     public NpmPackageInfo() {
     }
 
-    public NpmPackageInfo(String name, String version, String scope) {
+    public NpmPackageInfo(String name, String version, String scope, String[] pathToRoot) {
         this.name = name;
         this.version = version;
         this.scope = scope;
+        this.pathToRoot = pathToRoot;
     }
 
     public String getName() {
@@ -75,6 +82,7 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
 
         setName(npmPackageInfo.getName());
         splitScopeFromName();
+        setPathToRoot(npmPackageInfo.getPathToRoot());
     }
 
     public String getModuleId() {
@@ -118,5 +126,13 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     @Override
     public String toString() {
         return name + ":" + version;
+    }
+
+    public String[] getPathToRoot() {
+        return pathToRoot;
+    }
+
+    public void setPathToRoot(String[] pathToRoot) {
+        this.pathToRoot = pathToRoot;
     }
 }

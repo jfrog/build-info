@@ -10,6 +10,7 @@ import java.util.Objects;
 @XStreamAlias(BuildInfoFields.VCS)
 public class Vcs implements Serializable {
     private String revision = "";
+    private String message = "";
     private String branch = "";
     private String url = "";
 
@@ -21,9 +22,10 @@ public class Vcs implements Serializable {
         this.setRevision(vcsRevision);
     }
 
-    public Vcs(String vcsUrl, String vcsRevision, String branch) {
+    public Vcs(String vcsUrl, String vcsRevision, String branch, String message) {
         this(vcsUrl, vcsRevision);
         this.branch = branch;
+        this.message = message;
     }
 
     public String getRevision() {
@@ -42,6 +44,14 @@ public class Vcs implements Serializable {
         this.branch = branch;
     }
 
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
     public String getUrl() {
         return this.url;
     }
@@ -53,6 +63,7 @@ public class Vcs implements Serializable {
     @Override
     public String toString() {
         return "revision='" + revision + '\'' +
+                ", commit message=" + message + '\'' +
                 ", branch='" + branch + '\'' +
                 ", url='" + url + '\'';
     }
@@ -69,16 +80,18 @@ public class Vcs implements Serializable {
         Vcs that = (Vcs) o;
         return Objects.equals(revision, that.revision) &&
                 Objects.equals(branch, that.branch) &&
+                Objects.equals(message, that.message) &&
                 Objects.equals(url, that.url);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(revision, branch, url);
+        return Objects.hash(revision, branch, message, url);
     }
 
     @JsonIgnore
     public boolean isEmpty() {
-        return StringUtils.isEmpty(getRevision()) && StringUtils.isEmpty(getBranch()) && StringUtils.isEmpty(getUrl());
+        return StringUtils.isEmpty(getRevision()) && StringUtils.isEmpty(getBranch()) &&
+                StringUtils.isEmpty(getMessage()) && StringUtils.isEmpty(getUrl());
     }
 }

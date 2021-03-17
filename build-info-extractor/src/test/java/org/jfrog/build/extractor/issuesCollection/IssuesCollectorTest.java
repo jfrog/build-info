@@ -92,6 +92,16 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         runCollectIssues("git_issues2_.git_suffix", vcsList, 2);
     }
 
+    @Test
+    /**
+     * Test collection with a made up revision - the command should not throw an error, and 0 issues should be returned.
+     * This test covers the cenario of missing revision on the 'git log' output, probably due to a squash / revert. therefore, ignore and don't collect new issues.
+     */
+    public void testCollectIssuesWithNonExistingRevision() throws IOException, InterruptedException {
+        List<Vcs> vcsList = Collections.singletonList(new Vcs("http://TESTING.com", "abcdefABCDEF1234567890123456789012345678"));
+        runCollectIssues("git_issues2_.git_suffix", vcsList, 0);
+    }
+
     private void runCollectIssues(String sourceFolder, List<Vcs> vcs, int expectedNumOfIssues) throws IOException, InterruptedException {
         // Copy the provided folder and create .git
         FileUtils.deleteDirectory(dotGitPath);

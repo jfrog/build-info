@@ -238,12 +238,12 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         if (scopes.isEmpty()) {
             return new ArrayList<>();
         }
-        List<String> extraListArgs = new ArrayList<>();
-        if (scopes.size() == 1) {
-            extraListArgs.add("--only=" + scopes.get(0));
+        for (NpmScope scope : scopes) {
+            List<String> extraListArgs = new ArrayList<>();
+            extraListArgs.add("--only=" + scope);
+            JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
+            populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode, scope);
         }
-        JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-        populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode);
 
         return new ArrayList<>(dependencies.values());
     }
@@ -286,10 +286,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependency tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependencyTree) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependencyTree, NpmScope scope) throws Exception {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree);
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope);
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
