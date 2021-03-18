@@ -120,10 +120,12 @@ for:
       only:
         - job_group: pip
     test_script:
+      - sh: "go version"
       - sh: "python --version"
       - sh: "python -m venv pip-venv"
       - sh: "$TEST_SUIT"
       - cmd: "C:\\Python37-x64\\python -m venv pip-venv"
+      - cmd: "go version"
       - cmd: "%TEST_SUIT%"
 
 build: off
