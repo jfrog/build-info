@@ -136,3 +136,6 @@ for:
       - cmd: "%TEST_SUIT%"
 
 build: off
+before_test:
+  - cmd: "go version"
+  - sh: "go version"
