@@ -12,6 +12,7 @@ import org.jfrog.build.client.ArtifactoryHttpClient;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.ProxyConfiguration;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 
 /**
@@ -118,6 +119,10 @@ public abstract class ArtifactoryBaseClient implements AutoCloseable {
 
     public void setInsecureTls(boolean insecureTls) {
         httpClient.setInsecureTls(insecureTls);
+    }
+
+    public void setSslContext(SSLContext sslContext) {
+        httpClient.setSslContext(sslContext);
     }
 
     public String getArtifactoryUrl() {

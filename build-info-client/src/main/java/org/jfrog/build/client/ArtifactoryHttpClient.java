@@ -34,6 +34,7 @@ import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.util.URI;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -65,6 +66,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
     private int connectionRetries = DEFAULT_CONNECTION_RETRY;
     private ProxyConfiguration proxyConfiguration;
     private boolean insecureTls = false;
+    private SSLContext sslContext;
 
     private PreemptiveHttpClient deployClient;
 
@@ -137,6 +139,10 @@ public class ArtifactoryHttpClient implements AutoCloseable {
         this.insecureTls = insecureTls;
     }
 
+    public void setSslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
+    }
+
     public int getConnectionRetries() {
         return connectionRetries;
     }
@@ -165,6 +171,7 @@ public class ArtifactoryHttpClient implements AutoCloseable {
                     .setConnectionRetries(connectionRetries)
                     .setInsecureTls(insecureTls)
                     .setTimeout(connectionTimeout)
+                    .setSslContext(sslContext)
                     .setLog(log);
             if (proxyConfiguration != null) {
                 clientBuilder.setProxyConfiguration(proxyConfiguration);

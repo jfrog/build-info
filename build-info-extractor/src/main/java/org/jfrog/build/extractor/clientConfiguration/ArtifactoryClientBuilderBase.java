@@ -5,6 +5,7 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
 
+import javax.net.ssl.SSLContext;
 import java.io.Serializable;
 
 /**
@@ -18,6 +19,7 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
     protected int connectionTimeout = -1;
     protected int connectionRetry = -1;
     protected String artifactoryUrl;
+    protected SSLContext sslContext;
     protected String username;
     protected String password;
     protected String accessToken;
@@ -40,6 +42,11 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
 
     public T setArtifactoryUrl(String artifactoryUrl) {
         this.artifactoryUrl = artifactoryUrl;
+        return self();
+    }
+
+    public T setSslContext(SSLContext sslContext) {
+        this.sslContext = sslContext;
         return self();
     }
 
@@ -105,6 +112,8 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
                     proxyConfiguration.username,
                     proxyConfiguration.password);
         }
+
+        client.setSslContext(sslContext);
 
         if (connectionTimeout != -1) {
             client.setConnectionTimeout(connectionTimeout);
