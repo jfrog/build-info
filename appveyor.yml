@@ -1,4 +1,4 @@
-stack: jdk 8, node 8, go 1.13, python 3.7.9, go 1.15.10
+stack: jdk 8, node 8, go 1.15.10, python 3.7.9
 skip_tags: true
 environment:
   matrix:
@@ -56,13 +56,13 @@ environment:
 
     # Go Tests
     - job_name: go_extractor_win
-      job_group: general
+      job_group: go
       appveyor_build_worker_image: Visual Studio 2019
       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
       TEST_SUIT:
         "gradlew.bat clean build-info-extractor-go:test"
     - job_name: go_extractor_linux
-      job_group: general
+      job_group: go
       appveyor_build_worker_image: Ubuntu
       TEST_SUIT:
         "./gradlew clean build-info-extractor-go:test"
@@ -118,14 +118,21 @@ for:
   -
     matrix:
       only:
+        - job_group: go
+    test_script:
+      - sh: "$TEST_SUIT"
+      - sh: "go version"
+      - cmd: "%TEST_SUIT%"
+      - cmd: "go version"
+  -
+    matrix:
+      only:
         - job_group: pip
     test_script:
-      - sh: "go version"
       - sh: "python --version"
       - sh: "python -m venv pip-venv"
       - sh: "$TEST_SUIT"
       - cmd: "C:\\Python37-x64\\python -m venv pip-venv"
-      - cmd: "go version"
       - cmd: "%TEST_SUIT%"
 
 build: off
