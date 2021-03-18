@@ -1,4 +1,4 @@
-stack: jdk 8, node 8, go 1.13, python 3.7.9
+stack: jdk 8, node 8, go 1.13, python 3.7.9, go 1.15.10
 skip_tags: true
 environment:
   matrix:
