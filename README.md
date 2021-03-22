@@ -118,7 +118,7 @@ To run the tests on Artifactory OSS, you should create the Gradle repositories b
 To run Gradle tests on Artifactory OSS:
 * Start Artifactory on docker container:
 ```
-> docker run --name artifactory -d -p 8081:8081 -p 8082:8082 docker.bintray.io/jfrog/artifactory-oss:latest
+> docker run --name artifactory -d -p 8081:8081 -p 8082:8082 releases-docker.jfrog.io/jfrog/artifactory-oss:latest
 ```
 * With your web browser, go to Artifactory UI: http://127.0.0.1:8081/artifactory
 * Create 3 Gradle repositories:
