@@ -3,6 +3,8 @@ package org.jfrog.build.extractor.scan;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author yahavi
@@ -18,6 +20,8 @@ public class GeneralInfo implements Serializable {
     private String groupId = "";
     private String artifactId = "";
     private String version = "";
+    private String sha1 = "";
+    private Set<String> parentsIds = new HashSet<>();
 
     @SuppressWarnings("WeakerAccess")
     public GeneralInfo() {
@@ -77,6 +81,14 @@ public class GeneralInfo implements Serializable {
         return pkgType;
     }
 
+    public String getSha1() {
+        return sha1;
+    }
+
+    public Set<String> getParentsIds() {
+        return parentsIds;
+    }
+
     @SuppressWarnings("unused")
     public GeneralInfo componentId(String componentId) {
         this.componentId = componentId;
@@ -111,6 +123,16 @@ public class GeneralInfo implements Serializable {
     @SuppressWarnings("unused")
     public GeneralInfo pkgType(String pkgType) {
         this.pkgType = pkgType;
+        return this;
+    }
+
+    public GeneralInfo sha1(String sha1) {
+        this.sha1 = sha1;
+        return this;
+    }
+
+    public GeneralInfo parentsIds(Set<String> parentsIds) {
+        this.parentsIds = parentsIds;
         return this;
     }
 
