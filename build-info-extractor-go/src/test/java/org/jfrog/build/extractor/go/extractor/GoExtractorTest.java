@@ -32,7 +32,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     private static final String GO_REMOTE_REPO = "build-info-tests-go-remote";
     private static final String GO_VIRTUAL_REPO = "build-info-tests-go-virtual";
     private static final String[] GO_PACKAGE_EXTENSIONS = {".zip", ".mod", ".info"};
-    private static final String GO_BUILD_CMD = "build";
+    private static final String GO_BUILD_CMD = "build -mod=mod";
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
