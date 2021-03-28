@@ -129,3 +129,6 @@ To run Gradle tests on Artifactory OSS:
 
 ## More about build-info
 Read more about build-info in the [Build Integration documentation](https://www.jfrog.com/confluence/display/JFROG/Build+Integration).
+
+## Release notes
+The release notes are available [here](RELEASE.md).
