@@ -103,7 +103,7 @@ public abstract class DeploymentUrlUtils {
 
     private static String encode(String s) throws UnsupportedEncodingException {
         if (s != null) {
-            return URLEncoder.encode(s, "UTF-8").replace("%2F", "/");
+            return URLEncoder.encode(s, "UTF-8");
         }
         return null;
     }

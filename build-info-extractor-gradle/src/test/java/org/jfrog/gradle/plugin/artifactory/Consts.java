@@ -17,6 +17,9 @@ public class Consts {
     // The test directory
     static final File TEST_DIR = new File(System.getProperty("java.io.tmpdir"), "gradle_tests_space");
 
+    // Build info json path if not published
+    static final Path BUILD_INFO_JSON = TEST_DIR.toPath().resolve(Paths.get("build", "build-info.json"));
+
     // Root directories
     static final Path GRADLE_EXTRACTOR = Paths.get(".").normalize().toAbsolutePath();
     static final Path GRADLE_EXTRACTOR_SRC = GRADLE_EXTRACTOR.resolve("src");
@@ -25,6 +28,7 @@ public class Consts {
     // Projects
     static final Path GRADLE_EXAMPLE = PROJECTS_ROOT.resolve("gradle-example");
     static final Path GRADLE_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-example-publish");
+    static final Path GRADLE_KTS_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-kts-example-publish");
     static final Path GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server");
 
     // CI example paths

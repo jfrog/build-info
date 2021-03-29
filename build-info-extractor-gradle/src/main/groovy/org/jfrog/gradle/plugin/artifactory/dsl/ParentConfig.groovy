@@ -1,5 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Action
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
 
@@ -17,7 +18,11 @@ class ParentConfig {
     }
 
     def config(Closure closure) {
-        ConfigureUtil.configure(closure, this)
+        config(ConfigureUtil.configureUsing(closure))
+    }
+
+    def config(Action<? extends ParentConfig> configAction) {
+        configAction.execute(this)
     }
 
     def propertyMissing(String name, value) {

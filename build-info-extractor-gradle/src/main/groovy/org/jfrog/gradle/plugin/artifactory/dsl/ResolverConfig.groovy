@@ -16,6 +16,7 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.ResolverHandler
@@ -57,13 +58,21 @@ class ResolverConfig {
     }
 
     def config(Closure closure) {
-        ConfigureUtil.configure(closure, this)
+        config(ConfigureUtil.configureUsing(closure))
+    }
+
+    def config(Action<? extends ResolverConfig> configAction) {
+        configAction.execute(this)
     }
 
     def repository(Closure closure) {
+        repository(ConfigureUtil.configureUsing(closure))
+    }
+
+    def repository(Action<? extends Repository> repositoryAction) {
         //Initialize the defaults and configure the repo
         repository.setMaven(true)
-        ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, repository))
+        repositoryAction.execute(repository)
     }
 
     public class Repository {
@@ -103,7 +112,11 @@ class ResolverConfig {
         }
 
         def ivy(Closure closure) {
-            ConfigureUtil.configure(closure, new DoubleDelegateWrapper(ResolverConfig.this.project, this))
+            ivy(ConfigureUtil.configureUsing(closure))
+        }
+
+        def ivy(Action<? extends Repository> ivyAction) {
+            ivyAction.execute(this)
         }
     }
 }

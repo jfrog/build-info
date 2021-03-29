@@ -16,6 +16,7 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration
@@ -37,8 +38,11 @@ class ArtifactoryPluginConvention {
     }
 
     def artifactory(Closure closure) {
-        closure.delegate = this
-        closure.call()
+        artifactory(ConfigureUtil.configureUsing(closure))
+    }
+
+    def artifactory(Action<? extends ArtifactoryPluginConvention> artifactoryAction) {
+        artifactoryAction.execute(this)
         project.logger.debug("Artifactory plugin: configured")
         conventionSet = true
     }
@@ -53,29 +57,53 @@ class ArtifactoryPluginConvention {
     }
 
     def distribute(Closure closure) {
+        distribute(ConfigureUtil.configureUsing(closure))
+    }
+
+    def distribute(Action<? extends DistributerConfig> distributeAction) {
         distributerConfig = new DistributerConfig(this)
-        distributerConfig.config(closure)
+        distributeAction.execute(distributerConfig)
     }
 
     def publish(Closure closure) {
+        publish(ConfigureUtil.configureUsing(closure))
+    }
+
+    def publish(Action<? extends PublisherConfig> publishAction) {
         publisherConfig = new PublisherConfig(this)
-        publisherConfig.config(closure)
+        publishAction.execute(publisherConfig)
     }
 
     def resolve(Closure closure) {
-        new ResolverConfig(this).config(closure)
+        resolve(ConfigureUtil.configureUsing(closure))
+    }
+
+    def resolve(Action<? extends ResolverConfig> resolveAction) {
+        resolveAction.execute(new ResolverConfig(this))
     }
 
     def buildInfo(Closure closure) {
         ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, clientConfig.info))
     }
 
+    def buildInfo(Action<? extends ArtifactoryClientConfiguration.BuildInfoHandler> infoAction) {
+        infoAction.execute(clientConfig.info)
+    }
+
     def proxy(Closure closure) {
         ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, clientConfig.proxy))
     }
 
+    def proxy(Action<? extends ArtifactoryClientConfiguration.ProxyHandler> proxyAction) {
+        proxyAction.execute(clientConfig.proxy)
+    }
+
     def parent(Closure closure) {
-        new ParentConfig(this).config(closure)
+        parent(ConfigureUtil.configureUsing(closure))
+    }
+
+    def parent(Action<? extends ParentConfig> parentAction) {
+        parentAction.execute(new ParentConfig(this))
     }
 }
 

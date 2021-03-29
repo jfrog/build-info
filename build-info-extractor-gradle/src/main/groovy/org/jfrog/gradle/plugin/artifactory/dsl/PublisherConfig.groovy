@@ -16,9 +16,11 @@
 
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.PublisherHandler
+import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 
 import java.lang.reflect.Method
 
@@ -29,7 +31,7 @@ class PublisherConfig {
     private final Project project
     private final PublisherHandler publisher;
     private final Repository repository;
-    Closure defaultsClosure
+    Action<ArtifactoryTask> defaultsAction
 
     PublisherConfig(ArtifactoryPluginConvention conv) {
         publisher = conv.clientConfig.publisher
@@ -58,12 +60,20 @@ class PublisherConfig {
     }
 
     def defaults(Closure closure) {
+        defaults(ConfigureUtil.configureUsing(closure))
+    }
+
+    def defaults(Action<ArtifactoryTask> action) {
         //Add for later evaluation by the task itself after all projects evaluated
-        defaultsClosure = closure
+        defaultsAction = action
     }
 
     def config(Closure closure) {
-        ConfigureUtil.configure(closure, this)
+        config(ConfigureUtil.configureUsing(closure))
+    }
+
+    def config(Action<? extends PublisherConfig> configAction) {
+        configAction.execute(this)
     }
 
     def setContextUrl(def contextUrl) {
@@ -80,6 +90,10 @@ class PublisherConfig {
 
     def repository(Closure closure) {
         ConfigureUtil.configure(closure, new DoubleDelegateWrapper(project, repository))
+    }
+
+    def repository(Action<? extends Repository> repositoryAction) {
+        repositoryAction.execute(repository)
     }
 
     public class Repository {
@@ -110,7 +124,11 @@ class PublisherConfig {
         }
 
         def ivy(Closure closure) {
-            ConfigureUtil.configure(closure, this)
+            ivy(ConfigureUtil.configureUsing(closure))
+        }
+
+        def ivy(Action<? extends Repository> ivyAction) {
+            ivyAction.execute(this)
         }
     }
 }

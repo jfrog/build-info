@@ -20,6 +20,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
+import org.jfrog.gradle.plugin.artifactory.extractor.listener.ArtifactoryDependencyResolutionListener
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ProjectsEvaluatedBuildListener
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask
@@ -37,6 +38,7 @@ import static org.jfrog.gradle.plugin.artifactory.task.DistributeBuildTask.DISTR
 abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private static final Logger log = LoggerFactory.getLogger(ArtifactoryPluginBase.class)
     public static final String PUBLISH_TASK_GROUP = "publishing"
+    private ArtifactoryDependencyResolutionListener artifactoryDependencyResolutionListener = new ArtifactoryDependencyResolutionListener()
 
     void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
@@ -64,6 +66,8 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         log.debug("Using Artifactory Plugin for ${project.path}")
 
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
+        // Add a DependencyResolutionListener, to populate the dependency hierarchy map.
+        project.getGradle().addListener(artifactoryDependencyResolutionListener)
     }
 
     protected abstract ArtifactoryTask createArtifactoryPublishTask(Project project)
@@ -71,6 +75,10 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
     protected abstract DeployTask createArtifactoryDeployTask(Project project);
     protected abstract ExtractModuleTask createExtractModuleTask(Project project);
+
+    ArtifactoryDependencyResolutionListener getArtifactoryDependencyResolutionListener() {
+        return artifactoryDependencyResolutionListener
+    }
 
     /**
      *  Set the plugin convention closure object

@@ -1,5 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.dsl
 
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.util.ConfigureUtil
 
@@ -24,7 +25,11 @@ class DistributerConfig {
     }
 
     def config(Closure closure) {
-        ConfigureUtil.configure(closure, this)
+        config(ConfigureUtil.configureUsing(closure))
+    }
+
+    def config(Action<? extends DistributerConfig> configAction) {
+        configAction.execute(this)
     }
 
     boolean getPublish() {
