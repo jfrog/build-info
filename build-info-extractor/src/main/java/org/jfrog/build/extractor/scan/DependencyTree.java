@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.scan;
 
-import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
-
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
@@ -10,7 +8,7 @@ import java.util.*;
  *
  * @author yahavi
  */
-public class DependencyTree extends DefaultMutableTreeNode implements ProducerConsumerItem {
+public class DependencyTree extends DefaultMutableTreeNode {
 
     private Set<License> licenses = new HashSet<>();
     private Set<Issue> issues = new HashSet<>();
@@ -42,8 +40,6 @@ public class DependencyTree extends DefaultMutableTreeNode implements ProducerCo
     public void setGeneralInfo(GeneralInfo generalInfo) {
         this.generalInfo = generalInfo;
     }
-
-    @SuppressWarnings("unused")
 
     public Set<License> getLicenses() {
         return licenses;
@@ -145,5 +141,4 @@ public class DependencyTree extends DefaultMutableTreeNode implements ProducerCo
             allLicenses.addAll(child.getLicenses());
         }
     }
-
 }
