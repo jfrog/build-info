@@ -80,10 +80,10 @@ public class GoRun extends GoCommand {
             }
             // We create the GoDriver here as env might had changed.
             this.goDriver = new GoDriver(GO_CLIENT_CMD, env, path.toFile(), logger);
-            this.moduleName = goDriver.getModuleName();
             // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
             goDriver.version(true);
             goDriver.runCmd(goCmdArgs, true);
+            this.moduleName = goDriver.getModuleName();
             collectDependencies();
             return createBuild();
         } catch (Exception e) {
