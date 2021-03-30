@@ -283,13 +283,13 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
     /**
      * Populate the dependencies map for the specified scope by:
-     * 1. Create npm dependencies tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
+     * 1. Create npm dependency tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependenciesTree, NpmScope scope) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependencyTree, NpmScope scope) throws Exception {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependenciesTree(npmDependenciesTree, scope);
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope);
         try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};

@@ -8,7 +8,7 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Enumeration;
 
 /**
- * Traverse over the dependencies tree of 'NpmPackageInfo's. If a node is legal - Produce it.
+ * Traverse over the dependency tree of 'NpmPackageInfo's. If a node is legal - Produce it.
  *
  * @author Yahav Itzhak
  */
