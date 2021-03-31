@@ -183,7 +183,7 @@ public class Utils {
         // Extract build name and number from build info URL
         String buildName = res[1];
         String buildNumber = StringUtils.substringBefore(res[2], System.lineSeparator());
-        return buildInfoClient.getBuildInfo(buildName, buildNumber);
+        return buildInfoClient.getBuildInfo(buildName, buildNumber, null);
     }
 
     /**

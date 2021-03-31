@@ -48,9 +48,9 @@ public class IssuesCollector implements Serializable {
      * Main function that manages the issue collection process.
      */
     public Issues collectIssues(File execDir, Log logger, String config, ArtifactoryBuildInfoClientBuilder clientBuilder,
-                                String buildName, Vcs vcs) throws InterruptedException, IOException {
+                                String buildName, Vcs vcs, String project) throws InterruptedException, IOException {
         IssuesCollectionConfig parsedConfig = parseConfig(config);
-        String previousVcsRevision = getPreviousVcsRevision(clientBuilder, buildName, vcs);
+        String previousVcsRevision = getPreviousVcsRevision(clientBuilder, buildName, vcs, project);
         Set<Issue> affectedIssues = doCollect(execDir, logger, parsedConfig, previousVcsRevision);
         return buildIssuesObject(parsedConfig, affectedIssues);
     }
@@ -73,10 +73,10 @@ public class IssuesCollector implements Serializable {
     /**
      * Gets the previous vcs revision from the LATEST build published to Artifactory.
      */
-    private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String prevBuildName, Vcs prevVcs) throws IOException {
+    private String getPreviousVcsRevision(ArtifactoryBuildInfoClientBuilder clientBuilder, String prevBuildName, Vcs prevVcs, String project) throws IOException {
         try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
             // Get LATEST build info from Artifactory
-            Build previousBuildInfo = client.getBuildInfo(prevBuildName, LATEST);
+            Build previousBuildInfo = client.getBuildInfo(prevBuildName, LATEST, project);
             if (previousBuildInfo == null) {
                 return "";
             }

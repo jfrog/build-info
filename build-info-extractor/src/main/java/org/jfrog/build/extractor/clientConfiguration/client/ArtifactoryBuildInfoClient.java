@@ -69,6 +69,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
+    private static final String BUILD_PROJECT_PARAM = "?buildRepo=";
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
@@ -177,8 +178,17 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return repositories;
     }
 
-    public void sendBuildInfo(String buildInfoJson) throws IOException {
-        String url = String.format("%s%s", artifactoryUrl, BUILD_REST_URL);
+    // Returns the name of the build-info repository, corresponding to the project key sent.
+    // Returns an empty string, if the provided projectKey is empty.
+    public static String buildRepoNameFromProjectKey(String project) {
+        if (StringUtils.isNotEmpty(project)) {
+            return BUILD_PROJECT_PARAM + encodeUrl(project) + "-build-info";
+        }
+        return "";
+    }
+
+    public void sendBuildInfo(String buildInfoJson, String project) throws IOException {
+        String url = String.format("%s%s%s", artifactoryUrl, BUILD_REST_URL, buildRepoNameFromProjectKey(project));
         HttpPut httpPut = new HttpPut(url);
         try {
             log.info("Deploying build descriptor to: " + httpPut.getURI().toString());
@@ -188,14 +198,14 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
     }
 
-    public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
+    public Build getBuildInfo(String buildName, String buildNumber, String project) throws IOException {
         // Only If the value of the buildNumber sent is "LATEST" or "LAST_RELEASE", replace the value with a specific build number.
-        buildNumber = getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+        buildNumber = getLatestBuildNumberFromArtifactory(buildName, buildNumber, project);
         if (buildNumber == null) {
             return null;
         }
 
-        String url = String.format("%s%s/%s/%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber));
+        String url = String.format("%s%s/%s/%s%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber), buildRepoNameFromProjectKey(project));
         HttpGet httpGet = new HttpGet(url);
         try (CloseableHttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK)) {
             String buildInfoJson = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
@@ -206,14 +216,14 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
     }
 
-    private String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber) throws IOException {
+    private String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber, String project) throws IOException {
         ArtifactoryDependenciesClient dependenciesClient = new ArtifactoryDependenciesClient(artifactoryUrl, httpClient, log);
-        return dependenciesClient.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+        return dependenciesClient.getLatestBuildNumberFromArtifactory(buildName, buildNumber, project);
     }
 
-    public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
+    public void sendBuildRetetion(BuildRetention buildRetention, String buildName, String project, boolean async) throws IOException {
         String buildRetentionJson = toJsonString(buildRetention);
-        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
+        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async + buildRepoNameFromProjectKey(project);
         HttpPost httpPost = new HttpPost(url);
         try {
             log.info(createBuildRetentionLogMsg(buildRetention, async));
@@ -263,7 +273,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     public void sendBuildInfo(Build buildInfo) throws IOException {
         log.debug("Sending build info: " + buildInfo);
         try {
-            sendBuildInfo(buildInfoToJsonString(buildInfo));
+            sendBuildInfo(buildInfoToJsonString(buildInfo), buildInfo.getProject());
         } catch (Exception e) {
             log.error("Could not build the build-info object.", e);
             throw new IOException("Could not publish build-info: " + e.getMessage());

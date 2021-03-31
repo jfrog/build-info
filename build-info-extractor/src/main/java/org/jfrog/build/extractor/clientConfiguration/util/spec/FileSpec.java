@@ -18,6 +18,7 @@ public class FileSpec {
     private String flat;
     private String regexp;
     private String build;
+    private String project;
     private String explode;
     // Deprecated, Use Exclusions instead.
     private String[] excludePatterns;
@@ -98,6 +99,14 @@ public class FileSpec {
 
     public void setBuild(String build) {
         this.build = build;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 
     public String getExplode() {
@@ -192,6 +201,7 @@ public class FileSpec {
                 ", flat='" + flat + '\'' +
                 ", regexp='" + regexp + '\'' +
                 ", build='" + build + '\'' +
+                ", project='" + project + '\'' +
                 ", explode='" + explode + '\'' +
                 ", excludePatterns='" + Arrays.toString(excludePatterns) + '\'' +
                 ", exclusions='" + Arrays.toString(exclusions) + '\'' +

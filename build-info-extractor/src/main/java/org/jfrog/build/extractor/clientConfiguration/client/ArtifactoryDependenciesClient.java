@@ -266,13 +266,13 @@ public class ArtifactoryDependenciesClient extends ArtifactoryBaseClient {
      *
      * @return actual build number, null if buildName is not found.
      */
-    public String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber) throws IOException {
+    public String getLatestBuildNumberFromArtifactory(String buildName, String buildNumber, String project) throws IOException {
         if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
             if (isArtifactoryOSS()) {
                 throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", buildNumber));
             }
             List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
-            artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber));
+            artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, buildNumber, project));
             List<BuildPatternArtifacts> artifactsResponses = retrievePatternArtifacts(artifactsRequest);
             // Artifactory returns null if no build was found
             if (artifactsResponses.get(0) != null) {

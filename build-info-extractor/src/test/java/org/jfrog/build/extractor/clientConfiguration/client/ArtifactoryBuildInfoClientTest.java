@@ -78,7 +78,7 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
         buildInfoClient.sendBuildInfo(buildInfoToSend);
 
         // Get build info
-        Build receivedBuildInfo = buildInfoClient.getBuildInfo(BUILD_NAME, BUILD_NUMBER);
+        Build receivedBuildInfo = buildInfoClient.getBuildInfo(BUILD_NAME, BUILD_NUMBER, null);
 
         // Compare
         Assert.assertEquals(buildInfoClient.toJsonString(buildInfoToSend), buildInfoClient.toJsonString(receivedBuildInfo));

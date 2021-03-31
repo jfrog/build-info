@@ -43,6 +43,7 @@ public class Build extends BaseBuildBean {
     private String version = "1.0.1";
     private String name;
     private String number;
+    private String project;
     private BuildAgent buildAgent;
     private Agent agent;
     private String started;
@@ -139,6 +140,24 @@ public class Build extends BaseBuildBean {
      */
     public void setNumber(String number) {
         this.number = number;
+    }
+
+    /**
+     * Returns the project of the build
+     *
+     * @return Build project
+     */
+    public String getProject() {
+        return project;
+    }
+
+    /**
+     * Sets the project of the build
+     *
+     * @param project Build project
+     */
+    public void setProject(String project) {
+        this.project = project;
     }
 
     /**

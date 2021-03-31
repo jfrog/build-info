@@ -33,7 +33,7 @@ public class AqlHelperBase {
 
     protected void buildQueryAdditionalParts(FileSpec file) throws IOException {
         this.buildName = getBuildName(file.getBuild());
-        this.buildNumber = getBuildNumber(client, buildName, file.getBuild());
+        this.buildNumber = getBuildNumber(client, buildName, file.getBuild(), file.getProject());
         this.querySuffix = buildQuerySuffix(file.getSortBy(), file.getSortOrder(), file.getOffset(), file.getLimit());
         this.includeFields = buildIncludeQueryPart(file.getSortBy(), querySuffix);
     }
@@ -69,7 +69,7 @@ public class AqlHelperBase {
         return buildName.endsWith(ESCAPE_CHAR) ? build : buildName;
     }
 
-    protected String getBuildNumber(ArtifactoryDependenciesClient client, String buildName, String build) throws IOException {
+    protected String getBuildNumber(ArtifactoryDependenciesClient client, String buildName, String build, String project) throws IOException {
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
             if (!build.startsWith(buildName)) {
@@ -84,7 +84,7 @@ public class AqlHelperBase {
                 // Remove the escape chars before the delimiters
                 buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            String retrievedBuildNumber = client.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+            String retrievedBuildNumber = client.getLatestBuildNumberFromArtifactory(buildName, buildNumber, project);
             if (retrievedBuildNumber == null) {
                 logBuildNotFound(buildName, buildNumber);
             }
