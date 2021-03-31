@@ -810,7 +810,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         try (CloseableHttpResponse httpResponse = httpClient.getHttpClient().execute(request)) {
             EntityUtils.consumeQuietly(httpResponse.getEntity());
             StatusLine statusLine = httpResponse.getStatusLine();
-            if (statusLine.getStatusCode() != HttpStatus.SC_OK) {
+            if (statusLine.getStatusCode() != HttpStatus.SC_OK && statusLine.getStatusCode() != HttpStatus.SC_ACCEPTED) {
                 throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
             }
         }
