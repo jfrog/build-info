@@ -33,7 +33,8 @@ public class AqlHelperBase {
 
     protected void buildQueryAdditionalParts(FileSpec file) throws IOException {
         this.buildName = getBuildName(file.getBuild());
-        this.buildNumber = getBuildNumber(client, buildName, file.getBuild(), file.getProject());
+        // AQL doesn't support projects.
+        this.buildNumber = getBuildNumber(client, buildName, file.getBuild(), null);
         this.querySuffix = buildQuerySuffix(file.getSortBy(), file.getSortOrder(), file.getOffset(), file.getLimit());
         this.includeFields = buildIncludeQueryPart(file.getSortBy(), querySuffix);
     }
