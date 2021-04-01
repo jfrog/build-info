@@ -90,7 +90,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
 
 #### Docker tests
 * Docker tests run only on Linux/mac.
-* Create the following docker repository in Artifactory:
+* Create the following docker repositories in Artifactory:
   * docker-local
   * docker-remote
   * docker-virtual (contains both docker-local & docker-remote repositories)
