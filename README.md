@@ -66,6 +66,7 @@ To run *all* tests:
 
 #### Go tests
 * Add Go executable to the system search path (PATH environment variable).
+* Go v1.14 or above is required.
 ```
 > ./gradlew clean build-info-extractor-go:test
 ```
