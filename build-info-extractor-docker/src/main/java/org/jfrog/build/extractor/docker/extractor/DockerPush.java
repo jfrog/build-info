@@ -96,8 +96,9 @@ public class DockerPush extends DockerCommand {
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
             if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");
+            } else {
+                setImageLayersProps(image.getLayers(), artifactProperties, buildInfoClientBuilder);
             }
-            setImageLayersProps(image.getLayers(), artifactProperties, buildInfoClientBuilder);
             Build build = new Build();
             modulesList.add(module);
             build.setModules(modulesList);
@@ -113,6 +114,9 @@ public class DockerPush extends DockerCommand {
      * Update each layer's properties with artifactProperties.
      */
     private void setImageLayersProps(DockerLayers layers, ArrayListMultimap<String, String> artifactProperties, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder) throws IOException {
+        if (layers == null){
+            return;
+        }
         String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
