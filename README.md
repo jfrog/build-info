@@ -90,26 +90,29 @@ When running on a unix machine, provide the path to the 'bin' directory.
 
 #### Docker tests
 * Docker tests run only on Linux/mac.
+* Create the following docker repositories in Artifactory:
+  * docker-local
+  * docker-remote
+  * docker-virtual (contains both docker-local & docker-remote repositories)
 * In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
-
+  * Replace `localhost:8081` prefix with your docker registry domain if needed.
  ```
-  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN=localhost:8081/build-info-tests-docker-local
-  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN=localhost:8081/build-info-tests-docker-remote
-  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN=localhost:8081/build-info-tests-docker-virtual
-  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_REPO=build-info-tests-docker-local
-  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_REPO=build-info-tests-docker-remote
-  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO=build-info-tests-docker-virtual
+  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN=localhost:8081/docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN=localhost:8081/docker-remote
+  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN=localhost:8081/docker-virtual
+  export BITESTS_ARTIFACTORY_DOCKER_LOCAL_REPO=docker-local
+  export BITESTS_ARTIFACTORY_DOCKER_REMOTE_REPO=docker-remote
+  export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO=docker-virtual
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
  * For OSX agents, run a Socat container:
  ```
  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
  ```
+ * Run tests:
  ```
 > ./gradlew clean build-info-extractor-docker:test
 ```
-
-* Before running the tests, please make sure you have a local docker repository named *build-info-tests-docker* in Artifactory.
 
 ###  Testing on Artifactory OSS
 When testing with an instance of Artifactory OSS, only supported tests are for the build-info-gradle-extractor.
