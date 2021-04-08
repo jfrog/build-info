@@ -37,6 +37,7 @@ public interface ClientConfigurationFields {
     String PIP_ENV_ACTIVATION = "pip.env.activation";
     String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
     String DOCKER_IMAGE_TAG = "docker.image.tag";
+    String KANIKO_IMAGE_FILE = "kaniko.image.file";
     String DOCKER_HOST = "docker.host";
     String URL = "url";
     String REPO_KEY = "repoKey";
