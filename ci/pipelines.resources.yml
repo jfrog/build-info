@@ -1,0 +1,16 @@
+resources:
+  - name: biSnapshotGit
+    type: GitRepo
+    configuration:
+      path: yahavi/build-info
+      gitProvider: yahav_github
+      branches:
+        include: master
+
+  - name: biReleaseGit
+    type: GitRepo
+    configuration:
+      path: yahavi/build-info
+      gitProvider: yahav_github
+      buildOn:
+        commit: false
