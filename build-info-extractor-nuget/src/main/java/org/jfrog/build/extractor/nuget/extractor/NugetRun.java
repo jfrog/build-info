@@ -22,6 +22,7 @@ import org.jfrog.build.extractor.nuget.types.NugetProjectAssets;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.io.BufferedWriter;
+import java.io.PrintWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -78,7 +79,6 @@ public class NugetRun extends PackageManagerExtractor {
     private String resolutionRepo;
     private String username;
     private String password;
-    private boolean useNugetV2;
     private String module;
     private String nugetCmdArgs;
     private List<String> dependenciesSources;
@@ -95,7 +95,7 @@ public class NugetRun extends PackageManagerExtractor {
      * @param env            - Environment variables to use during npm execution.
      */
 
-    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, boolean useNugetV2) {
+    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
         this.clientBuilder = clientBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -105,7 +105,6 @@ public class NugetRun extends PackageManagerExtractor {
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
         this.username = username;
         this.password = password;
-        this.useNugetV2 = useNugetV2;
         this.module = module;
     }
 
@@ -150,7 +149,7 @@ public class NugetRun extends PackageManagerExtractor {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryClientConfiguration.DotnetHandler handler = clientConfiguration.dotnetHandler;
+            ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
             NugetRun nugetRun = new NugetRun(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     clientConfiguration.dotnetHandler.useDotnetCoreCli(),
@@ -160,8 +159,7 @@ public class NugetRun extends PackageManagerExtractor {
                     clientConfiguration.getAllProperties(),
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
-                    clientConfiguration.resolver.getPassword(),
-                    handler.useNugetV2());
+                    clientConfiguration.resolver.getPassword());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -209,20 +207,22 @@ public class NugetRun extends PackageManagerExtractor {
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, useNugetV2, username, password);
+            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password);
         }
         return configFile;
     }
 
-
-    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, boolean useNugetV2, String username, String password) throws IOException{
-        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, useNugetV2);
-        String protocolVersion = useNugetV2 ? "2" : "3";
+    /**
+     * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
+     * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
+     */
+    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password) throws Exception{
+        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo);
+        String protocolVersion = "3";
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
         try (PrintWriter out = new PrintWriter(configPath)) {
             out.println(configFileText);
         }
-        return ;
     }
 
     /**

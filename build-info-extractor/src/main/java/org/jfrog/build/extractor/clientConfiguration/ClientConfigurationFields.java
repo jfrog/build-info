@@ -36,7 +36,6 @@ public interface ClientConfigurationFields {
     String NPM_CI_COMMAND = "npm.ci.command"; // Determines whether the npm build is 'npm install' or 'npm ci' command.
     String PIP_ENV_ACTIVATION = "pip.env.activation";
     String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
-    String DOTNET_USE_NUGET_V2 = "dotnet.use.nuget.v2";
     String DOCKER_IMAGE_TAG = "docker.image.tag";
     String DOCKER_HOST = "docker.host";
     String URL = "url";

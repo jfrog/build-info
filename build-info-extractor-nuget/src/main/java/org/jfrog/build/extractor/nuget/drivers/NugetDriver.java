@@ -19,17 +19,6 @@ public class NugetDriver extends ToolchainDriverBase {
         commandExecutor = new CommandExecutor("nuget", env);
     }
 
-    public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException {
-        try {
-            String sourceUrl = buildNugetSourceUrl(client, repo);
-            List<String> extraArgs = Arrays.asList(getFlagSyntax(CONFIG_FILE_FLAG), configPath, getFlagSyntax(SOURCE_FLAG), sourceUrl, getFlagSyntax(NAME_FLAG), sourceName);
-            List<String> credentials = Arrays.asList(getFlagSyntax(USERNAME_FLAG), username, getFlagSyntax(PASSWORD_FLAG), password);
-            return runCommand(new String[]{"sources", "add"}, extraArgs, credentials, logger);
-        } catch (Exception e) {
-            throw new IOException("nuget sources add failed: " + e.getMessage(), e);
-        }
-    }
-
     public String globalPackagesCache() throws IOException, InterruptedException {
         // Run `nuget locals globals-packages -list` to get the global packages path
         List<String> args = new ArrayList<>();
