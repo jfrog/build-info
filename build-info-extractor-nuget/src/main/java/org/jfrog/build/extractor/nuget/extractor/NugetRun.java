@@ -42,6 +42,7 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String NUGET_CONFIG_FILE_PREFIX = TEMP_DIR_PREFIX + ".nuget.config";
     private static final String PACKAGES_CONFIG = "packages.config";
     private static final String PROJECT_ASSETS = "project.assets.json";
+    private static final String PROJECT_ASSETS_DIR = "obj";
     private static final String CONFIG_FILE_TEMPLATE = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
             + "<configuration>\n"
             + "\t<packageSources>\n\t</packageSources>\n"
@@ -348,10 +349,11 @@ public class NugetRun extends PackageManagerExtractor {
      * Iterate the dependencies sources list and look for the project's source
      */
     private String getDependenciesSource(String projectName, String csprojPath) {
+        String projectRootPath = (new File(csprojPath)).getParent();
         String projectNamePattern = File.separator + projectName + File.separator;
-        String projectPathPattern = (new File(csprojPath)).getParent() + File.separator;
+        String projectPathPattern = projectRootPath + File.separator + PROJECT_ASSETS_DIR + File.separator;
         for (String source : dependenciesSources) {
-            if (source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
+            if ( (new File(source)).getParent() == projectRootPath || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
                 return source;
             }
         }
