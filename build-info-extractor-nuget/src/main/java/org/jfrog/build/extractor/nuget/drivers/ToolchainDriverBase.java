@@ -30,7 +30,8 @@ abstract public class ToolchainDriverBase implements Serializable {
     protected static final String GLOBAL_PACKAGES_ARG = "global-packages";
     protected static final String GLOBAL_PACKAGES_REGEX = "^global-packages:";
     private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
-    private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
+    private static final String ARTIFACTORY_NUGET_API_V2 = "/api/nuget/";
+    private static final String ARTIFACTORY_NUGET_API_V3 = ARTIFACTORY_NUGET_API_V2 + "v3";
     private static final long serialVersionUID = 1L;
 
     protected CommandExecutor commandExecutor;
@@ -53,7 +54,7 @@ abstract public class ToolchainDriverBase implements Serializable {
         }
     }
 
-    abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException;
+    abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password, boolean useNugetV2) throws IOException;
 
     abstract public String globalPackagesCache() throws IOException, InterruptedException;
 
@@ -63,12 +64,13 @@ abstract public class ToolchainDriverBase implements Serializable {
         return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
-    protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
+    protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo, boolean useNugetV2) throws Exception {
         URL rtUrl = new URL(client.getArtifactoryUrl());
+        String artifactoryNugetApi = useNugetV2 ? ARTIFACTORY_NUGET_API_V2 : ARTIFACTORY_NUGET_API_V3
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())
-                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo)
+                .setPath(rtUrl.getPath() + artifactoryNugetApi + repo)
                 .setPort(rtUrl.getPort());
         return sourceUrlBuilder.build().toURL().toString();
     }
