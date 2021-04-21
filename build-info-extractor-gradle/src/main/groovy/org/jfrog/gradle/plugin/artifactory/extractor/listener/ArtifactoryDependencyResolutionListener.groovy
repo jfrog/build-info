@@ -15,6 +15,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdStrin
  * which is used in the 'requestedBy' field of every dependency in the build info.
  * Does so by listening to the 'afterResolve' event of every module.
  */
+@SuppressWarnings("unused")
 class ArtifactoryDependencyResolutionListener implements DependencyResolutionListener {
     final Map<String, Map<String, String[][]>> modulesHierarchyMap = new HashMap()
 
@@ -33,6 +34,7 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
      * Handles the modules' hierarchy map update.
      * @param dependencies - Module's resolved dependencies.
      */
+    @SuppressWarnings("unused")
     void updateModulesHierarchyMap(ResolvableDependencies dependencies) {
         String compId = getGav(dependencies.getResolutionResult().getRoot().getModuleVersion())
         // If the module was already visited, update it.
@@ -53,39 +55,46 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
         for (DependencyResult dependency : dependencies) {
             // Update the map for every resolved dependency.
             if (dependency instanceof ResolvedDependencyResult) {
-                String[] newDependent = getPathToRoot(dependency)
+                List<String> newDependentsList = new ArrayList<>()
+                populateDependentsList(dependency, newDependentsList)
 
                 // Add the new dependent's path to root to the 2d array.
                 String compId = getGav(dependency.getSelected().getModuleVersion())
-                String[][] curDependants = hierarchyMap[compId]
-                curDependants = ArrayUtils.add(curDependants, newDependent)
-                hierarchyMap[compId] = curDependants
+                String[][] curDependents = hierarchyMap[compId]
+                curDependents = ArrayUtils.add(curDependents, newDependentsList as String[])
+                hierarchyMap[compId] = curDependents
             }
         }
     }
 
     /**
-     * Recursively populate a pathToRoot array of transitive dependencies.
-     * @param dependency
+     * Recursively populate a pathToRoot list of transitive dependencies. Root is expected to be last in list.
+     * @param dependency - To populate the dependents list for.
+     * @param dependents - Dependents list to populate.
      * @return
      */
-    private String[] getPathToRoot(ResolvedDependencyResult dependency) {
+    private void populateDependentsList(ResolvedDependencyResult dependency, List<String> dependents) {
         ResolvedComponentResult from = dependency.getFrom()
         if (from.getDependents().isEmpty()) {
-            // If the dependency was requested by root, return an array with the root's GAV.
+            // If the dependency was requested by root, append the root's GAV.
             if (from.getSelectionReason().isExpected()) {
-                return [getGav(from.getModuleVersion())]
+                dependents << getGav(from.getModuleVersion())
+                return
             }
             // Unexpected result.
-            return new RuntimeException("Failed populating dependency parents map: dependency has no dependents and is not root.")
+            throw new RuntimeException("Failed populating dependency parents map: dependency has no dependents and is not root.")
         }
-        // Get parent's path to root, then add the parent's GAV.
         // We assume the first parent in the list, is the item that that triggered this dependency resolution.
         ResolvedDependencyResult parent = from.getDependents().iterator().next()
-        List<String> dependants = getPathToRoot(parent)
-        // Add the current parent to the beginning of the list.
-        dependants.add(0, getGav(parent.getSelected().getModuleVersion()))
-        return dependants
+        String parentGav = getGav(parent.getSelected().getModuleVersion())
+        // Check for circular dependency.
+        if (dependents.contains(parentGav)) {
+            return
+        }
+        // Append the current parent's GAV to list.
+        dependents << parentGav
+        // Continue populating dependents list.
+        populateDependentsList(parent, dependents)
     }
 
     private static String getGav(ModuleVersionIdentifier module) {
