@@ -29,7 +29,7 @@ String testNgVersion = '6.10'
 project.version = '2'
 project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-info-extractor', 'build-info-vcs']
 
-defaultTasks 'clean', 'build', 'install'
+defaultTasks 'clean', 'build', 'publishToMavenLocal'
 
 allprojects {
     apply plugin: 'java'
@@ -85,9 +85,14 @@ subprojects {
         downloadSources = true
     }
 
-    java {
-        withJavadocJar()
-        withSourcesJar()
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allJava
+        archiveClassifier.set('sources')
+    }
+
+    task javadocJar(type: Jar) {
+        from javadoc
+        archiveClassifier.set('javadoc')
     }
 
     task uberJar(type: Jar) {
@@ -103,9 +108,12 @@ subprojects {
         def publication = publications.create(project.name, MavenPublication) {
             artifactId = project.name
             version = project.findProperty(versionPrefix + "-version") ?: buildInfoVersion
+            from components.java
 
+            artifact sourcesJar
+            artifact javadocJar
             if (project in extractorProjects()) {
-                from components.java
+                artifact uberJar
             }
 
             pom {
@@ -126,8 +134,8 @@ subprojects {
                     }
                 }
                 scm {
-                    connection = 'scm:git:git://github.com/jfrog/artifactory-maven-plugin.git'
-                    developerConnection = 'scm:git:git@github.com:jfrog/artifactory-maven-plugin.git'
+                    connection = 'scm:git:git://github.com/jfrog/build-info.git'
+                    developerConnection = 'scm:git:git@github.com:jfrog/build-info.git'
                     url = 'https://github.com/jfrog/build-info'
                 }
             }
