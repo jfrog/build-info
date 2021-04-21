@@ -52,7 +52,7 @@ pipelines:
             - ./jfrog c add ojo --artifactory-url $int_ojo_rt_url --access-token=$int_ojo_rt_token
             - ./jfrog rt gradlec --use-wrapper --uses-plugin
               --server-id-resolve ojo --repo-resolve remote-repos
-              --server-id-deploy ojo --repo-deploy oss-snapshot-local
+              --server-id-deploy ojo --repo-deploy oss-release-local
 
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties

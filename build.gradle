@@ -90,9 +90,9 @@ subprojects {
         withSourcesJar()
     }
 
-    task fatJar(type: Jar) {
+    task uberJar(type: Jar) {
         from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+            configurations.uberJar.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
         }
         with jar
         archiveClassifier.set('uber')
@@ -104,8 +104,9 @@ subprojects {
             artifactId = project.name
             version = project.findProperty(versionPrefix + "-version") ?: buildInfoVersion
 
-            from components.java
-            artifact fatJar
+            if (project in extractorProjects()) {
+                from components.java
+            }
 
             pom {
                 name = project.name
@@ -155,6 +156,12 @@ nexusPublishing {
 configure(baseProjects()) {
     version = buildInfoVersion
     status = version.status
+    configurations {
+        uberJar {
+            description = 'All jars that should be included in the Uber Jar'
+            transitive = true
+        }
+    }
     dependencies {
         implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.15'
     }
@@ -162,6 +169,8 @@ configure(baseProjects()) {
 
 // Create configurations for the extractor projects
 configure(extractorProjects()) {
+    apply plugin: 'maven-publish'
+
     it.version = new Version(it)
     it.status = version.status
     configurations {
@@ -181,8 +190,12 @@ configure(extractorProjects()) {
         implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
         implementation project(':build-info-client')
         implementation project(':build-info-api')
-        implementation project(':build-info-extractor')
+        uberJar project(':build-info-extractor')
         testImplementation(testFixtures(project(':build-info-extractor')))
+    }
+
+    assemble {
+        dependsOn uberJar
     }
 }
 

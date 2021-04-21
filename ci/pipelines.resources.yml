@@ -2,15 +2,15 @@ resources:
   - name: biSnapshotGit
     type: GitRepo
     configuration:
-      path: yahavi/build-info
-      gitProvider: yahav_github
+      path: jfrog/build-info
+      gitProvider: github
       branches:
         include: master
 
   - name: biReleaseGit
     type: GitRepo
     configuration:
-      path: yahavi/build-info
-      gitProvider: yahav_github
+      path: jfrog/build-info
+      gitProvider: github
       buildOn:
         commit: false
