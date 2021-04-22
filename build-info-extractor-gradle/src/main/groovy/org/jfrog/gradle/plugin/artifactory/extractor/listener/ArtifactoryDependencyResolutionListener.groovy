@@ -84,10 +84,10 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
             // Unexpected result.
             throw new RuntimeException("Failed populating dependency parents map: dependency has no dependents and is not root.")
         }
-        // We assume the first parent in the list, is the item that that triggered this dependency resolution.
+        // We assume the first parent in the list, is the item that triggered this dependency resolution.
         ResolvedDependencyResult parent = from.getDependents().iterator().next()
         String parentGav = getGav(parent.getSelected().getModuleVersion())
-        // Check for circular dependency.
+        // Check for circular dependencies loop. We do this check to avoid an infinite loop dependencies. For example: A --> B --> C --> A...
         if (dependents.contains(parentGav)) {
             return
         }
