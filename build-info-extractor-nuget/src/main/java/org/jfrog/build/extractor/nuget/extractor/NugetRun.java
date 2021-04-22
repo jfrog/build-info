@@ -376,7 +376,7 @@ public class NugetRun extends PackageManagerExtractor {
         String projectNamePattern = File.separator + projectName + File.separator;
         String projectPathPattern = projectRootPath + File.separator + PROJECT_ASSETS_DIR + File.separator;
         for (String source : dependenciesSources) {
-            if ( (new File(source)).getParent() == projectRootPath || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
+            if ( (new File(source)).getParent().equals(projectRootPath) || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
                 return source;
             }
         }
