@@ -71,7 +71,6 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
      * Recursively populate a pathToRoot list of transitive dependencies. Root is expected to be last in list.
      * @param dependency - To populate the dependents list for.
      * @param dependents - Dependents list to populate.
-     * @return
      */
     private void populateDependentsList(ResolvedDependencyResult dependency, List<String> dependents) {
         ResolvedComponentResult from = dependency.getFrom()
