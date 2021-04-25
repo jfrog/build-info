@@ -71,10 +71,6 @@ pipelines:
             - ./jfrog rt bag
             - ./jfrog rt bp
 
-            # Update next development version
-            - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
-            - git commit -am "[artifactory-release] Next development version [skipRun]"
-
             # Publish to Maven Central
             - >
               env -i PATH=$PATH HOME=$HOME
@@ -82,6 +78,10 @@ pipelines:
               ORG_GRADLE_PROJECT_sonatypePassword=$int_mvn_central_password
               ./gradlew clean build publishToSonatype closeSonatypeStagingRepository -x test
 
+            # Update next development version
+            - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
+            - git commit -am "[artifactory-release] Next development version [skipRun]"
+            
             # Push changes
             - git push
             - git push --tags
