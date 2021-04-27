@@ -27,7 +27,7 @@ pipelines:
             - name: mvn_central
         execution:
           onStart:
-            - restore_cache_files m2_home ${HOME}/.m2
+            - restore_cache_files gradle_cache $res_biReleaseGit_resourcePath/.gradle
           onExecute:
             - cd $res_biReleaseGit_resourcePath
 
@@ -81,11 +81,11 @@ pipelines:
             # Update next development version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
             - git commit -am "[artifactory-release] Next development version [skipRun]"
-            
+
             # Push changes
             - git push
             - git push --tags
 
           onComplete:
             # Save .m2 cache
-            - add_cache_files ${HOME}/.m2 m2_home
+            - add_cache_files $res_biReleaseGit_resourcePath/.gradle gradle_cache
