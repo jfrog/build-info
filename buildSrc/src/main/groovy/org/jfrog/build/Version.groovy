@@ -39,7 +39,8 @@ class Version {
     }
 
     def Version(Project project, List<String> subProjects) {
-        this.versionNumber = project.getProperty("${project.name}-version")
+        def versionPrefix = project.name.contains("gradle") ? "build-info-extractor-gradle" : "build-info"
+        this.versionNumber = project.getProperty("${versionPrefix}-version")
         this.release = true
         if (versionNumber.endsWith('SNAPSHOT')) {
             this.release = false

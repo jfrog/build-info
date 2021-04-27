@@ -1,0 +1,55 @@
+updateCommitStatus: &UPDATE_COMMIT_STATUS update_commit_status biSnapshotGit --context "$step_name"
+
+pipelines:
+  # Global configuration
+  - name: build_bi_snapshot
+    configuration:
+      runtime:
+        type: image
+        image:
+          auto:
+            language: java
+            versions:
+              - "8.0.0"
+      environmentVariables:
+        readOnly:
+          CI: "true"
+
+    steps:
+      - name: Snapshot
+        type: Bash
+        configuration:
+          inputResources:
+            - name: biSnapshotGit
+          integrations:
+            - name: ojo
+        execution:
+          onStart:
+            - *UPDATE_COMMIT_STATUS
+            - restore_cache_files m2_home ${HOME}/.m2
+          onExecute:
+            - cd $res_biSnapshotGit_resourcePath
+
+            # Configure JFrog CLI
+            - export JFROG_CLI_BUILD_NAME=build-info
+            - export JFROG_CLI_BUILD_NUMBER=$run_number
+            - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
+            - ./jfrog c add ojo --artifactory-url $int_ojo_rt_url --access-token=$int_ojo_rt_token
+            - ./jfrog rt gradlec --use-wrapper --uses-plugin
+              --server-id-resolve ojo --repo-resolve remote-repos
+              --server-id-deploy ojo --repo-deploy oss-snapshot-local
+
+            # Run install and publish
+            - >
+              env -i PATH=$PATH HOME=$HOME
+              JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
+              JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
+              ./jfrog rt gradle clean aP -x test
+            - ./jfrog rt bag
+            - ./jfrog rt bp
+
+          onComplete:
+            - *UPDATE_COMMIT_STATUS
+
+            # Save .m2 cache
+            - add_cache_files ${HOME}/.m2 m2_home

@@ -1,0 +1,91 @@
+pipelines:
+  - name: build_bi
+    configuration:
+      runtime:
+        type: image
+        image:
+          auto:
+            language: java
+            versions:
+              - "8.0.0"
+      environmentVariables:
+        readOnly:
+          NEXT_VERSION: 0.0.0
+          NEXT_DEVELOPMENT_VERSION: 0.0.x-SNAPSHOT
+          NEXT_GRADLE_VERSION: 0.0.0
+          NEXT_GRADLE_DEVELOPMENT_VERSION: 0.0.x-SNAPSHOT
+
+    steps:
+      - name: Release
+        type: Bash
+        configuration:
+          inputResources:
+            - name: biReleaseGit
+          integrations:
+            - name: ojo
+            - name: github_generic
+            - name: mvn_central
+        execution:
+          onStart:
+            - restore_cache_files m2_home ${HOME}/.m2
+          onExecute:
+            - cd $res_biReleaseGit_resourcePath
+
+            # Set env
+            - export CI=true
+            - export JFROG_CLI_BUILD_NAME=build-info
+            - export JFROG_CLI_BUILD_NUMBER=$run_number
+
+            # Configure git
+            - git checkout master
+            - git remote set-url origin https://$int_github_generic_token@github.com/jfrog/build-info.git
+
+            # Make sure versions provided
+            - echo "Checking variables"
+            - test -n "$NEXT_VERSION" -a "$NEXT_VERSION" != "0.0.0"
+            - test -n "$NEXT_GRADLE_VERSION" -a "$NEXT_GRADLE_VERSION" != "0.0.0"
+            - test -n "$NEXT_DEVELOPMENT_VERSION" -a "$NEXT_DEVELOPMENT_VERSION" != "0.0.0"
+            - test -n "$NEXT_GRADLE_DEVELOPMENT_VERSION" -a "$NEXT_GRADLE_DEVELOPMENT_VERSION" != "0.0.0"
+
+            # Configure JFrog CLI
+            - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
+            - ./jfrog c add ojo --artifactory-url $int_ojo_rt_url --access-token=$int_ojo_rt_token
+            - ./jfrog rt gradlec --use-wrapper --uses-plugin
+              --server-id-resolve ojo --repo-resolve remote-repos
+              --server-id-deploy ojo --repo-deploy oss-release-local
+
+            # Update version
+            - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
+            - git commit -am "[artifactory-release] Release version ${NEXT_VERSION} [skipRun]" --allow-empty
+            - git tag build-info-extractor-${NEXT_VERSION}
+            - git tag build-info-gradle-extractor-${NEXT_VERSION}
+            - git push
+            - git push --tags
+
+            # Run install and publish
+            - >
+              env -i PATH=$PATH HOME=$HOME
+              JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
+              JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
+              ./jfrog rt gradle clean aP -x test
+            - ./jfrog rt bag
+            - ./jfrog rt bp
+
+            # Publish to Maven Central
+            - >
+              env -i PATH=$PATH HOME=$HOME
+              ORG_GRADLE_PROJECT_sonatypeUsername=$int_mvn_central_user
+              ORG_GRADLE_PROJECT_sonatypePassword=$int_mvn_central_password
+              ./gradlew clean build publishToSonatype closeSonatypeStagingRepository -x test
+
+            # Update next development version
+            - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
+            - git commit -am "[artifactory-release] Next development version [skipRun]"
+            
+            # Push changes
+            - git push
+            - git push --tags
+
+          onComplete:
+            # Save .m2 cache
+            - add_cache_files ${HOME}/.m2 m2_home
