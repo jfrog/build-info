@@ -14,3 +14,5 @@ resources:
       gitProvider: github
       buildOn:
         commit: false
+      branches:
+        include: master
