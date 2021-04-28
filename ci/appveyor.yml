@@ -134,7 +134,7 @@ for:
         - job_group: npm_win
     install:
       - ps: Install-Product node %NODEJS_VERSION%
-      - cmd: npm i -g npm@%NPM_VERSION%
+      - cmd: "npm i -g npm@%NPM_VERSION%"
     test_script:
       - cmd: "npm -v"
       - cmd: "%TEST_SUIT%"
@@ -143,7 +143,7 @@ for:
       only:
         - job_group: npm_linux
     install:
-      - sh: npm i -g npm@%NPM_VERSION%
+      - sh: "npm i -g npm@$NPM_VERSION"
     test_script:
       - sh: "npm -v"
       - sh: "$TEST_SUIT"
