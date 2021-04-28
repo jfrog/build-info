@@ -142,6 +142,7 @@ subprojects {
             }
         }
         signing {
+            required { buildInfoVersion.isRelease() }
             def signingKey = findProperty("signingKey")
             def signingPassword = findProperty("signingPassword")
             useInMemoryPgpKeys(signingKey, signingPassword)
