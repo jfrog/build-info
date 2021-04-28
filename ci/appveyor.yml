@@ -2,44 +2,44 @@ stack: jdk 8, node 16, go 1.15, python 3.7.9
 skip_tags: true
 environment:
   matrix:
-    # Extractor Tests
-    - job_name: extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
-    - job_name: extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
-
-    # Maven Tests
-    - job_name: maven_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-maven3:test"
-    - job_name: maven_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-maven3:test"
-
-    # Gradle Tests
-    - job_name: gradle_extractor_win
-      job_group: general
-      appveyor_build_worker_image: Visual Studio 2019
-      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-      TEST_SUIT:
-        "gradlew.bat clean build-info-extractor-gradle:test"
-    - job_name: gradle_extractor_linux
-      job_group: general
-      appveyor_build_worker_image: Ubuntu
-      TEST_SUIT:
-        "./gradlew clean build-info-extractor-gradle:test"
+#    # Extractor Tests
+#    - job_name: extractor_win
+#      job_group: general
+#      appveyor_build_worker_image: Visual Studio 2019
+#      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#      TEST_SUIT:
+#        "gradlew.bat clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
+#    - job_name: extractor_linux
+#      job_group: general
+#      appveyor_build_worker_image: Ubuntu
+#      TEST_SUIT:
+#        "./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test"
+#
+#    # Maven Tests
+#    - job_name: maven_extractor_win
+#      job_group: general
+#      appveyor_build_worker_image: Visual Studio 2019
+#      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#      TEST_SUIT:
+#        "gradlew.bat clean build-info-extractor-maven3:test"
+#    - job_name: maven_extractor_linux
+#      job_group: general
+#      appveyor_build_worker_image: Ubuntu
+#      TEST_SUIT:
+#        "./gradlew clean build-info-extractor-maven3:test"
+#
+#    # Gradle Tests
+#    - job_name: gradle_extractor_win
+#      job_group: general
+#      appveyor_build_worker_image: Visual Studio 2019
+#      JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+#      TEST_SUIT:
+#        "gradlew.bat clean build-info-extractor-gradle:test"
+#    - job_name: gradle_extractor_linux
+#      job_group: general
+#      appveyor_build_worker_image: Ubuntu
+#      TEST_SUIT:
+#        "./gradlew clean build-info-extractor-gradle:test"
 
     # npm Tests
     - job_name: npm_extractor_win
