@@ -58,7 +58,7 @@ pipelines:
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
             - git commit -am "[artifactory-release] Release version ${NEXT_VERSION} [skipRun]" --allow-empty
             - git tag build-info-extractor-${NEXT_VERSION}
-            - git tag build-info-gradle-extractor-${NEXT_VERSION}
+            - git tag build-info-gradle-extractor-${NEXT_GRADLE_VERSION}
             - git push
             - git push --tags
 
