@@ -53,6 +53,7 @@ subprojects {
     apply plugin: 'groovy'
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.artifactory'
+    apply plugin: 'signing'
 
     repositories {
         mavenLocal()
@@ -118,7 +119,7 @@ subprojects {
 
             pom {
                 name = project.name
-                description = project.description
+                description = project.description ?: "JFrog Build-Info"
                 url = 'https://www.jfrog.com/confluence/display/JFROG/Build+Integration'
 
                 licenses {
@@ -140,6 +141,13 @@ subprojects {
                 }
             }
         }
+        signing {
+            def signingKey = findProperty("signingKey")
+            def signingPassword = findProperty("signingPassword")
+            useInMemoryPgpKeys(signingKey, signingPassword)
+            sign publication
+        }
+
         artifactoryPublish {
             publications(publication)
         }
