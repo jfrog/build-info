@@ -1,7 +1,6 @@
-stack: jdk 8, node 16, go 1.15, python 3.7.9
+stack: jdk 8, node 15, go 1.15, python 3.7.9
 skip_tags: true
 environment:
-  NODEJS_VERSION: "15" # Fill the same version as above (in 'stack')
   NPM_VERSION: "7.11.1"
 
   matrix:
@@ -136,7 +135,7 @@ for:
       - ps: echo %NODEJS_VERSION%
       - ps: echo $NODEJS_VERSION
       - ps: echo ${NODEJS_VERSION}
-      - ps: Install-Product node %NODEJS_VERSION%
+      - ps: Install-Product node 15
       - cmd: "npm i -g npm@%NPM_VERSION%"
     test_script:
       - cmd: "npm -v"
