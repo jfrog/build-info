@@ -130,7 +130,7 @@ for:
       only:
         - job_group: npm
     install:
-      - ps: Install-Product node 16
+      - ps: "Install-Product node 15"
     test_script:
       - sh: "npm -v"
       - sh: "$TEST_SUIT"
