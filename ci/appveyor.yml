@@ -129,6 +129,8 @@ for:
     matrix:
       only:
         - job_group: npm
+    install:
+      - ps: Install-Product node 16
     test_script:
       - sh: "npm -v"
       - sh: "$TEST_SUIT"
