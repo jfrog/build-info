@@ -133,7 +133,10 @@ for:
       only:
         - job_group: npm_win
     install:
-      - ps: Install-Product node 16
+      - ps: echo %NODEJS_VERSION%
+      - ps: echo $NODEJS_VERSION
+      - ps: echo ${NODEJS_VERSION}
+      - ps: Install-Product node %NODEJS_VERSION%
       - cmd: "npm i -g npm@%NPM_VERSION%"
     test_script:
       - cmd: "npm -v"
