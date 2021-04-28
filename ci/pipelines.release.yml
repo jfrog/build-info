@@ -67,6 +67,8 @@ pipelines:
               env -i PATH=$PATH HOME=$HOME
               JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
               JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
+              ORG_GRADLE_PROJECT_signingKey=$int_mvn_central_signingKey
+              ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
               ./jfrog rt gradle clean aP -x test
             - ./jfrog rt bag
             - ./jfrog rt bp
@@ -76,7 +78,9 @@ pipelines:
               env -i PATH=$PATH HOME=$HOME
               ORG_GRADLE_PROJECT_sonatypeUsername=$int_mvn_central_user
               ORG_GRADLE_PROJECT_sonatypePassword=$int_mvn_central_password
-              ./gradlew clean build publishToSonatype closeSonatypeStagingRepository -x test
+              ORG_GRADLE_PROJECT_signingKey=$int_mvn_central_signingKey
+              ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
+              ./gradlew clean build publishToSonatype closeAndReleaseSonatypeStagingRepository -x test
 
             # Update next development version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
@@ -84,7 +88,6 @@ pipelines:
 
             # Push changes
             - git push
-            - git push --tags
 
           onComplete:
             # Save .m2 cache
