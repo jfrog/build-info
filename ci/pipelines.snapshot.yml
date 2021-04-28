@@ -26,7 +26,7 @@ pipelines:
         execution:
           onStart:
             - *UPDATE_COMMIT_STATUS
-            - restore_cache_files m2_home ${HOME}/.m2
+            - restore_cache_files gradle_cache $res_biSnapshotGit_resourcePath/.gradle
           onExecute:
             - cd $res_biSnapshotGit_resourcePath
 
@@ -52,4 +52,4 @@ pipelines:
             - *UPDATE_COMMIT_STATUS
 
             # Save .m2 cache
-            - add_cache_files ${HOME}/.m2 m2_home
+            - add_cache_files $res_biSnapshotGit_resourcePath/.gradle gradle_cache

@@ -27,7 +27,7 @@ pipelines:
             - name: mvn_central
         execution:
           onStart:
-            - restore_cache_files m2_home ${HOME}/.m2
+            - restore_cache_files gradle_cache $res_biReleaseGit_resourcePath/.gradle
           onExecute:
             - cd $res_biReleaseGit_resourcePath
 
@@ -58,7 +58,7 @@ pipelines:
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
             - git commit -am "[artifactory-release] Release version ${NEXT_VERSION} [skipRun]" --allow-empty
             - git tag build-info-extractor-${NEXT_VERSION}
-            - git tag build-info-gradle-extractor-${NEXT_VERSION}
+            - git tag build-info-gradle-extractor-${NEXT_GRADLE_VERSION}
             - git push
             - git push --tags
 
@@ -67,6 +67,8 @@ pipelines:
               env -i PATH=$PATH HOME=$HOME
               JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
               JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
+              ORG_GRADLE_PROJECT_signingKey=$int_mvn_central_signingKey
+              ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
               ./jfrog rt gradle clean aP -x test
             - ./jfrog rt bag
             - ./jfrog rt bp
@@ -76,16 +78,17 @@ pipelines:
               env -i PATH=$PATH HOME=$HOME
               ORG_GRADLE_PROJECT_sonatypeUsername=$int_mvn_central_user
               ORG_GRADLE_PROJECT_sonatypePassword=$int_mvn_central_password
-              ./gradlew clean build publishToSonatype closeSonatypeStagingRepository -x test
+              ORG_GRADLE_PROJECT_signingKey=$int_mvn_central_signingKey
+              ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
+              ./gradlew clean build publishToSonatype closeAndReleaseSonatypeStagingRepository -x test
 
             # Update next development version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
             - git commit -am "[artifactory-release] Next development version [skipRun]"
-            
+
             # Push changes
             - git push
-            - git push --tags
 
           onComplete:
             # Save .m2 cache
-            - add_cache_files ${HOME}/.m2 m2_home
+            - add_cache_files $res_biReleaseGit_resourcePath/.gradle gradle_cache
