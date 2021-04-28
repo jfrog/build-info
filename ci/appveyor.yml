@@ -43,13 +43,13 @@ environment:
 
     # npm Tests
     - job_name: npm_extractor_win
-      job_group: general
+      job_group: npm
       appveyor_build_worker_image: Visual Studio 2019
       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
       TEST_SUIT:
         "gradlew.bat clean build-info-extractor-npm:test"
     - job_name: npm_extractor_linux
-      job_group: general
+      job_group: npm
       appveyor_build_worker_image: Ubuntu
       TEST_SUIT:
         "./gradlew clean build-info-extractor-npm:test"
@@ -124,6 +124,15 @@ for:
       - sh: "python -m venv pip-venv"
       - sh: "$TEST_SUIT"
       - cmd: "C:\\Python37-x64\\python -m venv pip-venv"
+      - cmd: "%TEST_SUIT%"
+  -
+    matrix:
+      only:
+        - job_group: npm
+    test_script:
+      - sh: "npm -v"
+      - sh: "$TEST_SUIT"
+      - cmd: "npm -v"
       - cmd: "%TEST_SUIT%"
 
 build: off
