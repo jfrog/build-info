@@ -143,7 +143,7 @@ for:
       only:
         - job_group: npm_linux
     install:
-      - sh: "npm i -g npm@$NPM_VERSION"
+      - npm i -g npm@$NPM_VERSION
     test_script:
       - sh: "npm -v"
       - sh: "$TEST_SUIT"
