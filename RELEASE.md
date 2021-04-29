@@ -1,5 +1,10 @@
 # Release Notes
 
+## build-info-extractor 2.25.4 / gradle-artifactory-plugin 4.23.4 (April 29, 2021)
+- Start uploading build-info JARs to Maven Central
+- Bug fix - Gradle circular dependency resolution causes stack overflow
+- Bug fix - NPE is thrown if the image is not found in Artifactory
+
 ## build-info-extractor 2.25.0 / gradle-artifactory-plugin 4.23.0 (March 31, 2021)
 - Gradle Kotlin DSL support 
 - Update severities in dependency tree - make 'Critical' one level above 'High'
