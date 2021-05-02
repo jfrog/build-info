@@ -86,7 +86,6 @@ public class NpmDriver implements Serializable {
         List<String> args = new ArrayList<>();
         args.add("ls");
         args.add("--json");
-        args.add("--long");
         args.add("--all");
         args.addAll(extraArgs);
         try {
