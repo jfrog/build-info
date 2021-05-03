@@ -45,13 +45,13 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
     private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
     private NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
+    private TypeRestriction typeRestriction;
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
     private String buildName;
     private String npmProxy;
     private String module;
-    private TypeRestriction typeRestriction;
     private Log logger;
 
     NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,
@@ -148,16 +148,21 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         Files.deleteIfExists(npmrcPath); // Delete old npmrc file
 
         StringBuilder npmrcBuilder = new StringBuilder();
-        Scanner configScanner = new Scanner(configList);
 
-        while (configScanner.hasNextLine()) {
-            String currOption = configScanner.nextLine();
+        try (Scanner configScanner = new Scanner(configList)) {
+            while (configScanner.hasNextLine()) {
+                String currOption = configScanner.nextLine();
+                if (StringUtils.isBlank(currOption)) {
+                    continue;
+                }
 
-            if (!currOption.equals("")) {
                 String[] splitOption = currOption.split("=", 2);
-                String key = splitOption[0].trim();
+                if (splitOption.length < 2) {
+                    continue;
+                }
 
-                if (splitOption.length == 2 && isValidKey(key)) {
+                String key = splitOption[0].trim();
+                if (isValidKey(key)) {
                     String value = splitOption[1].trim();
 
                     if (value.startsWith("[") && value.endsWith("]")) {
@@ -176,7 +181,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
         // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
         // We will get json output only if it was explicitly required in the command arguments.
-        npmrcBuilder.append("json = ").append(String.valueOf(isJsonOutputRequired(commandArgs))).append("\n");
+        npmrcBuilder.append("json = ").append(isJsonOutputRequired(commandArgs)).append("\n");
 
         // Save registry
         npmrcBuilder.append("registry = ").append(this.npmRegistry).append("\n");
@@ -197,6 +202,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
     }
 
+    /**
+     * Adds an array-value config to a StringBuilder of .npmrc file, in the following format:
+     * key[] = value
+     */
     private static void addArrayConfigs(StringBuilder npmrcBuilder, String key, String arrayValue) {
         if (arrayValue.equals("[]")) {
             return;
@@ -246,7 +255,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             } else {
                 this.typeRestriction = TypeRestriction.ALL;
             }
-        } else if (this.typeRestriction == TypeRestriction.DEFAULT_RESTRICTION) { // Until npm 6, configurations in 'npm config ls' are sorted by priority in descending order, so typeRestriction should be set only if it was not set before
+        }
+        // Until npm 6, configurations in 'npm config ls' are sorted by priority in descending order, so typeRestriction should be set only if it was not set before
+        else if (this.typeRestriction == TypeRestriction.DEFAULT_RESTRICTION) {
             if (key.equals("only")) {
                 if (StringUtils.startsWith(value, "prod")) {
                     this.typeRestriction = TypeRestriction.PROD_ONLY;

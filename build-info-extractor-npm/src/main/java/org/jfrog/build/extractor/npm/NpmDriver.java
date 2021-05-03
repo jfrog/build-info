@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Strings;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -41,27 +40,21 @@ public class NpmDriver implements Serializable {
     }
 
     public String install(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
-        CommandResults results;
-
         try {
-            results = runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
+            CommandResults results = runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
+            return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm install failed: " + e.getMessage(), e);
         }
-
-        return results.getErr() + results.getRes();
     }
 
     public String ci(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
-        CommandResults results;
-
         try {
-            results = runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
+            CommandResults results = runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
+            return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
             throw new IOException("npm ci failed: " + e.getMessage(), e);
         }
-
-        return results.getErr() + results.getRes();
     }
 
     /**
@@ -77,9 +70,11 @@ public class NpmDriver implements Serializable {
             throw new IOException("npm pack failed: " + e.getMessage(), e);
         }
 
-        logger.info(results.getErr() + results.getRes());
-        String fileName = results.getRes().trim();
-        return fileName;
+        if (logger != null) {
+            logger.info(results.getErr() + results.getRes());
+        }
+
+        return results.getRes().trim();
     }
 
     public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
@@ -109,7 +104,7 @@ public class NpmDriver implements Serializable {
         List<String> args = new ArrayList<>(extraArgs);
         CommandResults res = runCommand(workingDirectory, new String[]{"c", "ls"}, args);
 
-        if (!Strings.isNullOrEmpty(res.getErr())) {
+        if (logger != null && StringUtils.isNotBlank(res.getErr())) {
             logger.warn(res.getErr());
         }
 
@@ -123,7 +118,6 @@ public class NpmDriver implements Serializable {
     private CommandResults runCommand(File workingDirectory, String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
         CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, null, logger);
-
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr() + npmCommandRes.getRes());
         }
