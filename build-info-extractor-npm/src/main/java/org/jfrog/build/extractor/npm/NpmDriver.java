@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -44,7 +45,7 @@ public class NpmDriver implements Serializable {
             CommandResults results = runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
             return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm install failed: " + e.getMessage(), e);
+            throw new IOException("npm install failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
     }
 
@@ -53,7 +54,7 @@ public class NpmDriver implements Serializable {
             CommandResults results = runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
             return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm ci failed: " + e.getMessage(), e);
+            throw new IOException("npm ci failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
     }
 
@@ -67,7 +68,7 @@ public class NpmDriver implements Serializable {
         try {
             results = runCommand(workingDirectory, new String[]{"pack"}, extraArgs, logger);
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm pack failed: " + e.getMessage(), e);
+            throw new IOException("npm pack failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
 
         if (logger != null) {

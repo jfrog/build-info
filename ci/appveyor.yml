@@ -1,8 +1,6 @@
-stack: jdk 8, node 15, go 1.15, python 3.7.9 # If you want to change NodeJS version - you must change it also below (under 'install' of npm_win)
+stack: jdk 8, node 15, go 1.15, python 3.7.9
 skip_tags: true
 environment:
-  NPM_VERSION: "7.11.1"
-
   matrix:
     # Extractor Tests
     - job_name: extractor_win
@@ -45,13 +43,13 @@ environment:
 
     # npm Tests
     - job_name: npm_extractor_win
-      job_group: npm_win
+      job_group: general
       appveyor_build_worker_image: Visual Studio 2019
       JAVA_HOME: C:\Program Files\Java\jdk1.8.0
       TEST_SUIT:
         "gradlew.bat clean build-info-extractor-npm:test"
     - job_name: npm_extractor_linux
-      job_group: npm_linux
+      job_group: general
       appveyor_build_worker_image: Ubuntu
       TEST_SUIT:
         "./gradlew clean build-info-extractor-npm:test"
@@ -127,24 +125,5 @@ for:
       - sh: "$TEST_SUIT"
       - cmd: "C:\\Python37-x64\\python -m venv pip-venv"
       - cmd: "%TEST_SUIT%"
-  -
-    matrix:
-      only:
-        - job_group: npm_win
-    install:
-      - ps: Install-Product node 15 # Fill the same version as above (in 'stack')
-      - cmd: "npm i -g npm@%NPM_VERSION%"
-    test_script:
-      - cmd: "npm -v"
-      - cmd: "%TEST_SUIT%"
-  -
-    matrix:
-      only:
-        - job_group: npm_linux
-    install:
-      - sh: "npm i -g npm@$NPM_VERSION"
-    test_script:
-      - sh: "npm -v"
-      - sh: "$TEST_SUIT"
 
 build: off
