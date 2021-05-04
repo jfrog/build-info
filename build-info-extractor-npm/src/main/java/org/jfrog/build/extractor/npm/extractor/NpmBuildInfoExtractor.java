@@ -179,9 +179,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             }
         }
 
-        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
-        // We will get json output only if it was explicitly required in the command arguments.
-        npmrcBuilder.append("json = ").append(isJsonOutputRequired(commandArgs)).append("\n");
+        // Since we run the get config command with "--json=false", the returned config includes 'json=false' which we don't want to force
+        boolean isJsonOutputRequired = this.npmDriver.isJson(workingDir.toFile(), commandArgs);
+        npmrcBuilder.append("json = ").append(isJsonOutputRequired).append("\n");
 
         // Save registry
         npmrcBuilder.append("registry = ").append(this.npmRegistry).append("\n");
@@ -231,26 +231,17 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
                 !key.equals("json"); // Handled separately because 'npm c ls' should run with json=false
     }
 
-    /**
-     * Boolean argument can be provided in one of the following ways:
-     * 1. --arg - which infers true
-     * 2. --arg=value (true/false)
-     * 3. --arg value (true/false)
-     */
-    static boolean isJsonOutputRequired(List<String> commandArgs) {
-        int jsonIndex = commandArgs.indexOf("--json");
-        if (jsonIndex > -1) {
-            return jsonIndex == commandArgs.size() - 1 || !commandArgs.get(jsonIndex + 1).equals("false");
-        }
-        return commandArgs.contains("--json=true");
+    // For testing
+    TypeRestriction getTypeRestriction() {
+        return typeRestriction;
     }
 
-    private void setTypeRestriction(String key, String value) {
+    void setTypeRestriction(String key, String value) {
         // From npm 7, type restriction is determined by 'omit' and 'include' (both appear in 'npm config ls').
         // Other options (like 'dev', 'production' and 'only') are deprecated, but if they're used anyway - 'omit' and 'include' are automatically calculated.
         // So 'omit' is always preferred, if it exists.
         if (key.equals("omit")) {
-            if (StringUtils.startsWith(value, "dev")) {
+            if (StringUtils.contains(value, "dev")) {
                 this.typeRestriction = TypeRestriction.PROD_ONLY;
             } else {
                 this.typeRestriction = TypeRestriction.ALL;
@@ -398,7 +389,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return previousBuildDependencies;
     }
 
-    private enum TypeRestriction {
+    enum TypeRestriction {
         DEFAULT_RESTRICTION,
         ALL,
         DEV_ONLY,

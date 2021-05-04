@@ -101,8 +101,14 @@ public class NpmDriver implements Serializable {
         return runCommand(workingDirectory, new String[]{"--version"}, Collections.emptyList()).getRes();
     }
 
+    public boolean isJson(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
+        // In case of --json=<not boolean>, the value of json is set to 'true', but the result from the command is not 'true'
+        return !runCommand(workingDirectory, new String[]{"c", "get", "json"}, extraArgs).getRes().equals("false");
+    }
+
     public String configList(File workingDirectory, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> args = new ArrayList<>(extraArgs);
+        args.add("--json=false");
         CommandResults res = runCommand(workingDirectory, new String[]{"c", "ls"}, args);
 
         if (logger != null && StringUtils.isNotBlank(res.getErr())) {
