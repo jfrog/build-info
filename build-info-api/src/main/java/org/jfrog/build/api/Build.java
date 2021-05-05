@@ -46,6 +46,7 @@ public class Build extends BaseBuildBean {
     private BuildAgent buildAgent;
     private Agent agent;
     private String started;
+    private long startedMillis;
     private long durationMillis;
     private String principal;
     private String artifactoryPrincipal;
@@ -230,6 +231,14 @@ public class Build extends BaseBuildBean {
     public String getStarted() {
         return started;
     }
+    /**
+     * Returns the started time of the build in a unit of milliseconds
+     *
+     * @return Build started time in a unit of milliseconds
+     */
+    public long getStartedMillis() {
+        return startedMillis;
+    }
 
     /**
      * Sets the started time of the build
@@ -246,7 +255,8 @@ public class Build extends BaseBuildBean {
      * @param startedDate Build start date to set
      */
     public void setStartedDate(Date startedDate) {
-        this.started = formatBuildStarted(startedDate.getTime());
+        startedMillis = startedDate.getTime();
+        started = formatBuildStarted(startedMillis);
     }
 
     /**

@@ -52,7 +52,6 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
@@ -253,8 +252,8 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
      * @throws ParseException
      */
-    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp) throws ParseException {
-        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + (new SimpleDateFormat(Build.STARTED_FORMAT).parse(timeStamp)).getTime() + "/published";
+    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp) {
+        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published";
     }
 
     /**
@@ -840,11 +839,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
         String url;
         if (StringUtils.isNotBlank(platformUrl)) {
-            try {
-                url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), buildInfo.getStarted());
-            } catch (ParseException e) {
-                throw new IOException("Could not build the build-info url link", e);
-            }
+            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()));
         } else {
             url = createBuildInfoUrl(artifactoryUrl, buildInfo.getName(), buildInfo.getNumber());
         }
