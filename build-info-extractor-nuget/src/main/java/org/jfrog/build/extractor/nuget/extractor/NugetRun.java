@@ -79,23 +79,29 @@ public class NugetRun extends PackageManagerExtractor {
     private String resolutionRepo;
     private String username;
     private String password;
+    private boolean useNugetV3;
     private String module;
     private String nugetCmdArgs;
     private List<String> dependenciesSources;
     private List<Module> modulesList = new ArrayList<>();
 
     /**
-     * Install npm package.
+     * Run NuGet.
      *
      * @param clientBuilder  - Build Info client builder.
      * @param resolutionRepo - The repository it'll resolve from.
-     * @param nugetCmdArgs   - nuget exec args.
+     * @param useDotnetCli   -
+     * @param nugetCmdArgs   - NuGet exec args.
      * @param logger         - The logger.
-     * @param path           - Path to directory contains package.json or path to '.tgz' file.
+     * @param path           - Path to directory contains .sln file.
      * @param env            - Environment variables to use during npm execution.
+     * @param module         -
+     * @param username       - JFrog platfrom username.
+     * @param password       - JFrog platfrom password.
+     * @param useNugetV3     - Boolean indicates if Nuget V3 protocol should be used.
      */
 
-    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
+    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, boolean useNugetV3) {
         this.clientBuilder = clientBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -105,6 +111,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
         this.username = username;
         this.password = password;
+        this.useNugetV3 = useNugetV3;
         this.module = module;
     }
 
@@ -159,7 +166,8 @@ public class NugetRun extends PackageManagerExtractor {
                     clientConfiguration.getAllProperties(),
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
-                    clientConfiguration.resolver.getPassword());
+                    clientConfiguration.resolver.getPassword(),
+                    clientConfiguration.dotnetHandler.useNugetV3());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -207,7 +215,7 @@ public class NugetRun extends PackageManagerExtractor {
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password);
+            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password, useNugetV3);
         }
         return configFile;
     }
@@ -216,9 +224,9 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password) throws Exception{
-        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo);
-        String protocolVersion = "3";
+    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, boolean useNugetV3) throws Exception{
+        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, useNugetV3);
+        String protocolVersion = useNugetV3 ? "3" : "2";
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
         try (PrintWriter out = new PrintWriter(configPath)) {
             out.println(configFileText);

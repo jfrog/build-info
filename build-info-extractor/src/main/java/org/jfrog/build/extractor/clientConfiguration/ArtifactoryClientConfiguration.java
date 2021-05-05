@@ -555,6 +555,14 @@ public class ArtifactoryClientConfiguration {
         public void setUseDotnetCli(boolean useDotnetCli) {
             rootConfig.setBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, useDotnetCli);
         }
+
+        public boolean useNugetV3() {
+            return rootConfig.getBooleanValue(DOTNET_USE_NUGET_V3, false);
+        }
+
+        public void setUseNugetV3(boolean useNugetV3) {
+            rootConfig.setBooleanValue(DOTNET_USE_NUGET_V3, useNugetV3);
+        }
     }
 
     public class DockerHandler extends PrefixPropertyHandler {
