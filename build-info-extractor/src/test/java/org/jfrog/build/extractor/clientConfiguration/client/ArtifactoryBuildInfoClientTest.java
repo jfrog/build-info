@@ -75,7 +75,7 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
         Build buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
-        buildInfoClient.sendBuildInfo(buildInfoToSend);
+        buildInfoClient.sendBuildInfo(buildInfoToSend, null);
 
         // Get build info
         Build receivedBuildInfo = buildInfoClient.getBuildInfo(BUILD_NAME, BUILD_NUMBER);

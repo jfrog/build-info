@@ -129,7 +129,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         Build buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
-        buildInfoClient.sendBuildInfo(buildInfoToSend);
+        buildInfoClient.sendBuildInfo(buildInfoToSend, null);
     }
 
     @BeforeMethod

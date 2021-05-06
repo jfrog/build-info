@@ -51,6 +51,7 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
@@ -70,6 +71,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
+    public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
     public static final String APPLICATION_JSON = "application/json";
     public static final String ITEM_LAST_MODIFIED = "/api/storage/";
@@ -211,20 +213,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return dependenciesClient.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
     }
 
-    public void sendBuildRetetion(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
-        String buildRetentionJson = toJsonString(buildRetention);
-        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
-        HttpPost httpPost = new HttpPost(url);
-        try {
-            log.info(createBuildRetentionLogMsg(buildRetention, async));
-            log.debug(buildRetentionJson);
-            sendHttpEntityRequest(httpPost, buildRetentionJson, APPLICATION_JSON);
-        } catch (IOException e) {
-            log.error("Failed to execute build retention.", e);
-            throw new IOException("Failed to execute build retention: " + e.getMessage(), e);
-        }
-    }
-
     private String createBuildRetentionLogMsg(BuildRetention buildRetention, boolean async) {
         StringBuilder strBuilder = new StringBuilder().append("Sending");
 
@@ -255,22 +243,29 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     /**
-     * Sends build info to Artifactory.
+     * Creates a build info link to the published build in JFrog platform (Artifactory V7)
      *
-     * @param buildInfo The build info to send
-     * @throws IOException On any connection error
+     * @param platformUrl Base platform URL
+     * @param buildName   Build name of the published build
+     * @param buildNumber Build number of the published build
+     * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
+     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
+     * @throws ParseException
      */
-    public void sendBuildInfo(Build buildInfo) throws IOException {
-        log.debug("Sending build info: " + buildInfo);
-        try {
-            sendBuildInfo(buildInfoToJsonString(buildInfo));
-        } catch (Exception e) {
-            log.error("Could not build the build-info object.", e);
-            throw new IOException("Could not publish build-info: " + e.getMessage());
-        }
-        String url = artifactoryUrl +
-                BUILD_BROWSE_URL + "/" + encodeUrl(buildInfo.getName()) + "/" + encodeUrl(buildInfo.getNumber());
-        log.info("Build successfully deployed. Browse it in Artifactory under " + url);
+    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp) {
+        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published";
+    }
+
+    /**
+     * Creates a build info link to the published build in Artifactory (Artifactory V6 or below)
+     *
+     * @param artifactoryUrl Base Artifactory URL
+     * @param buildName      Build name of the published build
+     * @param buildNumber    Build number of the published build
+     * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
+     */
+    public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber) {
+        return artifactoryUrl + BUILD_BROWSE_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber);
     }
 
     public void sendModuleInfo(Build build) throws IOException {
@@ -814,5 +809,40 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
                 throw new IOException(String.format("Artifactory response: %s %s", statusLine.getStatusCode(), statusLine.getReasonPhrase()));
             }
         }
+    }
+
+    public void sendBuildRetention(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
+        String buildRetentionJson = toJsonString(buildRetention);
+        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async;
+        HttpPost httpPost = new HttpPost(url);
+        try {
+            log.info(createBuildRetentionLogMsg(buildRetention, async));
+            log.debug(buildRetentionJson);
+            sendHttpEntityRequest(httpPost, buildRetentionJson, APPLICATION_JSON);
+        } catch (IOException e) {
+            throw new IOException("Failed to execute build retention", e);
+        }
+    }
+
+    /**
+     * Sends build info to Artifactory.
+     *
+     * @param buildInfo The build info to send
+     * @throws IOException On any connection error
+     */
+    public void sendBuildInfo(Build buildInfo, String platformUrl) throws IOException {
+        log.debug("Sending build info: " + buildInfo);
+        try {
+            sendBuildInfo(buildInfoToJsonString(buildInfo));
+        } catch (Exception e) {
+            throw new IOException("Could not publish build-info", e);
+        }
+        String url;
+        if (StringUtils.isNotBlank(platformUrl)) {
+            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()));
+        } else {
+            url = createBuildInfoUrl(artifactoryUrl, buildInfo.getName(), buildInfo.getNumber());
+        }
+        log.info("Build successfully deployed. Browse it in Artifactory under " + url);
     }
 }
