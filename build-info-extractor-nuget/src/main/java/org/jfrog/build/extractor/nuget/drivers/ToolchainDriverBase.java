@@ -32,6 +32,7 @@ abstract public class ToolchainDriverBase implements Serializable {
     private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
     private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
     private static final String ARTIFACTORY_NUGET_API_V3 = ARTIFACTORY_NUGET_API + "v3/";
+    private static final String V3 = "v3";
     private static final long serialVersionUID = 1L;
 
     protected CommandExecutor commandExecutor;
@@ -62,9 +63,9 @@ abstract public class ToolchainDriverBase implements Serializable {
         return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
-    public String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo, boolean useNugetV3) throws Exception {
+    public String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo, String apiProtocol) throws Exception {
         URL rtUrl = new URL(client.getArtifactoryUrl());
-        String nugetApi = useNugetV3 ? ARTIFACTORY_NUGET_API_V3:ARTIFACTORY_NUGET_API;
+        String nugetApi = apiProtocol.equalsIgnoreCase(V3) ? ARTIFACTORY_NUGET_API_V3 : ARTIFACTORY_NUGET_API;
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())

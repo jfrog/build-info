@@ -79,7 +79,7 @@ public class NugetRun extends PackageManagerExtractor {
     private String resolutionRepo;
     private String username;
     private String password;
-    private boolean useNugetV3;
+    private String apiProtocol;
     private String module;
     private String nugetCmdArgs;
     private List<String> dependenciesSources;
@@ -98,10 +98,10 @@ public class NugetRun extends PackageManagerExtractor {
      * @param module         -
      * @param username       - JFrog platfrom username.
      * @param password       - JFrog platfrom password.
-     * @param useNugetV3     - Boolean indicates if Nuget V3 protocol should be used.
+     * @param apiProtocol  - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
-    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, boolean useNugetV3) {
+    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
         this.clientBuilder = clientBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -111,7 +111,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
         this.username = username;
         this.password = password;
-        this.useNugetV3 = useNugetV3;
+        this.apiProtocol = apiProtocol;
         this.module = module;
     }
 
@@ -167,7 +167,7 @@ public class NugetRun extends PackageManagerExtractor {
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword(),
-                    clientConfiguration.dotnetHandler.useNugetV3());
+                    clientConfiguration.dotnetHandler.apiProtocol());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -215,7 +215,7 @@ public class NugetRun extends PackageManagerExtractor {
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password, useNugetV3);
+            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password, apiProtocol);
         }
         return configFile;
     }
@@ -224,9 +224,9 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, boolean useNugetV3) throws Exception{
-        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, useNugetV3);
-        String protocolVersion = useNugetV3 ? "3" : "2";
+    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, String apiProtocol) throws Exception{
+        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
+        String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
         try (PrintWriter out = new PrintWriter(configPath)) {
             out.println(configFileText);
