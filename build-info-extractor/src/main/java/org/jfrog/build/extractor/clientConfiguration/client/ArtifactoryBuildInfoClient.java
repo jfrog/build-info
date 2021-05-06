@@ -250,7 +250,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @param buildNumber Build number of the published build
      * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
      * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
-     * @throws ParseException
      */
     public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp) {
         return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published";
