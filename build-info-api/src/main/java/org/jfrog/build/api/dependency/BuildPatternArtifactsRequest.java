@@ -16,6 +16,8 @@
 
 package org.jfrog.build.api.dependency;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +44,9 @@ public class BuildPatternArtifactsRequest implements Serializable {
     public BuildPatternArtifactsRequest(String buildName, String buildNumber, String project) {
         this.buildNumber = buildNumber;
         this.buildName = buildName;
-        this.project = project;
+        if (StringUtils.isNotEmpty(project)) {
+            this.project = project;
+        }
     }
 
     public String getBuildName() {
