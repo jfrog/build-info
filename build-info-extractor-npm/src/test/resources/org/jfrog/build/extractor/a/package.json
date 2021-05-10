@@ -1,6 +1,6 @@
 {
   "name": "package-name1",
-  "version": "0.0.1",
+  "version": "v0.0.1",
   "private": true,
   "scripts": {
     "start": "node app"

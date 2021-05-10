@@ -74,6 +74,16 @@ public class GradlePluginTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "gradleVersions")
+    public void publicationsTestKotlinDsl(String gradleVersion) throws IOException {
+        // Create test environment
+        createTestDir(GRADLE_KTS_EXAMPLE_PUBLISH);
+        // Run Gradle
+        BuildResult buildResult = runGradle(gradleVersion, envVars, false);
+        // Check results
+        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
+    }
+
+    @Test(dataProvider = "gradleVersions")
     public void ciServerTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);

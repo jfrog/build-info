@@ -29,27 +29,7 @@ public class NpmPackageInfoTest {
     public void testModuleNames(String scope, String name, String version, String expectedModuleId, String expectedPackedFileName, String expectedDeployPath) {
         NpmPackageInfo npmPackageInfo = new NpmPackageInfo(name, version, scope, null);
         assertEquals(npmPackageInfo.getModuleId(), expectedModuleId);
-        assertEquals(npmPackageInfo.getExpectedPackedFileName(), expectedPackedFileName);
         assertEquals(npmPackageInfo.getDeployPath(), expectedDeployPath);
-    }
-
-    @DataProvider
-    private Object[][] removeVersionPrefixesProvider() {
-        return new Object[][]{
-                // version | expectedVersion
-                {"", ""},
-                {"80", "80"},
-                {"v81", "81"},
-                {"=82", "82"},
-                {"=v83", "83"}
-        };
-    }
-
-    @Test(dataProvider = "removeVersionPrefixesProvider")
-    public void testRemoveVersionPrefixes(String version, String expectedVersion) {
-        NpmPackageInfo npmPackageInfo = new NpmPackageInfo("", version, "", null);
-        npmPackageInfo.removeVersionPrefixes();
-        assertEquals(npmPackageInfo.getVersion(), expectedVersion);
     }
 
     @DataProvider

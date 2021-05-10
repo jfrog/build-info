@@ -53,14 +53,18 @@ public class Utils {
         }
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, ArtifactoryClientConfiguration clientConf) throws IOException {
+    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, ArtifactoryClientConfiguration clientConf, String platformUrl) throws IOException {
         BuildRetention retention = getBuildRetention(clientConf);
-        sendBuildAndBuildRetention(client, build, retention, clientConf.info.isAsyncBuildRetention());
+        sendBuildAndBuildRetention(client, build, retention, clientConf.info.isAsyncBuildRetention(), platformUrl);
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention, boolean asyncBuildRetention) throws IOException {
+    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, ArtifactoryClientConfiguration clientConfl) throws IOException {
+        sendBuildAndBuildRetention(client, build, clientConfl, null);
+    }
+
+    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention, boolean asyncBuildRetention, String platformUrl) throws IOException {
         if (retention == null || retention.isEmpty()) {
-            client.sendBuildInfo(build);
+            client.sendBuildInfo(build, platformUrl);
             return;
         }
         ArtifactoryVersion version;
@@ -70,7 +74,11 @@ public class Utils {
             throw new RuntimeException(e);
         }
         addRetentionIfNeeded(build, retention, version);
-        client.sendBuildInfo(build);
+        client.sendBuildInfo(build, platformUrl);
         sendRetentionIfNeeded(client, retention, build.getName(), build.getProject(), version, asyncBuildRetention);
+    }
+
+    public static void sendBuildAndBuildRetention(ArtifactoryBuildInfoClient client, Build build, BuildRetention retention, boolean asyncBuildRetention) throws IOException {
+        sendBuildAndBuildRetention(client, build, retention, asyncBuildRetention, null);
     }
 }
