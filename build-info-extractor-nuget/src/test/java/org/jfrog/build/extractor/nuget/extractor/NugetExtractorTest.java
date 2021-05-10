@@ -96,7 +96,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getPassword(), false);
+            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getPassword(), "v2");
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -118,7 +118,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getPassword(),false);
+            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getPassword(), "v2");
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -168,7 +168,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     private void getProjectRootTest(String args, String expectedProjectRootFileName) {
         try {
             File rootDir = PROJECTS_ROOT.resolve("projectRootTestDir").toFile();
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword(),false);
+            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword(), "v2");
             File projectRoot = nugetRun.getProjectRootPath();
             assertTrue(projectRoot.getPath().endsWith(expectedProjectRootFileName));
         } catch (Exception e) {
