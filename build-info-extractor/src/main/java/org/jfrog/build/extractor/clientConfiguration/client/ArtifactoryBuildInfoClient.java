@@ -51,7 +51,6 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.util.*;
 
 import static org.jfrog.build.client.ArtifactoryHttpClient.encodeUrl;
@@ -63,6 +62,11 @@ import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientCon
  * @author Yossi Shaul
  */
 public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements AutoCloseable {
+    public static final String BUILD_BROWSE_URL = "/webapp/builds";
+    public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
+    public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
+    public static final String APPLICATION_JSON = "application/json";
+    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final String LOCAL_REPOS_REST_URL = "/api/repositories?type=local";
     private static final String REMOTE_REPOS_REST_URL = "/api/repositories?type=remote";
     private static final String VIRTUAL_REPOS_REST_URL = "/api/repositories?type=virtual";
@@ -71,11 +75,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
     private static final String BUILD_PROJECT_PARAM = "?buildRepo=";
-    public static final String BUILD_BROWSE_URL = "/webapp/builds";
-    public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
-    public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
-    public static final String APPLICATION_JSON = "application/json";
-    public static final String ITEM_LAST_MODIFIED = "/api/storage/";
     private static final String USAGE_API = "/api/system/usage";
     private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
@@ -103,6 +102,47 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     public ArtifactoryBuildInfoClient(String artifactoryUrl, String username, String password, Log log) {
         this(artifactoryUrl, username, password, StringUtils.EMPTY, log);
+    }
+
+    // Returns the name of the build-info repository, corresponding to the project key sent.
+    // Returns an empty string, if the provided projectKey is empty.
+    public static String buildRepoNameFromProjectKey(String project) {
+        if (StringUtils.isNotEmpty(project)) {
+            return BUILD_PROJECT_PARAM + encodeUrl(project) + "-build-info";
+        }
+        return "";
+    }
+
+    /**
+     * Creates a build info link to the published build in JFrog platform (Artifactory V7)
+     *
+     * @param platformUrl Base platform URL
+     * @param buildName   Build name of the published build
+     * @param buildNumber Build number of the published build
+     * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
+     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
+     */
+    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project) {
+        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published" +createProjectsPostfix(project);
+    }
+
+    /**
+     * Creates a build info link to the published build in Artifactory (Artifactory V6 or below)
+     *
+     * @param artifactoryUrl Base Artifactory URL
+     * @param buildName      Build name of the published build
+     * @param buildNumber    Build number of the published build
+     * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
+     */
+    public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber) {
+        return artifactoryUrl + BUILD_BROWSE_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber);
+    }
+
+    public static String createProjectsPostfix(String projectKey) {
+        if (StringUtils.isEmpty(projectKey)) {
+            return "";
+        }
+        return BUILD_PROJECT_PARAM + projectKey + "-build-info";
     }
 
     /**
@@ -180,15 +220,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         return repositories;
     }
 
-    // Returns the name of the build-info repository, corresponding to the project key sent.
-    // Returns an empty string, if the provided projectKey is empty.
-    public static String buildRepoNameFromProjectKey(String project) {
-        if (StringUtils.isNotEmpty(project)) {
-            return BUILD_PROJECT_PARAM + encodeUrl(project) + "-build-info";
-        }
-        return "";
-    }
-
     public void sendBuildInfo(String buildInfoJson, String project) throws IOException {
         String url = String.format("%s%s%s", artifactoryUrl, BUILD_REST_URL, buildRepoNameFromProjectKey(project));
         HttpPut httpPut = new HttpPut(url);
@@ -264,31 +295,6 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         strBuilder.append(".");
 
         return strBuilder.toString();
-    }
-
-    /**
-     * Creates a build info link to the published build in JFrog platform (Artifactory V7)
-     *
-     * @param platformUrl Base platform URL
-     * @param buildName   Build name of the published build
-     * @param buildNumber Build number of the published build
-     * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
-     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
-     */
-    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp) {
-        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published";
-    }
-
-    /**
-     * Creates a build info link to the published build in Artifactory (Artifactory V6 or below)
-     *
-     * @param artifactoryUrl Base Artifactory URL
-     * @param buildName      Build name of the published build
-     * @param buildNumber    Build number of the published build
-     * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
-     */
-    public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber) {
-        return artifactoryUrl + BUILD_BROWSE_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber);
     }
 
     public void sendModuleInfo(Build build) throws IOException {
@@ -696,7 +702,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         HttpPut httpPut = new HttpPut(deploymentPathBuilder.toString());
         httpPut.addHeader(SHA1_HEADER_NAME, details.getSha1());
         httpPut.addHeader(MD5_HEADER_NAME, details.getMd5());
-        log.debug("Full Artifact Http path: " + httpPut.toString() + "\n@Http Headers: " + Arrays.toString(httpPut.getAllHeaders()));
+        log.debug("Full Artifact Http path: " + httpPut + "\n@Http Headers: " + Arrays.toString(httpPut.getAllHeaders()));
         return httpPut;
     }
 
@@ -862,7 +868,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
         }
         String url;
         if (StringUtils.isNotBlank(platformUrl)) {
-            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()));
+            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()), buildInfo.getProject());
         } else {
             url = createBuildInfoUrl(artifactoryUrl, buildInfo.getName(), buildInfo.getNumber());
         }

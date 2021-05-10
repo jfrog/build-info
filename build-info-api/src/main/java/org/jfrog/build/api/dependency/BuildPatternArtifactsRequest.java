@@ -61,7 +61,7 @@ public class BuildPatternArtifactsRequest implements Serializable {
         this.buildNumber = buildNumber;
     }
 
-    public String getBuildProject() {
+    public String getProject() {
         return project;
     }
 
