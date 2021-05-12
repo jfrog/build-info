@@ -66,7 +66,7 @@ pipelines:
             - >
               ORG_GRADLE_PROJECT_signingKey=$(echo $int_mvn_central_signingKey | base64 -d)
               ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
-              ./jfrog rt gradle clean aP -x test
+              ./jfrog rt gradle clean aP -x test -Psign
             - ./jfrog rt bag
             - ./jfrog rt bp
 
@@ -76,7 +76,7 @@ pipelines:
               ORG_GRADLE_PROJECT_sonatypePassword=$int_mvn_central_password
               ORG_GRADLE_PROJECT_signingKey=$(echo $int_mvn_central_signingKey | base64 -d)
               ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
-              ./gradlew clean build publishToSonatype closeAndReleaseSonatypeStagingRepository -x test
+              ./gradlew clean build publishToSonatype closeAndReleaseSonatypeStagingRepository -x test -Psign
 
             # Update next development version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties

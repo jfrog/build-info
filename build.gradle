@@ -31,6 +31,14 @@ project.ext.baseProjectNames = ['build-info-api', 'build-info-client', 'build-in
 
 defaultTasks 'clean', 'build', 'publishToMavenLocal'
 
+task install {
+    dependsOn allprojects.collect { proj ->
+        proj.tasks.matching {
+            it.name == 'publishToMavenLocal'
+        }
+    }
+}
+
 allprojects {
     apply plugin: 'java'
     group = 'org.jfrog.buildinfo'
@@ -142,7 +150,7 @@ subprojects {
             }
         }
         signing {
-            required { buildInfoVersion.isRelease() }
+            required { project.hasProperty('sign') }
             def signingKey = findProperty("signingKey")
             def signingPassword = findProperty("signingPassword")
             useInMemoryPgpKeys(signingKey, signingPassword)
