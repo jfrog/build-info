@@ -44,9 +44,7 @@ public class BuildPatternArtifactsRequest implements Serializable {
     public BuildPatternArtifactsRequest(String buildName, String buildNumber, String project) {
         this.buildNumber = buildNumber;
         this.buildName = buildName;
-        if (StringUtils.isNotEmpty(project)) {
-            this.project = project;
-        }
+        this.project = project;
     }
 
     public String getBuildName() {

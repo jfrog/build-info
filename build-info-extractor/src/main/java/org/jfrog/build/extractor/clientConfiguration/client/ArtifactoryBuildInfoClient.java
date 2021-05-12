@@ -74,7 +74,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     private static final String BUILD_REST_URL = "/api/build";
     private static final String BUILD_RETENTION_REST_URL = BUILD_REST_URL + "/retention/";
     private static final String BUILD_RETENTION_REST_ASYNC_PARAM = "?async=";
-    private static final String BUILD_PROJECT_PARAM = "?buildRepo=";
+    private static final String BUILD_PROJECT_PARAM = "?project=";
     private static final String USAGE_API = "/api/system/usage";
     private static final ArtifactoryVersion USAGE_ARTIFACTORY_MIN_VERSION = new ArtifactoryVersion("6.9.0");
 
@@ -106,11 +106,15 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     // Returns the name of the build-info repository, corresponding to the project key sent.
     // Returns an empty string, if the provided projectKey is empty.
-    public static String buildRepoNameFromProjectKey(String project) {
+    public static String getProjectQueryParam(String project, String prefix) {
         if (StringUtils.isNotEmpty(project)) {
-            return BUILD_PROJECT_PARAM + encodeUrl(project) + "-build-info";
+            return prefix + encodeUrl(project);
         }
         return "";
+    }
+
+    public static String getProjectQueryParam(String project) {
+        return getProjectQueryParam(project, BUILD_PROJECT_PARAM);
     }
 
     /**
@@ -123,7 +127,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
      */
     public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project) {
-        return platformUrl + BUILD_BROWSE_PLATFORM_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber) + "/" + timeStamp + "/published" +createProjectsPostfix(project);
+        return String.format("%s/%s/%s/%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, encodeUrl(buildName), encodeUrl(buildNumber), timeStamp, "published" + getProjectQueryParam(project));
     }
 
     /**
@@ -135,14 +139,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
      * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
      */
     public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber) {
-        return artifactoryUrl + BUILD_BROWSE_URL + "/" + encodeUrl(buildName) + "/" + encodeUrl(buildNumber);
-    }
-
-    public static String createProjectsPostfix(String projectKey) {
-        if (StringUtils.isEmpty(projectKey)) {
-            return "";
-        }
-        return BUILD_PROJECT_PARAM + projectKey + "-build-info";
+        return String.format("%s/%s/%s",artifactoryUrl + BUILD_BROWSE_URL, encodeUrl(buildName), encodeUrl(buildNumber));
     }
 
     /**
@@ -221,7 +218,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
     }
 
     public void sendBuildInfo(String buildInfoJson, String project) throws IOException {
-        String url = String.format("%s%s%s", artifactoryUrl, BUILD_REST_URL, buildRepoNameFromProjectKey(project));
+        String url = String.format("%s%s%s", artifactoryUrl, BUILD_REST_URL, getProjectQueryParam(project));
         HttpPut httpPut = new HttpPut(url);
         try {
             log.info("Deploying build descriptor to: " + httpPut.getURI().toString());
@@ -238,7 +235,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
             return null;
         }
 
-        String url = String.format("%s%s/%s/%s%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber), buildRepoNameFromProjectKey(project));
+        String url = String.format("%s%s/%s/%s%s", artifactoryUrl, BUILD_REST_URL, encodeUrl(buildName), encodeUrl(buildNumber), getProjectQueryParam(project));
         HttpGet httpGet = new HttpGet(url);
         try (CloseableHttpResponse httpResponse = sendHttpRequest(httpGet, HttpStatus.SC_OK)) {
             String buildInfoJson = EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8);
@@ -256,7 +253,7 @@ public class ArtifactoryBuildInfoClient extends ArtifactoryBaseClient implements
 
     public void sendBuildRetetion(BuildRetention buildRetention, String buildName, String project, boolean async) throws IOException {
         String buildRetentionJson = toJsonString(buildRetention);
-        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async + buildRepoNameFromProjectKey(project);
+        String url = artifactoryUrl + BUILD_RETENTION_REST_URL + buildName + BUILD_RETENTION_REST_ASYNC_PARAM + async + getProjectQueryParam(project,"&project=");
         HttpPost httpPost = new HttpPost(url);
         try {
             log.info(createBuildRetentionLogMsg(buildRetention, async));

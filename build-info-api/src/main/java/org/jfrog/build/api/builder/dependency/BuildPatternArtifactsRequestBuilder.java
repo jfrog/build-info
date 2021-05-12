@@ -66,7 +66,6 @@ public class BuildPatternArtifactsRequestBuilder {
         this.project = project;
         return this;
     }
-    //no support for transitivity
 
     public BuildPatternArtifactsRequestBuilder pattern(String pattern) {
         patterns.add(new Pattern(pattern));

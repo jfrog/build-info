@@ -37,7 +37,9 @@ public class BuildInfoBuilder {
     protected String version;
     protected String name;
     protected String started;
+    protected long startedMillis;
     protected String number;
+    protected String project;
     protected String artifactoryPluginVersion;
     protected Agent agent;
     protected BuildAgent buildAgent;
@@ -85,9 +87,11 @@ public class BuildInfoBuilder {
         }
         build.setName(name);
         build.setNumber(number);
+        build.setProject(project);
         build.setAgent(agent);
         build.setBuildAgent(buildAgent);
         build.setStarted(started);
+        build.setStartedMillis(startedMillis);
         build.setDurationMillis(durationMillis);
         build.setPrincipal(principal);
         build.setArtifactoryPrincipal(artifactoryPrincipal);
@@ -182,6 +186,7 @@ public class BuildInfoBuilder {
     public BuildInfoBuilder startedDate(Date startedDate) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         this.started = simpleDateFormat.format(startedDate);
+        this.startedMillis = startedDate.getTime();
         return this;
     }
 
@@ -430,5 +435,11 @@ public class BuildInfoBuilder {
     public BuildInfoBuilder governance(Governance governance) {
         this.governance = governance;
         return this;
+    }
+
+    public BuildInfoBuilder setProject(String project) {
+        this.project = project;
+        return this;
+
     }
 }

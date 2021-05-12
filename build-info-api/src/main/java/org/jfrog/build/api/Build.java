@@ -35,7 +35,7 @@ import static org.jfrog.build.api.BuildBean.ROOT;
  * @author Noam Y. Tenne
  */
 @XStreamAlias(ROOT)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
 public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -250,6 +250,7 @@ public class Build extends BaseBuildBean {
     public String getStarted() {
         return started;
     }
+
     /**
      * Returns the started time of the build in a unit of milliseconds
      *
@@ -257,6 +258,14 @@ public class Build extends BaseBuildBean {
      */
     public long getStartedMillis() {
         return startedMillis;
+    }
+
+    /**
+     * Sets the started time of the build in a unit of milliseconds
+     *
+     */
+    public void setStartedMillis(long startedMillis) {
+        this.startedMillis = startedMillis;
     }
 
     /**
