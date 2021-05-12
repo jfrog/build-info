@@ -9,6 +9,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClien
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Properties;
 
 import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
 
@@ -48,12 +49,37 @@ public abstract class PackageManagerExtractor implements Serializable {
         if (StringUtils.isBlank(generatedBuildInfoPath)) {
             return;
         }
+        if (clientConfiguration.isIncludeEnvVars()) {
+            collectEnv(clientConfiguration, build);
+        }
         try {
             BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(generatedBuildInfoPath));
         } catch (Exception e) {
             clientConfiguration.getLog().error("Failed writing build info to file: ", e);
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Collect environment variables according to the env include-exclude patterns
+     *
+     * @param clientConfiguration - Artifactory client configuration
+     * @param build               - The target build
+     */
+    private static void collectEnv(ArtifactoryClientConfiguration clientConfiguration, Build build) {
+        // Create initial environment variables properties
+        Properties envProperties = new Properties();
+        envProperties.putAll(clientConfiguration.getAllProperties());
+
+        // Filter env according to the include-exclude patterns
+        envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConfiguration.getLog());
+
+        // Add results to the build
+        if (build.getProperties() != null) {
+            build.getProperties().putAll(envProperties);
+            return;
+        }
+        build.setProperties(envProperties);
     }
 
     protected static void validateRepoExists(ArtifactoryBaseClient client, String repo, String repoNotSpecifiedMsg) throws IOException {
