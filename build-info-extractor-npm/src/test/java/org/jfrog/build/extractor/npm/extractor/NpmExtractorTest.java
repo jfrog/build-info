@@ -188,15 +188,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             if (isNpmCi) {
                 // Run npm install to generate package-lock.json file.
-                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false).execute();
+                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false, null).execute();
             }
 
             // Execute command.
             NpmInstallCi buildExecutor;
             if (isNpmCi) {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, true);
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, true, null);
             } else {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false);
+                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false, null);
             }
             Build build = buildExecutor.execute();
 

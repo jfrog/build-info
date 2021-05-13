@@ -50,18 +50,20 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private String npmRegistry;
     private Properties npmAuth;
     private String buildName;
+    private final String project;
     private String npmProxy;
     private String module;
     private Log logger;
 
     NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,
-                          NpmDriver npmDriver, Log logger, String module, String buildName) {
+                          NpmDriver npmDriver, Log logger, String module, String buildName, String project) {
         this.dependenciesClientBuilder = dependenciesClientBuilder;
         this.buildInfoClientBuilder = buildInfoClientBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
         this.module = module;
         this.buildName = buildName;
+        this.project = project;
         this.typeRestriction = TypeRestriction.DEFAULT_RESTRICTION;
     }
 
@@ -365,7 +367,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
         try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
             // Get previous build's dependencies.
-            Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST");
+            Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST", project);
             if (previousBuildInfo == null) {
                 return Collections.emptyMap();
             }

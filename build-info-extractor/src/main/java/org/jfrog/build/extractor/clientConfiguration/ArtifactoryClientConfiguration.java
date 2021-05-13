@@ -995,6 +995,14 @@ public class ArtifactoryClientConfiguration {
             buildRunParametersPredicate = input -> input.startsWith(BUILD_INFO_PREFIX + RUN_PARAMETERS);
         }
 
+        public String getProject() {
+            return getStringValue(BUILD_PROJECT);
+        }
+
+        public void setProject(String project) {
+            setStringValue(BUILD_PROJECT, project);
+        }
+
         public String getBuildName() {
             return getStringValue(BUILD_NAME);
         }

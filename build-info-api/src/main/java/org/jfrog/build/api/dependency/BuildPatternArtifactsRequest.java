@@ -16,6 +16,8 @@
 
 package org.jfrog.build.api.dependency;
 
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +33,7 @@ public class BuildPatternArtifactsRequest implements Serializable {
 
     private String buildName;
     private String buildNumber;
+    private String project;
     private boolean transitive;
     private List<Pattern> patterns;
 
@@ -38,9 +41,10 @@ public class BuildPatternArtifactsRequest implements Serializable {
         patterns = new ArrayList<>();
     }
 
-    public BuildPatternArtifactsRequest(String buildName, String buildNumber) {
+    public BuildPatternArtifactsRequest(String buildName, String buildNumber, String project) {
         this.buildNumber = buildNumber;
         this.buildName = buildName;
+        this.project = project;
     }
 
     public String getBuildName() {
@@ -57,6 +61,14 @@ public class BuildPatternArtifactsRequest implements Serializable {
 
     public void setBuildNumber(String buildNumber) {
         this.buildNumber = buildNumber;
+    }
+
+    public String getProject() {
+        return project;
+    }
+
+    public void setProject(String project) {
+        this.project = project;
     }
 
     public boolean isTransitive() {

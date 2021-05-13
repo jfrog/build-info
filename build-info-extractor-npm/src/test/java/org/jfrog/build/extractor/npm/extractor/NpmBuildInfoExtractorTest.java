@@ -96,7 +96,7 @@ public class NpmBuildInfoExtractorTest {
 
     @Test(dataProvider = "setTypeRestrictionProvider")
     public void setTypeRestrictionTest(NpmBuildInfoExtractor.TypeRestriction expected, String[][] confs) {
-        NpmBuildInfoExtractor extractor = new NpmBuildInfoExtractor(null, null, null, null, null, null);
+        NpmBuildInfoExtractor extractor = new NpmBuildInfoExtractor(null, null, null, null, null, null, null);
 
         for (String[] conf : confs) {
             extractor.setTypeRestriction(conf[0], conf[1]);
