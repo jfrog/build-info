@@ -9,6 +9,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClien
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Properties;
 
 import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
 
@@ -34,6 +35,7 @@ public abstract class PackageManagerExtractor implements Serializable {
         if (build == null) {
             return;
         }
+        PackageManagerUtils.collectEnvIfNeeded(clientConfiguration, build);
         saveBuildInfoToFile(clientConfiguration, build);
     }
 
