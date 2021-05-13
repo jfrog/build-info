@@ -1007,7 +1007,6 @@ public class ArtifactoryClientConfiguration {
             return getStringValue(BUILD_NAME);
         }
 
-
         public void setBuildName(String buildName) {
             setStringValue(BUILD_NAME, buildName);
         }
