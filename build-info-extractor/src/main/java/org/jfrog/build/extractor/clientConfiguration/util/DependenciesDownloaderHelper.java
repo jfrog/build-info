@@ -10,25 +10,25 @@ import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.search.AqlSearchResult;
+import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.api.util.ZipUtils;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
 
 import java.io.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient.MD5_HEADER_NAME;
-import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient.SHA1_HEADER_NAME;
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.MD5_HEADER_NAME;
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.SHA1_HEADER_NAME;
 
 /**
  * Helper class for downloading dependencies
@@ -56,8 +56,8 @@ public class DependenciesDownloaderHelper {
         this.log = log;
     }
 
-    public DependenciesDownloaderHelper(ArtifactoryDependenciesClient client, String workingDirectory, Log log) {
-        this.downloader = new DependenciesDownloaderImpl(client, workingDirectory, log);
+    public DependenciesDownloaderHelper(ArtifactoryManager artifactoryManager, String workingDirectory, Log log) {
+        this.downloader = new DependenciesDownloaderImpl(artifactoryManager, workingDirectory, log);
         this.log = log;
     }
 
@@ -70,7 +70,7 @@ public class DependenciesDownloaderHelper {
      * @throws IOException in case of IO error
      */
     public List<Dependency> downloadDependencies(Spec downloadSpec) throws IOException {
-        ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.getClient(), log);
+        ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.artifactoryManagerClient(), log);
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
         List<Dependency> resolvedDependencies = new ArrayList<>();
@@ -111,8 +111,7 @@ public class DependenciesDownloaderHelper {
         Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         for (AqlSearchResult.SearchEntry searchEntry : searchResults) {
             String path = searchEntry.getPath().equals(".") ? "" : searchEntry.getPath() + "/";
-            DownloadableArtifact downloadableArtifact = new DownloadableArtifact(StringUtils.stripEnd(downloader.getClient().getArtifactoryUrl(), "/") + "/" +
-                    searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL);
+            DownloadableArtifact downloadableArtifact = new DownloadableArtifact(searchEntry.getRepo(), target, path + searchEntry.getName(), "", "", PatternType.NORMAL);
             downloadableArtifact.setExplode(explode);
             downloadableArtifacts.add(downloadableArtifact);
         }
@@ -172,7 +171,6 @@ public class DependenciesDownloaderHelper {
      *
      * @param downloadableArtifact download recipe
      * @return artifact dependency
-     * @throws IOException
      */
     private Dependency downloadArtifact(DownloadableArtifact downloadableArtifact) throws IOException {
         String filePath = downloadableArtifact.getFilePath();
@@ -197,7 +195,6 @@ public class DependenciesDownloaderHelper {
      * @param uriWithParams        full artifact uri with matrix params
      * @param filePath             the path to file in file system
      * @return artifact dependency
-     * @throws IOException
      */
     Dependency downloadArtifact(DownloadableArtifact downloadableArtifact, ArtifactMetaData artifactMetaData, String uriWithParams, String filePath) throws IOException {
         String fileDestination = downloader.getTargetDir(downloadableArtifact.getTargetDirPath(),
@@ -229,11 +226,12 @@ public class DependenciesDownloaderHelper {
         }
     }
 
-    protected Map<String, String> downloadFile(String uriWithParams, String fileDestination) throws IOException {
-        try (CloseableHttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams)) {
-            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-                return downloader.saveDownloadedFile(inputStream, fileDestination);
-            }
+    protected Map<String, String> downloadFile(String downloadPath, String fileDestination) throws IOException {
+        File downloadedFile = downloader.artifactoryManagerClient().downloadToFile(downloadPath, fileDestination);
+        try {
+            return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
     }
 
@@ -262,7 +260,7 @@ public class DependenciesDownloaderHelper {
         }
     }
 
-    private String[] doConcurrentDownload(long fileSize, final String uriWithParams, String tempPath)
+    private String[] doConcurrentDownload(long fileSize, final String downloadPath, String tempPath)
             throws Exception {
         final MutableBoolean errorOccurred = new MutableBoolean(false);
         String[] downloadedFilesPaths = new String[CONCURRENT_DOWNLOAD_THREADS];
@@ -275,15 +273,15 @@ public class DependenciesDownloaderHelper {
             final Map<String, String> headers = new HashMap<>();
             headers.put(HttpHeaders.RANGE, "bytes=" + start + "-" + end);
 
-            final String downloadPath = tempPath + String.valueOf(i);
-            downloadedFilesPaths[i] = downloadPath;
+            final String fileDestination = tempPath + i;
+            downloadedFilesPaths[i] = fileDestination;
             workers[i] = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        saveRequestToFile(uriWithParams, downloadPath, headers);
+                        downloader.artifactoryManagerClient().downloadToFile(downloadPath, fileDestination, headers);
                     } catch (Exception e) {
                         errorOccurred.setValue(true);
-                        printErrorToLog(e, downloadPath, uriWithParams);
+                        printErrorToLog(e, fileDestination, downloadPath);
                     }
                 }
             });
@@ -300,26 +298,10 @@ public class DependenciesDownloaderHelper {
 
         // Check if error occurred while downloading
         if (errorOccurred.booleanValue()) {
-            throw new Exception(String.format("Error occurred while downloading %s, please refer to logs for more information", uriWithParams));
+            throw new Exception(String.format("Error occurred while downloading %s, please refer to logs for more information", downloadPath));
         }
 
         return downloadedFilesPaths;
-    }
-
-    /**
-     * Executes a GET request to download files and saves the result to the file system.
-     * Used by the downloading threads of concurrentDownloadedArtifact.
-     *
-     * @param uriWithParams   the request uri
-     * @param fileDestination location to save the downloaded file to
-     * @param headers         additional headers for the request
-     */
-    private void saveRequestToFile(String uriWithParams, String fileDestination, Map<String, String> headers) throws IOException {
-        try (CloseableHttpResponse httpResponse = downloader.getClient().downloadArtifact(uriWithParams, headers)) {
-            try (InputStream inputStream = httpResponse.getEntity().getContent()) {
-                saveInputStreamToFile(inputStream, fileDestination);
-            }
-        }
     }
 
     /**
@@ -367,13 +349,24 @@ public class DependenciesDownloaderHelper {
     }
 
     protected ArtifactMetaData downloadArtifactMetaData(String url) throws IOException {
-        try (CloseableHttpResponse response = downloader.getClient().getArtifactMetadata(url)) {
-            EntityUtils.consumeQuietly(response.getEntity());
+        try {
             ArtifactMetaData artifactMetaData = new ArtifactMetaData();
-            artifactMetaData.setMd5(getHeaderContentFromResponse(response, MD5_HEADER_NAME));
-            artifactMetaData.setSha1(getHeaderContentFromResponse(response, SHA1_HEADER_NAME));
-            artifactMetaData.setSize(NumberUtils.toLong(getHeaderContentFromResponse(response, HttpHeaders.CONTENT_LENGTH)));
-            artifactMetaData.setAcceptRange("bytes".equals(getHeaderContentFromResponse(response, HttpHeaders.ACCEPT_RANGES)));
+            for (Header header : downloader.artifactoryManagerClient().downloadHeaders(url)) {
+                switch (header.getName()) {
+                    case MD5_HEADER_NAME:
+                        artifactMetaData.setMd5(header.getValue());
+                        break;
+                    case SHA1_HEADER_NAME:
+                        artifactMetaData.setSha1(header.getValue());
+                        break;
+                    case HttpHeaders.CONTENT_LENGTH:
+                        artifactMetaData.setSize(NumberUtils.toLong(header.getValue()));
+                        break;
+                    case HttpHeaders.ACCEPT_RANGES:
+                        artifactMetaData.setAcceptRange("bytes".equals(header.getValue()));
+                        break;
+                }
+            }
             return artifactMetaData;
         } catch (NumberFormatException e) {
             throw new IOException(e);
@@ -398,15 +391,6 @@ public class DependenciesDownloaderHelper {
             throw new IOException(errorMessage);
         }
         return metadataSha1 == null ? "" : metadataSha1;
-    }
-
-    private String getHeaderContentFromResponse(HttpResponse response, String headerName) {
-        String headerContent = null;
-        Header header = response.getFirstHeader(headerName);
-        if (header != null) {
-            headerContent = header.getValue();
-        }
-        return headerContent;
     }
 
     private Dependency validateChecksumsAndBuildDependency(Map<String, String> checksumsMap, ArtifactMetaData artifactMetaData, String filePath, String fileDestination, String remotePath)

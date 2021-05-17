@@ -10,8 +10,7 @@ import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
@@ -43,8 +42,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private static final String DOCKER_VIRTUAL_REPO = "BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO";
     private static final String DOCKER_HOST = "BITESTS_ARTIFACTORY_DOCKER_HOST";
     private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String localDomainName;
     private String remoteDomainName;
     private String pullImageFromVirtual;
@@ -74,8 +72,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
-        buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         // Get image name
         localDomainName = validateDomainSuffix(System.getenv(LOCAL_DOMAIN));
         remoteDomainName = validateDomainSuffix(System.getenv(REMOTE_DOMAIN));
@@ -105,7 +102,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
             DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), projectPath);
 
-            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -137,7 +134,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
             DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), projectPath);
 
-            DockerPush dockerPush = new DockerPush(buildInfoClientBuilder, dependenciesClientBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             Build build = dockerPush.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -167,7 +164,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             if (StringUtils.isBlank(dockerRemoteRepo)) {
                 throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
             }
-            DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -187,7 +184,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             if (StringUtils.isBlank(dockerVirtualRepo)) {
                 throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
             }
-            DockerPull dockerPull = new DockerPull(buildInfoClientBuilder, dependenciesClientBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+            DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
             validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));

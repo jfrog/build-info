@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public interface DependenciesDownloader {
 
-    ArtifactoryDependenciesClient getClient();
+    ArtifactoryManager artifactoryManagerClient();
 
     List<Dependency> download(Set<DownloadableArtifact> downloadableArtifacts) throws IOException;
 

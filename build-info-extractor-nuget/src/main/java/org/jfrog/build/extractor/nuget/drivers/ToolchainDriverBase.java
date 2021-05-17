@@ -2,8 +2,7 @@ package org.jfrog.build.extractor.nuget.drivers;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
@@ -53,7 +52,7 @@ abstract public class ToolchainDriverBase implements Serializable {
         }
     }
 
-    abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException;
+    abstract public String addSource(String configPath, ArtifactoryManager artifactoryManager, String repo, String sourceName, String username, String password) throws IOException;
 
     abstract public String globalPackagesCache() throws IOException, InterruptedException;
 
@@ -63,8 +62,8 @@ abstract public class ToolchainDriverBase implements Serializable {
         return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
-    protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
-        URL rtUrl = new URL(client.getArtifactoryUrl());
+    protected String buildNugetSourceUrl(ArtifactoryManager artifactoryManager, String repo) throws Exception {
+        URL rtUrl = new URL(artifactoryManager.getUrl());
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())

@@ -7,7 +7,7 @@ import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,21 +25,21 @@ import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDow
  */
 public class DependenciesDownloaderImpl implements DependenciesDownloader {
 
-    private ArtifactoryDependenciesClient client;
+    private final ArtifactoryManager artifactoryManager;
     private File workingDirectory;
     private Log log;
     private boolean flatDownload = false;
 
-    public DependenciesDownloaderImpl(ArtifactoryDependenciesClient client, String workingDirectory, Log log) {
+    public DependenciesDownloaderImpl(ArtifactoryManager artifactoryManager, String workingDirectory, Log log) {
         this.workingDirectory = new File(workingDirectory);
         this.log = log;
         this.flatDownload = false;
-        this.client = client;
+        this.artifactoryManager = artifactoryManager;
     }
 
     @Override
-    public ArtifactoryDependenciesClient getClient() {
-        return client;
+    public ArtifactoryManager artifactoryManagerClient() {
+        return artifactoryManager;
     }
 
     @Override

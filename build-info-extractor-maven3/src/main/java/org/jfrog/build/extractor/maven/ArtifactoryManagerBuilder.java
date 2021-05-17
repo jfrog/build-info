@@ -6,32 +6,32 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONNECTION_RETRIES;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
 
 /**
- * Simple class to build {@link org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient} for deployment.
+ * Simple class to build {@link org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager} for deployment.
  *
  * @author Noam Y. Tenne
  */
-@Component(role = BuildInfoClientBuilder.class)
-public class BuildInfoClientBuilder {
+@Component(role = ArtifactoryManagerBuilder.class)
+public class ArtifactoryManagerBuilder {
 
     @Requirement
     private Logger logger;
 
-    public ArtifactoryBuildInfoClient resolveProperties(ArtifactoryClientConfiguration clientConf) {
-        ArtifactoryBuildInfoClient client = resolveClientProps(clientConf);
-        resolveTimeout(clientConf, client);
-        resolveProxy(clientConf.proxy, client);
-        resolveRetriesParams(clientConf, client);
-        resolveInsecureTls(clientConf, client);
-        return client;
+    public ArtifactoryManager resolveProperties(ArtifactoryClientConfiguration clientConf) {
+        ArtifactoryManager artifactoryManager = resolveClientProps(clientConf);
+        resolveTimeout(clientConf, artifactoryManager);
+        resolveProxy(clientConf.proxy, artifactoryManager);
+        resolveRetriesParams(clientConf, artifactoryManager);
+        resolveInsecureTls(clientConf, artifactoryManager);
+        return artifactoryManager;
     }
 
-    private ArtifactoryBuildInfoClient resolveClientProps(ArtifactoryClientConfiguration clientConf) {
+    private ArtifactoryManager resolveClientProps(ArtifactoryClientConfiguration clientConf) {
         String contextUrl = clientConf.publisher.getContextUrl();
         if (StringUtils.isBlank(contextUrl)) {
             throw new IllegalArgumentException(
@@ -44,36 +44,36 @@ public class BuildInfoClientBuilder {
 
         if (StringUtils.isNotBlank(username)) {
             logResolvedProperty(ClientConfigurationFields.USERNAME, username);
-            return new ArtifactoryBuildInfoClient(contextUrl, username, password, new Maven3BuildInfoLogger(logger));
+            return new ArtifactoryManager(contextUrl, username, password, new Maven3BuildInfoLogger(logger));
         } else {
-            return new ArtifactoryBuildInfoClient(contextUrl, new Maven3BuildInfoLogger(logger));
+            return new ArtifactoryManager(contextUrl, new Maven3BuildInfoLogger(logger));
         }
     }
 
-    private void resolveTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    private void resolveTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getTimeout() == null) {
             return;
         }
         int timeout = clientConf.getTimeout();
         logResolvedProperty(PROP_TIMEOUT, String.valueOf(timeout));
-        client.setConnectionTimeout(timeout);
+        artifactoryManager.setConnectionTimeout(timeout);
     }
 
-    private void resolveRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    private void resolveRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getConnectionRetries() == null) {
             return;
         }
         int configMaxRetries = clientConf.getConnectionRetries();
         logResolvedProperty(PROP_CONNECTION_RETRIES, String.valueOf(configMaxRetries));
-        client.setConnectionRetries(configMaxRetries);
+        artifactoryManager.setConnectionRetries(configMaxRetries);
     }
 
-    private void resolveInsecureTls(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
-        client.setInsecureTls(clientConf.getInsecureTls());
+    private void resolveInsecureTls(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
+        artifactoryManager.setInsecureTls(clientConf.getInsecureTls());
     }
 
     private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,
-                              ArtifactoryBuildInfoClient client) {
+                              ArtifactoryManager artifactoryManager) {
         String proxyHost = proxyConf.getHost();
 
         if (StringUtils.isNotBlank(proxyHost)) {
@@ -84,10 +84,10 @@ public class BuildInfoClientBuilder {
             String proxyUsername = proxyConf.getUsername();
             if (StringUtils.isNotBlank(proxyUsername)) {
                 logResolvedProperty(ClientConfigurationFields.USERNAME, proxyUsername);
-                client.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,
+                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,
                         proxyConf.getPassword());
             } else {
-                client.setProxyConfiguration(proxyHost, proxyConf.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort());
             }
         }
     }

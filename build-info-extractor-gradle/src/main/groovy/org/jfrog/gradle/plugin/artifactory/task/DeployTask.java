@@ -18,7 +18,7 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.retention.Utils;
@@ -95,18 +95,17 @@ public class DeployTask extends DefaultTask {
             }
         }
 
-        ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
-            try {
-                client = new ArtifactoryBuildInfoClient(
-                        accRoot.publisher.getContextUrl(),
-                        accRoot.publisher.getUsername(),
-                        accRoot.publisher.getPassword(),
-                        new GradleClientLogger(log));
-                configureProxy(accRoot, client);
-                configConnectionTimeout(accRoot, client);
-                configRetriesParams(accRoot, client);
+            try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(
+                    accRoot.publisher.getContextUrl(),
+                    accRoot.publisher.getUsername(),
+                    accRoot.publisher.getPassword(),
+                    new GradleClientLogger(log))) {
+
+                configureProxy(accRoot, artifactoryManager);
+                configConnectionTimeout(accRoot, artifactoryManager);
+                configRetriesParams(accRoot, artifactoryManager);
                 GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
                 Build build = gbie.extract(getProject().getRootProject());
                 exportBuildInfo(build, getExportFile(accRoot));
@@ -115,10 +114,10 @@ public class DeployTask extends DefaultTask {
                     exportBuildInfo(build, getExportFile(accRoot));
                     if (accRoot.info.isIncremental()) {
                         log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
-                        client.sendModuleInfo(build);
+                        artifactoryManager.publishBuildInfo(build);
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                        Utils.sendBuildAndBuildRetention(client, build, accRoot);
+                        Utils.sendBuildAndBuildRetention(artifactoryManager, build, accRoot);
                     }
                 }
                 if (isGenerateBuildInfoToFile(accRoot)) {
@@ -136,10 +135,6 @@ public class DeployTask extends DefaultTask {
                         log.error("Failed writing deployable artifacts to file: ", e);
                         throw new RuntimeException("Failed writing deployable artifacts to file", e);
                     }
-                }
-            } finally {
-                if (client != null) {
-                    client.close();
                 }
             }
         }
@@ -167,17 +162,16 @@ public class DeployTask extends DefaultTask {
                     }
 
                     if (publisher.isPublishArtifacts()) {
-                        try (ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(contextUrl, username, password,
+                        try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(contextUrl, username, password,
                                 new GradleClientLogger(log))) {
                             log.debug("Uploading artifacts to Artifactory at '{}'", contextUrl);
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                                     publisher.getIncludePatterns(),
                                     publisher.getExcludePatterns());
-                            configureProxy(accRoot, client);
-                            configConnectionTimeout(accRoot, client);
-                            configRetriesParams(accRoot, client);
-                            client.setMinChecksumDeploySizeKb(publisher.getMinChecksumDeploySizeKb());
-                            deployArtifacts(artifactoryTask.deployDetails, client, patterns, logPrefix);
+                            configureProxy(accRoot, artifactoryManager);
+                            configConnectionTimeout(accRoot, artifactoryManager);
+                            configRetriesParams(accRoot, artifactoryManager);
+                            deployArtifacts(artifactoryTask.deployDetails, artifactoryManager, patterns, logPrefix, publisher.getMinChecksumDeploySizeKb());
                         }
                     }
 
@@ -197,7 +191,7 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
         if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
@@ -205,23 +199,23 @@ public class DeployTask extends DefaultTask {
             String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
-                client.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
             } else {
                 log.debug("No proxy user name and password found, using anonymous proxy");
-                client.setProxyConfiguration(proxyHost, proxy.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort());
             }
         }
     }
 
-    private void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    private void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getTimeout() != null) {
-            client.setConnectionTimeout(clientConf.getTimeout());
+            artifactoryManager.setConnectionTimeout(clientConf.getTimeout());
         }
     }
 
-    private void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    private void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getConnectionRetries() != null) {
-            client.setConnectionRetries(clientConf.getConnectionRetries());
+            artifactoryManager.setConnectionRetries(clientConf.getConnectionRetries());
         }
     }
 
@@ -263,8 +257,8 @@ public class DeployTask extends DefaultTask {
         return !StringUtils.isEmpty(acc.info.getDeployableArtifactsFilePath());
     }
 
-    private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryBuildInfoClient client,
-                                 IncludeExcludePatterns patterns, String logPrefix)
+    private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryManager artifactoryManager,
+                                 IncludeExcludePatterns patterns, String logPrefix, int MinChecksumDeploySizeKb)
             throws IOException {
         for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
@@ -274,7 +268,7 @@ public class DeployTask extends DefaultTask {
                         "' due to the defined include-exclude patterns.");
                 continue;
             }
-            client.deployArtifact(deployDetails, logPrefix);
+            artifactoryManager.upload(deployDetails, logPrefix, MinChecksumDeploySizeKb);
         }
     }
 

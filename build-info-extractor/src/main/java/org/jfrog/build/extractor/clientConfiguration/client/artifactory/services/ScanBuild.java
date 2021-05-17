@@ -1,67 +1,60 @@
-package org.jfrog.build.extractor.clientConfiguration.client;
+package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.PreemptiveHttpClient;
+import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
+import org.jfrog.build.extractor.clientConfiguration.client.JFrogService;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-/**
- * Created by romang on 1/1/17.
- */
-public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
-    private static final String SCAN_BUILD_URL = "/api/xray/scanBuild";
-    /**
-     * Retrying to resume the scan 5 times after a stable connection
-     */
-    private static final int XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES = 5;
+public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     /**
      * Expecting \r\n every 30 seconds
      */
-    private static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;
-    /**
-     * 30 seconds sleep between retry
-     */
-    private static final int XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS = 30000;
+    public static final int XRAY_SCAN_CONNECTION_TIMEOUT_SECS = 90;
     /**
      * Fatal error code from Xray
      */
     private static final String XRAY_FATAL_FAIL_STATUS = "-1";
     /**
-     * ArtifactoryXrayClient manages retry mechanism, http-client's mechanism is not required
+     * Retrying to resume the scan 5 times after a stable connection
      */
-    private static final int HTTP_CLIENT_RETRIES = 0;
+    private static final int XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES = 5;
+    /**
+     * 30 seconds sleep between retry
+     */
+    private static final int XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS = 30000;
+    private static final String SCAN_BUILD_URL = "api/xray/scanBuild";
+    private final String buildName;
+    private final String buildNumber;
+    private final String context;
+    private HttpPost request;
 
-    public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, String accessToken, Log logger) {
-        super(artifactoryUrl, username, password, accessToken, logger);
-        setConnectionRetries(HTTP_CLIENT_RETRIES);
+    public ScanBuild(String buildName, String buildNumber, String context, Log log) {
+        super(ArtifactoryXrayResponse.class, log);
+        this.buildName = buildName;
+        this.buildNumber = buildNumber;
+        this.context = context;
     }
 
-    public ArtifactoryXrayClient(String artifactoryUrl, String username, String password, Log logger) {
-        this(artifactoryUrl, username, password, StringUtils.EMPTY, logger);
-    }
-
-    public ArtifactoryXrayResponse xrayScanBuild(String buildName, String buildNumber, String context) throws IOException, InterruptedException {
+    @Override
+    public HttpRequestBase createRequest() throws IOException {
         StringEntity entity = new StringEntity("{\"buildName\":\"" + buildName + "\",\"buildNumber\":\"" + buildNumber +
                 "\",\"context\":\"" + context + "\"}");
         entity.setContentType("application/json");
 
-        String scanUrl = artifactoryUrl + SCAN_BUILD_URL;
-        HttpPost httpPost = new HttpPost(scanUrl);
+        HttpPost request = new HttpPost(SCAN_BUILD_URL);
 
         // The scan build operation can take a long time to finish.
         // To keep the connection open, when Xray starts scanning the build, it starts sending new-lines
@@ -69,30 +62,17 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         // connection does not get timed out.
         // We need make sure the new-lines are not buffered on the nginx and are flushed
         // as soon as Xray sends them.
-        httpPost.addHeader("X-Accel-Buffering", "no");
+        request.addHeader("X-Accel-Buffering", "no");
 
-        httpPost.setEntity(entity);
-        return execute(httpPost);
+        request.setEntity(entity);
+        this.request = request;
+        return request;
     }
 
-    /**
-     * Stable connection is a connection which was connected successfully for at least @stableConnectionMillis.
-     *
-     * @param lastConnectionAttemptMillis
-     * @return
-     */
-    private boolean isStableConnection(long lastConnectionAttemptMillis) {
-        final long stableConnectionMillis = (XRAY_SCAN_CONNECTION_TIMEOUT_SECS + 10) * 1000;
-        return lastConnectionAttemptMillis + stableConnectionMillis < System.currentTimeMillis();
-    }
-
-    private ArtifactoryXrayResponse parseXrayScanResponse(HttpResponse response) throws IOException {
-        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IOException("Artifactory response: " + response.getStatusLine().getReasonPhrase());
-        }
-
+    @Override
+    public void setResponse(InputStream stream) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        String content = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+        String content = IOUtils.toString(stream, StandardCharsets.UTF_8);
         JsonNode result;
         try {
             result = mapper.readTree(content);
@@ -101,7 +81,7 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
             }
         } catch (Exception ex) {
             // Throwing XrayErrorException since the retry-mechanism should not reset the retries-count in such error.
-            throw new XrayErrorException(String.format("Failed processing scan response: %s\n%s", ex.toString(), content));
+            throw new XrayErrorException(String.format("Failed processing scan response: %s\n%s", ex, content));
         }
         if (result.get("errors") != null) {
             String resultStr = result.get("errors").toString();
@@ -113,50 +93,58 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
             throw new XrayErrorException("Artifactory response: " + resultStr);
         }
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return mapper.treeToValue(result, ArtifactoryXrayResponse.class);
+        this.result = mapper.treeToValue(result, ArtifactoryXrayResponse.class);
     }
 
-    private ArtifactoryXrayResponse execute(HttpRequestBase httpRequest) throws InterruptedException, IOException {
-        PreemptiveHttpClient client = httpClient.getHttpClient(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
+
+    @Override
+    public ArtifactoryXrayResponse execute(JFrogHttpClient client) throws IOException {
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
         HttpEntity entity = null;
         while (true) {
-            try (CloseableHttpResponse response = client.execute(httpRequest)){
-                entity = response.getEntity();
+            try {
                 lastConnectionAttemptMillis = System.currentTimeMillis();
                 retryNum++;
-                return parseXrayScanResponse(response);
+                return super.execute(client);
             } catch (XrayErrorException e) {
                 handleException(retryNum, e);
             } catch (IOException e) {
                 if (isStableConnection(lastConnectionAttemptMillis)) {
                     // Interruption may happen when build is aborted in the CI Server.
                     if (Thread.currentThread().isInterrupted()) {
-                        throw new InterruptedException("Operation interrupted.");
+                        throw new IOException("Operation interrupted.");
                     }
                     retryNum = 0;
                     continue;
                 }
                 handleException(retryNum, e);
             } finally {
-                releaseResponse(httpRequest, entity);
+                request.releaseConnection();
             }
         }
     }
 
-    private void releaseResponse(HttpRequestBase httpRequest, HttpEntity entity) {
-        EntityUtils.consumeQuietly(entity);
-        httpRequest.releaseConnection();
+    /**
+     * Stable connection is a connection which was connected successfully for at least @stableConnectionMillis.
+     *
+     */
+    private boolean isStableConnection(long lastConnectionAttemptMillis) {
+        final long stableConnectionMillis = (XRAY_SCAN_CONNECTION_TIMEOUT_SECS + 10) * 1000;
+        return lastConnectionAttemptMillis + stableConnectionMillis < System.currentTimeMillis();
     }
 
-    private void handleException(int retryNum, IOException e) throws InterruptedException, IOException {
+    private void handleException(int retryNum, IOException e) throws IOException {
         if (XRAY_SCAN_RETRY_CONSECUTIVE_RETRIES <= retryNum) {
             throw e;
         }
         log.warn("Xray scan connection lost: " + e.getMessage() + ", attempting to reconnect...");
         // Sleeping before trying to reconnect.
-        Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
+        try {
+            Thread.sleep(XRAY_SCAN_SLEEP_BETWEEN_RETRIES_MILLIS);
+        } catch (InterruptedException interruptedException) {
+            throw new IOException(interruptedException.getMessage());
+        }
     }
 
     /**
@@ -168,4 +156,3 @@ public class ArtifactoryXrayClient extends ArtifactoryBaseClient {
         }
     }
 }
-

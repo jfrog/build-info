@@ -48,7 +48,7 @@ public class PropertiesTest extends IntegrationTestsBase {
         // Upload artifacts.
         String uploadSpec = readSpec(new File(propsTestPath, UPLOAD_SPEC), tempWorkspace.getPath());
         File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<>(), buildInfoClientBuilder);
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(uploadSpec, uploadFromPath, new HashMap<>(), artifactoryManagerBuilder);
         Reporter.log("Uploaded " + uploaded.size() + " artifacts", true);
 
         // Edit properties on the uploaded artifacts and verify.
@@ -61,10 +61,10 @@ public class PropertiesTest extends IntegrationTestsBase {
         Expected expected = mapper.readValue(new File(propsTestPath, expectedPath), Expected.class);
 
         // Edit Properties on the uploaded artifacts
-        specsHelper.editPropertiesBySpec(spec, dependenciesClient, editType, props);
+        specsHelper.editPropertiesBySpec(spec, artifactoryManager, editType, props);
 
-        // Download artifacts to compare against the expected result.
-        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        // DownloadBase artifacts to compare against the expected result.
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(downloadSpec, artifactoryManager, tempWorkspace.getPath());
         Reporter.log("Downloaded " + downloaded.size() + " artifacts", true);
 
         // Verify expected results

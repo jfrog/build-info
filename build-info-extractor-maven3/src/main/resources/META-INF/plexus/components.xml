@@ -508,8 +508,8 @@
             </requirements>
         </component>
         <component>
-            <role>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</role>
-            <implementation>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</implementation>
+            <role>org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder</role>
+            <implementation>org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder</implementation>
             <role-hint>default</role-hint>
             <isolated-realm>false</isolated-realm>
             <requirements>
@@ -545,7 +545,7 @@
                     <field-name>logger</field-name>
                 </requirement>
                 <requirement>
-                    <role>org.jfrog.build.extractor.maven.BuildInfoClientBuilder</role>
+                    <role>org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder</role>
                     <role-hint>default</role-hint>
                     <field-name>buildInfoClientBuilder</field-name>
                 </requirement>

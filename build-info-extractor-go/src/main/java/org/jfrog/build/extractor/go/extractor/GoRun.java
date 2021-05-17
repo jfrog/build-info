@@ -9,8 +9,8 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.jfrog.build.extractor.go.GoDriver;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
@@ -54,17 +54,17 @@ public class GoRun extends GoCommand {
     /**
      * Run go command and collect dependencies.
      *
-     * @param goCmdArgs     - Go cmd args.
-     * @param path          - Path to directory contains go.mod.
-     * @param clientBuilder - Client builder for resolution.
-     * @param repo          - Artifactory's repository for resolution.
-     * @param username      - Artifactory's username for resolution.
-     * @param password      - Artifactory's password for resolution.
-     * @param logger        - The logger.
-     * @param env           - Environment variables to use during npm execution.
+     * @param goCmdArgs                 - Go cmd args.
+     * @param path                      - Path to directory contains go.mod.
+     * @param artifactoryManagerBuilder - Manager builder for resolution.
+     * @param repo                      - Artifactory's repository for resolution.
+     * @param username                  - Artifactory's username for resolution.
+     * @param password                  - Artifactory's password for resolution.
+     * @param logger                    - The logger.
+     * @param env                       - Environment variables to use during npm execution.
      */
-    public GoRun(String goCmdArgs, Path path, String buildInfoModuleId, ArtifactoryBuildInfoClientBuilder clientBuilder, String repo, String username, String password, Log logger, Map<String, String> env) throws IOException {
-        super(clientBuilder, path, buildInfoModuleId, logger);
+    public GoRun(String goCmdArgs, Path path, String buildInfoModuleId, ArtifactoryManagerBuilder artifactoryManagerBuilder, String repo, String username, String password, Log logger, Map<String, String> env) {
+        super(artifactoryManagerBuilder, path, buildInfoModuleId, logger);
         this.env = env;
         this.goCmdArgs = goCmdArgs;
         this.resolutionRepository = repo;
@@ -73,7 +73,7 @@ public class GoRun extends GoCommand {
     }
 
     public Build execute() {
-        try (ArtifactoryBuildInfoClient artifactoryClient = (clientBuilder != null ? (ArtifactoryBuildInfoClient) clientBuilder.build() : null)) {
+        try (ArtifactoryManager artifactoryClient = (artifactoryManagerBuilder != null ? artifactoryManagerBuilder.build() : null)) {
             if (artifactoryClient != null) {
                 preparePrerequisites(resolutionRepository, artifactoryClient);
                 setResolverAsGoProxy(artifactoryClient);
@@ -96,8 +96,8 @@ public class GoRun extends GoCommand {
      * In order to use Artifactory as a resolver we need to set GOPROXY env var with Artifactory details.
      * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
      */
-    private void setResolverAsGoProxy(ArtifactoryBuildInfoClient client) throws Exception {
-        String rtUrl = PackageManagerUtils.createArtifactoryUrlWithCredentials(client.getArtifactoryUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
+    private void setResolverAsGoProxy(ArtifactoryManager artifactoryClient) throws Exception {
+        String rtUrl = PackageManagerUtils.createArtifactoryUrlWithCredentials(artifactoryClient.getUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
         String proxyValue = rtUrl + "," + GOPROXY_VCS_FALLBACK;
         env.put(GOPROXY_ENV_VAR, proxyValue);
     }

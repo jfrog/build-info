@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
@@ -11,8 +11,8 @@ import java.util.Map;
 
 public class BuildAqlHelper extends AqlHelperBase {
 
-    BuildAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
-        super(client, log, file);
+    BuildAqlHelper(ArtifactoryManager artifactoryManager, Log log, FileSpec file) throws IOException {
+        super(artifactoryManager, log, file);
     }
 
     @Override
@@ -22,7 +22,7 @@ public class BuildAqlHelper extends AqlHelperBase {
     }
 
     @Override
-    protected List<AqlSearchResult.SearchEntry> filterResult(List<AqlSearchResult.SearchEntry> queryResults) throws IOException {
+    protected List<AqlSearchResult.SearchEntry> filterResult(List<AqlSearchResult.SearchEntry> queryResults) {
         Map<String, Boolean> buildArtifactsSha1 = extractSha1FromAqlResponse(queryResults);
         return filterAqlSearchResultsByBuild(queryResults, buildArtifactsSha1, buildName, buildNumber);
     }

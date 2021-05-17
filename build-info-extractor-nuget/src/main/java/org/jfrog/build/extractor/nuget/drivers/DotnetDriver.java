@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.nuget.drivers;
 
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 
 import java.io.IOException;
@@ -20,9 +20,9 @@ public class DotnetDriver extends ToolchainDriverBase {
         commandExecutor = new CommandExecutor("dotnet", env);
     }
 
-    public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException {
+    public String addSource(String configPath, ArtifactoryManager artifactoryManager, String repo, String sourceName, String username, String password) throws IOException {
         try {
-            String sourceUrl = buildNugetSourceUrl(client, repo);
+            String sourceUrl = buildNugetSourceUrl(artifactoryManager, repo);
             List<String> extraArgs = Arrays.asList(getFlagSyntax(CONFIG_FILE_FLAG), configPath, getFlagSyntax(NAME_FLAG), sourceName);
             List<String> credentials = Arrays.asList(getFlagSyntax(USERNAME_FLAG), username, getFlagSyntax(PASSWORD_FLAG), password, CLEAR_TEXT_PASSWORD_FLAG);
             return runCommand(new String[]{"nuget", "add", "source", sourceUrl}, extraArgs, credentials, logger);

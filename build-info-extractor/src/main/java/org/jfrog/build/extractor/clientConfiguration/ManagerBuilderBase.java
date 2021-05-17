@@ -3,7 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ManagerBase;
 
 import javax.net.ssl.SSLContext;
 import java.io.Serializable;
@@ -12,7 +13,7 @@ import java.io.Serializable;
  * @author Yahav Itzhak
  */
 @SuppressWarnings({"unused", "WeakerAccess", "UnusedReturnValue"})
-public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBuilderBase<T>> implements Serializable {
+public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implements Serializable {
     private static final long serialVersionUID = 1L;
 
     protected ProxyConfiguration proxyConfiguration;
@@ -105,7 +106,7 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
         return self();
     }
 
-    protected ArtifactoryBaseClient build(ArtifactoryBaseClient client) {
+    protected ArtifactoryManager build(ArtifactoryManager client) {
         if (proxyConfiguration != null) {
             client.setProxyConfiguration(proxyConfiguration.host,
                     proxyConfiguration.port,
@@ -125,7 +126,7 @@ public abstract class ArtifactoryClientBuilderBase<T extends ArtifactoryClientBu
         return client;
     }
 
-    public abstract ArtifactoryBaseClient build();
+    public abstract ManagerBase build();
 
     protected abstract T self();
 }

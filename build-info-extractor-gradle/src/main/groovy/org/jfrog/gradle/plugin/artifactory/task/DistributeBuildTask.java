@@ -1,16 +1,13 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 import org.jfrog.gradle.plugin.artifactory.dsl.DistributerConfig;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
@@ -44,16 +41,9 @@ public class DistributeBuildTask extends DefaultTask {
                 new ArrayList<>(distributerConfig.getSourceRepoKeys()),
                 distributerConfig.getDryRun());
 
-        try (ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(distributerConfig.getContextUrl(),
-                distributerConfig.getUsername(), distributerConfig.getPassword(), new GradleClientLogger(getLogger()));
-             CloseableHttpResponse response = client.distributeBuild(buildName, buildNumber, distribution)) {
-            String content = response.getEntity() != null ? EntityUtils.toString(response.getEntity(), "UTF-8") : "";
-            EntityUtils.consumeQuietly(response.getEntity());
-            StatusLine status = response.getStatusLine();
-            if (status.getStatusCode() != 200) {
-                throw new IOException(String.format("Distribution failed. Received '%s', '%s' from Artifactory.", status.getReasonPhrase(), content));
-            }
-
+        try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(distributerConfig.getContextUrl(),
+                distributerConfig.getUsername(), distributerConfig.getPassword(), new GradleClientLogger(getLogger()))) {
+            artifactoryManager.distributeBuild(buildName, buildNumber, distribution);
             log.info(String.format("Successfully distributed build %s/%s", clientConf.info.getBuildName(), clientConf.info.getBuildNumber()));
         }
     }

@@ -6,8 +6,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -34,7 +33,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private Map<String, String> env = new HashMap<>();
 
     public NugetExtractorTest() {
@@ -64,9 +63,8 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     }
 
     @BeforeClass
-    private void setUp() throws IOException {
-        dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
-        buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+    private void setUp() {
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
     }
 
     Object[][] packagesConfigTestsInfo = new Object[][]{
@@ -96,7 +94,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getPassword());
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getPassword());
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -118,7 +116,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getPassword());
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getPassword());
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -168,7 +166,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     private void getProjectRootTest(String args, String expectedProjectRootFileName) {
         try {
             File rootDir = PROJECTS_ROOT.resolve("projectRootTestDir").toFile();
-            NugetRun nugetRun = new NugetRun(dependenciesClientBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword());
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword());
             File projectRoot = nugetRun.getProjectRootPath();
             assertTrue(projectRoot.getPath().endsWith(expectedProjectRootFileName));
         } catch (Exception e) {

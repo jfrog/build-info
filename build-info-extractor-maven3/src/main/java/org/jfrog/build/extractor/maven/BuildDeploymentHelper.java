@@ -26,11 +26,11 @@ import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ModuleParallelDeployHelper;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
-import org.jfrog.build.extractor.ModuleParallelDeployHelper;
 import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class BuildDeploymentHelper {
     @Requirement
     private Logger logger;
     @Requirement
-    private BuildInfoClientBuilder buildInfoClientBuilder;
+    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
 
     public void deploy( Build                          build,
                         ArtifactoryClientConfiguration clientConf,
@@ -84,8 +84,8 @@ public class BuildDeploymentHelper {
         }
 
         if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifactsByModule)) {
-            try (ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf)) {
-                new ModuleParallelDeployHelper().deployArtifacts(client, deployableArtifactsByModule, clientConf.publisher.getPublishForkCount());
+            try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.resolveProperties(clientConf)) {
+                new ModuleParallelDeployHelper().deployArtifacts(artifactoryManager, deployableArtifactsByModule, clientConf.publisher.getPublishForkCount());
             }
         }
         if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
@@ -94,9 +94,9 @@ public class BuildDeploymentHelper {
     }
 
     private void publishBuildInfo(ArtifactoryClientConfiguration clientConf, Build build) {
-        try (ArtifactoryBuildInfoClient client = buildInfoClientBuilder.resolveProperties(clientConf)) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.resolveProperties(clientConf)) {
             logger.info("Artifactory Build Info Recorder: Deploying build info ...");
-            Utils.sendBuildAndBuildRetention(client, build, clientConf);
+            Utils.sendBuildAndBuildRetention(artifactoryManager, build, clientConf);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

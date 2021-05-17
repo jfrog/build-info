@@ -34,14 +34,14 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
     @BeforeClass
     public void init() throws IOException {
         super.init();
-        if (!dependenciesClient.isArtifactoryOSS()) {
+        if (!artifactoryManager.getVersion().isOSS()) {
             createTestRepo(localRepo2);
         }
     }
 
     @AfterClass
     protected void terminate() throws IOException {
-        if (!dependenciesClient.isArtifactoryOSS()) {
+        if (!artifactoryManager.getVersion().isOSS()) {
             deleteTestRepo(localRepo2);
         }
         super.terminate();
@@ -61,11 +61,11 @@ public class SpecsHelperIntegrationTest extends IntegrationTestsBase {
 
         // Upload artifacts.
         File uploadFromPath = new File(this.getClass().getResource("/workspace").toURI()).getCanonicalFile();
-        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(specTest.uploadSpec, uploadFromPath, new HashMap<>(), buildInfoClientBuilder);
+        List<Artifact> uploaded = specsHelper.uploadArtifactsBySpec(specTest.uploadSpec, uploadFromPath, new HashMap<>(), artifactoryManagerBuilder);
         Reporter.log("Uploaded " + uploaded.size() + " artifacts", false);
 
         // Download artifacts to compare against the expected result.
-        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(specTest.downloadSpec, dependenciesClient, tempWorkspace.getPath());
+        List<Dependency> downloaded = specsHelper.downloadArtifactsBySpec(specTest.downloadSpec, artifactoryManager, tempWorkspace.getPath());
         Reporter.log("Downloaded " + downloaded.size() + " artifacts", false);
 
         // Verify expected results

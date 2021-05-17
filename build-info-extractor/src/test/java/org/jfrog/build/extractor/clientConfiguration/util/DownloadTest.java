@@ -40,10 +40,10 @@ public class DownloadTest extends IntegrationTestsBase {
     @Test(dataProvider = "testDownloadFilesProvider")
     public void testBulkAndConcurrentDownload(Map<String, String> uploadedChecksum, String fileName, long fileSize)
             throws Exception {
-        String uriWithParams = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH + "/" + fileName;
+        String uriWithParams = localRepo1 + "/" + TEST_REPO_PATH + "/" + fileName;
         String fileDestination = tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar + fileName;
 
-        DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(dependenciesClient, tempWorkspace.getPath(), log);
+        DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(artifactoryManager, tempWorkspace.getPath(), log);
         DependenciesDownloaderHelper.ArtifactMetaData artifactMetaData = helper.downloadArtifactMetaData(uriWithParams);
         Assert.assertEquals(artifactMetaData.getSize(), fileSize);
 
@@ -70,9 +70,9 @@ public class DownloadTest extends IntegrationTestsBase {
     @Test(dataProvider = "testDownloadFilesProvider")
     public void testDownloadArtifact(Map<String, String> uploadedChecksum, String fileName, long fileSize)
             throws Exception {
-        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(artifactoryManager, ".", log);
 
-        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH;
+        String repoUrl = localRepo1 + "/" + TEST_REPO_PATH;
         String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
         String url = repoUrl + "/" + fileName;
 
@@ -92,9 +92,9 @@ public class DownloadTest extends IntegrationTestsBase {
     @Test(dataProvider = "testDownloadFilesProvider")
     public void testDownloadArtifactWithoutContentLength(Map<String, String> uploadedChecksum, String fileName, long fileSize)
             throws Exception {
-        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+        DependenciesDownloaderHelper dependenciesDownloaderHelper = new DependenciesDownloaderHelper(artifactoryManager, ".", log);
 
-        String repoUrl = dependenciesClient.getArtifactoryUrl() + "/" + localRepo1 + "/" + TEST_REPO_PATH;
+        String repoUrl = localRepo1 + "/" + TEST_REPO_PATH;
         String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "download" + File.separatorChar;
         String url = repoUrl + "/" + fileName;
 
@@ -118,7 +118,7 @@ public class DownloadTest extends IntegrationTestsBase {
      */
     @DataProvider
     private Object[][] testDownloadFilesProvider() throws IOException, NoSuchAlgorithmException {
-        if (buildInfoClient == null) {
+        if (artifactoryManager == null) {
             throw new IOException("tests were not initialized successfully. aborting");
         }
         Map<String, Integer> testFilesMap = new HashMap<String, Integer>() {{
@@ -149,7 +149,7 @@ public class DownloadTest extends IntegrationTestsBase {
                         .build();
 
                 // Upload artifact
-                buildInfoClient.deployArtifact(deployDetails);
+                artifactoryManager.upload(deployDetails);
                 long createdFileSize = deployDetails.getFile().length();
 
                 tests[i] = new Object[]{checksum, fileName, createdFileSize};

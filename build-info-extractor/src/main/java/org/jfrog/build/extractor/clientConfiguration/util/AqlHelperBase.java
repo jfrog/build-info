@@ -4,7 +4,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ public class AqlHelperBase {
     protected static final String DELIMITER = "/";
     protected static final String ESCAPE_CHAR = "\\";
 
-    protected ArtifactoryDependenciesClient client;
+    protected ArtifactoryManager artifactoryManager;
     private Log log;
     protected String queryBody;
     protected String includeFields;
@@ -25,15 +25,15 @@ public class AqlHelperBase {
     protected String buildName;
     protected String buildNumber;
 
-    AqlHelperBase(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
-        this.client = client;
+    AqlHelperBase(ArtifactoryManager artifactoryManager, Log log, FileSpec file) throws IOException {
+        this.artifactoryManager = artifactoryManager;
         this.log = log;
         convertFileSpecToAql(file);
     }
 
     protected void buildQueryAdditionalParts(FileSpec file) throws IOException {
         this.buildName = getBuildName(file.getBuild());
-        this.buildNumber = getBuildNumber(client, buildName, file.getBuild());
+        this.buildNumber = getBuildNumber(artifactoryManager, buildName, file.getBuild());
         this.querySuffix = buildQuerySuffix(file.getSortBy(), file.getSortOrder(), file.getOffset(), file.getLimit());
         this.includeFields = buildIncludeQueryPart(file.getSortBy(), querySuffix);
     }
@@ -46,7 +46,7 @@ public class AqlHelperBase {
     public List<AqlSearchResult.SearchEntry> run() throws IOException {
         String aql = "items.find(" + queryBody + ")" + includeFields + querySuffix;
         log.debug("Searching Artifactory using AQL query:\n" + aql);
-        AqlSearchResult aqlSearchResult = client.searchArtifactsByAql(aql);
+        AqlSearchResult aqlSearchResult = artifactoryManager.searchArtifactsByAql(aql);
         List<AqlSearchResult.SearchEntry> queryResults = aqlSearchResult.getResults();
 
         List<AqlSearchResult.SearchEntry> results = filterResult(queryResults);
@@ -69,7 +69,7 @@ public class AqlHelperBase {
         return buildName.endsWith(ESCAPE_CHAR) ? build : buildName;
     }
 
-    protected String getBuildNumber(ArtifactoryDependenciesClient client, String buildName, String build) throws IOException {
+    protected String getBuildNumber(ArtifactoryManager client, String buildName, String build) throws IOException {
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
             if (!build.startsWith(buildName)) {
@@ -84,7 +84,7 @@ public class AqlHelperBase {
                 // Remove the escape chars before the delimiters
                 buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            String retrievedBuildNumber = client.getLatestBuildNumberFromArtifactory(buildName, buildNumber);
+            String retrievedBuildNumber = client.getLatestBuildNumber(buildName, buildNumber);
             if (retrievedBuildNumber == null) {
                 logBuildNotFound(buildName, buildNumber);
             }
@@ -245,7 +245,7 @@ public class AqlHelperBase {
         String includeSha1Field = ".include(\"name\",\"repo\",\"path\",\"actual_sha1\")";
         String buildAql = createAqlQueryForBuild(includeSha1Field);
         log.debug("Searching Artifactory for build's checksums using AQL query:\n" + buildAql);
-        AqlSearchResult aqlSearchResult = client.searchArtifactsByAql(buildAql);
+        AqlSearchResult aqlSearchResult = artifactoryManager.searchArtifactsByAql(buildAql);
         return extractSha1FromAqlResponse(aqlSearchResult.getResults());
     }
 
