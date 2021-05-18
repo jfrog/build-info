@@ -52,6 +52,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
 public class ArtifactoryClientConfiguration {
     // Try checksum deploy of files greater than 10KB
     public static final transient int DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB = 10;
+    public static final String DEFAULT_NUGET_PROTOCOL = "v2";
 
     public final ResolverHandler resolver;
     public final PublisherHandler publisher;
@@ -554,6 +555,14 @@ public class ArtifactoryClientConfiguration {
 
         public void setUseDotnetCli(boolean useDotnetCli) {
             rootConfig.setBooleanValue(DOTNET_USE_DOTNET_CORE_CLI, useDotnetCli);
+        }
+
+        public String apiProtocol() {
+            return rootConfig.getStringValue(DOTNET_NUGET_PROTOCOL, DEFAULT_NUGET_PROTOCOL);
+        }
+
+        public void setApiProtocol(String apiProtocol) {
+            rootConfig.setStringValue(DOTNET_NUGET_PROTOCOL, apiProtocol);
         }
     }
 
