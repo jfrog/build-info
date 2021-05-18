@@ -49,16 +49,16 @@ public class NugetRun extends PackageManagerExtractor {
             + "\t<packageSources>\n\t</packageSources>\n"
             + "\t<packageSourceCredentials>\n\t</packageSourceCredentials>\n"
             + "</configuration>";
-    private  static  final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+    private static final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<configuration>\n" +
             "\t<packageSources>\n" +
-            "\t\t<add key=\"JFrogCli\" value=\"%s\" protocolVersion=\"%s\" />\n" +
+            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" />\n" +
             "\t</packageSources>\n" +
             "\t<packageSourceCredentials>\n" +
-            "\t\t<JFrogCli>\n" +
+            "\t\t<JFrogJenkins>\n" +
             "\t\t\t<add key=\"Username\" value=\"%s\" />\n" +
             "\t\t\t<add key=\"ClearTextPassword\" value=\"%s\" />\n" +
-            "\t\t</JFrogCli>\n" +
+            "\t\t</JFrogJenkins>\n" +
             "\t</packageSourceCredentials>\n" +
             "</configuration>";
     private static final String SOURCE_NAME = "BuildInfo.extractor.nuget";
@@ -93,7 +93,7 @@ public class NugetRun extends PackageManagerExtractor {
      * @param useDotnetCli   -
      * @param nugetCmdArgs   - NuGet exec args.
      * @param logger         - The logger.
-     * @param path           - Path to directory contains .sln file.
+     * @param path           - Path to the directory containing the .sln file.
      * @param env            - Environment variables to use during npm execution.
      * @param module         -
      * @param username       - JFrog platfrom username.
@@ -207,7 +207,7 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     /**
-     * We will write a temporary NuGet configuration which will be used during the restore.
+     * Writes a temporary NuGet configuration which will be used during the restore.
      * The resolution repository will be set as a source in the configuration.
      */
     private File prepareConfig(ArtifactoryDependenciesClient client) throws Exception {
