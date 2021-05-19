@@ -75,6 +75,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                 .id(moduleId)
                 .repository(repo);
         try {
+            // Extract the module's artifacts information if a publisher exists.
             ArtifactoryClientConfiguration.PublisherHandler publisher = ArtifactoryPluginUtil.getPublisherHandler(project);
             if (publisher != null) {
                 boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
@@ -91,11 +92,11 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                     deployExcludeDetails = new ArrayList<>();
                 }
                 builder.artifacts(calculateArtifacts(deployIncludeDetails))
-                        .excludedArtifacts(calculateArtifacts(deployExcludeDetails))
-                        .dependencies(calculateDependencies(project, moduleId));
+                        .excludedArtifacts(calculateArtifacts(deployExcludeDetails));
             } else {
                 log.warn("No publisher config found for project: " + project.getName());
             }
+            builder.dependencies(calculateDependencies(project, moduleId));
         } catch (Exception e) {
             log.error("Error during extraction: ", e);
         }

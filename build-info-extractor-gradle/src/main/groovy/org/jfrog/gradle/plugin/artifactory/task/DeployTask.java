@@ -95,6 +95,22 @@ public class DeployTask extends DefaultTask {
             }
         }
 
+        // Extract Build Info.
+        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
+        Build build = gbie.extract(getProject().getRootProject());
+        exportBuildInfo(build, getExportFile(accRoot));
+
+        // Export generated.
+        if (isGenerateBuildInfoToFile(accRoot)) {
+            try {
+                exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
+            } catch (Exception e) {
+                log.error("Failed writing build info to file: ", e);
+                throw new IOException("Failed writing build info to file", e);
+            }
+        }
+
+        // Handle deployment.
         ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
@@ -107,9 +123,7 @@ public class DeployTask extends DefaultTask {
                 configureProxy(accRoot, client);
                 configConnectionTimeout(accRoot, client);
                 configRetriesParams(accRoot, client);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
-                Build build = gbie.extract(getProject().getRootProject());
-                exportBuildInfo(build, getExportFile(accRoot));
+
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory
                     exportBuildInfo(build, getExportFile(accRoot));
@@ -119,14 +133,6 @@ public class DeployTask extends DefaultTask {
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                         Utils.sendBuildAndBuildRetention(client, build, accRoot);
-                    }
-                }
-                if (isGenerateBuildInfoToFile(accRoot)) {
-                    try {
-                        exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
-                    } catch (Exception e) {
-                        log.error("Failed writing build info to file: ", e);
-                        throw new IOException("Failed writing build info to file", e);
                     }
                 }
                 if (isGenerateDeployableArtifactsToFile(accRoot)) {
