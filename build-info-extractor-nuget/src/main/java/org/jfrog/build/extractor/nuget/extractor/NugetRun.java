@@ -21,11 +21,9 @@ import org.jfrog.build.extractor.nuget.types.NugetPackgesConfig;
 import org.jfrog.build.extractor.nuget.types.NugetProjectAssets;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
-import java.io.BufferedWriter;
-import java.io.PrintWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -44,11 +42,6 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String PACKAGES_CONFIG = "packages.config";
     private static final String PROJECT_ASSETS = "project.assets.json";
     private static final String PROJECT_ASSETS_DIR = "obj";
-    private static final String CONFIG_FILE_TEMPLATE = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-            + "<configuration>\n"
-            + "\t<packageSources>\n\t</packageSources>\n"
-            + "\t<packageSourceCredentials>\n\t</packageSourceCredentials>\n"
-            + "</configuration>";
     private static final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<configuration>\n" +
             "\t<packageSources>\n" +
@@ -90,15 +83,15 @@ public class NugetRun extends PackageManagerExtractor {
      *
      * @param clientBuilder  - Build Info client builder.
      * @param resolutionRepo - The repository it'll resolve from.
-     * @param useDotnetCli   -
+     * @param useDotnetCli   - Boolean indicates if .Net cli will be used.
      * @param nugetCmdArgs   - NuGet exec args.
      * @param logger         - The logger.
      * @param path           - Path to the directory containing the .sln file.
      * @param env            - Environment variables to use during npm execution.
-     * @param module         -
-     * @param username       - JFrog platfrom username.
-     * @param password       - JFrog platfrom password.
-     * @param apiProtocol  - A string indicates which NuGet protocol should be used (V2/V3).
+     * @param module         - NuGet module
+     * @param username       - JFrog platform username.
+     * @param password       - JFrog platform password.
+     * @param apiProtocol    - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
     public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
@@ -380,11 +373,12 @@ public class NugetRun extends PackageManagerExtractor {
      * Iterate the dependencies sources list and look for the project's source
      */
     private String getDependenciesSource(String projectName, String csprojPath) {
-        String projectRootPath = (new File(csprojPath)).getParent();
+        Path projectRootPath = Paths.get(csprojPath).getParent().normalize();
         String projectNamePattern = File.separator + projectName + File.separator;
         String projectPathPattern = projectRootPath + File.separator + PROJECT_ASSETS_DIR + File.separator;
         for (String source : dependenciesSources) {
-            if ( (new File(source)).getParent().equals(projectRootPath) || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
+            Path sourceRootPath = Paths.get(source).getParent().normalize();
+            if (sourceRootPath.equals(projectRootPath) || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
                 return source;
             }
         }
