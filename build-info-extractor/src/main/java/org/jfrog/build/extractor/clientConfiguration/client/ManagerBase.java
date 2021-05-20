@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.clientConfiguration.client.artifactory;
+package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;

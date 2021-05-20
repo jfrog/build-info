@@ -12,7 +12,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
 
 /**
- * Simple class to build {@link org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager} for deployment.
+ * Simple class to build {@link ArtifactoryManager} for deployment.
  *
  * @author Noam Y. Tenne
  */

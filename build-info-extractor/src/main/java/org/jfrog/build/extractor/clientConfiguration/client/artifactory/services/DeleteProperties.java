@@ -9,24 +9,26 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.IOException;
 
 public class DeleteProperties extends VoidJFrogService {
-    private final String url;
+    public static final String DELETE_PROPERTIES_ENDPOINT = "api/storage/";
+
+    private final String relativePath;
     private final String properties;
 
-    public DeleteProperties(String url, String properties, Log log) {
+    public DeleteProperties(String relativePath, String properties, Log log) {
         super(log);
-        this.url = url;
+        this.relativePath = relativePath;
         this.properties = properties;
     }
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        String requestUrl = encodeUrl(url + "?properties=" + properties);
+        String requestUrl = DELETE_PROPERTIES_ENDPOINT + encodeUrl(relativePath + "?properties=" + properties);
         return new HttpDelete(requestUrl);
     }
 
     @Override
     protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
-        log.error("Failed to delete properties to '" + url + "'");
+        log.error("Failed to delete properties to '" + relativePath + "'");
         throwException(response);
     }
 }

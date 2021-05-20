@@ -168,9 +168,9 @@ public class SpecsHelper {
     }
 
     @SuppressWarnings("unused")
-    public boolean editPropertiesBySpec(String spec, ArtifactoryManager client,
+    public boolean editPropertiesBySpec(String spec, ArtifactoryManager artifactoryManager,
                                         EditPropertiesHelper.EditPropertiesActionType editType, String props) throws IOException {
-        EditPropertiesHelper helper = new EditPropertiesHelper(client, log);
+        EditPropertiesHelper helper = new EditPropertiesHelper(artifactoryManager, log);
         return helper.editProperties(getSpecFromString(spec, new SearchBasedSpecValidator()), editType, props);
     }
 

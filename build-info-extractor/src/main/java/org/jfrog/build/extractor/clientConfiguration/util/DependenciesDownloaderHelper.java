@@ -9,7 +9,6 @@ import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.lang.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
@@ -70,7 +69,7 @@ public class DependenciesDownloaderHelper {
      * @throws IOException in case of IO error
      */
     public List<Dependency> downloadDependencies(Spec downloadSpec) throws IOException {
-        ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.artifactoryManagerClient(), log);
+        ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.getArtifactoryManager(), log);
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
         List<Dependency> resolvedDependencies = new ArrayList<>();
@@ -227,7 +226,7 @@ public class DependenciesDownloaderHelper {
     }
 
     protected Map<String, String> downloadFile(String downloadPath, String fileDestination) throws IOException {
-        File downloadedFile = downloader.artifactoryManagerClient().downloadToFile(downloadPath, fileDestination);
+        File downloadedFile = downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination);
         try {
             return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
         } catch (NoSuchAlgorithmException e) {
@@ -278,7 +277,7 @@ public class DependenciesDownloaderHelper {
             workers[i] = new Thread(new Runnable() {
                 public void run() {
                     try {
-                        downloader.artifactoryManagerClient().downloadToFile(downloadPath, fileDestination, headers);
+                        downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination, headers);
                     } catch (Exception e) {
                         errorOccurred.setValue(true);
                         printErrorToLog(e, fileDestination, downloadPath);
@@ -351,7 +350,7 @@ public class DependenciesDownloaderHelper {
     protected ArtifactMetaData downloadArtifactMetaData(String url) throws IOException {
         try {
             ArtifactMetaData artifactMetaData = new ArtifactMetaData();
-            for (Header header : downloader.artifactoryManagerClient().downloadHeaders(url)) {
+            for (Header header : downloader.getArtifactoryManager().downloadHeaders(url)) {
                 switch (header.getName()) {
                     case MD5_HEADER_NAME:
                         artifactMetaData.setMd5(header.getValue());

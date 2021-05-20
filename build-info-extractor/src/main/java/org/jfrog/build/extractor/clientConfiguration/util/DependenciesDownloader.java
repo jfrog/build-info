@@ -18,7 +18,7 @@ import java.util.Set;
  */
 public interface DependenciesDownloader {
 
-    ArtifactoryManager artifactoryManagerClient();
+    ArtifactoryManager getArtifactoryManager();
 
     List<Dependency> download(Set<DownloadableArtifact> downloadableArtifacts) throws IOException;
 

@@ -47,7 +47,7 @@ public class DistributeBuild extends VoidJFrogService {
     }
 
     @Override
-    protected void ensureRequirements(JFrogHttpClient client) throws IOException {
+    protected void ensureRequirements(JFrogHttpClient client) {
         if (StringUtils.isBlank(buildName)) {
             throw new IllegalArgumentException("Build name is required for distribution.");
         }

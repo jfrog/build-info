@@ -80,7 +80,7 @@ public class AntPatternsDependenciesHelper {
         Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         String pattern = dependencyPattern.getPattern();
         String matrixParams = dependencyPattern.getMatrixParams();
-        PropertySearchResult propertySearchResult = downloader.artifactoryManagerClient().searchArtifactsByProperties(matrixParams);
+        PropertySearchResult propertySearchResult = downloader.getArtifactoryManager().searchArtifactsByProperties(matrixParams);
         List<PropertySearchResult.SearchEntry> filteredEntries = filterResultEntries(
                 propertySearchResult.getResults(), pattern);
         log.info("Found " + filteredEntries.size() + " dependencies by doing a property search.");
@@ -102,7 +102,7 @@ public class AntPatternsDependenciesHelper {
     private Set<DownloadableArtifact> performPatternSearch(DependencyPattern dependencyPattern) throws IOException {
         Set<DownloadableArtifact> downloadableArtifacts = new HashSet<>();
         String pattern = dependencyPattern.getPattern();
-        PatternResultFileSet fileSet = downloader.artifactoryManagerClient().searchArtifactsByPattern(pattern);
+        PatternResultFileSet fileSet = downloader.getArtifactoryManager().searchArtifactsByPattern(pattern);
         Set<String> filesToDownload = fileSet.getFiles();
         log.info("Found " + filesToDownload.size() + " dependencies by doing a pattern search.");
         for (String fileToDownload : filesToDownload) {

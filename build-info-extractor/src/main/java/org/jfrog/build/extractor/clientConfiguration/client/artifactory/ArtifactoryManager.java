@@ -18,6 +18,7 @@ import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.ItemLastModified;
 import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
+import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.RepositoryType;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.*;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -148,7 +149,7 @@ public class ArtifactoryManager extends ManagerBase {
         if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
             buildNumber = getLatestBuildNumber(buildName, buildNumber);
             if (buildNumber == null) {
-                throw new IllegalArgumentException(String.format("No build was found for '%s'.", buildName));
+                return null;
             }
         }
         GetBuildInfo getBuildInfoService = new GetBuildInfo(buildName, buildNumber, log);

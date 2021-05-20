@@ -15,7 +15,6 @@ import java.io.InputStream;
 
 public class Version extends JFrogService<ArtifactoryVersion> {
     private static final String VERSION_REST_URL = "api/system/version";
-
     private final Log log;
 
     public Version(Log logger) {

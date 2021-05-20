@@ -95,7 +95,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     /**
      * Called when the build has ended, this is the time where we will assemble the build-info object that its
      * information was collected by the {@link org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger} it will
-     * serialize the build-info object into a senadble JSON object to be used by the {@link org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager}
+     * serialize the build-info object into a senadble JSON object to be used by the {@link ArtifactoryManager}
      *
      * @param event The build event.
      */

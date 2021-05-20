@@ -3,8 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ManagerBase;
 
 import javax.net.ssl.SSLContext;
 import java.io.Serializable;

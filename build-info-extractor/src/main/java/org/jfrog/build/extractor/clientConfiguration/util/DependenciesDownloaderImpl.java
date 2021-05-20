@@ -38,7 +38,7 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
     }
 
     @Override
-    public ArtifactoryManager artifactoryManagerClient() {
+    public ArtifactoryManager getArtifactoryManager() {
         return artifactoryManager;
     }
 

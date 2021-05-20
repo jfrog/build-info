@@ -547,7 +547,7 @@
                 <requirement>
                     <role>org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder</role>
                     <role-hint>default</role-hint>
-                    <field-name>buildInfoClientBuilder</field-name>
+                    <field-name>artifactoryManagerBuilder</field-name>
                 </requirement>
             </requirements>
         </component>
