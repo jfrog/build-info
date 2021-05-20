@@ -8,52 +8,14 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
-import org.testng.collections.Lists;
 
 import java.util.*;
 
 import static org.jfrog.build.extractor.npm.extractor.NpmBuildInfoExtractor.getDependenciesMapFromBuild;
-import static org.jfrog.build.extractor.npm.extractor.NpmBuildInfoExtractor.isJsonOutputRequired;
 import static org.testng.Assert.assertEquals;
 
 @Test
 public class NpmBuildInfoExtractorTest {
-
-    @DataProvider
-    private Object[][] isJsonOutputRequiredProvider() {
-        return new Object[][]{
-                //  Check "--json" possible positions
-                {true, "--json"},
-                {true, "--json", "arg2"},
-                {true, "arg1", "--json"},
-                {true, "arg1", "--json", "arg3"},
-                //  Check "--json=true" possible positions
-                {true, "--json=true"},
-                {true, "--json=true", "arg2"},
-                {true, "arg1", "--json=true"},
-                {true, "arg1", "--json=true", "arg3"},
-                //  Check "--json=false" possible positions
-                {false, "--json=false"},
-                {false, "--json=false", "arg2"},
-                {false, "arg1", "--json=false"},
-                {false, "arg1", "--json=false", "arg3"},
-                //  Check "--json true" possible positions
-                {true, "--json", "true"},
-                {true, "--json", "true", "arg3"},
-                {true, "arg1", "--json", "true"},
-                {true, "arg1", "--json", "true", "arg4"},
-                //  Check "--json false" possible positions
-                {false, "--json", "false"},
-                {false, "--json", "false", "arg3"},
-                {false, "arg1", "--json", "false"},
-                {false, "arg1", "--json", "false", "arg4"},
-        };
-    }
-
-    @Test(dataProvider = "isJsonOutputRequiredProvider")
-    public void isJsonOutputRequiredTest(boolean expectedResult, String[] installationArgs) {
-        assertEquals(isJsonOutputRequired(Lists.newArrayList(installationArgs)), expectedResult);
-    }
 
     @DataProvider
     private Object[][] getDependenciesMapFromBuildProvider() {
@@ -114,6 +76,33 @@ public class NpmBuildInfoExtractorTest {
     public void getDependenciesMapFromBuildTest(Build build, Map<String, Dependency> expected) {
         Map<String, Dependency> actual = getDependenciesMapFromBuild(build);
         assertEquals(actual, expected);
+    }
+
+    @DataProvider
+    private Object[][] setTypeRestrictionProvider() {
+        return new Object[][]{
+                {NpmBuildInfoExtractor.TypeRestriction.PROD_ONLY, new String[]{"production", "true"}},
+                {NpmBuildInfoExtractor.TypeRestriction.PROD_ONLY, new String[]{"only", "prod"}},
+                {NpmBuildInfoExtractor.TypeRestriction.PROD_ONLY, new String[]{"only", "production"}},
+                {NpmBuildInfoExtractor.TypeRestriction.DEV_ONLY, new String[]{"only", "dev"}},
+                {NpmBuildInfoExtractor.TypeRestriction.DEV_ONLY, new String[]{"only", "development"}},
+                {NpmBuildInfoExtractor.TypeRestriction.PROD_ONLY, new String[]{"omit", "[\"dev\"]"}, new String[]{"k1", "v1"}, new String[]{"dev", "true"}},
+                {NpmBuildInfoExtractor.TypeRestriction.ALL, new String[]{"omit", "[\"abc\"]"}, new String[]{"dev", "true"}},
+                {NpmBuildInfoExtractor.TypeRestriction.ALL, new String[]{"only", "dev"}, new String[]{"omit", "[\"abc\"]"}},
+                {NpmBuildInfoExtractor.TypeRestriction.PROD_ONLY, new String[]{"dev", "true"}, new String[]{"omit", "[\"dev\"]"}},
+                {NpmBuildInfoExtractor.TypeRestriction.DEFAULT_RESTRICTION, new String[]{"kuku", "true"}}
+        };
+    }
+
+    @Test(dataProvider = "setTypeRestrictionProvider")
+    public void setTypeRestrictionTest(NpmBuildInfoExtractor.TypeRestriction expected, String[][] confs) {
+        NpmBuildInfoExtractor extractor = new NpmBuildInfoExtractor(null, null, null, null, null, null, null);
+
+        for (String[] conf : confs) {
+            extractor.setTypeRestriction(conf[0], conf[1]);
+        }
+
+        assertEquals(extractor.getTypeRestriction(), expected);
     }
 
     private Module createTestModule(String id, List<Dependency> dependencies) {

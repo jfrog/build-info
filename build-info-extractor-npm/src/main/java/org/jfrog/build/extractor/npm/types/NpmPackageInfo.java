@@ -58,11 +58,6 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
         this.scope = scope;
     }
 
-    void removeVersionPrefixes() {
-        version = StringUtils.removeStart(version, "=");
-        version = StringUtils.removeStart(version, "v");
-    }
-
     void splitScopeFromName() {
         if (StringUtils.startsWith(name, "@") && StringUtils.contains(name, "/")) {
             String[] splitValues = StringUtils.split(name, "/");
@@ -78,7 +73,6 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
         NpmPackageInfo npmPackageInfo = mapper.readValue(inputStream, NpmPackageInfo.class);
 
         setVersion(npmPackageInfo.getVersion());
-        removeVersionPrefixes();
 
         setName(npmPackageInfo.getName());
         splitScopeFromName();
@@ -91,14 +85,6 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
             return nameBase;
         }
         return String.format("%s:%s", scope.replaceFirst("^@", ""), nameBase);
-    }
-
-    public String getExpectedPackedFileName() {
-        String nameBase = String.format("%s-%s.tgz", name, version);
-        if (StringUtils.isBlank(scope)) {
-            return nameBase;
-        }
-        return String.format("%s-%s", scope.replaceFirst("^@", ""), nameBase);
     }
 
     public String getDeployPath() {

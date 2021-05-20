@@ -176,7 +176,7 @@ public class Utils {
         // Extract build name and number from build info URL
         String buildName = res[1];
         String buildNumber = StringUtils.substringBefore(res[2], System.lineSeparator());
-        return artifactoryManager.getBuildInfo(buildName, buildNumber);
+        return artifactoryManager.getBuildInfo(buildName, buildNumber, null);
     }
 
     /**

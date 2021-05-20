@@ -43,6 +43,15 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
      */
     @Test
     public void sendBuildInfoTest() throws IOException {
+        doSendBuildInfoTest(null);
+    }
+
+    @Test
+    public void sendBuildInfoWithProjectTest() throws IOException {
+        doSendBuildInfoTest("jit");
+    }
+
+    private void doSendBuildInfoTest(String project) throws IOException {
         final String BUILD_NAME = "ArtifactoryManagerTest";
         final String BUILD_NUMBER = "13";
         final Date STARTED = new Date();
@@ -57,6 +66,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
                 .number(BUILD_NUMBER)
+                .setProject(project)
                 .buildAgent(new BuildAgent("agent11", "11"))
                 .agent(new Agent("agent22", "22"))
                 .startedDate(STARTED)
@@ -77,10 +87,10 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         Build buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
-        artifactoryManager.publishBuildInfo(buildInfoToSend);
+        artifactoryManager.publishBuildInfo(buildInfoToSend, project);
 
         // Get build info
-        Build receivedBuildInfo = artifactoryManager.getBuildInfo(BUILD_NAME, BUILD_NUMBER);
+        Build receivedBuildInfo = artifactoryManager.getBuildInfo(BUILD_NAME, BUILD_NUMBER, project);
 
         // Compare
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));

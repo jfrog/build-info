@@ -25,9 +25,9 @@ import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -201,20 +201,13 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             bib.addRunParameters(matrixParameter);
         }
 
-        if (clientConf.isIncludeEnvVars()) {
-            Properties envProperties = new Properties();
-            envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
-            for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
-                bib.addProperty(envProp.getKey(), envProp.getValue());
-            }
-        }
         log.debug("buildInfoBuilder = " + bib);
         // for backward compatibility for Artifactory 2.2.3
         Build build = bib.build();
         if (parentName != null && parentNumber != null) {
             build.setParentBuildId(parentName);
         }
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
         return build;
     }
 }

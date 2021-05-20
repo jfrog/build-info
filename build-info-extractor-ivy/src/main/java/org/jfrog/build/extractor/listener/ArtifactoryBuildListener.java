@@ -20,6 +20,7 @@ import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
@@ -132,20 +133,20 @@ public class ArtifactoryBuildListener implements BuildListener {
 
     private Task extractIvyTask(BuildEvent event) {
         Task task = event.getTask();
-        
+
         //Handle ivy tasks that are wrapped
-        if(task instanceof UnknownElement) {
+        if (task instanceof UnknownElement) {
             UnknownElement unknown = (UnknownElement) task;
             Object realThing = unknown.getRealThing();
-            if(realThing == null) {
+            if (realThing == null) {
                 unknown.maybeConfigure();
             }
             realThing = unknown.getRealThing();
             if (realThing instanceof Task) {
-                task = (Task)realThing;
+                task = (Task) realThing;
             }
         }
-        
+
         // Interested only in Ivy tasks
         String taskType = task.getTaskType();
         if (taskType != null
@@ -206,14 +207,14 @@ public class ArtifactoryBuildListener implements BuildListener {
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
             if (element instanceof UnknownElement) {
-                UnknownElement unknown = (UnknownElement)element;
+                UnknownElement unknown = (UnknownElement) element;
                 element = unknown.getRealThing();
-                if(element == null) {
+                if (element == null) {
                     unknown.maybeConfigure();
                     element = unknown.getRealThing();
                 }
             }
-            if (element instanceof IvyAntSettings ) {
+            if (element instanceof IvyAntSettings) {
                 results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
             }
         }
@@ -352,15 +353,8 @@ public class ArtifactoryBuildListener implements BuildListener {
             builder.addRunParameters(matrixParameter);
         }
 
-        if (clientConf.isIncludeEnvVars()) {
-            Properties envProperties = new Properties();
-            envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
-            for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
-                builder.addProperty(envProp.getKey(), envProp.getValue());
-            }
-        }
         Build build = builder.build();
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();

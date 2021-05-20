@@ -40,9 +40,9 @@ public class NpmInstallCi extends NpmCommand {
      * @param path                      - Path to directory contains package.json or path to '.tgz' file.
      * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmInstallCi(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand) {
+    public NpmInstallCi(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand, String project) {
         super(artifactoryManagerBuilder, resolutionRepository, logger, path, env);
-        buildInfoExtractor = new NpmBuildInfoExtractor(artifactoryManagerBuilder, npmDriver, logger, module, buildName);
+        buildInfoExtractor = new NpmBuildInfoExtractor(artifactoryManagerBuilderת npmDriver, logger, module, buildName, project);
         this.commandArgs = StringUtils.isBlank(commandArgs) ? new ArrayList<>() : Arrays.asList(commandArgs.trim().split("\\s+"));
         this.isCiCommand = isCiCommand;
     }
@@ -65,7 +65,8 @@ public class NpmInstallCi extends NpmCommand {
                     clientConfiguration.getAllProperties(),
                     packageManagerHandler.getModule(),
                     clientConfiguration.info.getBuildName(),
-                    npmHandler.isCiCommand());
+                    npmHandler.isCiCommand(),
+                    clientConfiguration.info.getProject());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);

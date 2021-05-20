@@ -35,7 +35,7 @@ import static org.jfrog.build.api.BuildBean.ROOT;
  * @author Noam Y. Tenne
  */
 @XStreamAlias(ROOT)
-@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
 public class Build extends BaseBuildBean {
 
     public static final String STARTED_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -43,9 +43,11 @@ public class Build extends BaseBuildBean {
     private String version = "1.0.1";
     private String name;
     private String number;
+    private String project;
     private BuildAgent buildAgent;
     private Agent agent;
     private String started;
+    private long startedMillis;
     private long durationMillis;
     private String principal;
     private String artifactoryPrincipal;
@@ -142,6 +144,24 @@ public class Build extends BaseBuildBean {
     }
 
     /**
+     * Returns the project of the build
+     *
+     * @return Build project
+     */
+    public String getProject() {
+        return project;
+    }
+
+    /**
+     * Sets the project of the build
+     *
+     * @param project Build project
+     */
+    public void setProject(String project) {
+        this.project = project;
+    }
+
+    /**
      * Returns the name of the parent build
      *
      * @return Parent build name
@@ -232,6 +252,23 @@ public class Build extends BaseBuildBean {
     }
 
     /**
+     * Returns the started time of the build in a unit of milliseconds
+     *
+     * @return Build started time in a unit of milliseconds
+     */
+    public long getStartedMillis() {
+        return startedMillis;
+    }
+
+    /**
+     * Sets the started time of the build in a unit of milliseconds
+     *
+     */
+    public void setStartedMillis(long startedMillis) {
+        this.startedMillis = startedMillis;
+    }
+
+    /**
      * Sets the started time of the build
      *
      * @param started Build started time
@@ -246,7 +283,8 @@ public class Build extends BaseBuildBean {
      * @param startedDate Build start date to set
      */
     public void setStartedDate(Date startedDate) {
-        this.started = formatBuildStarted(startedDate.getTime());
+        startedMillis = startedDate.getTime();
+        started = formatBuildStarted(startedMillis);
     }
 
     /**

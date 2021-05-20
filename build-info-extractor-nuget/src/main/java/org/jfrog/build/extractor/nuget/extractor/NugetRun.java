@@ -21,10 +21,9 @@ import org.jfrog.build.extractor.nuget.types.NugetPackgesConfig;
 import org.jfrog.build.extractor.nuget.types.NugetProjectAssets;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -42,11 +41,19 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String NUGET_CONFIG_FILE_PREFIX = TEMP_DIR_PREFIX + ".nuget.config";
     private static final String PACKAGES_CONFIG = "packages.config";
     private static final String PROJECT_ASSETS = "project.assets.json";
-    private static final String CONFIG_FILE_TEMPLATE = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
-            + "<configuration>\n"
-            + "\t<packageSources>\n\t</packageSources>\n"
-            + "\t<packageSourceCredentials>\n\t</packageSourceCredentials>\n"
-            + "</configuration>";
+    private static final String PROJECT_ASSETS_DIR = "obj";
+    private static final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+            "<configuration>\n" +
+            "\t<packageSources>\n" +
+            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" />\n" +
+            "\t</packageSources>\n" +
+            "\t<packageSourceCredentials>\n" +
+            "\t\t<JFrogJenkins>\n" +
+            "\t\t\t<add key=\"Username\" value=\"%s\" />\n" +
+            "\t\t\t<add key=\"ClearTextPassword\" value=\"%s\" />\n" +
+            "\t\t</JFrogJenkins>\n" +
+            "\t</packageSourceCredentials>\n" +
+            "</configuration>";
     private static final String SOURCE_NAME = "BuildInfo.extractor.nuget";
     private static final String SLN_FILE_PARSING_REGEX = "^Project\\(\\\"(.*)";
     private static final String SHA1 = "SHA1";
@@ -65,23 +72,29 @@ public class NugetRun extends PackageManagerExtractor {
     private String resolutionRepo;
     private String username;
     private String password;
+    private String apiProtocol;
     private String module;
     private String nugetCmdArgs;
     private List<String> dependenciesSources;
     private List<Module> modulesList = new ArrayList<>();
 
     /**
-     * Install npm package.
+     * Run NuGet.
      *
      * @param artifactoryManagerBuilder  - ArtifactoryManager builder builder.
      * @param resolutionRepo - The repository it'll resolve from.
-     * @param nugetCmdArgs   - nuget exec args.
+     * @param useDotnetCli   - Boolean indicates if .Net cli will be used.
+     * @param nugetCmdArgs   - NuGet exec args.
      * @param logger         - The logger.
-     * @param path           - Path to directory contains package.json or path to '.tgz' file.
+     * @param path           - Path to the directory containing the .sln file.
      * @param env            - Environment variables to use during npm execution.
+     * @param module         - NuGet module
+     * @param username       - JFrog platform username.
+     * @param password       - JFrog platform password.
+     * @param apiProtocol    - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
-    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password) {
+    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -91,6 +104,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
         this.username = username;
         this.password = password;
+        this.apiProtocol = apiProtocol;
         this.module = module;
     }
 
@@ -145,7 +159,8 @@ public class NugetRun extends PackageManagerExtractor {
                     clientConfiguration.getAllProperties(),
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
-                    clientConfiguration.resolver.getPassword());
+                    clientConfiguration.resolver.getPassword(),
+                    clientConfiguration.dotnetHandler.apiProtocol());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -185,7 +200,7 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     /**
-     * We will write a temporary NuGet configuration which will be used during the restore.
+     * Writes a temporary NuGet configuration which will be used during the restore.
      * The resolution repository will be set as a source in the configuration.
      */
     private File prepareConfig(ArtifactoryManager artifactoryManager) throws Exception {
@@ -193,12 +208,22 @@ public class NugetRun extends PackageManagerExtractor {
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            try (BufferedWriter bw = new BufferedWriter(new FileWriter(configFile.getAbsolutePath()))) {
-                bw.write(CONFIG_FILE_TEMPLATE);
-            }
-            toolchainDriver.addSource(configFile.getPath(), artifactoryManager, resolutionRepo, SOURCE_NAME, username, password);
+            addSourceToConfigFile(configFile.getAbsolutePath(), artifactoryManager, resolutionRepo, username, password, apiProtocol);
         }
         return configFile;
+    }
+
+    /**
+     * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
+     * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
+     */
+    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, String apiProtocol) throws Exception{
+        String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
+        String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
+        String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
+        try (PrintWriter out = new PrintWriter(configPath)) {
+            out.println(configFileText);
+        }
     }
 
     /**
@@ -348,10 +373,12 @@ public class NugetRun extends PackageManagerExtractor {
      * Iterate the dependencies sources list and look for the project's source
      */
     private String getDependenciesSource(String projectName, String csprojPath) {
+        Path projectRootPath = Paths.get(csprojPath).getParent().normalize();
         String projectNamePattern = File.separator + projectName + File.separator;
-        String projectPathPattern = (new File(csprojPath)).getParent() + File.separator;
+        String projectPathPattern = projectRootPath + File.separator + PROJECT_ASSETS_DIR + File.separator;
         for (String source : dependenciesSources) {
-            if (source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
+            Path sourceRootPath = Paths.get(source).getParent().normalize();
+            if (sourceRootPath.equals(projectRootPath) || source.contains(projectNamePattern) || source.contains(projectPathPattern)) {
                 return source;
             }
         }

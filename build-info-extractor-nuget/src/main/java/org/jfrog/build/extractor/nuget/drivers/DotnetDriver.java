@@ -20,17 +20,6 @@ public class DotnetDriver extends ToolchainDriverBase {
         commandExecutor = new CommandExecutor("dotnet", env);
     }
 
-    public String addSource(String configPath, ArtifactoryManager artifactoryManager, String repo, String sourceName, String username, String password) throws IOException {
-        try {
-            String sourceUrl = buildNugetSourceUrl(artifactoryManager, repo);
-            List<String> extraArgs = Arrays.asList(getFlagSyntax(CONFIG_FILE_FLAG), configPath, getFlagSyntax(NAME_FLAG), sourceName);
-            List<String> credentials = Arrays.asList(getFlagSyntax(USERNAME_FLAG), username, getFlagSyntax(PASSWORD_FLAG), password, CLEAR_TEXT_PASSWORD_FLAG);
-            return runCommand(new String[]{"nuget", "add", "source", sourceUrl}, extraArgs, credentials, logger);
-        } catch (Exception e) {
-            throw new IOException("dotnet nuget add source failed: " + e.getMessage() + ". Please make sure .NET Core 3.1.200 SDK or above is installed.", e);
-        }
-    }
-
     public String globalPackagesCache() throws IOException, InterruptedException {
         // Run `nuget locals globals-packages -list` to get the global packages path
         List<String> args = new ArrayList<>();
