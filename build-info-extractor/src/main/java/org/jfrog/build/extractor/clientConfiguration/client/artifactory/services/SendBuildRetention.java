@@ -8,18 +8,21 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 
 public class SendBuildRetention extends VoidJFrogService {
     private static final String RETENTION_REST_URL = "api/build/retention/";
     private final BuildRetention buildRetention;
     private final String buildName;
+    private final String project;
     private final boolean async;
 
-    public SendBuildRetention(BuildRetention buildRetention, String buildName, boolean async, Log logger) {
+    public SendBuildRetention(BuildRetention buildRetention, String buildName, String project, boolean async, Log logger) {
         super(logger);
         this.buildRetention = buildRetention;
         this.buildName = encodeUrl(buildName);
+        this.project = project;
         this.async = async;
     }
 
@@ -27,7 +30,7 @@ public class SendBuildRetention extends VoidJFrogService {
     public HttpRequestBase createRequest() throws IOException {
         log.info(createBuildRetentionLogMsg(buildRetention, async));
         log.debug(toJsonString(buildRetention));
-        String url = RETENTION_REST_URL + buildName + "?async=" + async;
+        String url = RETENTION_REST_URL + buildName + "?async=" + async + getProjectQueryParam(project, "&project=");
         return new HttpPost(url);
     }
 

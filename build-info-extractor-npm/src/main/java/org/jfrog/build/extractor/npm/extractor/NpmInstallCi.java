@@ -31,7 +31,7 @@ public class NpmInstallCi extends NpmCommand {
     /**
      * Run npm install or npm ci commands.
      *
-     * @param artifactoryManagerBuilder - Dependencies client builder.
+     * @param artifactoryManagerBuilder - ArtifactoryManagerBuilder.
      * @param resolutionRepository      - The repository it'll resolve from.
      * @param commandArgs               - Npm command args.
      * @param buildName                 - The build's name.
@@ -42,7 +42,7 @@ public class NpmInstallCi extends NpmCommand {
      */
     public NpmInstallCi(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand, String project) {
         super(artifactoryManagerBuilder, resolutionRepository, logger, path, env);
-        buildInfoExtractor = new NpmBuildInfoExtractor(artifactoryManagerBuilderת npmDriver, logger, module, buildName, project);
+        buildInfoExtractor = new NpmBuildInfoExtractor(artifactoryManagerBuilder, npmDriver, logger, module, buildName, project);
         this.commandArgs = StringUtils.isBlank(commandArgs) ? new ArrayList<>() : Arrays.asList(commandArgs.trim().split("\\s+"));
         this.isCiCommand = isCiCommand;
     }

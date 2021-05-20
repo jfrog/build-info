@@ -114,7 +114,7 @@ public class DeployTask extends DefaultTask {
                     exportBuildInfo(build, getExportFile(accRoot));
                     if (accRoot.info.isIncremental()) {
                         log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
-                        artifactoryManager.publishBuildInfo(build);
+                        artifactoryManager.sendModuleInfo(build);
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                         Utils.sendBuildAndBuildRetention(artifactoryManager, build, accRoot);

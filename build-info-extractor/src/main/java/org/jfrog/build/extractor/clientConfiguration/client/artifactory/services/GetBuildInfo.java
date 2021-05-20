@@ -10,21 +10,25 @@ import org.jfrog.build.extractor.clientConfiguration.client.response.GetBuildInf
 import java.io.IOException;
 import java.io.InputStream;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
+
 public class GetBuildInfo extends JFrogService<Build> {
 
     private final String buildName;
     private final String buildNumber;
+    private final String project;
 
-    public GetBuildInfo(String buildName, String buildNumber, Log logger) {
+    public GetBuildInfo(String buildName, String buildNumber, String project, Log logger) {
         super(Build.class, logger);
 
         this.buildName = buildName;
         this.buildNumber = buildNumber;
+        this.project = project;
     }
 
     @Override
     public HttpRequestBase createRequest() {
-        String apiEndPoint = String.format("%s/%s/%s", "api/build", encodeUrl(buildName), encodeUrl(buildNumber));
+        String apiEndPoint = String.format("%s/%s/%s%s", "api/build", encodeUrl(buildName), encodeUrl(buildNumber), getProjectQueryParam(project));
         return new HttpGet(apiEndPoint);
     }
 

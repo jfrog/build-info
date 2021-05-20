@@ -135,24 +135,23 @@ public class ArtifactoryManager extends ManagerBase {
         return versionService.execute(jfrogHttpClient);
     }
 
-    public void publishBuildInfo(String buildInfoJson) throws IOException {
-        PublishBuildInfo publishBuildInfoService = new PublishBuildInfo(buildInfoJson, log);
+    public void publishBuildInfo(Build buildInfo, String platformUrl) throws IOException {
+        PublishBuildInfo publishBuildInfoService = new PublishBuildInfo(buildInfo, platformUrl, log);
         publishBuildInfoService.execute(jfrogHttpClient);
     }
-
-    public void publishBuildInfo(Build buildInfo) throws IOException {
-        PublishBuildInfo publishBuildInfoService = new PublishBuildInfo(buildInfo, log);
-        publishBuildInfoService.execute(jfrogHttpClient);
+    public void sendModuleInfo(Build build) throws IOException {
+        SendModuleInfo sendModuleInfoService = new SendModuleInfo(build, log);
+        sendModuleInfoService.execute(jfrogHttpClient);
     }
 
-    public Build getBuildInfo(String buildName, String buildNumber) throws IOException {
+    public Build getBuildInfo(String buildName, String buildNumber, String project) throws IOException {
         if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
-            buildNumber = getLatestBuildNumber(buildName, buildNumber);
+            buildNumber = getLatestBuildNumber(buildName, buildNumber, project);
             if (buildNumber == null) {
                 return null;
             }
         }
-        GetBuildInfo getBuildInfoService = new GetBuildInfo(buildName, buildNumber, log);
+        GetBuildInfo getBuildInfoService = new GetBuildInfo(buildName, buildNumber, project, log);
         return getBuildInfoService.execute(jfrogHttpClient);
     }
 
@@ -218,8 +217,8 @@ public class ArtifactoryManager extends ManagerBase {
         return searchArtifactsByPropertiesService.execute(jfrogHttpClient);
     }
 
-    public void sendBuildRetention(BuildRetention buildRetention, String buildName, boolean async) throws IOException {
-        SendBuildRetention sendBuildRetentionService = new SendBuildRetention(buildRetention, buildName, async, log);
+    public void sendBuildRetention(BuildRetention buildRetention, String buildName, String project, boolean async) throws IOException {
+        SendBuildRetention sendBuildRetentionService = new SendBuildRetention(buildRetention, buildName, project, async, log);
         sendBuildRetentionService.execute(jfrogHttpClient);
     }
 
@@ -261,7 +260,7 @@ public class ArtifactoryManager extends ManagerBase {
         createRepository.execute(jfrogHttpClient);
     }
 
-    public String getLatestBuildNumber(String buildName, String latestType) throws IOException {
+    public String getLatestBuildNumber(String buildName, String latestType, String project) throws IOException {
         if (!LATEST.equals(latestType.trim()) && LAST_RELEASE.equals(latestType.trim())) {
             log.warn("GetLatestBuildNumber accepts only two latest types: LATEST or LAST_RELEASE");
             return null;
@@ -271,7 +270,7 @@ public class ArtifactoryManager extends ManagerBase {
             throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", latestType));
         }
         List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
-        artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, latestType));
+        artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, latestType, project));
         List<BuildPatternArtifacts> artifactsResponses = retrievePatternArtifacts(artifactsRequest);
         // Artifactory returns null if no build was found
         if (artifactsResponses.get(0) != null) {

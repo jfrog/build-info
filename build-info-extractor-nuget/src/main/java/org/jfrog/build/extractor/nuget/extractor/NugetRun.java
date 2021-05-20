@@ -217,7 +217,7 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, String apiProtocol) throws Exception{
+    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol) throws Exception{
         String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
         String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
