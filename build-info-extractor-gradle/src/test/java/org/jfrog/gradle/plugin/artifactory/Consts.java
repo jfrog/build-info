@@ -34,7 +34,8 @@ public class Consts {
     // CI example paths
     static final Path LIBS_DIR = GRADLE_EXTRACTOR.resolve(Paths.get("build", "libs"));
     static final Path INIT_SCRIPT = GRADLE_EXTRACTOR_SRC.resolve(Paths.get("main", "resources", "initscripttemplate.gradle"));
-    static final Path BUILD_INFO_PROPERTIES_SOURCE = PROJECTS_ROOT.resolve("buildinfo.properties");
+    static final Path BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER = PROJECTS_ROOT.resolve("buildinfo.properties.deployer");
+    static final Path BUILD_INFO_PROPERTIES_SOURCE_RESOLVER = PROJECTS_ROOT.resolve("buildinfo.properties.resolver");
     static final Path BUILD_INFO_PROPERTIES_TARGET = TEST_DIR.toPath().resolve("buildinfo.properties");
 
     // Expected artifacts
