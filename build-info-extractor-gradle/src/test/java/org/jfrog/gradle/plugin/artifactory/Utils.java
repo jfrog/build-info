@@ -87,21 +87,31 @@ public class Utils {
      * @param localRepo        - Gradle local repository
      * @param virtualRepo      - Gradle remote repository
      * @param publishBuildInfo - Publish build info
+     * @param setDeployer      - Set deployer details in file
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer, boolean setResolver) throws IOException {
-        String content = "";
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer) throws IOException {
+        String content = generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER);
         if (setDeployer) {
-            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
             content += "\n";
-        }
-        if (setResolver) {
-            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER);
+            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
         }
         Files.write(BUILD_INFO_PROPERTIES_TARGET, content.getBytes(StandardCharsets.UTF_8));
     }
 
-    static String generateBuildInfoPropertiesForServer(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, Path source) throws IOException {
+    /**
+     * Generate buildinfo.properties section from source template.
+     *
+     * @param contextUrl       - Artifactory URL
+     * @param username         - Artifactory username
+     * @param password         - Artifactory password
+     * @param localRepo        - Gradle local repository
+     * @param virtualRepo      - Gradle remote repository
+     * @param publishBuildInfo - Publish build info
+     * @param source           - Path to server specific buildinfo.properties template.
+     * @throws IOException - In case of any IO error
+     */
+    private static String generateBuildInfoPropertiesForServer(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, Path source) throws IOException {
         String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
         Map<String, String> valuesMap = new HashMap<String, String>() {{
             put("publications", publications);
@@ -153,16 +163,14 @@ public class Utils {
         assertSuccess(buildResult, ":artifactoryPublish");
     }
 
-    static void checkLocalBuild(BuildResult buildResult, File buildInfoJson, int expectedModules, int expectedArtifactsPerModule, boolean checkRequestedBy) throws IOException {
+    static void checkLocalBuild(BuildResult buildResult, File buildInfoJson, int expectedModules, int expectedArtifactsPerModule) throws IOException {
         assertProjectsSuccess(buildResult);
 
         // Assert build info contains requestedBy information.
         assertTrue(buildInfoJson.exists());
         Build buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
         checkBuildInfoModules(buildInfo, expectedModules, expectedArtifactsPerModule);
-        if (checkRequestedBy) {
-            assertRequestedBy(buildInfo);
-        }
+        assertRequestedBy(buildInfo);
     }
 
     private static void assertRequestedBy(Build buildInfo) {

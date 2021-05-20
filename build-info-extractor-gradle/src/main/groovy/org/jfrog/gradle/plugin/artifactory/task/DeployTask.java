@@ -101,6 +101,13 @@ public class DeployTask extends DefaultTask {
         exportBuildInfo(build, getExportFile(accRoot));
 
         // Export generated.
+        generateBuildInfoJson(accRoot, build);
+
+        // Handle deployment.
+        handleBuildInfoDeployment(accRoot, build, allDeployDetails);
+    }
+
+    private void generateBuildInfoJson(ArtifactoryClientConfiguration accRoot, Build build) throws IOException {
         if (isGenerateBuildInfoToFile(accRoot)) {
             try {
                 exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
@@ -109,8 +116,9 @@ public class DeployTask extends DefaultTask {
                 throw new IOException("Failed writing build info to file", e);
             }
         }
+    }
 
-        // Handle deployment.
+    private void handleBuildInfoDeployment(ArtifactoryClientConfiguration accRoot, Build build, Map<String, Set<DeployDetails>> allDeployDetails) throws IOException {
         ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
