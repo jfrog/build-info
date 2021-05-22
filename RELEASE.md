@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.26.1 / gradle-artifactory-plugin 4.24.1 (May 23, 2021)
+- Gradle - Build-info is not published, if the build does not deploy artifacts ([495](https://github.com/jfrog/build-info/pull/495))
+
 ## build-info-extractor 2.26.0 / gradle-artifactory-plugin 4.24.0 (May 19, 2021)
 - Upgrade xstream to 1.4.16 ([489](https://github.com/jfrog/build-info/pull/489)) 
 - Add support for npm 7.7([484](https://github.com/jfrog/build-info/pull/484))
