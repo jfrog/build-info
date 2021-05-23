@@ -87,26 +87,26 @@ public class ArtifactoryManager extends ManagerBase {
         return download(downloadFrom, null);
     }
 
-    public String download(String DownloadPath, Map<String, String> headers) throws IOException {
-        Download downloadService = new Download(DownloadPath, headers, log);
+    public String download(String downloadFrom, Map<String, String> headers) throws IOException {
+        Download downloadService = new Download(downloadFrom, headers, log);
         return downloadService.execute(jfrogHttpClient);
     }
 
-    public Header[] downloadHeaders(String DownloadPath) throws IOException {
-        return downloadHeaders(DownloadPath, null);
+    public Header[] downloadHeaders(String downloadFrom) throws IOException {
+        return downloadHeaders(downloadFrom, null);
     }
 
-    public Header[] downloadHeaders(String DownloadPath, Map<String, String> headers) throws IOException {
-        DownloadHeaders downloadHeadersService = new DownloadHeaders(DownloadPath, headers, log);
+    public Header[] downloadHeaders(String downloadFrom, Map<String, String> headers) throws IOException {
+        DownloadHeaders downloadHeadersService = new DownloadHeaders(downloadFrom, headers, log);
         return downloadHeadersService.execute(jfrogHttpClient);
     }
 
-    public File downloadToFile(String DownloadPath, String downloadTo) throws IOException {
-        return downloadToFile(DownloadPath, downloadTo, null);
+    public File downloadToFile(String downloadFrom, String downloadTo) throws IOException {
+        return downloadToFile(downloadFrom, downloadTo, null);
     }
 
-    public File downloadToFile(String DownloadPath, String downloadTo, Map<String, String> headers) throws IOException {
-        DownloadToFile downloadToFileService = new DownloadToFile(DownloadPath, downloadTo, headers, log);
+    public File downloadToFile(String downloadFrom, String downloadTo, Map<String, String> headers) throws IOException {
+        DownloadToFile downloadToFileService = new DownloadToFile(downloadFrom, downloadTo, headers, log);
         return downloadToFileService.execute(jfrogHttpClient);
     }
 
@@ -139,6 +139,7 @@ public class ArtifactoryManager extends ManagerBase {
         PublishBuildInfo publishBuildInfoService = new PublishBuildInfo(buildInfo, platformUrl, log);
         publishBuildInfoService.execute(jfrogHttpClient);
     }
+
     public void sendModuleInfo(Build build) throws IOException {
         SendModuleInfo sendModuleInfoService = new SendModuleInfo(build, log);
         sendModuleInfoService.execute(jfrogHttpClient);

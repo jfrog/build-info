@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -41,7 +41,7 @@ public class DistributeBuild extends VoidJFrogService {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         log.info(String.format("Successfully distributed build %s/%s", buildName, buildNumber));
 
     }
@@ -57,8 +57,8 @@ public class DistributeBuild extends VoidJFrogService {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Distribution failed.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

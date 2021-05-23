@@ -159,12 +159,17 @@ public abstract class IntegrationTestsBase {
      * Create new repository according to the settings.
      *
      * @param repo - repository name
+     * @throws IOException in case of any connection issues with Artifactory or the repository doesn't exist.
      */
     protected void createTestRepo(String repo) throws IOException {
         if (StringUtils.isBlank(repo) || isRepoExists(repo)) {
             return;
         }
-        try (InputStream repoConfigInputStream = this.getClass().getResourceAsStream("/integration/settings/" + repo + ".json")) {
+        String path = "/integration/settings/" + repo + ".json";
+        try (InputStream repoConfigInputStream = this.getClass().getResourceAsStream(path)) {
+            if (repoConfigInputStream == null) {
+                throw new IOException("Couldn't find repository settings in " + path);
+            }
             String json = IOUtils.toString(repoConfigInputStream, StandardCharsets.UTF_8);
             artifactoryManager.createRepository(repo, json);
         }
@@ -183,6 +188,10 @@ public abstract class IntegrationTestsBase {
     /**
      * Read spec file and replace the placeholder test data.
      *
+     * @param specFile      - the spec file
+     * @param workSpacePath - workspace path
+     * @return the File Spec as a string.
+     * @throws IOException in case of any I/O error.
      */
     protected String readSpec(File specFile, String workSpacePath) throws IOException {
         String spec = FileUtils.readFileToString(specFile, StandardCharsets.UTF_8);

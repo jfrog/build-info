@@ -1,11 +1,10 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.client.JFrogService;
@@ -18,7 +17,7 @@ public class Version extends JFrogService<ArtifactoryVersion> {
     private final Log log;
 
     public Version(Log logger) {
-        super(ArtifactoryVersion.class, logger);
+        super(logger);
         log = logger;
         result = ArtifactoryVersion.NOT_FOUND;
     }
@@ -29,7 +28,7 @@ public class Version extends JFrogService<ArtifactoryVersion> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         JsonNode result = getMapper(false).readTree(stream);
         log.debug("Version result: " + result);
         String version = result.get("version").asText();
@@ -39,12 +38,11 @@ public class Version extends JFrogService<ArtifactoryVersion> {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            EntityUtils.consumeQuietly(response.getEntity());
             result = ArtifactoryVersion.NOT_FOUND;
         } else {
-            throwException(response);
+            throwException(entity, getStatusCode());
         }
     }
 }

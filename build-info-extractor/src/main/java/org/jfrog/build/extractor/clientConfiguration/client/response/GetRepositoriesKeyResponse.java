@@ -18,7 +18,7 @@ public class GetRepositoriesKeyResponse {
         return results.stream().map(LocalRepository::getKey).collect(Collectors.toList());
     }
 
-    public class LocalRepository {
+    public static class LocalRepository {
         private String key;
 
         public String getKey() {

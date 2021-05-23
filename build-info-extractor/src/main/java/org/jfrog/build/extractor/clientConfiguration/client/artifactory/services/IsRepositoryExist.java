@@ -1,10 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.JFrogService;
 
@@ -16,7 +15,7 @@ public class IsRepositoryExist extends JFrogService<Boolean> {
     private final String repo;
 
     public IsRepositoryExist(String repo, Log logger) {
-        super(Boolean.class, logger);
+        super(logger);
         this.repo = repo;
     }
 
@@ -26,14 +25,12 @@ public class IsRepositoryExist extends JFrogService<Boolean> {
     }
 
     @Override
-    public void setResponse(InputStream stream) {
+    protected void setResponse(InputStream stream) {
         result = true;
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) {
-        EntityUtils.consumeQuietly(response.getEntity());
-        // Maintain old logic which is: statusLine.getStatusCode() == HttpStatus.SC_BAD_REQUEST -> return false;
+    protected void handleUnsuccessfulResponse(HttpEntity entity) {
         result = statusCode != HttpStatus.SC_BAD_REQUEST;
     }
 }

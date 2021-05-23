@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -21,7 +21,7 @@ public class GetRepositoriesKeys extends JFrogService<List<String>> {
 
     @SuppressWarnings("unchecked")
     public GetRepositoriesKeys(RepositoryType repositoryType, Log logger) {
-        super((Class<List<String>>) (Class<?>) List.class, logger);
+        super(logger);
         result = new ArrayList<>();
         this.repositoryType = repositoryType;
         log = logger;
@@ -29,31 +29,21 @@ public class GetRepositoriesKeys extends JFrogService<List<String>> {
 
     @Override
     public HttpRequestBase createRequest() {
-        String endPoint = REPOS_REST_URL;
-        switch (repositoryType) {
-            case LOCAL:
-                endPoint += "local";
-                break;
-            case REMOTE:
-                endPoint += "remote";
-                break;
-            case VIRTUAL:
-                endPoint += "virtual";
-        }
-        HttpGet req = new HttpGet(endPoint);
-        log.debug("Requesting repositories list from: " + endPoint);
+        String endpoint = REPOS_REST_URL + repositoryType.name().toLowerCase();
+        HttpGet req = new HttpGet(endpoint);
+        log.debug("Requesting repositories list from: " + endpoint);
         return req;
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         GetRepositoriesKeyResponse localRepositories = getMapper(true).readValue(stream, GetRepositoriesKeyResponse.class);
         result = localRepositories.getRepositoriesKey();
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to obtain list of repositories.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

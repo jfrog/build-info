@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -18,7 +18,7 @@ public class GetUserPluginInfo extends JFrogService<Map<String, List<Map>>> {
 
     @SuppressWarnings("unchecked")
     public GetUserPluginInfo(Log log) {
-        super((Class<Map<String, List<Map>>>) (Class<?>) Map.class, log);
+        super(log);
         result = new HashMap<>();
     }
 
@@ -28,13 +28,13 @@ public class GetUserPluginInfo extends JFrogService<Map<String, List<Map>>> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = getMapper(true).readValue(stream, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, List.class));
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to obtain user plugin information.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

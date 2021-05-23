@@ -43,8 +43,8 @@ public class UsageReporter {
         }
     }
 
-    public class FeatureId {
-        private String featureId;
+    public static class FeatureId {
+        private final String featureId;
 
         public FeatureId(String featureId) {
             this.featureId = featureId;

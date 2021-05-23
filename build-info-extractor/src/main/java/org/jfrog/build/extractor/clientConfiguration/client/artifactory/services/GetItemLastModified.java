@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -17,7 +17,7 @@ public class GetItemLastModified extends JFrogService<ItemLastModified> {
     private final String path;
 
     public GetItemLastModified(String path, Log logger) {
-        super(ItemLastModified.class, logger);
+        super(logger);
         this.path = path;
     }
 
@@ -32,8 +32,8 @@ public class GetItemLastModified extends JFrogService<ItemLastModified> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, resultClass);
+    protected void setResponse(InputStream stream) throws IOException {
+        result = getMapper(true).readValue(stream, ItemLastModified.class);
         try {
             if (result.getLastModified() == 0 || result.getUri() == null) {
                 throw new IOException("JSON response is missing URI or LastModified fields when requesting info for path " + path);
@@ -43,10 +43,9 @@ public class GetItemLastModified extends JFrogService<ItemLastModified> {
         }
     }
 
-
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
-        log.error("Failed While requesting item info for path:" + path);
-        throwException(response);
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
+        log.error("Failed while requesting item info for path: " + path);
+        throwException(entity, getStatusCode());
     }
 }

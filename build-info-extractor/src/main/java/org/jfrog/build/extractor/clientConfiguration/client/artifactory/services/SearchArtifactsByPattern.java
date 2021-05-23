@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
@@ -16,7 +16,7 @@ public class SearchArtifactsByPattern extends JFrogService<PatternResultFileSet>
     private final String pattern;
 
     public SearchArtifactsByPattern(String pattern, Log log) {
-        super(PatternResultFileSet.class, log);
+        super(log);
         this.pattern = pattern;
     }
 
@@ -26,13 +26,13 @@ public class SearchArtifactsByPattern extends JFrogService<PatternResultFileSet>
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to search artifact by the pattern '" + pattern + "'");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
-        result = getMapper(false).readValue(stream, resultClass);
+    protected void setResponse(InputStream stream) throws IOException {
+        result = getMapper(false).readValue(stream, PatternResultFileSet.class);
     }
 }

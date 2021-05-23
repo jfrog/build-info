@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -17,8 +17,8 @@ public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
     private final boolean isHead;
     private final Map<String, String> headers;
 
-    protected DownloadBase(Class<TResult> resultClass, String DownloadPath, boolean isHead, Map<String, String> headers, Log log) {
-        super(resultClass, log);
+    protected DownloadBase(String DownloadPath, boolean isHead, Map<String, String> headers, Log log) {
+        super(log);
         this.DownloadPath = encodeUrl(DownloadPath);
         this.isHead = isHead;
         this.headers = headers;
@@ -39,11 +39,11 @@ public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
             throw new FileNotFoundException("Unable to find " + DownloadPath);
         }
         log.error("Failed to download from  '" + DownloadPath + "'");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

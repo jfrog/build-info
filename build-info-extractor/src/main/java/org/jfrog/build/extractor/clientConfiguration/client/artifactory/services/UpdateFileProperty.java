@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -21,12 +21,12 @@ public class UpdateFileProperty extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpPut(UPDATE_FILE_PROPERTY_ENDPOINT + encodeUrl(itemPath) + "?" + "properties=" + encodeUrl(properties));
+        return new HttpPut(UPDATE_FILE_PROPERTY_ENDPOINT + encodeUrl(itemPath) + "?properties=" + encodeUrl(properties));
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed while trying to set properties on docker layer.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

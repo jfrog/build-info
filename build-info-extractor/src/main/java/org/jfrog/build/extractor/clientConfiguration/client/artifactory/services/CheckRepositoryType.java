@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.repository.RepositoryConfig;
@@ -17,7 +17,7 @@ public class CheckRepositoryType extends JFrogService<Boolean> {
     private final String repositoryKey;
 
     public CheckRepositoryType(RepositoryType repositoryType, String repositoryKey, Log log) {
-        super(Boolean.class, log);
+        super(log);
         this.repositoryType = repositoryType;
         this.repositoryKey = repositoryKey;
     }
@@ -28,7 +28,7 @@ public class CheckRepositoryType extends JFrogService<Boolean> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         RepositoryConfig repositoryConfig = getMapper(true).readValue(stream, RepositoryConfig.class);
         switch (repositoryType) {
             case LOCAL:
@@ -40,8 +40,8 @@ public class CheckRepositoryType extends JFrogService<Boolean> {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to retrieve repository configuration '" + repositoryKey + "'");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

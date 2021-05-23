@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -38,9 +38,9 @@ public class StageBuild extends VoidJFrogService {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Promotion failed.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override

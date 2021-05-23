@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
-import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -42,7 +41,7 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     private HttpPost request;
 
     public ScanBuild(String buildName, String buildNumber, String context, Log log) {
-        super(ArtifactoryXrayResponse.class, log);
+        super(log);
         this.buildName = buildName;
         this.buildNumber = buildNumber;
         this.context = context;
@@ -70,7 +69,7 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         String content = IOUtils.toString(stream, StandardCharsets.UTF_8);
         JsonNode result;
@@ -101,7 +100,6 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     public ArtifactoryXrayResponse execute(JFrogHttpClient client) throws IOException {
         int retryNum = 0;
         long lastConnectionAttemptMillis = 0;
-        HttpEntity entity = null;
         while (true) {
             try {
                 lastConnectionAttemptMillis = System.currentTimeMillis();
@@ -150,7 +148,7 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     /**
      * Private exception class, signals that Xray-response returned from Artifactory contained an error.
      */
-    private class XrayErrorException extends IOException {
+    private static class XrayErrorException extends IOException {
         private XrayErrorException(String message) {
             super(message);
         }

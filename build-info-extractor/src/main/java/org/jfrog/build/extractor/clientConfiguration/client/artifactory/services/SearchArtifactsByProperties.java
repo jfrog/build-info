@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.dependency.PropertySearchResult;
@@ -17,7 +17,7 @@ public class SearchArtifactsByProperties extends JFrogService<PropertySearchResu
     private final String properties;
 
     public SearchArtifactsByProperties(String properties, Log log) {
-        super(PropertySearchResult.class, log);
+        super(log);
         this.properties = properties;
     }
 
@@ -29,13 +29,13 @@ public class SearchArtifactsByProperties extends JFrogService<PropertySearchResu
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to search artifact by the properties '" + properties + "'");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
-        result = getMapper(false).readValue(stream, resultClass);
+    protected void setResponse(InputStream stream) throws IOException {
+        result = getMapper(false).readValue(stream, PropertySearchResult.class);
     }
 }

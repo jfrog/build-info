@@ -10,7 +10,7 @@ import java.util.List;
 
 class ArtifactorySearcher {
     private final ArtifactoryManager artifactoryManager;
-    private Log log;
+    private final Log log;
 
     ArtifactorySearcher(ArtifactoryManager artifactoryManager, Log log) {
         this.artifactoryManager = artifactoryManager;

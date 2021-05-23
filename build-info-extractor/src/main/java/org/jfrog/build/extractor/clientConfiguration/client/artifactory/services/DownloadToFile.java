@@ -13,7 +13,7 @@ public class DownloadToFile extends DownloadBase<File> {
     private final String downloadTo;
 
     public DownloadToFile(String downloadFrom, String downloadTo, Map<String, String> headers, Log log) {
-        super(File.class, downloadFrom, false, headers, log);
+        super(downloadFrom, false, headers, log);
         this.downloadTo = downloadTo;
     }
 
@@ -37,7 +37,7 @@ public class DownloadToFile extends DownloadBase<File> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = saveInputStreamToFile(stream, downloadTo);
     }
 }

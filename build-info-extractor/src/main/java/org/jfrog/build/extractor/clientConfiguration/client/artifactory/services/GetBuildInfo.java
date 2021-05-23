@@ -19,7 +19,7 @@ public class GetBuildInfo extends JFrogService<Build> {
     private final String project;
 
     public GetBuildInfo(String buildName, String buildNumber, String project, Log logger) {
-        super(Build.class, logger);
+        super(logger);
 
         this.buildName = buildName;
         this.buildNumber = buildNumber;
@@ -33,7 +33,7 @@ public class GetBuildInfo extends JFrogService<Build> {
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = getMapper(true).readValue(stream, GetBuildInfoResponse.class).getBuildInfo();
     }
 }

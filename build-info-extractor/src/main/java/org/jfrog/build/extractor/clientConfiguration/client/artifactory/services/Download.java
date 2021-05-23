@@ -10,11 +10,11 @@ import java.util.Map;
 
 public class Download extends DownloadBase<String> {
     public Download(String downloadFrom, Map<String, String> headers, Log log) {
-        super(String.class, downloadFrom, false, headers, log);
+        super(downloadFrom, false, headers, log);
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = IOUtils.toString(stream, StandardCharsets.UTF_8);
     }
 }

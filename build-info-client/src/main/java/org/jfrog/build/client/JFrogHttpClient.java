@@ -23,6 +23,7 @@ import org.jfrog.build.api.util.Log;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
+import java.net.URI;
 
 /**
  * @author Noam Y. Tenne
@@ -40,7 +41,7 @@ public class JFrogHttpClient implements AutoCloseable {
     private Log log;
 
     private JFrogHttpClient(String url, String username, String password, String accessToken, Log log) {
-        this.url = StringUtils.stripEnd(url, "/");
+        this.url = StringUtils.removeEnd(url, "/");
         this.log = log;
         clientBuilder = new PreemptiveHttpClientBuilder()
                 .setConnectionRetries(DEFAULT_CONNECTION_RETRY)
@@ -133,7 +134,6 @@ public class JFrogHttpClient implements AutoCloseable {
         }
     }
 
-
     public PreemptiveHttpClient getHttpClient() {
         if (deployClient == null) {
             deployClient = clientBuilder.build();
@@ -142,10 +142,10 @@ public class JFrogHttpClient implements AutoCloseable {
     }
 
     public CloseableHttpResponse sendRequest(HttpRequestBase request) throws IOException {
-        log.info("Base URL: " + request.getURI().toString());
+        log.debug("Base URL: " + request.getURI().toString());
         PreemptiveHttpClient client = getHttpClient();
         String url = request.getURI().toString();
-        request.setURI(java.net.URI.create(this.url + "/" + StringUtils.removeStart(url, "/")));
+        request.setURI(URI.create((this.url + "/" + StringUtils.removeStart(url, "/"))));
         return client.execute(request);
     }
 

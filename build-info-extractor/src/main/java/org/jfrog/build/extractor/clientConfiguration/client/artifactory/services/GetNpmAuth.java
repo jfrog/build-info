@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -15,7 +15,7 @@ public class GetNpmAuth extends JFrogService<Properties> {
 
 
     public GetNpmAuth(Log log) {
-        super(Properties.class, log);
+        super(log);
     }
 
     @Override
@@ -24,13 +24,13 @@ public class GetNpmAuth extends JFrogService<Properties> {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("npm Auth request failed");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = new Properties();
         result.load(stream);
     }

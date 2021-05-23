@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
@@ -24,10 +24,10 @@ public class DeleteRepositoryContent extends VoidJFrogService {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
             throw new FileNotFoundException("Bad credentials");
         }
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 }

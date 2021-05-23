@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.FileEntity;
@@ -31,7 +31,7 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     private boolean isExplode;
 
     public Upload(DeployDetails details, String logPrefix, Integer minChecksumDeploySizeKb, Log logger) {
-        super(ArtifactoryUploadResponse.class, logger);
+        super(logger);
         this.minChecksumDeploySizeKb = minChecksumDeploySizeKb;
         this.details = details;
         this.logPrefix = logPrefix == null ? "" : logPrefix + " ";
@@ -53,15 +53,15 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to upload file");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         if (!isExplode) {
-            result = getMapper(false).readValue(stream, resultClass);
+            result = getMapper(false).readValue(stream, ArtifactoryUploadResponse.class);
         }
     }
 
@@ -109,7 +109,7 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
         private final Integer minChecksumDeploySizeKb;
 
         private TryChecksumUpload(DeployDetails details, String logPrefix, Integer minChecksumDeploySizeKb, Log logger) {
-            super(ArtifactoryUploadResponse.class, logger);
+            super(logger);
             this.details = details;
             this.logPrefix = logPrefix;
             this.minChecksumDeploySizeKb = minChecksumDeploySizeKb != null ? minChecksumDeploySizeKb : DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB;
@@ -148,8 +148,8 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
         }
 
         @Override
-        public void setResponse(InputStream stream) throws IOException {
-            result = getMapper(false).readValue(stream, resultClass);
+        protected void setResponse(InputStream stream) throws IOException {
+            result = getMapper(false).readValue(stream, ArtifactoryUploadResponse.class);
         }
     }
 }

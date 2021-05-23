@@ -22,8 +22,12 @@ import java.nio.charset.StandardCharsets;
 import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 
+/**
+ * JFrogService represents a generic way of processing a REST endpoint process that structures how REST sends, handles errors, and parses the response.
+ *
+ * @param <TResult> - The expected result class  from the JFrog REST endpoint.
+ */
 public abstract class JFrogService<TResult> {
-    protected final Class<TResult> resultClass;
     protected final Log log;
     protected TResult result;
     protected int statusCode;
@@ -31,30 +35,24 @@ public abstract class JFrogService<TResult> {
     private Header[] headers;
     private ObjectMapper mapper;
 
-
-    protected JFrogService(Class<TResult> resultClass, Log log) {
-        this.resultClass = resultClass;
+    protected JFrogService(Log log) {
         this.log = log;
         responseType = JFrogServiceResponseType.OBJECT;
     }
 
-    protected JFrogService(Class<TResult> resultClass, Log log, JFrogServiceResponseType responseType) {
-        this.resultClass = resultClass;
+    protected JFrogService(Log log, JFrogServiceResponseType responseType) {
         this.log = log;
         this.responseType = responseType;
     }
 
-    protected static void throwException(CloseableHttpResponse response) throws IOException {
-        if (response == null) {
-            throw new IllegalArgumentException("Response cannot be null");
+    protected static void throwException(HttpEntity entity, int statusCode) throws IOException {
+        if (entity == null) {
+            throw new IllegalArgumentException("JFrog service failed. Received " + statusCode);
         }
-        try (InputStream stream = response.getEntity().getContent()) {
+        try (InputStream stream = entity.getContent()) {
             String ResponseMessage = IOUtils.toString(stream, StandardCharsets.UTF_8);
-            throw new IOException("JFrog service failed. Received " + response.getStatusLine().getStatusCode() + ": " + ResponseMessage);
-        } finally {
-            EntityUtils.consumeQuietly(response.getEntity());
+            throw new IOException("JFrog service failed. Received " + statusCode + ": " + ResponseMessage);
         }
-
     }
 
     public static String encodeUrl(String unescaped) {
@@ -62,6 +60,9 @@ public abstract class JFrogService<TResult> {
         return newStringUsAscii(rawData);
     }
 
+    /**
+     * Default ObjectMapper to parse or deserialize JSON content into a Java object.
+     */
     protected ObjectMapper getMapper(boolean ignoreMissingFields) {
         if (mapper == null) {
             mapper = new ObjectMapper();
@@ -92,47 +93,69 @@ public abstract class JFrogService<TResult> {
 
     public abstract HttpRequestBase createRequest() throws IOException;
 
-    public void setResponse(InputStream stream) throws IOException {
-        throw new UnsupportedOperationException("The service '" + getClass().getSimpleName() + "' must override the setResponse method");
+    /**
+     * Override this in order to parse the service response body (only for services that expect to have body in the response).
+     *
+     * @param stream - Inout stream of the response body.
+     */
+    protected abstract void setResponse(InputStream stream) throws IOException;
+
+    /**
+     * Default error handling (E.G. 404 bad request).
+     *
+     * @param entity - The returned failure response.
+     */
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
+        throwException(entity, getStatusCode());
     }
 
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
-        throwException(response);
-    }
-
+    /**
+     * Default execution of a service:
+     * 1. Send the http request
+     * 2. check HTTP status code. if there are any errors, throw.
+     * 3. Return the response result (if any is expected).
+     *
+     * @param client - http client for sending the request.
+     * @return - The response body object.
+     */
     public TResult execute(JFrogHttpClient client) throws IOException {
         ensureRequirements(client);
         try (CloseableHttpResponse response = client.sendRequest(createRequest())) {
             if (response == null) {
                 return null;
             }
-            setStatusCode(response.getStatusLine().getStatusCode());
-            setHeaders(response.getAllHeaders());
-            if (getStatusCode() >= 400) {
-                handleUnsuccessfulResponse(response);
-            } else {
-                processResponse(response);
+            HttpEntity entity = response.getEntity();
+            try {
+                setStatusCode(response.getStatusLine().getStatusCode());
+                setHeaders(response.getAllHeaders());
+                if (getStatusCode() >= 400) {
+                    handleUnsuccessfulResponse(entity);
+                } else {
+                    processResponse(entity);
+                }
+                return getResult();
+            } finally {
+                if (entity != null) {
+                    EntityUtils.consumeQuietly(entity);
+                }
             }
-            return getResult();
         }
     }
 
-    public void processResponse(CloseableHttpResponse response) throws IOException {
-        HttpEntity entity = response.getEntity();
-        try {
-            if (entity == null) {
-                handleEmptyEntity();
+    private void processResponse(HttpEntity entity) throws IOException {
+        if (entity == null) {
+            handleEmptyEntity();
+            return;
+        }
+        try (InputStream stream = entity.getContent()) {
+            long contentLength = entity.getContentLength();
+            if (contentLength == 0 || responseType == JFrogServiceResponseType.EMPTY) {
                 return;
             }
-            try (InputStream stream = entity.getContent()) {
-                long contentLength = entity.getContentLength();
-                if (contentLength == 0 || responseType == JFrogServiceResponseType.EMPTY) {
-                    return;
-                }
-                setResponse(stream);
-            }
-        } finally {
-            EntityUtils.consumeQuietly(entity);
+            setResponse(stream);
         }
     }
 

@@ -1,15 +1,15 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
+
+import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.appendParamsToUrl;
 
 
 public class PromotionUserPlugin extends VoidJFrogService {
@@ -37,29 +37,8 @@ public class PromotionUserPlugin extends VoidJFrogService {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Failed to promote user plugin.");
-        throwException(response);
-    }
-
-    private void appendParamsToUrl(Map<String, String> requestParams, StringBuilder urlBuilder) {
-        if ((requestParams != null) && !requestParams.isEmpty()) {
-            urlBuilder.append("params=");
-            Iterator<Map.Entry<String, String>> paramEntryIterator = requestParams.entrySet().iterator();
-            String encodedPipe = encodeUrl("|");
-            while (paramEntryIterator.hasNext()) {
-                Map.Entry<String, String> paramEntry = paramEntryIterator.next();
-                urlBuilder.append(encodeUrl(paramEntry.getKey()));
-                String paramValue = paramEntry.getValue();
-                if (StringUtils.isNotBlank(paramValue)) {
-                    urlBuilder.append("=").append(encodeUrl(paramValue));
-                }
-
-                if (paramEntryIterator.hasNext()) {
-
-                    urlBuilder.append(encodedPipe);
-                }
-            }
-        }
+        throwException(entity, statusCode);
     }
 }

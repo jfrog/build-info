@@ -119,18 +119,13 @@ public class DeployTask extends DefaultTask {
     }
 
     private void handleBuildInfoDeployment(ArtifactoryClientConfiguration accRoot, Build build, Map<String, Set<DeployDetails>> allDeployDetails) throws IOException {
-        ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
-            try {
-                client = new ArtifactoryBuildInfoClient(
-                        accRoot.publisher.getContextUrl(),
-                        accRoot.publisher.getUsername(),
-                        accRoot.publisher.getPassword(),
-                        new GradleClientLogger(log));
-                configureProxy(accRoot, client);
-                configConnectionTimeout(accRoot, client);
-                configRetriesParams(accRoot, client);
+            try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(
+                    accRoot.publisher.getContextUrl(),
+                    accRoot.publisher.getUsername(),
+                    accRoot.publisher.getPassword(),
+                    new GradleClientLogger(log))) {
 
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory

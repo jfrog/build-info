@@ -274,14 +274,12 @@ public class DependenciesDownloaderHelper {
 
             final String fileDestination = tempPath + i;
             downloadedFilesPaths[i] = fileDestination;
-            workers[i] = new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination, headers);
-                    } catch (Exception e) {
-                        errorOccurred.setValue(true);
-                        printErrorToLog(e, fileDestination, downloadPath);
-                    }
+            workers[i] = new Thread(() -> {
+                try {
+                    downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination, headers);
+                } catch (Exception e) {
+                    errorOccurred.setValue(true);
+                    printErrorToLog(e, fileDestination, downloadPath);
                 }
             });
             workers[i].setName("downloader_" + i);

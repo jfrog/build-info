@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -20,7 +20,7 @@ public class PublishBuildInfo extends VoidJFrogService {
     public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
     private static final String BUILD_PROJECT_PARAM = "?project=";
 
-    Build buildInfo;
+    private final Build buildInfo;
     private final String platformUrl;
     private String buildInfoJson;
 
@@ -30,8 +30,6 @@ public class PublishBuildInfo extends VoidJFrogService {
         this.platformUrl = platformUrl;
     }
 
-    // Returns the name of the build-info repository, corresponding to the project key sent.
-    // Returns an empty string, if the provided projectKey is empty.
     public static String getProjectQueryParam(String project, String prefix) {
         if (StringUtils.isNotEmpty(project)) {
             return prefix + encodeUrl(project);
@@ -69,9 +67,9 @@ public class PublishBuildInfo extends VoidJFrogService {
     }
 
     @Override
-    protected void handleUnsuccessfulResponse(CloseableHttpResponse response) throws IOException {
+    protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         log.error("Could not build the build-info object.");
-        throwException(response);
+        throwException(entity, getStatusCode());
     }
 
     @Override

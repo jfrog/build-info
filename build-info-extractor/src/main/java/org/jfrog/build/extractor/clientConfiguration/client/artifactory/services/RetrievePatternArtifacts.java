@@ -20,7 +20,7 @@ public class RetrievePatternArtifacts extends JFrogService<List<BuildPatternArti
 
     @SuppressWarnings("unchecked")
     public RetrievePatternArtifacts(List<BuildPatternArtifactsRequest> requests, Log logger) {
-        super((Class<List<BuildPatternArtifacts>>) (Class<?>) List.class, logger);
+        super(logger);
         this.requests = requests;
     }
 
@@ -36,7 +36,7 @@ public class RetrievePatternArtifacts extends JFrogService<List<BuildPatternArti
     }
 
     @Override
-    public void setResponse(InputStream stream) throws IOException {
+    protected void setResponse(InputStream stream) throws IOException {
         result = getMapper(true).readValue(stream, TypeFactory.defaultInstance().constructCollectionLikeType(List.class, BuildPatternArtifacts.class));
     }
 }
