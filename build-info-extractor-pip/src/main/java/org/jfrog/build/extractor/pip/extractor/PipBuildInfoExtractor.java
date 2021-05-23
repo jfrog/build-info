@@ -9,7 +9,7 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,12 +29,12 @@ public class PipBuildInfoExtractor {
     private static final String PIP_AQL_FILE_PART = "{\"name\":\"%s\"},";
     private static final int PIP_AQL_BULK_SIZE = 3;
 
-    Build extract(ArtifactoryDependenciesClient client, String repository, String installationLog, Path executionPath, String module, Log logger) throws IOException {
+    Build extract(ArtifactoryManager artifactoryManager, String repository, String installationLog, Path executionPath, String module, Log logger) throws IOException {
         // Parse logs and create dependency list of <pkg-name, pkg-file>
         Map<String, String> downloadedDependencies = PipLogParser.parse(installationLog, logger);
 
         // Create package-name to dependency map.
-        Map<String, Dependency> dependenciesMap = buildDependenciesMap(downloadedDependencies, client, repository, executionPath, logger);
+        Map<String, Dependency> dependenciesMap = buildDependenciesMap(downloadedDependencies, artifactoryManager, repository, executionPath, logger);
 
         // Create Build.
         List<Dependency> dependenciesList = new ArrayList<>(dependenciesMap.values());
@@ -46,14 +46,13 @@ public class PipBuildInfoExtractor {
      * Creation is based on the dependencies downloaded in this pip-install execution, and the cache saved in previous builds.
      *
      * @param downloadedDependencies - The dependencies of this pip-execution, package-name to downloaded package-file map.
-     * @param client                 - Artifactory client for fetching artifacts data.
+     * @param artifactoryManager     - Artifactory manager for fetching artifacts data.
      * @param repository             - Resolution repository.
      * @param executionPath          - Path of pip command's execution.
      * @param logger                 - The logger.
      * @return Mapping of a package-name and its Dependency object.
-     * @throws IOException
      */
-    Map<String, Dependency> buildDependenciesMap(Map<String, String> downloadedDependencies, ArtifactoryDependenciesClient client, String repository, Path executionPath, Log logger) throws IOException {
+    Map<String, Dependency> buildDependenciesMap(Map<String, String> downloadedDependencies, ArtifactoryManager artifactoryManager, String repository, Path executionPath, Log logger) throws IOException {
         Map<String, Dependency> dependenciesMap = new HashMap<>();
         DependenciesCache dependenciesCache = DependenciesCache.getProjectDependenciesCache(executionPath, logger);
 
@@ -73,7 +72,7 @@ public class PipBuildInfoExtractor {
         }
 
         // Get dependencies from Artifactory.
-        dependenciesMap.putAll(getDependenciesFromArtifactory(getFromArtifactoryMap, repository, client, logger));
+        dependenciesMap.putAll(getDependenciesFromArtifactory(getFromArtifactoryMap, repository, artifactoryManager, logger));
 
         // Prompt missing dependencies.
         Set<String> missingDeps = downloadedDependencies.keySet().stream()
@@ -91,17 +90,16 @@ public class PipBuildInfoExtractor {
      *
      * @param fileToPackageMap - Mapping between a downloaded file to its package name.
      * @param repository       - Resolution repository.
-     * @param client           - Artifactory client for fetching artifacts data.
+     * @param artifactoryManager           - Artifactory manager for fetching artifacts data.
      * @param logger           - The logger.
      * @return Mapping of a package-name and its Dependency object.
-     * @throws IOException
      */
     private Map<String, Dependency> getDependenciesFromArtifactory(Map<String, String> fileToPackageMap, String repository,
-                                                                   ArtifactoryDependenciesClient client, Log logger) throws IOException {
+                                                                   ArtifactoryManager artifactoryManager, Log logger) throws IOException {
         if (fileToPackageMap.isEmpty()) {
             return Collections.emptyMap();
         }
-        AqlSearchResult searchResult = runAqlQueries(createAqlQueries(fileToPackageMap, repository, PIP_AQL_BULK_SIZE), client);
+        AqlSearchResult searchResult = runAqlQueries(createAqlQueries(fileToPackageMap, repository, PIP_AQL_BULK_SIZE), artifactoryManager);
         return createDependenciesFromAqlResult(searchResult, fileToPackageMap, logger);
     }
 
@@ -129,11 +127,11 @@ public class PipBuildInfoExtractor {
         return String.format(PIP_AQL_FORMAT, repository, filesQueryPartBuilder.toString());
     }
 
-    private AqlSearchResult runAqlQueries(List<String> aqlQueries, ArtifactoryDependenciesClient client) throws IOException {
+    private AqlSearchResult runAqlQueries(List<String> aqlQueries, ArtifactoryManager artifactoryManager) throws IOException {
         AqlSearchResult aggregatedResults = new AqlSearchResult();
         for (String aql : aqlQueries) {
             try {
-                AqlSearchResult searchResult = client.searchArtifactsByAql(aql);
+                AqlSearchResult searchResult = artifactoryManager.searchArtifactsByAql(aql);
                 if (!searchResult.getResults().isEmpty()) {
                     aggregatedResults.getResults().addAll(searchResult.getResults());
                 }

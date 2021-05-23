@@ -68,7 +68,7 @@ public class PreemptiveHttpClient implements AutoCloseable {
         this.connectionRetries = connectionRetries;
         this.log = log;
 
-        int retryCount = connectionRetries < 0 ? ArtifactoryHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
+        int retryCount = connectionRetries < 0 ? JFrogHttpClient.DEFAULT_CONNECTION_RETRY : connectionRetries;
         clientBuilder.setRetryHandler(new PreemptiveHttpClient.PreemptiveRetryHandler(retryCount));
         clientBuilder.setServiceUnavailableRetryStrategy(new PreemptiveHttpClient.PreemptiveRetryStrategy());
         clientBuilder.setRedirectStrategy(new PreemptiveHttpClient.PreemptiveRedirectStrategy());

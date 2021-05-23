@@ -13,8 +13,8 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.go.GoDriver;
 
@@ -48,15 +48,15 @@ public class GoPublish extends GoCommand {
     /**
      * Publish go package.
      *
-     * @param clientBuilder - Client builder for deployment.
-     * @param properties    - Properties to set on each deployed artifact (Build name, Build number, etc...).
-     * @param repo          - Artifactory's repository for deployment.
-     * @param path          - Path to directory contains go.mod.
-     * @param version       - The package's version.
-     * @param logger        - The logger.
+     * @param artifactoryManagerBuilder - Artifactory Manager builder for deployment.
+     * @param properties                - Properties to set on each deployed artifact (Build name, Build number, etc...).
+     * @param repo                      - Artifactory's repository for deployment.
+     * @param path                      - Path to directory contains go.mod.
+     * @param version                   - The package's version.
+     * @param logger                    - The logger.
      */
-    public GoPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
-        super(clientBuilder, path, module, logger);
+    public GoPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
+        super(artifactoryManagerBuilder, path, module, logger);
         this.goDriver = new GoDriver(GO_CLIENT_CMD, null, path.toFile(), logger);
         this.moduleName = goDriver.getModuleName();
         this.properties = properties;
@@ -65,9 +65,9 @@ public class GoPublish extends GoCommand {
     }
 
     public Build execute() {
-        try (ArtifactoryBuildInfoClient artifactoryClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
-            preparePrerequisites(deploymentRepo, artifactoryClient);
-            publishPkg(artifactoryClient);
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            preparePrerequisites(deploymentRepo, artifactoryManager);
+            publishPkg(artifactoryManager);
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -81,13 +81,13 @@ public class GoPublish extends GoCommand {
      * 2. go.mod file.
      * 3. go.info file.
      */
-    private void publishPkg(ArtifactoryBuildInfoClient client) throws Exception {
-        createAndDeployZip(client);
-        deployGoMod(client);
-        createAndDeployInfo(client);
+    private void publishPkg(ArtifactoryManager artifactoryManager) throws Exception {
+        createAndDeployZip(artifactoryManager);
+        deployGoMod(artifactoryManager);
+        createAndDeployInfo(artifactoryManager);
     }
 
-    private void createAndDeployZip(ArtifactoryBuildInfoClient client) throws Exception {
+    private void createAndDeployZip(ArtifactoryManager artifactoryManager) throws Exception {
         // First, we create a temporary zip file of all project files.
         File tmpZipFile = archiveProjectDir();
 
@@ -96,7 +96,7 @@ public class GoPublish extends GoCommand {
         File deployableZipFile = File.createTempFile(LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
         try (GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger)) {
             pkgArchiver.writeDeployableZip(deployableZipFile);
-            Artifact deployedPackage = deploy(client, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
+            Artifact deployedPackage = deploy(artifactoryManager, deployableZipFile, PKG_ZIP_FILE_EXTENSION);
             artifactList.add(deployedPackage);
         } finally {
             Files.deleteIfExists(tmpZipFile.toPath());
@@ -104,16 +104,16 @@ public class GoPublish extends GoCommand {
         }
     }
 
-    private void deployGoMod(ArtifactoryBuildInfoClient client) throws Exception {
+    private void deployGoMod(ArtifactoryManager artifactoryManager) throws Exception {
         String modLocalPath = getModFilePath();
-        Artifact deployedMod = deploy(client, new File(modLocalPath), PKG_MOD_FILE_EXTENSION);
+        Artifact deployedMod = deploy(artifactoryManager, new File(modLocalPath), PKG_MOD_FILE_EXTENSION);
         artifactList.add(deployedMod);
     }
 
-    private void createAndDeployInfo(ArtifactoryBuildInfoClient client) throws Exception {
+    private void createAndDeployInfo(ArtifactoryManager artifactoryManager) throws Exception {
         String infoLocalPath = path.toString() + File.separator + LOCAL_INFO_FILENAME;
         File infoFile = writeInfoFile(infoLocalPath);
-        Artifact deployedInfo = deploy(client, infoFile, PKG_INFO_FILE_EXTENSION);
+        Artifact deployedInfo = deploy(artifactoryManager, infoFile, PKG_INFO_FILE_EXTENSION);
         artifactList.add(deployedInfo);
         infoFile.delete();
     }
@@ -160,7 +160,7 @@ public class GoPublish extends GoCommand {
     /**
      * Deploy pkg file and add it as an buildInfo's artifact
      */
-    private Artifact deploy(ArtifactoryBuildInfoClient client, File deployedFile, String extension) throws Exception {
+    private Artifact deploy(ArtifactoryManager artifactoryManager, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
         Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5, SHA1);
         String remotePath = moduleName + "/@v";
@@ -173,7 +173,7 @@ public class GoPublish extends GoCommand {
                 .packageType(DeployDetails.PackageType.GO)
                 .build();
 
-        ArtifactoryUploadResponse response = client.deployArtifact(deployDetails);
+        ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails);
 
         return new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())

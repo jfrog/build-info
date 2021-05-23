@@ -4,8 +4,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
@@ -13,8 +11,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.CommonUtils;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +22,7 @@ import java.util.*;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
-import static org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient.BUILD_BROWSE_URL;
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.BUILD_BROWSE_URL;
 import static org.jfrog.gradle.plugin.artifactory.Consts.*;
 import static org.testng.Assert.*;
 
@@ -130,28 +127,24 @@ public class Utils {
      * 1. Check the build status of all tasks.
      * 2. Make sure all artifacts deployed.
      *
-     * @param dependenciesClient    - Artifactory dependencies client
-     * @param buildInfoClient       - The build info client
+     * @param artifactoryManager    - ArtifactoryManager client
      * @param buildResult           - The build results
      * @param expectModuleArtifacts - Should we expect *.module files
-     * @param url                   - Artifactory URL
      * @param localRepo             - Artifactory local localRepo
      * @throws IOException - In case of any IO error
      */
-    static void checkBuildResults(ArtifactoryDependenciesClient dependenciesClient, ArtifactoryBuildInfoClient buildInfoClient, BuildResult buildResult, boolean expectModuleArtifacts, String url, String localRepo) throws IOException {
+    static void checkBuildResults(ArtifactoryManager artifactoryManager, BuildResult buildResult, boolean expectModuleArtifacts, String localRepo) throws IOException {
         // Assert all tasks ended with success outcome
         assertProjectsSuccess(buildResult);
 
         // Check that all expected artifacts uploaded to Artifactory
         String[] expectedArtifacts = expectModuleArtifacts ? EXPECTED_MODULE_ARTIFACTS : EXPECTED_ARTIFACTS;
         for (String expectedArtifact : expectedArtifacts) {
-            try (CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url + localRepo + ARTIFACTS_GROUP_ID + expectedArtifact)) {
-                EntityUtils.consume(response.getEntity());
-            }
+            artifactoryManager.downloadHeaders(localRepo + ARTIFACTS_GROUP_ID + expectedArtifact);
         }
 
         // Check build info
-        Build buildInfo = getBuildInfo(buildInfoClient, buildResult);
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
     }
@@ -191,12 +184,12 @@ public class Utils {
     /**
      * Get build info from the build info URL.
      *
-     * @param buildInfoClient - The build info client
-     * @param buildResult     - The build results
+     * @param artifactoryManager - The ArtifactoryManager client
+     * @param buildResult        - The build results
      * @return build info or null
      * @throws IOException - In case of any IO error
      */
-    private static Build getBuildInfo(ArtifactoryBuildInfoClient buildInfoClient, BuildResult buildResult) throws IOException {
+    private static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
         // Get build info URL
         String[] res = StringUtils.substringAfter(buildResult.getOutput(), BUILD_BROWSE_URL).split("/");
         assertTrue(ArrayUtils.getLength(res) >= 3, "Couldn't find build info URL link");
@@ -204,7 +197,7 @@ public class Utils {
         // Extract build name and number from build info URL
         String buildName = res[1];
         String buildNumber = StringUtils.substringBefore(res[2], System.lineSeparator());
-        return buildInfoClient.getBuildInfo(buildName, buildNumber, null);
+        return artifactoryManager.getBuildInfo(buildName, buildNumber, null);
     }
 
     /**

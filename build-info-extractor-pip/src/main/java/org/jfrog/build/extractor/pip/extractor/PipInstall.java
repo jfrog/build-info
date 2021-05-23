@@ -4,10 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.jfrog.build.extractor.pip.PipDriver;
@@ -31,7 +30,7 @@ public class PipInstall extends PackageManagerExtractor {
     private static final String ARTIFACTORY_PIP_API_START = "/api/pypi/";
     private static final String ARTIFACTORY_PIP_API_END = "/simple";
 
-    private ArtifactoryClientBuilderBase clientBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private PipDriver pipDriver;
     private Path workingDir;
     private String repo;
@@ -42,9 +41,9 @@ public class PipInstall extends PackageManagerExtractor {
     private String password;
     private String module;
 
-    public PipInstall(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepository, String installArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String envActivation) {
+    public PipInstall(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepository, String installArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String envActivation) {
 
-        this.clientBuilder = clientBuilder;
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.path = path;
         this.logger = logger;
         this.repo = resolutionRepository;
@@ -64,28 +63,6 @@ public class PipInstall extends PackageManagerExtractor {
                 : module;
     }
 
-    public Build execute() {
-        try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
-            validateRepoExists(dependenciesClient, repo, "Source repo must be specified");
-            String artifactoryUrlWithCredentials = PackageManagerUtils.createArtifactoryUrlWithCredentials(dependenciesClient.getArtifactoryUrl(), username, password, ARTIFACTORY_PIP_API_START + repo + ARTIFACTORY_PIP_API_END);
-
-            // Run pip install with URL and get output.
-            String installLog = pipDriver.install(path.toFile(), artifactoryUrlWithCredentials, installArgs, logger);
-            logger.info(installLog);
-
-            // Parse output and get all dependencies.
-            PipBuildInfoExtractor buildInfoExtractor = new PipBuildInfoExtractor();
-            try {
-                return buildInfoExtractor.extract(dependenciesClient, repo, installLog, path, module, logger);
-            } catch (IOException e) {
-                throw new IOException("Build info collection failed", e);
-            }
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
     /**
      * Allow running pip install using a new Java process.
      * Used only in Jenkins to allow running 'rtPip install' in a docker container.
@@ -93,9 +70,9 @@ public class PipInstall extends PackageManagerExtractor {
     public static void main(String[] ignored) {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
             ArtifactoryClientConfiguration.PackageManagerHandler pipHandler = clientConfiguration.packageManagerHandler;
-            PipInstall pipInstall = new PipInstall(clientBuilder,
+            PipInstall pipInstall = new PipInstall(artifactoryManagerBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     pipHandler.getArgs(),
                     clientConfiguration.getLog(),
@@ -109,6 +86,28 @@ public class PipInstall extends PackageManagerExtractor {
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
             System.exit(1);
+        }
+    }
+
+    public Build execute() {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            validateRepoExists(artifactoryManager, repo, "Source repo must be specified");
+            String artifactoryUrlWithCredentials = PackageManagerUtils.createArtifactoryUrlWithCredentials(artifactoryManager.getUrl(), username, password, ARTIFACTORY_PIP_API_START + repo + ARTIFACTORY_PIP_API_END);
+
+            // Run pip install with URL and get output.
+            String installLog = pipDriver.install(path.toFile(), artifactoryUrlWithCredentials, installArgs, logger);
+            logger.info(installLog);
+
+            // Parse output and get all dependencies.
+            PipBuildInfoExtractor buildInfoExtractor = new PipBuildInfoExtractor();
+            try {
+                return buildInfoExtractor.extract(artifactoryManager, repo, installLog, path, module, logger);
+            } catch (IOException e) {
+                throw new IOException("Build info collection failed", e);
+            }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 }

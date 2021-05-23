@@ -113,7 +113,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         // Get config
         String successfulConfig = FileUtils.readFileToString(new File(testResourcesPath, "issues_config_full_test.json"), "UTF-8");
 
-        Issues issues = collector.collectIssues(dotGitPath, getLog(), successfulConfig, buildInfoClientBuilder, BUILD_NAME, vcs.get(0), null);
+        Issues issues = collector.collectIssues(dotGitPath, getLog(), successfulConfig, artifactoryManagerBuilder, BUILD_NAME, vcs.get(0), null);
 
         Assert.assertNotNull(issues);
         Assert.assertNotNull(issues.getAffectedIssues());
@@ -129,7 +129,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         Build buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
-        buildInfoClient.sendBuildInfo(buildInfoToSend, null);
+        artifactoryManager.publishBuildInfo(buildInfoToSend, null);
     }
 
     @BeforeMethod

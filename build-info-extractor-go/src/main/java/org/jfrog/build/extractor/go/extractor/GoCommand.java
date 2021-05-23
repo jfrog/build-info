@@ -1,17 +1,10 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.ModuleBuilder;
-import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.go.GoDriver;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
@@ -20,8 +13,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Base class for go build and go publish commands.
@@ -35,7 +26,7 @@ abstract class GoCommand implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final ArtifactoryVersion MIN_SUPPORTED_ARTIFACTORY_VERSION = new ArtifactoryVersion("6.10.0");
 
-    ArtifactoryClientBuilderBase clientBuilder;
+    ArtifactoryManagerBuilder artifactoryManagerBuilder;
     GoDriver goDriver;
     Path path;
     // Module name, as specified in go.mod, is used for naming the relevant go package files.
@@ -45,20 +36,20 @@ abstract class GoCommand implements Serializable {
     String buildInfoModuleId;
     Log logger;
 
-    GoCommand(ArtifactoryBuildInfoClientBuilder clientBuilder, Path path,  String buildInfoModuleId, Log logger) throws IOException {
-        this.clientBuilder = clientBuilder;
+    GoCommand(ArtifactoryManagerBuilder artifactoryManagerBuilder, Path path, String buildInfoModuleId, Log logger) {
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.logger = logger;
         this.path = path;
         this.buildInfoModuleId = buildInfoModuleId;
     }
 
-    protected void preparePrerequisites(String repo, ArtifactoryBaseClient client) throws VersionException, IOException {
-        validateArtifactoryVersion(client);
-        validateRepoExists(repo, client, "The provided repo must be specified");
+    protected void preparePrerequisites(String repo, ArtifactoryManager artifactoryManager) throws VersionException, IOException {
+        validateArtifactoryVersion(artifactoryManager);
+        validateRepoExists(repo, artifactoryManager, "The provided repo must be specified");
     }
 
-    private void validateArtifactoryVersion(ArtifactoryBaseClient client) throws VersionException {
-        ArtifactoryVersion version = client.getArtifactoryVersion();
+    private void validateArtifactoryVersion(ArtifactoryManager artifactoryManager) throws VersionException, IOException {
+        ArtifactoryVersion version = artifactoryManager.getVersion();
         if (version.isNotFound()) {
             String message = "Couldn't execute go task. Check connection with Artifactory.";
             throw new VersionException(message, VersionCompatibilityType.NOT_FOUND);
@@ -69,11 +60,11 @@ abstract class GoCommand implements Serializable {
         }
     }
 
-    private void validateRepoExists(String repo, ArtifactoryBaseClient client, String repoNotSpecifiedMsg) throws IOException {
+    private void validateRepoExists(String repo, ArtifactoryManager artifactoryManager, String repoNotSpecifiedMsg) throws IOException {
         if (StringUtils.isBlank(repo)) {
             throw new IllegalArgumentException(repoNotSpecifiedMsg);
         }
-        if (!client.isRepoExist(repo)) {
+        if (!artifactoryManager.isRepositoryExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");
         }
     }

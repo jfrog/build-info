@@ -12,8 +12,8 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.nuget.drivers.DotnetDriver;
 import org.jfrog.build.extractor.nuget.drivers.NugetDriver;
 import org.jfrog.build.extractor.nuget.drivers.ToolchainDriverBase;
@@ -64,7 +64,7 @@ public class NugetRun extends PackageManagerExtractor {
 
     private static final long serialVersionUID = 1L;
 
-    private ArtifactoryDependenciesClientBuilder clientBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private ToolchainDriverBase toolchainDriver;
     private Path workingDir;
     private Log logger;
@@ -81,7 +81,7 @@ public class NugetRun extends PackageManagerExtractor {
     /**
      * Run NuGet.
      *
-     * @param clientBuilder  - Build Info client builder.
+     * @param artifactoryManagerBuilder  - ArtifactoryManager builder builder.
      * @param resolutionRepo - The repository it'll resolve from.
      * @param useDotnetCli   - Boolean indicates if .Net cli will be used.
      * @param nugetCmdArgs   - NuGet exec args.
@@ -94,8 +94,8 @@ public class NugetRun extends PackageManagerExtractor {
      * @param apiProtocol    - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
-    public NugetRun(ArtifactoryDependenciesClientBuilder clientBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
-        this.clientBuilder = clientBuilder;
+    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
         this.logger = logger;
@@ -148,7 +148,7 @@ public class NugetRun extends PackageManagerExtractor {
     public static void main(String[] ignored) {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder clientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryManagerBuilder clientBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
             ArtifactoryClientConfiguration.PackageManagerHandler handler = clientConfiguration.packageManagerHandler;
             NugetRun nugetRun = new NugetRun(clientBuilder,
                     clientConfiguration.resolver.getRepoKey(),
@@ -188,9 +188,9 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     private void prepareAndRunCmd() throws Exception {
-        try (ArtifactoryDependenciesClient artifactoryClient = clientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             List<String> extraArgs = new ArrayList<>();
-            File configFile = prepareConfig(artifactoryClient);
+            File configFile = prepareConfig(artifactoryManager);
             if (configFile != null) {
                 String configPath = configFile.getAbsolutePath();
                 extraArgs = StringUtils.isBlank(configPath) ? null : Arrays.asList(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG), configPath);
@@ -203,12 +203,12 @@ public class NugetRun extends PackageManagerExtractor {
      * Writes a temporary NuGet configuration which will be used during the restore.
      * The resolution repository will be set as a source in the configuration.
      */
-    private File prepareConfig(ArtifactoryDependenciesClient client) throws Exception {
+    private File prepareConfig(ArtifactoryManager artifactoryManager) throws Exception {
         File configFile = null;
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            addSourceToConfigFile(configFile.getAbsolutePath(), client, resolutionRepo, username, password, apiProtocol);
+            addSourceToConfigFile(configFile.getAbsolutePath(), artifactoryManager, resolutionRepo, username, password, apiProtocol);
         }
         return configFile;
     }
@@ -217,7 +217,7 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryDependenciesClient client, String repo, String username, String password, String apiProtocol) throws Exception{
+    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol) throws Exception{
         String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
         String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);

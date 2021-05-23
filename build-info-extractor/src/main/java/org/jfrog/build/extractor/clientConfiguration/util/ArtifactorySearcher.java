@@ -2,18 +2,18 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
 import java.util.List;
 
 class ArtifactorySearcher {
-    private ArtifactoryDependenciesClient client;
-    private Log log;
+    private final ArtifactoryManager artifactoryManager;
+    private final Log log;
 
-    ArtifactorySearcher(ArtifactoryDependenciesClient client, Log log) {
-        this.client = client;
+    ArtifactorySearcher(ArtifactoryManager artifactoryManager, Log log) {
+        this.artifactoryManager = artifactoryManager;
         this.log = log;
     }
 
@@ -23,15 +23,15 @@ class ArtifactorySearcher {
         log.info("Searching for artifacts...");
         switch (file.getSpecType()) {
             case PATTERN: {
-                aqlHelper = new PatternAqlHelper(client, log, file);
+                aqlHelper = new PatternAqlHelper(artifactoryManager, log, file);
                 break;
             }
             case BUILD: {
-                aqlHelper = new BuildAqlHelper(client, log, file);
+                aqlHelper = new BuildAqlHelper(artifactoryManager, log, file);
                 break;
             }
             case AQL: {
-                aqlHelper = new AqlHelperBase(client, log, file);
+                aqlHelper = new AqlHelperBase(artifactoryManager, log, file);
                 break;
             }
         }

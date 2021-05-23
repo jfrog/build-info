@@ -10,8 +10,7 @@ import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
@@ -47,7 +46,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
 
     public NpmExtractorTest() {
@@ -116,9 +115,8 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
-        buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
-        downloaderHelper = new DependenciesDownloaderHelper(dependenciesClient, ".", log);
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        downloaderHelper = new DependenciesDownloaderHelper(artifactoryManager, ".", log);
         deployTestDependencies(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
     }
 
@@ -130,7 +128,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
                     .artifactPath(project.getTargetPath())
                     .packageType(DeployDetails.PackageType.NPM)
                     .build();
-            buildInfoClient.deployArtifact(deployDetails);
+            artifactoryManager.upload(deployDetails);
         }
     }
 
@@ -188,15 +186,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             if (isNpmCi) {
                 // Run npm install to generate package-lock.json file.
-                new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false, null).execute();
+                new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, false, null).execute();
             }
 
             // Execute command.
             NpmInstallCi buildExecutor;
             if (isNpmCi) {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, true, null);
+                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, true, null);
             } else {
-                buildExecutor = new NpmInstallCi(dependenciesClientBuilder, buildInfoClientBuilder, virtualRepo, args, log, path, null, null, null, false, null);
+                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, false, null);
             }
             Build build = buildExecutor.execute();
 
@@ -235,7 +233,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(buildInfoClientBuilder, props, path, virtualRepo, log, null, null);
+            NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder, props, path, virtualRepo, log, null, null);
             Build build = npmPublish.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -248,7 +246,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             assertEquals(module.getArtifacts().get(0).getName(), project.getModuleId());
             assertEquals(module.getArtifacts().get(0).getRemotePath(), project.getRemotePath());
 
-            // Download the artifact and check for its properties
+            // DownloadBase the artifact and check for its properties
             StringJoiner propertiesBuilder = new StringJoiner(";");
             props.entries().forEach(property -> propertiesBuilder.add(property.getKey() + "=" + property.getValue()));
             FileSpec fileSpec = new FileSpec();

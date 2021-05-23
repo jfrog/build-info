@@ -10,10 +10,8 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.npm.types.NpmProject;
@@ -42,8 +40,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
     private TypeRestriction typeRestriction;
     private NpmDriver npmDriver;
@@ -55,10 +52,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,
+    NpmBuildInfoExtractor(ArtifactoryManagerBuilder artifactoryManagerBuilder,
                           NpmDriver npmDriver, Log logger, String module, String buildName, String project) {
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
         this.module = module;
@@ -90,29 +86,29 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
-        try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
-            setNpmAuth(dependenciesClient);
-            setRegistryUrl(dependenciesClient, resolutionRepository);
-            setNpmProxy(dependenciesClient);
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            setNpmAuth(artifactoryManager);
+            setRegistryUrl(artifactoryManager, resolutionRepository);
+            setNpmProxy(artifactoryManager);
         }
         readPackageInfoFromPackageJson(workingDir);
         backupProjectNpmrc(workingDir);
     }
 
-    private void setNpmAuth(ArtifactoryDependenciesClient dependenciesClient) throws IOException {
-        npmAuth = dependenciesClient.getNpmAuth();
+    private void setNpmAuth(ArtifactoryManager artifactoryManage) throws IOException {
+        npmAuth = artifactoryManage.getNpmAuth();
     }
 
-    private void setRegistryUrl(ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository) {
-        npmRegistry = dependenciesClient.getArtifactoryUrl();
+    private void setRegistryUrl(ArtifactoryManager artifactoryManage, String resolutionRepository) {
+        npmRegistry = artifactoryManage.getUrl();
         if (!StringUtils.endsWith(npmRegistry, "/")) {
             npmRegistry += "/";
         }
         npmRegistry += "api/npm/" + resolutionRepository;
     }
 
-    private void setNpmProxy(ArtifactoryDependenciesClient dependenciesClient) {
-        ProxyConfiguration proxyConfiguration = dependenciesClient.getProxyConfiguration();
+    private void setNpmProxy(ArtifactoryManager artifactoryManage) {
+        ProxyConfiguration proxyConfiguration = artifactoryManage.getProxyConfiguration();
         if (proxyConfiguration == null || StringUtils.isBlank(proxyConfiguration.host)) {
             return;
         }
@@ -340,14 +336,14 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope);
-        try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables.
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages)
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages)
             };
             // Create the deployment executor.
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
@@ -365,9 +361,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         if (StringUtils.isBlank(buildName)) {
             return Collections.emptyMap();
         }
-        try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Get previous build's dependencies.
-            Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST", project);
+            Build previousBuildInfo = artifactoryManager.getBuildInfo(buildName, "LATEST", project);
             if (previousBuildInfo == null) {
                 return Collections.emptyMap();
             }

@@ -4,7 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,11 +58,11 @@ public abstract class PackageManagerExtractor implements Serializable {
         }
     }
 
-    protected static void validateRepoExists(ArtifactoryBaseClient client, String repo, String repoNotSpecifiedMsg) throws IOException {
+    protected static void validateRepoExists(ArtifactoryManager client, String repo, String repoNotSpecifiedMsg) throws IOException {
         if (StringUtils.isBlank(repo)) {
             throw new IllegalArgumentException(repoNotSpecifiedMsg);
         }
-        if (!client.isRepoExist(repo)) {
+        if (!client.isRepositoryExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");
         }
     }

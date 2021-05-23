@@ -2,8 +2,7 @@ package org.jfrog.build.extractor.nuget.drivers;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
@@ -63,8 +62,8 @@ abstract public class ToolchainDriverBase implements Serializable {
         return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
-    public String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo, String apiProtocol) throws Exception {
-        URL rtUrl = new URL(client.getArtifactoryUrl());
+    public String buildNugetSourceUrl(ArtifactoryManager artifactoryManager, String repo, String apiProtocol) throws Exception {
+        URL rtUrl = new URL(artifactoryManager.getUrl());
         String nugetApi = apiProtocol.equalsIgnoreCase(V3) ? ARTIFACTORY_NUGET_API_V3 : ARTIFACTORY_NUGET_API;
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())

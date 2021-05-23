@@ -58,7 +58,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, false, getUrl(), localRepo1);
+        checkBuildResults(artifactoryManager, buildResult, false, localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -68,7 +68,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
+        checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -78,7 +78,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
+        checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -92,7 +92,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
+        checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -106,7 +106,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Run Gradle
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
-        checkBuildResults(dependenciesClient, buildInfoClient, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, getUrl(), localRepo1);
+        checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
     }
 
     @Test(dataProvider = "gradleVersions")

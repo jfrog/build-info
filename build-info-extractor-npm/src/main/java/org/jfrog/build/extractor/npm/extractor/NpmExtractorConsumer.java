@@ -6,7 +6,7 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
@@ -28,15 +28,15 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
                     "\"@npm.version\": \"%s\"" +
                     "}).include(\"name\", \"repo\", \"path\", \"actual_sha1\", \"actual_md5\")";
     private Map<String, Dependency> previousBuildDependencies;
-    private ArtifactoryDependenciesClient client;
+    private final ArtifactoryManager artifactoryManager;
     private Map<String, Dependency> dependencies;
     private ProducerConsumerExecutor executor;
     private Set<NpmPackageInfo> badPackages;
     private Log log;
 
-    NpmExtractorConsumer(ArtifactoryDependenciesClient client, Map<String, Dependency> dependencies,
+    NpmExtractorConsumer(ArtifactoryManager artifactoryManager, Map<String, Dependency> dependencies,
                          Map<String, Dependency> previousBuildDependencies, Set<NpmPackageInfo> badPackages) {
-        this.client = client;
+        this.artifactoryManager = artifactoryManager;
         this.dependencies = dependencies;
         this.previousBuildDependencies = previousBuildDependencies;
         this.badPackages = badPackages;
@@ -114,7 +114,7 @@ public class NpmExtractorConsumer extends ConsumerRunnableBase {
         String aql = String.format(NPM_AQL_FORMAT, npmPackageInfo.getName(), npmPackageInfo.getVersion());
         AqlSearchResult searchResult;
         try {
-            searchResult = client.searchArtifactsByAql(aql);
+            searchResult = artifactoryManager.searchArtifactsByAql(aql);
             if (searchResult.getResults().isEmpty()) {
                 return null;
             }

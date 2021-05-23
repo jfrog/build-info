@@ -11,9 +11,8 @@ import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.clientConfiguration.util.EditPropertiesHelper;
@@ -48,62 +47,62 @@ public class SpecsHelper {
      * Retains compatibility with other plugins using file specs
      * with default number of concurrent upload threads
      *
-     * @param uploadSpec      The required spec represented as String
-     * @param workspace       File object that represents the workspace
-     * @param buildProperties Upload properties
-     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @param uploadSpec                The required spec represented as String
+     * @param workspace                 File object that represents the workspace
+     * @param buildProperties           Upload properties
+     * @param artifactoryManagerBuilder ArtifactoryManagerBuilder which will build the ArtifactoryManager to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Map<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
-        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), clientBuilder);
+                                                ArtifactoryManagerBuilder artifactoryManagerBuilder) throws Exception {
+        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), artifactoryManagerBuilder);
     }
 
     /**
      * Upload artifacts according to a given spec, return a list describing the deployed items.
      *
-     * @param uploadSpec      The required spec represented as String
-     * @param workspace       File object that represents the workspace
-     * @param buildProperties Upload properties
-     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients to perform the actual upload
+     * @param uploadSpec                The required spec represented as String
+     * @param workspace                 File object that represents the workspace
+     * @param buildProperties           Upload properties
+     * @param artifactoryManagerBuilder ArtifactoryManagerBuilder which will build the ArtifactoryManager to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, File workspace,
                                                 Multimap<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
-        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, buildProperties, clientBuilder);
+                                                ArtifactoryManagerBuilder artifactoryManagerBuilder) throws Exception {
+        return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, buildProperties, artifactoryManagerBuilder);
     }
 
 
     /**
      * Upload artifacts according to a given spec, return a list describing the deployed items.
      *
-     * @param uploadSpec      The required spec represented as String
-     * @param numberOfThreads Number of concurrent threads to use for handling uploads
-     * @param workspace       File object that represents the workspace
-     * @param buildProperties Upload properties
-     * @param clientBuilder   ArtifactoryBuildInfoClientBuilder which will build the buildInfoClients per the number of passed threads number to perform the actual upload
+     * @param uploadSpec                The required spec represented as String
+     * @param numberOfThreads           Number of concurrent threads to use for handling uploads
+     * @param workspace                 File object that represents the workspace
+     * @param buildProperties           Upload properties
+     * @param artifactoryManagerBuilder ArtifactoryManagerBuilder which will build the ArtifactoryManager per the number of passed threads number to perform the actual upload
      * @return Set of DeployDetails that was calculated from the given params
      * @throws IOException Thrown if any error occurs while reading the file, calculating the
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, int numberOfThreads, File workspace,
                                                 Multimap<String, String> buildProperties,
-                                                ArtifactoryBuildInfoClientBuilder clientBuilder) throws Exception {
+                                                ArtifactoryManagerBuilder artifactoryManagerBuilder) throws Exception {
         Spec spec = this.getSpecFromString(uploadSpec, new UploadSpecValidator());
 
-        try (ArtifactoryBuildInfoClient client = clientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Create producer Runnable
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new SpecDeploymentProducer(spec, workspace, buildProperties)};
             // Create consumer Runnables
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[numberOfThreads];
             for (int i = 0; i < numberOfThreads; i++) {
-                consumerRunnables[i] = new SpecDeploymentConsumer(client);
+                consumerRunnables[i] = new SpecDeploymentConsumer(artifactoryManager);
             }
             // Create the deployment executor
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(log, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
@@ -133,7 +132,7 @@ public class SpecsHelper {
      * @return A list of the downloaded dependencies.
      * @throws IOException in case of IOException
      */
-    public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryDependenciesClient client, String targetDirectory) throws IOException {
+    public List<Dependency> downloadArtifactsBySpec(String spec, ArtifactoryManager client, String targetDirectory) throws IOException {
         // During download, temp directories are created. This will make sure 'java.io.tmpdir' property is defined in Unix.
         handleJavaTmpdirProperty();
         DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(client, targetDirectory, log);
@@ -169,9 +168,9 @@ public class SpecsHelper {
     }
 
     @SuppressWarnings("unused")
-    public boolean editPropertiesBySpec(String spec, ArtifactoryDependenciesClient client,
+    public boolean editPropertiesBySpec(String spec, ArtifactoryManager artifactoryManager,
                                         EditPropertiesHelper.EditPropertiesActionType editType, String props) throws IOException {
-        EditPropertiesHelper helper = new EditPropertiesHelper(client, log);
+        EditPropertiesHelper helper = new EditPropertiesHelper(artifactoryManager, log);
         return helper.editProperties(getSpecFromString(spec, new SearchBasedSpecValidator()), editType, props);
     }
 

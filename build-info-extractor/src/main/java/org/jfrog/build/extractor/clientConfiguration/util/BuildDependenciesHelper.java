@@ -59,7 +59,7 @@ public class BuildDependenciesHelper {
         log.info("Beginning to resolve Build Info build dependencies.");
         Map<String, Map<String, List<BuildDependencyPattern>>> buildDependencies = getBuildDependencies(patternLines);
         List<BuildPatternArtifactsRequest> artifactsRequests = toArtifactsRequests(buildDependencies);
-        List<BuildPatternArtifacts> artifactsResponses = downloader.getClient().retrievePatternArtifacts(
+        List<BuildPatternArtifacts> artifactsResponses = downloader.getArtifactoryManager().retrievePatternArtifacts(
                 artifactsRequests);
         Set<BuildDependency> result = new HashSet<>();
         downloader.download(collectArtifactsToDownload(buildDependencies, artifactsRequests, artifactsResponses, result));

@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.nuget.drivers;
 
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 
 import java.io.IOException;

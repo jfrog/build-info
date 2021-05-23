@@ -5,15 +5,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Hex;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -224,17 +219,6 @@ public class DockerUtils {
     }
 
     /**
-     * Converts the http entity to string. If entity is null, returns empty string.
-     */
-    public static String entityToString(HttpEntity entity) throws IOException {
-        if (entity != null) {
-            InputStream is = entity.getContent();
-            return IOUtils.toString(is, StandardCharsets.UTF_8.name());
-        }
-        return "";
-    }
-
-    /**
      * Layer file name to digest format.
      */
     public static String fileNameToDigest(String fileName) {
@@ -278,13 +262,11 @@ public class DockerUtils {
      * @param repo               - Repository from which to download the layer
      * @param imageName          - Image name to download
      * @param imageDigests       - image digest to download
-     * @param dependenciesClient - Dependencies client
+     * @param artifactoryManager - Artifactory Manager
      */
-    public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryDependenciesClient dependenciesClient) throws IOException {
-        String url = dependenciesClient.getArtifactoryUrl() + "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
-        try (CloseableHttpResponse response = dependenciesClient.getArtifactMetadata(url)) {
-            EntityUtils.consume(response.getEntity());
-        }
+    public static void downloadMarkerLayer(String repo, String imageName, String imageDigests, ArtifactoryManager artifactoryManager) throws IOException {
+        String url = "/api/docker/" + repo + "/v2/" + imageName + "/blobs/" + imageDigests;
+        artifactoryManager.downloadHeaders(url);
     }
 
     /**
