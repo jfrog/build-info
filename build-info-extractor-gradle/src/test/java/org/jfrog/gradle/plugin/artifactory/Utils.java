@@ -84,10 +84,32 @@ public class Utils {
      * @param localRepo        - Gradle local repository
      * @param virtualRepo      - Gradle remote repository
      * @param publishBuildInfo - Publish build info
+     * @param setDeployer      - Set deployer details in file
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo) throws IOException {
-        String content = new String(Files.readAllBytes(BUILD_INFO_PROPERTIES_SOURCE), StandardCharsets.UTF_8);
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer) throws IOException {
+        String content = generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER);
+        if (setDeployer) {
+            content += "\n";
+            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
+        }
+        Files.write(BUILD_INFO_PROPERTIES_TARGET, content.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Generate buildinfo.properties section from source template.
+     *
+     * @param contextUrl       - Artifactory URL
+     * @param username         - Artifactory username
+     * @param password         - Artifactory password
+     * @param localRepo        - Gradle local repository
+     * @param virtualRepo      - Gradle remote repository
+     * @param publishBuildInfo - Publish build info
+     * @param source           - Path to server specific buildinfo.properties template.
+     * @throws IOException - In case of any IO error
+     */
+    private static String generateBuildInfoPropertiesForServer(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, Path source) throws IOException {
+        String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
         Map<String, String> valuesMap = new HashMap<String, String>() {{
             put("publications", publications);
             put("contextUrl", contextUrl);
@@ -98,8 +120,7 @@ public class Utils {
             put("buildInfo", String.valueOf(publishBuildInfo));
         }};
         StrSubstitutor sub = new StrSubstitutor(valuesMap);
-        content = sub.replace(content);
-        Files.write(BUILD_INFO_PROPERTIES_TARGET, content.getBytes(StandardCharsets.UTF_8));
+        return sub.replace(content);
     }
 
     /**
@@ -125,7 +146,7 @@ public class Utils {
         // Check build info
         Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
-        checkBuildInfoModules(buildInfo, expectModuleArtifacts);
+        checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
     }
 
     static void assertProjectsSuccess(BuildResult buildResult) {
@@ -135,13 +156,13 @@ public class Utils {
         assertSuccess(buildResult, ":artifactoryPublish");
     }
 
-    static void checkRequestedBy(BuildResult buildResult, boolean expectModuleArtifacts, File buildInfoJson) throws IOException {
+    static void checkLocalBuild(BuildResult buildResult, File buildInfoJson, int expectedModules, int expectedArtifactsPerModule) throws IOException {
         assertProjectsSuccess(buildResult);
 
         // Assert build info contains requestedBy information.
         assertTrue(buildInfoJson.exists());
         Build buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
-        checkBuildInfoModules(buildInfo, expectModuleArtifacts);
+        checkBuildInfoModules(buildInfo, expectedModules, expectedArtifactsPerModule);
         assertRequestedBy(buildInfo);
     }
 
@@ -182,14 +203,20 @@ public class Utils {
     /**
      * Check expected build info modules.
      *
-     * @param buildInfo             - The build info
-     * @param expectModuleArtifacts - Should we expect *.module files
+     * @param buildInfo                  - The build info
+     * @param expectedModules            - Number of expected modules.
+     * @param expectedArtifactsPerModule - Number of expected artifacts in each module.
      */
-    private static void checkBuildInfoModules(Build buildInfo, boolean expectModuleArtifacts) {
+    private static void checkBuildInfoModules(Build buildInfo, int expectedModules, int expectedArtifactsPerModule) {
         List<Module> modules = buildInfo.getModules();
-        assertEquals(modules.size(), 3);
+        assertEquals(modules.size(), expectedModules);
         for (Module module : modules) {
-            assertEquals(module.getArtifacts().size(), expectModuleArtifacts ? 5 : 4);
+            if (expectedArtifactsPerModule > 0) {
+                assertEquals(module.getArtifacts().size(), expectedArtifactsPerModule);
+            } else {
+                assertNull(module.getArtifacts());
+            }
+
             switch (module.getId()) {
                 case "org.jfrog.test.gradle.publish:webservice:1.0-SNAPSHOT":
                     assertEquals(module.getDependencies().size(), 7);

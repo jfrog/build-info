@@ -95,20 +95,43 @@ public class DeployTask extends DefaultTask {
             }
         }
 
+        // Extract Build Info.
+        GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
+        Build build = gbie.extract(getProject().getRootProject());
+        exportBuildInfo(build, getExportFile(accRoot));
+
+        // Export generated.
+        generateBuildInfoJson(accRoot, build);
+
+        // Handle deployment.
+        handleBuildInfoDeployment(accRoot, build, allDeployDetails);
+    }
+
+    private void generateBuildInfoJson(ArtifactoryClientConfiguration accRoot, Build build) throws IOException {
+        if (isGenerateBuildInfoToFile(accRoot)) {
+            try {
+                exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
+            } catch (Exception e) {
+                log.error("Failed writing build info to file: ", e);
+                throw new IOException("Failed writing build info to file", e);
+            }
+        }
+    }
+
+    private void handleBuildInfoDeployment(ArtifactoryClientConfiguration accRoot, Build build, Map<String, Set<DeployDetails>> allDeployDetails) throws IOException {
+        ArtifactoryBuildInfoClient client = null;
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
-            try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(
-                    accRoot.publisher.getContextUrl(),
-                    accRoot.publisher.getUsername(),
-                    accRoot.publisher.getPassword(),
-                    new GradleClientLogger(log))) {
+            try {
+                client = new ArtifactoryBuildInfoClient(
+                        accRoot.publisher.getContextUrl(),
+                        accRoot.publisher.getUsername(),
+                        accRoot.publisher.getPassword(),
+                        new GradleClientLogger(log));
+                configureProxy(accRoot, client);
+                configConnectionTimeout(accRoot, client);
+                configRetriesParams(accRoot, client);
 
-                configureProxy(accRoot, artifactoryManager);
-                configConnectionTimeout(accRoot, artifactoryManager);
-                configRetriesParams(accRoot, artifactoryManager);
-                GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
-                Build build = gbie.extract(getProject().getRootProject());
-                exportBuildInfo(build, getExportFile(accRoot));
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory
                     exportBuildInfo(build, getExportFile(accRoot));
@@ -118,14 +141,6 @@ public class DeployTask extends DefaultTask {
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
                         Utils.sendBuildAndBuildRetention(artifactoryManager, build, accRoot);
-                    }
-                }
-                if (isGenerateBuildInfoToFile(accRoot)) {
-                    try {
-                        exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
-                    } catch (Exception e) {
-                        log.error("Failed writing build info to file: ", e);
-                        throw new IOException("Failed writing build info to file", e);
                     }
                 }
                 if (isGenerateDeployableArtifactsToFile(accRoot)) {
