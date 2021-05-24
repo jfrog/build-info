@@ -22,7 +22,6 @@ import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.RepositoryType;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.*;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
-import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.extractor.usageReport.UsageReporter;
 
 import java.io.File;
@@ -74,7 +73,7 @@ public class ArtifactoryManager extends ManagerBase {
     }
 
     public void setProperties(String relativePath, ArrayListMultimap<String, String> properties, boolean encodeProperties) throws IOException {
-        SetProperties setPropertiesService = new SetProperties(relativePath, DeploymentUrlUtils.buildMatrixParamsString(properties, false), encodeProperties, log);
+        SetProperties setPropertiesService = new SetProperties(relativePath, properties, encodeProperties, log);
         setPropertiesService.execute(jfrogHttpClient);
     }
 

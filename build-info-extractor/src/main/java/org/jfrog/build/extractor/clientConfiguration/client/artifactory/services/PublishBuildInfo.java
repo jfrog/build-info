@@ -86,7 +86,7 @@ public class PublishBuildInfo extends VoidJFrogService {
         StringEntity stringEntity = new StringEntity(buildInfoJson, "UTF-8");
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         request.setEntity(stringEntity);
-        log.info("Deploying build info to: " + BUILD_REST_URL);
+        log.info("Deploying build info to: " + request.getURI());
         return request;
     }
 
