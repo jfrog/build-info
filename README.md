@@ -9,7 +9,7 @@ Build Info is Artifactory's open integration layer for the CI servers and build 
 * The code is built using Gradle and includes integration tests.<br/>
 * It must run using JDK 8 and Gradle 5.6.2. If you are using different gradle version you can use the provided gradle wrapper.<br/>
 * In order to run tests the following environment variables must be set:
-```
+```bash
 export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
 export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
@@ -21,54 +21,54 @@ export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 When running the following commands to build the code, the entire testing suite is also executed. See the *Testing* section for configuration instructions prior to running the tests.
 
 To build the code using the gradle wrapper in Unix run:
-```
-> ./gradlew clean build
+```bash
+./gradlew clean build
 ```
 To build the code using the gradle wrapper in Windows run:
-```
-> gradlew clean build
+```bash
+gradlew clean build
 ```
 To build the code using the environment gradle run:
-```
-> gradle clean build
+```bash
+gradle clean build
 ```
 To build the code without running the tests, add to the "clean build" command the "-x test" option, for example:
-```
-> ./gradlew clean build -x test
+```bash
+./gradlew clean build -x test
 ```
 
 ### Testing
 To run *all* tests:
-```
-> ./gradlew clean test
+```bash
+./gradlew clean test
 ```
 
 #### Extractor tests
-```
-> ./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test
+```bash
+./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test
 ```
 
 #### Maven tests
-```
-> ./gradlew clean build-info-extractor-maven3:test
+```bash
+./gradlew clean build-info-extractor-maven3:test
 ```
 
 #### Gradle tests
-```
-> ./gradlew clean build-info-extractor-gradle:test
+```bash
+./gradlew clean build-info-extractor-gradle:test
 ```
 
 #### Npm tests
 * Add npm executable to the system search path (PATH environment variable).
-```
-> ./gradlew clean build-info-extractor-npm:test
+```bash
+./gradlew clean build-info-extractor-npm:test
 ```
 
 #### Go tests
 * Add Go executable to the system search path (PATH environment variable).
 * Go v1.14 or above is required.
-```
-> ./gradlew clean build-info-extractor-go:test
+```bash
+./gradlew clean build-info-extractor-go:test
 ```
 
 #### Pip tests
@@ -76,16 +76,16 @@ To run *all* tests:
 * Pip tests must run inside a clean pip-environment. Create a virtual environment and provide its path using the 'BITESTS_ARTIFACTORY_PIP_ENV' variable.
 When running on a Windows machine, provide the path to the 'Scripts' directory.
 When running on a unix machine, provide the path to the 'bin' directory.
-```
-> python -m venv buildinfo-tests-env
-> export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/buildinfo-tests-env/bin
-> ./gradlew clean build-info-extractor-pip:test
+```bash
+python -m venv buildinfo-tests-env
+export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/buildinfo-tests-env/bin
+./gradlew clean build-info-extractor-pip:test
 ```
 
 #### NuGet tests
 * Add Nuget & Dotnet executable to the system search path (PATH environment variable).
-```
-> ./gradlew clean build-info-extractor-nuget:test
+```bash
+./gradlew clean build-info-extractor-nuget:test
 ```
 
 #### Docker tests
@@ -96,7 +96,7 @@ When running on a unix machine, provide the path to the 'bin' directory.
   * docker-virtual (contains both docker-local & docker-remote repositories)
 * In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
   * Replace `localhost:8081` prefix with your docker registry domain if needed.
- ```
+ ```bash
   export BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN=localhost:8081/docker-local
   export BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN=localhost:8081/docker-remote
   export BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN=localhost:8081/docker-virtual
@@ -106,12 +106,12 @@ When running on a unix machine, provide the path to the 'bin' directory.
   export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
  ```
  * For OSX agents, run a Socat container:
- ```
+ ```bash
  docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
  ```
  * Run tests:
- ```
-> ./gradlew clean build-info-extractor-docker:test
+ ```bash
+./gradlew clean build-info-extractor-docker:test
 ```
 
 ###  Testing on Artifactory OSS
@@ -121,8 +121,8 @@ On Artifactory pro, the tests infrastructure will create the test repositories b
 To run the tests on Artifactory OSS, you should create the Gradle repositories by yourself.
 To run Gradle tests on Artifactory OSS:
 * Start Artifactory on docker container:
-```
-> docker run --name artifactory -d -p 8081:8081 -p 8082:8082 releases-docker.jfrog.io/jfrog/artifactory-oss:latest
+```bash
+docker run --name artifactory -d -p 8081:8081 -p 8082:8082 releases-docker.jfrog.io/jfrog/artifactory-oss:latest
 ```
 * With your web browser, go to Artifactory UI: http://127.0.0.1:8081/artifactory
 * Create 3 Gradle repositories:
