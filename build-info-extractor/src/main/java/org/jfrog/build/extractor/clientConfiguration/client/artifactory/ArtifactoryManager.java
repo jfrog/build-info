@@ -74,7 +74,7 @@ public class ArtifactoryManager extends ManagerBase {
     }
 
     public void setProperties(String relativePath, ArrayListMultimap<String, String> properties, boolean encodeProperties) throws IOException {
-        SetProperties setPropertiesService = new SetProperties(relativePath, DeploymentUrlUtils.buildMatrixParamsString(properties, false), encodeProperties, log);
+        SetProperties setPropertiesService = new SetProperties(relativePath, properties, encodeProperties, log);
         setPropertiesService.execute(jfrogHttpClient);
     }
 
