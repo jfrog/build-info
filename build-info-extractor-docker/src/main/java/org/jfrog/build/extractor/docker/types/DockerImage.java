@@ -100,8 +100,7 @@ public class DockerImage implements Serializable {
 
         downloadUrl = manifestPath + "/manifest.json";
         logger.info("Trying to download manifest from " + downloadUrl);
-        return Pair.of(artifactoryManager.download(downloadUrl), pathWithoutRepo);
-
+        return Pair.of(artifactoryManager.download(downloadUrl), StringUtils.substringAfter(manifestPath, "/"));
     }
 
     private void setBuildInfoModuleProps(ModuleBuilder moduleBuilder) {
