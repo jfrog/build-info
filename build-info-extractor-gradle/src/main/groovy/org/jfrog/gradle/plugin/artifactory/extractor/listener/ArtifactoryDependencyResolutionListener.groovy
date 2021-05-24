@@ -55,14 +55,16 @@ class ArtifactoryDependencyResolutionListener implements DependencyResolutionLis
         for (DependencyResult dependency : dependencies) {
             // Update the map for every resolved dependency.
             if (dependency instanceof ResolvedDependencyResult) {
-                List<String> newDependentsList = new ArrayList<>()
-                populateDependentsList(dependency, newDependentsList)
-
-                // Add the new dependent's path to root to the 2d array.
                 String compId = getGav(dependency.getSelected().getModuleVersion())
                 String[][] curDependents = hierarchyMap[compId]
-                curDependents = ArrayUtils.add(curDependents, newDependentsList as String[])
-                hierarchyMap[compId] = curDependents
+                // If already collected for this compId, skip.
+                if (curDependents == null) {
+                    List<String> newDependentsList = new ArrayList<>()
+                    populateDependentsList(dependency, newDependentsList)
+                    // Add the new dependent's path to root to the 2d array.
+                    curDependents = ArrayUtils.add(curDependents, newDependentsList as String[])
+                    hierarchyMap[compId] = curDependents
+                }
             }
         }
     }
