@@ -118,7 +118,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
 
     private List<Dependency> calculateDependencies(Project project, String moduleId) throws Exception {
         ArtifactoryDependencyResolutionListener artifactoryDependencyResolutionListener =
-                project.getPlugins().getPlugin(ArtifactoryPlugin.class).getArtifactoryDependencyResolutionListener();
+                project.getRootProject().getPlugins().getPlugin(ArtifactoryPlugin.class).getArtifactoryDependencyResolutionListener();
         Map<String, String[][]> requestedByMap = artifactoryDependencyResolutionListener.getModulesHierarchyMap().get(moduleId);
 
         Set<Configuration> configurationSet = project.getConfigurations();
@@ -152,8 +152,10 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                                 .type(getTypeString(artifact.getType(),
                                         artifact.getClassifier(), artifact.getExtension()))
                                 .id(depId)
-                                .scopes(Sets.newHashSet(configuration.getName()))
-                                .requestedBy(requestedByMap.get(depId));
+                                .scopes(Sets.newHashSet(configuration.getName()));
+                        if (requestedByMap != null) {
+                            dependencyBuilder.requestedBy(requestedByMap.get(depId));
+                        }
                         if (file.isFile()) {
                             // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
                             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
