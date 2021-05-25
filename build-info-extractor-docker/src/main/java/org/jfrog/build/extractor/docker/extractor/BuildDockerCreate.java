@@ -2,17 +2,12 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.docker.DockerUtils;
 import org.jfrog.build.extractor.docker.types.DockerImage;
 import org.jfrog.build.extractor.docker.types.DockerLayer;
@@ -27,12 +22,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils.buildMatrixParamsString;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class BuildDockerCreate extends PackageManagerExtractor {
-    private final ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private final ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private final Log logger;
     private final String kanikoImageFile;
     private final String targetRepository;
@@ -41,17 +34,15 @@ public class BuildDockerCreate extends PackageManagerExtractor {
 
 
     /**
-     * @param buildInfoClientBuilder    - Build Info client builder.
-     * @param dependenciesClientBuilder - Dependencies client builder.
+     * @param artifactoryManagerBuilder - Artifactory manager builder.
      * @param targetRepository          - The repository it'll deploy to.
      * @param kanikoImageFile           - Image file to add.
      * @param logger                    - The logger.
      * @param artifactProperties        - Properties to be attached to the docker layers deployed to Artifactory.
      */
-    public BuildDockerCreate(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder,
+    public BuildDockerCreate(ArtifactoryManagerBuilder artifactoryManagerBuilder,
                       String kanikoImageFile, ArrayListMultimap<String, String> artifactProperties, String targetRepository, Log logger) {
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.targetRepository = targetRepository;
         this.logger = logger;
         this.kanikoImageFile = kanikoImageFile;
@@ -67,13 +58,11 @@ public class BuildDockerCreate extends PackageManagerExtractor {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             // Client builders.
-            ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
-            ArtifactoryDependenciesClientBuilder dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
             // Load artifact and BuildInfo properties from publisher section in the BuildInfo.properties file.
             ArtifactoryClientConfiguration.KanikoHandler kanikoHandler = clientConfiguration.kanikoHandler;
             // Init BuildDockerCreate.
-            BuildDockerCreate dockerBuildCreate = new BuildDockerCreate(buildInfoClientBuilder,
-                    dependenciesClientBuilder,
+            BuildDockerCreate dockerBuildCreate = new BuildDockerCreate(artifactoryManagerBuilder,
                     kanikoHandler.getImageFile(),
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
                     clientConfiguration.publisher.getRepoKey(),
@@ -93,19 +82,19 @@ public class BuildDockerCreate extends PackageManagerExtractor {
         try {
             Build build = new Build();
             for (ImageFileWithDigest imageFileWithDigest : getImageFileWithDigests(kanikoImageFile)) {
-                DockerImage image = new DockerImage(imageFileWithDigest.manifestSha256, imageFileWithDigest.imageName, targetRepository, buildInfoClientBuilder, dependenciesClientBuilder, "", "");
+                DockerImage image = new DockerImage(imageFileWithDigest.manifestSha256, imageFileWithDigest.imageName, targetRepository, artifactoryManagerBuilder, "", "");
                 Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
                 if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
                     logger.warn("Could not find docker image: " + imageFileWithDigest.imageName + " in Artifactory.");
                 } else {
-                    setImageLayersProps(image.getLayers(), artifactProperties, buildInfoClientBuilder);
+                    setImageLayersProps(image.getLayers(), artifactProperties, artifactoryManagerBuilder);
                 }
                 modulesList.add(module);
                 logger.info("Successfully created build info for image: " + imageFileWithDigest.imageName);
             }
             build.setModules(modulesList);
             return build;
-        } catch (IOException e) {
+        } catch (IOException | InterruptedException e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         } catch (RuntimeException e) {
@@ -117,29 +106,14 @@ public class BuildDockerCreate extends PackageManagerExtractor {
     /**
      * Update each layer's properties with artifactProperties.
      */
-    private void setImageLayersProps(DockerLayers layers, ArrayListMultimap<String, String> artifactProperties, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder) throws IOException {
+    private void setImageLayersProps(DockerLayers layers, ArrayListMultimap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
         if (layers == null){
             return;
         }
-        String artifactsPropsStr = buildMatrixParamsString(artifactProperties, false);
-        try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
-                HttpEntity entity = null;
-                try (CloseableHttpResponse httpResponse = buildInfoClient.executeUpdateFileProperty(layer.getFullPath(), artifactsPropsStr)) {
-                    entity = httpResponse.getEntity();
-                    validateSetImageLayersResponse(httpResponse);
-                } finally {
-                    EntityUtils.consume(entity);
-                }
+                artifactoryManager.setProperties(layer.getFullPath(), artifactProperties, false);
             }
-        }
-    }
-
-    private void validateSetImageLayersResponse(HttpResponse httpResponse) throws IOException {
-        int code = httpResponse.getStatusLine().getStatusCode();
-        if (code != 204) {
-            String response = DockerUtils.entityToString(httpResponse.getEntity());
-            throw new IOException("Failed while trying to set properties on docker layer: " + response);
         }
     }
 

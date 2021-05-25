@@ -214,7 +214,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
             Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
 
-            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(buildInfoClientBuilder, dependenciesClientBuilder, kanikoFile.toString(), artifactProperties, dockerRemoteRepo, getLog());
+            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerRemoteRepo, getLog());
             Build build = buildDockerCreate.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -255,7 +255,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
             Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
 
-            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(buildInfoClientBuilder, dependenciesClientBuilder, kanikoFile.toString(), artifactProperties, dockerVirtualRepo, getLog());
+            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerVirtualRepo, getLog());
             Build build = buildDockerCreate.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
