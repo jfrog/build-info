@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.response;
 
-public class GetRepositoriesKeyResponse {
+public class GetRepositoriesResponse {
     private String key;
 
     public String getKey() {
