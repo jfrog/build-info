@@ -14,25 +14,34 @@ import java.io.IOException;
 
 public class SetProperties extends VoidJFrogService {
     public static final String SET_PROPERTIES_ENDPOINT = "api/storage/";
-
-    private final String relativePath;
-    private final String properties;
+    private ArrayListMultimap<String, String> propertiesMap;
     private final boolean encodeProperties;
+    private final String relativePath;
+    private String propertiesString;
 
-    public SetProperties(String relativePath, String properties, boolean encodeProperties, Log log) {
+    private SetProperties(String relativePath, String propertiesString,ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         super(log);
         this.relativePath = relativePath;
-        this.properties = properties;
+        this.propertiesMap = propertiesMap;
+        this.propertiesString = propertiesString;
         this.encodeProperties = encodeProperties;
+    }
+
+    public SetProperties(String relativePath, String propertiesString, boolean encodeProperties, Log log) {
+        this(relativePath, propertiesString,null, encodeProperties, log);
+    }
+
+    public SetProperties(String relativePath, ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
+        this(relativePath, null,propertiesMap, encodeProperties, log);
     }
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
         String requestUrl = SET_PROPERTIES_ENDPOINT + encodeUrl(StringUtils.stripEnd(relativePath, "/") + "?properties=");
-        if (encodeProperties) {
-            requestUrl += DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(properties), true);
+        if (StringUtils.isNotEmpty(propertiesString)) {
+            requestUrl += encodeProperties ? DeploymentUrlUtils.buildMatrixParamsString(mapPropsString(propertiesString), true) : propertiesString;
         } else {
-            requestUrl += properties;
+            requestUrl += DeploymentUrlUtils.buildMatrixParamsString(propertiesMap, encodeProperties);
         }
         return new HttpPut(requestUrl);
     }
@@ -45,7 +54,10 @@ public class SetProperties extends VoidJFrogService {
 
     @Override
     protected void ensureRequirements(JFrogHttpClient client) throws IOException {
-        for (String prop : properties.trim().split(";")) {
+        if (StringUtils.isEmpty(propertiesString)) {
+            return;
+        }
+        for (String prop : propertiesString.trim().split(";")) {
             if (prop.isEmpty()) {
                 continue;
             }
@@ -67,8 +79,10 @@ public class SetProperties extends VoidJFrogService {
         ArrayListMultimap<String, String> propsMap = ArrayListMultimap.create();
         String[] propsList = props.split(";");
         for (String prop : propsList) {
-            String[] propParts = prop.split("=");
-            propsMap.put(propParts[0], propParts[1]);
+            if (StringUtils.isNotEmpty(prop)) {
+                String[] propParts = prop.split("=");
+                propsMap.put(propParts[0], propParts[1]);
+            }
         }
         return propsMap;
     }
