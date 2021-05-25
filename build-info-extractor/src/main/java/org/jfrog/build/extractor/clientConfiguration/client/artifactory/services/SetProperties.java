@@ -29,7 +29,6 @@ public class SetProperties extends VoidJFrogService {
 
     public SetProperties(String relativePath, String propertiesString, boolean encodeProperties, Log log) {
         this(relativePath, propertiesString,null, encodeProperties, log);
-
     }
 
     public SetProperties(String relativePath, ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
