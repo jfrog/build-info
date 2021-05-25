@@ -30,6 +30,7 @@ public class BuildPatternArtifactsRequestBuilder {
 
     private String buildName;
     private String buildNumber;
+    private String project;
     private boolean transitive;
     private List<Pattern> patterns;
 
@@ -45,7 +46,7 @@ public class BuildPatternArtifactsRequestBuilder {
             throw new IllegalArgumentException("BuildPatternArtifactsRequest must have a build number.");
         }
 
-        BuildPatternArtifactsRequest request = new BuildPatternArtifactsRequest(buildName, buildNumber);
+        BuildPatternArtifactsRequest request = new BuildPatternArtifactsRequest(buildName, buildNumber, project);
         request.setTransitive(transitive);
         request.setPatterns(patterns);
         return request;
@@ -60,7 +61,11 @@ public class BuildPatternArtifactsRequestBuilder {
         this.buildNumber = buildNumber;
         return this;
     }
-    //no support for transitivity
+
+    public BuildPatternArtifactsRequestBuilder project(String project) {
+        this.project = project;
+        return this;
+    }
 
     public BuildPatternArtifactsRequestBuilder pattern(String pattern) {
         patterns.add(new Pattern(pattern));

@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
@@ -11,10 +10,8 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.npm.types.NpmProject;
@@ -43,25 +40,27 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     private static final String NPMRC_BACKUP_FILE_NAME = "jfrog.npmrc.backup";
     private static final String NPMRC_FILE_NAME = ".npmrc";
 
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    private ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
+    private TypeRestriction typeRestriction;
     private NpmDriver npmDriver;
     private String npmRegistry;
     private Properties npmAuth;
     private String buildName;
+    private final String project;
     private String npmProxy;
     private String module;
     private Log logger;
 
-    NpmBuildInfoExtractor(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder,
-                          NpmDriver npmDriver, Log logger, String module, String buildName) {
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
+    NpmBuildInfoExtractor(ArtifactoryManagerBuilder artifactoryManagerBuilder,
+                          NpmDriver npmDriver, Log logger, String module, String buildName, String project) {
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.npmDriver = npmDriver;
         this.logger = logger;
         this.module = module;
         this.buildName = buildName;
+        this.project = project;
+        this.typeRestriction = TypeRestriction.DEFAULT_RESTRICTION;
     }
 
     @Override
@@ -72,41 +71,44 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
 
         preparePrerequisites(resolutionRepository, workingDir);
         createTempNpmrc(workingDir, commandArgs);
-        if (npmProject.isCiCommand()) {
-            runCi(workingDir, commandArgs);
-        } else {
-            runInstall(workingDir, commandArgs);
+        try {
+            if (npmProject.isCiCommand()) {
+                runCi(workingDir, commandArgs);
+            } else {
+                runInstall(workingDir, commandArgs);
+            }
+        } finally {
+            restoreNpmrc(workingDir);
         }
-        restoreNpmrc(workingDir);
         List<Dependency> dependencies = collectDependencies(workingDir);
         String moduleId = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         return createBuild(dependencies, moduleId);
     }
 
     private void preparePrerequisites(String resolutionRepository, Path workingDir) throws IOException {
-        try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
-            setNpmAuth(dependenciesClient);
-            setRegistryUrl(dependenciesClient, resolutionRepository);
-            setNpmProxy(dependenciesClient);
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            setNpmAuth(artifactoryManager);
+            setRegistryUrl(artifactoryManager, resolutionRepository);
+            setNpmProxy(artifactoryManager);
         }
         readPackageInfoFromPackageJson(workingDir);
         backupProjectNpmrc(workingDir);
     }
 
-    private void setNpmAuth(ArtifactoryDependenciesClient dependenciesClient) throws IOException {
-        npmAuth = dependenciesClient.getNpmAuth();
+    private void setNpmAuth(ArtifactoryManager artifactoryManage) throws IOException {
+        npmAuth = artifactoryManage.getNpmAuth();
     }
 
-    private void setRegistryUrl(ArtifactoryDependenciesClient dependenciesClient, String resolutionRepository) {
-        npmRegistry = dependenciesClient.getArtifactoryUrl();
+    private void setRegistryUrl(ArtifactoryManager artifactoryManage, String resolutionRepository) {
+        npmRegistry = artifactoryManage.getUrl();
         if (!StringUtils.endsWith(npmRegistry, "/")) {
             npmRegistry += "/";
         }
         npmRegistry += "api/npm/" + resolutionRepository;
     }
 
-    private void setNpmProxy(ArtifactoryDependenciesClient dependenciesClient) {
-        ProxyConfiguration proxyConfiguration = dependenciesClient.getProxyConfiguration();
+    private void setNpmProxy(ArtifactoryManager artifactoryManage) {
+        ProxyConfiguration proxyConfiguration = artifactoryManage.getProxyConfiguration();
         if (proxyConfiguration == null || StringUtils.isBlank(proxyConfiguration.host)) {
             return;
         }
@@ -139,68 +141,121 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     private void createTempNpmrc(Path workingDir, List<String> commandArgs) throws IOException, InterruptedException {
+        final String configList = npmDriver.configList(workingDir.toFile(), commandArgs, logger);
         Path npmrcPath = workingDir.resolve(NPMRC_FILE_NAME);
         Files.deleteIfExists(npmrcPath); // Delete old npmrc file
-        final String configList = npmDriver.configList(workingDir.toFile(), commandArgs);
 
-        Properties npmrcProperties = new Properties();
+        StringBuilder npmrcBuilder = new StringBuilder();
 
-        // Save npm config list results
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode manifestTree = mapper.readTree(configList);
-        manifestTree.fields().forEachRemaining(entry -> npmrcProperties.setProperty(entry.getKey(), entry.getValue().asText()));
-        // Since we run the get config cmd with "--json" flag, we don't want to force the json output on the new npmrc we write.
-        // We will get json output only if it was explicitly required in the command arguments.
-        npmrcProperties.setProperty("json", String.valueOf(isJsonOutputRequired(commandArgs)));
+        try (Scanner configScanner = new Scanner(configList)) {
+            while (configScanner.hasNextLine()) {
+                String currOption = configScanner.nextLine();
+                if (StringUtils.isBlank(currOption)) {
+                    continue;
+                }
 
-        // Save npm auth
-        npmrcProperties.putAll(npmAuth);
+                String[] splitOption = currOption.split("=", 2);
+                if (splitOption.length < 2) {
+                    continue;
+                }
 
-        // Save registry
-        npmrcProperties.setProperty("registry", npmRegistry);
-        npmrcProperties.remove("metrics-registry");
+                String key = splitOption[0].trim();
+                if (isValidKey(key)) {
+                    String value = splitOption[1].trim();
 
-        // Save npm proxy
-        if (StringUtils.isNotBlank(npmProxy)) {
-            npmrcProperties.setProperty("proxy", npmProxy);
+                    if (value.startsWith("[") && value.endsWith("]")) {
+                        addArrayConfigs(npmrcBuilder, key, value);
+                    } else {
+                        npmrcBuilder.append(currOption).append("\n");
+                    }
+
+                    setTypeRestriction(key, value);
+                } else if (key.startsWith("@")) {
+                    // Override scoped registries (@scope = xyz)
+                    npmrcBuilder.append(key).append(" = ").append(this.npmRegistry).append("\n");
+                }
+            }
         }
 
+        // Since we run the get config command with "--json=false", the returned config includes 'json=false' which we don't want to force
+        boolean isJsonOutputRequired = this.npmDriver.isJson(workingDir.toFile(), commandArgs);
+        npmrcBuilder.append("json = ").append(isJsonOutputRequired).append("\n");
+
+        // Save registry
+        npmrcBuilder.append("registry = ").append(this.npmRegistry).append("\n");
+
+        // Save npm proxy
+        if (StringUtils.isNotBlank(this.npmProxy)) {
+            npmrcBuilder.append("proxy = ").append(this.npmProxy).append("\n");
+        }
+
+        // Save npm auth
+        npmAuth.forEach((key, value) -> npmrcBuilder.append(key).append("=").append(value).append("\n"));
+
         // Write npmrc file
-        StringBuilder stringBuffer = new StringBuilder();
-        npmrcProperties.forEach((key, value) -> stringBuffer.append(key).append("=").append(value).append("\n"));
-        setScope(npmrcProperties);
         try (FileWriter fileWriter = new FileWriter(npmrcPath.toFile());
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
-            bufferedWriter.write(stringBuffer.toString());
+            bufferedWriter.write(npmrcBuilder.toString());
             bufferedWriter.flush();
         }
     }
 
     /**
-     * Boolean argument can be provided in one of the following ways:
-     * 1. --arg - which infers true
-     * 2. --arg=value (true/false)
-     * 3. --arg value (true/false)
+     * Adds an array-value config to a StringBuilder of .npmrc file, in the following format:
+     * key[] = value
      */
-    static boolean isJsonOutputRequired(List<String> commandArgs) {
-        int jsonIndex = commandArgs.indexOf("--json");
-        if (jsonIndex > -1) {
-            return jsonIndex == commandArgs.size() - 1 || !commandArgs.get(jsonIndex + 1).equals("false");
+    private static void addArrayConfigs(StringBuilder npmrcBuilder, String key, String arrayValue) {
+        if (arrayValue.equals("[]")) {
+            return;
         }
-        return commandArgs.contains("--json=true");
+
+        String valuesString = arrayValue.substring(1, arrayValue.length() - 1);
+        String[] separatedValues = valuesString.split(",");
+
+        for (String val : separatedValues) {
+            npmrcBuilder.append(key).append("[] = ").append(val).append("\n");
+        }
     }
 
     /**
-     * npm install scope can be set by "--production" or "--only={prod[uction]|dev[elopment]}" flags.
-     *
-     * @param npmrcProperties - The results of 'npm config list' command.
+     * To avoid writing configurations that are used by us
      */
-    private void setScope(Properties npmrcProperties) {
-        String only = npmrcProperties.getProperty("only");
-        if (StringUtils.startsWith(only, "prod") || Boolean.parseBoolean(npmrcProperties.getProperty("production"))) {
-            npmPackageInfo.setScope(NpmScope.PRODUCTION.toString());
-        } else if (StringUtils.startsWith(only, "dev")) {
-            npmPackageInfo.setScope(NpmScope.DEVELOPMENT.toString());
+    private static boolean isValidKey(String key) {
+        return !key.startsWith("//") &&
+                !key.startsWith(";") && // Comments
+                !key.startsWith("@") && // Scoped configurations
+                !key.equals("registry") &&
+                !key.equals("metrics-registry") &&
+                !key.equals("json"); // Handled separately because 'npm c ls' should run with json=false
+    }
+
+    // For testing
+    TypeRestriction getTypeRestriction() {
+        return typeRestriction;
+    }
+
+    void setTypeRestriction(String key, String value) {
+        // From npm 7, type restriction is determined by 'omit' and 'include' (both appear in 'npm config ls').
+        // Other options (like 'dev', 'production' and 'only') are deprecated, but if they're used anyway - 'omit' and 'include' are automatically calculated.
+        // So 'omit' is always preferred, if it exists.
+        if (key.equals("omit")) {
+            if (StringUtils.contains(value, "dev")) {
+                this.typeRestriction = TypeRestriction.PROD_ONLY;
+            } else {
+                this.typeRestriction = TypeRestriction.ALL;
+            }
+        }
+        // Until npm 6, configurations in 'npm config ls' are sorted by priority in descending order, so typeRestriction should be set only if it was not set before
+        else if (this.typeRestriction == TypeRestriction.DEFAULT_RESTRICTION) {
+            if (key.equals("only")) {
+                if (StringUtils.startsWith(value, "prod")) {
+                    this.typeRestriction = TypeRestriction.PROD_ONLY;
+                } else if (StringUtils.startsWith(value, "dev")) {
+                    this.typeRestriction = TypeRestriction.DEV_ONLY;
+                }
+            } else if (key.equals("production") && value.equals("true")) {
+                this.typeRestriction = TypeRestriction.PROD_ONLY;
+            }
         }
     }
 
@@ -240,7 +295,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
         for (NpmScope scope : scopes) {
             List<String> extraListArgs = new ArrayList<>();
-            extraListArgs.add("--only=" + scope);
+            extraListArgs.add("--" + scope);
             JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
             populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode, scope);
         }
@@ -248,27 +303,18 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return new ArrayList<>(dependencies.values());
     }
 
-    /**
-     * This method returns the npm scopes of this npm install command.
-     * It does this by checking the scopes on the npm package - dev, prod or no scope ("no scope" actually means both) and builds the list of scopes to be returned.
-     *
-     * @return list of "production", "development" or both.
-     */
     private List<NpmScope> getNpmScopes() {
         List<NpmScope> scopes = new ArrayList<>();
-        if (StringUtils.isBlank(npmPackageInfo.getScope())) {
+
+        // typeRestriction default is ALL
+        if (this.typeRestriction != TypeRestriction.PROD_ONLY) {
             scopes.add(NpmScope.DEVELOPMENT);
-            scopes.add(NpmScope.PRODUCTION);
-        } else {
-            // If this npm package is not installed with the dev scope, then it is installed with the prod scope.
-            if (!StringUtils.containsIgnoreCase(NpmScope.DEVELOPMENT.toString(), npmPackageInfo.getScope())) {
-                scopes.add(NpmScope.PRODUCTION);
-            }
-            // If this npm package is not installed with the prod scope, then it is installed with the dev scope.
-            if (!StringUtils.containsIgnoreCase(NpmScope.PRODUCTION.toString(), npmPackageInfo.getScope())) {
-                scopes.add(NpmScope.DEVELOPMENT);
-            }
         }
+
+        if (this.typeRestriction != TypeRestriction.DEV_ONLY) {
+            scopes.add(NpmScope.PRODUCTION);
+        }
+
         return scopes;
     }
 
@@ -290,14 +336,14 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
         DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope);
-        try (ArtifactoryDependenciesClient dependenciesClient = dependenciesClientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
             // Create consumer Runnables.
             ConsumerRunnableBase[] consumerRunnables = new ConsumerRunnableBase[]{
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages),
-                    new NpmExtractorConsumer(dependenciesClient, dependencies, previousBuildDependencies, badPackages)
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages),
+                    new NpmExtractorConsumer(artifactoryManager, dependencies, previousBuildDependencies, badPackages)
             };
             // Create the deployment executor.
             ProducerConsumerExecutor deploymentExecutor = new ProducerConsumerExecutor(logger, producerRunnable, consumerRunnables, CONNECTION_POOL_SIZE);
@@ -315,9 +361,9 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         if (StringUtils.isBlank(buildName)) {
             return Collections.emptyMap();
         }
-        try (ArtifactoryBuildInfoClient buildInfoClient = buildInfoClientBuilder.build()) {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Get previous build's dependencies.
-            Build previousBuildInfo = buildInfoClient.getBuildInfo(buildName, "LATEST");
+            Build previousBuildInfo = artifactoryManager.getBuildInfo(buildName, "LATEST", project);
             if (previousBuildInfo == null) {
                 return Collections.emptyMap();
             }
@@ -339,5 +385,12 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             }
         }
         return previousBuildDependencies;
+    }
+
+    enum TypeRestriction {
+        DEFAULT_RESTRICTION,
+        ALL,
+        DEV_ONLY,
+        PROD_ONLY
     }
 }

@@ -14,9 +14,9 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.util.VersionException;
 
@@ -46,23 +46,46 @@ public class NpmPublish extends NpmCommand {
     /**
      * Publish npm package.
      *
-     * @param clientBuilder        - Build Info client builder.
-     * @param properties           - The Artifact properties to set (Build name, Build number, etc...).
-     * @param path                 - Path to directory contains package.json or path to '.tgz' file.
-     * @param deploymentRepository - The repository it'll deploy to.
-     * @param logger               - The logger.
-     * @param env                  - Environment variables to use during npm execution.
+     * @param artifactoryManagerBuilder - Artifactory manager builder builder.
+     * @param properties                - The Artifact properties to set (Build name, Build number, etc...).
+     * @param path                      - Path to directory contains package.json or path to '.tgz' file.
+     * @param deploymentRepository      - The repository it'll deploy to.
+     * @param logger                    - The logger.
+     * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryBuildInfoClientBuilder clientBuilder, ArrayListMultimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
-        super(clientBuilder, deploymentRepository, logger, path, env);
+    public NpmPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, ArrayListMultimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
+        super(artifactoryManagerBuilder, deploymentRepository, logger, path, env);
         this.properties = properties;
         this.module = module;
     }
 
+    /**
+     * Allow running npm publish using a new Java process.
+     * Used only in Jenkins to allow running 'rtNpm publish' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
+            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
+            NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder,
+                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
+                    clientConfiguration.publisher.getRepoKey(),
+                    clientConfiguration.getLog(),
+                    clientConfiguration.getAllProperties(),
+                    npmHandler.getModule());
+            npmPublish.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
+    }
+
     @Override
     public Build execute() {
-        try (ArtifactoryBuildInfoClient dependenciesClient = (ArtifactoryBuildInfoClient) clientBuilder.build()) {
-            client = dependenciesClient;
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            this.artifactoryManager = artifactoryManager;
             preparePrerequisites();
             if (!tarballProvided) {
                 pack();
@@ -76,13 +99,6 @@ public class NpmPublish extends NpmCommand {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-    }
-
-    private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
-        validateArtifactoryVersion();
-        validateNpmVersion();
-        validateRepoExists(client, repo, "Target repo must be specified");
-        setPackageInfo();
     }
 
     private void setPackageInfo() throws IOException {
@@ -115,8 +131,8 @@ public class NpmPublish extends NpmCommand {
     }
 
     private void pack() throws IOException {
-        logger.info(npmDriver.pack(workingDir.toFile(), new ArrayList<>()));
-        path = path.resolve(npmPackageInfo.getExpectedPackedFileName());
+        String packageFileName = npmDriver.pack(workingDir.toFile(), new ArrayList<>(), logger);
+        path = path.resolve(packageFileName);
     }
 
     private void deploy() throws IOException {
@@ -124,22 +140,11 @@ public class NpmPublish extends NpmCommand {
         doDeploy();
     }
 
-    private void doDeploy() throws IOException {
-        DeployDetails deployDetails = new DeployDetails.Builder()
-                .file(path.toFile())
-                .targetRepository(repo)
-                .addProperties(properties)
-                .artifactPath(npmPackageInfo.getDeployPath())
-                .packageType(DeployDetails.PackageType.NPM)
-                .build();
-
-        ArtifactoryUploadResponse response = ((ArtifactoryBuildInfoClient) client).deployArtifact(deployDetails);
-
-        deployedArtifact = new ArtifactBuilder(npmPackageInfo.getModuleId())
-                .md5(response.getChecksums().getMd5())
-                .sha1(response.getChecksums().getSha1())
-                .remotePath(StringUtils.substringBeforeLast(npmPackageInfo.getDeployPath(), "/"))
-                .build();
+    private void preparePrerequisites() throws InterruptedException, VersionException, IOException {
+        validateArtifactoryVersion();
+        validateNpmVersion();
+        validateRepoExists(artifactoryManager, repo, "Target repo must be specified");
+        setPackageInfo();
     }
 
     private void deleteCreatedTarball() throws IOException {
@@ -156,26 +161,21 @@ public class NpmPublish extends NpmCommand {
         return build;
     }
 
-    /**
-     * Allow running npm publish using a new Java process.
-     * Used only in Jenkins to allow running 'rtNpm publish' in a docker container.
-     */
-    public static void main(String[] ignored) {
-        try {
-            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryBuildInfoClientBuilder clientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
-            ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
-            NpmPublish npmPublish = new NpmPublish(clientBuilder,
-                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
-                    Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
-                    clientConfiguration.publisher.getRepoKey(),
-                    clientConfiguration.getLog(),
-                    clientConfiguration.getAllProperties(),
-                    npmHandler.getModule());
-            npmPublish.executeAndSaveBuildInfo(clientConfiguration);
-        } catch (RuntimeException e) {
-            ExceptionUtils.printRootCauseStackTrace(e, System.out);
-            System.exit(1);
-        }
+    private void doDeploy() throws IOException {
+        DeployDetails deployDetails = new DeployDetails.Builder()
+                .file(path.toFile())
+                .targetRepository(repo)
+                .addProperties(properties)
+                .artifactPath(npmPackageInfo.getDeployPath())
+                .packageType(DeployDetails.PackageType.NPM)
+                .build();
+
+        ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails);
+
+        deployedArtifact = new ArtifactBuilder(npmPackageInfo.getModuleId())
+                .md5(response.getChecksums().getMd5())
+                .sha1(response.getChecksums().getSha1())
+                .remotePath(StringUtils.substringBeforeLast(npmPackageInfo.getDeployPath(), "/"))
+                .build();
     }
 }

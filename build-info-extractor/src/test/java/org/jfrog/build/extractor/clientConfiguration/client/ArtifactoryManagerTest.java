@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+
 /**
  * Integration tests for the ArtifactoryBuildInfoClient.
  * Performs tests using the infrastructure resources provided by IntegrationTestsBase (such as Artifactory, localRepo, and credentials).
@@ -25,7 +27,7 @@ import java.util.List;
  * @author Yahav Itzhak
  */
 @Test
-public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
+public class ArtifactoryManagerTest extends IntegrationTestsBase {
     private static final String TEST_SPACE = "bi_client_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
 
@@ -41,7 +43,16 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
      */
     @Test
     public void sendBuildInfoTest() throws IOException {
-        final String BUILD_NAME = "ArtifactoryBuildInfoClientTest";
+        doSendBuildInfoTest(null);
+    }
+
+    @Test
+    public void sendBuildInfoWithProjectTest() throws IOException {
+        doSendBuildInfoTest("jit");
+    }
+
+    private void doSendBuildInfoTest(String project) throws IOException {
+        final String BUILD_NAME = "ArtifactoryManagerTest";
         final String BUILD_NUMBER = "13";
         final Date STARTED = new Date();
         final List<Vcs> VCS = Arrays.asList(new Vcs("foo", "1"),
@@ -55,6 +66,7 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
 
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
                 .number(BUILD_NUMBER)
+                .setProject(project)
                 .buildAgent(new BuildAgent("agent11", "11"))
                 .agent(new Agent("agent22", "22"))
                 .startedDate(STARTED)
@@ -75,12 +87,12 @@ public class ArtifactoryBuildInfoClientTest extends IntegrationTestsBase {
         Build buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
-        buildInfoClient.sendBuildInfo(buildInfoToSend);
+        artifactoryManager.publishBuildInfo(buildInfoToSend, project);
 
         // Get build info
-        Build receivedBuildInfo = buildInfoClient.getBuildInfo(BUILD_NAME, BUILD_NUMBER);
+        Build receivedBuildInfo = artifactoryManager.getBuildInfo(BUILD_NAME, BUILD_NUMBER, project);
 
         // Compare
-        Assert.assertEquals(buildInfoClient.toJsonString(buildInfoToSend), buildInfoClient.toJsonString(receivedBuildInfo));
+        Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
     }
 }

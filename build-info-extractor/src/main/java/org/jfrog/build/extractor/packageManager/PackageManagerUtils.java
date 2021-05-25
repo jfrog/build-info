@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.packageManager;
 
 import org.apache.http.client.utils.URIBuilder;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
@@ -37,5 +38,30 @@ public class PackageManagerUtils {
                 .setHost(rtUrl.getHost())
                 .setPath(rtUrl.getPath() + path);
         return proxyUrlBuilder.build().toURL().toString();
+    }
+
+    /**
+     * Collect environment variables according to the env include-exclude patterns.
+     *
+     * @param clientConfiguration - Artifactory client configuration
+     * @param build               - The target build
+     */
+    public static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, Build build) {
+        if (!clientConfiguration.isIncludeEnvVars()) {
+            return;
+        }
+        // Create initial environment variables properties
+        Properties envProperties = new Properties();
+        envProperties.putAll(clientConfiguration.getAllProperties());
+
+        // Filter env according to the include-exclude patterns
+        envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConfiguration.getLog());
+
+        // Add results to the build
+        if (build.getProperties() != null) {
+            build.getProperties().putAll(envProperties);
+            return;
+        }
+        build.setProperties(envProperties);
     }
 }

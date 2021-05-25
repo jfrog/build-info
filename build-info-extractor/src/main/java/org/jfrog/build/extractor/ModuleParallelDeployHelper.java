@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor;
 
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 
 import java.io.IOException;
@@ -19,10 +19,10 @@ import java.util.concurrent.Executors;
 public class ModuleParallelDeployHelper {
     public static final int DEFAULT_DEPLOYMENT_THREADS = 3;
 
-    public void deployArtifacts(ArtifactoryBuildInfoClient client,
+    public void deployArtifacts(ArtifactoryManager artifactoryManager,
                                 Map<String, Set<DeployDetails>> deployableArtifactsByModule, int publishForkCount) {
         if (publishForkCount <= 1) {
-            deployableArtifactsByModule.forEach((module, deployableArtifacts) -> deploy(client, deployableArtifacts, null));
+            deployableArtifactsByModule.forEach((module, deployableArtifacts) -> deploy(artifactoryManager, deployableArtifacts, null));
         } else {
             try {
                 ExecutorService executor = Executors.newFixedThreadPool(publishForkCount);
@@ -30,7 +30,7 @@ public class ModuleParallelDeployHelper {
                         deployableArtifactsByModule.values().stream()
                                 .map(deployDetails ->
                                         CompletableFuture.runAsync(() ->
-                                                deploy(client, deployDetails, "[" + Thread.currentThread().getName() + "]"), executor))
+                                                deploy(artifactoryManager, deployDetails, "[" + Thread.currentThread().getName() + "]"), executor))
                                 .toArray(CompletableFuture[]::new));
                 allDeployments.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -39,10 +39,10 @@ public class ModuleParallelDeployHelper {
         }
     }
 
-    private void deploy(ArtifactoryBuildInfoClient client, Set<DeployDetails> deployableArtifacts, String logPrefix) {
+    private void deploy(ArtifactoryManager artifactoryManager, Set<DeployDetails> deployableArtifacts, String logPrefix) {
         deployableArtifacts.forEach(artifact -> {
             try {
-                client.deployArtifact(artifact, logPrefix);
+                artifactoryManager.upload(artifact, logPrefix);
             } catch (IOException e) {
                 throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
                         artifact.getFile() +

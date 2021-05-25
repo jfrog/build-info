@@ -2,8 +2,7 @@ package org.jfrog.build.extractor.nuget.drivers;
 
 import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
@@ -31,6 +30,8 @@ abstract public class ToolchainDriverBase implements Serializable {
     protected static final String GLOBAL_PACKAGES_REGEX = "^global-packages:";
     private static final String NUGET_PROMPT_ENV_VAR = "NUGET_EXE_NO_PROMPT";
     private static final String ARTIFACTORY_NUGET_API = "/api/nuget/";
+    private static final String ARTIFACTORY_NUGET_API_V3 = ARTIFACTORY_NUGET_API + "v3/";
+    private static final String V3 = "v3";
     private static final long serialVersionUID = 1L;
 
     protected CommandExecutor commandExecutor;
@@ -53,8 +54,6 @@ abstract public class ToolchainDriverBase implements Serializable {
         }
     }
 
-    abstract public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException;
-
     abstract public String globalPackagesCache() throws IOException, InterruptedException;
 
     abstract public String getFlagSyntax(String flagName);
@@ -63,12 +62,13 @@ abstract public class ToolchainDriverBase implements Serializable {
         return runCommand(new String[]{"help"}, Collections.emptyList(), null, logger);
     }
 
-    protected String buildNugetSourceUrl(ArtifactoryBaseClient client, String repo) throws Exception {
-        URL rtUrl = new URL(client.getArtifactoryUrl());
+    public String buildNugetSourceUrl(ArtifactoryManager artifactoryManager, String repo, String apiProtocol) throws Exception {
+        URL rtUrl = new URL(artifactoryManager.getUrl());
+        String nugetApi = apiProtocol.equalsIgnoreCase(V3) ? ARTIFACTORY_NUGET_API_V3 : ARTIFACTORY_NUGET_API;
         URIBuilder sourceUrlBuilder = new URIBuilder()
                 .setScheme(rtUrl.getProtocol())
                 .setHost(rtUrl.getHost())
-                .setPath(rtUrl.getPath() + ARTIFACTORY_NUGET_API + repo)
+                .setPath(rtUrl.getPath() + nugetApi + repo)
                 .setPort(rtUrl.getPort());
         return sourceUrlBuilder.build().toURL().toString();
     }

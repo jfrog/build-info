@@ -21,6 +21,7 @@ package org.jfrog.build.api;
 public interface BuildInfoFields {
     String BUILD_NAME = "build.name";
     String BUILD_NUMBER = "build.number";
+    String BUILD_PROJECT = "build.project";
     String BUILD_TIMESTAMP = "build.timestamp";
     String BUILD_STARTED = "build.started";
     String ARTIFACTORY_PLUGIN_VERSION = "artifactoryPluginVersion";

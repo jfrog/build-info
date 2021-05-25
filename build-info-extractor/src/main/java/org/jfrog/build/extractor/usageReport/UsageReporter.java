@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.usageReport;
 
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;
 
@@ -19,11 +19,11 @@ public class UsageReporter {
     }
 
     public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, Log log) throws IOException {
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(artifactoryUrl, username, password, accessToken, log);
+        ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log);
         if (proxyConfiguration != null) {
-            client.setProxyConfiguration(proxyConfiguration);
+            artifactoryManager.setProxyConfiguration(proxyConfiguration);
         }
-        client.reportUsage(this);
+        artifactoryManager.reportUsage(this);
     }
 
     public String getProductId() {
@@ -43,10 +43,10 @@ public class UsageReporter {
         }
     }
 
-    public class FeatureId {
-        private String featureId;
+    public static class FeatureId {
+        private final String featureId;
 
-        public FeatureId (String featureId) {
+        public FeatureId(String featureId) {
             this.featureId = featureId;
         }
 

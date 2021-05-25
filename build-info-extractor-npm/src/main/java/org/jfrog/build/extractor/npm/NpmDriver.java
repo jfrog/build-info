@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -41,33 +42,47 @@ public class NpmDriver implements Serializable {
 
     public String install(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
         try {
-            return runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
+            CommandResults results = runCommand(workingDirectory, new String[]{"i"}, extraArgs, logger);
+            return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm install failed: " + e.getMessage(), e);
+            throw new IOException("npm install failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
     }
 
     public String ci(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
         try {
-            return runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
+            CommandResults results = runCommand(workingDirectory, new String[]{"ci"}, extraArgs, logger);
+            return results.getErr() + results.getRes();
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm ci failed: " + e.getMessage(), e);
+            throw new IOException("npm ci failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
     }
 
-    public String pack(File workingDirectory, List<String> extraArgs) throws IOException {
+    /**
+     * Runs 'npm pack' command.
+     * @return the name of the new package file.
+     */
+    public String pack(File workingDirectory, List<String> extraArgs, Log logger) throws IOException {
+        CommandResults results;
+
         try {
-            return runCommand(workingDirectory, new String[]{"pack"}, extraArgs);
+            results = runCommand(workingDirectory, new String[]{"pack"}, extraArgs, logger);
         } catch (IOException | InterruptedException e) {
-            throw new IOException("npm pack failed: " + e.getMessage(), e);
+            throw new IOException("npm pack failed: " + ExceptionUtils.getRootCauseMessage(e), e);
         }
+
+        if (logger != null) {
+            logger.info(results.getErr() + results.getRes());
+        }
+
+        return results.getRes().trim();
     }
 
     public JsonNode list(File workingDirectory, List<String> extraArgs) throws IOException {
         List<String> args = new ArrayList<>();
         args.add("ls");
         args.add("--json");
-        args.add("--long");
+        args.add("--all");
         args.addAll(extraArgs);
         try {
             CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, args, null, null);
@@ -83,27 +98,37 @@ public class NpmDriver implements Serializable {
     }
 
     public String version(File workingDirectory) throws IOException, InterruptedException {
-        return runCommand(workingDirectory, new String[]{"--version"}, Collections.emptyList());
+        return runCommand(workingDirectory, new String[]{"--version"}, Collections.emptyList()).getRes();
     }
 
-    public String configList(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
-        // We're adding the -s and --json options to the command, to make sure the command output can be parsed properly.
+    public boolean isJson(File workingDirectory, List<String> extraArgs) throws IOException, InterruptedException {
+        // In case of --json=<not boolean>, the value of json is set to 'true', but the result from the command is not 'true'
+        return !runCommand(workingDirectory, new String[]{"c", "get", "json"}, extraArgs).getRes().equals("false");
+    }
+
+    public String configList(File workingDirectory, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> args = new ArrayList<>(extraArgs);
-        args.add("-s");
-        args.add("--json");
-        return runCommand(workingDirectory, new String[]{"c", "ls"}, args);
+        args.add("--json=false");
+        CommandResults res = runCommand(workingDirectory, new String[]{"c", "ls"}, args);
+
+        if (logger != null && StringUtils.isNotBlank(res.getErr())) {
+            logger.warn(res.getErr());
+        }
+
+        return res.getRes();
     }
 
-    private String runCommand(File workingDirectory, String[] args, List<String> extraArgs) throws IOException, InterruptedException {
+    private CommandResults runCommand(File workingDirectory, String[] args, List<String> extraArgs) throws IOException, InterruptedException {
         return runCommand(workingDirectory, args, extraArgs, null);
     }
 
-    private String runCommand(File workingDirectory, String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
+    private CommandResults runCommand(File workingDirectory, String[] args, List<String> extraArgs, Log logger) throws IOException, InterruptedException {
         List<String> finalArgs = Stream.concat(Arrays.stream(args), extraArgs.stream()).collect(Collectors.toList());
         CommandResults npmCommandRes = commandExecutor.exeCommand(workingDirectory, finalArgs, null, logger);
         if (!npmCommandRes.isOk()) {
             throw new IOException(npmCommandRes.getErr() + npmCommandRes.getRes());
         }
-        return npmCommandRes.getErr() + npmCommandRes.getRes();
+
+        return npmCommandRes;
     }
 }

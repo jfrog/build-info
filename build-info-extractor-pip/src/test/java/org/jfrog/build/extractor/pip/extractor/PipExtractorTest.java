@@ -6,7 +6,7 @@ import org.apache.commons.lang.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.pip.PipDriver;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -34,7 +34,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
+    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String pipEnvVar;
     private PipDriver driver;
     private Map<String, String> env;
@@ -77,7 +77,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
 
         // Read pip environment path variable.
         pipEnvVar = System.getenv(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PIP_ENV");
@@ -122,7 +122,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
             }
 
             // Run pip-install.
-            PipInstall pipInstall = new PipInstall(dependenciesClientBuilder, virtualRepo, project.args, getLog(),projectDir, env, project.moduleId, getUsername(), getPassword(), null);
+            PipInstall pipInstall = new PipInstall(artifactoryManagerBuilder, virtualRepo, project.args, getLog(), projectDir, env, project.moduleId, getUsername(), getPassword(), null);
             Build build = pipInstall.execute();
             assertNotNull(build, "Pip execution returned empty build.");
 

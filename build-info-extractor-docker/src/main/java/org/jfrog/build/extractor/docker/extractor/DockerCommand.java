@@ -2,8 +2,7 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 
 import java.util.ArrayList;
@@ -11,8 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 abstract class DockerCommand extends PackageManagerExtractor {
-    ArtifactoryDependenciesClientBuilder dependenciesClientBuilder;
-    ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder;
+    ArtifactoryManagerBuilder artifactoryManagerBuilder;
     Map<String, String> env;
     String username;
     String password;
@@ -32,10 +30,9 @@ abstract class DockerCommand extends PackageManagerExtractor {
      * @param logger   - log output.
      * @param env      - Environment variables to use during docker push execution.
      */
-    public DockerCommand(ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, ArtifactoryDependenciesClientBuilder dependenciesClientBuilder,
+    public DockerCommand(ArtifactoryManagerBuilder artifactoryManagerBuilder,
                          String imageTag, String host, String targetRepository, String username, String password, Log logger, Map<String, String> env) {
-        this.dependenciesClientBuilder = dependenciesClientBuilder;
-        this.buildInfoClientBuilder = buildInfoClientBuilder;
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.targetRepository = targetRepository;
         this.logger = logger;
         this.imageTag = imageTag;
@@ -44,5 +41,4 @@ abstract class DockerCommand extends PackageManagerExtractor {
         this.password = password;
         this.env = env;
     }
-
 }

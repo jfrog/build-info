@@ -84,7 +84,7 @@ public class Issue implements Comparable<Issue> {
     @JsonIgnore
     @SuppressWarnings("WeakerAccess")
     public boolean isTopSeverity() {
-        return getSeverity() == Severity.High;
+        return getSeverity() == Severity.Critical;
     }
 
     @JsonIgnore

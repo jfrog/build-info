@@ -4,8 +4,8 @@ package org.jfrog.build.extractor.npm.types;
  * @author Yahav Itzhak
  */
 public enum NpmScope {
-    PRODUCTION("production"),
-    DEVELOPMENT("development");
+    PRODUCTION("prod"),
+    DEVELOPMENT("dev");
 
     private String scope;
 

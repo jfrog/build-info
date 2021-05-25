@@ -18,8 +18,9 @@ import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger;
 import org.jfrog.build.util.IvyBuildInfoLog;
@@ -95,7 +96,7 @@ public class ArtifactoryBuildListener implements BuildListener {
     /**
      * Called when the build has ended, this is the time where we will assemble the build-info object that its
      * information was collected by the {@link org.jfrog.build.extractor.trigger.ArtifactoryBuildInfoTrigger} it will
-     * serialize the build-info object into a senadble JSON object to be used by the {@link org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient}
+     * serialize the build-info object into a senadble JSON object to be used by the {@link ArtifactoryManager}
      *
      * @param event The build event.
      */
@@ -132,20 +133,20 @@ public class ArtifactoryBuildListener implements BuildListener {
 
     private Task extractIvyTask(BuildEvent event) {
         Task task = event.getTask();
-        
+
         //Handle ivy tasks that are wrapped
-        if(task instanceof UnknownElement) {
+        if (task instanceof UnknownElement) {
             UnknownElement unknown = (UnknownElement) task;
             Object realThing = unknown.getRealThing();
-            if(realThing == null) {
+            if (realThing == null) {
                 unknown.maybeConfigure();
             }
             realThing = unknown.getRealThing();
             if (realThing instanceof Task) {
-                task = (Task)realThing;
+                task = (Task) realThing;
             }
         }
-        
+
         // Interested only in Ivy tasks
         String taskType = task.getTaskType();
         if (taskType != null
@@ -206,14 +207,14 @@ public class ArtifactoryBuildListener implements BuildListener {
         while (elements.hasMoreElements()) {
             Object element = elements.nextElement();
             if (element instanceof UnknownElement) {
-                UnknownElement unknown = (UnknownElement)element;
+                UnknownElement unknown = (UnknownElement) element;
                 element = unknown.getRealThing();
-                if(element == null) {
+                if (element == null) {
                     unknown.maybeConfigure();
                     element = unknown.getRealThing();
                 }
             }
-            if (element instanceof IvyAntSettings ) {
+            if (element instanceof IvyAntSettings) {
                 results.add(((IvyAntSettings) element).getConfiguredIvyInstance(task).getResolveEngine().getEventManager());
             }
         }
@@ -352,41 +353,32 @@ public class ArtifactoryBuildListener implements BuildListener {
             builder.addRunParameters(matrixParameter);
         }
 
-        if (clientConf.isIncludeEnvVars()) {
-            Properties envProperties = new Properties();
-            envProperties.putAll(clientConf.getAllProperties());
-            envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConf.getLog());
-            for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
-                builder.addProperty(envProp.getKey(), envProp.getValue());
-            }
-        }
         Build build = builder.build();
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
-        ArtifactoryBuildInfoClient client = new ArtifactoryBuildInfoClient(contextUrl, username, password, log);
-        try {
-            configureProxy(clientConf, client);
-            configConnectionTimeout(clientConf, client);
-            configRetriesParams(clientConf, client);
+
+        try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(contextUrl, username, password, log)) {
+            configureProxy(clientConf, artifactoryManager);
+            configConnectionTimeout(clientConf, artifactoryManager);
+            configRetriesParams(clientConf, artifactoryManager);
             if (clientConf.publisher.isPublishArtifacts()) {
                 IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                         clientConf.publisher.getIncludePatterns(), clientConf.publisher.getExcludePatterns());
 
-                deployArtifacts(project, client, deployDetails, patterns);
+                deployArtifacts(project, artifactoryManager, deployDetails, patterns);
             }
             if (clientConf.publisher.isPublishBuildInfo()) {
-                Utils.sendBuildAndBuildRetention(client, build, clientConf);
+                Utils.sendBuildAndBuildRetention(artifactoryManager, build, clientConf);
             }
             isDidDeploy = true;
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            client.close();
         }
     }
 
-    private void deployArtifacts(Project project, ArtifactoryBuildInfoClient client, Set<DeployDetails> deployDetails,
+    private void deployArtifacts(Project project, ArtifactoryManager artifactoryManager, Set<DeployDetails> deployDetails,
                                  IncludeExcludePatterns patterns) throws IOException {
         for (DeployDetails deployDetail : deployDetails) {
             String artifactPath = deployDetail.getArtifactPath();
@@ -395,11 +387,11 @@ public class ArtifactoryBuildListener implements BuildListener {
                         "' due to the defined include-exclude patterns.", Project.MSG_INFO);
                 continue;
             }
-            client.deployArtifact(deployDetail);
+            artifactoryManager.upload(deployDetail);
         }
     }
 
-    protected void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    protected void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
         if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
@@ -407,22 +399,22 @@ public class ArtifactoryBuildListener implements BuildListener {
             String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 buildInfoLog.debug("Found proxy user name '" + proxyUserName + "'");
-                client.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
             } else {
                 buildInfoLog.debug("No proxy user name and password found, using anonymous proxy");
-                client.setProxyConfiguration(proxyHost, proxy.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort());
             }
         }
     }
 
-    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    protected void configConnectionTimeout(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getTimeout() != null)
-            client.setConnectionTimeout(clientConf.getTimeout());
+            artifactoryManager.setConnectionTimeout(clientConf.getTimeout());
     }
 
-    protected void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryBuildInfoClient client) {
+    protected void configRetriesParams(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         if (clientConf.getConnectionRetries() != null) {
-            client.setConnectionRetries(clientConf.getConnectionRetries());
+            artifactoryManager.setConnectionRetries(clientConf.getConnectionRetries());
         }
     }
 }

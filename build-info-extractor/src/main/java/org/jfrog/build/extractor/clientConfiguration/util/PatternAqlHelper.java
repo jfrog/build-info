@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
 
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class PatternAqlHelper extends AqlHelperBase {
-    PatternAqlHelper(ArtifactoryDependenciesClient client, Log log, FileSpec file) throws IOException {
+    PatternAqlHelper(ArtifactoryManager client, Log log, FileSpec file) throws IOException {
         super(client, log, file);
     }
 

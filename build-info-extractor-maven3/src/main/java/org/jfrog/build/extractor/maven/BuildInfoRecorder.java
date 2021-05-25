@@ -41,6 +41,7 @@ import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
+import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -695,18 +696,12 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     public Build extract(ExecutionEvent event) {
         MavenSession session = event.getSession();
         if (!session.getResult().hasExceptions()) {
-            if (conf.isIncludeEnvVars()) {
-                Properties envProperties = new Properties();
-                envProperties.putAll(conf.getAllProperties());
-                envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, conf.getLog());
-                for (Map.Entry<Object, Object> envProp : envProperties.entrySet()) {
-                    buildInfoBuilder.addProperty(envProp.getKey(), envProp.getValue());
-                }
-            }
             Date finish = new Date();
             long time = finish.getTime() - session.getRequest().getStartTime().getTime();
 
-            return buildInfoBuilder.durationMillis(time).build();
+            Build build = buildInfoBuilder.durationMillis(time).build();
+            PackageManagerUtils.collectEnvIfNeeded(conf, build);
+            return build;
         }
 
         return null;

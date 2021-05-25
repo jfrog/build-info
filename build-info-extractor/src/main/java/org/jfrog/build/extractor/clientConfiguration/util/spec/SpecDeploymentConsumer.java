@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBuildInfoClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ConsumerRunnableBase;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
@@ -18,10 +18,10 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
 
     private ProducerConsumerExecutor executor;
     private Log log;
-    private ArtifactoryBuildInfoClient client;
+    private final ArtifactoryManager ArtifactoryManager;
 
-    public SpecDeploymentConsumer(ArtifactoryBuildInfoClient client) {
-        this.client = client;
+    public SpecDeploymentConsumer(ArtifactoryManager ArtifactoryManager) {
+        this.ArtifactoryManager = ArtifactoryManager;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class SpecDeploymentConsumer extends ConsumerRunnableBase {
                     break;
                 }
                 // Perform artifact deploy
-                client.deployArtifact((DeployDetails) item, "[" + Thread.currentThread().getName() + "]");
+                ArtifactoryManager.upload((DeployDetails) item, "[" + Thread.currentThread().getName() + "]");
             } catch (InterruptedException e) {
                 return;
             } catch (IOException e) {

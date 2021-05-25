@@ -8,10 +8,3 @@ artifactory.publish.unstable=false
 artifactory.publish.buildInfo=true
 artifactory.publish.maven=true
 artifactory.publish.ivy=true
-
-# Resolver settings
-artifactory.resolve.contextUrl=${contextUrl}
-artifactory.resolve.repoKey=${virtualRepo}
-artifactory.resolve.username=${username}
-artifactory.resolve.password=${password}
-

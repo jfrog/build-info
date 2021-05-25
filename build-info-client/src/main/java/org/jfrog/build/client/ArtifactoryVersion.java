@@ -16,4 +16,8 @@ public class ArtifactoryVersion extends Version {
     public boolean hasAddons() {
         return addons;
     }
+
+    public boolean isOSS(){
+        return !hasAddons();
+    }
 }

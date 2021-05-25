@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.nuget.drivers;
 
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 
 import java.io.IOException;
@@ -17,17 +17,6 @@ public class NugetDriver extends ToolchainDriverBase {
     public NugetDriver(Map<String, String> env, Path workingDirectory, Log logger) {
         super(env, workingDirectory, logger);
         commandExecutor = new CommandExecutor("nuget", env);
-    }
-
-    public String addSource(String configPath, ArtifactoryDependenciesClient client, String repo, String sourceName, String username, String password) throws IOException {
-        try {
-            String sourceUrl = buildNugetSourceUrl(client, repo);
-            List<String> extraArgs = Arrays.asList(getFlagSyntax(CONFIG_FILE_FLAG), configPath, getFlagSyntax(SOURCE_FLAG), sourceUrl, getFlagSyntax(NAME_FLAG), sourceName);
-            List<String> credentials = Arrays.asList(getFlagSyntax(USERNAME_FLAG), username, getFlagSyntax(PASSWORD_FLAG), password);
-            return runCommand(new String[]{"sources", "add"}, extraArgs, credentials, logger);
-        } catch (Exception e) {
-            throw new IOException("nuget sources add failed: " + e.getMessage(), e);
-        }
     }
 
     public String globalPackagesCache() throws IOException, InterruptedException {

@@ -2,8 +2,8 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientBuilderBase;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryBaseClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
@@ -26,16 +26,16 @@ abstract class NpmCommand extends PackageManagerExtractor {
     private static final ArtifactoryVersion MIN_SUPPORTED_NPM_VERSION = new ArtifactoryVersion("5.4.0");
 
     NpmPackageInfo npmPackageInfo = new NpmPackageInfo();
-    ArtifactoryClientBuilderBase clientBuilder;
-    ArtifactoryBaseClient client;
+    ArtifactoryManagerBuilder artifactoryManagerBuilder;
+    ArtifactoryManager artifactoryManager;
     NpmDriver npmDriver;
     Path workingDir;
     String repo;
     Log logger;
     Path path;
 
-    NpmCommand(ArtifactoryClientBuilderBase clientBuilder, String repo, Log logger, Path path, Map<String, String> env) {
-        this.clientBuilder = clientBuilder;
+    NpmCommand(ArtifactoryManagerBuilder artifactoryManagerBuilder, String repo, Log logger, Path path, Map<String, String> env) {
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.npmDriver = new NpmDriver(env);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
         this.repo = repo;
@@ -49,8 +49,8 @@ abstract class NpmCommand extends PackageManagerExtractor {
         }
     }
 
-    void validateArtifactoryVersion() throws VersionException {
-        ArtifactoryVersion version = client.getArtifactoryVersion();
+    void validateArtifactoryVersion() throws VersionException, IOException {
+        ArtifactoryVersion version = artifactoryManager.getVersion();
         if (version.isNotFound()) {
             String message = "Couldn't execute npm task. Check connection with Artifactory.";
             throw new VersionException(message, VersionCompatibilityType.NOT_FOUND);

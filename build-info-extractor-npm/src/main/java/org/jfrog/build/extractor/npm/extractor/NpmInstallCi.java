@@ -4,10 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryBuildInfoClientBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryDependenciesClientBuilder;
-import org.jfrog.build.extractor.clientConfiguration.client.ArtifactoryDependenciesClient;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 
 import java.nio.file.Path;
@@ -32,8 +31,7 @@ public class NpmInstallCi extends NpmCommand {
     /**
      * Run npm install or npm ci commands.
      *
-     * @param dependenciesClientBuilder - Dependencies client builder.
-     * @param buildInfoClientBuilder    - Build Info client builder.
+     * @param artifactoryManagerBuilder - ArtifactoryManagerBuilder.
      * @param resolutionRepository      - The repository it'll resolve from.
      * @param commandArgs               - Npm command args.
      * @param buildName                 - The build's name.
@@ -42,28 +40,11 @@ public class NpmInstallCi extends NpmCommand {
      * @param path                      - Path to directory contains package.json or path to '.tgz' file.
      * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmInstallCi(ArtifactoryDependenciesClientBuilder dependenciesClientBuilder, ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand) {
-        super(dependenciesClientBuilder, resolutionRepository, logger, path, env);
-        buildInfoExtractor = new NpmBuildInfoExtractor(dependenciesClientBuilder, buildInfoClientBuilder, npmDriver, logger, module, buildName);
+    public NpmInstallCi(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepository, String commandArgs, Log logger, Path path, Map<String, String> env, String module, String buildName, boolean isCiCommand, String project) {
+        super(artifactoryManagerBuilder, resolutionRepository, logger, path, env);
+        buildInfoExtractor = new NpmBuildInfoExtractor(artifactoryManagerBuilder, npmDriver, logger, module, buildName, project);
         this.commandArgs = StringUtils.isBlank(commandArgs) ? new ArrayList<>() : Arrays.asList(commandArgs.trim().split("\\s+"));
         this.isCiCommand = isCiCommand;
-    }
-
-    @Override
-    public Build execute() {
-        try (ArtifactoryDependenciesClient dependenciesClient = (ArtifactoryDependenciesClient) clientBuilder.build()) {
-            client = dependenciesClient;
-            validatePath();
-            validateArtifactoryVersion();
-            validateNpmVersion();
-            validateRepoExists(client, repo, "Source repo must be specified");
-
-            NpmProject npmProject = new NpmProject(commandArgs, repo, workingDir, isCiCommand);
-            return buildInfoExtractor.extract(npmProject);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
     }
 
     /**
@@ -73,12 +54,10 @@ public class NpmInstallCi extends NpmCommand {
     public static void main(String[] ignored) {
         try {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
-            ArtifactoryDependenciesClientBuilder dependenciesClientBuilder = new ArtifactoryDependenciesClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
-            ArtifactoryBuildInfoClientBuilder buildInfoClientBuilder = new ArtifactoryBuildInfoClientBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
             ArtifactoryClientConfiguration.PackageManagerHandler packageManagerHandler = clientConfiguration.packageManagerHandler;
             ArtifactoryClientConfiguration.NpmHandler npmHandler = clientConfiguration.npmHandler;
-            NpmInstallCi npmInstall = new NpmInstallCi(dependenciesClientBuilder,
-                    buildInfoClientBuilder,
+            NpmInstallCi npmInstall = new NpmInstallCi(artifactoryManagerBuilder,
                     clientConfiguration.resolver.getRepoKey(),
                     packageManagerHandler.getArgs(),
                     clientConfiguration.getLog(),
@@ -86,11 +65,29 @@ public class NpmInstallCi extends NpmCommand {
                     clientConfiguration.getAllProperties(),
                     packageManagerHandler.getModule(),
                     clientConfiguration.info.getBuildName(),
-                    npmHandler.isCiCommand());
+                    npmHandler.isCiCommand(),
+                    clientConfiguration.info.getProject());
             npmInstall.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
             System.exit(1);
+        }
+    }
+
+    @Override
+    public Build execute() {
+        try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+            this.artifactoryManager = artifactoryManager;
+            validatePath();
+            validateArtifactoryVersion();
+            validateNpmVersion();
+            validateRepoExists(artifactoryManager, repo, "Source repo must be specified");
+
+            NpmProject npmProject = new NpmProject(commandArgs, repo, workingDir, isCiCommand);
+            return buildInfoExtractor.extract(npmProject);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 }
