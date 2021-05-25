@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -12,6 +13,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class GetRepositoriesKeys extends JFrogService<List<String>> {
     private static final String REPOS_REST_URL = "api/repositories?type=";
@@ -19,7 +21,6 @@ public class GetRepositoriesKeys extends JFrogService<List<String>> {
     protected final Log log;
     RepositoryType repositoryType;
 
-    @SuppressWarnings("unchecked")
     public GetRepositoriesKeys(RepositoryType repositoryType, Log logger) {
         super(logger);
         result = new ArrayList<>();
@@ -37,8 +38,9 @@ public class GetRepositoriesKeys extends JFrogService<List<String>> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        GetRepositoriesKeyResponse localRepositories = getMapper(true).readValue(stream, GetRepositoriesKeyResponse.class);
-        result = localRepositories.getRepositoriesKey();
+        List<GetRepositoriesKeyResponse> keys = getMapper(true).readValue(stream, new TypeReference<List<GetRepositoriesKeyResponse>>() {
+        });
+        result = keys.stream().map(GetRepositoriesKeyResponse::getKey).collect(Collectors.toList());
     }
 
     @Override
