@@ -110,7 +110,7 @@ public class DockerPush extends DockerCommand {
         }
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             for (DockerLayer layer : layers.getLayers()) {
-                artifactoryManager.setProperties(layer.getFullPath(), artifactProperties, false);
+                artifactoryManager.setProperties(layer.getFullPath(), artifactProperties, true);
             }
         }
     }
