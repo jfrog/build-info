@@ -37,6 +37,6 @@ public class SearchArtifactsByAql extends JFrogService<AqlSearchResult> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, AqlSearchResult.class);
+        result = getMapper().readValue(stream, AqlSearchResult.class);
     }
 }

@@ -33,7 +33,7 @@ public class GetItemLastModified extends JFrogService<ItemLastModified> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, ItemLastModified.class);
+        result = getMapper().readValue(stream, ItemLastModified.class);
         try {
             if (result.getLastModified() == 0 || result.getUri() == null) {
                 throw new IOException("JSON response is missing URI or LastModified fields when requesting info for path " + path);

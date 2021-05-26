@@ -61,7 +61,7 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     @Override
     protected void setResponse(InputStream stream) throws IOException {
         if (!isExplode) {
-            result = getMapper(true).readValue(stream, ArtifactoryUploadResponse.class);
+            result = getMapper().readValue(stream, ArtifactoryUploadResponse.class);
         }
     }
 
@@ -149,7 +149,7 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
 
         @Override
         protected void setResponse(InputStream stream) throws IOException {
-            result = getMapper(true).readValue(stream, ArtifactoryUploadResponse.class);
+            result = getMapper().readValue(stream, ArtifactoryUploadResponse.class);
         }
     }
 }

@@ -37,7 +37,7 @@ public class GetRepositoriesKeys extends JFrogService<List<String>> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        GetRepositoriesKeyResponse localRepositories = getMapper(true).readValue(stream, GetRepositoriesKeyResponse.class);
+        GetRepositoriesKeyResponse localRepositories = getMapper().readValue(stream, GetRepositoriesKeyResponse.class);
         result = localRepositories.getRepositoriesKey();
     }
 

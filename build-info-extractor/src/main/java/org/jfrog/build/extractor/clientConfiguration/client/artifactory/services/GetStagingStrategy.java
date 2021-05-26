@@ -44,6 +44,6 @@ public class GetStagingStrategy extends JFrogService<Map> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, Map.class);
+        result = getMapper().readValue(stream, Map.class);
     }
 }
