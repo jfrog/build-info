@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.26.2 / gradle-artifactory-plugin 4.24.2 (May 25, 2021)
+- Gradle - Improve Gradle transitive dependency collection ([498](https://github.com/jfrog/build-info/pull/498))
+- Restructuring Artifactory APIs ([493](https://github.com/jfrog/build-info/pull/493))
+
 ## build-info-extractor 2.26.1 / gradle-artifactory-plugin 4.24.1 (May 23, 2021)
 - Gradle - Build-info is not published, if the build does not deploy artifacts ([495](https://github.com/jfrog/build-info/pull/495))
 
