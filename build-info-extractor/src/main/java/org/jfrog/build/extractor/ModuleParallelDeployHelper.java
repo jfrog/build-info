@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor;
 
+import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 
@@ -42,7 +43,8 @@ public class ModuleParallelDeployHelper {
     private void deploy(ArtifactoryManager artifactoryManager, Set<DeployDetails> deployableArtifacts, String logPrefix) {
         deployableArtifacts.forEach(artifact -> {
             try {
-                artifactoryManager.upload(artifact, logPrefix);
+                ArtifactoryUploadResponse response = artifactoryManager.upload(artifact, logPrefix);
+                response.getChecksums();
             } catch (IOException e) {
                 throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
                         artifact.getFile() +
