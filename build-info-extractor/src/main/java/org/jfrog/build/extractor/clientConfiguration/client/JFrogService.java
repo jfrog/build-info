@@ -61,7 +61,7 @@ public abstract class JFrogService<TResult> {
     }
 
     /**
-     * Default ObjectMapper to parse or deserialize JSON content into a Java object..
+     * Default ObjectMapper to parse or deserialize JSON content into a Java object.
      */
     protected ObjectMapper getMapper(boolean ignoreMissingFields) {
         if (mapper == null) {
