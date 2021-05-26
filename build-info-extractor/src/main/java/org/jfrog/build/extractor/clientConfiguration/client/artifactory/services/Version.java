@@ -29,7 +29,7 @@ public class Version extends JFrogService<ArtifactoryVersion> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        JsonNode result = getMapper(false).readTree(stream);
+        JsonNode result = getMapper(true).readTree(stream);
         log.debug("Version result: " + result);
         String version = result.get("version").asText();
         JsonNode addonsNode = result.get("addons");

@@ -36,6 +36,6 @@ public class SearchArtifactsByProperties extends JFrogService<PropertySearchResu
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(false).readValue(stream, PropertySearchResult.class);
+        result = getMapper(true).readValue(stream, PropertySearchResult.class);
     }
 }

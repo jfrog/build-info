@@ -33,6 +33,6 @@ public class SearchArtifactsByPattern extends JFrogService<PatternResultFileSet>
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(false).readValue(stream, PatternResultFileSet.class);
+        result = getMapper(true).readValue(stream, PatternResultFileSet.class);
     }
 }
