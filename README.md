@@ -15,7 +15,9 @@ export BITESTS_ARTIFACTORY_USERNAME=admin
 export BITESTS_ARTIFACTORY_PASSWORD=password
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
-* Before running the tests, please make sure you have a generic repository named *tests* in Artifactory.
+Before running the tests:
+1. Create a generic repository named *tests* in Artifactory.
+2. Create a project with *btests* as its key in Artifactory.
 
 ### Building
 When running the following commands to build the code, the entire testing suite is also executed. See the *Testing* section for configuration instructions prior to running the tests.

@@ -51,8 +51,8 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
-        doSendBuildInfoTest("jit");
-        sendBuildRetention("jit");
+        doSendBuildInfoTest("btests");
+        sendBuildRetention("btests");
     }
 
     private void doSendBuildInfoTest(String project) throws IOException {
