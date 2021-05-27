@@ -46,13 +46,13 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
     @Test
     public void sendBuildInfoAndBuildRetentioTest() throws IOException {
         doSendBuildInfoTest(null);
-        sendBuildRetentionTest("");
+        sendBuildRetention("");
     }
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
         doSendBuildInfoTest("jit");
-        sendBuildRetentionTest("jit");
+        sendBuildRetention("jit");
     }
 
     private void doSendBuildInfoTest(String project) throws IOException {
@@ -99,7 +99,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
     }
 
     @Test
-    private void sendBuildRetentionTest(String project) throws IOException {
+    private void sendBuildRetention(String project) throws IOException {
         BuildRetention buildRetention = new BuildRetention();
         buildRetention.setCount(1);
         buildRetention.setDeleteBuildArtifacts(false);
