@@ -98,7 +98,6 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
     }
 
-    @Test
     private void sendBuildRetention(String project) throws IOException {
         BuildRetention buildRetention = new BuildRetention();
         buildRetention.setCount(1);
