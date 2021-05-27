@@ -34,6 +34,6 @@ public class GetBuildInfo extends JFrogService<Build> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, GetBuildInfoResponse.class).getBuildInfo();
+        result = getMapper().readValue(stream, GetBuildInfoResponse.class).getBuildInfo();
     }
 }
