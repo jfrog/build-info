@@ -30,6 +30,8 @@ import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJso
 public class ArtifactoryManagerTest extends IntegrationTestsBase {
     private static final String TEST_SPACE = "bi_client_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
+    private static final String BUILD_NAME = "ArtifactoryManagerTest";
+    private static final String BUILD_NUMBER = "13";
 
     @BeforeMethod
     @AfterMethod
@@ -42,18 +44,18 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
      * Send build info to artifactory, receive it and compare.
      */
     @Test
-    public void sendBuildInfoTest() throws IOException {
+    public void sendBuildInfoAndBuildRetentioTest() throws IOException {
         doSendBuildInfoTest(null);
+        sendBuildRetention("");
     }
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
         doSendBuildInfoTest("jit");
+        sendBuildRetention("jit");
     }
 
     private void doSendBuildInfoTest(String project) throws IOException {
-        final String BUILD_NAME = "ArtifactoryManagerTest";
-        final String BUILD_NUMBER = "13";
         final Date STARTED = new Date();
         final List<Vcs> VCS = Arrays.asList(new Vcs("foo", "1"),
                 new Vcs("bar", "2"),
@@ -94,5 +96,12 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
         // Compare
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
+    }
+
+    private void sendBuildRetention(String project) throws IOException {
+        BuildRetention buildRetention = new BuildRetention();
+        buildRetention.setCount(1);
+        buildRetention.setDeleteBuildArtifacts(false);
+        artifactoryManager.sendBuildRetention(buildRetention, BUILD_NAME, project, false);
     }
 }
