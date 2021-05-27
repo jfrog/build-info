@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
@@ -29,9 +30,14 @@ public class SendBuildRetention extends VoidJFrogService {
     @Override
     public HttpRequestBase createRequest() throws IOException {
         log.info(createBuildRetentionLogMsg(buildRetention, async));
-        log.debug(toJsonString(buildRetention));
+        String buildRetentionString = toJsonString(buildRetention);
+        log.debug(buildRetentionString);
         String url = RETENTION_REST_URL + buildName + "?async=" + async + getProjectQueryParam(project, "&project=");
-        return new HttpPost(url);
+        StringEntity stringEntity = new StringEntity(buildRetentionString, "UTF-8");
+        stringEntity.setContentType("application/json");
+        HttpPost request = new HttpPost(url);
+        request.setEntity(stringEntity);
+        return request;
     }
 
     private String createBuildRetentionLogMsg(BuildRetention buildRetention, boolean async) {
