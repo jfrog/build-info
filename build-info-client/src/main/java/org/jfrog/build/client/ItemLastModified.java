@@ -13,6 +13,12 @@ public class ItemLastModified {
     String uri;
     String lastModified;
 
+    /**
+     * No args constructor for use in serialization
+     */
+    public ItemLastModified() {
+    }
+
     public ItemLastModified(String uri, String lastModified) {
         this.uri = uri;
         this.lastModified = lastModified;
