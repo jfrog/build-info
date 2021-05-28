@@ -1,5 +1,10 @@
 # Release Notes
 
+## build-info-extractor 2.26.3 / gradle-artifactory-plugin 4.24.3 (May 28, 2021)
+- Bug fix - Ignore missing fields while deserialize HTTP response ([502](https://github.com/jfrog/build-info/pull/502))
+- Bug fix - Build retention service sends an empty body ([504](https://github.com/jfrog/build-info/pull/504))
+- Bug fix - Artifactory Trigger cannot deserialize instance ItemLastModified ([503](https://github.com/jfrog/build-info/pull/503))
+
 ## build-info-extractor 2.26.2 / gradle-artifactory-plugin 4.24.2 (May 25, 2021)
 - Gradle - Improve Gradle transitive dependency collection ([498](https://github.com/jfrog/build-info/pull/498))
 - Restructuring Artifactory APIs ([493](https://github.com/jfrog/build-info/pull/493))
