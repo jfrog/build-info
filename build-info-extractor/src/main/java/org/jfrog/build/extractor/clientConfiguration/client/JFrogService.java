@@ -149,8 +149,7 @@ public abstract class JFrogService<TResult> {
             return;
         }
         try (InputStream stream = entity.getContent()) {
-            long contentLength = entity.getContentLength();
-            if (contentLength == 0 || responseType == JFrogServiceResponseType.EMPTY) {
+            if (responseType == JFrogServiceResponseType.EMPTY) {
                 return;
             }
             setResponse(stream);
