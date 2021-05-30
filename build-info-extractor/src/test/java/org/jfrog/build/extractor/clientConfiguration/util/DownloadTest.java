@@ -124,6 +124,7 @@ public class DownloadTest extends IntegrationTestsBase {
         Map<String, Integer> testFilesMap = new HashMap<String, Integer>() {{
             put("file1", MIN_SIZE_FOR_CONCURRENT_DOWNLOAD);
             put("file2", MIN_SIZE_FOR_CONCURRENT_DOWNLOAD - 1);
+            put("zeroByte", 0);
         }};
 
         Object[][] tests = new Object[testFilesMap.size()][4];
