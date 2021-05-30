@@ -149,6 +149,7 @@ public abstract class JFrogService<TResult> {
         }
         if (entity == null) {
             handleEmptyEntity();
+            return;
         }
         try (InputStream stream = entity.getContent()) {
             setResponse(stream);
