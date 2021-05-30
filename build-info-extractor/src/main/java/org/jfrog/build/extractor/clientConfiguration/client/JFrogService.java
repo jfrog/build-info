@@ -144,18 +144,22 @@ public abstract class JFrogService<TResult> {
     }
 
     private void processResponse(HttpEntity entity) throws IOException {
-        if (entity == null) {
-            handleEmptyEntity();
+        if (responseType == JFrogServiceResponseType.EMPTY) {
             return;
         }
+        if (entity == null) {
+            handleEmptyEntity();
+        }
         try (InputStream stream = entity.getContent()) {
-            if (responseType == JFrogServiceResponseType.EMPTY) {
-                return;
-            }
             setResponse(stream);
         }
     }
 
+    /**
+     * For services with responseType.OBJECT (expected a return value) may
+     * override this function which helps to handle scenarios whereby a response body needs to be read
+     * but do entity is found.
+     */
     protected void handleEmptyEntity() throws IOException {
     }
 
