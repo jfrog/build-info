@@ -240,11 +240,9 @@ public class ArtifactoryManager extends ManagerBase {
         return upload(details, logPrefix, null);
     }
 
-    public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer MinChecksumDeploySizeKb) throws IOException {
-        Upload uploadService = new Upload(details, logPrefix, MinChecksumDeploySizeKb, log);
-        ArtifactoryUploadResponse result = uploadService.execute(jfrogHttpClient);
-        log.info(logPrefix + " Deployed artifact: " + result.getUri());
-        return result;
+    public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer minChecksumDeploySizeKb) throws IOException {
+        Upload uploadService = new Upload(details, logPrefix, minChecksumDeploySizeKb, log);
+        return uploadService.execute(jfrogHttpClient);
     }
 
     public void deleteRepository(String repository) throws IOException {
