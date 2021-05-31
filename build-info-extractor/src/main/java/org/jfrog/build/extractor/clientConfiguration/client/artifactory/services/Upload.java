@@ -25,6 +25,8 @@ import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientCon
 public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     public static final String SHA1_HEADER_NAME = "X-Checksum-Sha1";
     public static final String MD5_HEADER_NAME = "X-Checksum-Md5";
+    public static final String EXPLODE_HEADER_NAME = "X-Explode-Archive";
+    public static final String CHECKSUM_DEPLOY_HEADER_NAME = "X-Checksum-Deploy";
     private final DeployDetails details;
     private final String logPrefix;
     private final Integer minChecksumDeploySizeKb;
@@ -40,12 +42,11 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     @Override
     public HttpRequestBase createRequest() throws IOException {
         HttpPut request = createHttpPutMethod(details);
-        log.info(logPrefix + "Deploying artifact: " + request.getURI().toString());
         // add the 100 continue directive
         request.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
         if (details.isExplode()) {
             this.isExplode = true;
-            request.addHeader("X-Explode-Archive", "true");
+            request.addHeader(EXPLODE_HEADER_NAME, "true");
         }
         FileEntity fileEntity = new FileEntity(details.getFile(), "binary/octet-stream");
         request.setEntity(fileEntity);
@@ -67,12 +68,12 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
 
     @Override
     public ArtifactoryUploadResponse execute(JFrogHttpClient client) throws IOException {
+        log.info(logPrefix + "Deploying artifact: " + client.getUrl() + "/" + StringUtils.removeStart(buildDefaultUploadPath(details), "/"));
         ArtifactoryUploadResponse response = tryChecksumUpload(client);
         if (response != null) {
             // Checksum deploy was performed:
             return response;
         }
-
         return super.execute(client);
     }
 
@@ -140,9 +141,8 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
             }
 
             HttpPut request = createHttpPutMethod(details);
-            log.info(logPrefix + "Deploying artifact: " + request.getURI().toString());
             // activate checksum deploy
-            request.addHeader("X-Checksum-Deploy", "true");
+            request.addHeader(CHECKSUM_DEPLOY_HEADER_NAME, "true");
 
             return request;
         }
