@@ -83,7 +83,7 @@ public class DockerPush extends DockerCommand {
         try {
             DockerJavaWrapper.pushImage(imageTag, username, password, host, env, logger);
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
-            DockerImage image = new DockerImage(imageId, imageTag, targetRepository, artifactoryManagerBuilder, "", "");
+            DockerImage image = new DockerImage(imageId, imageTag, "", targetRepository, artifactoryManagerBuilder, "", "");
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
             if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");

@@ -1,7 +1,8 @@
 package org.jfrog.build.extractor.docker.types;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.Header;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -12,6 +13,7 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryVersion;
+import org.jfrog.build.client.DownloadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.docker.DockerUtils;
@@ -21,8 +23,10 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jfrog.build.client.DownloadResponse.SHA256_HEADER_NAME;
+
 public class DockerImage implements Serializable {
-    private final String imageId;
+    private String imageId;
     private final String imageTag;
     private final String targetRepo;
     // Properties to be attached to the docker layers deployed to Artifactory.
@@ -35,14 +39,16 @@ public class DockerImage implements Serializable {
     private String manifest;
     private String imagePath;
     private DockerLayers layers;
+    private final String manifestSha256;
 
-    public DockerImage(String imageId, String imageTag, String targetRepo, ArtifactoryManagerBuilder artifactoryManagerBuilder, String arch, String os) {
+    public DockerImage(String imageId, String imageTag, String manifestSha256, String targetRepo, ArtifactoryManagerBuilder artifactoryManagerBuilder, String arch, String os) {
         this.imageId = imageId;
         this.imageTag = imageTag;
         this.targetRepo = targetRepo;
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.architecture = arch;
         this.os = os;
+        this.manifestSha256 = manifestSha256;
     }
 
     public DockerLayers getLayers() {
@@ -50,19 +56,47 @@ public class DockerImage implements Serializable {
     }
 
     /**
-     * Check if the provided manifestPath is correct.
+     * Check if the provided manifestPath is correct by comparing the SHA256 of the image or of the manifest.
      * Set the manifest and imagePath in case of the correct manifest.
+     * Also, if manifestSha256 is provided, set the actual imageId in case of the correct manifest.
      */
     private void checkAndSetManifestAndImagePathCandidates(String candidateManifestPath, ArtifactoryManager artifactoryManager, Log logger) throws IOException {
-        Pair<String, String> candidateDetails = getManifestFromArtifactory(artifactoryManager, candidateManifestPath, logger);
-        String manifestContent = candidateDetails.getLeft();
+        Pair<DownloadResponse, String> candidateDetails = getManifestFromArtifactory(artifactoryManager, candidateManifestPath, logger);
+        DownloadResponse downloadResponse = candidateDetails.getLeft();
+        String manifestContent = downloadResponse.getContent();
         String manifestPath = candidateDetails.getRight();
-        String imageDigest = DockerUtils.getConfigDigest(manifestContent);
-        if (imageDigest.equals(imageId)) {
-            manifest = manifestContent;
-            imagePath = manifestPath;
-            loadLayers(manifestPath);
+        if (StringUtils.isNotBlank(manifestSha256)) {
+            // If manifestSha256 is set, we should check the manifest's SHA256 instead of the image's SHA256.
+            // This scenario is used for Kaniko and JIB.
+            if (!checkDownloadedManifest(downloadResponse, manifestPath)) {
+                // The downloaded manifest is not the expected one.
+                return;
+            }
+            // Extract the image ID from the downloaded manifest.
+            imageId = DockerUtils.getConfigDigest(manifestContent);
+        } else if (!DockerUtils.getConfigDigest(manifestContent).equals(imageId)) {
+            // The downloaded manifest does not contain the expected image SHA256
+            return;
         }
+        manifest = manifestContent;
+        imagePath = manifestPath;
+        loadLayers(manifestPath);
+    }
+
+    /**
+     * Return true if the SHA256 of the downloaded manifest.json file is matched the expected one.
+     *
+     * @param downloadResponse - The download response from the 'GET <manifestPath>' REST API
+     * @param manifestPath     - The actual path to the manifest.json file in Artifactory
+     * @return if the SHA256 of the downloaded manifest.json file is matched the expected one.
+     * @throws IOException in case the 'X-Checksum-Sha256' is missing in the response.
+     */
+    private boolean checkDownloadedManifest(DownloadResponse downloadResponse, String manifestPath) throws IOException {
+        Header manifestSha256 = Arrays.stream(downloadResponse.getHeaders())
+                .filter(header -> SHA256_HEADER_NAME.equals(header.getName()))
+                .findFirst()
+                .orElseThrow(() -> new IOException(String.format("'%s' header is missing in GET '%s'.", SHA256_HEADER_NAME, manifestPath)));
+        return StringUtils.endsWith(this.manifestSha256, manifestSha256.getValue());
     }
 
     /**
@@ -76,7 +110,8 @@ public class DockerImage implements Serializable {
      * @return A pair of (manifest content, path to manifest).
      * @throws IOException fail to search for manifest json in manifestPath.
      */
-    private Pair<String, String> getManifestFromArtifactory(ArtifactoryManager artifactoryManager, String manifestPath, Log logger) throws IOException {
+    private Pair<DownloadResponse, String> getManifestFromArtifactory(ArtifactoryManager artifactoryManager, String
+            manifestPath, Log logger) throws IOException {
         String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
         String downloadUrl = manifestPath + "/manifest.json";
         logger.info("Trying to download manifest from " + downloadUrl);
@@ -88,7 +123,7 @@ public class DockerImage implements Serializable {
             }
             downloadUrl = manifestPath + "/list.manifest.json";
             logger.info("Fallback for remote/virtual repository. Trying to download fat-manifest from " + downloadUrl);
-            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(artifactoryManager.download(downloadUrl), os, architecture);
+            String digestsFromFatManifest = DockerUtils.getImageDigestFromFatManifest(artifactoryManager.download(downloadUrl).getContent(), os, architecture);
             if (digestsFromFatManifest.isEmpty()) {
                 logger.info("Failed to get image digest from fat manifest");
                 throw e;
@@ -125,37 +160,38 @@ public class DockerImage implements Serializable {
     /**
      * Search the docker image in Artifactory and add all artifacts & dependencies into Module.
      */
-    private void setDependenciesAndArtifacts(ModuleBuilder moduleBuilder, ArtifactoryManager artifactoryManager) throws IOException {
+    private void setDependenciesAndArtifacts(ModuleBuilder moduleBuilder, ArtifactoryManager artifactoryManager) throws
+            IOException {
         DockerLayer historyLayer = layers.getByDigest(imageId);
         if (historyLayer == null) {
             throw new IllegalStateException("Could not find the history docker layer: " + imageId + " for image: " + imageTag + " in Artifactory.");
         }
-        int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(artifactoryManager.download(historyLayer.getFullPath()));
+        int dependencyLayerNum = DockerUtils.getNumberOfDependentLayers(artifactoryManager.download(historyLayer.getFullPath()).getContent());
 
-            LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
-            LinkedHashSet<Artifact> artifacts = new LinkedHashSet<>();
-            // Filter out duplicate layers from manifest by using HashSet.
-            // Docker manifest may hold 'empty layers', as a result, docker promote will fail to promote the same layer more than once.
-            Iterator<String> it = DockerUtils.getLayersDigests(manifest).iterator();
-            for (int i = 0; i < dependencyLayerNum; i++) {
-                String digest = it.next();
-                DockerLayer layer = layers.getByDigest(digest);
-                Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).build();
-                dependencies.add(dependency);
-                Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
-                artifacts.add(artifact);
+        LinkedHashSet<Dependency> dependencies = new LinkedHashSet<>();
+        LinkedHashSet<Artifact> artifacts = new LinkedHashSet<>();
+        // Filter out duplicate layers from manifest by using HashSet.
+        // Docker manifest may hold 'empty layers', as a result, docker promote will fail to promote the same layer more than once.
+        Iterator<String> it = DockerUtils.getLayersDigests(manifest).iterator();
+        for (int i = 0; i < dependencyLayerNum; i++) {
+            String digest = it.next();
+            DockerLayer layer = layers.getByDigest(digest);
+            Dependency dependency = new DependencyBuilder().id(layer.getFileName()).sha1(layer.getSha1()).build();
+            dependencies.add(dependency);
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
+            artifacts.add(artifact);
+        }
+        moduleBuilder.dependencies(new ArrayList<>(dependencies));
+        while (it.hasNext()) {
+            String digest = it.next();
+            DockerLayer layer = layers.getByDigest(digest);
+            if (layer == null) {
+                continue;
             }
-            moduleBuilder.dependencies(new ArrayList<>(dependencies));
-            while (it.hasNext()) {
-                String digest = it.next();
-                DockerLayer layer = layers.getByDigest(digest);
-                if (layer == null) {
-                    continue;
-                }
-                Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
-                artifacts.add(artifact);
-            }
-            moduleBuilder.artifacts(new ArrayList<>(artifacts));
+            Artifact artifact = new ArtifactBuilder(layer.getFileName()).sha1(layer.getSha1()).remotePath(layer.getPath()).build();
+            artifacts.add(artifact);
+        }
+        moduleBuilder.artifacts(new ArrayList<>(artifacts));
     }
 
     private void setDependencies(ModuleBuilder moduleBuilder) throws IOException {
@@ -186,7 +222,8 @@ public class DockerImage implements Serializable {
         return aqlRequestForDockerSha.toString();
     }
 
-    public Module generateBuildInfoModule(Log logger, DockerUtils.CommandType cmdType) throws IOException, InterruptedException {
+    public Module generateBuildInfoModule(Log logger, DockerUtils.CommandType cmdType) throws
+            IOException, InterruptedException {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             ModuleBuilder moduleBuilder = new ModuleBuilder()
                     .type(ModuleType.DOCKER)
@@ -245,7 +282,8 @@ public class DockerImage implements Serializable {
      * Find and validate manifest.json file in Artifactory for the current image.
      * Since provided imageTag differs between reverse-proxy and proxy-less configuration, try to build the correct manifest path.
      */
-    private void findAndSetManifestFromArtifactory(ArtifactoryManager artifactoryManager, Log logger, DockerUtils.CommandType cmdType) throws IOException {
+    private void findAndSetManifestFromArtifactory(ArtifactoryManager artifactoryManager, Log
+            logger, DockerUtils.CommandType cmdType) throws IOException {
         // Try to get manifest, assuming reverse proxy
         String ImagePath = DockerUtils.getImagePath(imageTag);
         ArrayList<String> manifestPathCandidate = new ArrayList<>(DockerUtils.getArtManifestPath(ImagePath, targetRepo, cmdType));

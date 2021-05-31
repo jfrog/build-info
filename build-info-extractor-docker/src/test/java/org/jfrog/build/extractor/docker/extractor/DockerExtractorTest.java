@@ -1,27 +1,32 @@
 package org.jfrog.build.extractor.docker.extractor;
 
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.api.*;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
+import org.jfrog.build.extractor.executor.CommandExecutor;
+import org.jfrog.build.extractor.executor.CommandResults;
 import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.List;
 
@@ -29,12 +34,12 @@ import static org.testng.Assert.*;
 
 @Test
 public class DockerExtractorTest extends IntegrationTestsBase {
-    private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
+    private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor", "docker"));
+    private static final String PROJECT_PATH = PROJECTS_ROOT.toAbsolutePath().toString();
     private static final String SHORT_IMAGE_NAME = "jfrog_artifactory_buildinfo_tests";
     private static final String SHORT_IMAGE_TAG_LOCAL = "2";
     private static final String SHORT_IMAGE_TAG_VIRTUAL = "3";
-    private static final String EXPECTED_REMOTE_PATH_LOCAL = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG_LOCAL;
-    private static final String EXPECTED_REMOTE_PATH_VIRTUAL = SHORT_IMAGE_NAME + "/" + SHORT_IMAGE_TAG_VIRTUAL;
+    private static final String EXPECTED_REMOTE_PATH_KANIKO = "hello-world/latest";
 
     private static final String LOCAL_DOMAIN = "BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN";
     private static final String REMOTE_DOMAIN = "BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN";
@@ -44,9 +49,6 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private static final String DOCKER_VIRTUAL_REPO = "BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO";
     private static final String DOCKER_HOST = "BITESTS_ARTIFACTORY_DOCKER_HOST";
     private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
-    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
-    private String localDomainName;
-    private String remoteDomainName;
     private String pullImageFromVirtual;
     private String virtualDomainName;
     private String dockerLocalRepo;
@@ -68,17 +70,15 @@ public class DockerExtractorTest extends IntegrationTestsBase {
                 .build());
     }
 
-    private static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
-    }
-
     @BeforeClass
     private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
-        // Get image name
-        localDomainName = validateDomainSuffix(System.getenv(LOCAL_DOMAIN));
-        remoteDomainName = validateDomainSuffix(System.getenv(REMOTE_DOMAIN));
-        virtualDomainName = validateDomainSuffix(System.getenv(VIRTUAL_DOMAIN));
+        if (SystemUtils.IS_OS_WINDOWS) {
+            throw new SkipException("Skipping Docker tests on Windows OS");
+        }
+        assertEnvironment();
+        String localDomainName = StringUtils.appendIfMissing(System.getenv(LOCAL_DOMAIN), "/");
+        String remoteDomainName = StringUtils.appendIfMissing(System.getenv(REMOTE_DOMAIN), "/");
+        virtualDomainName = System.getenv(VIRTUAL_DOMAIN);
         dockerLocalRepo = System.getenv(DOCKER_LOCAL_REPO);
         dockerRemoteRepo = System.getenv(DOCKER_REMOTE_REPO);
         dockerVirtualRepo = System.getenv(DOCKER_VIRTUAL_REPO);
@@ -86,193 +86,135 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         imageTagLocal = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
         imageTagVirtual = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
         pullImageFromRemote = remoteDomainName + "hello-world:latest";
-        pullImageFromVirtual = virtualDomainName + "hello-world:latest";
+        pullImageFromVirtual = StringUtils.appendIfMissing(virtualDomainName, "/") + "hello-world:latest";
+    }
+
+    private void assertEnvironment() {
+        Lists.newArrayList(LOCAL_DOMAIN, DOCKER_LOCAL_REPO,
+                REMOTE_DOMAIN, DOCKER_REMOTE_REPO,
+                VIRTUAL_DOMAIN, DOCKER_VIRTUAL_REPO)
+                .forEach(envKey -> assertNotNull(System.getenv(envKey), "The '" + envKey + "' environment variable is not set, failing docker tests."));
+    }
+
+    @AfterClass
+    private void tearDown() throws IOException {
+        deleteContentFromRepo(dockerLocalRepo);
     }
 
     @Test
-    public void dockerPushFromLocalTest() {
-        if (isWindows()) {
-            throw new SkipException("Skipping Docker tests on Windows OS");
-        }
-        try {
-            if (StringUtils.isBlank(localDomainName)) {
-                throw new IOException("The " + LOCAL_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerLocalRepo)) {
-                throw new IOException("The " + DOCKER_LOCAL_REPO + " environment variable is not set, failing docker tests.");
-            }
-            String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), projectPath);
-
-            DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            Build build = dockerPush.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
-
-            assertEquals(module.getType(), "docker");
-            assertEquals(module.getRepository(), dockerLocalRepo);
-            List<Artifact> artifacts = module.getArtifacts();
-            validateImageArtifacts(artifacts, imageTagLocal);
-            assertEquals(7, artifacts.size());
-            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_LOCAL));
-            assertEquals(5, module.getDependencies().size());
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
-        }
+    public void dockerPushToLocalTest() {
+        DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), PROJECT_PATH);
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+        pushAndValidateImage(dockerPush, dockerLocalRepo, imageTagLocal, SHORT_IMAGE_TAG_LOCAL);
     }
 
     @Test
-    public void dockerPushFromVirtualTest() {
-        if (isWindows()) {
-            throw new SkipException("Skipping Docker tests on Windows OS");
-        }
-        try {
-            if (StringUtils.isBlank(virtualDomainName)) {
-                throw new IOException("The " + LOCAL_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerVirtualRepo)) {
-                throw new IOException("The " + DOCKER_LOCAL_REPO + " environment variable is not set, failing docker tests.");
-            }
-            String projectPath = PROJECTS_ROOT.resolve("docker-push").toAbsolutePath().toString();
-            DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), projectPath);
-
-            DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            Build build = dockerPush.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
-
-            assertEquals(module.getType(), "docker");
-            assertEquals(module.getRepository(), dockerVirtualRepo);
-            List<Artifact> artifacts = module.getArtifacts();
-            validateImageArtifacts(artifacts, imageTagVirtual);
-            assertEquals(7, artifacts.size());
-            module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), EXPECTED_REMOTE_PATH_VIRTUAL));
-            assertEquals(5, module.getDependencies().size());
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
-        }
+    public void dockerPushToVirtualTest() {
+        DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), PROJECT_PATH);
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+        pushAndValidateImage(dockerPush, dockerVirtualRepo, imageTagVirtual, SHORT_IMAGE_TAG_VIRTUAL);
     }
 
     @Test
     public void dockerPullFromRemoteTest() {
-        if (isWindows()) {
-            getLog().info("Skipping Docker tests on Windows OS");
-            return;
-        }
-        try {
-            if (StringUtils.isBlank(remoteDomainName)) {
-                throw new IOException("The " + REMOTE_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerRemoteRepo)) {
-                throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
-            }
-            DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
-        }
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+        validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
     }
 
     @Test
     public void dockerPullFromVirtualTest() {
-        if (isWindows()) {
-            getLog().info("Skipping Docker tests on Windows OS");
-            return;
-        }
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
+        validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
+    }
+
+    @Test
+    public void buildDockerCreateKanikoTest() throws IOException, InterruptedException {
+        Path workingDirectory = Files.createTempDirectory("build-docker-create-kaniko-test",
+                PosixFilePermissions.asFileAttribute(Sets.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE)));
         try {
-            if (StringUtils.isBlank(virtualDomainName)) {
-                throw new IOException("The " + VIRTUAL_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerVirtualRepo)) {
-                throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
-            }
-            DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getPassword(), getLog(), Collections.emptyMap());
-            validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
+            FileUtils.copyDirectory(new File(PROJECT_PATH), workingDirectory.toFile());
+            Path kanikoConfig = createKanikoConfig(workingDirectory, virtualDomainName);
+            String kanikoFile = execKaniko(workingDirectory, virtualDomainName, kanikoConfig);
+
+            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile, BuildDockerCreate.ImageFileType.KANIKO, artifactProperties, dockerVirtualRepo, getLog());
+            Build build = buildDockerCreate.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = getAndValidateModule(build, "hello-world:latest", dockerVirtualRepo);
+            module.getArtifacts().stream().map(BaseBuildFileBean::getRemotePath).forEach(remotePath -> assertEquals(remotePath, EXPECTED_REMOTE_PATH_KANIKO));
+        } finally {
+            FileUtils.deleteDirectory(workingDirectory.toFile());
         }
     }
 
     @Test
-    public void buildDockerCreateFromRemoteTest() {
-        if (isWindows()) {
-            throw new SkipException("Skipping Docker tests on Windows OS");
-        }
-        Path kanikoFile = null;
+    public void buildDockerCreateJibTest() throws IOException, InterruptedException {
+        Path wd = Files.createTempDirectory("build-docker-create-jib-test",
+                PosixFilePermissions.asFileAttribute(Sets.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE)));
         try {
-            if (StringUtils.isBlank(remoteDomainName)) {
-                throw new IOException("The " + REMOTE_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerRemoteRepo)) {
-                throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
-            }
-            // Get the image id for the image already in artifactory
-            DockerJavaWrapper.pullImage(pullImageFromRemote, getUsername(), getPassword(), host, Collections.emptyMap(), getLog());
-            String imageId = DockerJavaWrapper.getImageIdFromTag(pullImageFromRemote, host, Collections.emptyMap(), getLog());
-            // Create the image file from the already created image
-            String kanikoImageData = pullImageFromRemote + '@' + imageId;
-            kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
-            Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
+            FileUtils.copyDirectory(PROJECTS_ROOT.resolve("maven-jib-example").toFile(), wd.toFile());
+            execJib(wd);
 
-            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerRemoteRepo, getLog());
-            Build build = buildDockerCreate.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
+            // Run build-docker-create
+            BuildDockerCreate.ImageFileType imageFileType = BuildDockerCreate.ImageFileType.JIB;
+            Build build = new BuildDockerCreate(artifactoryManagerBuilder, getJibImageJsonPath(wd),
+                    imageFileType, artifactProperties, dockerVirtualRepo, getLog()).execute();
 
-            assertEquals(module.getType(), "docker");
-            assertEquals(module.getRepository(), dockerRemoteRepo);
-            List<Artifact> artifacts = module.getArtifacts();
-            validateImageArtifacts(artifacts, pullImageFromRemote);
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
+            // Check modules
+            assertEquals(build.getModules().size(), 3);
+            Module module = getAndValidateModule(build, "multi1", dockerVirtualRepo);
+            assertEquals(module.getArtifacts().size(), 10);
+            module = getAndValidateModule(build, "multi2", dockerVirtualRepo);
+            assertEquals(module.getArtifacts().size(), 9);
+            module = getAndValidateModule(build, "multi3", dockerVirtualRepo);
+            assertEquals(module.getArtifacts().size(), 11);
         } finally {
-            if (kanikoFile != null) {
-                try {
-                    Files.deleteIfExists(kanikoFile);
-                } catch (IOException ex) {}
-            }
+            FileUtils.deleteDirectory(wd.toFile());
         }
     }
 
-    @Test
-    public void buildDockerCreateFromVirtualTest() {
-        if (isWindows()) {
-            throw new SkipException("Skipping Docker tests on Windows OS");
-        }
-        Path kanikoFile = null;
-        try {
-            if (StringUtils.isBlank(virtualDomainName)) {
-                throw new IOException("The " + VIRTUAL_DOMAIN + " environment variable is not set, failing docker tests.");
-            }
-            if (StringUtils.isBlank(dockerVirtualRepo)) {
-                throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
-            }
-            // Get the image id for the image already in artifactory
-            DockerJavaWrapper.pullImage(pullImageFromVirtual, getUsername(), getPassword(), host, Collections.emptyMap(), getLog());
-            String imageId = DockerJavaWrapper.getImageIdFromTag(pullImageFromVirtual, host, Collections.emptyMap(), getLog());
-            // Create the image file from the already created image
-            String kanikoImageData = pullImageFromVirtual + '@' + imageId;
-            kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
-            Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
+    private Path createKanikoConfig(Path workingDirectory, String registry) throws IOException {
+        Path kanikoConfigPath = workingDirectory.toAbsolutePath().resolve("kaniko-config.json");
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode credentials = mapper.createObjectNode()
+                .put("username", getUsername())
+                .put("password", getPassword());
+        ObjectNode registryNode = mapper.createObjectNode().set(registry, credentials);
+        String kanikoConfig = mapper.createObjectNode().set("auths", registryNode).toPrettyString();
+        Files.write(kanikoConfigPath, kanikoConfig.getBytes(StandardCharsets.UTF_8));
+        return kanikoConfigPath;
+    }
 
-            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerVirtualRepo, getLog());
-            Build build = buildDockerCreate.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
+    private String execKaniko(Path workingDirectory, String registry, Path kanikoConfigPath) throws IOException, InterruptedException {
+        CommandExecutor commandExecutor = new CommandExecutor("docker", null);
+        List<String> args = Lists.newArrayList("run", "--rm", "-v",
+                workingDirectory.toAbsolutePath() + ":/workspace", "-v",
+                kanikoConfigPath + ":/kaniko/.docker/config.json:ro", "gcr.io/kaniko-project/executor:latest",
+                "--dockerfile=Dockerfile", "--destination=" + registry + "/hello-world",
+                "--image-name-tag-with-digest-file=image-file");
+        CommandResults results = commandExecutor.exeCommand(workingDirectory.toFile(), args, null, getLog());
+        assertTrue(results.isOk(), results.getErr());
+        return workingDirectory.resolve("image-file").toAbsolutePath().toString();
+    }
 
-            assertEquals(module.getType(), "docker");
-            assertEquals(module.getRepository(), dockerVirtualRepo);
-            List<Artifact> artifacts = module.getArtifacts();
-            validateImageArtifacts(artifacts, pullImageFromVirtual);
-        } catch (Exception e) {
-            fail(ExceptionUtils.getStackTrace(e));
-        } finally {
-            if (kanikoFile != null) {
-                try {
-                    Files.deleteIfExists(kanikoFile);
-                } catch (IOException ex) {}
-            }
-        }
+    private void execJib(Path workingDirectory) throws IOException, InterruptedException {
+        CommandExecutor commandExecutor = new CommandExecutor("mvn", null);
+        List<String> args = Lists.newArrayList("compile", "jib:build");
+        CommandResults results = commandExecutor.exeCommand(workingDirectory.toFile(), args, null, getLog());
+        assertTrue(results.isOk(), results.getErr());
+    }
+
+    private String getJibImageJsonPath(Path workingDirectory) {
+        return workingDirectory.resolve("*").resolve("target").resolve("jib-image.json").toAbsolutePath().toString();
+    }
+
+    private void pushAndValidateImage(DockerPush dockerPush, String repo, String imageTag, String shortImageTag) {
+        Build build = dockerPush.execute();
+        Module module = getAndValidateModule(build, SHORT_IMAGE_NAME + ":" + shortImageTag, repo);
+        List<Artifact> artifacts = module.getArtifacts();
+        validateImageArtifacts(artifacts, imageTag);
+        assertEquals(7, artifacts.size());
+        module.getArtifacts().forEach(artifact -> assertEquals(artifact.getRemotePath(), SHORT_IMAGE_NAME + "/" + shortImageTag));
+        assertEquals(5, module.getDependencies().size());
     }
 
     private void validatePulledDockerImage(Build build, String image) {
@@ -290,6 +232,16 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         assertTrue(deps.stream().anyMatch(dep -> dep.getId().equals(imageDigest)));
     }
 
+    private Module getAndValidateModule(Build build, String id, String repo) {
+        Module module = build.getModules().stream()
+                .filter(moduleCandidate -> StringUtils.equals(moduleCandidate.getId(), id))
+                .findFirst().orElse(null);
+        assertNotNull(module);
+        assertEquals(module.getType(), "docker");
+        assertEquals(module.getRepository(), repo);
+        return module;
+    }
+
     private void validateImageArtifacts(List<Artifact> arts, String image) {
         String imageDigest = getImageId(image);
         assertTrue(arts.stream().anyMatch(art -> art.getName().equals(imageDigest)));
@@ -299,14 +251,5 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         String id = DockerJavaWrapper.InspectImage(image, host, Collections.emptyMap(), getLog()).getId();
         assertNotNull(id);
         return id.replace(":", "__");
-    }
-
-    private String validateDomainSuffix(String domain) {
-        return StringUtils.appendIfMissing(domain, "/");
-    }
-
-    @AfterClass
-    private void tearDown() throws IOException {
-        deleteContentFromRepo(dockerLocalRepo);
     }
 }

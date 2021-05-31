@@ -39,6 +39,7 @@ public interface ClientConfigurationFields {
     String DOTNET_NUGET_PROTOCOL = "dotnet.nuget.protocol";
     String DOCKER_IMAGE_TAG = "docker.image.tag";
     String KANIKO_IMAGE_FILE = "kaniko.image.file";
+    String JIB_IMAGE_FILE = "jib.image.file";
     String DOCKER_HOST = "docker.host";
     String URL = "url";
     String REPO_KEY = "repoKey";
