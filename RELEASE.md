@@ -1,6 +1,6 @@
 # Release Notes
 
-## build-info-extractor 2.26.3 / gradle-artifactory-plugin 4.24.3 (May 31, 2021)
+## build-info-extractor 2.26.4 / gradle-artifactory-plugin 4.24.4 (May 31, 2021)
 - Bug fix - Error when trying to download an empty (zero bytes size) file ([507](https://github.com/jfrog/build-info/pull/507))
 - Bug fix - Deploy file doesn't print full URL in the log output ([509](https://github.com/jfrog/build-info/pull/509))
 
