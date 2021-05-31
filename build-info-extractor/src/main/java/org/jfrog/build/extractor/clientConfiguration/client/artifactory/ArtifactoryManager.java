@@ -243,7 +243,7 @@ public class ArtifactoryManager extends ManagerBase {
     public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer MinChecksumDeploySizeKb) throws IOException {
         Upload uploadService = new Upload(details, logPrefix, MinChecksumDeploySizeKb, log);
         ArtifactoryUploadResponse result = uploadService.execute(jfrogHttpClient);
-        log.info(logPrefix + "Deployed artifact: " + result.getUri());
+        log.info(logPrefix + " Deployed artifact: " + result.getUri());
         return result;
     }
 
