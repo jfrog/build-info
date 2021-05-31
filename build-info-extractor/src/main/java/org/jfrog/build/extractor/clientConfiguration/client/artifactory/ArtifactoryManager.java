@@ -22,7 +22,6 @@ import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.RepositoryType;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.*;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
-import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.jfrog.build.extractor.usageReport.UsageReporter;
 
 import java.io.File;
@@ -243,7 +242,9 @@ public class ArtifactoryManager extends ManagerBase {
 
     public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer MinChecksumDeploySizeKb) throws IOException {
         Upload uploadService = new Upload(details, logPrefix, MinChecksumDeploySizeKb, log);
-        return uploadService.execute(jfrogHttpClient);
+        ArtifactoryUploadResponse result = uploadService.execute(jfrogHttpClient);
+        log.info(logPrefix + "Deployed artifact: " + result.getUri());
+        return result;
     }
 
     public void deleteRepository(String repository) throws IOException {

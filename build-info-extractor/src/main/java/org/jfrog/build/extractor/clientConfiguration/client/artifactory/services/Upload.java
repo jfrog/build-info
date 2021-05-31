@@ -40,7 +40,6 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
     @Override
     public HttpRequestBase createRequest() throws IOException {
         HttpPut request = createHttpPutMethod(details);
-        log.info(logPrefix + "Deploying artifact: " + request.getURI().toString());
         // add the 100 continue directive
         request.addHeader(HTTP.EXPECT_DIRECTIVE, HTTP.EXPECT_CONTINUE);
         if (details.isExplode()) {
@@ -72,7 +71,6 @@ public class Upload extends JFrogService<ArtifactoryUploadResponse> {
             // Checksum deploy was performed:
             return response;
         }
-
         return super.execute(client);
     }
 
