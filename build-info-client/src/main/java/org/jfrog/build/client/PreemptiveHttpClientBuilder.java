@@ -193,7 +193,7 @@ public class PreemptiveHttpClientBuilder {
         builder.addInterceptorFirst(new PreemptiveHttpClient.PreemptiveAuth());
 
         // Set the following user agent with each request
-        String userAgent = StringUtils.defaultIfEmpty(this.userAgent, "Artifactory2BuildClient/" + CLIENT_VERSION);
+        String userAgent = StringUtils.defaultIfEmpty(this.userAgent, "ArtifactoryBuildClient/" + CLIENT_VERSION);
         builder.setUserAgent(userAgent);
 
         setDefaultCookieSpecRegistry(builder);

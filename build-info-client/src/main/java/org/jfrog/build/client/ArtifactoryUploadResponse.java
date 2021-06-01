@@ -120,14 +120,11 @@ public class ArtifactoryUploadResponse {
     public static class Checksums {
         private String sha1;
         private String md5;
-
-        public void setSha256(String sha256) {
-            this.sha256 = sha256;
-        }
-
         private String sha256;
 
         public String getSha256() { return sha256; }
+
+        public void setSha256(String sha256) { this.sha256 = sha256; }
 
         public String getSha1() {
             return sha1;
