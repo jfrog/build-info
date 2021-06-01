@@ -29,7 +29,7 @@ public class CheckRepositoryType extends JFrogService<Boolean> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        RepositoryConfig repositoryConfig = getMapper(true).readValue(stream, RepositoryConfig.class);
+        RepositoryConfig repositoryConfig = getMapper().readValue(stream, RepositoryConfig.class);
         switch (repositoryType) {
             case LOCAL:
                 result = "local".equals(repositoryConfig.getRclass());

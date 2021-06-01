@@ -37,6 +37,6 @@ public class RetrievePatternArtifacts extends JFrogService<List<BuildPatternArti
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, TypeFactory.defaultInstance().constructCollectionLikeType(List.class, BuildPatternArtifacts.class));
+        result = getMapper().readValue(stream, TypeFactory.defaultInstance().constructCollectionLikeType(List.class, BuildPatternArtifacts.class));
     }
 }

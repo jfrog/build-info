@@ -29,10 +29,9 @@ public class DownloadToFile extends DownloadBase<File> {
         // Save InputStream to file
         try (FileOutputStream fileOutputStream = new FileOutputStream(dest)) {
             IOUtils.copyLarge(inputStream, fileOutputStream);
-
             return dest;
         } catch (IOException e) {
-            throw new IOException(String.format("Could not create or write to file: %s", dest.getCanonicalPath()), e);
+            throw new IOException(String.format("Could not create nor write to file: %s", dest.getCanonicalPath()), e);
         }
     }
 

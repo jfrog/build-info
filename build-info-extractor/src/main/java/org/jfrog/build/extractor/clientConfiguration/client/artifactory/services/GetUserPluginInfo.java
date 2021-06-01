@@ -29,7 +29,7 @@ public class GetUserPluginInfo extends JFrogService<Map<String, List<Map>>> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = getMapper(true).readValue(stream, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, List.class));
+        result = getMapper().readValue(stream, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, List.class));
     }
 
     @Override
