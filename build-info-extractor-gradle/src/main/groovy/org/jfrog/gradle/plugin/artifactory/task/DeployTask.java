@@ -178,7 +178,7 @@ public class DeployTask extends DefaultTask {
                             IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                                     publisher.getIncludePatterns(),
                                     publisher.getExcludePatterns());
-                            configureProxy(accRoot, artifactoryManager);
+                            configureProxy(contextUrl, accRoot, artifactoryManager);
                             configConnectionTimeout(accRoot, artifactoryManager);
                             configRetriesParams(accRoot, artifactoryManager);
                             deployArtifacts(artifactoryTask.deployDetails, artifactoryManager, patterns, logPrefix, publisher.getMinChecksumDeploySizeKb());
@@ -201,18 +201,36 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void configureProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
+    private void configureProxy(String contextUrl, ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
-        if (StringUtils.isNotBlank(proxyHost) && proxy.getPort() != null) {
+        Integer proxyPort = proxy.getPort();
+
+        boolean isHttps = contextUrl.startsWith("http") && !contextUrl.startsWith("https");
+
+        // If no proxyHost is explicitly set, check for the JVM system proxyHost property:
+        if (StringUtils.isBlank(proxyHost)) {
+            String systemPropertyName = isHttps ? "https.proxyHost" : "http.proxyHost";
+            proxyHost = System.getProperty(systemPropertyName);
+        }
+        // If no proxyPort is explicitly set, check for the JVM system proxyPort property:
+        if (proxyPort == null) {
+            String systemPropertyName = isHttps ? "https.proxyPort" : "http.proxyPort";
+            String systemProxyPortValue = System.getProperty(systemPropertyName);
+            if (StringUtils.isNotBlank(systemProxyPortValue)) {
+                proxyPort = Integer.valueOf(systemProxyPortValue);
+            }
+        }
+
+        if (StringUtils.isNotBlank(proxyHost) && proxyPort != null) {
             log.debug("Found proxy host '{}'", proxyHost);
             String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxyPort, proxyUserName, proxy.getPassword());
             } else {
                 log.debug("No proxy user name and password found, using anonymous proxy");
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxyPort);
             }
         }
     }
