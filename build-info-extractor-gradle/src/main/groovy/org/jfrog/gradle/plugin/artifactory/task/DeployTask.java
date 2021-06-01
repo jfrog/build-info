@@ -206,7 +206,7 @@ public class DeployTask extends DefaultTask {
         String proxyHost = proxy.getHost();
         Integer proxyPort = proxy.getPort();
 
-        boolean isHttps = contextUrl.startsWith("http") && !contextUrl.startsWith("https");
+        boolean isHttps = !contextUrl.startsWith("http://");
 
         // If no proxyHost is explicitly set, check for the JVM system proxyHost property:
         if (StringUtils.isBlank(proxyHost)) {
