@@ -210,15 +210,30 @@ public class DeployTask extends DefaultTask {
 
         // If no proxyHost is explicitly set, check for the JVM system proxyHost property:
         if (StringUtils.isBlank(proxyHost)) {
-            String systemPropertyName = isHttps ? "https.proxyHost" : "http.proxyHost";
-            proxyHost = System.getProperty(systemPropertyName);
+            // Note: "http.nonProxyHosts" is used for both http and https, despite its prefix
+            String systemNonProxyHostsString = System.getProperty("http.nonProxyHosts");
+            String[] systemNonProxyHosts = StringUtils.split(systemNonProxyHostsString, '|');
+
+            String contextUrlHost = getHost(contextUrl);
+            boolean isContextUrlOnNonProxyList = false;
+            for (String nonProxyHost : systemNonProxyHosts) {
+                if (nonProxyHost.contains("*") && matchesWildcardPattern(contextUrlHost, nonProxyHost)) {
+                    isContextUrlOnNonProxyList = true;
+                }
+            }
+
+            if (!isContextUrlOnNonProxyList) {
+                String systemPropertyName = isHttps ? "https.proxyHost" : "http.proxyHost";
+                proxyHost = System.getProperty(systemPropertyName);
+            }
         }
+
         // If no proxyPort is explicitly set, check for the JVM system proxyPort property:
         if (proxyPort == null) {
             String systemPropertyName = isHttps ? "https.proxyPort" : "http.proxyPort";
-            String systemProxyPortValue = System.getProperty(systemPropertyName);
-            if (StringUtils.isNotBlank(systemProxyPortValue)) {
-                proxyPort = Integer.valueOf(systemProxyPortValue);
+            String systemProxyPort = System.getProperty(systemPropertyName);
+            if (StringUtils.isNotBlank(systemProxyPort)) {
+                proxyPort = Integer.valueOf(systemProxyPort);
             }
         }
 
@@ -232,6 +247,46 @@ public class DeployTask extends DefaultTask {
                 log.debug("No proxy user name and password found, using anonymous proxy");
                 artifactoryManager.setProxyConfiguration(proxyHost, proxyPort);
             }
+        }
+    }
+
+    private static String getHost(String url) {
+        String afterProtocol = url.contains("://") ? StringUtils.substringAfter(url, "://") : url;
+        return StringUtils.substringBefore(afterProtocol, "/");
+    }
+
+    /**
+     * Checks whether a string matches a pattern with * wildcards. * is the only supported wildcard character.
+     *
+     * @param string The string to check.
+     * @param pattern The wildcard pattern to match with the string.
+     * @return True if the string matches the wildcard pattern, or if the pattern contains no wildcards and is equal to
+     * the string. False otherwise.
+     */
+    private static boolean matchesWildcardPattern(@Nonnull String string, @Nonnull String pattern) {
+        if (!pattern.contains("*")) {
+            // Shortcut wildcard matching if the pattern has no wildcard:
+            return string.equals(pattern);
+        }
+
+        String[] patternParts = StringUtils.split(pattern, "*");
+
+        if (!pattern.startsWith("*") && !string.startsWith(patternParts[0])) {
+            // Shortcut loop if string doesn't start with an exact match:
+            return false;
+        } else if (!pattern.endsWith("*") && !string.endsWith(patternParts[patternParts.length - 1])) {
+            // Shortcut loop if string doesn't end with an exact match:
+            return false;
+        } else {
+            String remainingString = string;
+            for (String patternPart : patternParts) {
+                if (remainingString.contains(patternPart)) {
+                    remainingString = StringUtils.substringAfter(remainingString, patternPart);
+                } else {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 
