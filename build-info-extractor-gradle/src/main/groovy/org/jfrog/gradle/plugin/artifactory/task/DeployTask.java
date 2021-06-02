@@ -1,5 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang.StringUtils;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.Project;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Stream;
 
 /**
  * @author Ruben Perez
@@ -201,7 +203,8 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void configureProxy(String contextUrl, ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
+    @VisibleForTesting
+    static void configureProxy(String contextUrl, ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
         ArtifactoryClientConfiguration.ProxyHandler proxy = clientConf.proxy;
         String proxyHost = proxy.getHost();
         Integer proxyPort = proxy.getPort();
@@ -217,8 +220,9 @@ public class DeployTask extends DefaultTask {
             String contextUrlHost = getHost(contextUrl);
             boolean isContextUrlOnNonProxyList = false;
             for (String nonProxyHost : systemNonProxyHosts) {
-                if (nonProxyHost.contains("*") && matchesWildcardPattern(contextUrlHost, nonProxyHost)) {
+                if (matchesProxyHostWildcardPattern(contextUrlHost, nonProxyHost)) {
                     isContextUrlOnNonProxyList = true;
+                    break;
                 }
             }
 
@@ -251,31 +255,25 @@ public class DeployTask extends DefaultTask {
     }
 
     private static String getHost(String url) {
-        String afterProtocol = url.contains("://") ? StringUtils.substringAfter(url, "://") : url;
-        return StringUtils.substringBefore(afterProtocol, "/");
+        return url.contains("://") ? StringUtils.substringAfter(url, "://") : url;
     }
 
     /**
      * Checks whether a string matches a pattern with * wildcards. * is the only supported wildcard character.
      *
-     * @param string The string to check.
+     * @param string  The string to check.
      * @param pattern The wildcard pattern to match with the string.
      * @return True if the string matches the wildcard pattern, or if the pattern contains no wildcards and is equal to
      * the string. False otherwise.
      */
-    private static boolean matchesWildcardPattern(@Nonnull String string, @Nonnull String pattern) {
-        if (!pattern.contains("*")) {
-            // Shortcut wildcard matching if the pattern has no wildcard:
-            return string.equals(pattern);
-        }
-
-        String[] patternParts = StringUtils.split(pattern, "*");
+    private static boolean matchesProxyHostWildcardPattern(@Nonnull String string, @Nonnull String pattern) {
+        String[] patternParts = Arrays.stream(StringUtils.split(pattern, "*"))
+                // Drop leading '.', so that string with "example.com" will match pattern part ".example.com":
+                .map(it -> it.startsWith(".") ? it.substring(1) : it)
+                .toArray(String[]::new);
 
         if (!pattern.startsWith("*") && !string.startsWith(patternParts[0])) {
             // Shortcut loop if string doesn't start with an exact match:
-            return false;
-        } else if (!pattern.endsWith("*") && !string.endsWith(patternParts[patternParts.length - 1])) {
-            // Shortcut loop if string doesn't end with an exact match:
             return false;
         } else {
             String remainingString = string;
