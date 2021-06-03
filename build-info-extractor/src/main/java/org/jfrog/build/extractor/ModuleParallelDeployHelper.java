@@ -44,8 +44,11 @@ public class ModuleParallelDeployHelper {
         deployableArtifacts.forEach(artifact -> {
             try {
                 ArtifactoryUploadResponse response = artifactoryManager.upload(artifact, logPrefix);
-                response.getChecksums();
+                artifact.setDeploySucceeded(true);
+                artifact.setSha256(response.getChecksums().getSha256());
             } catch (IOException e) {
+                artifact.setDeploySucceeded(false);
+                artifact.setSha256("");
                 throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
                         artifact.getFile() +
                         ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);

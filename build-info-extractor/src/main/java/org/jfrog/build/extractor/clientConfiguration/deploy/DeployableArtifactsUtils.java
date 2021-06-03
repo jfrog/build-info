@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.deploy;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -31,6 +32,7 @@ public class DeployableArtifactsUtils {
         deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
                 deployableArtifactsDetails.put(module, DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
         ObjectMapper mapper = new ObjectMapper();
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.writeValue(toFile, deployableArtifactsDetails);
     }
 
@@ -84,7 +86,7 @@ public class DeployableArtifactsUtils {
     private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails) {
         List<DeployableArtifactDetail> deployableArtifacts = new ArrayList<DeployableArtifactDetail>();
         for (DeployDetails artifact : deployDetails) {
-            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifact.getArtifactPath(), artifact.getSha1()));
+            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifact.getArtifactPath(), artifact.getSha1(), artifact.getSha256(), artifact.getDeploySucceeded()));
         }
         return deployableArtifacts;
     }
