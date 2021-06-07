@@ -52,6 +52,8 @@ public interface ClientProperties {
 
     String PROP_DOCKER_PREFIX = ARTIFACTORY_PREFIX + "docker.";
 
+    String PROP_KANIKO_PREFIX = ARTIFACTORY_PREFIX + "kaniko.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */
