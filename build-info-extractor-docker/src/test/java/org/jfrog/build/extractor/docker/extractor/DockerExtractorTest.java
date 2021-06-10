@@ -18,8 +18,10 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Collections;
 import java.util.List;
 
@@ -188,6 +190,88 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
+        }
+    }
+
+    @Test
+    public void buildDockerCreateFromRemoteTest() {
+        if (isWindows()) {
+            throw new SkipException("Skipping Docker tests on Windows OS");
+        }
+        Path kanikoFile = null;
+        try {
+            if (StringUtils.isBlank(remoteDomainName)) {
+                throw new IOException("The " + REMOTE_DOMAIN + " environment variable is not set, failing docker tests.");
+            }
+            if (StringUtils.isBlank(dockerRemoteRepo)) {
+                throw new IOException("The " + DOCKER_REMOTE_REPO + " environment variable is not set, failing docker tests.");
+            }
+            // Get the image id for the image already in artifactory
+            DockerJavaWrapper.pullImage(pullImageFromRemote, getUsername(), getPassword(), host, Collections.emptyMap(), getLog());
+            String imageId = DockerJavaWrapper.getImageIdFromTag(pullImageFromRemote, host, Collections.emptyMap(), getLog());
+            // Create the image file from the already created image
+            String kanikoImageData = pullImageFromRemote + '@' + imageId;
+            kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
+            Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
+
+            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerRemoteRepo, getLog());
+            Build build = buildDockerCreate.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
+
+            assertEquals(module.getType(), "docker");
+            assertEquals(module.getRepository(), dockerRemoteRepo);
+            List<Artifact> artifacts = module.getArtifacts();
+            validateImageArtifacts(artifacts, pullImageFromRemote);
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        } finally {
+            if (kanikoFile != null) {
+                try {
+                    Files.deleteIfExists(kanikoFile);
+                } catch (IOException ex) {}
+            }
+        }
+    }
+
+    @Test
+    public void buildDockerCreateFromVirtualTest() {
+        if (isWindows()) {
+            throw new SkipException("Skipping Docker tests on Windows OS");
+        }
+        Path kanikoFile = null;
+        try {
+            if (StringUtils.isBlank(virtualDomainName)) {
+                throw new IOException("The " + VIRTUAL_DOMAIN + " environment variable is not set, failing docker tests.");
+            }
+            if (StringUtils.isBlank(dockerVirtualRepo)) {
+                throw new IOException("The " + DOCKER_VIRTUAL_REPO + " environment variable is not set, failing docker tests.");
+            }
+            // Get the image id for the image already in artifactory
+            DockerJavaWrapper.pullImage(pullImageFromVirtual, getUsername(), getPassword(), host, Collections.emptyMap(), getLog());
+            String imageId = DockerJavaWrapper.getImageIdFromTag(pullImageFromVirtual, host, Collections.emptyMap(), getLog());
+            // Create the image file from the already created image
+            String kanikoImageData = pullImageFromVirtual + '@' + imageId;
+            kanikoFile = Files.createTempFile("hello-world", ".image").toAbsolutePath();
+            Files.write(kanikoFile, Collections.singleton(kanikoImageData), StandardOpenOption.TRUNCATE_EXISTING);
+
+            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile.toString(), artifactProperties, dockerVirtualRepo, getLog());
+            Build build = buildDockerCreate.execute();
+            assertEquals(build.getModules().size(), 1);
+            Module module = build.getModules().get(0);
+
+            assertEquals(module.getType(), "docker");
+            assertEquals(module.getRepository(), dockerVirtualRepo);
+            List<Artifact> artifacts = module.getArtifacts();
+            validateImageArtifacts(artifacts, pullImageFromVirtual);
+        } catch (Exception e) {
+            fail(ExceptionUtils.getStackTrace(e));
+        } finally {
+            if (kanikoFile != null) {
+                try {
+                    Files.deleteIfExists(kanikoFile);
+                } catch (IOException ex) {}
+            }
         }
     }
 
