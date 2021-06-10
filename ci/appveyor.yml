@@ -1,4 +1,4 @@
-stack: jdk 8, node 15, go 1.15, python 3.7.9 # If you want to change NodeJS version - you must change it also below (under 'install' of npm_win)
+stack: jdk 8, node 15, go 1.15, python 3.9 # If you want to change NodeJS version - you must change it also below (under 'install' of npm_win)
 skip_tags: true
 environment:
   matrix:
