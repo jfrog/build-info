@@ -71,7 +71,7 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     @Override
     protected void setResponse(InputStream stream) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
-        String content = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        String content = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
         JsonNode result;
         try {
             result = mapper.readTree(content);

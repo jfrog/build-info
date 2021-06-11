@@ -15,6 +15,6 @@ public class Download extends DownloadBase<String> {
 
     @Override
     protected void setResponse(InputStream stream) throws IOException {
-        result = IOUtils.toString(stream, StandardCharsets.UTF_8);
+        result = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
     }
 }
