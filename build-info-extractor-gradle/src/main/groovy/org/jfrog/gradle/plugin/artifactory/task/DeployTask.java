@@ -269,7 +269,7 @@ public class DeployTask extends DefaultTask {
     }
 
     private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryManager artifactoryManager,
-                                 IncludeExcludePatterns patterns, String logPrefix, int MinChecksumDeploySizeKb)
+                                 IncludeExcludePatterns patterns, String logPrefix, int minChecksumDeploySizeKb)
             throws IOException {
         for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
@@ -280,7 +280,7 @@ public class DeployTask extends DefaultTask {
                 continue;
             }
             try {
-                ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails, logPrefix, MinChecksumDeploySizeKb);
+                ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails, logPrefix, minChecksumDeploySizeKb);
                 detail.getDeployDetails().setDeploySucceeded(true);
                 detail.getDeployDetails().setSha256(response.getChecksums().getSha256());
             } catch (IOException e){
