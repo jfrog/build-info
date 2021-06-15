@@ -240,8 +240,8 @@ public class ArtifactoryManager extends ManagerBase {
         return upload(details, logPrefix, null);
     }
 
-    public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer MinChecksumDeploySizeKb) throws IOException {
-        Upload uploadService = new Upload(details, logPrefix, MinChecksumDeploySizeKb, log);
+    public ArtifactoryUploadResponse upload(DeployDetails details, String logPrefix, Integer minChecksumDeploySizeKb) throws IOException {
+        Upload uploadService = new Upload(details, logPrefix, minChecksumDeploySizeKb, log);
         return uploadService.execute(jfrogHttpClient);
     }
 
