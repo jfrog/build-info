@@ -14,6 +14,7 @@ import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
+import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -268,7 +269,7 @@ public class DeployTask extends DefaultTask {
     }
 
     private void deployArtifacts(Set<GradleDeployDetails> allDeployDetails, ArtifactoryManager artifactoryManager,
-                                 IncludeExcludePatterns patterns, String logPrefix, int MinChecksumDeploySizeKb)
+                                 IncludeExcludePatterns patterns, String logPrefix, int minChecksumDeploySizeKb)
             throws IOException {
         for (GradleDeployDetails detail : allDeployDetails) {
             DeployDetails deployDetails = detail.getDeployDetails();
@@ -278,7 +279,15 @@ public class DeployTask extends DefaultTask {
                         "' due to the defined include-exclude patterns.");
                 continue;
             }
-            artifactoryManager.upload(deployDetails, logPrefix, MinChecksumDeploySizeKb);
+            try {
+                ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails, logPrefix, minChecksumDeploySizeKb);
+                detail.getDeployDetails().setDeploySucceeded(true);
+                detail.getDeployDetails().setSha256(response.getChecksums().getSha256());
+            } catch (IOException e){
+                detail.getDeployDetails().setDeploySucceeded(false);
+                detail.getDeployDetails().setSha256("");
+                throw e;
+            }
         }
     }
 

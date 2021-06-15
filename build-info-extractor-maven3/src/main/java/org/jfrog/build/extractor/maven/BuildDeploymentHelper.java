@@ -74,6 +74,12 @@ public class BuildDeploymentHelper {
             }
         }
 
+        if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifactsByModule)) {
+            try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.resolveProperties(clientConf)) {
+                new ModuleParallelDeployHelper().deployArtifacts(artifactoryManager, deployableArtifactsByModule, clientConf.publisher.getPublishForkCount());
+            }
+        }
+
         if (!StringUtils.isEmpty(clientConf.info.getDeployableArtifactsFilePath())) {
             try {
                 DeployableArtifactsUtils.saveDeployableArtifactsToFile(deployableArtifactsByModule, new File(clientConf.info.getDeployableArtifactsFilePath()), false);
@@ -83,11 +89,6 @@ public class BuildDeploymentHelper {
             }
         }
 
-        if (isDeployArtifacts(clientConf, wereThereTestFailures, deployableArtifactsByModule)) {
-            try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.resolveProperties(clientConf)) {
-                new ModuleParallelDeployHelper().deployArtifacts(artifactoryManager, deployableArtifactsByModule, clientConf.publisher.getPublishForkCount());
-            }
-        }
         if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
             publishBuildInfo(clientConf, build);
         }
