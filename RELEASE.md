@@ -1,7 +1,6 @@
 # Release Notes
 
 ## build-info-extractor 2.27.0 / gradle-artifactory-plugin 4.24.5 (June 16, 2021)
-- Introduce support for kaniko docker images ([515](https://github.com/jfrog/build-info/pull/515))
 - Add sha256 to the upload response of maven and gradle ([477](https://github.com/jfrog/build-info/pull/477))
 - Update xstream to 1.4.17 ([513](https://github.com/jfrog/build-info/pull/513))
 
