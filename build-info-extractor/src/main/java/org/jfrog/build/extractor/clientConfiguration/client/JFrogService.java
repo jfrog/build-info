@@ -50,7 +50,7 @@ public abstract class JFrogService<TResult> {
             throw new IllegalArgumentException("JFrog service failed. Received " + statusCode);
         }
         try (InputStream stream = entity.getContent()) {
-            String ResponseMessage = IOUtils.toString(stream, StandardCharsets.UTF_8);
+            String ResponseMessage = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
             throw new IOException("JFrog service failed. Received " + statusCode + ": " + ResponseMessage);
         }
     }
