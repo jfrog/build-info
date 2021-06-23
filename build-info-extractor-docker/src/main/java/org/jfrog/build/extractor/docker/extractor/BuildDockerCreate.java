@@ -65,7 +65,7 @@ public class BuildDockerCreate extends PackageManagerExtractor {
     }
 
     /**
-     * Allow running build docker create using a new Java process.
+     * Allow creating build-info for a published docker image in a new Java process.
      *
      * @param ignored ignores input incoming params.
      */
