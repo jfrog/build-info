@@ -53,6 +53,14 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
      */
     String md5;
     /**
+     * sha256 checksum of the file to deploy.
+     */
+    String sha256;
+    /**
+     * In case of deploy - is the deployment succeeded.
+     */
+    private Boolean deploySucceeded;
+    /**
      * Properties to attach to the deployed file as matrix params.
      */
     ArrayListMultimap<String, String> properties;
@@ -89,6 +97,22 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
     public String getSha1() {
         return sha1;
+    }
+
+    public String getSha256() {
+        return sha256;
+    }
+
+    public void setSha256(String sha256) {
+        this.sha256=sha256;
+    }
+
+    public Boolean getDeploySucceeded() {
+        return deploySucceeded;
+    }
+
+    public void setDeploySucceeded(Boolean deploySucceeded) {
+        this.deploySucceeded = deploySucceeded;
     }
 
     public String getMd5() {

@@ -18,11 +18,21 @@ public class DeployableArtifactDetail implements Serializable {
      * sha1 checksum of the file to deploy.
      */
     private String sha1;
+    /**
+     * sha256 checksum of the file to deploy.
+     */
+    private String sha256;
+    /**
+     * In case of deploy - is the deployment succeeded.
+     */
+    private Boolean deploySucceeded;
 
-    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1) {
+    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1, String sha256, Boolean deploySucceeded) {
         this.sourcePath = artifactSource;
         this.artifactDest = artifactDest;
         this.sha1 = sha1;
+        this.sha256 = sha256;
+        this.deploySucceeded = deploySucceeded;
     }
 
     public DeployableArtifactDetail() {
@@ -38,5 +48,13 @@ public class DeployableArtifactDetail implements Serializable {
 
     public String getSha1() {
         return sha1;
+    }
+
+    public String getSha256() {
+        return sha256;
+    }
+
+    public Boolean isDeploySucceeded() {
+        return deploySucceeded;
     }
 }

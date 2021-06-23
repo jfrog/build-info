@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor;
 
+import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 
@@ -42,8 +43,12 @@ public class ModuleParallelDeployHelper {
     private void deploy(ArtifactoryManager artifactoryManager, Set<DeployDetails> deployableArtifacts, String logPrefix) {
         deployableArtifacts.forEach(artifact -> {
             try {
-                artifactoryManager.upload(artifact, logPrefix);
+                ArtifactoryUploadResponse response = artifactoryManager.upload(artifact, logPrefix);
+                artifact.setDeploySucceeded(true);
+                artifact.setSha256(response.getChecksums().getSha256());
             } catch (IOException e) {
+                artifact.setDeploySucceeded(false);
+                artifact.setSha256("");
                 throw new RuntimeException("Error occurred while publishing artifact to Artifactory: " +
                         artifact.getFile() +
                         ".\n Skipping deployment of remaining artifacts (if any) and build info.", e);
