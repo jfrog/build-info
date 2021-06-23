@@ -162,11 +162,11 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             // Check modules
             assertEquals(build.getModules().size(), 3);
             Module module = getAndValidateModule(build, "multi1", dockerVirtualRepo);
-            assertEquals(module.getArtifacts().size(), 10);
+            assertFalse(module.getArtifacts().isEmpty());
             module = getAndValidateModule(build, "multi2", dockerVirtualRepo);
-            assertEquals(module.getArtifacts().size(), 9);
+            assertFalse(module.getArtifacts().isEmpty());
             module = getAndValidateModule(build, "multi3", dockerVirtualRepo);
-            assertEquals(module.getArtifacts().size(), 11);
+            assertFalse(module.getArtifacts().isEmpty());
         } finally {
             FileUtils.deleteDirectory(wd.toFile());
         }
