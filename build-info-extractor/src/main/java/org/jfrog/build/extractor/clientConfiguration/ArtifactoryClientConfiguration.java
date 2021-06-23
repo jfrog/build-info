@@ -63,7 +63,6 @@ public class ArtifactoryClientConfiguration {
     public final PipHandler pipHandler;
     public final DotnetHandler dotnetHandler;
     public final DockerHandler dockerHandler;
-    public final KanikoHandler kanikoHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -82,7 +81,6 @@ public class ArtifactoryClientConfiguration {
         this.pipHandler = new PipHandler();
         this.dotnetHandler = new DotnetHandler();
         this.dockerHandler = new DockerHandler();
-        this.kanikoHandler = new KanikoHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -588,19 +586,21 @@ public class ArtifactoryClientConfiguration {
         public void setHost(String host) {
             rootConfig.setStringValue(DOCKER_HOST, host);
         }
-    }
 
-    public class KanikoHandler extends PrefixPropertyHandler {
-        public KanikoHandler() {
-            super(root, PROP_KANIKO_PREFIX);
-        }
-
-        public String getImageFile() {
+        public String getKanikoImageFile() {
             return rootConfig.getStringValue(KANIKO_IMAGE_FILE);
         }
 
-        public void setImageFile(String imageManifestPath) {
-            rootConfig.setStringValue(KANIKO_IMAGE_FILE, imageManifestPath);
+        public void setKanikoImageFile(String kanikoImageFile) {
+            rootConfig.setStringValue(KANIKO_IMAGE_FILE, kanikoImageFile);
+        }
+
+        public String getJibImageFile() {
+            return rootConfig.getStringValue(JIB_IMAGE_FILE);
+        }
+
+        public void setJibImageFile(String jibImageFile) {
+            rootConfig.setStringValue(JIB_IMAGE_FILE, jibImageFile);
         }
     }
 

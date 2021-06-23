@@ -74,7 +74,7 @@ public class DockerPull extends DockerCommand {
             DockerJavaWrapper.pullImage(imageTag, username, password, host, env, logger);
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
             Pair<String, String> archDetails = DockerJavaWrapper.getImageArch(imageTag, host, env, logger);
-            DockerImage image = new DockerImage(imageId, imageTag, targetRepository, artifactoryManagerBuilder, archDetails.getLeft(), archDetails.getRight());
+            DockerImage image = new DockerImage(imageId, imageTag, "", targetRepository, artifactoryManagerBuilder, archDetails.getLeft(), archDetails.getRight());
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Pull);
             if (module.getDependencies() == null || module.getDependencies().size() == 0) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");
