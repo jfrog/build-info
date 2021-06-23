@@ -136,8 +136,8 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             Path kanikoConfig = createKanikoConfig(workingDirectory, virtualDomainName);
             String kanikoFile = execKaniko(workingDirectory, virtualDomainName, kanikoConfig);
 
-            BuildDockerCreate buildDockerCreate = new BuildDockerCreate(artifactoryManagerBuilder, kanikoFile, BuildDockerCreate.ImageFileType.KANIKO, artifactProperties, dockerVirtualRepo, getLog());
-            Build build = buildDockerCreate.execute();
+            BuildDockerCreator buildDockerCreator = new BuildDockerCreator(artifactoryManagerBuilder, kanikoFile, BuildDockerCreator.ImageFileType.KANIKO, artifactProperties, dockerVirtualRepo, getLog());
+            Build build = buildDockerCreator.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = getAndValidateModule(build, "hello-world:latest", dockerVirtualRepo);
             module.getArtifacts().stream().map(BaseBuildFileBean::getRemotePath).forEach(remotePath -> assertEquals(remotePath, EXPECTED_REMOTE_PATH_KANIKO));
@@ -155,8 +155,8 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             execJib(wd);
 
             // Run build-docker-create
-            BuildDockerCreate.ImageFileType imageFileType = BuildDockerCreate.ImageFileType.JIB;
-            Build build = new BuildDockerCreate(artifactoryManagerBuilder, getJibImageJsonPath(wd),
+            BuildDockerCreator.ImageFileType imageFileType = BuildDockerCreator.ImageFileType.JIB;
+            Build build = new BuildDockerCreator(artifactoryManagerBuilder, getJibImageJsonPath(wd),
                     imageFileType, artifactProperties, dockerVirtualRepo, getLog()).execute();
 
             // Check modules

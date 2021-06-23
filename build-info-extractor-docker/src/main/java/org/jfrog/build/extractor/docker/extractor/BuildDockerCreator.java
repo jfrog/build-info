@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 import static org.jfrog.build.extractor.docker.DockerUtils.createMapper;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
-public class BuildDockerCreate extends PackageManagerExtractor {
+public class BuildDockerCreator extends PackageManagerExtractor {
     private final ArrayListMultimap<String, String> artifactProperties;
     private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private final ImageFileType imageFileType;
@@ -54,8 +54,8 @@ public class BuildDockerCreate extends PackageManagerExtractor {
      * @param logger                    - The logger.
      * @param artifactProperties        - Properties to be attached to the docker layers deployed to Artifactory.
      */
-    public BuildDockerCreate(ArtifactoryManagerBuilder artifactoryManagerBuilder, String imageFile, ImageFileType imageFileType,
-                             ArrayListMultimap<String, String> artifactProperties, String sourceRepo, Log logger) {
+    public BuildDockerCreator(ArtifactoryManagerBuilder artifactoryManagerBuilder, String imageFile, ImageFileType imageFileType,
+                              ArrayListMultimap<String, String> artifactProperties, String sourceRepo, Log logger) {
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.artifactProperties = artifactProperties;
         this.sourceRepo = sourceRepo;
@@ -88,7 +88,7 @@ public class BuildDockerCreate extends PackageManagerExtractor {
                 throw new RuntimeException("kaniko.image.file or jib.image.file property is expected");
             }
             // Init BuildDockerCreate.
-            BuildDockerCreate dockerBuildCreate = new BuildDockerCreate(artifactoryManagerBuilder,
+            BuildDockerCreator dockerBuildCreate = new BuildDockerCreator(artifactoryManagerBuilder,
                     imageFile,
                     imageFileType,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
