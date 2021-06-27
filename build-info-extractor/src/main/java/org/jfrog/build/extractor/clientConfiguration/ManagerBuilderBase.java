@@ -4,7 +4,6 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import javax.net.ssl.SSLContext;
 import java.io.Serializable;
@@ -19,7 +18,7 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
     protected ProxyConfiguration proxyConfiguration;
     protected int connectionTimeout = -1;
     protected int connectionRetry = -1;
-    protected String artifactoryUrl;
+    protected String serverUrl;
     protected SSLContext sslContext;
     protected String username;
     protected String password;
@@ -41,8 +40,8 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
         return self();
     }
 
-    public T setArtifactoryUrl(String artifactoryUrl) {
-        this.artifactoryUrl = artifactoryUrl;
+    public T setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
         return self();
     }
 
@@ -80,7 +79,7 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
      */
     public T setClientConfiguration(ArtifactoryClientConfiguration clientConfiguration,
                                     ArtifactoryClientConfiguration.RepositoryConfiguration repositoryConfiguration) {
-        setArtifactoryUrl(repositoryConfiguration.getContextUrl());
+        setServerUrl(repositoryConfiguration.getContextUrl());
         setUsername(repositoryConfiguration.getUsername());
         setPassword(repositoryConfiguration.getPassword());
         setLog(repositoryConfiguration.getLog());
@@ -106,7 +105,7 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
         return self();
     }
 
-    protected ArtifactoryManager build(ArtifactoryManager client) {
+    protected ManagerBase build(ManagerBase client) {
         if (proxyConfiguration != null) {
             client.setProxyConfiguration(proxyConfiguration.host,
                     proxyConfiguration.port,

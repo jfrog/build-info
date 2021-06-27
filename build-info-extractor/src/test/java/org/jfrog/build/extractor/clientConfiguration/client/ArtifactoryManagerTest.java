@@ -76,7 +76,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
                 .principal("foo")
                 .artifactoryPrincipal(getUsername())
                 .artifactoryPluginVersion("2.3.1")
-                .url(getUrl())
+                .url(getArtifactoryUrl())
                 .parentName("baz")
                 .parentNumber("10")
                 .vcs(VCS)

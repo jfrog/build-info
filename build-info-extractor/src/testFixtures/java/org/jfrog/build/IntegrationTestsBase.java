@@ -36,8 +36,9 @@ public abstract class IntegrationTestsBase {
     protected static final String UPLOAD_SPEC = "upload.json";
     protected static final String DOWNLOAD_SPEC = "download.json";
     protected static final String EXPECTED = "expected.json";
+    protected static final String BITESTS_ENV_VAR_PREFIX = "BITESTS_PLATFORM_";
+    private static final String BITESTS_PROPERTIES_PREFIX = "bitests.platform.";
     protected static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
-    private static final String BITESTS_ARTIFACTORY_PROPERTIES_PREFIX = "bitests.artifactory.";
     protected String localRepo1 = "build-info-tests-local";
     protected String localRepo2 = "build-info-tests-local2";
     protected String remoteRepo;
@@ -47,7 +48,8 @@ public abstract class IntegrationTestsBase {
     protected ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String username;
     private String password;
-    private String url;
+    private String platformUrl;
+    private String artifactoryUrl;
 
     public static Log getLog() {
         return log;
@@ -64,10 +66,11 @@ public abstract class IntegrationTestsBase {
             inputStream.close();
         }
 
-        url = readParam(props, "url");
-        if (!url.endsWith("/")) {
-            url += "/";
+        platformUrl = readParam(props, "url");
+        if (!platformUrl.endsWith("/")) {
+            platformUrl += "/";
         }
+        artifactoryUrl = platformUrl + "artifactory/";
         username = readParam(props, "username");
         password = readParam(props, "password");
         artifactoryManager = createArtifactoryManager();
@@ -106,13 +109,13 @@ public abstract class IntegrationTestsBase {
     private String readParam(Properties props, String paramName) {
         String paramValue = null;
         if (props.size() > 0) {
-            paramValue = props.getProperty(BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + paramName);
+            paramValue = props.getProperty(BITESTS_PROPERTIES_PREFIX + paramName);
         }
         if (paramValue == null) {
-            paramValue = System.getProperty(BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + paramName);
+            paramValue = System.getProperty(BITESTS_PROPERTIES_PREFIX + paramName);
         }
         if (paramValue == null) {
-            paramValue = System.getenv(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + paramName.toUpperCase());
+            paramValue = System.getenv(BITESTS_ENV_VAR_PREFIX + paramName.toUpperCase());
         }
         if (paramValue == null) {
             failInit();
@@ -122,14 +125,14 @@ public abstract class IntegrationTestsBase {
 
     private void failInit() {
         String message =
-                "Failed to load test Artifactory instance credentials. Looking for System properties:\n'" +
-                        BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "url', \n'" +
-                        BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "username' and \n'" +
-                        BITESTS_ARTIFACTORY_PROPERTIES_PREFIX + "password'. \n" +
+                "Failed to load test JFrog platform instance credentials. Looking for System properties:\n'" +
+                        BITESTS_PROPERTIES_PREFIX + "url', \n'" +
+                        BITESTS_PROPERTIES_PREFIX + "username' and \n'" +
+                        BITESTS_PROPERTIES_PREFIX + "password'. \n" +
                         "Or a properties file with those properties in classpath or Environment variables:\n'" +
-                        BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "URL', \n'" +
-                        BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "USERNAME' and \n'" +
-                        BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PASSWORD'.";
+                        BITESTS_ENV_VAR_PREFIX + "URL', \n'" +
+                        BITESTS_ENV_VAR_PREFIX + "USERNAME' and \n'" +
+                        BITESTS_ENV_VAR_PREFIX + "PASSWORD'.";
 
         fail(message);
     }
@@ -227,17 +230,21 @@ public abstract class IntegrationTestsBase {
         return password;
     }
 
-    protected String getUrl() {
-        return this.url;
+    protected String getPlatformUrl() {
+        return this.platformUrl;
+    }
+
+    protected String getArtifactoryUrl() {
+        return this.artifactoryUrl;
     }
 
     private ArtifactoryManager createArtifactoryManager() {
-        return new ArtifactoryManager(url, username, password, log);
+        return new ArtifactoryManager(artifactoryUrl, username, password, log);
     }
 
     private ArtifactoryManagerBuilder createArtifactoryManagerBuilder() {
         ArtifactoryManagerBuilder builder = new ArtifactoryManagerBuilder();
-        return builder.setArtifactoryUrl(url).setUsername(username).setPassword(password).setLog(log);
+        return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(password).setLog(log);
     }
 
     /**

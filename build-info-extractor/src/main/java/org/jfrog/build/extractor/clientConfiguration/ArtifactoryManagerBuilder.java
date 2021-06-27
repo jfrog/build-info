@@ -9,7 +9,7 @@ public class ArtifactoryManagerBuilder extends ManagerBuilderBase<ArtifactoryMan
 
     @Override
     public ArtifactoryManager build() {
-        ArtifactoryManager client = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log);
+        ArtifactoryManager client = new ArtifactoryManager(serverUrl, username, password, accessToken, log);
         build(client);
         return client;
     }
