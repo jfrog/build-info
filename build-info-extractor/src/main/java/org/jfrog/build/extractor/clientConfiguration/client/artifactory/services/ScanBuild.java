@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NullArgumentException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -37,22 +38,22 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
     private static final String SCAN_BUILD_URL = "api/xray/scanBuild";
     private final String buildName;
     private final String buildNumber;
+    private final String project;
     private final String context;
     private HttpPost request;
 
-    public ScanBuild(String buildName, String buildNumber, String context, Log log) {
+    public ScanBuild(String buildName, String buildNumber, String project, String context, Log log) {
         super(log);
         this.buildName = buildName;
         this.buildNumber = buildNumber;
+        this.project = project;
         this.context = context;
     }
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        StringEntity entity = new StringEntity("{\"buildName\":\"" + buildName + "\",\"buildNumber\":\"" + buildNumber +
-                "\",\"context\":\"" + context + "\"}");
+        StringEntity entity = new StringEntity(getXrayScanBody());
         entity.setContentType("application/json");
-
         HttpPost request = new HttpPost(SCAN_BUILD_URL);
 
         // The scan build operation can take a long time to finish.
@@ -152,5 +153,17 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
         private XrayErrorException(String message) {
             super(message);
         }
+    }
+
+    /**
+     * Creates JSON body request for ScanBuild API.
+     */
+    private String getXrayScanBody() {
+        String body = "{\"buildName\":\"" + buildName + "\",\"buildNumber\":\"" + buildNumber +
+                "\",\"context\":\"" + context;
+        if (StringUtils.isNotEmpty(project)) {
+            body += "\",\"project\":\"" + project;
+        }
+        return body + "\"}";
     }
 }
