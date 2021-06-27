@@ -197,9 +197,9 @@ public class ArtifactoryManager extends ManagerBase {
         return retrievePatternArtifactsService.execute(jfrogHttpClient);
     }
 
-    public ArtifactoryXrayResponse scanBuild(String buildName, String buildNumber, String context) throws IOException {
+    public ArtifactoryXrayResponse scanBuild(String buildName, String buildNumber, String project, String context) throws IOException {
         setConnectionTimeout(XRAY_SCAN_CONNECTION_TIMEOUT_SECS);
-        ScanBuild scanBuildService = new ScanBuild(buildName, buildNumber, context, log);
+        ScanBuild scanBuildService = new ScanBuild(buildName, buildNumber, project, context, log);
         return scanBuildService.execute(jfrogHttpClient);
     }
 
