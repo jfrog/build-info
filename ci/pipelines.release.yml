@@ -67,8 +67,8 @@ pipelines:
               ORG_GRADLE_PROJECT_signingKey=$(echo $int_mvn_central_signingKey | base64 -d)
               ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
               ./jfrog rt gradle clean aP -x test -Psign
-            - ./jfrog rt bag
-            - ./jfrog rt bp
+#             - ./jfrog rt bag
+#             - ./jfrog rt bp
 
             # Publish to Maven Central
             - >
