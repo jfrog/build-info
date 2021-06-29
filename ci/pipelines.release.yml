@@ -22,7 +22,7 @@ pipelines:
           inputResources:
             - name: biReleaseGit
           integrations:
-            - name: ojo
+            - name: releases_temp
             - name: github_generic
             - name: mvn_central
         execution:
@@ -49,10 +49,10 @@ pipelines:
 
             # Configure JFrog CLI
             - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
-            - ./jfrog c add ojo --artifactory-url $int_ojo_rt_url --access-token=$int_ojo_rt_token
+            - ./jfrog c add releases --url=https://releases.jfrog.io/artifactory --access-token=$int_releases_temp_token
             - ./jfrog rt gradlec --use-wrapper --uses-plugin
-              --server-id-resolve ojo --repo-resolve remote-repos
-              --server-id-deploy ojo --repo-deploy oss-release-local
+              --server-id-resolve releases --repo-resolve jcenter
+              --server-id-deploy releases --repo-deploy oss-release-local
 
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
