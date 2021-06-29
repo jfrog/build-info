@@ -2,9 +2,6 @@ buildscript {
     repositories {
         mavenCentral()
         maven {
-            url "https://oss.jfrog.org/artifactory/libs-release"
-        }
-        maven {
             url "https://plugins.gradle.org/m2/"
         }
         dependencies {
@@ -44,7 +41,6 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 
     repositories {
-        maven { url "https://oss.jfrog.org/jfrog-dependencies" }
         maven { url "https://releases.jfrog.io/artifactory/oss-releases" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
@@ -67,7 +63,6 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url 'https://oss.jfrog.org/artifactory/oss-snapshot-local/' }
     }
 
     sourceCompatibility = 1.8
