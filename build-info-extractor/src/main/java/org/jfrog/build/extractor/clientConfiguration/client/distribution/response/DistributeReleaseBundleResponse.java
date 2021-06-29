@@ -2,13 +2,16 @@ package org.jfrog.build.extractor.clientConfiguration.client.distribution.respon
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author yahavi
  */
 @SuppressWarnings("unused")
-public class DistributeReleaseBundleResponse {
+public class DistributeReleaseBundleResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private List<DistributionStatusResponse.TargetArtifactory> sites;
     @JsonProperty("id")
     private String trackerId;

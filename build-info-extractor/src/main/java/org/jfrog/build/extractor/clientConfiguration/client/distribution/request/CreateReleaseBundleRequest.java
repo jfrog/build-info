@@ -1,11 +1,12 @@
 package org.jfrog.build.extractor.clientConfiguration.client.distribution.request;
 
-import java.io.IOException;
-
 /**
+ * Represents a request to create a release bundle.
+ *
  * @author yahavi
  */
-public class CreateReleaseBundleRequest extends UpdateReleaseBundleRequest {
+@SuppressWarnings("unused")
+public class CreateReleaseBundleRequest extends CreateUpdateReleaseBundleRequest {
     private String version;
     private String name;
 
@@ -18,14 +19,6 @@ public class CreateReleaseBundleRequest extends UpdateReleaseBundleRequest {
         this.version = version;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getVersion() {
         return version;
     }
@@ -34,18 +27,28 @@ public class CreateReleaseBundleRequest extends UpdateReleaseBundleRequest {
         this.version = version;
     }
 
-    public static class Builder extends UpdateReleaseBundleRequest.Builder<CreateReleaseBundleRequest> {
-        private final String name;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public static class Builder extends CreateUpdateReleaseBundleRequest.Builder<CreateReleaseBundleRequest, Builder> {
         private final String version;
+        private final String name;
 
         public Builder(String name, String version) {
             this.name = name;
             this.version = version;
         }
 
-        @Override
-        public CreateReleaseBundleRequest build() throws IOException {
-            return build(new CreateReleaseBundleRequest(name, version));
+        public CreateReleaseBundleRequest build() {
+            CreateReleaseBundleRequest request = build(new CreateReleaseBundleRequest());
+            request.setName(name);
+            request.setVersion(version);
+            return request;
         }
     }
 }

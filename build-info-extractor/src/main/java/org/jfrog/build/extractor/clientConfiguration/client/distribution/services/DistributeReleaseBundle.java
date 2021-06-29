@@ -25,10 +25,10 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
     static final int DEFAULT_SYNC_SLEEP_INTERVAL = 10; // 10 seconds
     static final int DEFAULT_MAX_WAIT_MINUTES = 60;    // 60 minutes
 
-    final DistributeReleaseBundleRequest request;
-    final String version;
-    final boolean sync;
-    final String name;
+    private final DistributeReleaseBundleRequest request;
+    private final String version;
+    private final boolean sync;
+    private final String name;
 
     public DistributeReleaseBundle(String name, String version, boolean sync, DistributeReleaseBundleRequest request, Log log) {
         super(log);
@@ -63,16 +63,12 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
 
     @Override
     public DistributeReleaseBundleResponse execute(JFrogHttpClient client) throws IOException {
-        logCommand();
+        log.info(request.isDryRun() ? "[Dry run] " : "" + "Distributing:" + name + " / " + version);
         super.execute(client);
         if (sync && !request.isDryRun()) {
             waitForDistribution(client);
         }
         return result;
-    }
-
-    void logCommand() {
-        log.info(request.isDryRun() ? "[Dry run] " : "" + "Distributing:" + name + " / " + version);
     }
 
     @Override
@@ -82,7 +78,7 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
         log.debug("Response:  " + toJsonString(result));
     }
 
-    void waitForDistribution(JFrogHttpClient client) throws IOException {
+    private void waitForDistribution(JFrogHttpClient client) throws IOException {
         String trackerId = result.getTrackerId();
         GetDistributionStatus getDistributionStatusService = new GetDistributionStatus(name, version, trackerId, log);
         for (int timeElapsed = 0; timeElapsed < DEFAULT_MAX_WAIT_MINUTES * 60; timeElapsed += DEFAULT_SYNC_SLEEP_INTERVAL) {
@@ -90,10 +86,10 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
                 log.info(String.format("Sync: Distributing %s/%s...", name, version));
             }
             DistributionStatusResponse statusResponse = getDistributionStatusService.execute(client);
-            if (statusResponse.getStatus().equals("Failed")) {
+            if (statusResponse.getStatus().equalsIgnoreCase("Failed")) {
                 throw new IOException("JFrog service failed. Received " + statusCode + ": " + toJsonString(statusResponse));
             }
-            if (statusResponse.getStatus().equals("Completed")) {
+            if (statusResponse.getStatus().equalsIgnoreCase("Completed")) {
                 log.info("Distribution Completed!");
                 return;
             }

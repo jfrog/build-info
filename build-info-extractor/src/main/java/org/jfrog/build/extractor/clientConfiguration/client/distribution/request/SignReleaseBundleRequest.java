@@ -2,10 +2,17 @@ package org.jfrog.build.extractor.clientConfiguration.client.distribution.reques
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+
 /**
+ * Represents a request to sign a release bundle.
+ *
  * @author yahavi
  */
-public class SignReleaseBundleRequest {
+@SuppressWarnings("unused")
+public class SignReleaseBundleRequest implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     @JsonProperty("storing_repository")
     String storingRepository;
 
@@ -16,12 +23,10 @@ public class SignReleaseBundleRequest {
         this.storingRepository = storingRepository;
     }
 
-    @SuppressWarnings("unused")
     public String getStoringRepository() {
         return storingRepository;
     }
 
-    @SuppressWarnings("unused")
     public void setStoringRepository(String storingRepository) {
         this.storingRepository = storingRepository;
     }

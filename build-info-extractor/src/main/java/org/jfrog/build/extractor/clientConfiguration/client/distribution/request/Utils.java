@@ -15,11 +15,25 @@ import java.util.List;
  **/
 public class Utils {
 
-    public static ReleaseBundleSpec createSpec(String spec) throws IOException {
-        return createSpec(FileSpec.fromString(spec));
+    /**
+     * Create a release bundle spec from a File Spec string.
+     *
+     * @param fileSpec - File Spec
+     * @return release bundle spec.
+     * @throws IOException if the input File Spec is invalid.
+     */
+    public static ReleaseBundleSpec createReleaseBundleSpec(String fileSpec) throws IOException {
+        return createReleaseBundleSpec(FileSpec.fromString(fileSpec));
     }
 
-    public static ReleaseBundleSpec createSpec(FileSpec fileSpec) throws IOException {
+    /**
+     * Create a release bundle spec from a File Spec object.
+     *
+     * @param fileSpec - File Spec
+     * @return release bundle spec.
+     * @throws IOException if the input File Spec is invalid.
+     */
+    public static ReleaseBundleSpec createReleaseBundleSpec(FileSpec fileSpec) throws IOException {
         List<ReleaseBundleQuery> queries = new ArrayList<>();
         List<DistributionSpecComponent> specComponents = DistributionHelper.toSpecComponents(fileSpec);
         for (DistributionSpecComponent specComponent : specComponents) {

@@ -2,13 +2,16 @@ package org.jfrog.build.extractor.clientConfiguration.client.distribution.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author yahavi
  **/
 @SuppressWarnings("unused")
-public class DistributionRules {
+public class DistributionRules implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     @JsonProperty("country_codes")
     private List<String> countryCodes;
     @JsonProperty("site_name")

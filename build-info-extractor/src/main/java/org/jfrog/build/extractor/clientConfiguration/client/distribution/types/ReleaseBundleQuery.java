@@ -4,13 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jfrog.filespecs.distribution.PathMapping;
 import org.jfrog.filespecs.properties.Property;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author yahavi
  **/
 @SuppressWarnings("unused")
-public class ReleaseBundleQuery {
+public class ReleaseBundleQuery implements Serializable  {
+    private static final long serialVersionUID = 1L;
+
     private List<PathMapping> mappings;
     @JsonProperty("added_props")
     private List<Property> addedProps;

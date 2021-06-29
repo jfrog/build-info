@@ -4,12 +4,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jfrog.build.extractor.clientConfiguration.client.distribution.types.ReleaseBundleSpec;
 import org.jfrog.build.extractor.clientConfiguration.client.distribution.types.ReleaseNotes;
 
+import java.io.Serializable;
+
 /**
  * @author yahavi
  */
 @SuppressWarnings("unused")
-public class GetReleaseBundleStatusResponse {
-    enum DistributionState {
+public class GetReleaseBundleStatusResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public enum DistributionState {
         // Release bundle created and open for changes:
         OPEN,
         // Release bundle is signed, but not stored:

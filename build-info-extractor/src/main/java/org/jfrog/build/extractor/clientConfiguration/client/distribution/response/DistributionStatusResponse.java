@@ -3,13 +3,16 @@ package org.jfrog.build.extractor.clientConfiguration.client.distribution.respon
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jfrog.build.extractor.clientConfiguration.client.distribution.types.DistributionRules;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author yahavi
  */
 @SuppressWarnings("unused")
-public class DistributionStatusResponse {
+public class DistributionStatusResponse implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     @JsonProperty("distribution_rules")
     private List<DistributionRules> distributionRules;
     private List<DistributionSiteStatus> sites;

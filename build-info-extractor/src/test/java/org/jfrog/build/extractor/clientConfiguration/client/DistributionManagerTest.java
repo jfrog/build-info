@@ -74,18 +74,18 @@ public class DistributionManagerTest extends IntegrationTestsBase {
         ReleaseNotes releaseNotes = new ReleaseNotes();
         releaseNotes.setContent("Create content");
         releaseNotes.setSyntax(ReleaseNotes.Syntax.plain_text);
-        return (CreateReleaseBundleRequest.Builder) new CreateReleaseBundleRequest.Builder(RELEASE_BUNDLE_NAME, RELEASE_BUNDLE_VERSION)
+        return new CreateReleaseBundleRequest.Builder(RELEASE_BUNDLE_NAME, RELEASE_BUNDLE_VERSION)
                 .description("Create")
                 .releaseNotes(releaseNotes)
                 .spec(fileSpec);
     }
 
-    UpdateReleaseBundleRequest.Builder<UpdateReleaseBundleRequest> updateRequestBuilder() throws IOException {
+    UpdateReleaseBundleRequest.Builder updateRequestBuilder() throws IOException {
         FileSpec fileSpec = createSpec();
         ReleaseNotes releaseNotes = new ReleaseNotes();
         releaseNotes.setContent("Update content");
         releaseNotes.setSyntax(ReleaseNotes.Syntax.plain_text);
-        return new UpdateReleaseBundleRequest.Builder<>().description("Update").releaseNotes(releaseNotes).spec(fileSpec);
+        return new UpdateReleaseBundleRequest.Builder().description("Update").releaseNotes(releaseNotes).spec(fileSpec);
     }
 
     FileSpec createSpec() throws IOException {

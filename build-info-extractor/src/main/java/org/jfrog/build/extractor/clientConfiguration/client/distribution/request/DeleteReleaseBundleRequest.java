@@ -3,23 +3,24 @@ package org.jfrog.build.extractor.clientConfiguration.client.distribution.reques
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
+ * Represents a request to delete a remote release bundle.
+ *
  * @author yahavi
- **/
-public class DeleteReleaseBundleRequest extends DistributeReleaseBundleRequest {
+ */
+@SuppressWarnings("unused")
+public class DeleteReleaseBundleRequest extends RemoteReleaseBundleRequest {
+    public enum OnSuccess {
+        keep, delete
+    }
 
     @JsonProperty("on_success")
     private OnSuccess onSuccess;
 
-    @SuppressWarnings("unused")
     public OnSuccess getOnSuccess() {
         return onSuccess;
     }
 
     public void setOnSuccess(OnSuccess onSuccess) {
         this.onSuccess = onSuccess;
-    }
-
-    public enum OnSuccess {
-        keep, delete
     }
 }

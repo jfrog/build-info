@@ -1,9 +1,13 @@
 package org.jfrog.build.extractor.clientConfiguration.client.distribution.types;
 
+import java.io.Serializable;
+
 /**
  * @author yahavi
  **/
-public class ReleaseNotes {
+public class ReleaseNotes implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private Syntax syntax;
     private String content;
 
