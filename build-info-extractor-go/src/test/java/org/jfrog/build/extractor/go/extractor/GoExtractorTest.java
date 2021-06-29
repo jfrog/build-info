@@ -100,7 +100,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         deployTestDependencies(Project.QUOTE, Project.SAMPLER, Project.TEXT);
     }
 

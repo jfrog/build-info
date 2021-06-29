@@ -6,6 +6,7 @@ import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;
 
 import javax.net.ssl.SSLContext;
+import java.io.IOException;
 
 public abstract class ManagerBase implements AutoCloseable {
     protected final JFrogHttpClient jfrogHttpClient;
@@ -19,6 +20,8 @@ public abstract class ManagerBase implements AutoCloseable {
         }
         log = logger;
     }
+
+    public abstract org.jfrog.build.client.Version getVersion() throws IOException;
 
     /**
      * Network timeout in seconds to use both for connection establishment and for unanswered requests.

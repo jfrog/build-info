@@ -64,7 +64,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
     }
 
     Object[][] packagesConfigTestsInfo = new Object[][]{

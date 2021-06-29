@@ -115,7 +115,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
         downloaderHelper = new DependenciesDownloaderHelper(artifactoryManager, ".", log);
         deployTestDependencies(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
     }

@@ -77,7 +77,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setArtifactoryUrl(getUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
 
         // Read pip environment path variable.
         pipEnvVar = System.getenv(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PIP_ENV");

@@ -124,7 +124,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
                 .number("123")
                 .startedDate(new Date())
-                .url(getUrl())
+                .url(getArtifactoryUrl())
                 .vcs(vcsList);
         Build buildInfoToSend = buildInfoBuilder.build();
 
