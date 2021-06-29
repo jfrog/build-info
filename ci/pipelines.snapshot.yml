@@ -22,7 +22,7 @@ pipelines:
           inputResources:
             - name: biSnapshotGit
           integrations:
-            - name: ojo
+            - name: releases_jfrog
         execution:
           onStart:
             - *UPDATE_COMMIT_STATUS
@@ -34,10 +34,10 @@ pipelines:
             - export JFROG_CLI_BUILD_NAME=build-info
             - export JFROG_CLI_BUILD_NUMBER=$run_number
             - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
-            - ./jfrog c add ojo --artifactory-url $int_ojo_rt_url --access-token=$int_ojo_rt_token
+            - ./jfrog c add releases --artifactory-url https://releases.jfrog.io/artifactory --access-token=$int_releases_jfrog_token
             - ./jfrog rt gradlec --use-wrapper --uses-plugin
-              --server-id-resolve ojo --repo-resolve remote-repos
-              --server-id-deploy ojo --repo-deploy oss-snapshot-local
+              --server-id-resolve releases --repo-resolve jcenter
+              --server-id-deploy releases --repo-deploy oss-snapshot-local
 
             # Run install and publish
             - >
