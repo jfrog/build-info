@@ -7,6 +7,7 @@ buildscript {
         dependencies {
             classpath "com.gradle.publish:plugin-publish-plugin:+"
             classpath "io.github.gradle-nexus:publish-plugin:+"
+            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
         }
     }
 }
@@ -14,8 +15,9 @@ buildscript {
 plugins {
     id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
     id 'idea'
-    id 'com.jfrog.artifactory' version '4.21.0'
 }
+
+apply plugin: "com.jfrog.artifactory"
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
