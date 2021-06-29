@@ -70,7 +70,7 @@ public class DeleteReleaseBundle extends JFrogService<DistributeReleaseBundleRes
 
     @Override
     public DistributeReleaseBundleResponse execute(JFrogHttpClient client) throws IOException {
-        log.info(request.isDryRun() ? "[Dry run] " : "" + "Deleting:" + name + " / " + version);
+        log.info(request.isDryRun() ? "[Dry run] " : "" + "Deleting " + name + " / " + version);
         super.execute(client);
         if (sync && !request.isDryRun()) {
             waitForDeletion(client);

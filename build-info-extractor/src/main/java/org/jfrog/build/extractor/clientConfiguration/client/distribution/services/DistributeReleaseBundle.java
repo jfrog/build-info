@@ -63,7 +63,7 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
 
     @Override
     public DistributeReleaseBundleResponse execute(JFrogHttpClient client) throws IOException {
-        log.info(request.isDryRun() ? "[Dry run] " : "" + "Distributing:" + name + " / " + version);
+        log.info(request.isDryRun() ? "[Dry run] " : "" + "Distributing " + name + " / " + version);
         super.execute(client);
         if (sync && !request.isDryRun()) {
             waitForDistribution(client);
