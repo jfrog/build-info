@@ -49,7 +49,7 @@ pipelines:
 
             # Configure JFrog CLI
             - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
-            - ./jfrog c add releases --url=https://releases.jfrog.io/artifactory --access-token=$int_releases_temp_token
+            - ./jfrog c add releases --artifactory-url=https://releases.jfrog.io/artifactory --access-token=$int_releases_temp_token
             - ./jfrog rt gradlec --use-wrapper --uses-plugin
               --server-id-resolve releases --repo-resolve jcenter
               --server-id-deploy releases --repo-deploy oss-release-local
