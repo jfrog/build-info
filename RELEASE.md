@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.28.3 / gradle-artifactory-plugin 4.24.9 (June 30, 2021)
+- Fix file-spec-java missing dependency issue when using the Artifactory Gradle plugin ([523](https://github.com/jfrog/build-info/pull/523))
+
 ## build-info-extractor 2.28.2 / gradle-artifactory-plugin 4.24.8 (June 29, 2021)
 - Add support for Kaniko and JIB ([512](https://github.com/jfrog/build-info/pull/512))
 - Add JFrog Distribution commands ([520](https://github.com/jfrog/build-info/pull/520))
