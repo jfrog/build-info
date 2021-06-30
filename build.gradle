@@ -43,7 +43,6 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 
     repositories {
-        maven { url "https://releases.jfrog.io/artifactory/oss-releases" }
         maven { url "https://plugins.gradle.org/m2/" }
     }
 }
@@ -267,7 +266,7 @@ project('build-info-extractor') {
     dependencies {
         implementation project(':build-info-client')
         implementation project(':build-info-api')
-        implementation group: 'org.jfrog.filespecs', name: 'file-specs-java', version: '1.0.0'
+        implementation group: 'org.jfrog.filespecs', name: 'file-specs-java', version: '1.0.2'
 
         testImplementation "org.easymock:easymockclassextension:2.5.2"
         testFixturesApi project(':build-info-client')
