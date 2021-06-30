@@ -34,14 +34,16 @@ public class ReportUsage extends VoidJFrogService {
     }
 
     @Override
-    protected void ensureRequirements(JFrogHttpClient client) throws IOException {
+    public Void execute(JFrogHttpClient client) throws IOException {
         Version versionService = new Version(log);
         ArtifactoryVersion version = versionService.execute(client);
         if (version.isNotFound()) {
             throw new IOException("Could not get Artifactory version.");
         }
         if (!version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
-            throw new IOException("Usage report is not supported on targeted Artifactory server.");
+            log.debug("Usage report is not supported on targeted Artifactory server.")
+            return null;
         }
+        return super.execute(client);
     }
 }
