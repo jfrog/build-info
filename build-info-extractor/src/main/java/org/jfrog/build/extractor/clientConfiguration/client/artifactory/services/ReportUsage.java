@@ -41,7 +41,7 @@ public class ReportUsage extends VoidJFrogService {
             throw new IOException("Could not get Artifactory version.");
         }
         if (!version.isAtLeast(USAGE_ARTIFACTORY_MIN_VERSION)) {
-            log.debug("Usage report is not supported on targeted Artifactory server.")
+            log.debug("Usage report is not supported on targeted Artifactory server.");
             return null;
         }
         return super.execute(client);
