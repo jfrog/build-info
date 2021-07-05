@@ -48,10 +48,15 @@ public class PublishBuildInfo extends VoidJFrogService {
      * @param buildName   Build name of the published build
      * @param buildNumber Build number of the published build
      * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
+     * @param encode      Encode builder name and build number.
      * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
      */
-    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project) {
-        return String.format("%s/%s/%s/%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, encodeUrl(buildName), encodeUrl(buildNumber), timeStamp, "published" + getProjectQueryParam(project));
+    public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
+        if (encode) {
+            buildName = encodeUrl(buildName);
+            buildNumber = encodeUrl(buildNumber);
+        }
+        return String.format("%s/%s/%s/%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, buildName, buildNumber, timeStamp, "published" + getProjectQueryParam(project));
     }
 
     /**
@@ -59,11 +64,16 @@ public class PublishBuildInfo extends VoidJFrogService {
      *
      * @param artifactoryUrl Base Artifactory URL
      * @param buildName      Build name of the published build
-     * @param buildNumber    Build number of the published build
+     * @param buildNumber    Build number of the published build.
+     * @param encode         Encode builder name and build number.
      * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
      */
-    public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber) {
-        return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, encodeUrl(buildName), encodeUrl(buildNumber));
+    public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber, boolean encode) {
+        if (encode) {
+            buildName = encodeUrl(buildName);
+            buildNumber = encodeUrl(buildNumber);
+        }
+        return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
     }
 
     @Override
@@ -95,9 +105,9 @@ public class PublishBuildInfo extends VoidJFrogService {
         super.execute(client);
         String url;
         if (StringUtils.isNotBlank(platformUrl)) {
-            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()), buildInfo.getProject());
+            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()), buildInfo.getProject(), true);
         } else {
-            url = createBuildInfoUrl(client.getUrl(), buildInfo.getName(), buildInfo.getNumber());
+            url = createBuildInfoUrl(client.getUrl(), buildInfo.getName(), buildInfo.getNumber(), true);
         }
         log.info("Build successfully deployed. Browse it in Artifactory under " + url);
         return result;
