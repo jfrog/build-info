@@ -48,7 +48,7 @@ public class PublishBuildInfo extends VoidJFrogService {
      * @param buildName   Build name of the published build
      * @param buildNumber Build number of the published build
      * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
-     * @param encode      Encode builder name and build number.
+     * @param encode      True if should encode build name and build number
      * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published
      */
     public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
@@ -64,8 +64,8 @@ public class PublishBuildInfo extends VoidJFrogService {
      *
      * @param artifactoryUrl Base Artifactory URL
      * @param buildName      Build name of the published build
-     * @param buildNumber    Build number of the published build.
-     * @param encode         Encode builder name and build number.
+     * @param buildNumber    Build number of the published build
+     * @param encode         True if should encode build name and build number
      * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
      */
     public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber, boolean encode) {
