@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.28.4 / gradle-artifactory-plugin 4.24.10 (July 5, 2021)
+- Fix ReportUsage throws an exception for Artifactory version 6.9.0 ([525](https://github.com/jfrog/build-info/pull/525))
+
 ## build-info-extractor 2.28.3 / gradle-artifactory-plugin 4.24.9 (June 30, 2021)
 - Fix file-spec-java missing dependency issue when using the Artifactory Gradle plugin ([523](https://github.com/jfrog/build-info/pull/523))
 
