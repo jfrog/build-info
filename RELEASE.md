@@ -1,16 +1,16 @@
 # Release Notes
 
 ## build-info-extractor 2.28.4 / gradle-artifactory-plugin 4.24.10 (July 5, 2021)
-- Fix ReportUsage throws an exception for Artifactory version 6.9.0 ([525](https://github.com/jfrog/build-info/pull/525))
+- Bug fix - ReportUsage throws an exception for Artifactory version 6.9.0 ([525](https://github.com/jfrog/build-info/pull/525))
 
 ## build-info-extractor 2.28.3 / gradle-artifactory-plugin 4.24.9 (June 30, 2021)
-- Fix file-spec-java missing dependency issue when using the Artifactory Gradle plugin ([523](https://github.com/jfrog/build-info/pull/523))
+- Bug fix - file-spec-java missing dependency issue when using the Artifactory Gradle plugin ([523](https://github.com/jfrog/build-info/pull/523))
 
 ## build-info-extractor 2.28.2 / gradle-artifactory-plugin 4.24.8 (June 29, 2021)
 - Add support for Kaniko and JIB ([512](https://github.com/jfrog/build-info/pull/512))
 - Add JFrog Distribution commands ([520](https://github.com/jfrog/build-info/pull/520))
 - Add project to ScanBuild service ([519](https://github.com/jfrog/build-info/pull/519))
-- Fix NoSuchMethodError when using IOUtils.toString ([516](https://github.com/jfrog/build-info/pull/516))
+- Bug fix - NoSuchMethodError when using IOUtils.toString ([516](https://github.com/jfrog/build-info/pull/516))
 
 ## build-info-extractor 2.27.0 / gradle-artifactory-plugin 4.24.5 (June 16, 2021)
 - Add sha256 to the upload response of maven and gradle ([477](https://github.com/jfrog/build-info/pull/477))
