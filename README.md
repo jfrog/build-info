@@ -10,9 +10,9 @@ Build Info is Artifactory's open integration layer for the CI servers and build 
 * It must run using JDK 8 and Gradle 5.6.2. If you are using different gradle version you can use the provided gradle wrapper.<br/>
 * In order to run tests the following environment variables must be set:
 ```bash
-export BITESTS_ARTIFACTORY_URL='http://localhost:8081/artifactory'
-export BITESTS_ARTIFACTORY_USERNAME=admin
-export BITESTS_ARTIFACTORY_PASSWORD=password
+export BITESTS_PLATFORM_URL='http://localhost:8081'
+export BITESTS_PLATFORM_USERNAME=admin
+export BITESTS_PLATFORM_PASSWORD=password
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
 Before running the tests:
