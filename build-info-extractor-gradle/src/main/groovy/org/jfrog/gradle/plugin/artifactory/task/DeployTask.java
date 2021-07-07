@@ -141,7 +141,7 @@ public class DeployTask extends DefaultTask {
                 }
                 if (isGenerateDeployableArtifactsToFile(accRoot)) {
                     try {
-                        exportDeployableArtifacts(allDeployDetails, new File(accRoot.info.getDeployableArtifactsFilePath()), accRoot.info.isBackwardCompatibleDeployableArtifacts());
+                        exportDeployableArtifacts(allDeployDetails, new File(accRoot.info.getDeployableArtifactsFilePath()), accRoot.info.isBackwardCompatibleDeployableArtifacts(), contextUrl);
                     } catch (Exception e) {
                         log.error("Failed writing deployable artifacts to file: ", e);
                         throw new RuntimeException("Failed writing deployable artifacts to file", e);
@@ -235,9 +235,9 @@ public class DeployTask extends DefaultTask {
         BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
     }
 
-    private void exportDeployableArtifacts(Map<String, Set<DeployDetails>> allDeployDetails, File toFile, boolean exportBackwardCompatibleDeployableArtifacts) throws IOException {
+    private void exportDeployableArtifacts(Map<String, Set<DeployDetails>> allDeployDetails, File toFile, boolean exportBackwardCompatibleDeployableArtifacts, String rtUrl) throws IOException {
         log.debug("Exporting deployable artifacts to '{}'", toFile.getAbsolutePath());
-        DeployableArtifactsUtils.saveDeployableArtifactsToFile(allDeployDetails, toFile, exportBackwardCompatibleDeployableArtifacts);
+        DeployableArtifactsUtils.saveDeployableArtifactsToFile(allDeployDetails, toFile, exportBackwardCompatibleDeployableArtifacts, rtUrl);
     }
 
     private File getExportFile(ArtifactoryClientConfiguration clientConf) {
