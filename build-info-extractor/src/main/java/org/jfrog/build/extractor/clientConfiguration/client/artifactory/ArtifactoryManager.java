@@ -145,6 +145,16 @@ public class ArtifactoryManager extends ManagerBase {
         sendModuleInfoService.execute(jfrogHttpClient);
     }
 
+    public void deleteBuilds(String buildName, String project, boolean deleteArtifact) throws IOException {
+        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, deleteArtifact, log);
+        deleteBuildsService.execute(jfrogHttpClient);
+    }
+
+    public void deleteBuild(String buildName, String buildNumber, String project, boolean deleteArtifact) throws IOException {
+        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, buildNumber, deleteArtifact, log);
+        deleteBuildsService.execute(jfrogHttpClient);
+    }
+
     public Build getBuildInfo(String buildName, String buildNumber, String project) throws IOException {
         if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
             buildNumber = getLatestBuildNumber(buildName, buildNumber, project);

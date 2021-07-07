@@ -147,6 +147,9 @@ public class Utils {
         Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
+
+        // Cleanup
+        artifactoryManager.deleteBuild(buildInfo.getName(), buildInfo.getNumber(), null, true);
     }
 
     static void assertProjectsSuccess(BuildResult buildResult) {

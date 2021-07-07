@@ -23,6 +23,7 @@ import java.util.List;
 public class IssuesCollectorTest extends IntegrationTestsBase {
     private static final String BASE_CONFIG_PATH = "/issuesCollection";
     private static final String BUILD_NAME = "IssuesCollectionTest";
+    private static final String BUILD_NUMBER = String.valueOf(System.currentTimeMillis());
     private IssuesCollector collector;
     private File testResourcesPath;
     private File dotGitPath;
@@ -122,7 +123,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
 
     private void publishBuildInfoWithVcs(List<Vcs> vcsList) throws IOException {
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
-                .number("123")
+                .number(BUILD_NUMBER)
                 .startedDate(new Date())
                 .url(getArtifactoryUrl())
                 .vcs(vcsList);
@@ -130,6 +131,9 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
 
         // Publish build info
         artifactoryManager.publishBuildInfo(buildInfoToSend, null);
+
+        // Cleanup
+        artifactoryManager.deleteBuild(BUILD_NAME, BUILD_NUMBER, null, true);
     }
 
     @BeforeMethod
