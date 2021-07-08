@@ -88,7 +88,7 @@ public class DeployableArtifactsUtils {
         List<DeployableArtifactDetail> deployableArtifacts = new ArrayList<>();
         for (DeployDetails artifact : deployDetails) {
             String artifactDest = artifact.getArtifactPath();
-            // In case we want artifact destination to contain the full path of the archive in Artifactory - add rtUrl and repository to the path.
+            // In case we want artifact absolute path in Artifactory - add rtUrl and repository to destination.
             if (StringUtils.isBlank(rtUrl)){
                 artifactDest = rtUrl + artifact.getTargetRepository() + "/" + artifactDest;
             }
