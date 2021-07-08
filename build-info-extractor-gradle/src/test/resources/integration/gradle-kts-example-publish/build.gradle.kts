@@ -16,10 +16,10 @@ allprojects {
     status = "Integration"
 
     repositories {
-        maven(url = "${System.getenv("BITESTS_ARTIFACTORY_URL")}/${System.getenv("BITESTS_ARTIFACTORY_VIRTUAL_REPO")}") {
+        maven(url = "${System.getenv("BITESTS_PLATFORM_URL")}/artifactory/${System.getenv("BITESTS_ARTIFACTORY_VIRTUAL_REPO")}") {
             credentials {
-                username = System.getenv("BITESTS_ARTIFACTORY_USERNAME")
-                password = System.getenv("BITESTS_ARTIFACTORY_PASSWORD")
+                username = System.getenv("BITESTS_PLATFORM_USERNAME")
+                password = System.getenv("BITESTS_PLATFORM_PASSWORD")
             }
         }
     }
@@ -63,12 +63,12 @@ configure<org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention> {
     clientConfig.isIncludeEnvVars = true
     clientConfig.info.addEnvironmentProperty("test.adding.dynVar", java.util.Date().toString())
 
-    setContextUrl(System.getenv("BITESTS_ARTIFACTORY_URL"))
+    setContextUrl(System.getenv("BITESTS_PLATFORM_URL")+"/artifactory")
     publish {
         repository {
             setRepoKey(System.getenv("BITESTS_ARTIFACTORY_LOCAL_REPO")) // The Artifactory repository key to publish to
-            setUsername(System.getenv("BITESTS_ARTIFACTORY_USERNAME")) // The publisher user name
-            setPassword(System.getenv("BITESTS_ARTIFACTORY_PASSWORD")) // The publisher password
+            setUsername(System.getenv("BITESTS_PLATFORM_USERNAME")) // The publisher user name
+            setPassword(System.getenv("BITESTS_PLATFORM_PASSWORD")) // The publisher password
             // This is an optional section for configuring Ivy publication (when publishIvy = true).
             ivy {
                 setIvyLayout("[organization]/[module]/ivy-[revision].xml")

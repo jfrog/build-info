@@ -8,10 +8,10 @@ allprojects {
   status = 'Integration'
   repositories {
     maven {
-      url "${System.env.BITESTS_ARTIFACTORY_URL}/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
+      url "${System.env.BITESTS_PLATFORM_URL}/artifactory/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
       credentials {
-        username "${System.env.BITESTS_ARTIFACTORY_USERNAME}"
-        password "${System.env.BITESTS_ARTIFACTORY_PASSWORD}"
+        username "${System.env.BITESTS_PLATFORM_USERNAME}"
+        password "${System.env.BITESTS_PLATFORM_PASSWORD}"
       }
     }
   }
