@@ -82,6 +82,22 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
         }
     }
 
+    private void addMavenWebPublication(PublishingExtension publishingExtension, Project project) {
+        if (publishingExtension.getPublications().findByName(TaskHelperPublications.MAVEN_WEB) != null) {
+            // mavenWeb publication already exist
+            return
+        }
+        project.plugins.withType(MavenPublishPlugin) { MavenPublishPlugin publishingPlugin ->
+            publishingExtension.with {
+                publications {
+                    mavenWeb(MavenPublication) {
+                        from project.components.web
+                    }
+                }
+            }
+        }
+    }
+
     private void addIvyJavaPublication(PublishingExtension publishingExtension, Project project) {
         if (publishingExtension.getPublications().findByName(TaskHelperPublications.IVY_JAVA) != null) {
             // ivyJava publication already exist
@@ -177,7 +193,11 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      */
     private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask, @Nullable PublishingExtension publishingExtension) {
         if (publishingExtension != null) {
-            addMavenJavaPublication(publishingExtension, artifactoryTask.project)
+            if (artifactoryTask.project.plugins.hasPlugin("war")) {
+                addMavenWebPublication(publishingExtension, artifactoryTask.project)
+            } else if (!artifactoryTask.project.plugins.hasPlugin("org.springframework.boot")) {
+                addMavenJavaPublication(publishingExtension, artifactoryTask.project)
+            }
             addIvyJavaPublication(publishingExtension, artifactoryTask.project)
             artifactoryTask.addDefaultPublications()
         } else {
