@@ -199,14 +199,12 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                 addMavenWebPublication(publishingExtension, artifactoryTask.project)
             }
 
-            // Add mavenJava publication if jar task doesn't exist, or exists and enabled
+            // Add mavenJava and ivyJava publications if jar task doesn't exist, or exists and enabled
             Task jarTask = artifactoryTask.project.tasks.findByName("jar");
             if (jarTask == null || (jarTask != null && jarTask.enabled)) {
                 addMavenJavaPublication(publishingExtension, artifactoryTask.project)
+                addIvyJavaPublication(publishingExtension, artifactoryTask.project)
             }
-
-            // Add ivyJava publication
-            addIvyJavaPublication(publishingExtension, artifactoryTask.project)
 
             // Add publications to Artifactory task
             artifactoryTask.addDefaultPublications()
