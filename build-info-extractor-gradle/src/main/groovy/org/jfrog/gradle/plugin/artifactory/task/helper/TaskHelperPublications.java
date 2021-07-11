@@ -57,6 +57,7 @@ import java.util.concurrent.Callable;
  */
 public class TaskHelperPublications extends TaskHelper {
     public static final String MAVEN_JAVA = "mavenJava";
+    public static final String MAVEN_WEB = "mavenWeb";
     public static final String IVY_JAVA = "ivyJava";
     public static final String ALL_PUBLICATIONS = "ALL_PUBLICATIONS";
     private static final Logger log = Logging.getLogger(TaskHelperPublications.class);
@@ -298,6 +299,12 @@ public class TaskHelperPublications extends TaskHelper {
                 log.info("No publications specified for project '{}' - adding '{}' publication.",
                         getProject().getPath(), MAVEN_JAVA);
                 addPublication(mavenJavaPublication);
+            }
+            Publication mavenWebPublication = publishingExtension.getPublications().findByName(MAVEN_WEB);
+            if (mavenWebPublication != null) {
+                log.info("No publications specified for project '{}' - adding '{}' publication.",
+                        getProject().getPath(), MAVEN_WEB);
+                addPublication(mavenWebPublication);
             }
             Publication ivyJavaPublication = publishingExtension.getPublications().findByName(IVY_JAVA);
             if (ivyJavaPublication != null) {
