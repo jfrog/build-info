@@ -47,7 +47,8 @@ public class ModuleParallelDeployHelper {
                 // Save information returned from Artifactory after deployed.
                 artifact.setDeploySucceeded(true);
                 artifact.setSha256(response.getChecksums().getSha256());
-                // In case of a SNAPSHOT deploy artifact's name is being modify by artifactory and ArtifactPath needs to be update.
+                // In case of a SNAPSHOT deploy artifact's name is being modify by artifactory.
+                // ArtifactPath needs to be updated accordingly.
                 artifact.setArtifactPath(response.getPath());
             } catch (IOException e) {
                 artifact.setDeploySucceeded(false);
