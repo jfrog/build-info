@@ -26,13 +26,18 @@ public class DeployableArtifactDetail implements Serializable {
      * In case of deploy - is the deployment succeeded.
      */
     private Boolean deploySucceeded;
+    /**
+     * Target deploy repository.
+     */
+    private String targetRepository;
 
-    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1, String sha256, Boolean deploySucceeded) {
+    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1, String sha256, Boolean deploySucceeded, String targetRepository) {
         this.sourcePath = artifactSource;
         this.artifactDest = artifactDest;
         this.sha1 = sha1;
         this.sha256 = sha256;
         this.deploySucceeded = deploySucceeded;
+        this.targetRepository = targetRepository;
     }
 
     public DeployableArtifactDetail() {
@@ -52,6 +57,10 @@ public class DeployableArtifactDetail implements Serializable {
 
     public String getSha256() {
         return sha256;
+    }
+
+    public String getTargetRepository() {
+        return targetRepository;
     }
 
     public Boolean isDeploySucceeded() {

@@ -3,8 +3,6 @@ package org.jfrog.build.extractor.clientConfiguration.deploy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
-import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.client.DeployableArtifactDetail;
 
 import java.io.File;
@@ -20,18 +18,18 @@ import java.util.*;
  */
 public class DeployableArtifactsUtils {
 
-    public static void saveDeployableArtifactsToFile(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile, boolean saveBackwardCompatible, String rtUrl) throws IOException {
+    public static void saveDeployableArtifactsToFile(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile, boolean saveBackwardCompatible) throws IOException {
         if (saveBackwardCompatible) {
             saveBackwardCompatibleDeployableArtifacts(deployableArtifactsByModule, toFile);
             return;
         }
-        saveDeployableArtifactsByModule(deployableArtifactsByModule, toFile, rtUrl);
+        saveDeployableArtifactsByModule(deployableArtifactsByModule, toFile);
     }
 
-    private static void saveDeployableArtifactsByModule(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile, String rtUrl) throws IOException {
+    private static void saveDeployableArtifactsByModule(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
         Map<String, List<DeployableArtifactDetail>> deployableArtifactsDetails = new HashMap<>();
         deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
-                deployableArtifactsDetails.put(module, DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts, rtUrl)));
+                deployableArtifactsDetails.put(module, DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
         ObjectMapper mapper = new ObjectMapper();
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.writeValue(toFile, deployableArtifactsDetails);
@@ -44,7 +42,7 @@ public class DeployableArtifactsUtils {
     private static void saveBackwardCompatibleDeployableArtifacts(Map<String, Set<DeployDetails>> deployableArtifactsByModule, File toFile) throws IOException {
         List<DeployableArtifactDetail> deployableArtifactsList = new ArrayList<DeployableArtifactDetail>();
         deployableArtifactsByModule.forEach((module, deployableArtifacts) ->
-            deployableArtifactsList.addAll(DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts, "")));
+            deployableArtifactsList.addAll(DeployableArtifactsUtils.getDeployableArtifactsPaths(deployableArtifacts)));
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(toFile, deployableArtifactsList);
     }
@@ -84,15 +82,10 @@ public class DeployableArtifactsUtils {
         return deployableArtifactMap;
     }
 
-    private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails, String rtUrl) {
-        List<DeployableArtifactDetail> deployableArtifacts = new ArrayList<>();
+    private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails) {
+        List<DeployableArtifactDetail> deployableArtifacts = new ArrayList<DeployableArtifactDetail>();
         for (DeployDetails artifact : deployDetails) {
-            String artifactDest = artifact.getArtifactPath();
-            // In case we want artifact absolute path in Artifactory - add rtUrl and repository to destination.
-            if (StringUtils.isBlank(rtUrl)){
-                artifactDest = rtUrl + artifact.getTargetRepository() + "/" + artifactDest;
-            }
-            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifactDest, artifact.getSha1(), artifact.getSha256(), artifact.getDeploySucceeded()));
+            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifact.getArtifactPath(), artifact.getSha1(), artifact.getSha256(), artifact.getDeploySucceeded(), artifact.getTargetRepository()));
         }
         return deployableArtifacts;
     }

@@ -44,8 +44,11 @@ public class ModuleParallelDeployHelper {
         deployableArtifacts.forEach(artifact -> {
             try {
                 ArtifactoryUploadResponse response = artifactoryManager.upload(artifact, logPrefix);
+                // Save information returned from Artifactory after deployed.
                 artifact.setDeploySucceeded(true);
                 artifact.setSha256(response.getChecksums().getSha256());
+                // In case of a SNAPSHOT deploy artifact's name is being modify by artifactory and ArtifactPath needs to be update.
+                artifact.setArtifactPath(response.getPath());
             } catch (IOException e) {
                 artifact.setDeploySucceeded(false);
                 artifact.setSha256("");
