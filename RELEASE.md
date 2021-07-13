@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.28.6 / gradle-artifactory-plugin 4.24.12 (July 13, 2021)
+- Separate target repository and artifacts destination in the deployable artifacts file ([532](https://github.com/jfrog/build-info/pull/532))
+
 ## build-info-extractor 2.28.5 / gradle-artifactory-plugin 4.24.11 (July 8, 2021)
 - Add Artifactory url and repository to artifacts destination in deployable artifacts file ([530](https://github.com/jfrog/build-info/pull/530))
 
