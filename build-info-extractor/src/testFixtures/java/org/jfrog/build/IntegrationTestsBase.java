@@ -277,7 +277,7 @@ public abstract class IntegrationTestsBase {
      */
     private static boolean isOldBuild(Matcher buildMatcher) {
         long repoTimestamp = Long.parseLong(buildMatcher.group(1));
-        return TimeUnit.MILLISECONDS.toHours(CURRENT_TIME - repoTimestamp) >= 0;
+        return TimeUnit.MILLISECONDS.toHours(CURRENT_TIME - repoTimestamp) >= 24;
     }
 
     public void cleanTestBuilds(String buildName, String buildNumber, String project) throws IOException {
