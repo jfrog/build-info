@@ -4,6 +4,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrSubstitutor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
@@ -190,6 +191,15 @@ public class Utils {
      * @throws IOException - In case of any IO error
      */
     public static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
+        Pair<String,String> buildDetails = getBuildDetails(buildResult);
+        return artifactoryManager.getBuildInfo(buildDetails.getLeft(), buildDetails.getRight(), null);
+    }
+
+    /**
+     * @param buildResult Details of the build
+     * @return A pair of: Left item - buildResult's build name, Right item - buildResult's build number
+     */
+    public static Pair<String,String> getBuildDetails( BuildResult buildResult)  {
         // Get build info URL
         String[] res = StringUtils.substringAfter(buildResult.getOutput(), BUILD_BROWSE_URL).split("/");
         assertTrue(ArrayUtils.getLength(res) >= 3, "Couldn't find build info URL link");
@@ -197,7 +207,7 @@ public class Utils {
         // Extract build name and number from build info URL
         String buildName = res[1];
         String buildNumber = StringUtils.substringBefore(res[2], System.lineSeparator());
-        return artifactoryManager.getBuildInfo(buildName, buildNumber, null);
+        return Pair.of(buildName, buildNumber);
     }
 
     /**
