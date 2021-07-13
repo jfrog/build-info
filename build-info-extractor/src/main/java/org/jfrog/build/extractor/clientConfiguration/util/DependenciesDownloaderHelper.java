@@ -349,19 +349,14 @@ public class DependenciesDownloaderHelper {
         try {
             ArtifactMetaData artifactMetaData = new ArtifactMetaData();
             for (Header header : downloader.getArtifactoryManager().downloadHeaders(url)) {
-                switch (header.getName()) {
-                    case MD5_HEADER_NAME:
-                        artifactMetaData.setMd5(header.getValue());
-                        break;
-                    case SHA1_HEADER_NAME:
-                        artifactMetaData.setSha1(header.getValue());
-                        break;
-                    case HttpHeaders.CONTENT_LENGTH:
-                        artifactMetaData.setSize(NumberUtils.toLong(header.getValue()));
-                        break;
-                    case HttpHeaders.ACCEPT_RANGES:
-                        artifactMetaData.setAcceptRange("bytes".equals(header.getValue()));
-                        break;
+                if (MD5_HEADER_NAME.equalsIgnoreCase(header.getName())) {
+                    artifactMetaData.setMd5(header.getValue());
+                } else if (SHA1_HEADER_NAME.equalsIgnoreCase(header.getName())) {
+                    artifactMetaData.setSha1(header.getValue());
+                } else if (HttpHeaders.CONTENT_LENGTH.equalsIgnoreCase(header.getName())) {
+                    artifactMetaData.setSize(NumberUtils.toLong(header.getValue()));
+                } else if (HttpHeaders.ACCEPT_RANGES.equalsIgnoreCase(header.getName())) {
+                    artifactMetaData.setAcceptRange("bytes".equals(header.getValue()));
                 }
             }
             return artifactMetaData;
