@@ -19,17 +19,17 @@ public class DeleteBuilds extends VoidJFrogService {
     /**
      * Delete All build numbers of a certain build.
      */
-    public DeleteBuilds(String buildName, String project, boolean deleteArtifact, Log logger) {
+    public DeleteBuilds(String buildName, String project, boolean deleteArtifacts, Log logger) {
         super(logger);
-        deleteBuildsRequest = new DeleteBuildsRequest(buildName, project, deleteArtifact);
+        deleteBuildsRequest = new DeleteBuildsRequest(buildName, project, deleteArtifacts);
     }
 
     /**
      * Delete multiple build numbers of a certain build.
      */
-    public DeleteBuilds(String buildName, String project, String[] buildNumbers, boolean deleteArtifact, Log logger) {
+    public DeleteBuilds(String buildName, String project, String[] buildNumbers, boolean deleteArtifacts, Log logger) {
         super(logger);
-        deleteBuildsRequest = new DeleteBuildsRequest(buildName, buildNumbers, project, deleteArtifact);
+        deleteBuildsRequest = new DeleteBuildsRequest(buildName, buildNumbers, project, deleteArtifacts);
     }
 
     @Override

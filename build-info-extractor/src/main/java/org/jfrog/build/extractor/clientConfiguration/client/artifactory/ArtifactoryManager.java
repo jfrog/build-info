@@ -151,13 +151,13 @@ public class ArtifactoryManager extends ManagerBase {
         return getAllBuildNumbersService.execute(jfrogHttpClient);
     }
 
-    public void deleteBuilds(String buildName, String project, boolean deleteArtifact) throws IOException {
-        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, deleteArtifact, log);
+    public void deleteBuilds(String buildName, String project, boolean deleteArtifacts) throws IOException {
+        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, deleteArtifacts, log);
         deleteBuildsService.execute(jfrogHttpClient);
     }
 
-    public void deleteBuilds(String buildName, String project, boolean deleteArtifact, String... buildNumbers) throws IOException {
-        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, buildNumbers, deleteArtifact, log);
+    public void deleteBuilds(String buildName, String project, boolean deleteArtifacts, String... buildNumbers) throws IOException {
+        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, buildNumbers, deleteArtifacts, log);
         deleteBuildsService.execute(jfrogHttpClient);
     }
 
