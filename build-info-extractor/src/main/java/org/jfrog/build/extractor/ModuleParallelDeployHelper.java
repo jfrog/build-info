@@ -44,8 +44,12 @@ public class ModuleParallelDeployHelper {
         deployableArtifacts.forEach(artifact -> {
             try {
                 ArtifactoryUploadResponse response = artifactoryManager.upload(artifact, logPrefix);
+                // Save information returned from Artifactory after the deployment.
                 artifact.setDeploySucceeded(true);
                 artifact.setSha256(response.getChecksums().getSha256());
+                // When a maven SNAPSHOT artifact is deployed, Artifactory adds a timestamp to the artifact name, after the artifact is deployed.
+                // ArtifactPath needs to be updated accordingly.
+                artifact.setArtifactPath(response.getPath());
             } catch (IOException e) {
                 artifact.setDeploySucceeded(false);
                 artifact.setSha256("");

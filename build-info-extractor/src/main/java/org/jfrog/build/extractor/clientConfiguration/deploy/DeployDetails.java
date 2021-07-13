@@ -107,6 +107,10 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         this.sha256=sha256;
     }
 
+    public void setArtifactPath(String artifactPath) {
+        this.artifactPath=artifactPath;
+    }
+
     public Boolean getDeploySucceeded() {
         return deploySucceeded;
     }
