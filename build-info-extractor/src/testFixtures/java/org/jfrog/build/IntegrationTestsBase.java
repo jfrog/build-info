@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
+import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuildNumbersResponse;
 import org.jfrog.build.extractor.util.TestingLog;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -18,6 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.testng.Assert.fail;
 
@@ -50,6 +54,8 @@ public abstract class IntegrationTestsBase {
     private String password;
     private String platformUrl;
     private String artifactoryUrl;
+    public static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("^/(\\d+)$");
+    public static final long CURRENT_TIME = System.currentTimeMillis();
 
     public static Log getLog() {
         return log;
@@ -260,6 +266,53 @@ public abstract class IntegrationTestsBase {
 
         public void setFiles(List<String> files) {
             this.files = files;
+        }
+    }
+
+    /**
+     * Return true if the build was created more than 24 hours ago.
+     *
+     * @param buildMatcher - Build regex matcher on BUILD_NUMBER_PATTERN
+     * @return true if the Build was created more than 24 hours ago
+     */
+    private static boolean isOldBuild(Matcher buildMatcher) {
+        long repoTimestamp = Long.parseLong(buildMatcher.group(1));
+        return TimeUnit.MILLISECONDS.toHours(CURRENT_TIME - repoTimestamp) >= 0;
+    }
+
+    public void cleanTestBuilds(String buildName, String buildNumber, String project) throws IOException {
+        artifactoryManager.deleteBuilds(buildName, project, true, buildNumber);
+        cleanOldBuilds(buildName, project);
+    }
+
+    /**
+     * Clean up old build runs which have been created more than 24 hours.
+     *
+     * @param buildName - The build name to be cleaned.
+     */
+    private void cleanOldBuilds(String buildName, String project) throws IOException {
+        // Get build numbers for deletion
+        String[] oldBuildNumbers = artifactoryManager.getAllBuildNumbers(buildName, project).buildsNumbers.stream()
+
+                // Get build numbers.
+                .map(GetAllBuildNumbersResponse.BuildsNumberDetails::getUri)
+
+                //  Remove duplicates.
+                .distinct()
+
+                // Match build number pattern.
+                .map(BUILD_NUMBER_PATTERN::matcher)
+                .filter(Matcher::matches)
+
+                // Filter build numbers newer than 24 hours.
+                .filter(IntegrationTestsBase::isOldBuild)
+
+                // Get build number.
+                .map(matcher -> matcher.group(1))
+                .toArray(String[]::new);
+
+        if (oldBuildNumbers.length > 0) {
+            artifactoryManager.deleteBuilds(buildName, project, true, oldBuildNumbers);
         }
     }
 }

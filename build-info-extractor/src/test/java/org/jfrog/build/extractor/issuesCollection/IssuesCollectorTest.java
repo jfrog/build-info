@@ -133,7 +133,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         artifactoryManager.publishBuildInfo(buildInfoToSend, null);
 
         // Cleanup
-        artifactoryManager.deleteBuild(BUILD_NAME, BUILD_NUMBER, null, true);
+        artifactoryManager.deleteBuilds(BUILD_NAME, null, true, BUILD_NUMBER);
     }
 
     @BeforeMethod

@@ -22,6 +22,7 @@ import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
 import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.RepositoryType;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.*;
+import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuildNumbersResponse;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.usageReport.UsageReporter;
 
@@ -145,13 +146,18 @@ public class ArtifactoryManager extends ManagerBase {
         sendModuleInfoService.execute(jfrogHttpClient);
     }
 
+    public GetAllBuildNumbersResponse getAllBuildNumbers(String buildName, String project) throws IOException {
+        GetAllBuildNumbers getAllBuildNumbersService = new GetAllBuildNumbers(buildName, project, log);
+        return getAllBuildNumbersService.execute(jfrogHttpClient);
+    }
+
     public void deleteBuilds(String buildName, String project, boolean deleteArtifact) throws IOException {
         DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, deleteArtifact, log);
         deleteBuildsService.execute(jfrogHttpClient);
     }
 
-    public void deleteBuild(String buildName, String buildNumber, String project, boolean deleteArtifact) throws IOException {
-        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, buildNumber, deleteArtifact, log);
+    public void deleteBuilds(String buildName, String project, boolean deleteArtifact, String... buildNumbers) throws IOException {
+        DeleteBuilds deleteBuildsService = new DeleteBuilds(buildName, project, buildNumbers, deleteArtifact, log);
         deleteBuildsService.execute(jfrogHttpClient);
     }
 

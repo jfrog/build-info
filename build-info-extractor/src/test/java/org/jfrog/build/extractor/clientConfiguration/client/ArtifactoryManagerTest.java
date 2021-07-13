@@ -98,7 +98,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
 
         // Cleanup
-        artifactoryManager.deleteBuild(BUILD_NAME, BUILD_NUMBER, project, true);
+        cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, project);
     }
 
     private void sendBuildRetention(String project) throws IOException {

@@ -147,9 +147,6 @@ public class Utils {
         Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
-
-        // Cleanup
-        artifactoryManager.deleteBuild(buildInfo.getName(), buildInfo.getNumber(), null, true);
     }
 
     static void assertProjectsSuccess(BuildResult buildResult) {
@@ -192,7 +189,7 @@ public class Utils {
      * @return build info or null
      * @throws IOException - In case of any IO error
      */
-    private static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
+    public static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
         // Get build info URL
         String[] res = StringUtils.substringAfter(buildResult.getOutput(), BUILD_BROWSE_URL).split("/");
         assertTrue(ArrayUtils.getLength(res) >= 3, "Couldn't find build info URL link");

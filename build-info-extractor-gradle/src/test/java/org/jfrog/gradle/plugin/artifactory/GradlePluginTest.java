@@ -3,6 +3,7 @@ package org.jfrog.gradle.plugin.artifactory;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.util.VersionNumber;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -59,6 +60,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, false, localRepo1);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -69,6 +73,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -79,6 +86,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -93,6 +103,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -107,6 +120,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -121,6 +137,9 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         int expectedArtifactsPerModule = VersionNumber.parse(gradleVersion).getMajor() >= 6 ? 5 : 4;
         checkLocalBuild(buildResult, BUILD_INFO_JSON.toFile(), 3, expectedArtifactsPerModule);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 
     @Test(dataProvider = "gradleVersions")
@@ -135,5 +154,8 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
         checkLocalBuild(buildResult, BUILD_INFO_JSON.toFile(), 2, 0);
+        // Cleanup
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        cleanTestBuilds(buildInfo.getName(), buildInfo.getNumber(), null);
     }
 }
