@@ -27,7 +27,7 @@ public class DeployableArtifactDetail implements Serializable {
      */
     private Boolean deploySucceeded;
     /**
-     * Target deploy repository.
+     * Target deployment repository.
      */
     private String targetRepository;
 
