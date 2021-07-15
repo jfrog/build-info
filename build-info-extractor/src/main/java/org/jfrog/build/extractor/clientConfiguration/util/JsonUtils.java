@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -10,6 +9,8 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 public class JsonUtils {
     public static String toJsonString(Object object) throws IOException {
@@ -33,9 +34,8 @@ public class JsonUtils {
 
     public static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
-        ObjectMapper mapper = new ObjectMapper(jsonFactory);
+        ObjectMapper mapper = createMapper();
         mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
     }

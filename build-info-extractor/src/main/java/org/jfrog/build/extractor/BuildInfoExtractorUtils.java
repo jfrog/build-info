@@ -22,6 +22,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
@@ -292,6 +293,20 @@ public abstract class BuildInfoExtractorUtils {
 
     public static String getModuleIdString(String organisation, String name, String version) {
         return organisation + ':' + name + ':' + version;
+    }
+
+    /**
+     * Create an object mapper for serialization/deserialization.
+     * This mapper ignore unknown properties and null values.
+     *
+     * @return a new object mapper
+     */
+    public static ObjectMapper createMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        return mapper;
     }
 
     private static class PrefixPredicate implements Predicate<Object> {

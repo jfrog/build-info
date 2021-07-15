@@ -2,10 +2,8 @@ package org.jfrog.build.extractor.pip.extractor;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.util.Log;
 
@@ -16,6 +14,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 /**
  * Created by Bar Belity on 19/07/2020.
@@ -30,13 +30,7 @@ import java.util.Map;
 public class DependenciesCache {
 
     private static final int CACHE_VERSION = 1;
-    private static ObjectMapper objectMapper;
-
-    static {
-        objectMapper = new ObjectMapper();
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
-    }
+    private static final ObjectMapper objectMapper = createMapper();
 
     @JsonProperty("version")
     private int version = CACHE_VERSION;

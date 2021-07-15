@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jfrog.build.extractor.docker.DockerUtils.createMapper;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class BuildDockerCreator extends PackageManagerExtractor {

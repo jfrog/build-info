@@ -1,9 +1,6 @@
 package org.jfrog.build.extractor.docker;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -14,6 +11,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 public class DockerUtils {
     /**
@@ -74,19 +73,6 @@ public class DockerUtils {
             }
         }
         return "";
-    }
-
-    /**
-     * Create an object mapper for serialization/deserialization.
-     * This mapper ignore unknown properties and null values.
-     *
-     * @return a new object mapper
-     */
-    public static ObjectMapper createMapper() {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        return mapper;
     }
 
     /**

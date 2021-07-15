@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.base.Charsets;
@@ -16,16 +14,16 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
+
 /**
  * Utilities for serializing/deserializing Module info as json
  */
 public class ModuleExtractorUtils {
     private static JsonFactory createJsonFactory() {
         JsonFactory jsonFactory = new JsonFactory();
-        ObjectMapper mapper = new ObjectMapper(jsonFactory);
+        ObjectMapper mapper = createMapper();
         mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         jsonFactory.setCodec(mapper);
         return jsonFactory;
     }
