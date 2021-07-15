@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: "Get Maven Central Latest Version"
         run: |
-          export LATEST_MVN_CENTRAL_VERSION=`curl -s https://search.maven.org/solrsearch/select\?q\=g:"org.jfrog.buildinfo"+AND+a:"build-info-extractor-gradle" | jq -r '.response.docs[0].latestVersio'`
+          export LATEST_MVN_CENTRAL_VERSION=`curl -s https://search.maven.org/solrsearch/select\?q\=g:"org.jfrog.buildinfo"+AND+a:"build-info-extractor-gradle" | jq -r '.response.docs[0].latestVersion'`
           echo "LATEST_MVN_CENTRAL_VERSION=$LATEST_MVN_CENTRAL_VERSION" >> $GITHUB_ENV
       - name: "Convert Version to Regex"
         uses: actions-ecosystem/action-regex-match@v2
