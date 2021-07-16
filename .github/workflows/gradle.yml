@@ -22,7 +22,7 @@ jobs:
         id: check-version
         with:
           text: ${{ env.LATEST_MVN_CENTRAL_VERSION }}
-          regex: "[0-9]+.[0-9]+.[0-9]"
+          regex: "[0-9]+.[0-9]+.[0-9]+"
       - name: "Test Resolved Version"
         run: |
           echo "Illegal version: $LATEST_MVN_CENTRAL_VERSION"
