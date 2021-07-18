@@ -60,8 +60,9 @@ To run *all* tests:
 ./gradlew clean build-info-extractor-gradle:test
 ```
 
-#### Npm tests
+#### npm tests
 * Add npm executable to the system search path (PATH environment variable).
+* npm 7.7 or above is required.
 ```bash
 ./gradlew clean build-info-extractor-npm:test
 ```
