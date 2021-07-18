@@ -357,7 +357,7 @@ public class DependenciesDownloaderHelper {
                 } else if (HttpHeaders.CONTENT_LENGTH.toUpperCase().equals(upperCaseHeader)) {
                     artifactMetaData.setSize(NumberUtils.toLong(header.getValue()));
                 } else if (HttpHeaders.ACCEPT_RANGES.toUpperCase().equals(upperCaseHeader)) {
-                    artifactMetaData.setAcceptRange("bytes".equals(header.getValue()));
+                    artifactMetaData.setAcceptRange("bytes".equalsIgnoreCase(header.getValue()));
                 }
             }
             return artifactMetaData;
