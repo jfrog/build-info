@@ -255,7 +255,7 @@ public class TaskHelperPublications extends TaskHelper {
             }
 
             boolean legacy = false;
-            Set<MavenArtifact> artifacts;
+            Set<MavenArtifact> artifacts = new HashSet<>();
             try {
                 // Gradle 5.0 and above:
                 artifacts = mavenNormalizedPublication.getAdditionalArtifacts();
@@ -263,6 +263,10 @@ public class TaskHelperPublications extends TaskHelper {
                 if (mavenNormalizedPublication.getMainArtifact() != null) {
                     createPublishArtifactInfoAndAddToDeployDetails(mavenNormalizedPublication.getMainArtifact(), deployDetails, mavenPublication, publicationName);
                 }
+            } catch (IllegalStateException exception) {
+                // The Jar task is disabled, and therefore getMainArtifact() threw an exception:
+                // "Artifact api.jar wasn't produced by this build."
+                log.warn("Illegal state detected at Maven publication '{}', {}: {}", publicationName, getProject(), exception.getMessage());
             } catch (NoSuchMethodError error) {
                 // Compatibility with older versions of Gradle:
                 artifacts = mavenNormalizedPublication.getAllArtifacts();
