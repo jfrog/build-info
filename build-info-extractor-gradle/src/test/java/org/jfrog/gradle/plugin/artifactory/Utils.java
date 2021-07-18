@@ -191,7 +191,7 @@ public class Utils {
      * @throws IOException - In case of any IO error
      */
     public static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
-        Pair<String,String> buildDetails = getBuildDetails(buildResult);
+        Pair<String, String> buildDetails = getBuildDetails(buildResult);
         return artifactoryManager.getBuildInfo(buildDetails.getLeft(), buildDetails.getRight(), null);
     }
 
@@ -199,7 +199,7 @@ public class Utils {
      * @param buildResult Details of the build
      * @return A pair of: Left item - buildResult's build name, Right item - buildResult's build number
      */
-    public static Pair<String,String> getBuildDetails( BuildResult buildResult)  {
+    public static Pair<String, String> getBuildDetails(BuildResult buildResult) {
         // Get build info URL
         String[] res = StringUtils.substringAfter(buildResult.getOutput(), BUILD_BROWSE_URL).split("/");
         assertTrue(ArrayUtils.getLength(res) >= 3, "Couldn't find build info URL link");
