@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.npm.types;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
@@ -9,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Objects;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     private static final long serialVersionUID = 1L;
@@ -67,8 +68,7 @@ public class NpmPackageInfo implements Serializable, ProducerConsumerItem {
     }
 
     public void readPackageInfo(InputStream inputStream) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        ObjectMapper mapper = createMapper();
 
         NpmPackageInfo npmPackageInfo = mapper.readValue(inputStream, NpmPackageInfo.class);
 

@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.nuget.types;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
 
@@ -8,6 +7,8 @@ import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 public class NugetProjectAssets {
     private static final long serialVersionUID = 1L;
@@ -155,7 +156,7 @@ public class NugetProjectAssets {
     public void readProjectAssets(File projectAssets) throws IOException {
         try (FileInputStream fis = new FileInputStream(projectAssets)) {
             String json = inputStreamToString(fis);
-            ObjectMapper mapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            ObjectMapper mapper = createMapper();
             NugetProjectAssets assets = mapper.readValue(json, NugetProjectAssets.class);
             this.setVersion(assets.getVersion());
             this.setLibraries(assets.getLibraries());

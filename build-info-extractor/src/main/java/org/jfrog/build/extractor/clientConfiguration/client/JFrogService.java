@@ -1,7 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.codec.net.URLCodec;
@@ -21,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 
 import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
 import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 /**
  * JFrogService represents a generic way of processing a REST endpoint process that structures how REST sends, handles errors, and parses the response.
@@ -65,10 +64,8 @@ public abstract class JFrogService<TResult> {
      */
     protected ObjectMapper getMapper() {
         if (mapper == null) {
-            mapper = new ObjectMapper();
-            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+            mapper = createMapper();
             mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
-            mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         }
         return mapper;
     }
