@@ -31,7 +31,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
     private static final String TEST_SPACE = "bi_client_test_space";
     private static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), TEST_SPACE);
     private static final String BUILD_NAME = "ArtifactoryManagerTest";
-    private static final String BUILD_NUMBER = "13";
+    private static final String BUILD_NUMBER = String.valueOf(System.currentTimeMillis());
 
     @BeforeMethod
     @AfterMethod
@@ -64,7 +64,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         final Module module = new Module();
         module.setId("foo");
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
-        final List<PromotionStatus> STATUSES = Arrays.asList(new PromotionStatus("a", "b", "c", simpleDateFormat.format(STARTED), "e", "f"));
+        final List<PromotionStatus> STATUSES = Collections.singletonList(new PromotionStatus("a", "b", "c", simpleDateFormat.format(STARTED), "e", "f"));
 
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
                 .number(BUILD_NUMBER)
@@ -96,6 +96,9 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
         // Compare
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
+
+        // Cleanup
+        cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, project);
     }
 
     private void sendBuildRetention(String project) throws IOException {
