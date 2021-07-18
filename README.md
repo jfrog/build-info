@@ -1,4 +1,4 @@
-[![Build status](https://ci.appveyor.com/api/projects/status/omscno1vb7g11qu2?svg=true)](https://ci.appveyor.com/project/jfrog-ecosystem/build-info)
+[![Build status](https://ci.appveyor.com/api/projects/status/omscno1vb7g11qu2?svg=true)](https://ci.appveyor.com/project/jfrog-ecosystem/build-info) [![Gradle plugin](https://img.shields.io/gradle-plugin-portal/v/com.jfrog.artifactory?label=Gradle%20Artifactory%20plugin)](https://plugins.gradle.org/plugin/com.jfrog.artifactory)
 
 ## Overview
 
