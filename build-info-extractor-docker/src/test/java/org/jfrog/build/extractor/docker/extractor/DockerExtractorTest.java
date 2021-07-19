@@ -84,7 +84,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         dockerVirtualRepo = System.getenv(DOCKER_VIRTUAL_REPO);
         host = System.getenv(DOCKER_HOST);
         imageTagLocal = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
-        imageTagVirtual = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
+        imageTagVirtual = StringUtils.appendIfMissing(virtualDomainName, "/") + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
         pullImageFromRemote = remoteDomainName + "hello-world:latest";
         pullImageFromVirtual = StringUtils.appendIfMissing(virtualDomainName, "/") + "hello-world:latest";
     }
