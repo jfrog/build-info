@@ -119,6 +119,9 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
         Assert.assertNotNull(issues);
         Assert.assertNotNull(issues.getAffectedIssues());
         Assert.assertEquals(expectedNumOfIssues, issues.getAffectedIssues().size());
+
+        // Cleanup
+        artifactoryManager.deleteBuilds(BUILD_NAME, null, true, BUILD_NUMBER);
     }
 
     private void publishBuildInfoWithVcs(List<Vcs> vcsList) throws IOException {
@@ -131,9 +134,6 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
 
         // Publish build info
         artifactoryManager.publishBuildInfo(buildInfoToSend, null);
-
-        // Cleanup
-        artifactoryManager.deleteBuilds(BUILD_NAME, null, true, BUILD_NUMBER);
     }
 
     @BeforeMethod
