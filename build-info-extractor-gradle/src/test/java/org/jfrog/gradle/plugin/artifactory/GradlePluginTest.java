@@ -154,8 +154,5 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
         // Check results
         checkLocalBuild(buildResult, BUILD_INFO_JSON.toFile(), 2, 0);
-        // Cleanup
-        Pair<String, String> buildDetails = getBuildDetails(buildResult);
-        cleanTestBuilds(buildDetails.getLeft(), buildDetails.getRight(), null);
     }
 }
