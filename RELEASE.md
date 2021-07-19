@@ -1,7 +1,13 @@
 # Release Notes
 
+## build-info-extractor 2.28.8 / gradle-artifactory-plugin 4.24.14 (July 19, 2021)
+- Bug fix - Fail to deserialize deployable artifacts ([537](https://github.com/jfrog/build-info/pull/537))
+- Gradle - skip uploading JAR if no jar produced in build ([538](https://github.com/jfrog/build-info/pull/538))
+- Make download headers comparisons case insensitive ([539](https://github.com/jfrog/build-info/pull/539))
+
 ## build-info-extractor 2.28.6 / gradle-artifactory-plugin 4.24.12 (July 13, 2021)
 - Separate target repository and artifacts destination in the deployable artifacts file ([532](https://github.com/jfrog/build-info/pull/532))
+- Publish Gradle plugin to Gradle Gallery ([536](https://github.com/jfrog/build-info/pull/536))
 
 ## build-info-extractor 2.28.5 / gradle-artifactory-plugin 4.24.11 (July 8, 2021)
 - Add Artifactory url and repository to artifacts destination in deployable artifacts file ([530](https://github.com/jfrog/build-info/pull/530))
