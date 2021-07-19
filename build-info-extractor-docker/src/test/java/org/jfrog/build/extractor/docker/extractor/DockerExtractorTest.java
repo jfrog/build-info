@@ -76,16 +76,14 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             throw new SkipException("Skipping Docker tests on Windows OS");
         }
         assertEnvironment();
-        String localDomainName = StringUtils.appendIfMissing(System.getenv(LOCAL_DOMAIN), "/");
-        String remoteDomainName = StringUtils.appendIfMissing(System.getenv(REMOTE_DOMAIN), "/");
         virtualDomainName = System.getenv(VIRTUAL_DOMAIN);
         dockerLocalRepo = System.getenv(DOCKER_LOCAL_REPO);
         dockerRemoteRepo = System.getenv(DOCKER_REMOTE_REPO);
         dockerVirtualRepo = System.getenv(DOCKER_VIRTUAL_REPO);
         host = System.getenv(DOCKER_HOST);
-        imageTagLocal = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
-        imageTagVirtual = localDomainName + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
-        pullImageFromRemote = remoteDomainName + "hello-world:latest";
+        imageTagLocal = StringUtils.appendIfMissing(System.getenv(LOCAL_DOMAIN), "/") + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
+        imageTagVirtual = StringUtils.appendIfMissing(virtualDomainName, "/") + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_VIRTUAL;
+        pullImageFromRemote = StringUtils.appendIfMissing(System.getenv(REMOTE_DOMAIN), "/") + "hello-world:latest";
         pullImageFromVirtual = StringUtils.appendIfMissing(virtualDomainName, "/") + "hello-world:latest";
     }
 
