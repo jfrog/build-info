@@ -1,560 +1,388 @@
 {
   "summary" : {
-    "message" : "Build xray-report number 6 was scanned by Xray and 3 Alerts were generated",
-    "total_alerts" : 3,
+    "message" : "Build buildscan number 20 was scanned by Xray and 13 Alerts were generated",
+    "total_alerts" : 13,
     "fail_build" : true,
-    "more_details_url" : "https://ecosysjfrog.jfrog.io/ui/builds/xray-report/6/1606661776784"
+    "more_details_url" : "url"
   },
   "alerts" : [ {
-    "created" : "2020-11-29T14:56:33.291818513Z",
+    "created" : "2021-08-03T14:58:59.007Z",
     "issues" : [ {
-      "severity" : "High",
-      "type" : "License",
-      "summary" : "CDDL-1.0",
-      "description" : "Common Development and Distribution License (CDDL)\n            1.0",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "mail-1.4.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "96868f82264ebd9b7d41f04d78cbe87ab75d68a7bbf8edfb82416aabe9b54b6c",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.mail:mail:1.4"
-        }, {
-          "name" : "activation-1.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "2881c79c9d6ef01c58e62beea13e9d1ac8b8baa16f2fc198ad6e6776defdcdd3",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.activation:activation:1.1"
-        }, {
-          "name" : "jsp-api-2.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "545f4e7dc678ffb4cf8bd0fd40b4a4470a409a787c0ea7d0ad2f08d56112987b",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.servlet.jsp:jsp-api:2.1"
-        } ]
-      } ]
-    }, {
-      "severity" : "High",
-      "type" : "License",
-      "summary" : "Unknown",
-      "description" : "Unknown license",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "multi1-3.7-20201129.145611-116-sources.jar",
-          "path" : "",
-          "sha256" : "ce382333a8291cbb4ea80d2faf254e74be9ecbb207bc50857c1ad7277b03235d",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-sources.jar"
-        }, {
-          "name" : "multi1-3.7-SNAPSHOT.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "multi1-3.7-SNAPSHOT.jar"
-        }, {
-          "name" : "multi1-3.7-20201129.145611-116-tests.jar",
-          "path" : "",
-          "sha256" : "df5b492ca4c269dc90822a4d01c98d536ce04e5f4e19aa2fe085b6f65d68f66b",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-tests.jar"
-        }, {
-          "name" : "multi1-3.7-20201129.145611-116.jar",
-          "path" : "",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116.jar"
-        }, {
-          "name" : "multi2-3.7-20201129.145611-116.jar",
-          "path" : "",
-          "sha256" : "7749ce066293e6b2498f2da5d071706d45dab6fe0064890429b2b8427d8bc76a",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi2-3.7-20201129.145611-116.jar"
-        }, {
-          "name" : "multi3-3.7-20201129.145611-115.war",
-          "path" : "",
-          "sha256" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi3-3.7-20201129.145611-115.war"
-        } ]
-      } ]
-    }, {
-      "severity" : "High",
-      "type" : "License",
-      "summary" : "Public Domain",
-      "description" : "Public Domain",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "aopalliance-1.0.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "aopalliance:aopalliance:1.0"
-        } ]
-      } ]
-    } ],
-    "top_severity" : "High",
-    "watch_name" : "combined-rule"
-  }, {
-    "created" : "2020-11-29T14:56:33.868932981Z",
-    "issues" : [ {
-      "severity" : "High",
-      "type" : "security",
+      "severity" : "Critical",
+      "type" : "Security",
       "provider" : "JFrog",
-      "created" : "2019-03-25T16:42:05.856Z",
-      "summary" : "Apache Commons IO Java Deserialization Remote Code Execution",
-      "description" : "Apache Commons IO contains a flaw that is due to the program failing to restrict which class can be serialized. This may allow a remote attacker to execute arbitrary Java code via deserialization methods.",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "commons-io-1.4.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "commons-io:commons-io:1.4"
-        } ]
-      } ]
-    }, {
-      "severity" : "High",
-      "type" : "security",
-      "provider" : "JFrog",
-      "created" : "2019-06-10T08:42:32.044Z",
+      "created" : "2021-08-03T14:58:59.007Z",
       "summary" : "Plexus-utils before 3.0.16 is vulnerable to command injection because it does not correctly process the contents of double quoted strings.",
       "description" : "Plexus-utils before 3.0.16 is vulnerable to command injection because it does not correctly process the contents of double quoted strings.",
       "cve" : "CVE-2017-1000487",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
           "name" : "plexus-utils-1.5.1.jar",
-          "path" : "WEB-INF/lib/",
+          "path" : "",
           "sha256" : "72582f8ba285601fa753ceeda73ff3cbd94c6e78f52ec611621eaa0186165452",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
           "display_name" : "org.codehaus.plexus:plexus-utils:1.5.1"
         } ]
       } ]
     }, {
       "severity" : "High",
-      "type" : "License",
-      "summary" : "Unknown",
-      "description" : "Unknown license",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "multi1-3.7-20201129.145611-116-sources.jar",
-          "path" : "",
-          "sha256" : "ce382333a8291cbb4ea80d2faf254e74be9ecbb207bc50857c1ad7277b03235d",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-sources.jar"
-        }, {
-          "name" : "multi1-3.7-SNAPSHOT.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "multi1-3.7-SNAPSHOT.jar"
-        }, {
-          "name" : "multi1-3.7-20201129.145611-116-tests.jar",
-          "path" : "",
-          "sha256" : "df5b492ca4c269dc90822a4d01c98d536ce04e5f4e19aa2fe085b6f65d68f66b",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-tests.jar"
-        }, {
-          "name" : "multi1-3.7-20201129.145611-116.jar",
-          "path" : "",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116.jar"
-        }, {
-          "name" : "multi2-3.7-20201129.145611-116.jar",
-          "path" : "",
-          "sha256" : "7749ce066293e6b2498f2da5d071706d45dab6fe0064890429b2b8427d8bc76a",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi2-3.7-20201129.145611-116.jar"
-        }, {
-          "name" : "multi3-3.7-20201129.145611-115.war",
-          "path" : "",
-          "sha256" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi3-3.7-20201129.145611-115.war"
-        } ]
-      } ]
-    }, {
-      "severity" : "High",
-      "type" : "License",
-      "summary" : "Public Domain",
-      "description" : "Public Domain",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "aopalliance-1.0.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "aopalliance:aopalliance:1.0"
-        } ]
-      } ]
-    }, {
-      "severity" : "High",
-      "type" : "License",
-      "summary" : "CDDL-1.0",
-      "description" : "Common Development and Distribution License (CDDL)\n            1.0",
-      "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
-        "depth" : 0,
-        "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
-        "infected_files" : [ {
-          "name" : "mail-1.4.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "96868f82264ebd9b7d41f04d78cbe87ab75d68a7bbf8edfb82416aabe9b54b6c",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.mail:mail:1.4"
-        }, {
-          "name" : "activation-1.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "2881c79c9d6ef01c58e62beea13e9d1ac8b8baa16f2fc198ad6e6776defdcdd3",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.activation:activation:1.1"
-        }, {
-          "name" : "jsp-api-2.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "545f4e7dc678ffb4cf8bd0fd40b4a4470a409a787c0ea7d0ad2f08d56112987b",
-          "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.servlet.jsp:jsp-api:2.1"
-        } ]
-      } ]
-    } ],
-    "top_severity" : "High",
-    "watch_name" : "combined-rule"
-  }, {
-    "created" : "2020-11-29T14:56:33.868932981Z",
-    "issues" : [ {
-      "severity" : "High",
-      "type" : "security",
+      "type" : "Security",
       "provider" : "JFrog",
-      "created" : "2019-03-25T16:42:05.856Z",
-      "summary" : "Apache Commons IO Java Deserialization Remote Code Execution",
-      "description" : "Apache Commons IO contains a flaw that is due to the program failing to restrict which class can be serialized. This may allow a remote attacker to execute arbitrary Java code via deserialization methods.",
+      "created" : "2021-08-03T14:58:58.862Z",
+      "summary" : "Spring Framework, versions 5.0 prior to 5.0.5 and versions 4.3 prior to 4.3.15 and older unsupported versions, provide client-side support for multipart requests. When Spring MVC or Spring WebFlux server application (server A) receives input from a remote client, and then uses that input to make a multipart request to another server (server B), it can be exposed to an attack, where an extra multipart is inserted in the content of the request from server A, causing server B to use the wrong value for a part it expects. This could to lead privilege escalation, for example, if the part content represents a username or user roles.",
+      "description" : "Spring Framework, versions 5.0 prior to 5.0.5 and versions 4.3 prior to 4.3.15 and older unsupported versions, provide client-side support for multipart requests. When Spring MVC or Spring WebFlux server application (server A) receives input from a remote client, and then uses that input to make a multipart request to another server (server B), it can be exposed to an attack, where an extra multipart is inserted in the content of the request from server A, causing server B to use the wrong value for a part it expects. This could to lead privilege escalation, for example, if the part content represents a username or user roles.",
+      "cve" : "CVE-2018-1272",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "spring-core-2.5.6.jar",
+          "path" : "",
+          "sha256" : "cf37656069488043c47f49a5520bb06d6879b63ef6044abb200c51a7ff2d6c49",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.springframework:spring-core:2.5.6"
+        } ]
+      } ]
+    }, {
+      "severity" : "Low",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:59.029Z",
+      "summary" : "Apache Commons IO io/FileUtils.java Unsafe Directory Creation Weakness",
+      "description" : "Apache Commons IO contains a flaw in io/FileUtils.java that is due to the program creating directories in an unsafe manner in the window that exists between exists() and mkdirs() invocations. This may allow a remote attacker to potentially write data into an untrusted location.",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
           "name" : "commons-io-1.4.jar",
-          "path" : "WEB-INF/lib/",
+          "path" : "",
           "sha256" : "a7f713593007813bf07d19bd1df9f81c86c0719e9a0bb2ef1b98b78313fc940d",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
           "display_name" : "commons-io:commons-io:1.4"
         } ]
       } ]
     }, {
-      "severity" : "High",
-      "type" : "security",
+      "severity" : "Medium",
+      "type" : "Security",
       "provider" : "JFrog",
-      "created" : "2019-06-10T08:42:32.044Z",
-      "summary" : "Plexus-utils before 3.0.16 is vulnerable to command injection because it does not correctly process the contents of double quoted strings.",
-      "description" : "Plexus-utils before 3.0.16 is vulnerable to command injection because it does not correctly process the contents of double quoted strings.",
-      "cve" : "CVE-2017-1000487",
+      "created" : "2021-08-03T14:58:58.799Z",
+      "summary" : "Apache Maven org.apache.maven.shared.utils.Expand Expand.java extractFile() Function Traversal Remote File Write",
+      "description" : "Apache Maven contains a flaw in org.apache.maven.shared.utils.Expand that allows traversing outside of a restricted path. The issue is due to the extractFile() function in Expand.java not properly sanitizing user input, specifically path traversal style attacks (e.g. '../'). With a specially crafted request, a remote attacker can write arbitrary files.",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
           "name" : "plexus-utils-1.5.1.jar",
-          "path" : "WEB-INF/lib/",
+          "path" : "",
           "sha256" : "72582f8ba285601fa753ceeda73ff3cbd94c6e78f52ec611621eaa0186165452",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
           "display_name" : "org.codehaus.plexus:plexus-utils:1.5.1"
+        } ]
+      } ]
+    }, {
+      "severity" : "Medium",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:58.841Z",
+      "summary" : "Algorithmic complexity vulnerability in the java.util.regex.Pattern.compile method in Sun Java Development Kit (JDK) before 1.6, when used with spring.jar in SpringSource Spring Framework 1.1.0 through 2.5.6 and 3.0.0.M1 through 3.0.0.M2 and dm Server 1.0.0 through 1.0.2, allows remote attackers to cause a denial of service (CPU consumption) via serializable data with a long regex string containing multiple optional groups, a related issue to CVE-2004-2540.",
+      "description" : "Algorithmic complexity vulnerability in the java.util.regex.Pattern.compile method in Sun Java Development Kit (JDK) before 1.6, when used with spring.jar in SpringSource Spring Framework 1.1.0 through 2.5.6 and 3.0.0.M1 through 3.0.0.M2 and dm Server 1.0.0 through 1.0.2, allows remote attackers to cause a denial of service (CPU consumption) via serializable data with a long regex string containing multiple optional groups, a related issue to CVE-2004-2540.",
+      "cve" : "CVE-2009-1190",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "spring-core-2.5.6.jar",
+          "path" : "",
+          "sha256" : "cf37656069488043c47f49a5520bb06d6879b63ef6044abb200c51a7ff2d6c49",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.springframework:spring-core:2.5.6"
+        } ]
+      } ]
+    }, {
+      "severity" : "Medium",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:58.721Z",
+      "summary" : "SpringSource Spring Framework 2.5.x before 2.5.6.SEC02, 2.5.7 before 2.5.7.SR01, and 3.0.x before 3.0.3 allows remote attackers to execute arbitrary code via an HTTP request containing class.classLoader.URLs[0]=jar: followed by a URL of a crafted .jar file.",
+      "description" : "SpringSource Spring Framework 2.5.x before 2.5.6.SEC02, 2.5.7 before 2.5.7.SR01, and 3.0.x before 3.0.3 allows remote attackers to execute arbitrary code via an HTTP request containing class.classLoader.URLs[0]=jar: followed by a URL of a crafted .jar file.",
+      "cve" : "CVE-2010-1622",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "spring-beans-2.5.6.jar",
+          "path" : "",
+          "sha256" : "d33246bb33527685d04f23536ebf91b06ad7fa8b371fcbeb12f01523eb610104",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.springframework:spring-beans:2.5.6"
         } ]
       } ]
     }, {
       "severity" : "High",
       "type" : "License",
-      "summary" : "Public Domain",
-      "description" : "Public Domain",
+      "created" : "2021-08-03T14:58:58.765Z",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "mail-1.4.jar",
+          "path" : "",
+          "sha256" : "96868f82264ebd9b7d41f04d78cbe87ab75d68a7bbf8edfb82416aabe9b54b6c",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "javax.mail:mail:1.4"
+        }, {
+          "name" : "activation-1.1.jar",
+          "path" : "",
+          "sha256" : "2881c79c9d6ef01c58e62beea13e9d1ac8b8baa16f2fc198ad6e6776defdcdd3",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "javax.activation:activation:1.1"
+        } ]
+      } ]
+    }, {
+      "severity" : "High",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:58.82Z",
+      "summary" : "When a call-site passes a subject for an email that contains line-breaks in Apache Commons Email 1.0 through 1.4, the caller can add arbitrary SMTP headers.",
+      "description" : "When a call-site passes a subject for an email that contains line-breaks in Apache Commons Email 1.0 through 1.4, the caller can add arbitrary SMTP headers.",
+      "cve" : "CVE-2017-9801",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "commons-email-1.1.jar",
+          "path" : "",
+          "sha256" : "78da962833d83a9df219d07b6c8c60115a0146a7314f8e44df3efdcf15792eaa",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.apache.commons:commons-email:1.1"
+        } ]
+      } ]
+    }, {
+      "severity" : "High",
+      "type" : "License",
+      "created" : "2021-08-03T14:58:58.739Z",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
           "name" : "aopalliance-1.0.jar",
-          "path" : "WEB-INF/lib/",
+          "path" : "",
           "sha256" : "0addec670fedcd3f113c5c8091d783280d23f75e3acb841b61a9cdb079376a08",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
           "display_name" : "aopalliance:aopalliance:1.0"
         } ]
       } ]
     }, {
       "severity" : "High",
-      "type" : "License",
-      "summary" : "CDDL-1.0",
-      "description" : "Common Development and Distribution License (CDDL)\n            1.0",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:59.049Z",
+      "summary" : "If a user of Apache Commons Email (typically an application programmer) passes unvalidated input as the so-called \"Bounce Address\", and that input contains line-breaks, then the email details (recipients, contents, etc.) might be manipulated. Mitigation: Users should upgrade to Commons-Email 1.5. You can mitigate this vulnerability for older versions of Commons Email by stripping line-breaks from data, that will be passed to Email.setBounceAddress(String).",
+      "description" : "If a user of Apache Commons Email (typically an application programmer) passes unvalidated input as the so-called \"Bounce Address\", and that input contains line-breaks, then the email details (recipients, contents, etc.) might be manipulated. Mitigation: Users should upgrade to Commons-Email 1.5. You can mitigate this vulnerability for older versions of Commons Email by stripping line-breaks from data, that will be passed to Email.setBounceAddress(String).",
+      "cve" : "CVE-2018-1294",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
-          "name" : "mail-1.4.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "96868f82264ebd9b7d41f04d78cbe87ab75d68a7bbf8edfb82416aabe9b54b6c",
+          "name" : "commons-email-1.1.jar",
+          "path" : "",
+          "sha256" : "78da962833d83a9df219d07b6c8c60115a0146a7314f8e44df3efdcf15792eaa",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.mail:mail:1.4"
-        }, {
-          "name" : "activation-1.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "2881c79c9d6ef01c58e62beea13e9d1ac8b8baa16f2fc198ad6e6776defdcdd3",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.apache.commons:commons-email:1.1"
+        } ]
+      } ]
+    }, {
+      "severity" : "Medium",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:58.926Z",
+      "summary" : "In JUnit4 from version 4.7 and before 4.13.1, the test rule TemporaryFolder contains a local information disclosure vulnerability. On Unix like systems, the system's temporary directory is shared between all users on that system. Because of this, when files and directories are written into this directory they are, by default, readable by other users on that same system. This vulnerability does not allow other users to overwrite the contents of these directories or files. This is purely an information disclosure vulnerability. This vulnerability impacts you if the JUnit tests write sensitive information, like API keys or passwords, into the temporary folder, and the JUnit tests execute in an environment where the OS has other untrusted users. Because certain JDK file system APIs were only added in JDK 1.7, this this fix is dependent upon the version of the JDK you are using. For Java 1.7 and higher users: this vulnerability is fixed in 4.13.1. For Java 1.6 and lower users: no patch is available, you must use the workaround below. If you are unable to patch, or are stuck running on Java 1.6, specifying the `java.io.tmpdir` system environment variable to a directory that is exclusively owned by the executing user will fix this vulnerability. For more information, including an example of vulnerable code, see the referenced GitHub Security Advisory.",
+      "description" : "In JUnit4 from version 4.7 and before 4.13.1, the test rule TemporaryFolder contains a local information disclosure vulnerability. On Unix like systems, the system's temporary directory is shared between all users on that system. Because of this, when files and directories are written into this directory they are, by default, readable by other users on that same system. This vulnerability does not allow other users to overwrite the contents of these directories or files. This is purely an information disclosure vulnerability. This vulnerability impacts you if the JUnit tests write sensitive information, like API keys or passwords, into the temporary folder, and the JUnit tests execute in an environment where the OS has other untrusted users. Because certain JDK file system APIs were only added in JDK 1.7, this this fix is dependent upon the version of the JDK you are using. For Java 1.7 and higher users: this vulnerability is fixed in 4.13.1. For Java 1.6 and lower users: no patch is available, you must use the workaround below. If you are unable to patch, or are stuck running on Java 1.6, specifying the `java.io.tmpdir` system environment variable to a directory that is exclusively owned by the executing user will fix this vulnerability. For more information, including an example of vulnerable code, see the referenced GitHub Security Advisory.",
+      "cve" : "CVE-2020-15250",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "junit:junit:3.8.1.jar",
+          "path" : "",
+          "sha256" : "b58e459509e190bed737f3592bc1950485322846cf10e78ded1d065153012d70",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.activation:activation:1.1"
-        }, {
-          "name" : "jsp-api-2.1.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "545f4e7dc678ffb4cf8bd0fd40b4a4470a409a787c0ea7d0ad2f08d56112987b",
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "junit:junit:4.13-beta-3"
+        } ]
+      } ]
+    }, {
+      "severity" : "High",
+      "type" : "Security",
+      "provider" : "JFrog",
+      "created" : "2021-08-03T14:58:58.904Z",
+      "summary" : "VMware SpringSource Spring Framework before 2.5.6.SEC03, 2.5.7.SR023, and 3.x before 3.0.6, when a container supports Expression Language (EL), evaluates EL expressions in tags twice, which allows remote attackers to obtain sensitive information via a (1) name attribute in a (a) spring:hasBindErrors tag; (2) path attribute in a (b) spring:bind or (c) spring:nestedpath tag; (3) arguments, (4) code, (5) text, (6) var, (7) scope, or (8) message attribute in a (d) spring:message or (e) spring:theme tag; or (9) var, (10) scope, or (11) value attribute in a (f) spring:transform tag, aka \"Expression Language Injection.\"",
+      "description" : "VMware SpringSource Spring Framework before 2.5.6.SEC03, 2.5.7.SR023, and 3.x before 3.0.6, when a container supports Expression Language (EL), evaluates EL expressions in tags twice, which allows remote attackers to obtain sensitive information via a (1) name attribute in a (a) spring:hasBindErrors tag; (2) path attribute in a (b) spring:bind or (c) spring:nestedpath tag; (3) arguments, (4) code, (5) text, (6) var, (7) scope, or (8) message attribute in a (d) spring:message or (e) spring:theme tag; or (9) var, (10) scope, or (11) value attribute in a (f) spring:transform tag, aka \"Expression Language Injection.\"",
+      "cve" : "CVE-2011-2730",
+      "impacted_artifacts" : [ {
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
+        "depth" : 0,
+        "pkg_type" : "Build",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
+        "infected_files" : [ {
+          "name" : "spring-core-2.5.6.jar",
+          "path" : "",
+          "sha256" : "cf37656069488043c47f49a5520bb06d6879b63ef6044abb200c51a7ff2d6c49",
           "depth" : 0,
-          "pkg_type" : "Maven",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "javax.servlet.jsp:jsp-api:2.1"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.springframework:spring-core:2.5.6"
         } ]
       } ]
     }, {
       "severity" : "High",
       "type" : "License",
-      "summary" : "Unknown",
-      "description" : "Unknown license",
+      "created" : "2021-08-03T14:58:58.938Z",
       "impacted_artifacts" : [ {
-        "name" : "xray-report",
-        "path" : "artifactory_saas/builds/",
-        "sha256" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "sha1" : "4f8522a3547b36d65fa06fb47db756ea9b7a976d",
+        "name" : "buildscan",
+        "path" : "artifactory_saas/builds/buildscan",
+        "sha256" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "sha1" : "",
         "depth" : 0,
         "pkg_type" : "Build",
-        "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-        "display_name" : "xray-report:6",
+        "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+        "display_name" : "buildscan:20",
         "infected_files" : [ {
-          "name" : "multi1-3.7-20201129.145611-116-sources.jar",
+          "name" : "multi1-3.7-20210803.145840-308.jar",
           "path" : "",
-          "sha256" : "ce382333a8291cbb4ea80d2faf254e74be9ecbb207bc50857c1ad7277b03235d",
+          "sha256" : "ea1a44b5396bce4312a86d9c48c2e3bc987dabda4adac0154d7b4436422528cf",
           "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-sources.jar"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.jfrog.test:multi1:3.7-20210803.145840-308"
         }, {
           "name" : "multi1-3.7-SNAPSHOT.jar",
-          "path" : "WEB-INF/lib/",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
-          "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
-          "display_name" : "multi1-3.7-SNAPSHOT.jar"
-        }, {
-          "name" : "multi1-3.7-20201129.145611-116-tests.jar",
           "path" : "",
-          "sha256" : "df5b492ca4c269dc90822a4d01c98d536ce04e5f4e19aa2fe085b6f65d68f66b",
+          "sha256" : "ea1a44b5396bce4312a86d9c48c2e3bc987dabda4adac0154d7b4436422528cf",
           "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116-tests.jar"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "multi1-3.7-SNAPSHOT.jar:"
         }, {
-          "name" : "multi1-3.7-20201129.145611-116.jar",
+          "name" : "multi1-3.7-20210803.145840-308-sources.jar",
           "path" : "",
-          "sha256" : "8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6",
+          "sha256" : "f2ffd0664d2add2996f2617fcd44a7d3852a022bce44a49fe0dd6571cac1a164",
           "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi1-3.7-20201129.145611-116.jar"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "multi1-3.7-20210803.145840-308-sources.jar:"
         }, {
-          "name" : "multi2-3.7-20201129.145611-116.jar",
+          "name" : "multi2-3.7-20210803.145840-298.jar",
           "path" : "",
-          "sha256" : "7749ce066293e6b2498f2da5d071706d45dab6fe0064890429b2b8427d8bc76a",
+          "sha256" : "8434dfcc9a74983c9bb5c540552045499ce0b3899f8cd96735fd6c0e719fbeae",
           "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi2-3.7-20201129.145611-116.jar"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "org.jfrog.test:multi2:3.7-20210803.145840-298"
         }, {
-          "name" : "multi3-3.7-20201129.145611-115.war",
+          "name" : "jsp-api-2.1.jar",
           "path" : "",
-          "sha256" : "f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136",
+          "sha256" : "545f4e7dc678ffb4cf8bd0fd40b4a4470a409a787c0ea7d0ad2f08d56112987b",
           "depth" : 0,
-          "pkg_type" : "Generic",
-          "parent_sha" : "c27927010be6374413356a84247ad47e3853f5eb8774e01c611e5aa5e4c1c8bc",
-          "display_name" : "multi3-3.7-20201129.145611-115.war"
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "javax.servlet.jsp:jsp-api:2.1"
+        }, {
+          "name" : "multi1-3.7-20210803.145840-308-tests.jar",
+          "path" : "",
+          "sha256" : "975f925d95e1d3d4c45210aa0bdb2b6efc711334c7b24670def150e6e6e424a8",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "multi1-3.7-20210803.145840-308-tests.jar:"
+        }, {
+          "name" : "multi3-3.7-20210803.145840-299.war",
+          "path" : "",
+          "sha256" : "dc6756ffabe6f75f7715e84c7df673125e1344642d29c846c9b7795f9c247634",
+          "depth" : 0,
+          "parent_sha" : "e010e4a81d4066ced2f280c632deb0bfdf3fedb536f8994b7ec8a725f9765511",
+          "display_name" : "multi3-3.7-20210803.145840-299.war:"
         } ]
       } ]
     } ],
-    "top_severity" : "High",
+    "top_severity" : "Critical",
     "watch_name" : "combined-rule"
   } ],
-  "licenses" : [ {
-    "name" : "Unknown",
-    "components" : [ "generic://sha256:7749ce066293e6b2498f2da5d071706d45dab6fe0064890429b2b8427d8bc76a/multi2-3.7-20201129.145611-116.jar", "generic://sha256:8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6/multi1-3.7-20201129.145611-116.jar", "generic://sha256:f2351bddb5d0bbf6013e313b40caccfb114c9e93a7829ccc9f8ce54921b1e136/multi3-3.7-20201129.145611-115.war", "generic://sha256:8c0b37f6f447656b338f754ad4e3087bc841b588587b5145018a3b3ad729a7d6/multi1-3.7-SNAPSHOT.jar", "generic://sha256:df5b492ca4c269dc90822a4d01c98d536ce04e5f4e19aa2fe085b6f65d68f66b/multi1-3.7-20201129.145611-116-tests.jar", "generic://sha256:ce382333a8291cbb4ea80d2faf254e74be9ecbb207bc50857c1ad7277b03235d/multi1-3.7-20201129.145611-116-sources.jar" ],
-    "full_name" : "Unknown license",
-    "more_info_url" : [ "Unknown link" ]
-  }, {
-    "name" : "CDDL-1.0",
-    "components" : [ "gav://javax.activation:activation:1.1.1", "gav://javax.servlet.jsp:jsp-api:2.2.1-b03", "gav://javax.mail:mail:1.5.0-b01" ],
-    "full_name" : "Common Development and Distribution License (CDDL)\n            1.0",
-    "more_info_url" : [ "http://www.opensource.org/licenses/cddl1.php", "https://spdx.org/licenses/CDDL-1.0", "https://spdx.org/licenses/CDDL-1.0.html", "http://www.opensource.org/licenses/cddl1" ]
-  }, {
-    "name" : "Public Domain",
-    "components" : [ "gav://aopalliance:aopalliance:1.0" ],
-    "full_name" : "Public Domain",
-    "more_info_url" : [ "http://creativecommons.org/licenses/publicdomain/" ]
-  }, {
-    "name" : "Apache-2.0",
-    "components" : [ "gav://org.apache.commons:commons-email:1.1", "gav://org.springframework:spring-core:1.0-rc1", "gav://commons-io:commons-io:1.4", "gav://org.springframework:spring-beans:1.0-m4", "gav://org.testng:testng:6.9.6", "gav://commons-logging:commons-logging:1.1.1", "gav://org.codehaus.plexus:plexus-utils:1.5.1", "gav://org.springframework:spring-aop:1.2.8" ],
-    "full_name" : "The Apache Software License, Version 2.0",
-    "more_info_url" : [ "http://www.opensource.org/licenses/Apache-2.0", "http://www.opensource.org/licenses/apache2.0.php", "https://spdx.org/licenses/Apache-2.0", "https://spdx.org/licenses/Apache-2.0.html", "http://www.apache.org/licenses/LICENSE-2.0" ]
-  }, {
-    "name" : "GPL-2.0",
-    "components" : [ "gav://javax.mail:mail:1.5.0-b01" ],
-    "full_name" : "The GNU General Public License Version 2",
-    "more_info_url" : [ "http://www.opensource.org/licenses/GPL-2.0", "http://www.opensource.org/licenses/gpl-2.0.php", "https://spdx.org/licenses/GPL-2.0", "https://spdx.org/licenses/GPL-2.0.html", "http://www.gnu.org/licenses/old-licenses/gpl-2.0-standalone.html" ]
-  }, {
-    "name" : "HSQLDB",
-    "components" : [ "gav://hsqldb:hsqldb:1.8.1.1" ],
-    "full_name" : "HSQLDB License",
-    "more_info_url" : [ "http://hsqldb.org/web/hsqlLicense.html" ]
-  }, {
-    "name" : "MIT",
-    "components" : [ "gav://org.zenframework.z8.dependencies.servlet:servlet-api-2.5:2.0" ],
-    "full_name" : "The MIT License",
-    "more_info_url" : [ "http://www.opensource.org/licenses/MIT", "http://www.opensource.org/licenses/mit-license.php", "https://spdx.org/licenses/MIT", "https://spdx.org/licenses/MIT.html" ]
-  }, {
-    "name" : "CPAL-1.0",
-    "components" : [ "gav://junit:junit:4.13-beta-3" ],
-    "full_name" : "Common Public Attribution License Version 1.0 (CPAL)",
-    "more_info_url" : [ "http://www.opensource.org/licenses/cpal_1.0", "https://spdx.org/licenses/CPAL-1.0", "https://spdx.org/licenses/CPAL-1.0.html", "http://www.opensource.org/licenses/CPAL-1.0" ]
-  }, {
-    "name" : "EPL-1.0",
-    "components" : [ "gav://junit:junit:4.13-beta-3" ],
-    "full_name" : "Eclipse Public License 1.0",
-    "more_info_url" : [ "http://www.opensource.org/licenses/eclipse-1.0.php", "https://spdx.org/licenses/EPL-1.0", "https://spdx.org/licenses/EPL-1.0.html", "http://www.eclipse.org/legal/epl-v10.html", "http://www.opensource.org/licenses/EPL-1.0" ]
-  } ]
+  "licenses" : [ ]
 }

@@ -14,7 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class BuildScanTableHelperTest {
-    private static final String BASE_CONFIG_PATH = "/buildScanTable/scanResult.json";
+    private static final String SCAN_RESULT_PATH = "/buildScanTable/scanResult.json";
+    private static final String EMPTY_RESULT_PATH = "/buildScanTable/emptyResult.json";
     private final BuildScanTableHelper tableHelper = new BuildScanTableHelper();
 
     @Test
@@ -24,13 +25,21 @@ public class BuildScanTableHelperTest {
 
         tableHelper.PrintTable(result, log);
         List<String> logs = log.getLogs();
-        Assert.assertEquals(logs.size(), 15);
-        Assert.assertEquals(logs.get(0), tableHelper.TABLE_HEADLINE);
+        Assert.assertEquals(logs.size(), 27);
+        Assert.assertEquals(logs.get(0), tableHelper.securityViolationsTable.getHeadline());
         String headersLine = logs.get(1);
-        for (String header : tableHelper.TABLE_HEADERS) {
+        for (String header : tableHelper.securityViolationsTable.getHeaders()) {
             Assert.assertTrue(headersLine.contains(header));
         }
+
+        Assert.assertEquals(logs.get(14), tableHelper.licenseViolationsTable.getHeadline());
+        headersLine = logs.get(15);
+        for (String header : tableHelper.licenseViolationsTable.getHeaders()) {
+            Assert.assertTrue(headersLine.contains(header));
+        }
+
         Assert.assertEquals(logs.get(3).length(), logs.get(4).length());
+        Assert.assertEquals(logs.get(16).length(), logs.get(17).length());
     }
 
     @Test
@@ -44,8 +53,30 @@ public class BuildScanTableHelperTest {
         tableHelper.PrintTable(result, log);
     }
 
+    @Test
+    public void testPrintTableWithNoViolations() throws IOException, URISyntaxException {
+        TestsAggregationLog log = new TestsAggregationLog();
+        ArtifactoryXrayResponse result = getXrayEmptyResultResource();
+
+        tableHelper.PrintTable(result, log);
+        List<String> logs = log.getLogs();
+        Assert.assertEquals(logs.size(), 7);
+        Assert.assertEquals(logs.get(0), tableHelper.securityViolationsTable.getHeadline());
+        Assert.assertEquals(logs.get(1), tableHelper.securityViolationsTable.getEmptyTableLine());
+        Assert.assertEquals(logs.get(4), tableHelper.licenseViolationsTable.getHeadline());
+        Assert.assertEquals(logs.get(5), tableHelper.licenseViolationsTable.getEmptyTableLine());
+    }
+
     private ArtifactoryXrayResponse getXrayResultResource() throws URISyntaxException, IOException {
-        File testResourcesPath = new File(this.getClass().getResource(BASE_CONFIG_PATH).toURI()).getCanonicalFile();
+        return getResource(SCAN_RESULT_PATH);
+    }
+
+    private ArtifactoryXrayResponse getXrayEmptyResultResource() throws URISyntaxException, IOException {
+        return getResource(EMPTY_RESULT_PATH);
+    }
+
+    private ArtifactoryXrayResponse getResource(String path) throws URISyntaxException, IOException {
+        File testResourcesPath = new File(this.getClass().getResource(path).toURI()).getCanonicalFile();
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
         return mapper.readValue(testResourcesPath, ArtifactoryXrayResponse.class);
     }
