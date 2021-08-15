@@ -17,19 +17,19 @@ public class BuildScanTableHelper {
     LicenseViolationsTable licenseViolationsTable;
 
     @SuppressWarnings("unused")
-    public void PrintTable(ArtifactoryXrayResponse scanResult, Log log) {
+    public void printTable(ArtifactoryXrayResponse scanResult, Log log) {
         this.scanResult = scanResult;
         this.log = log;
         securityViolationsTable = new SecurityViolationsTable(log);
         licenseViolationsTable = new LicenseViolationsTable(log);
         generateResultTable();
-        printTables();
+        doPrintTables();
     }
 
     /***
      * Prints the generated violations tables to log.
      */
-    private void printTables() {
+    private void doPrintTables() {
         securityViolationsTable.printTable();
         log.info("");
         licenseViolationsTable.printTable();
@@ -57,14 +57,13 @@ public class BuildScanTableHelper {
      * @param infectedFile Infected file.
      */
     private void addElement(Issue issue, InfectedFile infectedFile) {
-        String violationType = issue.getType();
-        switch (violationType) {
-            case "Security":
-                securityViolationsTable.addElement(issue, infectedFile);
-                break;
-            case "License":
-                licenseViolationsTable.addElement(issue, infectedFile);
-                break;
+        Issue.IssueType issueType = issue.getIssueType();
+        if (issueType == Issue.IssueType.SECURITY) {
+            securityViolationsTable.addElement(issue, infectedFile);
+        } else if (issueType == Issue.IssueType.LICENSE) {
+            licenseViolationsTable.addElement(issue, infectedFile);
+        } else {
+            throw new IllegalArgumentException(String.format("Illegal issue type '%s'. Expecting either 'Security' or 'License'", issue.getType()));
         }
     }
 }

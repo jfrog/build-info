@@ -16,6 +16,7 @@ import java.util.List;
 public class BuildScanTableHelperTest {
     private static final String SCAN_RESULT_PATH = "/buildScanTable/scanResult.json";
     private static final String EMPTY_RESULT_PATH = "/buildScanTable/emptyResult.json";
+    private static final String INVALID_RESULT_PATH = "/buildScanTable/invalidResult.json";
     private final BuildScanTableHelper tableHelper = new BuildScanTableHelper();
 
     @Test
@@ -23,7 +24,7 @@ public class BuildScanTableHelperTest {
         TestsAggregationLog log = new TestsAggregationLog();
         ArtifactoryXrayResponse result = getXrayResultResource();
 
-        tableHelper.PrintTable(result, log);
+        tableHelper.printTable(result, log);
         List<String> logs = log.getLogs();
         Assert.assertEquals(logs.size(), 27);
         Assert.assertEquals(logs.get(0), tableHelper.securityViolationsTable.getHeadline());
@@ -50,7 +51,7 @@ public class BuildScanTableHelperTest {
         // Create some broken data
         result.getAlerts().get(0).getIssues().get(0).getImpactedArtifacts().get(0).setDisplayName(null);
 
-        tableHelper.PrintTable(result, log);
+        tableHelper.printTable(result, log);
     }
 
     @Test
@@ -58,7 +59,7 @@ public class BuildScanTableHelperTest {
         TestsAggregationLog log = new TestsAggregationLog();
         ArtifactoryXrayResponse result = getXrayEmptyResultResource();
 
-        tableHelper.PrintTable(result, log);
+        tableHelper.printTable(result, log);
         List<String> logs = log.getLogs();
         Assert.assertEquals(logs.size(), 7);
         Assert.assertEquals(logs.get(0), tableHelper.securityViolationsTable.getHeadline());
@@ -67,12 +68,23 @@ public class BuildScanTableHelperTest {
         Assert.assertEquals(logs.get(5), tableHelper.licenseViolationsTable.getEmptyTableLine());
     }
 
+    @Test
+    public void testPrintTableWithInvalidType() throws IOException, URISyntaxException {
+        TestsAggregationLog log = new TestsAggregationLog();
+        ArtifactoryXrayResponse result = getXrayInvalidResultResource();
+        Assert.assertThrows(IllegalArgumentException.class, () -> tableHelper.printTable(result, log));
+    }
+
     private ArtifactoryXrayResponse getXrayResultResource() throws URISyntaxException, IOException {
         return getResource(SCAN_RESULT_PATH);
     }
 
     private ArtifactoryXrayResponse getXrayEmptyResultResource() throws URISyntaxException, IOException {
         return getResource(EMPTY_RESULT_PATH);
+    }
+
+    private ArtifactoryXrayResponse getXrayInvalidResultResource() throws URISyntaxException, IOException {
+        return getResource(INVALID_RESULT_PATH);
     }
 
     private ArtifactoryXrayResponse getResource(String path) throws URISyntaxException, IOException {

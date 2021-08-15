@@ -6,30 +6,32 @@ import org.jfrog.build.client.artifactoryXrayResponse.Issue;
 
 import java.util.Objects;
 
-class SecurityViolationsTable extends ScanTableBase {
-    SecurityViolationsTable(Log log) {
+public class SecurityViolationsTable extends ScanTableBase {
+    public static final String SECURITY_VIOLATIONS_TABLE_HEADLINE = "Security Violations";
+
+    protected SecurityViolationsTable(Log log) {
         super(log);
     }
 
-    String getHeadline() {
-        return "Security Violations";
+    protected String getHeadline() {
+        return SECURITY_VIOLATIONS_TABLE_HEADLINE;
     }
 
-    String[] getHeaders() {
+    protected String[] getHeaders() {
         return new String[]{"#", "Severity", "Component", "CVE"};
     }
 
-    String getTableFormat() {
+    protected String getTableFormat() {
         return super.getFormatBase(longestDisplayName)
                 // CVE.
                 + "%-20s";
     }
 
-    String getEmptyTableLine() {
+    protected String getEmptyTableLine() {
         return "No security compliance violations were found";
     }
 
-    void addElement(Issue issue, InfectedFile infectedFile) {
+    protected void addElement(Issue issue, InfectedFile infectedFile) {
         // Create table element.
         SecurityTableElement element = new SecurityTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
                 issue.getSummary(), issue.getDescription(), issue.getCve());
@@ -40,11 +42,11 @@ class SecurityViolationsTable extends ScanTableBase {
         }
     }
 
-    void printTable() {
+    protected void printTable() {
         super.printTable(table);
     }
 
-    static class SecurityTableElement extends TableElementBase {
+    private static class SecurityTableElement extends TableElementBase {
         private final String cve;
 
         SecurityTableElement(String fileDisplayName, String fileSha256,
@@ -53,12 +55,12 @@ class SecurityViolationsTable extends ScanTableBase {
             this.cve = cve;
         }
 
-        String getCve() {
+        private String getCve() {
             return cve == null ? "" : cve;
         }
 
         @Override
-        Object[] getLineArgs(int line, String severityName) {
+        protected Object[] getLineArgs(int line, String severityName) {
             return new Object[]{line, severityName, this.getFileDisplayName(), this.getCve()};
         }
 

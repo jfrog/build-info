@@ -13,23 +13,23 @@ import java.util.Set;
  * Base class for violations tables printed by {@link BuildScanTableHelper}
  */
 abstract class ScanTableBase {
-    Log log;
-    int longestDisplayName = 0;
-    final Map<Severity, Set<TableElementBase>> table = new HashMap<>();
+    private final Log log;
+    protected int longestDisplayName = 0;
+    protected final Map<Severity, Set<TableElementBase>> table = new HashMap<>();
 
-    ScanTableBase(Log log) {
+    protected ScanTableBase(Log log) {
         this.log = log;
     }
 
-    abstract String getHeadline();
+    protected abstract String getHeadline();
 
-    abstract String[] getHeaders();
+    protected abstract String[] getHeaders();
 
-    abstract String getTableFormat();
+    protected abstract String getTableFormat();
 
-    abstract String getEmptyTableLine();
+    protected abstract String getEmptyTableLine();
 
-    String getFormatBase(int longestDisplayName) {
+    protected String getFormatBase(int longestDisplayName) {
         // Index (assuming 5 digits is sufficient).
         return "%-6s"
                 // Severity (Longest is 'Information').
@@ -38,11 +38,11 @@ abstract class ScanTableBase {
                 + "%-" + (longestDisplayName + 3) + "s";
     }
 
-    void printFormattedLine(Object... args) {
+    private void printFormattedLine(Object... args) {
         log.info(String.format(getTableFormat(), args));
     }
 
-    void addElement(Map<Severity, Set<TableElementBase>> table, Issue issue, TableElementBase element) {
+    protected void addElement(Map<Severity, Set<TableElementBase>> table, Issue issue, TableElementBase element) {
         Severity severity = Severity.fromString(issue.getSeverity());
         Set<TableElementBase> elements = table.get(severity);
         if (elements == null) {
@@ -52,7 +52,7 @@ abstract class ScanTableBase {
         table.put(severity, elements);
     }
 
-    void printTable(Map<Severity, Set<TableElementBase>> table) {
+    protected void printTable(Map<Severity, Set<TableElementBase>> table) {
         int line = 1;
         Severity[] severities = Severity.values();
 
@@ -87,25 +87,25 @@ abstract class ScanTableBase {
     /**
      * Base class for elements of the violations tables
      */
-    abstract static class TableElementBase {
-        public final String fileDisplayName;
+    protected abstract static class TableElementBase {
+        protected final String fileDisplayName;
         // Following fields are for the set's uniqueness only:
-        public final String fileSha256;
-        public final String issueSummary;
-        public final String issueDescription;
+        protected final String fileSha256;
+        protected final String issueSummary;
+        protected final String issueDescription;
 
-        public TableElementBase(String fileDisplayName, String fileSha256,
-                                String issueSummary, String issueDescription) {
+        protected TableElementBase(String fileDisplayName, String fileSha256,
+                                   String issueSummary, String issueDescription) {
             this.fileDisplayName = fileDisplayName;
             this.fileSha256 = fileSha256;
             this.issueSummary = issueSummary;
             this.issueDescription = issueDescription;
         }
 
-        String getFileDisplayName() {
+        protected String getFileDisplayName() {
             return fileDisplayName == null ? "" : fileDisplayName;
         }
 
-        abstract Object[] getLineArgs(int line, String severityName);
+        protected abstract Object[] getLineArgs(int line, String severityName);
     }
 }

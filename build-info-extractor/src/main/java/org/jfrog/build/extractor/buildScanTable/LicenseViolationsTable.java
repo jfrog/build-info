@@ -6,28 +6,30 @@ import org.jfrog.build.client.artifactoryXrayResponse.Issue;
 
 import java.util.Objects;
 
-class LicenseViolationsTable extends ScanTableBase {
-    LicenseViolationsTable(Log log) {
+public class LicenseViolationsTable extends ScanTableBase {
+    public static final String LICENSE_VIOLATIONS_TABLE_HEADLINE = "License Compliance Violations";
+
+    protected LicenseViolationsTable(Log log) {
         super(log);
     }
 
-    String getHeadline() {
-        return "License Compliance Violations";
+    protected String getHeadline() {
+        return LICENSE_VIOLATIONS_TABLE_HEADLINE;
     }
 
-    String[] getHeaders() {
+    protected String[] getHeaders() {
         return new String[]{"#", "Severity", "Component"};
     }
 
-    String getTableFormat() {
+    protected String getTableFormat() {
         return super.getFormatBase(longestDisplayName);
     }
 
-    String getEmptyTableLine() {
+    protected String getEmptyTableLine() {
         return "No license compliance violations were found";
     }
 
-    void addElement(Issue issue, InfectedFile infectedFile) {
+    protected void addElement(Issue issue, InfectedFile infectedFile) {
         // Create table element.
         LicenseTableElement element = new LicenseTableElement(infectedFile.getDisplayName(), infectedFile.getSha256(),
                 issue.getSummary(), issue.getDescription());
@@ -38,18 +40,18 @@ class LicenseViolationsTable extends ScanTableBase {
         }
     }
 
-    void printTable() {
+    protected void printTable() {
         super.printTable(table);
     }
 
-    static class LicenseTableElement extends TableElementBase {
+    private static class LicenseTableElement extends TableElementBase {
         LicenseTableElement(String fileDisplayName, String fileSha256,
                             String issueSummary, String issueDescription) {
             super(fileDisplayName, fileSha256, issueSummary, issueDescription);
         }
 
         @Override
-        Object[] getLineArgs(int line, String severityName) {
+        protected Object[] getLineArgs(int line, String severityName) {
             return new Object[]{line, severityName, this.getFileDisplayName()};
         }
 
