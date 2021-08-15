@@ -54,6 +54,8 @@ public interface ClientProperties {
 
     String PROP_KANIKO_PREFIX = ARTIFACTORY_PREFIX + "kaniko.";
 
+    String PROP_GO_PREFIX = ARTIFACTORY_PREFIX + "go.";
+
     /**
      * The repo key in Artifactory from where to resolve artifacts.
      */

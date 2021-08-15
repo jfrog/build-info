@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -9,6 +10,7 @@ import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -28,6 +30,7 @@ import java.util.Map;
 
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toLowerCase;
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -72,6 +75,34 @@ public class GoRun extends GoCommand {
         this.resolverPassword = password;
     }
 
+    /**
+     * Allow running go run using a new Java process.
+     * Used only in Jenkins to allow running 'rtGo run' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.resolver);
+            ArtifactoryClientConfiguration.PackageManagerHandler packageManagerHandler = clientConfiguration.packageManagerHandler;
+            ArtifactoryClientConfiguration.GoHandler goHandler = clientConfiguration.goHandler;
+            GoRun goRun = new GoRun(
+                    packageManagerHandler.getArgs(),
+                    Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : "."),
+                    packageManagerHandler.getModule(),
+                    artifactoryManagerBuilder,
+                    clientConfiguration.resolver.getRepoKey(),
+                    clientConfiguration.resolver.getUsername(),
+                    clientConfiguration.resolver.getPassword(),
+                    clientConfiguration.getLog(),
+                    clientConfiguration.getAllProperties()
+            );
+            goRun.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
+    }
+
     public Build execute() {
         try (ArtifactoryManager artifactoryClient = (artifactoryManagerBuilder != null ? artifactoryManagerBuilder.build() : null)) {
             if (artifactoryClient != null) {
@@ -88,8 +119,8 @@ public class GoRun extends GoCommand {
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**

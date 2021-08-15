@@ -6,18 +6,18 @@ import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.go.GoDriver;
+import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;
 import org.jfrog.build.util.VersionCompatibilityType;
 import org.jfrog.build.util.VersionException;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Serializable;
 import java.nio.file.Path;
 
 /**
  * Base class for go build and go publish commands.
  */
-abstract class GoCommand implements Serializable {
+abstract class GoCommand extends PackageManagerExtractor {
 
     protected static final String SHA1 = "SHA1";
     protected static final String MD5 = "MD5";
