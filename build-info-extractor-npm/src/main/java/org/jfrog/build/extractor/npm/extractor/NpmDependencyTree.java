@@ -8,6 +8,7 @@ import org.jfrog.build.extractor.npm.types.NpmScope;
 import org.jfrog.build.extractor.scan.DependencyTree;
 import org.jfrog.build.extractor.scan.Scope;
 
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -21,18 +22,39 @@ public class NpmDependencyTree {
     /**
      * Create a npm dependency tree from the results of 'npm ls' command.
      *
-     * @param npmList - Results of 'npm ls' command.
+     * @param npmList    - Results of 'npm ls' command
+     * @param scope      - Dependency scope
+     * @param workingDir - The package.json directory
      * @return Tree of npm PackageInfos.
      * @see NpmPackageInfo
      */
-    public static DependencyTree createDependencyTree(JsonNode npmList, NpmScope scope) {
+    public static DependencyTree createDependencyTree(JsonNode npmList, NpmScope scope, Path workingDir) {
         DependencyTree rootNode = new DependencyTree();
-        populateDependenciesTree(rootNode, npmList.get("dependencies"), new String[]{npmList.get("name").asText() + ":" + npmList.get("version").asText()}, scope);
+        populateDependenciesTree(rootNode, npmList.get("dependencies"), new String[]{getProjectName(npmList, workingDir)}, scope);
         for (DependencyTree child : rootNode.getChildren()) {
             NpmPackageInfo packageInfo = (NpmPackageInfo) child.getUserObject();
             child.setScopes(getScopes(packageInfo.getName(), packageInfo.getScope()));
         }
         return rootNode;
+    }
+
+    /**
+     * Get npm project name to populate the root node.
+     *
+     * @param npmList    - Results of 'npm ls' command
+     * @param workingDir - The package.json directory
+     * @return <name>:<version>, <name> or <directory-name>
+     */
+    static String getProjectName(JsonNode npmList, Path workingDir) {
+        JsonNode name = npmList.get("name");
+        JsonNode version = npmList.get("version");
+        if (name != null) {
+            if (version != null) {
+                return name.asText() + ":" + version.asText();
+            }
+            return name.asText();
+        }
+        return workingDir.getFileName().toString();
     }
 
     /**

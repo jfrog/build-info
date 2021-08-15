@@ -297,7 +297,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             List<String> extraListArgs = new ArrayList<>();
             extraListArgs.add("--" + scope);
             JsonNode jsonNode = npmDriver.list(workingDir.toFile(), extraListArgs);
-            populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode, scope);
+            populateDependenciesMap(dependencies, getDependenciesMapFromLatestBuild(), jsonNode, scope, workingDir);
         }
 
         return new ArrayList<>(dependencies.values());
@@ -332,10 +332,11 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
      * 1. Create npm dependency tree from root node of 'npm ls' command tree. Populate each node with name, version and scope.
      * 2. For each dependency, retrieve sha1 and md5 from Artifactory. Use the producer-consumer mechanism to parallelize it.
      */
-    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies, JsonNode npmDependencyTree, NpmScope scope) throws Exception {
+    private void populateDependenciesMap(Map<String, Dependency> dependencies, Map<String, Dependency> previousBuildDependencies,
+                                         JsonNode npmDependencyTree, NpmScope scope, Path workingDir) throws Exception {
         // Set of packages that could not be found in Artifactory.
         Set<NpmPackageInfo> badPackages = Collections.synchronizedSet(new HashSet<>());
-        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope);
+        DefaultMutableTreeNode rootNode = NpmDependencyTree.createDependencyTree(npmDependencyTree, scope, workingDir);
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Create producer Runnable.
             ProducerRunnableBase[] producerRunnable = new ProducerRunnableBase[]{new NpmExtractorProducer(rootNode)};
