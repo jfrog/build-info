@@ -48,10 +48,10 @@ public class NpmDependencyTree {
     static String getProjectName(JsonNode npmList, Path workingDir) {
         JsonNode name = npmList.get("name");
         JsonNode version = npmList.get("version");
-        if (name != null && version != null) {
-            return name.asText() + ":" + version.asText();
-        }
         if (name != null) {
+            if (version != null) {
+                return name.asText() + ":" + version.asText();
+            }
             return name.asText();
         }
         return workingDir.getFileName().toString();
