@@ -1,0 +1,10 @@
+{
+  "summary" : {
+    "message" : "Build ArtifactoryBuildInfoClientTest number 13 was scanned by Xray and passed with no Alerts",
+    "total_alerts" : 0,
+    "fail_build" : false,
+    "more_details_url" : "path/to/url"
+  },
+  "alerts" : [ ],
+  "licenses" : [ ]
+}

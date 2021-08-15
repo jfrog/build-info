@@ -108,4 +108,18 @@ public class Issue implements Serializable {
     public String toString() {
         return ToStringBuilder.reflectionToString(this);
     }
+
+    public enum IssueType {
+        SECURITY,
+        LICENSE
+    }
+
+    public IssueType getIssueType() {
+        if ("Security".equals(this.getType())) {
+            return IssueType.SECURITY;
+        } else if ("License".equals(this.getType())) {
+            return IssueType.LICENSE;
+        }
+        return null;
+    }
 }
