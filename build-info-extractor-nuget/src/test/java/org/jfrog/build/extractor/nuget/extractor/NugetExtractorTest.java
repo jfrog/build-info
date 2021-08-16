@@ -64,7 +64,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getAccessToken()).setLog(getLog());
     }
 
     Object[][] packagesConfigTestsInfo = new Object[][]{
@@ -94,7 +94,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getPassword(), "v2");
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, projectDir, env, moduleName, getUsername(), getAccessToken(), "v2");
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -116,7 +116,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getPassword(), "v2");
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getAccessToken(), "v2");
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
@@ -166,7 +166,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     private void getProjectRootTest(String args, String expectedProjectRootFileName) {
         try {
             File rootDir = PROJECTS_ROOT.resolve("projectRootTestDir").toFile();
-            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getPassword(), "v2");
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, false, args, log, rootDir.toPath(), env, null, getUsername(), getAccessToken(), "v2");
             File projectRoot = nugetRun.getProjectRootPath();
             assertTrue(projectRoot.getPath().endsWith(expectedProjectRootFileName));
         } catch (Exception e) {

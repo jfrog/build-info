@@ -100,7 +100,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getAccessToken()).setLog(getLog());
         deployTestDependencies(Project.QUOTE, Project.SAMPLER, Project.TEXT);
     }
 
@@ -149,7 +149,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
         try {
             // Run Go build
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            GoRun goRun = new GoRun(args, projectDir, null, artifactoryManagerBuilder, repo, getUsername(), getPassword(), getLog(), env);
+            GoRun goRun = new GoRun(args, projectDir, null, artifactoryManagerBuilder, repo, getUsername(), getAccessToken(), getLog(), env);
             Build build = goRun.execute();
             // Check successful execution and correctness of the module and dependencies
             assertNotNull(build);
@@ -181,7 +181,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Run Go build on project1 locally
             Project project = Project.PROJECT_1;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, null, StringUtils.EMPTY, getUsername(), getPassword(), getLog(), env);
+            GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, null, StringUtils.EMPTY, getUsername(), getAccessToken(), getLog(), env);
             Build project1Build = goRun.execute();
             // Check successful execution
             assertNotNull(project1Build);
@@ -207,7 +207,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Run Go build on project2 using Artifactory for resolution
             project = Project.PROJECT_2;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
-            goRun = new GoRun(GO_BUILD_CMD, projectDir, null, artifactoryManagerBuilder, virtualRepo, getUsername(), getPassword(), getLog(), env);
+            goRun = new GoRun(GO_BUILD_CMD, projectDir, null, artifactoryManagerBuilder, virtualRepo, getUsername(), getAccessToken(), getLog(), env);
             Build project2Build = goRun.execute();
             // Check successful execution and correctness of the module, dependencies and artifacts
             assertNotNull(project2Build);

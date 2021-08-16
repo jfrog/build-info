@@ -77,7 +77,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getPassword()).setLog(getLog());
+        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getAccessToken()).setLog(getLog());
 
         // Read pip environment path variable.
         pipEnvVar = System.getenv(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PIP_ENV");
@@ -122,7 +122,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
             }
 
             // Run pip-install.
-            PipInstall pipInstall = new PipInstall(artifactoryManagerBuilder, virtualRepo, project.args, getLog(), projectDir, env, project.moduleId, getUsername(), getPassword(), null);
+            PipInstall pipInstall = new PipInstall(artifactoryManagerBuilder, virtualRepo, project.args, getLog(), projectDir, env, project.moduleId, getUsername(), getAccessToken(), null);
             Build build = pipInstall.execute();
             assertNotNull(build, "Pip execution returned empty build.");
 

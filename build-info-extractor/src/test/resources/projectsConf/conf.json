@@ -1,0 +1,2 @@
+{"display_name":"testProject","description":"Build Info ${COMMAND_TYPE} Test Project",
+  "admin_privileges":{"manage_members":true,"manage_resources":true,"index_resources":true},"storage_quota_bytes":1073741825,"project_key":"${PROJECT_KEY}"}
