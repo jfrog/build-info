@@ -25,7 +25,7 @@ public class AccessManagerTest extends IntegrationTestsBase {
     protected static final String PROJECT_CONF = "conf.json";
     private static final String PROJECTS_TEST_PATH = "/projectsConf";
 
-    AccessManager accessManager;
+    private AccessManager accessManager;
 
     @BeforeClass
     @Override
@@ -33,7 +33,6 @@ public class AccessManagerTest extends IntegrationTestsBase {
         super.init();
         String accessUrl = getPlatformUrl() + "/access";
         accessManager = new AccessManager(accessUrl, getAccessToken(), getLog());
-        createTestRepo(localRepo2);
     }
 
     @Test
