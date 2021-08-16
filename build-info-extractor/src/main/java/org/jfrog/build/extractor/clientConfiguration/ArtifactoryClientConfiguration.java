@@ -63,6 +63,7 @@ public class ArtifactoryClientConfiguration {
     public final PipHandler pipHandler;
     public final DotnetHandler dotnetHandler;
     public final DockerHandler dockerHandler;
+    public final GoHandler goHandler;
     public final PrefixPropertyHandler root;
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -81,6 +82,7 @@ public class ArtifactoryClientConfiguration {
         this.pipHandler = new PipHandler();
         this.dotnetHandler = new DotnetHandler();
         this.dockerHandler = new DockerHandler();
+        this.goHandler = new GoHandler();
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -527,6 +529,20 @@ public class ArtifactoryClientConfiguration {
 
         public void setCiCommand(boolean ciCommand) {
             rootConfig.setBooleanValue(NPM_CI_COMMAND, ciCommand);
+        }
+    }
+
+    public class GoHandler extends PrefixPropertyHandler {
+        public GoHandler() {
+            super(root, PROP_GO_PREFIX);
+        }
+
+        public String getGoPublishedVersion() {
+            return rootConfig.getStringValue(GO_PUBLISHED_VERSION);
+        }
+
+        public void setGoPublishedVersion(String version) {
+            rootConfig.setStringValue(GO_PUBLISHED_VERSION, version);
         }
     }
 

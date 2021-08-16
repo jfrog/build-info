@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Module;
@@ -13,6 +14,7 @@ import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -23,11 +25,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class GoPublish extends GoCommand {
@@ -71,8 +76,34 @@ public class GoPublish extends GoCommand {
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return null;
+    }
+
+    /**
+     * Allow publishing Go packages using a new Java process.
+     * Used only in Jenkins to allow running 'rtGo publish' in a docker container.
+     */
+    public static void main(String[] ignored) {
+        try {
+            ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
+            ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
+            ArtifactoryClientConfiguration.PackageManagerHandler packageManagerHandler = clientConfiguration.packageManagerHandler;
+
+            GoPublish goPublish = new GoPublish(
+                    artifactoryManagerBuilder,
+                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    clientConfiguration.publisher.getRepoKey(),
+                    Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : ".").toAbsolutePath(),
+                    clientConfiguration.goHandler.getGoPublishedVersion(),
+                    packageManagerHandler.getModule(),
+                    clientConfiguration.getLog()
+            );
+            goPublish.executeAndSaveBuildInfo(clientConfiguration);
+        } catch (RuntimeException | IOException e) {
+            ExceptionUtils.printRootCauseStackTrace(e, System.out);
+            System.exit(1);
+        }
     }
 
     /**

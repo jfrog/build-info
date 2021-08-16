@@ -34,6 +34,7 @@ public interface ClientConfigurationFields {
     String PACKAGE_MANAGER_PATH = "package.manager.path"; // Path to package-manager execution dir
     String PACKAGE_MANAGER_MODULE = "package.manager.module"; // Custom module name for the build-info
     String NPM_CI_COMMAND = "npm.ci.command"; // Determines whether the npm build is 'npm install' or 'npm ci' command.
+    String GO_PUBLISHED_VERSION = "go.version"; // Version of the package published.
     String PIP_ENV_ACTIVATION = "pip.env.activation";
     String DOTNET_USE_DOTNET_CORE_CLI = "dotnet.use.dotnet.core.cli";
     String DOTNET_NUGET_PROTOCOL = "dotnet.nuget.protocol";
