@@ -11,8 +11,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.access.services.Utils.PROJECTS_ENDPOINT;
+
 public class GetProject extends JFrogService<String> {
-    private static final String CREATE_PROJECT_ENDPOINT = "api/v1/projects";
     private final String projectKey;
 
     public GetProject(String projectKey, Log logger) {
@@ -23,7 +24,7 @@ public class GetProject extends JFrogService<String> {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpGet(CREATE_PROJECT_ENDPOINT + "/" + encodeUrl(projectKey));
+        return new HttpGet(PROJECTS_ENDPOINT + "/" + encodeUrl(projectKey));
     }
 
     @Override

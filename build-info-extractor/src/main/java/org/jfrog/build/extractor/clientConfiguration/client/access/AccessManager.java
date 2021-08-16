@@ -17,28 +17,25 @@ public class AccessManager extends ManagerBase {
     }
 
     // Access has no version API.
+    @Override
     public org.jfrog.build.client.Version getVersion() throws IOException {
         return null;
     }
 
     public void createProject(String projectJsonConfig) throws IOException {
-        CreateProject createProject = new CreateProject(projectJsonConfig, log);
-        createProject.execute(jfrogHttpClient);
+        new CreateProject(projectJsonConfig, log).execute(jfrogHttpClient);
     }
 
     public void updateProject(String projectKey, String projectJsonConfig) throws IOException {
-        UpdateProject updateProject = new UpdateProject(projectKey, projectJsonConfig, log);
-        updateProject.execute(jfrogHttpClient);
+        new UpdateProject(projectKey, projectJsonConfig, log).execute(jfrogHttpClient);
     }
 
     public void deleteProject(String projectKey) throws IOException {
-        DeleteProject deleteProject = new DeleteProject(projectKey, log);
-        deleteProject.execute(jfrogHttpClient);
+        new DeleteProject(projectKey, log).execute(jfrogHttpClient);
     }
 
     public String getProject(String projectKey) throws IOException {
-        GetProject getProject = new GetProject(projectKey, log);
-        return getProject.execute(jfrogHttpClient);
+        return new GetProject(projectKey, log).execute(jfrogHttpClient);
     }
 
 }

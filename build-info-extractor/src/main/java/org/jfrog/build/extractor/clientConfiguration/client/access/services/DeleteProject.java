@@ -7,8 +7,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.access.services.Utils.PROJECTS_ENDPOINT;
+
 public class DeleteProject extends VoidJFrogService {
-    private static final String CREATE_PROJECT_ENDPOINT = "api/v1/projects";
     private final String projectKey;
 
     public DeleteProject(String projectKey, Log logger) {
@@ -18,6 +19,6 @@ public class DeleteProject extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpDelete(CREATE_PROJECT_ENDPOINT + "/" + encodeUrl(projectKey));
+        return new HttpDelete(PROJECTS_ENDPOINT + "/" + encodeUrl(projectKey));
     }
 }

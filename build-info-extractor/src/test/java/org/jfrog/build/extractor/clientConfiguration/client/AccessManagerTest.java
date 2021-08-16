@@ -3,8 +3,10 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.extractor.clientConfiguration.client.access.AccessManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -22,6 +24,17 @@ public class AccessManagerTest extends IntegrationTestsBase {
     protected static final String COMMAND_TYPE_UPDATED = "UPDATED";
     protected static final String PROJECT_CONF = "conf.json";
     private static final String PROJECTS_TEST_PATH = "/projectsConf";
+
+    AccessManager accessManager;
+
+    @BeforeClass
+    @Override
+    public void init() throws IOException {
+        super.init();
+        String accessUrl = getPlatformUrl() + "/access";
+        accessManager = new AccessManager(accessUrl, getAccessToken(), getLog());
+        createTestRepo(localRepo2);
+    }
 
     @Test
     public void projectTest() throws IOException, URISyntaxException {
