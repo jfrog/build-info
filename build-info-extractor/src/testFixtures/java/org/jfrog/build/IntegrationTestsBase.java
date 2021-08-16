@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.clientConfiguration.client.access.AccessManager;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuildNumbersResponse;
 import org.jfrog.build.extractor.util.TestingLog;
@@ -50,10 +51,13 @@ public abstract class IntegrationTestsBase {
     protected String localRepositoriesWildcard = "build-info-tests-local*";
     protected ArtifactoryManager artifactoryManager;
     protected ArtifactoryManagerBuilder artifactoryManagerBuilder;
+    protected AccessManager accessManager;
     private String username;
     private String password;
+    private String accessToken;
     private String platformUrl;
     private String artifactoryUrl;
+    private String accessUrl;
     public static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("^/(\\d+)$");
     public static final long CURRENT_TIME = System.currentTimeMillis();
 
@@ -77,10 +81,13 @@ public abstract class IntegrationTestsBase {
             platformUrl += "/";
         }
         artifactoryUrl = platformUrl + "artifactory/";
+        accessUrl = platformUrl + "access/";
         username = readParam(props, "username");
         password = readParam(props, "password");
+        accessToken = readParam(props, "access_token");
         artifactoryManager = createArtifactoryManager();
         artifactoryManagerBuilder = createArtifactoryManagerBuilder();
+        accessManager = createAccessManager();
 
         if (!artifactoryManager.getVersion().isOSS()) {
             if (StringUtils.isNotEmpty(localRepo1)) {
@@ -135,10 +142,12 @@ public abstract class IntegrationTestsBase {
                         BITESTS_PROPERTIES_PREFIX + "url', \n'" +
                         BITESTS_PROPERTIES_PREFIX + "username' and \n'" +
                         BITESTS_PROPERTIES_PREFIX + "password'. \n" +
+                        BITESTS_PROPERTIES_PREFIX + "access_token'. \n" +
                         "Or a properties file with those properties in classpath or Environment variables:\n'" +
                         BITESTS_ENV_VAR_PREFIX + "URL', \n'" +
                         BITESTS_ENV_VAR_PREFIX + "USERNAME' and \n'" +
-                        BITESTS_ENV_VAR_PREFIX + "PASSWORD'.";
+                        BITESTS_ENV_VAR_PREFIX + "PASSWORD' and \n'" +
+                        BITESTS_ENV_VAR_PREFIX + "ACCESS_TOKEN'.";
 
         fail(message);
     }
@@ -251,6 +260,10 @@ public abstract class IntegrationTestsBase {
     private ArtifactoryManagerBuilder createArtifactoryManagerBuilder() {
         ArtifactoryManagerBuilder builder = new ArtifactoryManagerBuilder();
         return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(password).setLog(log);
+    }
+
+    private AccessManager createAccessManager() {
+        return new AccessManager(accessUrl, accessToken, log);
     }
 
     /**
