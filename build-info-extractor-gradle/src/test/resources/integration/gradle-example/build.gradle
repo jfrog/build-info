@@ -16,7 +16,7 @@ allprojects {
             url "${System.env.BITESTS_PLATFORM_URL}/artifactory/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
             credentials {
                 username "${System.env.BITESTS_PLATFORM_USERNAME}"
-                password "${System.env.BITESTS_PLATFORM_PASSWORD}"
+                password "${System.env.BITESTS_PLATFORM_ADMIN_TOKEN}"
             }
         }
     }
@@ -62,7 +62,7 @@ artifactory {
         repository {
             repoKey = "$System.env.BITESTS_ARTIFACTORY_LOCAL_REPO" // The Artifactory repository key to publish to
             username = "$System.env.BITESTS_PLATFORM_USERNAME" // The publisher user name
-            password = "$System.env.BITESTS_PLATFORM_PASSWORD" // The publisher password
+            password = "$System.env.BITESTS_PLATFORM_ADMIN_TOKEN" // The publisher password
             // This is an optional section for configuring Ivy publication (when publishIvy = true).
             ivy {
                 ivyLayout = '[organization]/[module]/ivy-[revision].xml'

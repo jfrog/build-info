@@ -38,7 +38,7 @@ public class DistributionManagerTest extends IntegrationTestsBase {
     public void init() throws IOException {
         super.init();
         String distributionUrl = getPlatformUrl() + "/distribution";
-        distributionManager = new DistributionManager(distributionUrl, getUsername(), getAccessToken(), "", getLog());
+        distributionManager = new DistributionManager(distributionUrl, getUsername(), getAdminToken(), "", getLog());
         createTestRepo(localRepo2);
     }
 

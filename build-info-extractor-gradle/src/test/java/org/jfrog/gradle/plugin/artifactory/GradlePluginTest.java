@@ -34,7 +34,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         envVars = new HashMap<String, String>(System.getenv()) {{
             putIfAbsent(BITESTS_ENV_VAR_PREFIX + "URL", getArtifactoryUrl());
             putIfAbsent(BITESTS_ENV_VAR_PREFIX + "USERNAME", getUsername());
-            putIfAbsent(BITESTS_ENV_VAR_PREFIX + "PASSWORD", getAccessToken());
+            putIfAbsent(BITESTS_ENV_VAR_PREFIX + "ADMIN_TOKEN", getAdminToken());
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "LOCAL_REPO", localRepo1);
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "VIRTUAL_REPO", virtualRepo);
         }};
@@ -95,7 +95,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAccessToken(), localRepo1, virtualRepo, "", true, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -112,7 +112,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerPublicationsTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAccessToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", true, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", true, true);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -129,7 +129,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void requestedByTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAccessToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", false, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", false, true);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -146,7 +146,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerResolverOnlyTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAccessToken(), localRepo1, virtualRepo, "", false, false);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", false, false);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};

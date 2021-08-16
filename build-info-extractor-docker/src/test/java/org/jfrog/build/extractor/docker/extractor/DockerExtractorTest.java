@@ -102,26 +102,26 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     @Test
     public void dockerPushToLocalTest() {
         DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), PROJECT_PATH);
-        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getAccessToken(), getLog(), Collections.emptyMap());
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, dockerLocalRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         pushAndValidateImage(dockerPush, dockerLocalRepo, imageTagLocal, SHORT_IMAGE_TAG_LOCAL);
     }
 
     @Test
     public void dockerPushToVirtualTest() {
         DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), PROJECT_PATH);
-        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getAccessToken(), getLog(), Collections.emptyMap());
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, dockerVirtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         pushAndValidateImage(dockerPush, dockerVirtualRepo, imageTagVirtual, SHORT_IMAGE_TAG_VIRTUAL);
     }
 
     @Test
     public void dockerPullFromRemoteTest() {
-        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getAccessToken(), getLog(), Collections.emptyMap());
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, dockerRemoteRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
     }
 
     @Test
     public void dockerPullFromVirtualTest() {
-        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getAccessToken(), getLog(), Collections.emptyMap());
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, dockerVirtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
     }
 
@@ -175,7 +175,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         ObjectMapper mapper = new ObjectMapper();
         ObjectNode credentials = mapper.createObjectNode()
                 .put("username", getUsername())
-                .put("password", getAccessToken());
+                .put("password", getAdminToken());
         ObjectNode registryNode = mapper.createObjectNode().set(registry, credentials);
         String kanikoConfig = mapper.createObjectNode().set("auths", registryNode).toPrettyString();
         Files.write(kanikoConfigPath, kanikoConfig.getBytes(StandardCharsets.UTF_8));

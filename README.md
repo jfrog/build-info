@@ -12,9 +12,11 @@ Build Info is Artifactory's open integration layer for the CI servers and build 
 ```bash
 export BITESTS_PLATFORM_URL='http://localhost:8081'
 export BITESTS_PLATFORM_USERNAME=admin
-export BITESTS_PLATFORM_ACCESS_TOKEN=admin-access-token
+export BITESTS_PLATFORM_ADMIN_TOKEN=admin-access-token
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
+See [here](https://www.jfrog.com/confluence/display/JFROG/Access+Tokens#AccessTokens-GeneratingAdminTokens) how to generate an admin token for the above environment variable.
+
 Before running the tests:
 1. Create a generic repository named *tests* in Artifactory.
 2. Create a project with *btests* as its key in Artifactory.
