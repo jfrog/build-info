@@ -51,7 +51,6 @@ public abstract class IntegrationTestsBase {
     protected ArtifactoryManager artifactoryManager;
     protected ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String username;
-    private String password;
     private String accessToken;
     private String platformUrl;
     private String artifactoryUrl;
@@ -79,7 +78,6 @@ public abstract class IntegrationTestsBase {
         }
         artifactoryUrl = platformUrl + "artifactory/";
         username = readParam(props, "username");
-        password = readParam(props, "password");
         accessToken = readParam(props, "access_token");
         artifactoryManager = createArtifactoryManager();
         artifactoryManagerBuilder = createArtifactoryManagerBuilder();
@@ -236,10 +234,6 @@ public abstract class IntegrationTestsBase {
         return this.username;
     }
 
-    protected String getPassword() {
-        return password;
-    }
-
     protected String getAccessToken() {
         return accessToken;
     }
@@ -253,12 +247,12 @@ public abstract class IntegrationTestsBase {
     }
 
     private ArtifactoryManager createArtifactoryManager() {
-        return new ArtifactoryManager(artifactoryUrl, username, password, log);
+        return new ArtifactoryManager(artifactoryUrl, username, accessToken, log);
     }
 
     private ArtifactoryManagerBuilder createArtifactoryManagerBuilder() {
         ArtifactoryManagerBuilder builder = new ArtifactoryManagerBuilder();
-        return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(password).setLog(log);
+        return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(accessToken).setLog(log);
     }
 
     /**

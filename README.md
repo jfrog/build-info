@@ -12,7 +12,7 @@ Build Info is Artifactory's open integration layer for the CI servers and build 
 ```bash
 export BITESTS_PLATFORM_URL='http://localhost:8081'
 export BITESTS_PLATFORM_USERNAME=admin
-export BITESTS_PLATFORM_PASSWORD=password
+export BITESTS_PLATFORM_ACCESS_TOKEN=admin-access-token
 export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/venv-test/bin
 ```
 Before running the tests:
