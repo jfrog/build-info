@@ -81,7 +81,7 @@ public class GoPublish extends GoCommand {
     }
 
     /**
-     * Allow running go run using a new Java process.
+     * Allow publishing Go packages using a new Java process.
      * Used only in Jenkins to allow running 'rtGo publish' in a docker container.
      */
     public static void main(String[] ignored) {
@@ -89,13 +89,12 @@ public class GoPublish extends GoCommand {
             ArtifactoryClientConfiguration clientConfiguration = createArtifactoryClientConfiguration();
             ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
             ArtifactoryClientConfiguration.PackageManagerHandler packageManagerHandler = clientConfiguration.packageManagerHandler;
-            ArtifactoryClientConfiguration.GoHandler goHandler = clientConfiguration.goHandler;
 
             GoPublish goPublish = new GoPublish(
                     artifactoryManagerBuilder,
                     ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
                     clientConfiguration.publisher.getRepoKey(),
-                    Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : "."),
+                    Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : ".").toAbsolutePath(),
                     clientConfiguration.goHandler.getGoPublishedVersion(),
                     packageManagerHandler.getModule(),
                     clientConfiguration.getLog()
