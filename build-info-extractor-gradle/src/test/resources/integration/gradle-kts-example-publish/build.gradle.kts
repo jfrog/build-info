@@ -19,7 +19,7 @@ allprojects {
         maven(url = "${System.getenv("BITESTS_PLATFORM_URL")}/artifactory/${System.getenv("BITESTS_ARTIFACTORY_VIRTUAL_REPO")}") {
             credentials {
                 username = System.getenv("BITESTS_PLATFORM_USERNAME")
-                password = System.getenv("BITESTS_PLATFORM_PASSWORD")
+                password = System.getenv("BITESTS_PLATFORM_ADMIN_TOKEN")
             }
         }
     }
@@ -68,7 +68,7 @@ configure<org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention> {
         repository {
             setRepoKey(System.getenv("BITESTS_ARTIFACTORY_LOCAL_REPO")) // The Artifactory repository key to publish to
             setUsername(System.getenv("BITESTS_PLATFORM_USERNAME")) // The publisher user name
-            setPassword(System.getenv("BITESTS_PLATFORM_PASSWORD")) // The publisher password
+            setPassword(System.getenv("BITESTS_PLATFORM_ADMIN_TOKEN")) // The publisher password
             // This is an optional section for configuring Ivy publication (when publishIvy = true).
             ivy {
                 setIvyLayout("[organization]/[module]/ivy-[revision].xml")

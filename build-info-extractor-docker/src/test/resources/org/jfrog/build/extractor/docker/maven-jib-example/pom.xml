@@ -78,14 +78,14 @@
                         <image>${env.BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN}/adoptopenjdk:8-jdk-hotspot</image>
                         <auth>
                             <username>${env.BITESTS_PLATFORM_USERNAME}</username>
-                            <password>${env.BITESTS_PLATFORM_PASSWORD}</password>
+                            <password>${env.BITESTS_PLATFORM_ADMIN_TOKEN}</password>
                         </auth>
                     </from>
                     <to>
                         <image>${env.BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN}/${project.artifactId}</image>
                         <auth>
                             <username>${env.BITESTS_PLATFORM_USERNAME}</username>
-                            <password>${env.BITESTS_PLATFORM_PASSWORD}</password>
+                            <password>${env.BITESTS_PLATFORM_ADMIN_TOKEN}</password>
                         </auth>
                     </to>
                 </configuration>

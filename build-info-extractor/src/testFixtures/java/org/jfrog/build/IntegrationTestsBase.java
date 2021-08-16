@@ -51,7 +51,7 @@ public abstract class IntegrationTestsBase {
     protected ArtifactoryManager artifactoryManager;
     protected ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String username;
-    private String accessToken;
+    private String adminToken;
     private String platformUrl;
     private String artifactoryUrl;
     public static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("^/(\\d+)$");
@@ -78,7 +78,7 @@ public abstract class IntegrationTestsBase {
         }
         artifactoryUrl = platformUrl + "artifactory/";
         username = readParam(props, "username");
-        accessToken = readParam(props, "access_token");
+        adminToken = readParam(props, "admin_token");
         artifactoryManager = createArtifactoryManager();
         artifactoryManagerBuilder = createArtifactoryManagerBuilder();
 
@@ -135,12 +135,12 @@ public abstract class IntegrationTestsBase {
                         BITESTS_PROPERTIES_PREFIX + "url', \n'" +
                         BITESTS_PROPERTIES_PREFIX + "username' and \n'" +
                         BITESTS_PROPERTIES_PREFIX + "password'. \n" +
-                        BITESTS_PROPERTIES_PREFIX + "access_token'. \n" +
+                        BITESTS_PROPERTIES_PREFIX + "admin_token'. \n" +
                         "Or a properties file with those properties in classpath or Environment variables:\n'" +
                         BITESTS_ENV_VAR_PREFIX + "URL', \n'" +
                         BITESTS_ENV_VAR_PREFIX + "USERNAME' and \n'" +
                         BITESTS_ENV_VAR_PREFIX + "PASSWORD' and \n'" +
-                        BITESTS_ENV_VAR_PREFIX + "ACCESS_TOKEN'.";
+                        BITESTS_ENV_VAR_PREFIX + "ADMIN_TOKEN'.";
 
         fail(message);
     }
@@ -234,8 +234,8 @@ public abstract class IntegrationTestsBase {
         return this.username;
     }
 
-    protected String getAccessToken() {
-        return accessToken;
+    protected String getAdminToken() {
+        return adminToken;
     }
 
     protected String getPlatformUrl() {
@@ -247,12 +247,12 @@ public abstract class IntegrationTestsBase {
     }
 
     private ArtifactoryManager createArtifactoryManager() {
-        return new ArtifactoryManager(artifactoryUrl, username, accessToken, log);
+        return new ArtifactoryManager(artifactoryUrl, username, adminToken, log);
     }
 
     private ArtifactoryManagerBuilder createArtifactoryManagerBuilder() {
         ArtifactoryManagerBuilder builder = new ArtifactoryManagerBuilder();
-        return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(accessToken).setLog(log);
+        return builder.setServerUrl(artifactoryUrl).setUsername(username).setPassword(adminToken).setLog(log);
     }
 
     /**

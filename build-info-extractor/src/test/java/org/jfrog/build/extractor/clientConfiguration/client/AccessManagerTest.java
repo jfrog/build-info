@@ -32,7 +32,7 @@ public class AccessManagerTest extends IntegrationTestsBase {
     public void init() throws IOException {
         super.init();
         String accessUrl = getPlatformUrl() + "/access";
-        accessManager = new AccessManager(accessUrl, getAccessToken(), getLog());
+        accessManager = new AccessManager(accessUrl, getAdminToken(), getLog());
     }
 
     @Test

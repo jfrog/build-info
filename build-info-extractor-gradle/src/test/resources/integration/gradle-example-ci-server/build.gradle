@@ -11,7 +11,7 @@ allprojects {
       url "${System.env.BITESTS_PLATFORM_URL}/artifactory/${System.env.BITESTS_ARTIFACTORY_VIRTUAL_REPO}"
       credentials {
         username "${System.env.BITESTS_PLATFORM_USERNAME}"
-        password "${System.env.BITESTS_PLATFORM_PASSWORD}"
+        password "${System.env.BITESTS_PLATFORM_ADMIN_TOKEN}"
       }
     }
   }
