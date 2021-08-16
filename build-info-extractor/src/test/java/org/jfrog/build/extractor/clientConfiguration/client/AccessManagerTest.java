@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 @Test
 public class AccessManagerTest extends IntegrationTestsBase {
     // Project key has maximum size of 6 chars, and must start with a lowercase letter.
-    private static final String PROJECT_KEY = "bi" + String.valueOf(System.currentTimeMillis()).substring(0, 4);
+    private static final String PROJECT_KEY = "bi" + StringUtils.right(String.valueOf(System.currentTimeMillis()), 4);
     protected static final String PROJECT_KEY_PLACEHOLDER = "${PROJECT_KEY}";
     protected static final String COMMAND_TYPE_PLACEHOLDER = "${COMMAND_TYPE}";
     protected static final String COMMAND_TYPE_CREATED = "CREATED";
