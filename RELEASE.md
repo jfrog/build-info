@@ -1,5 +1,13 @@
 # Release Notes
 
+## build-info-extractor 2.30.0 / gradle-artifactory-plugin 4.24.16 (August 17, 2021)
+- Add Projects APIs ([549](https://github.com/jfrog/build-info/pull/549))
+- Run Go on new Java process ([548](https://github.com/jfrog/build-info/pull/548))
+
+## build-info-extractor 2.29.0 / gradle-artifactory-plugin 4.24.15 (August 15, 2021)
+- Refactor build scan table ([545](https://github.com/jfrog/build-info/pull/545))
+- Allow npm projects without name and versions ([546](https://github.com/jfrog/build-info/pull/546))
+
 ## build-info-extractor 2.28.8 / gradle-artifactory-plugin 4.24.14 (July 19, 2021)
 - Bug fix - Fail to deserialize deployable artifacts ([537](https://github.com/jfrog/build-info/pull/537))
 - Gradle - skip uploading JAR if no jar produced in build ([538](https://github.com/jfrog/build-info/pull/538))
