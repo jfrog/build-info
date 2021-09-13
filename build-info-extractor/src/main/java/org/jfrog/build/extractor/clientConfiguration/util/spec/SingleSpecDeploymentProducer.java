@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
+import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -24,7 +25,7 @@ import java.util.regex.Pattern;
  */
 public class SingleSpecDeploymentProducer {
 
-    private FileSpec spec;
+    private FilesGroup spec;
     private File workspace;
     private Multimap<String, String> buildProperties;
 
@@ -42,7 +43,7 @@ public class SingleSpecDeploymentProducer {
     private int separatorsCount;
     private Set<String> symlinkSet = new HashSet<>();
 
-    SingleSpecDeploymentProducer(FileSpec spec, File workspace, Multimap<String, String> buildProperties) {
+    SingleSpecDeploymentProducer(FilesGroup spec, File workspace, Multimap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;

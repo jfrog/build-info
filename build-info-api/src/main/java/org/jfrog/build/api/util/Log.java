@@ -23,14 +23,14 @@ import java.io.Serializable;
  *
  * @author Noam Y. Tenne
  */
-public interface Log extends Serializable {
-    public void debug(String message);
+public interface Log extends Serializable, org.jfrog.filespecs.utils.Log {
+    void debug(String message);
 
-    public void info(String message);
+    void info(String message);
 
-    public void warn(String message);
+    void warn(String message);
 
-    public void error(String message);
+    void error(String message);
 
-    public void error(String message, Throwable e);
+    void error(String message, Throwable e);
 }

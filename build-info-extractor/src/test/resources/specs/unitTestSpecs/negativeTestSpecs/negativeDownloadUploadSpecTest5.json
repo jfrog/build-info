@@ -1,9 +1,0 @@
-{
-  "files": [
-    {
-      "pattern": "foo",
-      "aql": "bar",
-      "target": "bar"
-    }
-  ]
-}

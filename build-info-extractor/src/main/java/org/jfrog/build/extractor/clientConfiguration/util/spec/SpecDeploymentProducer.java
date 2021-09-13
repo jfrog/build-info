@@ -3,6 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.google.common.collect.Multimap;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
+import org.jfrog.filespecs.FileSpec;
+import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.File;
 import java.util.HashSet;
@@ -20,11 +22,11 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
      */
     private Set<DeployDetails> deployDetailsSet = new HashSet<>();
 
-    private Spec spec;
+    private FileSpec spec;
     private File workspace;
     private Multimap<String, String> buildProperties;
 
-    SpecDeploymentProducer(Spec spec, File workspace, Multimap<String, String> buildProperties) {
+    SpecDeploymentProducer(FileSpec spec, File workspace, Multimap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;
@@ -35,7 +37,7 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
         log.debug(String.format("[Thread %s] starting run()", Thread.currentThread().getName()));
         try {
             // Iterate over FileSpecs
-            for (FileSpec uploadFile : spec.getFiles()) {
+            for (FilesGroup uploadFile : spec.getFiles()) {
                 if (Thread.interrupted()) {
                     break;
                 }
