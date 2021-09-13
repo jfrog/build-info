@@ -1,6 +1,10 @@
 package org.jfrog.build.extractor.scan;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.*;
 
 /**
@@ -8,13 +12,14 @@ import java.util.*;
  *
  * @author yahavi
  */
+@JsonFilter("xray-graph-filter")
 public class DependencyTree extends DefaultMutableTreeNode {
 
     private Set<License> licenses = new HashSet<>();
     private Set<Issue> issues = new HashSet<>();
     private Set<Scope> scopes = new HashSet<>();
     private Issue topIssue = new Issue();
-    private GeneralInfo generalInfo;
+    private GeneralInfo generalInfo = new GeneralInfo();
 
     public DependencyTree() {
         super();
@@ -30,6 +35,11 @@ public class DependencyTree extends DefaultMutableTreeNode {
 
     public void setIssues(Set<Issue> issues) {
         this.issues = issues;
+    }
+
+    @JsonProperty("component_id")
+    public String getComponentId() {
+        return generalInfo.getPrefix().toLowerCase() + "://" + this;
     }
 
     public void setScopes(Set<Scope> scopes) {
@@ -67,6 +77,29 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     /**
+     * @return if one or more of the licenses is violating define policy
+     */
+    public boolean isLicenseViolating() {
+        if (licenses.stream().anyMatch(license -> license.getIsViolate())) {
+            return true;
+        }
+        if (getChildren().size() > 0) {
+            for(DependencyTree node:getNodes()){
+                if(node.isLicenseViolating())
+                    return true;
+            }
+        }
+        return  false;
+    }
+
+    public void setPrefix(String prefix) {
+        generalInfo.prefix(prefix);
+        if (getChildren().size() > 0) {
+            getNodes().stream().forEach(node -> node.setPrefix(prefix));
+        }
+    }
+
+    /**
      * @return total number of issues of the current node and its ancestors
      */
     @SuppressWarnings("WeakerAccess")
@@ -80,6 +113,11 @@ public class DependencyTree extends DefaultMutableTreeNode {
     @SuppressWarnings({"WeakerAccess", "unchecked"})
     public Vector<DependencyTree> getChildren() {
         return children != null ? children : new Vector<>();
+    }
+
+    @JsonProperty(value = "nodes")
+    public List<DependencyTree> getNodes() {
+        return children;
     }
 
     /**

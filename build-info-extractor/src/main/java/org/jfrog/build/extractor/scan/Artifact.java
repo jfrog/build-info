@@ -50,4 +50,8 @@ public class Artifact implements Serializable {
     public void setLicenses(Set<License> licenses) {
         this.licenses = licenses;
     }
+
+    public boolean isLicenseViolating(){
+        return licenses.stream().anyMatch(license -> license.getIsViolate());
+    }
 }
