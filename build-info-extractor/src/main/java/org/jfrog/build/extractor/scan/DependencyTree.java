@@ -80,23 +80,15 @@ public class DependencyTree extends DefaultMutableTreeNode {
      * @return if one or more of the licenses is violating define policy
      */
     public boolean isLicenseViolating() {
-        if (licenses.stream().anyMatch(license -> license.getIsViolate())) {
+        if (licenses.stream().anyMatch(License::getIsViolate)) {
             return true;
         }
-        if (getChildren().size() > 0) {
-            for(DependencyTree node:getNodes()){
-                if(node.isLicenseViolating())
-                    return true;
-            }
-        }
-        return  false;
+        return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
     }
 
     public void setPrefix(String prefix) {
         generalInfo.prefix(prefix);
-        if (getChildren().size() > 0) {
-            getNodes().stream().forEach(node -> node.setPrefix(prefix));
-        }
+        getChildren().forEach(node -> node.setPrefix(prefix));
     }
 
     /**
