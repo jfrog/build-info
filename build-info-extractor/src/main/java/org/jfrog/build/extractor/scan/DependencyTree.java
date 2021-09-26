@@ -19,7 +19,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Set<Issue> issues = new HashSet<>();
     private Set<Scope> scopes = new HashSet<>();
     private Issue topIssue = new Issue();
-    private GeneralInfo generalInfo = new GeneralInfo();
+    private GeneralInfo generalInfo;
 
     public DependencyTree() {
         super();
@@ -39,7 +39,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
 
     @JsonProperty("component_id")
     public String getComponentId() {
-        return generalInfo.getPrefix().toLowerCase() + "://" + this;
+        return generalInfo != null ? generalInfo.getPrefix().toLowerCase() + "://" + this : "";
     }
 
     public void setScopes(Set<Scope> scopes) {
@@ -80,7 +80,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
      * @return if one or more of the licenses is violating define policy
      */
     public boolean isLicenseViolating() {
-        if (licenses.stream().anyMatch(License::getIsViolate)) {
+        if (licenses.stream().anyMatch(License::isViolate)) {
             return true;
         }
         return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);

@@ -18,24 +18,23 @@ public class License {
     private String fullName;
     private String name;
     private List<String> moreInfoUrl = new ArrayList<>();
-    private boolean isViolate;
+    private boolean violate;
 
     public License() {
         this.fullName = UNKNOWN_LICENCE_FULL_NAME;
         this.name = UNKNOWN_LICENCE_NAME;
-        this.isViolate = false;
     }
 
     public License(List<String> components, String fullName, String name, List<String> moreInfoUrl) {
         this(components, fullName, name, moreInfoUrl, false);
     }
 
-    public License(List<String> components, String fullName, String name, List<String> moreInfoUrl, boolean isViolate) {
+    public License(List<String> components, String fullName, String name, List<String> moreInfoUrl, boolean violate) {
         this.components = components;
         this.fullName = StringUtils.trim(fullName);
         this.name = StringUtils.trim(name);
         this.moreInfoUrl = moreInfoUrl;
-        this.isViolate = isViolate;
+        this.violate = violate;
     }
 
     @SuppressWarnings("unused")
@@ -52,12 +51,12 @@ public class License {
         return name;
     }
 
-    public boolean getIsViolate() {
-        return isViolate;
+    public boolean isViolate() {
+        return violate;
     }
 
-    public void setIsViolate(boolean isViolate) {
-        this.isViolate = isViolate;
+    public void setViolate(boolean violate) {
+        this.violate = violate;
     }
 
     @SuppressWarnings("unused")
