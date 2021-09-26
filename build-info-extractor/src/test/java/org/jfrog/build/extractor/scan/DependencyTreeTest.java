@@ -5,12 +5,9 @@ import org.apache.commons.compress.utils.Sets;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 import static org.testng.AssertJUnit.assertEquals;
 
 /**
@@ -124,6 +121,26 @@ public class DependencyTreeTest {
         assertEquals("5", five.getTopIssue().getComponent());
     }
 
+    @Test(dependsOnMethods = {"testFiveNodes"})
+    public void testIsLicenseViolating() {
+        assertFalse(root.isLicenseViolating());
+        // Populate node three with 4 licenses, one violation
+        three.setLicenses(Sets.newHashSet(createLicense(false),
+                createLicense(false),
+                createLicense(false),
+                createLicense(true)));
+        // Populate node five with non violated license.
+        five.setLicenses(Sets.newHashSet(createLicense(false)));
+
+        // Assert that all issues are in the tree
+        Set<License> rootLicense = new HashSet<>();
+        root.collectAllScopesAndLicenses(new HashSet<>(), rootLicense);
+        assertEquals(6, rootLicense.size());
+        assertTrue(root.isLicenseViolating());
+        assertFalse(four.isLicenseViolating());
+        assertFalse(five.isLicenseViolating());
+    }
+
     @Test
     public void testFixedVersions() {
         // Check no fixed versions
@@ -166,6 +183,16 @@ public class DependencyTreeTest {
      */
     private Issue createIssue(Severity severity) {
         return new Issue(generateUID(), generateUID(), generateUID(), generateUID(), severity, generateUID(), Lists.newArrayList());
+    }
+
+    /**
+     * Create a random license
+     *
+     * @param violating a boolean indicates if the licenses is violating a policy.
+     * @return the random issue
+     */
+    private License createLicense(boolean violating) {
+        return new License(Lists.newArrayList(), generateUID(), generateUID(), Lists.newArrayList(), violating);
     }
 
     private String generateUID() {

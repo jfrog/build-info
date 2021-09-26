@@ -51,7 +51,7 @@ public class Artifact implements Serializable {
         this.licenses = licenses;
     }
 
-    public boolean isLicenseViolating(){
+    public boolean isLicenseViolating() {
         return licenses.stream().anyMatch(License::isViolate);
     }
 }
