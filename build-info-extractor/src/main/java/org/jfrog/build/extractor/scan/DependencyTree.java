@@ -38,6 +38,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     @JsonProperty("component_id")
+    @SuppressWarnings("unused")
     public String getComponentId() {
         return generalInfo != null ? generalInfo.getPrefix().toLowerCase() + "://" + this : "";
     }
@@ -79,6 +80,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     /**
      * @return if one or more of the licenses is violating define policy
      */
+    @SuppressWarnings("unused")
     public boolean isLicenseViolating() {
         if (licenses.stream().anyMatch(License::isViolate)) {
             return true;
@@ -108,6 +110,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     @JsonProperty(value = "nodes")
+    @SuppressWarnings({"unchecked", "unused"})
     public List<DependencyTree> getNodes() {
         return children;
     }
