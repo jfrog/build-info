@@ -1,6 +1,7 @@
 package org.jfrog.build.client.artifactoryXrayResponse;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
 
 import java.io.Serializable;
@@ -115,10 +116,11 @@ public class Issue implements Serializable {
     }
 
     public IssueType getIssueType() {
-        if ("Security".equals(this.getType())) {
-            return IssueType.SECURITY;
-        } else if ("License".equals(this.getType())) {
-            return IssueType.LICENSE;
+        switch (StringUtils.defaultString(getType()).toUpperCase()) {
+            case "SECURITY":
+                return IssueType.SECURITY;
+            case "LICENSE":
+                return IssueType.LICENSE;
         }
         return null;
     }

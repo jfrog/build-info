@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.30.2 / gradle-artifactory-plugin 4.24.18 (September 19, 2021)
+- Bug fix - IllegalArgumentException during build scan ([554](https://github.com/jfrog/build-info/pull/554))
+- Dependencies update ([553](https://github.com/jfrog/build-info/pull/553))
+
 ## build-info-extractor 2.30.0 / gradle-artifactory-plugin 4.24.16 (August 17, 2021)
 - Add Projects APIs ([549](https://github.com/jfrog/build-info/pull/549))
 - Run Go on new Java process ([548](https://github.com/jfrog/build-info/pull/548))
