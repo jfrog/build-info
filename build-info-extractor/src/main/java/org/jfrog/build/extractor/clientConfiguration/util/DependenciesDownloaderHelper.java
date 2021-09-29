@@ -18,8 +18,8 @@ import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.api.util.ZipUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.filespecs.FileSpec;
+import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.*;
 import java.security.NoSuchAlgorithmException;
@@ -68,18 +68,18 @@ public class DependenciesDownloaderHelper {
      * @return list of downloaded artifacts
      * @throws IOException in case of IO error
      */
-    public List<Dependency> downloadDependencies(Spec downloadSpec) throws IOException {
+    public List<Dependency> downloadDependencies(FileSpec downloadSpec) throws IOException {
         ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.getArtifactoryManager(), log);
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
         List<Dependency> resolvedDependencies = new ArrayList<>();
 
-        for (FileSpec file : downloadSpec.getFiles()) {
+        for (FilesGroup file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
             this.downloader.setFlatDownload(BooleanUtils.toBoolean(file.getFlat()));
             searchResults = searcher.SearchByFileSpec(file);
             downloadableArtifacts = fetchDownloadableArtifactsFromResult(searchResults, Boolean.valueOf(file.getExplode()), file.getTarget());
-            if (file.getSpecType() == FileSpec.SpecType.PATTERN) {
+            if (file.getSpecType() == FilesGroup.SpecType.PATTERN) {
                 replaceTargetPlaceholders(file.getPattern(), downloadableArtifacts, file.getTarget());
             }
             resolvedDependencies.addAll(downloadDependencies(downloadableArtifacts));

@@ -13,8 +13,8 @@ import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.filespecs.FileSpec;
+import org.jfrog.filespecs.entities.FilesGroup;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -249,13 +249,13 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // DownloadBase the artifact and check for its properties
             StringJoiner propertiesBuilder = new StringJoiner(";");
             props.entries().forEach(property -> propertiesBuilder.add(property.getKey() + "=" + property.getValue()));
-            FileSpec fileSpec = new FileSpec();
+            FilesGroup fileSpec = new FilesGroup();
             fileSpec.setProps(propertiesBuilder.toString());
             fileSpec.setPattern(localRepo1 + "/" + targetPath);
             fileSpec.setTarget(projectDir.toString());
 
-            Spec spec = new Spec();
-            spec.setFiles(new FileSpec[]{fileSpec});
+            FileSpec spec = new FileSpec();
+            spec.addFilesGroup(fileSpec);
             assertEquals(downloaderHelper.downloadDependencies(spec).size(), 1);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));

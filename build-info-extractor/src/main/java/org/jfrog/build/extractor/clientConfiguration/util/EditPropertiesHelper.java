@@ -3,8 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.Spec;
+import org.jfrog.filespecs.FileSpec;
+import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,12 +23,12 @@ public class EditPropertiesHelper {
         this.log = log;
     }
 
-    public boolean editProperties(Spec spec, EditPropertiesActionType editType, String props) throws IOException {
+    public boolean editProperties(FileSpec spec, EditPropertiesActionType editType, String props) throws IOException {
         ArtifactorySearcher searcher = new ArtifactorySearcher(artifactoryManager, log);
         // Here to mark that at least one action has been successfully made. Needed for the failNoOp flag.
         boolean propertiesSet = false;
 
-        for (FileSpec file : spec.getFiles()) {
+        for (FilesGroup file : spec.getFiles()) {
             log.debug("Editing properties using spec: \n" + file.toString());
             if (editType == EditPropertiesActionType.SET) {
                 propertiesSet = setPropertiesOnResults(searcher.SearchByFileSpec(file), props) || propertiesSet;

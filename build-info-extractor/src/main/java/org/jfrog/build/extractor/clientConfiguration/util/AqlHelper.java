@@ -1,60 +1,104 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
-import org.jfrog.build.extractor.clientConfiguration.util.spec.FileSpec;
+import org.jfrog.filespecs.aql.AqlConverter;
+import org.jfrog.filespecs.entities.Aql;
+import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.IOException;
 import java.util.*;
 
-public class AqlHelperBase {
+public class AqlHelper {
 
     protected static final String LATEST = "LATEST";
     protected static final String LAST_RELEASE = "LAST_RELEASE";
     protected static final String DELIMITER = "/";
     protected static final String ESCAPE_CHAR = "\\";
 
+    protected Log log;
     protected ArtifactoryManager artifactoryManager;
-    private Log log;
-    protected String queryBody;
-    protected String includeFields;
-    protected String querySuffix;
     protected String buildName;
     protected String buildNumber;
+    protected final FilesGroup filesGroup;
 
-    AqlHelperBase(ArtifactoryManager artifactoryManager, Log log, FileSpec file) throws IOException {
+    AqlHelper(ArtifactoryManager artifactoryManager, Log log, FilesGroup file) throws IOException {
         this.artifactoryManager = artifactoryManager;
         this.log = log;
-        convertFileSpecToAql(file);
+        this.filesGroup = file;
+        buildQueryAdditionalParts();
     }
 
-    protected void buildQueryAdditionalParts(FileSpec file) throws IOException {
-        this.buildName = getBuildName(file.getBuild());
+    private void buildQueryAdditionalParts() throws IOException {
+        this.buildName = getBuildName(this.filesGroup.getBuild());
         // AQL doesn't support projects.
-        this.buildNumber = getBuildNumber(artifactoryManager, buildName, file.getBuild(), null);
-        this.querySuffix = buildQuerySuffix(file.getSortBy(), file.getSortOrder(), file.getOffset(), file.getLimit());
-        this.includeFields = buildIncludeQueryPart(file.getSortBy(), querySuffix);
-    }
-
-    protected void convertFileSpecToAql(FileSpec file) throws IOException {
-        buildQueryAdditionalParts(file);
-        this.queryBody = file.getAql();
+        this.buildNumber = getBuildNumber(artifactoryManager, buildName, this.filesGroup.getBuild(), null);
     }
 
     public List<AqlSearchResult.SearchEntry> run() throws IOException {
-        String aql = "items.find(" + queryBody + ")" + includeFields + querySuffix;
+        String aql;
+
+        if (this.filesGroup.getSpecType() == FilesGroup.SpecType.BUILD) {
+            // The file-specs-java library doesn't support files groups of type BUILD.
+            // To handle that, we create the AQL query body separately here, put it in the files group, use the files group
+            // to create a full, valid AQL query and finally revert the files group by removing the AQL from it.
+            String queryBody = createAqlBodyForBuild(buildName, buildNumber);
+            Aql query = new Aql();
+            query.setFind(queryBody);
+            this.filesGroup.setAql(query);
+            aql = AqlConverter.convertFilesGroupToAql(this.filesGroup);
+            this.filesGroup.setAql(null);
+        } else {
+            aql = AqlConverter.convertFilesGroupToAql(this.filesGroup);
+        }
+
         log.debug("Searching Artifactory using AQL query:\n" + aql);
         AqlSearchResult aqlSearchResult = artifactoryManager.searchArtifactsByAql(aql);
         List<AqlSearchResult.SearchEntry> queryResults = aqlSearchResult.getResults();
 
-        List<AqlSearchResult.SearchEntry> results = filterResult(queryResults);
+        List<AqlSearchResult.SearchEntry> artifactsSha1SearchResults;
+        if (this.filesGroup.getSpecType() == FilesGroup.SpecType.BUILD) {
+            artifactsSha1SearchResults = queryResults;
+        } else {
+            artifactsSha1SearchResults = fetchBuildArtifactsSha1();
+        }
+
+        List<AqlSearchResult.SearchEntry> results = filterResult(queryResults, artifactsSha1SearchResults);
         return (results == null ? new ArrayList<>() : results);
     }
 
-    protected static String getBuildName(String build) {
+    /**
+     * If buildName specified, filter the results to keep only artifacts matching the requested build
+     */
+    private List<AqlSearchResult.SearchEntry> filterResult(List<AqlSearchResult.SearchEntry> queryResults, List<AqlSearchResult.SearchEntry> artifactsSha1SerachResults) throws IOException {
+        if (StringUtils.isNotBlank(buildName) && queryResults.size() > 0) {
+            Map<String, Boolean> buildArtifactsSha1 = extractSha1FromAqlResponse(artifactsSha1SerachResults);
+            queryResults = filterAqlSearchResultsByBuild(queryResults, buildArtifactsSha1, buildName, buildNumber);
+        }
+
+        return queryResults;
+    }
+
+    /**
+     * Sends an aql query to get all Sha1 value of the requested build, then returns the search results.
+     */
+    private List<AqlSearchResult.SearchEntry> fetchBuildArtifactsSha1() throws IOException {
+        // If a user without admin privileges tries to send AQL query that includes 'actual_sha1' only, a bad request will be return.
+        // In order to fix this, we include name, repo & path.
+        String includeSha1Field = ".include(\"name\",\"repo\",\"path\",\"actual_sha1\")";
+        String buildAql = String.format("items.find(%s)%s", createAqlBodyForBuild(buildName, buildNumber), includeSha1Field);
+        log.debug("Searching Artifactory for build's checksums using AQL query:\n" + buildAql);
+        AqlSearchResult aqlSearchResult = artifactoryManager.searchArtifactsByAql(buildAql);
+        return aqlSearchResult.getResults();
+    }
+
+    private static String createAqlBodyForBuild(String buildName, String buildNumber) {
+        return String.format("{\"artifact.module.build.name\": \"%s\",\"artifact.module.build.number\": \"%s\"}", buildName, buildNumber);
+    }
+
+    private static String getBuildName(String build) {
         if (StringUtils.isBlank(build)) {
             return build;
         }
@@ -70,7 +114,7 @@ public class AqlHelperBase {
         return buildName.endsWith(ESCAPE_CHAR) ? build : buildName;
     }
 
-    protected String getBuildNumber(ArtifactoryManager client, String buildName, String build, String project) throws IOException {
+    private String getBuildNumber(ArtifactoryManager client, String buildName, String build, String project) throws IOException {
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
             if (!build.startsWith(buildName)) {
@@ -103,60 +147,8 @@ public class AqlHelperBase {
         log.warn(sb.toString());
     }
 
-    protected static String buildIncludeQueryPart(String[] sortByFields, String suffix) {
-        List<String> fieldsToInclude = getQueryReturnFields(sortByFields);
-        if (StringUtils.isBlank(suffix)) {
-            fieldsToInclude.add("property");
-        }
-        return ".include(" + StringUtils.join(prepareFieldsForQuery(fieldsToInclude), ',') + ")";
-    }
-
-    private static List<String> getQueryReturnFields(String[] sortByFields) {
-        ArrayList<String> includeFields = new ArrayList<String>(
-                Arrays.asList("name", "repo", "path", "actual_md5", "actual_sha1", "size", "type"));
-        for (String field : sortByFields) {
-            if (includeFields.indexOf(field) == -1) {
-                includeFields.add(field);
-            }
-        }
-        return includeFields;
-    }
-
-    private static List<String> prepareFieldsForQuery(List<String> fields) {
-        fields.forEach((field) -> fields.set(fields.indexOf(field), '"' + field + '"'));
-        return fields;
-    }
-
-    protected static String buildQuerySuffix(String[] sortBy, String sortOrder, String offset, String limit) {
-        StringBuilder query = new StringBuilder();
-        if (sortBy != ArrayUtils.EMPTY_STRING_ARRAY) {
-            sortOrder = StringUtils.defaultIfEmpty(sortOrder, "asc");
-            query.append(".sort({\"$").append(sortOrder).append("\":");
-            query.append("[").append(prepareSortFieldsForQuery(sortBy)).append("]})");
-        }
-        if (StringUtils.isNotBlank(offset)) {
-            query.append(".offset(").append(offset).append(")");
-        }
-        if (StringUtils.isNotBlank(limit)) {
-            query.append(".limit(").append(limit).append(")");
-        }
-        return query.toString();
-    }
-
-    private static String prepareSortFieldsForQuery(String[] sortByFields) {
-        StringBuilder fields = new StringBuilder();
-        int size = sortByFields.length;
-        for (int i = 0; i < size; i++) {
-            fields.append("\"").append(sortByFields[i]).append("\"");
-            if (i < size - 1) {
-                fields.append(",");
-            }
-        }
-        return fields.toString();
-    }
-
     /**
-     * When searching artifacts of a specific build, artifactory uses the checksum list in the the published build-info,
+     * When searching artifacts of a specific build, artifactory uses the checksum list in the published build-info,
      * and returns all the items that match this list.
      * That kind of search may return duplicated or unnecessary artifacts due to late move/copy/promote operations.
      * Therefore, we need to filter the search results according to the following priorities:
@@ -164,7 +156,7 @@ public class AqlHelperBase {
      * 2nd priority: Match {Sha1, build name}
      * 3rd priority: Match {Sha1}
      */
-    protected static List<AqlSearchResult.SearchEntry> filterAqlSearchResultsByBuild(List<AqlSearchResult.SearchEntry> itemsToFilter, Map<String, Boolean> buildArtifactsSha1, String buildName, String buildNumber) {
+    private static List<AqlSearchResult.SearchEntry> filterAqlSearchResultsByBuild(List<AqlSearchResult.SearchEntry> itemsToFilter, Map<String, Boolean> buildArtifactsSha1, String buildName, String buildNumber) {
         // Maps that contain the search results, mapped by the priority they match.
         Map<String, List<AqlSearchResult.SearchEntry>> firstPriority = new HashMap<>();
         Map<String, List<AqlSearchResult.SearchEntry>> secondPriority = new HashMap<>();
@@ -215,43 +207,9 @@ public class AqlHelperBase {
     /**
      * Maps all Sha1 values that exist in the results found
      */
-    protected static Map<String, Boolean> extractSha1FromAqlResponse(List<AqlSearchResult.SearchEntry> searchResults) {
+    private static Map<String, Boolean> extractSha1FromAqlResponse(List<AqlSearchResult.SearchEntry> searchResults) {
         Map<String, Boolean> resultsMap = new HashMap<>();
         searchResults.forEach((result) -> resultsMap.put(result.getActualSha1(), true));
         return resultsMap;
     }
-
-    protected static String createAqlBodyForBuild(String buildName, String buildNumber) {
-        return String.format("{\"artifact.module.build.name\": \"%s\",\"artifact.module.build.number\": \"%s\"}", buildName, buildNumber);
-    }
-
-    /**
-     * If buildName specified, filter the results to keep only artifacts matching the requested build
-     */
-    protected List<AqlSearchResult.SearchEntry> filterResult(List<AqlSearchResult.SearchEntry> queryResults) throws IOException {
-        if (StringUtils.isNotBlank(buildName) && queryResults.size() > 0) {
-            Map<String, Boolean> buildArtifactsSha1 = fetchBuildArtifactsSha1();
-            queryResults = filterAqlSearchResultsByBuild(queryResults, buildArtifactsSha1, buildName, buildNumber);
-        }
-
-        return queryResults;
-    }
-
-    /**
-     * Sends an aql query to get all Sha1 value of the requested build, then returns a Map of the Sha1 values.
-     */
-    private Map<String, Boolean> fetchBuildArtifactsSha1() throws IOException {
-        // If a user without admin privileges tries to send AQL query that includes 'actual_sha1' only, a bad request will be return.
-        // In order to fix this, we include name, repo & path.
-        String includeSha1Field = ".include(\"name\",\"repo\",\"path\",\"actual_sha1\")";
-        String buildAql = createAqlQueryForBuild(includeSha1Field);
-        log.debug("Searching Artifactory for build's checksums using AQL query:\n" + buildAql);
-        AqlSearchResult aqlSearchResult = artifactoryManager.searchArtifactsByAql(buildAql);
-        return extractSha1FromAqlResponse(aqlSearchResult.getResults());
-    }
-
-    private String createAqlQueryForBuild(String includeQueryPart) {
-        return String.format("items.find(%s)%s", createAqlBodyForBuild(buildName, buildNumber), includeQueryPart);
-    }
-
 }
