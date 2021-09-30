@@ -18,11 +18,11 @@ import java.util.Map;
  */
 public class GoDriver implements Serializable {
     private static final List<String> GO_LIST_USED_MODULES_CMD =
-            Arrays.asList("list", "-f" ,"\"{{with .Module}}{{.Path}} {{.Version}}{{end}}\"", "all");
+            Arrays.asList("list", "-f", "\"{{with .Module}}{{.Path}} {{.Version}}{{end}}\"", "all");
     private static final String GO_MOD_GRAPH_CMD = "mod graph";
+    private static final String GO_LIST_MODULE_CMD = "list -m";
     private static final String GO_MOD_TIDY_CMD = "mod tidy";
     private static final String GO_VERSION_CMD = "version";
-    private static final String GO_LIST_MODULE = "list -m";
 
     private static final long serialVersionUID = 1L;
     private final CommandExecutor commandExecutor;
@@ -89,7 +89,7 @@ public class GoDriver implements Serializable {
     }
 
     public String getModuleName() throws IOException {
-        CommandResults commandResults = runCmd(GO_LIST_MODULE, false);
+        CommandResults commandResults = runCmd(GO_LIST_MODULE_CMD, false);
         return commandResults.getRes().trim();
     }
 }
