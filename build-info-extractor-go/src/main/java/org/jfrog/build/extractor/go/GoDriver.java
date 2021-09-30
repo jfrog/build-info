@@ -17,14 +17,17 @@ import java.util.Map;
  * Created by Bar Belity on 13/02/2020.
  */
 public class GoDriver implements Serializable {
-    private static final String GO_VERSION_CMD = "version";
+    private static final List<String> GO_LIST_USED_MODULES_CMD =
+            Arrays.asList("list", "-f" ,"\"{{with .Module}}{{.Path}} {{.Version}}{{end}}\"", "all");
     private static final String GO_MOD_GRAPH_CMD = "mod graph";
+    private static final String GO_MOD_TIDY_CMD = "mod tidy";
+    private static final String GO_VERSION_CMD = "version";
     private static final String GO_LIST_MODULE = "list -m";
 
     private static final long serialVersionUID = 1L;
-    private CommandExecutor commandExecutor;
-    private File workingDirectory;
-    private Log logger;
+    private final CommandExecutor commandExecutor;
+    private final File workingDirectory;
+    private final Log logger;
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
         this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
@@ -74,6 +77,15 @@ public class GoDriver implements Serializable {
 
     public CommandResults modGraph(boolean prompt) throws IOException {
         return runCmd(GO_MOD_GRAPH_CMD, prompt);
+    }
+
+    public void modTidy(boolean prompt) throws IOException {
+        runCmd(GO_MOD_TIDY_CMD, prompt);
+    }
+
+    public CommandResults getUsedModules(boolean prompt) throws IOException {
+        List<String> argsList = new ArrayList<>(GO_LIST_USED_MODULES_CMD);
+        return runCmd(argsList, prompt);
     }
 
     public String getModuleName() throws IOException {
