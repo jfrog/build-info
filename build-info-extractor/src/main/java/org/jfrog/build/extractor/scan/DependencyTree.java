@@ -1,6 +1,10 @@
 package org.jfrog.build.extractor.scan;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.*;
 
 /**
@@ -8,6 +12,7 @@ import java.util.*;
  *
  * @author yahavi
  */
+@JsonFilter("xray-graph-filter")
 public class DependencyTree extends DefaultMutableTreeNode {
 
     private Set<License> licenses = new HashSet<>();
@@ -15,7 +20,8 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Set<Scope> scopes = new HashSet<>();
     private Issue topIssue = new Issue();
     private GeneralInfo generalInfo;
-
+    private String packagePrefix = "";
+ 
     public DependencyTree() {
         super();
     }
@@ -30,6 +36,12 @@ public class DependencyTree extends DefaultMutableTreeNode {
 
     public void setIssues(Set<Issue> issues) {
         this.issues = issues;
+    }
+
+    @JsonProperty("component_id")
+    @SuppressWarnings("unused")
+    public String getComponentId() {
+        return packagePrefix + this;
     }
 
     public void setScopes(Set<Scope> scopes) {
@@ -67,6 +79,22 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     /**
+     * @return if one or more of the licenses is violating define policy
+     */
+    @SuppressWarnings("unused")
+    public boolean isLicenseViolating() {
+        if (licenses.stream().anyMatch(License::isViolate)) {
+            return true;
+        }
+        return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
+    }
+
+    public void setPrefix(String prefix) {
+        packagePrefix = prefix.toLowerCase() + "://";
+        getChildren().forEach(node -> node.setPrefix(prefix));
+    }
+
+    /**
      * @return total number of issues of the current node and its ancestors
      */
     @SuppressWarnings("WeakerAccess")
@@ -80,6 +108,12 @@ public class DependencyTree extends DefaultMutableTreeNode {
     @SuppressWarnings({"WeakerAccess", "unchecked"})
     public Vector<DependencyTree> getChildren() {
         return children != null ? children : new Vector<>();
+    }
+
+    @JsonProperty(value = "nodes")
+    @SuppressWarnings({"unchecked", "unused"})
+    public List<DependencyTree> getNodes() {
+        return children;
     }
 
     /**
