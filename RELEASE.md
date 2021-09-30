@@ -1,5 +1,10 @@
 # Release Notes
 
+## build-info-extractor 2.31.0 / gradle-artifactory-plugin 4.24.19 (September 30, 2021)
+- Use the file-specs-java library ([552](https://github.com/jfrog/build-info/pull/552))
+- Add getUsedModules and modTidy to GoDriver ([557](https://github.com/jfrog/build-info/pull/557))
+- Add support for new Xray graph scan ([556](https://github.com/jfrog/build-info/pull/556))
+
 ## build-info-extractor 2.30.2 / gradle-artifactory-plugin 4.24.18 (September 19, 2021)
 - Bug fix - IllegalArgumentException during build scan ([554](https://github.com/jfrog/build-info/pull/554))
 - Dependencies update ([553](https://github.com/jfrog/build-info/pull/553))
