@@ -20,7 +20,8 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Set<Scope> scopes = new HashSet<>();
     private Issue topIssue = new Issue();
     private GeneralInfo generalInfo;
-
+    private String packagePrefix = "";
+ 
     public DependencyTree() {
         super();
     }
@@ -40,7 +41,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     @JsonProperty("component_id")
     @SuppressWarnings("unused")
     public String getComponentId() {
-        return generalInfo != null ? generalInfo.getPrefix().toLowerCase() + "://" + this : "";
+        return packagePrefix + this;
     }
 
     public void setScopes(Set<Scope> scopes) {
@@ -89,7 +90,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     public void setPrefix(String prefix) {
-        generalInfo.prefix(prefix);
+        packagePrefix = prefix.toLowerCase() + "://";
         getChildren().forEach(node -> node.setPrefix(prefix));
     }
 

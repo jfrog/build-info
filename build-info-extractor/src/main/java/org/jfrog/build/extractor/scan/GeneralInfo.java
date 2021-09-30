@@ -19,7 +19,6 @@ public class GeneralInfo implements Serializable {
     private String artifactId = "";
     private String version = "";
     private String sha1 = "";
-    private String prefix = "";
 
     @SuppressWarnings("WeakerAccess")
     public GeneralInfo() {
@@ -79,10 +78,6 @@ public class GeneralInfo implements Serializable {
         return pkgType;
     }
 
-    public String getPrefix() {
-        return prefix;
-    }
-
     public String getSha1() {
         return sha1;
     }
@@ -121,12 +116,6 @@ public class GeneralInfo implements Serializable {
     @SuppressWarnings("unused")
     public GeneralInfo pkgType(String pkgType) {
         this.pkgType = pkgType;
-        return this;
-    }
-
-    @SuppressWarnings("unused")
-    public GeneralInfo prefix(String prefix) {
-        this.prefix = prefix;
         return this;
     }
 
