@@ -1,4 +1,6 @@
 # Release Notes
+## build-info-extractor 2.31.1 / gradle-artifactory-plugin 4.24.20 (October 1, 2021)
+- Add metadata field to dependency tree node ([558](https://github.com/jfrog/build-info/pull/558)
 
 ## build-info-extractor 2.31.0 / gradle-artifactory-plugin 4.24.19 (September 30, 2021)
 - Use the file-specs-java library ([552](https://github.com/jfrog/build-info/pull/552))
