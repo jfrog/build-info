@@ -21,7 +21,8 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Issue topIssue = new Issue();
     private GeneralInfo generalInfo;
     private String packagePrefix = "";
- 
+    private boolean projectSetting;
+
     public DependencyTree() {
         super();
     }
@@ -87,6 +88,16 @@ public class DependencyTree extends DefaultMutableTreeNode {
             return true;
         }
         return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isProjectSetting() {
+        return projectSetting;
+    }
+
+    @SuppressWarnings("unused")
+    public void setProjectSetting(boolean projectSetting) {
+        this.projectSetting = projectSetting;
     }
 
     public void setPrefix(String prefix) {
