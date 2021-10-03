@@ -21,7 +21,15 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Issue topIssue = new Issue();
     private GeneralInfo generalInfo;
     private String packagePrefix = "";
- 
+
+    /**
+     * metadata should be true if one of the following statement is true:
+     * Node represents the root of the dependency tree.
+     * Node represents a project.
+     * Node represents a module in project.
+     */
+    private boolean metadata;
+
     public DependencyTree() {
         super();
     }
@@ -87,6 +95,16 @@ public class DependencyTree extends DefaultMutableTreeNode {
             return true;
         }
         return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
+    }
+
+    @SuppressWarnings("unused")
+    public boolean isMetadata() {
+        return metadata;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMetadata(boolean metadata) {
+        this.metadata = metadata;
     }
 
     public void setPrefix(String prefix) {
