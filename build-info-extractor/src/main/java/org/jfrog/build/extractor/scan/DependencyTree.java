@@ -21,7 +21,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     private Issue topIssue = new Issue();
     private GeneralInfo generalInfo;
     private String packagePrefix = "";
-    private boolean projectSetting;
+    private boolean metadata;
 
     public DependencyTree() {
         super();
@@ -90,14 +90,20 @@ public class DependencyTree extends DefaultMutableTreeNode {
         return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
     }
 
+    /**
+     * @return true in one of the following cases:
+     * Node represents the root of the dependency tree.
+     * Node represents a project.
+     * Node represents a module in project.
+     */
     @SuppressWarnings("unused")
-    public boolean isProjectSetting() {
-        return projectSetting;
+    public boolean isMetadata() {
+        return metadata;
     }
 
     @SuppressWarnings("unused")
-    public void setProjectSetting(boolean projectSetting) {
-        this.projectSetting = projectSetting;
+    public void setMetadata(boolean metadata) {
+        this.metadata = metadata;
     }
 
     public void setPrefix(String prefix) {
