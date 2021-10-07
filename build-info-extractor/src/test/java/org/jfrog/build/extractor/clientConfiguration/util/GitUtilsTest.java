@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FileUtils;
-import org.jfrog.build.api.Vcs;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
