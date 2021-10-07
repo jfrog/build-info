@@ -29,9 +29,13 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.api.builder.*;
+import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
+import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -57,7 +61,13 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
@@ -166,10 +176,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     @Override
     public void sessionEnded(ExecutionEvent event) {
         try {
-            Build build = extract(event);
-            if (build != null) {
+            BuildInfo buildInfo = extract(event);
+            if (buildInfo != null) {
                 File basedir = event.getSession().getTopLevelProject().getBasedir();
-                buildDeploymentHelper.deploy(build, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
+                buildDeploymentHelper.deploy(buildInfo, conf, deployableArtifactBuilderMap, projectHasTestFailures, basedir);
             }
             deployableArtifactBuilderMap.clear();
             if (wrappedListener != null) {
@@ -526,7 +536,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 }
             }
 
-            org.jfrog.build.api.Artifact artifact = artifactBuilder.build();
+            org.jfrog.build.api.ci.Artifact artifact = artifactBuilder.build();
             String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
             if (artifactFile != null && artifactFile.isFile()) {
                 boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
@@ -557,7 +567,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                         .remotePath(getRemotePath(metadata.getGroupId(), metadata.getArtifactId(), metadata.getBaseVersion()))
                         .type("pom");
                 File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
-                org.jfrog.build.api.Artifact pomArtifact = artifactBuilder.build();
+                org.jfrog.build.api.ci.Artifact pomArtifact = artifactBuilder.build();
 
                 if (pomFile != null && pomFile.isFile()) {
                     boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
@@ -573,7 +583,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
      * If excludeArtifactsFromBuild and the PatternMatcher found conflicts, add the excluded artifact to the excluded artifacts list in the build info.
      * Otherwise, add the artifact to the regular artifacts list.
      */
-    private void addArtifactToBuildInfo(org.jfrog.build.api.Artifact artifact, boolean pathConflicts, boolean isFilterExcludedArtifactsFromBuild, ModuleBuilder module) {
+    private void addArtifactToBuildInfo(org.jfrog.build.api.ci.Artifact artifact, boolean pathConflicts, boolean isFilterExcludedArtifactsFromBuild, ModuleBuilder module) {
         if (isFilterExcludedArtifactsFromBuild && pathConflicts) {
             module.addExcludedArtifact(artifact);
         } else {
@@ -590,7 +600,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         return nameBuilder.append(".").append(fileExtension).toString();
     }
 
-    private void addDeployableArtifact(org.jfrog.build.api.Artifact artifact, File artifactFile, boolean pathConflicts,
+    private void addDeployableArtifact(org.jfrog.build.api.ci.Artifact artifact, File artifactFile, boolean pathConflicts,
                                        String groupId, String artifactId, String version, String classifier, String fileExtension) {
         if (pathConflicts) {
             logger.info("'" + artifact.getName() + "' will not be deployed due to the defined include-exclude patterns.");
@@ -694,15 +704,15 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     @Override
-    public Build extract(ExecutionEvent event) {
+    public BuildInfo extract(ExecutionEvent event) {
         MavenSession session = event.getSession();
         if (!session.getResult().hasExceptions()) {
             Date finish = new Date();
             long time = finish.getTime() - session.getRequest().getStartTime().getTime();
 
-            Build build = buildInfoBuilder.durationMillis(time).build();
-            PackageManagerUtils.collectEnvIfNeeded(conf, build);
-            return build;
+            BuildInfo buildInfo = buildInfoBuilder.durationMillis(time).build();
+            PackageManagerUtils.collectEnvIfNeeded(conf, buildInfo);
+            return buildInfo;
         }
 
         return null;

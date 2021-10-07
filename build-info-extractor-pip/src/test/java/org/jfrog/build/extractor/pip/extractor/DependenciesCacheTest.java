@@ -3,8 +3,8 @@ package org.jfrog.build.extractor.pip.extractor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.ci.Dependency;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.util.TestingLog;
 import org.testng.annotations.Test;
@@ -14,7 +14,10 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.fail;
 
 /**
  * Created by Bar Belity on 21/07/2020.

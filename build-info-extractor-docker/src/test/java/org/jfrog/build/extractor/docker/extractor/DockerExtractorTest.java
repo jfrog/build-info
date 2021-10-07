@@ -10,7 +10,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BaseBuildFileBean;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -30,7 +34,10 @@ import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collections;
 import java.util.List;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 @Test
 public class DockerExtractorTest extends IntegrationTestsBase {
@@ -135,9 +142,9 @@ public class DockerExtractorTest extends IntegrationTestsBase {
             String kanikoFile = execKaniko(workingDirectory, virtualDomainName, kanikoConfig);
 
             BuildDockerCreator buildDockerCreator = new BuildDockerCreator(artifactoryManagerBuilder, kanikoFile, BuildDockerCreator.ImageFileType.KANIKO, artifactProperties, dockerVirtualRepo, getLog());
-            Build build = buildDockerCreator.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = getAndValidateModule(build, "hello-world:latest", dockerVirtualRepo);
+            BuildInfo buildInfo = buildDockerCreator.execute();
+            assertEquals(buildInfo.getModules().size(), 1);
+            Module module = getAndValidateModule(buildInfo, "hello-world:latest", dockerVirtualRepo);
             module.getArtifacts().stream().map(BaseBuildFileBean::getRemotePath).forEach(remotePath -> assertEquals(remotePath, EXPECTED_REMOTE_PATH_KANIKO));
         } finally {
             FileUtils.deleteDirectory(workingDirectory.toFile());
@@ -154,16 +161,16 @@ public class DockerExtractorTest extends IntegrationTestsBase {
 
             // Run build-docker-create
             BuildDockerCreator.ImageFileType imageFileType = BuildDockerCreator.ImageFileType.JIB;
-            Build build = new BuildDockerCreator(artifactoryManagerBuilder, getJibImageJsonPath(wd),
+            BuildInfo buildInfo = new BuildDockerCreator(artifactoryManagerBuilder, getJibImageJsonPath(wd),
                     imageFileType, artifactProperties, dockerVirtualRepo, getLog()).execute();
 
             // Check modules
-            assertEquals(build.getModules().size(), 3);
-            Module module = getAndValidateModule(build, "multi1", dockerVirtualRepo);
+            assertEquals(buildInfo.getModules().size(), 3);
+            Module module = getAndValidateModule(buildInfo, "multi1", dockerVirtualRepo);
             assertFalse(module.getArtifacts().isEmpty());
-            module = getAndValidateModule(build, "multi2", dockerVirtualRepo);
+            module = getAndValidateModule(buildInfo, "multi2", dockerVirtualRepo);
             assertFalse(module.getArtifacts().isEmpty());
-            module = getAndValidateModule(build, "multi3", dockerVirtualRepo);
+            module = getAndValidateModule(buildInfo, "multi3", dockerVirtualRepo);
             assertFalse(module.getArtifacts().isEmpty());
         } finally {
             FileUtils.deleteDirectory(wd.toFile());
@@ -206,8 +213,8 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     }
 
     private void pushAndValidateImage(DockerPush dockerPush, String repo, String imageTag, String shortImageTag) {
-        Build build = dockerPush.execute();
-        Module module = getAndValidateModule(build, SHORT_IMAGE_NAME + ":" + shortImageTag, repo);
+        BuildInfo buildInfo = dockerPush.execute();
+        Module module = getAndValidateModule(buildInfo, SHORT_IMAGE_NAME + ":" + shortImageTag, repo);
         List<Artifact> artifacts = module.getArtifacts();
         validateImageArtifacts(artifacts, imageTag);
         assertEquals(7, artifacts.size());
@@ -215,9 +222,9 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         assertEquals(5, module.getDependencies().size());
     }
 
-    private void validatePulledDockerImage(Build build, String image) {
-        assertEquals(build.getModules().size(), 1);
-        Module module = build.getModules().get(0);
+    private void validatePulledDockerImage(BuildInfo buildInfo, String image) {
+        assertEquals(buildInfo.getModules().size(), 1);
+        Module module = buildInfo.getModules().get(0);
         assertEquals(module.getType(), "docker");
         List<Dependency> dependencies = module.getDependencies();
         validateImageDependencies(dependencies, image);
@@ -230,8 +237,8 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         assertTrue(deps.stream().anyMatch(dep -> dep.getId().equals(imageDigest)));
     }
 
-    private Module getAndValidateModule(Build build, String id, String repo) {
-        Module module = build.getModules().stream()
+    private Module getAndValidateModule(BuildInfo buildInfo, String id, String repo) {
+        Module module = buildInfo.getModules().stream()
                 .filter(moduleCandidate -> StringUtils.equals(moduleCandidate.getId(), id))
                 .findFirst().orElse(null);
         assertNotNull(module);

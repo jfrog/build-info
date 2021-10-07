@@ -16,9 +16,9 @@
 
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Properties;
 
 import static org.jfrog.build.api.builder.ModuleType.BUILD;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests the behavior of the module builder class

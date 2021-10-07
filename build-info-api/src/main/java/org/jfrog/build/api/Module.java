@@ -197,31 +197,6 @@ public class Module extends BaseBuildBean {
         this.excludedArtifacts = excludedArtifacts;
     }
 
-    /**
-     * Append other module to this module
-     *
-     * @param other Module to append
-     */
-    public void append(Module other) {
-        artifacts = appendBuildFileLists(artifacts, other.getArtifacts());
-        excludedArtifacts = appendBuildFileLists(excludedArtifacts, other.getExcludedArtifacts());
-        dependencies = appendBuildFileLists(dependencies, other.getDependencies());
-        type = StringUtils.defaultIfEmpty(type, other.type);
-        repository = StringUtils.defaultIfEmpty(repository, other.repository);
-        md5 = StringUtils.defaultIfEmpty(md5, other.md5);
-        sha1 = StringUtils.defaultIfEmpty(sha1, other.sha1);
-    }
-
-    private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
-        if (a == null && b == null) {
-            return null;
-        }
-        return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
-                .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

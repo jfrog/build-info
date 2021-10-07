@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.ci.BuildRetention;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
@@ -14,14 +14,14 @@ import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJso
 
 public class SendBuildRetention extends VoidJFrogService {
     private static final String RETENTION_REST_URL = "api/build/retention/";
-    private final BuildRetention buildRetention;
+    private final org.jfrog.build.api.BuildRetention buildRetention;
     private final String buildName;
     private final String project;
     private final boolean async;
 
     public SendBuildRetention(BuildRetention buildRetention, String buildName, String project, boolean async, Log logger) {
         super(logger);
-        this.buildRetention = buildRetention;
+        this.buildRetention = buildRetention.ToBuildRetention();
         this.buildName = encodeUrl(buildName);
         this.project = project;
         this.async = async;
@@ -40,7 +40,7 @@ public class SendBuildRetention extends VoidJFrogService {
         return request;
     }
 
-    private String createBuildRetentionLogMsg(BuildRetention buildRetention, boolean async) {
+    private String createBuildRetentionLogMsg(org.jfrog.build.api.BuildRetention buildRetention, boolean async) {
         StringBuilder strBuilder = new StringBuilder().append("Sending");
 
         if (async) {

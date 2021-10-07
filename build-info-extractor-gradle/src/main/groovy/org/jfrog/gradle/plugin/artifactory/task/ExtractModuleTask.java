@@ -5,7 +5,7 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.util.GradleVersion;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
 import org.jfrog.gradle.plugin.artifactory.extractor.GradleModuleExtractor;
 

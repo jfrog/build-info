@@ -94,4 +94,8 @@ public class Vcs implements Serializable {
         return StringUtils.isEmpty(getRevision()) && StringUtils.isEmpty(getBranch()) &&
                 StringUtils.isEmpty(getMessage()) && StringUtils.isEmpty(getUrl());
     }
+
+    public org.jfrog.build.api.ci.Vcs ToBuildInfoVcs() {
+        return new org.jfrog.build.api.ci.Vcs(url, revision, branch, message);
+    }
 }

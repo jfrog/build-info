@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.ci.Dependency;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;

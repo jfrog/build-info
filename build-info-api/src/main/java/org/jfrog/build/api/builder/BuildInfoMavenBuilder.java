@@ -16,8 +16,17 @@
 
 package org.jfrog.build.api.builder;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.*;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.Agent;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BuildAgent;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildRetention;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Issues;
+import org.jfrog.build.api.ci.LicenseControl;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 
@@ -44,7 +53,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
      *
      * @return Assembled build
      */
-    public Build build() {
+    public BuildInfo build() {
         return super.build();
     }
 
@@ -316,11 +325,6 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
 
     public BuildInfoMavenBuilder issues(Issues issues) {
         super.issues(issues);
-        return this;
-    }
-
-    public BuildInfoMavenBuilder governance(Governance governance) {
-        super.governance(governance);
         return this;
     }
 

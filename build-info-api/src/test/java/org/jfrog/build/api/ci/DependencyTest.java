@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
-import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
@@ -24,7 +25,10 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests the behavior of the dependency class
@@ -38,7 +42,7 @@ public class DependencyTest {
      * Validates the dependency values after initializing the default constructor
      */
     public void testEmptyConstructor() {
-        Dependency dependency = new Dependency();
+        org.jfrog.build.api.Dependency dependency = new org.jfrog.build.api.Dependency();
 
         assertNull(dependency.getId(), "Dependency ID should have not been initialized.");
         assertNull(dependency.getType(), "Dependency type should have not been initialized.");

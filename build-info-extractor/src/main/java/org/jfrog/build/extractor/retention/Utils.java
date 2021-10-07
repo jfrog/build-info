@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.retention;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildRetention;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildRetention;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -39,9 +39,9 @@ public class Utils {
         return buildRetention;
     }
 
-    private static void addRetentionIfNeeded(Build build, BuildRetention retention, ArtifactoryVersion version) {
+    private static void addRetentionIfNeeded(BuildInfo buildInfo, BuildRetention retention, ArtifactoryVersion version) {
         if (!version.isAtLeast(JFrogHttpClient.STANDALONE_BUILD_RETENTION_SUPPORTED_ARTIFACTORY_VERSION)) {
-            build.setBuildRetention(retention);
+            buildInfo.setBuildRetention(retention);
         }
     }
 
@@ -51,27 +51,28 @@ public class Utils {
         }
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, Build build, ArtifactoryClientConfiguration clientConf, String platformUrl) throws IOException {
+    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, BuildInfo buildInfo, ArtifactoryClientConfiguration clientConf, String platformUrl) throws IOException {
         BuildRetention retention = getBuildRetention(clientConf);
-        sendBuildAndBuildRetention(artifactoryManager, build, retention, clientConf.info.isAsyncBuildRetention(), platformUrl);
+        sendBuildAndBuildRetention(artifactoryManager, buildInfo, retention, clientConf.info.isAsyncBuildRetention(), platformUrl);
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, Build build, ArtifactoryClientConfiguration clientConfl) throws IOException {
-        sendBuildAndBuildRetention(artifactoryManager, build, clientConfl, null);
+    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, BuildInfo buildInfo, ArtifactoryClientConfiguration clientConfl) throws IOException {
+        sendBuildAndBuildRetention(artifactoryManager, buildInfo, clientConfl, null);
     }
 
-    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, Build build, BuildRetention retention, boolean asyncBuildRetention, String platformUrl) throws IOException {
+    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, BuildInfo buildInfo, BuildRetention retention, boolean asyncBuildRetention, String platformUrl) throws IOException {
         if (retention == null || retention.isEmpty()) {
-            artifactoryManager.publishBuildInfo(build, platformUrl);
+            artifactoryManager.publishBuildInfo(buildInfo, platformUrl);
             return;
         }
         ArtifactoryVersion version;
         version = artifactoryManager.getVersion();
-        addRetentionIfNeeded(build, retention, version);
-        artifactoryManager.publishBuildInfo(build, platformUrl);
-        sendRetentionIfNeeded(artifactoryManager, retention, build.getName(), build.getProject(), version, asyncBuildRetention);
+        addRetentionIfNeeded(buildInfo, retention, version);
+        artifactoryManager.publishBuildInfo(buildInfo, platformUrl);
+        sendRetentionIfNeeded(artifactoryManager, retention, buildInfo.getName(), buildInfo.getProject(), version, asyncBuildRetention);
     }
-    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, Build build, BuildRetention retention, boolean asyncBuildRetention) throws IOException {
-        sendBuildAndBuildRetention(artifactoryManager, build, retention, asyncBuildRetention, null);
+
+    public static void sendBuildAndBuildRetention(ArtifactoryManager artifactoryManager, BuildInfo buildInfo, BuildRetention retention, boolean asyncBuildRetention) throws IOException {
+        sendBuildAndBuildRetention(artifactoryManager, buildInfo, retention, asyncBuildRetention, null);
     }
 }

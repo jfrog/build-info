@@ -17,7 +17,9 @@ package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.BuildInfoModuleBuilder;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
@@ -25,14 +27,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
+import java.util.stream.Collectors;
 
 import static org.jfrog.build.api.BuildBean.ROOT;
 
 /**
- * Contains the general build information
- *
- * @author Noam Y. Tenne
+ * Represents pure (without logic) schema of build info which contains the build info properties of a typical build.
+ * Convert {@link org.jfrog.build.api.ci.BuildInfo} to this class before sending the build info.
  */
 @XStreamAlias(ROOT)
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
@@ -75,8 +76,6 @@ public class Build extends BaseBuildBean {
     private List<BuildDependency> buildDependencies;
 
     private Issues issues;
-
-    private Governance governance;
 
     /**
      * Formats the timestamp to the ISO date time string format expected by the build info API.
@@ -381,7 +380,7 @@ public class Build extends BaseBuildBean {
      * Returns the parent build ID of the build
      *
      * @return Build parent build ID
-     * @deprecated Use {@link org.jfrog.build.api.Build#getParentName()} and {@link Build#getParentNumber()} instead.
+     * @deprecated Use {@link Build#getParentName()} and {@link Build#getParentNumber()} instead.
      */
     @Deprecated
     public String getParentBuildId() {
@@ -392,7 +391,7 @@ public class Build extends BaseBuildBean {
      * Sets the parent build ID of the build
      *
      * @param parentBuildId Build parent build ID
-     * @deprecated Use {@link org.jfrog.build.api.Build#setParentName(String)} and {@link Build#setParentNumber(String)}
+     * @deprecated Use {@link Build#setParentName(String)} and {@link Build#setParentNumber(String)}
      * instead.
      */
     @Deprecated
@@ -495,97 +494,13 @@ public class Build extends BaseBuildBean {
         this.buildDependencies = buildDependencies;
     }
 
-    /**
-     * Adds one #BuildDependency to build dependencies list
-     *
-     * @param buildDependency the #BuildDependency to add
-     */
-    public void addBuildDependency(BuildDependency buildDependency) {
-        if (buildDependencies == null) {
-            buildDependencies = new ArrayList<>();
-        }
-        buildDependencies.add(buildDependency);
-    }
-
     public Issues getIssues() {
         return issues;
     }
-
     public void setIssues(Issues issues) {
         this.issues = issues;
     }
 
-    public Governance getGovernance() {
-        return governance;
-    }
-
-    public void setGovernance(Governance governance) {
-        this.governance = governance;
-    }
-
-    public void append(Build other) {
-        if (buildAgent == null) {
-            setBuildAgent(other.buildAgent);
-        }
-
-        appendProperties(other);
-        appendModules(other);
-        appendBuildDependencies(other);
-        if (this.issues == null) {
-            this.issues = other.issues;
-            return;
-        }
-        this.issues.append(other.issues);
-    }
-
-    private void appendBuildDependencies(Build other) {
-        List<BuildDependency> buildDependencies = other.getBuildDependencies();
-        if (buildDependencies != null && buildDependencies.size() > 0) {
-            if (this.buildDependencies == null) {
-                this.setBuildDependencies(buildDependencies);
-            } else {
-                this.buildDependencies.addAll(buildDependencies);
-            }
-        }
-    }
-
-    private void appendModules(Build other) {
-        List<Module> modules = other.getModules();
-        if (modules != null && modules.size() > 0) {
-            if (this.getModules() == null) {
-                this.setModules(modules);
-            } else {
-                modules.forEach(this::addModule);
-            }
-        }
-    }
-
-    private void appendProperties(Build other) {
-        Properties properties = other.getProperties();
-        if (properties != null && properties.size() > 0) {
-            if (this.getProperties() == null) {
-                this.setProperties(properties);
-            } else {
-                this.getProperties().putAll(properties);
-            }
-        }
-    }
-
-    private void addModule(Module other) {
-        List<Module> modules = getModules();
-        Module currentModule = modules.stream()
-                // Check if there's already a module with the same name.
-                .filter(module -> StringUtils.equals(module.getId(), other.getId()))
-                .findAny()
-                .orElse(null);
-        if (currentModule == null) {
-            // Append new module.
-            modules.add(other);
-        } else {
-            // Append the other module into the existing module with the same name.
-            currentModule.append(other);
-        }
-    }
 
     @Override
     public String toString() {
@@ -612,7 +527,44 @@ public class Build extends BaseBuildBean {
                 ", statuses=" + statuses +
                 ", buildDependencies=" + buildDependencies +
                 ", issues=" + issues +
-                ", governance=" + governance +
                 '}';
+    }
+
+    public BuildInfo ToBuildInfo() {
+        BuildInfoBuilder builder = new BuildInfoBuilder(name)
+                .number(number)
+                .setProject(project)
+                .agent(agent == null ? null : new org.jfrog.build.api.ci.Agent(agent.getName(), agent.getVersion()))
+                .buildAgent(buildAgent == null ? null : new org.jfrog.build.api.ci.BuildAgent(buildAgent.getName(), buildAgent.getVersion()))
+                .started(started)
+                .startedMillis(startedMillis)
+                .durationMillis(durationMillis)
+                .principal(principal)
+                .artifactoryPrincipal(artifactoryPrincipal)
+                .artifactoryPluginVersion(artifactoryPluginVersion)
+                .url(url)
+                .parentName(parentName)
+                .parentNumber(parentNumber)
+                .buildRunParameters(runParameters == null ? null : runParameters.stream().map(rp -> new org.jfrog.build.api.ci.MatrixParameter(rp.getKey(), rp.getValue())).collect(Collectors.toList()))
+                .statuses(statuses)
+                .properties(getProperties())
+                .vcs(vcs == null ? null : vcs.stream().map(Vcs::ToBuildInfoVcs).collect(Collectors.toList()))
+                .licenseControl(licenseControl == null ? null : licenseControl.ToBuildInfoLicenseControl())
+                .buildRetention(buildRetention == null ? null : buildRetention.ToBuildInfoRetention())
+                .issues(issues == null ? null : issues.ToBuildInfoIssues());
+        if (modules != null) {
+            builder.modules(modules.stream().map(m -> new BuildInfoModuleBuilder().
+                    type(m.getType())
+                    .id(m.getId())
+                    .repository(m.getRepository())
+                    .sha1(m.getSha1())
+                    .md5(m.getType())
+                    .artifacts(m.getArtifacts() == null ? null : m.getArtifacts().stream().map(Artifact::ToBuildInfoArtifact).collect(Collectors.toList()))
+                    .dependencies(m.getDependencies() == null ? null : m.getDependencies().stream().map(Dependency::ToBuildDependency).collect(Collectors.toList()))
+                    .properties(m.getProperties())
+                    .excludedArtifacts(m.getExcludedArtifacts() == null ? null : m.getExcludedArtifacts().stream().map(Artifact::ToBuildInfoArtifact).collect(Collectors.toList()))
+                    .build()).collect(Collectors.toList()));
+        }
+        return builder.build();
     }
 }

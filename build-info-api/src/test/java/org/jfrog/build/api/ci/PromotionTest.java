@@ -1,12 +1,20 @@
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
 import org.jfrog.build.api.release.Promotion;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Noam Y. Tenne
@@ -92,7 +100,7 @@ public class PromotionTest {
     }
 
     public void testTimestampDateGetters() {
-        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
+        SimpleDateFormat format = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
 
         Date timestampDate = new Date();
 

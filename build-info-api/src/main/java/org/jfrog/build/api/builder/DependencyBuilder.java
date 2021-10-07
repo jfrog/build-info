@@ -16,8 +16,8 @@
 
 package org.jfrog.build.api.builder;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.jfrog.build.api.Dependency;
+import org.apache.commons.lang.ArrayUtils;
+import org.jfrog.build.api.ci.Dependency;
 
 import java.util.HashSet;
 import java.util.Properties;

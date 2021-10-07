@@ -1,6 +1,12 @@
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.ci.Agent;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BuildAgent;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
@@ -11,7 +17,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Author: Shay Yaakov
@@ -29,22 +38,22 @@ public class BuildInfoMavenBuilderTest {
      * Validates the build values when using the defaults
      */
     public void testDefaultBuild() {
-        Build build = new BuildInfoBuilder("test").number("4").started("test").build();
-        assertEquals(build.getVersion(), "1.0.1", "Unexpected default build version.");
-        assertEquals(build.getNumber(), "4", "Unexpected default build number.");
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").build();
+        assertEquals(buildInfo.getVersion(), "1.0.1", "Unexpected default build version.");
+        assertEquals(buildInfo.getNumber(), "4", "Unexpected default build number.");
 
-        assertNull(build.getAgent(), "Default build agent should be null.");
+        assertNull(buildInfo.getAgent(), "Default build agent should be null.");
 
-        assertEquals(build.getDurationMillis(), 0, "Default build duration millis should be zero.");
-        assertNull(build.getPrincipal(), "Default build principal should be null.");
-        assertNull(build.getArtifactoryPrincipal(), "Default build artifactory principal should be null.");
-        assertNull(build.getArtifactoryPluginVersion(), "Default build ArtifactoryPluginVersion should be null.");
-        assertNull(build.getUrl(), "Default build URL should be null.");
-        assertNull(build.getParentName(), "Default build parent build name should be null.");
-        assertNull(build.getParentNumber(), "Default build parent build number should be null.");
-        assertNull(build.getModules(), "Default build modules should be null.");
-        assertNull(build.getProperties(), "Default properties should be null.");
-        assertEquals(build.getVcs(), new ArrayList<Vcs>(), "Default vcs revision should be null.");
+        assertEquals(buildInfo.getDurationMillis(), 0, "Default build duration millis should be zero.");
+        assertNull(buildInfo.getPrincipal(), "Default build principal should be null.");
+        assertNull(buildInfo.getArtifactoryPrincipal(), "Default build artifactory principal should be null.");
+        assertNull(buildInfo.getArtifactoryPluginVersion(), "Default build ArtifactoryPluginVersion should be null.");
+        assertNull(buildInfo.getUrl(), "Default build URL should be null.");
+        assertNull(buildInfo.getParentName(), "Default build parent build name should be null.");
+        assertNull(buildInfo.getParentNumber(), "Default build parent build number should be null.");
+        assertNull(buildInfo.getModules(), "Default build modules should be null.");
+        assertNull(buildInfo.getProperties(), "Default properties should be null.");
+        assertEquals(buildInfo.getVcs(), new ArrayList<Vcs>(), "Default vcs revision should be null.");
     }
 
     /**
@@ -66,28 +75,28 @@ public class BuildInfoMavenBuilderTest {
         List<Module> modules = new ArrayList<>();
         Properties properties = new Properties();
 
-        Build build = new BuildInfoBuilder(name).started("test").version(version).number(number)
+        BuildInfo buildInfo = new BuildInfoBuilder(name).started("test").version(version).number(number)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
                 .modules(modules).properties(properties).buildAgent(buildAgent)
                 .artifactoryPluginVersion(artifactoryPluginVersion).build();
 
-        assertEquals(build.getVersion(), version, "Unexpected build version.");
-        assertEquals(build.getName(), name, "Unexpected build name.");
-        assertEquals(build.getNumber(), number, "Unexpected build number.");
-        assertEquals(build.getAgent(), agent, "Unexpected build agent.");
-        assertEquals(build.getBuildAgent(), buildAgent, "Unexpected build agent.");
-        assertEquals(build.getDurationMillis(), durationMillis, "Unexpected build duration millis.");
-        assertEquals(build.getPrincipal(), principal, "Unexpected build principal.");
-        assertEquals(build.getArtifactoryPrincipal(), artifactoryPrincipal, "Unexpected build artifactory principal.");
-        assertEquals(build.getArtifactoryPluginVersion(), artifactoryPluginVersion, "Unexpected build artifactory Plugin Version.");
-        assertEquals(build.getUrl(), url, "Unexpected build URL.");
-        assertEquals(build.getParentName(), parentName, "Unexpected build parent name.");
-        assertEquals(build.getParentNumber(), parentNumber, "Unexpected build parent build number.");
-        assertEquals(build.getModules(), modules, "Unexpected build modules.");
-        assertTrue(build.getModules().isEmpty(), "Build modules list should not have been populated.");
-        assertEquals(build.getProperties(), properties, "Unexpected build properties.");
-        assertTrue(build.getProperties().isEmpty(), "Build properties list should not have been populated.");
+        assertEquals(buildInfo.getVersion(), version, "Unexpected buildInfo version.");
+        assertEquals(buildInfo.getName(), name, "Unexpected buildInfo name.");
+        assertEquals(buildInfo.getNumber(), number, "Unexpected buildInfo number.");
+        assertEquals(buildInfo.getAgent(), agent, "Unexpected buildInfo agent.");
+        assertEquals(buildInfo.getBuildAgent(), buildAgent, "Unexpected buildInfo agent.");
+        assertEquals(buildInfo.getDurationMillis(), durationMillis, "Unexpected buildInfo duration millis.");
+        assertEquals(buildInfo.getPrincipal(), principal, "Unexpected buildInfo principal.");
+        assertEquals(buildInfo.getArtifactoryPrincipal(), artifactoryPrincipal, "Unexpected buildInfo artifactory principal.");
+        assertEquals(buildInfo.getArtifactoryPluginVersion(), artifactoryPluginVersion, "Unexpected buildInfo artifactory Plugin Version.");
+        assertEquals(buildInfo.getUrl(), url, "Unexpected buildInfo URL.");
+        assertEquals(buildInfo.getParentName(), parentName, "Unexpected buildInfo parent name.");
+        assertEquals(buildInfo.getParentNumber(), parentNumber, "Unexpected buildInfo parent buildInfo number.");
+        assertEquals(buildInfo.getModules(), modules, "Unexpected buildInfo modules.");
+        assertTrue(buildInfo.getModules().isEmpty(), "BuildInfo modules list should not have been populated.");
+        assertEquals(buildInfo.getProperties(), properties, "Unexpected buildInfo properties.");
+        assertTrue(buildInfo.getProperties().isEmpty(), "BuildInfo properties list should not have been populated.");
     }
 
     /**
@@ -95,14 +104,14 @@ public class BuildInfoMavenBuilderTest {
      */
     public void testStartedSetters() {
         String started = "192-1212-1";
-        Build build = new BuildInfoBuilder("test").number("4").started(started).build();
-        assertEquals(build.getStarted(), started, "Unexpected build started.");
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started(started).build();
+        assertEquals(buildInfo.getStarted(), started, "Unexpected buildInfo started.");
 
         Date startedDate = new Date();
-        build = new BuildInfoBuilder("test").number("4").startedDate(startedDate).build();
+        buildInfo = new BuildInfoBuilder("test").number("4").startedDate(startedDate).build();
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
-        assertEquals(build.getStarted(), simpleDateFormat.format(startedDate), "Unexpected build started.");
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        assertEquals(buildInfo.getStarted(), simpleDateFormat.format(startedDate), "Unexpected buildInfo started.");
     }
 
     /**
@@ -115,16 +124,16 @@ public class BuildInfoMavenBuilderTest {
         String propertyValue = "value";
         PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();
 
-        Build build = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
                 .addProperty(propertyKey, propertyValue).addStatus(promotionStatus).build();
-        List<Module> modules = build.getModules();
-        assertFalse(modules.isEmpty(), "A build module should have been added.");
-        assertEquals(modules.get(0), module, "Unexpected build module.");
+        List<Module> modules = buildInfo.getModules();
+        assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
+        assertEquals(modules.get(0), module, "Unexpected buildInfo module.");
 
-        assertTrue(build.getProperties().containsKey(propertyKey), "A build property should have been added.");
-        assertEquals(build.getProperties().get(propertyKey), propertyValue, "Unexpected build property value.");
+        assertTrue(buildInfo.getProperties().containsKey(propertyKey), "A buildInfo property should have been added.");
+        assertEquals(buildInfo.getProperties().get(propertyKey), propertyValue, "Unexpected buildInfo property value.");
 
-        List<PromotionStatus> statuses = build.getStatuses();
+        List<PromotionStatus> statuses = buildInfo.getStatuses();
         assertFalse(statuses.isEmpty(), "Expected a status to be added.");
         assertEquals(statuses.get(0), promotionStatus, "Unexpected added status.");
     }
@@ -139,10 +148,10 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1);
         builder.addModule(module2);
-        Build build = builder.build();
+        BuildInfo buildInfo = builder.build();
 
-        List<Module> modules = build.getModules();
-        assertFalse(modules.isEmpty(), "A build module should have been added.");
+        List<Module> modules = buildInfo.getModules();
+        assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
         assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");
@@ -163,10 +172,10 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());
         builder.addModule(module2.build());
-        Build build = builder.build();
+        BuildInfo buildInfo = builder.build();
 
-        List<Module> modules = build.getModules();
-        assertFalse(modules.isEmpty(), "A build module should have been added.");
+        List<Module> modules = buildInfo.getModules();
+        assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
         assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");
@@ -198,10 +207,10 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());
         builder.addModule(module2.build());
-        Build build = builder.build();
+        BuildInfo buildInfo = builder.build();
 
-        List<Module> modules = build.getModules();
-        assertFalse(modules.isEmpty(), "A build module should have been added.");
+        List<Module> modules = buildInfo.getModules();
+        assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
         assertEquals(modules.size(), 1, "Expected to find only 1 module.");
         assertEquals(modules.get(0).getId(), "id", "Expected to find module with id = 'id'.");
         assertEquals(modules.get(0).getType(), "maven", "Expected to find module with type = 'maven'.");

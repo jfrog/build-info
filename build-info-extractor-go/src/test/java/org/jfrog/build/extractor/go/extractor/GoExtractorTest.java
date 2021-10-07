@@ -6,7 +6,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BaseBuildFileBean;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -20,10 +24,17 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 @Test
 public class GoExtractorTest extends IntegrationTestsBase {
@@ -150,11 +161,11 @@ public class GoExtractorTest extends IntegrationTestsBase {
             // Run Go build
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             GoRun goRun = new GoRun(args, projectDir, null, artifactoryManagerBuilder, repo, getUsername(), getAdminToken(), getLog(), env);
-            Build build = goRun.execute();
+            BuildInfo buildInfo = goRun.execute();
             // Check successful execution and correctness of the module and dependencies
-            assertNotNull(build);
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
+            assertNotNull(buildInfo);
+            assertEquals(buildInfo.getModules().size(), 1);
+            Module module = buildInfo.getModules().get(0);
             assertEquals(module.getType(), "go");
             assertEquals(module.getId(), project.getModuleId());
             Set<String> moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
@@ -182,18 +193,18 @@ public class GoExtractorTest extends IntegrationTestsBase {
             Project project = Project.PROJECT_1;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             GoRun goRun = new GoRun(GO_BUILD_CMD, projectDir, null, null, StringUtils.EMPTY, getUsername(), getAdminToken(), getLog(), env);
-            Build project1Build = goRun.execute();
+            BuildInfo project1BuildInfo = goRun.execute();
             // Check successful execution
-            assertNotNull(project1Build);
+            assertNotNull(project1BuildInfo);
             // Publish project1 to Artifactory
             GoPublish goPublish = new GoPublish(artifactoryManagerBuilder, properties, localRepo1, projectDir, project.getVersion(), null, getLog());
-            Build publishBuild = goPublish.execute();
+            BuildInfo publishBuildInfo = goPublish.execute();
             // Check successful execution
-            assertNotNull(publishBuild);
-            project1Build.append(publishBuild);
+            assertNotNull(publishBuildInfo);
+            project1BuildInfo.append(publishBuildInfo);
             // Check correctness of the module, dependencies and artifacts
-            assertEquals(project1Build.getModules().size(), 1);
-            Module module = project1Build.getModules().get(0);
+            assertEquals(project1BuildInfo.getModules().size(), 1);
+            Module module = project1BuildInfo.getModules().get(0);
             assertEquals(module.getType(), "go");
             assertEquals(module.getId(), project.getModuleId());
             assertEquals(module.getRepository(), localRepo1);
@@ -208,11 +219,11 @@ public class GoExtractorTest extends IntegrationTestsBase {
             project = Project.PROJECT_2;
             projectDir = createProjectDir(project.targetDir, project.projectOrigin);
             goRun = new GoRun(GO_BUILD_CMD, projectDir, null, artifactoryManagerBuilder, virtualRepo, getUsername(), getAdminToken(), getLog(), env);
-            Build project2Build = goRun.execute();
+            BuildInfo project2BuildInfo = goRun.execute();
             // Check successful execution and correctness of the module, dependencies and artifacts
-            assertNotNull(project2Build);
-            assertEquals(project2Build.getModules().size(), 1);
-            module = project2Build.getModules().get(0);
+            assertNotNull(project2BuildInfo);
+            assertEquals(project2BuildInfo.getModules().size(), 1);
+            module = project2BuildInfo.getModules().get(0);
             assertEquals(module.getId(), project.getModuleId());
             moduleDependencies = module.getDependencies().stream().map(Dependency::getId).collect(Collectors.toSet());
             assertEquals(moduleDependencies, project.dependencies);

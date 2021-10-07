@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Noam Y. Tenne
@@ -107,5 +108,14 @@ public class Issues implements Serializable {
             return;
         }
         this.affectedIssues.addAll(otherAffectedIssues);
+    }
+
+    public org.jfrog.build.api.ci.Issues ToBuildInfoIssues() {
+        org.jfrog.build.api.ci.Issues result = new org.jfrog.build.api.ci.Issues();
+        result.setAffectedIssues(affectedIssues == null ? null : affectedIssues.stream().map(org.jfrog.build.api.Issue::ToBuildInfoIssue).collect(Collectors.toSet()));
+        result.setAggregateBuildIssues(aggregateBuildIssues);
+        result.setTracker(tracker == null ? null :tracker.ToBuildInfoIssueTracker());
+        result.setAggregationBuildStatus(aggregationBuildStatus);
+        return result;
     }
 }

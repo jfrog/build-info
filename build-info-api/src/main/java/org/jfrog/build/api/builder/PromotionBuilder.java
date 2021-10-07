@@ -1,10 +1,15 @@
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.release.Promotion;
 
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -52,7 +57,7 @@ public class PromotionBuilder {
         if (timestampDate == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(timestampDate);
+        this.timestamp = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(timestampDate);
         return this;
     }
 

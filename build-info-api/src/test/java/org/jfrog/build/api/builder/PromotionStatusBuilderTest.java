@@ -1,6 +1,6 @@
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
@@ -39,7 +39,7 @@ public class PromotionStatusBuilderTest {
         assertEquals(promotionStatus.getCiUser(), "bobo", "Unexpected ci user.");
 
         Date date = new Date();
-        String expectedTimeStamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(date);
+        String expectedTimeStamp = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(date);
         builderPromotion.timestampDate(date);
         promotionStatus = builderPromotion.build();
         assertEquals(promotionStatus.getTimestamp(), expectedTimeStamp, "Unexpected timestamp.");

@@ -16,10 +16,9 @@
 
 package org.jfrog.build.api.builder;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Artifact;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.Artifact;
 
-import java.util.Map;
 import java.util.Properties;
 
 /**

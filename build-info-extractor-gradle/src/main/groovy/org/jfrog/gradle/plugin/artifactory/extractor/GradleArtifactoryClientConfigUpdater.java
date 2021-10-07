@@ -19,9 +19,9 @@ package org.jfrog.gradle.plugin.artifactory.extractor;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoFields;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.api.ci.BuildInfoFields;
+import org.jfrog.build.api.ci.BuildInfoProperties;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -108,7 +108,7 @@ public class GradleArtifactoryClientConfigUpdater {
             String buildStartedIso = config.info.getBuildStarted();
             Date buildStartDate;
             try {
-                buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+                buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
             } catch (ParseException e) {
                 throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
             }

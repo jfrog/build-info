@@ -20,9 +20,20 @@ import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.api.ci.Agent;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BuildAgent;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Issue;
+import org.jfrog.build.api.ci.IssueTracker;
+import org.jfrog.build.api.ci.Issues;
+import org.jfrog.build.api.ci.LicenseControl;
+import org.jfrog.build.api.ci.MatrixParameter;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
@@ -33,7 +44,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +69,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     }
 
     @Override
-    public Build extract(Project rootProject) {
+    public BuildInfo extract(Project rootProject) {
         String buildName = clientConf.info.getBuildName();
         BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
 
@@ -64,7 +79,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         String buildStartedIso = clientConf.info.getBuildStarted();
         Date buildStartDate = null;
         try {
-            buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+            buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
         } catch (ParseException e) {
             log.error("Build start date format error: " + buildStartedIso, e);
         }
@@ -161,17 +176,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         bib.licenseControl(licenseControl);
 
-        final BlackDuckProperties blackDuckProperties;
-        if (clientConf.info.blackDuckProperties.isRunChecks()) {
-            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
-        } else {
-            blackDuckProperties = new BlackDuckProperties();
-        }
-
-        Governance governance = new Governance();
-        governance.setBlackDuckProperties(blackDuckProperties);
-        bib.governance(governance);
-
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
             String comment = clientConf.info.getReleaseComment();
@@ -203,11 +207,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
 
         log.debug("buildInfoBuilder = " + bib);
         // for backward compatibility for Artifactory 2.2.3
-        Build build = bib.build();
+        BuildInfo buildInfo = bib.build();
         if (parentName != null && parentNumber != null) {
-            build.setParentBuildId(parentName);
+            buildInfo.setParentBuildId(parentName);
         }
-        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
-        return build;
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
+        return buildInfo;
     }
 }

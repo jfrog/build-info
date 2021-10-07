@@ -3,12 +3,12 @@ package org.jfrog.build.extractor.nuget.extractor;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -28,7 +28,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -169,8 +173,8 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     @Override
-    public Build execute() {
-        Build build = null;
+    public BuildInfo execute() {
+        BuildInfo buildInfo = null;
         try {
             prepareAndRunCmd();
             if (!StringUtils.isBlank(module)) {
@@ -178,13 +182,13 @@ public class NugetRun extends PackageManagerExtractor {
                 modulesList.add(builder.build());
             }
             collectDependencies();
-            build = new Build();
-            build.setModules(modulesList);
+            buildInfo = new BuildInfo();
+            buildInfo.setModules(modulesList);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
-        return build;
+        return buildInfo;
     }
 
     private void prepareAndRunCmd() throws Exception {

@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Dependency;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
@@ -12,7 +12,11 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Helper class for parsing custom resolved dependencies

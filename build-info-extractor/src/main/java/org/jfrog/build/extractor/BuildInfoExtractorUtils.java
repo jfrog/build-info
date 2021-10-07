@@ -25,17 +25,23 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
+import org.jfrog.build.api.ci.BuildInfoProperties;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -182,7 +188,7 @@ public abstract class BuildInfoExtractorUtils {
         return jsonFactory;
     }
 
-    public static String buildInfoToJsonString(Build buildInfo) throws IOException {
+    public static String buildInfoToJsonString(BuildInfo buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
         StringWriter writer = new StringWriter();
@@ -194,10 +200,10 @@ public abstract class BuildInfoExtractorUtils {
         return result;
     }
 
-    public static Build jsonStringToBuildInfo(String json) throws IOException {
+    public static BuildInfo jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
         JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, Build.class);
+        return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
     }
 
     public static <T extends Serializable> String buildInfoToJsonString(T buildComponent) throws IOException {
@@ -218,8 +224,8 @@ public abstract class BuildInfoExtractorUtils {
         return jsonFactory.getCodec().readValue(parser, clazz);
     }
 
-    public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
-        String buildInfoJson = buildInfoToJsonString(build);
+    public static void saveBuildInfoToFile(BuildInfo buildInfo, File toFile) throws IOException {
+        String buildInfoJson = buildInfoToJsonString(buildInfo);
         if (!toFile.getParentFile().exists()) {
             toFile.getParentFile().mkdirs();
         }

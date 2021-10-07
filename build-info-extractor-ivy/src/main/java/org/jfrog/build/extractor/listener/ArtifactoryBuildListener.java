@@ -9,10 +9,23 @@ import org.apache.ivy.core.event.publish.EndArtifactPublishEvent;
 import org.apache.ivy.core.event.resolve.EndResolveEvent;
 import org.apache.ivy.core.resolve.ResolveEngine;
 import org.apache.ivy.plugins.trigger.Trigger;
-import org.apache.tools.ant.*;
+import org.apache.tools.ant.BuildEvent;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.*;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.ci.Agent;
+import org.jfrog.build.api.ci.BuildAgent;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
+import org.jfrog.build.api.ci.Issue;
+import org.jfrog.build.api.ci.IssueTracker;
+import org.jfrog.build.api.ci.Issues;
+import org.jfrog.build.api.ci.LicenseControl;
+import org.jfrog.build.api.ci.MatrixParameter;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -27,7 +40,14 @@ import org.jfrog.build.util.IvyBuildInfoLog;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 
 /**
@@ -324,17 +344,6 @@ public class ArtifactoryBuildListener implements BuildListener {
         licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
         builder.licenseControl(licenseControl);
 
-        final BlackDuckProperties blackDuckProperties;
-        if (clientConf.info.blackDuckProperties.isRunChecks()) {
-            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
-        } else {
-            blackDuckProperties = new BlackDuckProperties();
-        }
-
-        Governance governance = new Governance();
-        governance.setBlackDuckProperties(blackDuckProperties);
-        builder.governance(governance);
-
         String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {
             Issues issues = new Issues();
@@ -353,8 +362,8 @@ public class ArtifactoryBuildListener implements BuildListener {
             builder.addRunParameters(matrixParameter);
         }
 
-        Build build = builder.build();
-        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
+        BuildInfo buildInfo = builder.build();
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
@@ -370,7 +379,7 @@ public class ArtifactoryBuildListener implements BuildListener {
                 deployArtifacts(project, artifactoryManager, deployDetails, patterns);
             }
             if (clientConf.publisher.isPublishBuildInfo()) {
-                Utils.sendBuildAndBuildRetention(artifactoryManager, build, clientConf);
+                Utils.sendBuildAndBuildRetention(artifactoryManager, buildInfo, clientConf);
             }
             isDidDeploy = true;
         } catch (IOException e) {

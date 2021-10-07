@@ -69,4 +69,15 @@ public class Artifact extends BaseBuildFileBean {
         result = 31 * result + (name != null ? name.hashCode() : 0);
         return result;
     }
+
+    public org.jfrog.build.api.ci.Artifact ToBuildInfoArtifact() {
+        org.jfrog.build.api.ci.Artifact result = new org.jfrog.build.api.ci.Artifact();
+        result.setName(name);
+        result.setMd5(md5);
+        result.setSha256(sha256);
+        result.setSha1(sha1);
+        result.setRemotePath(remotePath);
+        result.setProperties(getProperties());
+        return result;
+    }
 }

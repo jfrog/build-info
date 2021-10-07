@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;

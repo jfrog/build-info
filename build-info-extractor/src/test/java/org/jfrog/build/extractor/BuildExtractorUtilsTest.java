@@ -16,11 +16,15 @@
 
 package org.jfrog.build.extractor;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.jfrog.build.api.*;
+import org.apache.commons.lang.ArrayUtils;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
+import org.jfrog.build.api.ci.BuildInfoProperties;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -31,8 +35,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
-import static org.testng.Assert.*;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * Test the build info extractor
@@ -40,7 +51,7 @@ import static org.testng.Assert.*;
  * @author Tomer Cohen
  */
 @Test
-public class BuildInfoExtractorUtilsTest {
+public class BuildExtractorUtilsTest {
     private static final String POPO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "popo";
     private static final String MOMO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "momo";
     private static final String ENV_POPO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "popo";
@@ -210,18 +221,18 @@ public class BuildInfoExtractorUtilsTest {
         String[] requestedByB = new String[]{"parentB", "d", "moduleId"};
         Dependency dependencyA = new DependencyBuilder().id("depA").addRequestedBy(requestedByA).addRequestedBy(requestedByB).build();
         Module module = new ModuleBuilder().id("moduleId").addDependency(dependencyA).build();
-        Build build = new BuildInfoBuilder("buildId").number("12").started("34").addModule(module).build();
+        BuildInfo buildInfo = new BuildInfoBuilder("buildId").number("12").started("34").addModule(module).build();
 
         // Serialize and deserialize again
-        Build actualBuild = jsonStringToBuildInfo(buildInfoToJsonString(build));
+        BuildInfo actualBuildInfo = jsonStringToBuildInfo(buildInfoToJsonString(buildInfo));
 
-        // Check build
-        assertEquals(actualBuild.getName(), build.getName());
-        assertEquals(actualBuild.getNumber(), build.getNumber());
-        assertEquals(actualBuild.getStarted(), build.getStarted());
+        // Check buildInfo
+        assertEquals(actualBuildInfo.getName(), buildInfo.getName());
+        assertEquals(actualBuildInfo.getNumber(), buildInfo.getNumber());
+        assertEquals(actualBuildInfo.getStarted(), buildInfo.getStarted());
 
         // Check module
-        Module actualModule = actualBuild.getModule(module.getId());
+        Module actualModule = actualBuildInfo.getModule(module.getId());
         assertNotNull(actualModule);
 
         // Check dependency

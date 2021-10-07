@@ -74,4 +74,13 @@ public class BuildRetention implements Serializable {
     public boolean isEmpty() {
         return count == -1 && minimumBuildDate == null;
     }
+
+    public org.jfrog.build.api.ci.BuildRetention ToBuildInfoRetention() {
+        org.jfrog.build.api.ci.BuildRetention result = new org.jfrog.build.api.ci.BuildRetention();
+        result.setDeleteBuildArtifacts(deleteBuildArtifacts);
+        result.setCount(count);
+        result.setMinimumBuildDate(minimumBuildDate);
+        result.setBuildNumbersNotToBeDiscarded(buildNumbersNotToBeDiscarded);
+        return result;
+    }
 }

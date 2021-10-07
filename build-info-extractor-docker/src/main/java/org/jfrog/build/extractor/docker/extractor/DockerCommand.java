@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.docker.extractor;
 
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.packageManager.PackageManagerExtractor;

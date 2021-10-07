@@ -16,7 +16,7 @@
 
 package org.jfrog.build.extractor;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 
 /**
  * -DbuildInfo.property.name=value -DbuildInfo.deploy.property.name=value (becomes a matrix param in the current impl)
@@ -36,5 +36,5 @@ public interface BuildInfoExtractor<C> {
      * @param buildInfoTask
      * @return A handle for the exported buildInfo
      */
-    Build extract(C buildInfoTask) throws Exception;
+    BuildInfo extract(C buildInfoTask) throws Exception;
 }

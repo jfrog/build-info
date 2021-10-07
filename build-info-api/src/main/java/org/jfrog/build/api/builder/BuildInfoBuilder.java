@@ -16,8 +16,16 @@
 
 package org.jfrog.build.api.builder;
 
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.*;
+import org.apache.commons.lang.StringUtils;
+import org.jfrog.build.api.ci.Agent;
+import org.jfrog.build.api.ci.BuildAgent;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildRetention;
+import org.jfrog.build.api.ci.Issues;
+import org.jfrog.build.api.ci.LicenseControl;
+import org.jfrog.build.api.ci.MatrixParameter;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
@@ -59,7 +67,6 @@ public class BuildInfoBuilder {
     protected LicenseControl licenseControl;
     protected BuildRetention buildRetention;
     protected Issues issues;
-    protected Governance governance;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -70,7 +77,7 @@ public class BuildInfoBuilder {
      *
      * @return Assembled build
      */
-    public Build build() {
+    public BuildInfo build() {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Build must have a name");
         }
@@ -81,40 +88,39 @@ public class BuildInfoBuilder {
             throw new IllegalArgumentException("Build start time must be set");
         }
 
-        Build build = new Build();
+        BuildInfo buildInfo = new BuildInfo();
         if (StringUtils.isNotBlank(version)) {
-            build.setVersion(version);
+            buildInfo.setVersion(version);
         }
-        build.setName(name);
-        build.setNumber(number);
-        build.setProject(project);
-        build.setAgent(agent);
-        build.setBuildAgent(buildAgent);
-        build.setStarted(started);
-        build.setStartedMillis(startedMillis);
-        build.setDurationMillis(durationMillis);
-        build.setPrincipal(principal);
-        build.setArtifactoryPrincipal(artifactoryPrincipal);
-        build.setArtifactoryPluginVersion(artifactoryPluginVersion);
-        build.setUrl(url);
-        build.setParentName(parentName);
-        build.setParentNumber(parentNumber);
-        build.setRunParameters(runParameters);
-        build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
-        build.setStatuses(statuses);
-        build.setProperties(properties);
-        build.setVcs(vcs);
-        build.setLicenseControl(licenseControl);
-        build.setBuildRetention(buildRetention);
-        build.setIssues(issues);
-        build.setGovernance(governance);
-        return build;
+        buildInfo.setName(name);
+        buildInfo.setNumber(number);
+        buildInfo.setProject(project);
+        buildInfo.setAgent(agent);
+        buildInfo.setBuildAgent(buildAgent);
+        buildInfo.setStarted(started);
+        buildInfo.setStartedMillis(startedMillis);
+        buildInfo.setDurationMillis(durationMillis);
+        buildInfo.setPrincipal(principal);
+        buildInfo.setArtifactoryPrincipal(artifactoryPrincipal);
+        buildInfo.setArtifactoryPluginVersion(artifactoryPluginVersion);
+        buildInfo.setUrl(url);
+        buildInfo.setParentName(parentName);
+        buildInfo.setParentNumber(parentNumber);
+        buildInfo.setRunParameters(runParameters);
+        buildInfo.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
+        buildInfo.setStatuses(statuses);
+        buildInfo.setProperties(properties);
+        buildInfo.setVcs(vcs);
+        buildInfo.setLicenseControl(licenseControl);
+        buildInfo.setBuildRetention(buildRetention);
+        buildInfo.setIssues(issues);
+        return buildInfo;
     }
 
     /**
      * Sets the version of the build
      *
-     * @param version Build version
+     * @param version BuildInfo version
      * @return Builder instance
      */
     public BuildInfoBuilder version(String version) {
@@ -178,13 +184,23 @@ public class BuildInfoBuilder {
     }
 
     /**
+     * Sets the started time in millis of the build
+     *
+     * @return Builder instance
+     */
+    public BuildInfoBuilder startedMillis(long startedMillis) {
+        this.startedMillis = startedMillis;
+        return this;
+    }
+
+    /**
      * Sets the started time of the build
      *
      * @param startedDate Build started date
      * @return Builder instance
      */
     public BuildInfoBuilder startedDate(Date startedDate) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
         this.started = simpleDateFormat.format(startedDate);
         this.startedMillis = startedDate.getTime();
         return this;
@@ -429,11 +445,6 @@ public class BuildInfoBuilder {
 
     public BuildInfoBuilder issues(Issues issues) {
         this.issues = issues;
-        return this;
-    }
-
-    public BuildInfoBuilder governance(Governance governance) {
-        this.governance = governance;
         return this;
     }
 

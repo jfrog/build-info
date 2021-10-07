@@ -16,8 +16,8 @@
 
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.dependency.BuildDependencyBuilder;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.testng.annotations.Test;
 
@@ -35,7 +35,7 @@ import static org.testng.Assert.assertNull;
 @Test
 public class BuildDependencyBuilderTest {
 
-    private String timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(new Date());
+    private final String timestamp = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(new Date());
 
     /**
      * Validates the module values when using the defaults

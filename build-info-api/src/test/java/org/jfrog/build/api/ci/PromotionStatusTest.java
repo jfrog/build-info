@@ -1,4 +1,4 @@
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;

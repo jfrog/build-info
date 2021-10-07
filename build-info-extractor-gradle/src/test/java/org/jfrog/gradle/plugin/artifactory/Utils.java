@@ -8,9 +8,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
@@ -19,13 +19,29 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.BUILD_BROWSE_URL;
-import static org.jfrog.gradle.plugin.artifactory.Consts.*;
-import static org.testng.Assert.*;
+import static org.jfrog.gradle.plugin.artifactory.Consts.ARTIFACTS_GROUP_ID;
+import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER;
+import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_SOURCE_RESOLVER;
+import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_TARGET;
+import static org.jfrog.gradle.plugin.artifactory.Consts.EXPECTED_ARTIFACTS;
+import static org.jfrog.gradle.plugin.artifactory.Consts.EXPECTED_MODULE_ARTIFACTS;
+import static org.jfrog.gradle.plugin.artifactory.Consts.INIT_SCRIPT;
+import static org.jfrog.gradle.plugin.artifactory.Consts.LIBS_DIR;
+import static org.jfrog.gradle.plugin.artifactory.Consts.TEST_DIR;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 /**
  * @author yahavi
@@ -144,8 +160,8 @@ public class Utils {
             artifactoryManager.downloadHeaders(localRepo + ARTIFACTS_GROUP_ID + expectedArtifact);
         }
 
-        // Check build info
-        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        // Check buildInfo info
+        BuildInfo buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
     }
@@ -162,12 +178,12 @@ public class Utils {
 
         // Assert build info contains requestedBy information.
         assertTrue(buildInfoJson.exists());
-        Build buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
+        BuildInfo buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
         checkBuildInfoModules(buildInfo, expectedModules, expectedArtifactsPerModule);
         assertRequestedBy(buildInfo);
     }
 
-    private static void assertRequestedBy(Build buildInfo) {
+    private static void assertRequestedBy(BuildInfo buildInfo) {
         List<Dependency> apiDependencies = buildInfo.getModule("org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT").getDependencies();
         assertEquals(apiDependencies.size(), 5);
         for (Dependency dependency : apiDependencies) {
@@ -190,7 +206,7 @@ public class Utils {
      * @return build info or null
      * @throws IOException - In case of any IO error
      */
-    public static Build getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
+    public static BuildInfo getBuildInfo(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
         Pair<String, String> buildDetails = getBuildDetails(buildResult);
         return artifactoryManager.getBuildInfo(buildDetails.getLeft(), buildDetails.getRight(), null);
     }
@@ -217,7 +233,7 @@ public class Utils {
      * @param expectedModules            - Number of expected modules.
      * @param expectedArtifactsPerModule - Number of expected artifacts in each module.
      */
-    private static void checkBuildInfoModules(Build buildInfo, int expectedModules, int expectedArtifactsPerModule) {
+    private static void checkBuildInfoModules(BuildInfo buildInfo, int expectedModules, int expectedArtifactsPerModule) {
         List<Module> modules = buildInfo.getModules();
         assertEquals(modules.size(), expectedModules);
         for (Module module : modules) {

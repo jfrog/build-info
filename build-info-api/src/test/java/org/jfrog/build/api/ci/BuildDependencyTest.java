@@ -1,4 +1,4 @@
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.testng.annotations.Test;
@@ -37,7 +37,7 @@ public class BuildDependencyTest {
         String name = "foo";
         String number = "123";
         Date date = new Date();
-        String started = new SimpleDateFormat(Build.STARTED_FORMAT).format(date);
+        String started = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(date);
         String url = "http://myhostA.com/artifactory/builds/foo/123/";
 
         BuildDependency buildDependency = new BuildDependency();

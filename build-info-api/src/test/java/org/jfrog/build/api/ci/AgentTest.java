@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
 import org.testng.annotations.Test;
 
@@ -23,8 +23,6 @@ import static org.testng.Assert.assertNull;
 
 /**
  * Tests the behavior of the agent class
- *
- * @author Noam Y. Tenne
  */
 @Test
 public class AgentTest {

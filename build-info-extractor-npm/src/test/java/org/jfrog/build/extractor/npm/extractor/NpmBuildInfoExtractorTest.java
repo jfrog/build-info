@@ -1,15 +1,19 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.DependencyBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.jfrog.build.extractor.npm.extractor.NpmBuildInfoExtractor.getDependenciesMapFromBuild;
 import static org.testng.Assert.assertEquals;
@@ -73,8 +77,8 @@ public class NpmBuildInfoExtractorTest {
     }
 
     @Test(dataProvider = "getDependenciesMapFromBuildProvider")
-    public void getDependenciesMapFromBuildTest(Build build, Map<String, Dependency> expected) {
-        Map<String, Dependency> actual = getDependenciesMapFromBuild(build);
+    public void getDependenciesMapFromBuildTest(BuildInfo buildInfo, Map<String, Dependency> expected) {
+        Map<String, Dependency> actual = getDependenciesMapFromBuild(buildInfo);
         assertEquals(actual, expected);
     }
 

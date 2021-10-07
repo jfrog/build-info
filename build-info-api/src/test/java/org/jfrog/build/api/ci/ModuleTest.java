@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-package org.jfrog.build.api;
+package org.jfrog.build.api.ci;
 
+import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests the behavior of the module class
@@ -35,7 +40,7 @@ public class ModuleTest {
      * Validates the module values after initializing the default constructor
      */
     public void testEmptyConstructor() {
-        Module module = new Module();
+        org.jfrog.build.api.Module module = new org.jfrog.build.api.Module();
 
         assertNull(module.getType(), "Module type should have not been initialized.");
         assertNull(module.getId(), "Module ID should have not been initialized.");
@@ -58,7 +63,7 @@ public class ModuleTest {
         List<Artifact> artifacts = new ArrayList<>();
         List<Dependency> dependencies = new ArrayList<>();
 
-        Module module = new Module();
+        org.jfrog.build.api.Module module = new Module();
         module.setId(id);
         module.setRepository(repo);
         module.setType(type);

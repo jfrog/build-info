@@ -20,10 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ModuleParallelDeployHelper;
@@ -35,7 +35,11 @@ import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Noam Y. Tenne
@@ -48,13 +52,13 @@ public class BuildDeploymentHelper {
     @Requirement
     private ArtifactoryManagerBuilder artifactoryManagerBuilder;
 
-    public void deploy( Build                          build,
-                        ArtifactoryClientConfiguration clientConf,
-                        Map<String, DeployDetails>     deployableArtifactBuilders,
-                        boolean                        wereThereTestFailures,
-                        File                           basedir ) {
+    public void deploy(BuildInfo buildInfo,
+                       ArtifactoryClientConfiguration clientConf,
+                       Map<String, DeployDetails> deployableArtifactBuilders,
+                       boolean wereThereTestFailures,
+                       File basedir) {
 
-        Map<String, Set<DeployDetails>> deployableArtifactsByModule = prepareDeployableArtifacts(build, deployableArtifactBuilders);
+        Map<String, Set<DeployDetails>> deployableArtifactsByModule = prepareDeployableArtifacts(buildInfo, deployableArtifactBuilders);
 
         logger.debug("Build Info Recorder: deploy artifacts: " + clientConf.publisher.isPublishArtifacts());
         logger.debug("Build Info Recorder: publication fork count: " + clientConf.publisher.getPublishForkCount());
@@ -62,12 +66,12 @@ public class BuildDeploymentHelper {
 
 
         if (clientConf.publisher.isPublishBuildInfo() || StringUtils.isNotBlank(clientConf.info.getGeneratedBuildInfoFilePath())) {
-            saveBuildInfoToFile(build, clientConf, basedir);
+            saveBuildInfoToFile(buildInfo, clientConf, basedir);
         }
 
         if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
             try {
-                BuildInfoExtractorUtils.saveBuildInfoToFile(build, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
+                BuildInfoExtractorUtils.saveBuildInfoToFile(buildInfo, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
             } catch (Exception e) {
                 logger.error("Failed writing build info to file: " , e);
                 throw new RuntimeException("Failed writing build info to file", e);
@@ -90,14 +94,14 @@ public class BuildDeploymentHelper {
         }
 
         if (isPublishBuildInfo(clientConf, wereThereTestFailures)) {
-            publishBuildInfo(clientConf, build);
+            publishBuildInfo(clientConf, buildInfo);
         }
     }
 
-    private void publishBuildInfo(ArtifactoryClientConfiguration clientConf, Build build) {
+    private void publishBuildInfo(ArtifactoryClientConfiguration clientConf, BuildInfo buildInfo) {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.resolveProperties(clientConf)) {
             logger.info("Artifactory Build Info Recorder: Deploying build info ...");
-            Utils.sendBuildAndBuildRetention(artifactoryManager, build, clientConf);
+            Utils.sendBuildAndBuildRetention(artifactoryManager, buildInfo, clientConf);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -131,28 +135,28 @@ public class BuildDeploymentHelper {
         return true;
     }
 
-    private void saveBuildInfoToFile(Build build, ArtifactoryClientConfiguration clientConf, File basedir) {
+    private void saveBuildInfoToFile(BuildInfo buildInfo, ArtifactoryClientConfiguration clientConf, File basedir) {
         String outputFile = clientConf.getExportFile();
-        File buildInfoFile = StringUtils.isBlank(outputFile) ? new File(basedir, "target/build-info.json" ) :
+        File buildInfoFile = StringUtils.isBlank(outputFile) ? new File(basedir, "target/build-info.json") :
                 new File(outputFile);
 
         logger.debug("Build Info Recorder: " + BuildInfoConfigProperties.EXPORT_FILE + " = " + outputFile);
-        logger.info("Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'" );
+        logger.info("Artifactory Build Info Recorder: Saving Build Info to '" + buildInfoFile + "'");
 
         try {
-            BuildInfoExtractorUtils.saveBuildInfoToFile(build, buildInfoFile.getCanonicalFile());
+            BuildInfoExtractorUtils.saveBuildInfoToFile(buildInfo, buildInfoFile.getCanonicalFile());
         } catch (IOException e) {
             throw new RuntimeException("Error occurred while persisting Build Info to '" + buildInfoFile + "'", e);
         }
     }
 
-    private Map<String, Set<DeployDetails>> prepareDeployableArtifacts(Build build, Map<String, DeployDetails> deployableArtifactBuilders) {
+    private Map<String, Set<DeployDetails>> prepareDeployableArtifacts(BuildInfo buildInfo, Map<String, DeployDetails> deployableArtifactBuilders) {
         Map<String, Set<DeployDetails>> deployableArtifactsByModule = new LinkedHashMap<>();
-        List<Module> modules = build.getModules();
+        List<Module> modules = buildInfo.getModules();
         for (Module module : modules) {
             Set<DeployDetails> moduleDeployableArtifacts = new LinkedHashSet<>();
             List<Artifact> artifacts = module.getArtifacts();
-            if(artifacts!=null){
+            if (artifacts != null) {
                 for (Artifact artifact : artifacts) {
                     String artifactId = BuildInfoExtractorUtils.getArtifactId(module.getId(), artifact.getName());
                     DeployDetails deployable = deployableArtifactBuilders.get(artifactId);
@@ -179,7 +183,7 @@ public class BuildDeploymentHelper {
         return deployableArtifactsByModule;
     }
 
-    private void setArtifactChecksums(File artifactFile, org.jfrog.build.api.Artifact artifact) {
+    private void setArtifactChecksums(File artifactFile, Artifact artifact) {
         if ((artifactFile != null) && (artifactFile.isFile())) {
             try {
                 Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "md5", "sha1");

@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor;
 
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Module;
 
 /**
  * Extracts a single module from the underlying build technology.

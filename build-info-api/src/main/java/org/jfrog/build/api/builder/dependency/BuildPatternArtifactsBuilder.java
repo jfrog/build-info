@@ -16,7 +16,7 @@
 
 package org.jfrog.build.api.builder.dependency;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.PatternResult;
 
@@ -82,7 +82,7 @@ public class BuildPatternArtifactsBuilder {
         if (started == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.started = new SimpleDateFormat(Build.STARTED_FORMAT).format(started);
+        this.started = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(started);
         return this;
     }
 

@@ -16,7 +16,7 @@
 
 package org.jfrog.build.api.builder.dependency;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.BuildDependency;
 
 import java.text.SimpleDateFormat;
@@ -102,7 +102,7 @@ public class BuildDependencyBuilder {
         if (startedDate == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.started = new SimpleDateFormat(Build.STARTED_FORMAT).format(startedDate);
+        this.started = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(startedDate);
         return this;
     }
 

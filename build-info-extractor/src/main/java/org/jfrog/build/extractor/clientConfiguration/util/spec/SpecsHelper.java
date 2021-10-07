@@ -3,10 +3,10 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Dependency;
+import org.apache.commons.lang.StringUtils;
 import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.Dependency;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -21,7 +21,11 @@ import org.jfrog.filespecs.FileSpecsValidation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
 import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;

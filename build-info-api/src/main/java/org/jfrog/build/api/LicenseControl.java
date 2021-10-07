@@ -125,4 +125,14 @@ public class LicenseControl implements Serializable {
         }
         return builder.toString();
     }
+
+    public org.jfrog.build.api.ci.LicenseControl ToBuildInfoLicenseControl() {
+        org.jfrog.build.api.ci.LicenseControl result = new org.jfrog.build.api.ci.LicenseControl();
+        result.setAutoDiscover(autoDiscover);
+        result.setLicenseViolationRecipients(licenseViolationRecipients);
+        result.setScopes(scopes);
+        result.setIncludePublishedArtifacts(includePublishedArtifacts);
+        result.setRunChecks(runChecks);
+        return result;
+    }
 }

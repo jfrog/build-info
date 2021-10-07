@@ -2,11 +2,11 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;
@@ -28,7 +28,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
@@ -64,7 +72,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
     }
 
     @Override
-    public Build extract(NpmProject npmProject) throws Exception {
+    public BuildInfo extract(NpmProject npmProject) throws Exception {
         String resolutionRepository = npmProject.getResolutionRepository();
         List<String> commandArgs = npmProject.getCommandArgs();
         Path workingDir = npmProject.getWorkingDir();
@@ -318,13 +326,13 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         return scopes;
     }
 
-    private Build createBuild(List<Dependency> dependencies, String moduleId) {
+    private BuildInfo createBuild(List<Dependency> dependencies, String moduleId) {
         Module module = new ModuleBuilder().type(ModuleType.NPM).id(moduleId).dependencies(dependencies).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
-        Build build = new Build();
-        build.setModules(modules);
-        return build;
+        BuildInfo buildInfo = new BuildInfo();
+        buildInfo.setModules(modules);
+        return buildInfo;
     }
 
     /**
@@ -364,7 +372,7 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Get previous build's dependencies.
-            Build previousBuildInfo = artifactoryManager.getBuildInfo(buildName, "LATEST", project);
+            BuildInfo previousBuildInfo = artifactoryManager.getBuildInfo(buildName, "LATEST", project);
             if (previousBuildInfo == null) {
                 return Collections.emptyMap();
             }
@@ -373,10 +381,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         }
     }
 
-    static Map<String, Dependency> getDependenciesMapFromBuild(Build build) {
+    static Map<String, Dependency> getDependenciesMapFromBuild(BuildInfo buildInfo) {
         Map<String, Dependency> previousBuildDependencies = new ConcurrentHashMap<>();
         // Iterate over all modules and extract dependencies.
-        List<Module> modules = build.getModules();
+        List<Module> modules = buildInfo.getModules();
         for (Module module : modules) {
             List<Dependency> dependencies = module.getDependencies();
             if (dependencies != null) {

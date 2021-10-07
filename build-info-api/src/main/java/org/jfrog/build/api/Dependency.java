@@ -138,4 +138,18 @@ public class Dependency extends BaseBuildFileBean {
     public int hashCode() {
         return Objects.hash(id, scopes, Arrays.deepHashCode(requestedBy), remotePath);
     }
+
+    public org.jfrog.build.api.ci.Dependency ToBuildDependency() {
+        org.jfrog.build.api.ci.Dependency result = new org.jfrog.build.api.ci.Dependency();
+        result.setId(id);
+        result.setRequestedBy(requestedBy);
+        result.setScopes(scopes);
+        result.setType(type);
+        result.setMd5(md5);
+        result.setSha256(sha256);
+        result.setSha1(sha1);
+        result.setRemotePath(remotePath);
+        result.setProperties(getProperties());
+        return result;
+    }
 }

@@ -4,8 +4,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.pip.PipDriver;
 import org.testng.annotations.AfterClass;
@@ -18,9 +18,15 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  * Created by Bar Belity on 21/07/2020.
@@ -123,11 +129,11 @@ public class PipExtractorTest extends IntegrationTestsBase {
 
             // Run pip-install.
             PipInstall pipInstall = new PipInstall(artifactoryManagerBuilder, virtualRepo, project.args, getLog(), projectDir, env, project.moduleId, getUsername(), getAdminToken(), null);
-            Build build = pipInstall.execute();
-            assertNotNull(build, "Pip execution returned empty build.");
+            BuildInfo buildInfo = pipInstall.execute();
+            assertNotNull(buildInfo, "Pip execution returned empty buildInfo.");
 
-            // Validate produced build-info.
-            Module module = build.getModules().get(0);
+            // Validate produced buildInfo-info.
+            Module module = buildInfo.getModules().get(0);
             assertEquals(module.getType(), "pypi");
             assertEquals(module.getId(), project.moduleId);
             assertEquals(module.getDependencies().size(), project.expectedDependencies);

@@ -6,12 +6,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
 import org.jfrog.build.api.builder.ArtifactBuilder;
 import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -47,7 +47,7 @@ public class NpmPublish extends NpmCommand {
      * Publish npm package.
      *
      * @param artifactoryManagerBuilder - Artifactory manager builder builder.
-     * @param properties                - The Artifact properties to set (Build name, Build number, etc...).
+     * @param properties                - The Artifact properties to set (BuildInfo name, BuildInfo number, etc...).
      * @param path                      - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository      - The repository it'll deploy to.
      * @param logger                    - The logger.
@@ -83,7 +83,7 @@ public class NpmPublish extends NpmCommand {
     }
 
     @Override
-    public Build execute() {
+    public BuildInfo execute() {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             this.artifactoryManager = artifactoryManager;
             preparePrerequisites();
@@ -151,14 +151,14 @@ public class NpmPublish extends NpmCommand {
         Files.deleteIfExists(path);
     }
 
-    private Build createBuild() {
+    private BuildInfo createBuild() {
         String moduleID = StringUtils.isNotBlank(module) ? module : npmPackageInfo.toString();
         List<Artifact> artifactList = Collections.singletonList(deployedArtifact);
         Module module = new ModuleBuilder().type(ModuleType.NPM).id(moduleID).repository(repo).artifacts(artifactList).build();
         List<Module> modules = Collections.singletonList(module);
-        Build build = new Build();
-        build.setModules(modules);
-        return build;
+        BuildInfo buildInfo = new BuildInfo();
+        buildInfo.setModules(modules);
+        return buildInfo;
     }
 
     private void doDeploy() throws IOException {

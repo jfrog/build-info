@@ -12,8 +12,8 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
+import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.ci.BuildInfoConfigProperties;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -24,13 +24,26 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
-import org.jfrog.gradle.plugin.artifactory.extractor.*;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
+import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
+import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * @author Ruben Perez
@@ -98,20 +111,20 @@ public class DeployTask extends DefaultTask {
 
         // Extract Build Info.
         GradleBuildInfoExtractor gbie = new GradleBuildInfoExtractor(accRoot, moduleInfoFileProducers);
-        Build build = gbie.extract(getProject().getRootProject());
-        exportBuildInfo(build, getExportFile(accRoot));
+        BuildInfo buildInfo = gbie.extract(getProject().getRootProject());
+        exportBuildInfo(buildInfo, getExportFile(accRoot));
 
         // Export generated.
-        generateBuildInfoJson(accRoot, build);
+        generateBuildInfoJson(accRoot, buildInfo);
 
         // Handle deployment.
-        handleBuildInfoDeployment(accRoot, build, allDeployDetails);
+        handleBuildInfoDeployment(accRoot, buildInfo, allDeployDetails);
     }
 
-    private void generateBuildInfoJson(ArtifactoryClientConfiguration accRoot, Build build) throws IOException {
+    private void generateBuildInfoJson(ArtifactoryClientConfiguration accRoot, BuildInfo buildInfo) throws IOException {
         if (isGenerateBuildInfoToFile(accRoot)) {
             try {
-                exportBuildInfo(build, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
+                exportBuildInfo(buildInfo, new File(accRoot.info.getGeneratedBuildInfoFilePath()));
             } catch (Exception e) {
                 log.error("Failed writing build info to file: ", e);
                 throw new IOException("Failed writing build info to file", e);
@@ -119,7 +132,7 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void handleBuildInfoDeployment(ArtifactoryClientConfiguration accRoot, Build build, Map<String, Set<DeployDetails>> allDeployDetails) throws IOException {
+    private void handleBuildInfoDeployment(ArtifactoryClientConfiguration accRoot, BuildInfo buildInfo, Map<String, Set<DeployDetails>> allDeployDetails) throws IOException {
         String contextUrl = accRoot.publisher.getContextUrl();
         if (contextUrl != null) {
             try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(
@@ -130,13 +143,13 @@ public class DeployTask extends DefaultTask {
 
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory
-                    exportBuildInfo(build, getExportFile(accRoot));
+                    exportBuildInfo(buildInfo, getExportFile(accRoot));
                     if (accRoot.info.isIncremental()) {
                         log.debug("Publishing build info modules to artifactory at: '{}'", contextUrl);
-                        artifactoryManager.sendModuleInfo(build);
+                        artifactoryManager.sendModuleInfo(buildInfo);
                     } else {
                         log.debug("Publishing build info to artifactory at: '{}'", contextUrl);
-                        Utils.sendBuildAndBuildRetention(artifactoryManager, build, accRoot);
+                        Utils.sendBuildAndBuildRetention(artifactoryManager, buildInfo, accRoot);
                     }
                 }
                 if (isGenerateDeployableArtifactsToFile(accRoot)) {
@@ -230,9 +243,9 @@ public class DeployTask extends DefaultTask {
         }
     }
 
-    private void exportBuildInfo(Build build, File toFile) throws IOException {
+    private void exportBuildInfo(BuildInfo buildInfo, File toFile) throws IOException {
         log.debug("Exporting generated build info to '{}'", toFile.getAbsolutePath());
-        BuildInfoExtractorUtils.saveBuildInfoToFile(build, toFile);
+        BuildInfoExtractorUtils.saveBuildInfoToFile(buildInfo, toFile);
     }
 
     private void exportDeployableArtifacts(Map<String, Set<DeployDetails>> allDeployDetails, File toFile, boolean exportBackwardCompatibleDeployableArtifacts) throws IOException {

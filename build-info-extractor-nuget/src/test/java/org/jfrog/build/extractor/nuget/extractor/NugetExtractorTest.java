@@ -4,8 +4,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
@@ -21,7 +21,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 @Test
 public class NugetExtractorTest extends IntegrationTestsBase {
@@ -128,11 +131,11 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     }
 
     private void executeAndAssertBuildInfo(NugetRun nugetRun, String[] expectedModules, int... expectedDependencies) {
-        Build build = nugetRun.execute();
-        assertNotNull(build);
-        assertEquals(build.getModules().size(), expectedModules.length);
+        BuildInfo buildInfo = nugetRun.execute();
+        assertNotNull(buildInfo);
+        assertEquals(buildInfo.getModules().size(), expectedModules.length);
         for (int i = 0; i < expectedModules.length; i++) {
-            Module module = build.getModules().get(i);
+            Module module = buildInfo.getModules().get(i);
             // Check correctness of the module and dependencies
             assertEquals(module.getType(), "nuget");
             assertEquals(module.getId(), expectedModules[i]);

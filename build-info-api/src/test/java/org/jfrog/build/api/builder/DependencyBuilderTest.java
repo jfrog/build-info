@@ -16,15 +16,17 @@
 
 package org.jfrog.build.api.builder;
 
-import org.apache.commons.lang3.ArrayUtils;
-import org.jfrog.build.api.Dependency;
+import org.apache.commons.lang.ArrayUtils;
+import org.jfrog.build.api.ci.Dependency;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
 import java.util.Set;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 /**
  * Tests the behavior of the dependency builder class

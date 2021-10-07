@@ -1,6 +1,6 @@
 package org.jfrog.build.api.release;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 
 import java.io.Serializable;
 import java.text.ParseException;
@@ -166,7 +166,7 @@ public class Promotion implements Serializable {
         if (timestamp == null) {
             return null;
         }
-        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
+        SimpleDateFormat format = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
         try {
             return format.parse(timestamp);
         } catch (ParseException e) {

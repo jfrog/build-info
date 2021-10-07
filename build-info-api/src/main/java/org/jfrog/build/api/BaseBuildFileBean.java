@@ -31,7 +31,6 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
     protected String sha1;
     protected String sha256;
     protected String md5;
-    protected String localPath;
 
     @JsonProperty("path")
     protected String remotePath;
@@ -66,14 +65,6 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
 
     public void setMd5(String md5) {
         this.md5 = md5;
-    }
-
-    public String getLocalPath() {
-        return localPath;
-    }
-
-    public void setLocalPath(String localPath) {
-        this.localPath = localPath;
     }
 
     public String getRemotePath() {

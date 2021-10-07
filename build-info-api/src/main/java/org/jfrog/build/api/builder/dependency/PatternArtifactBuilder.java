@@ -16,7 +16,7 @@
 
 package org.jfrog.build.api.builder.dependency;
 
-import org.jfrog.build.api.Build;
+import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.PatternArtifact;
 
 import java.text.SimpleDateFormat;
@@ -77,7 +77,7 @@ public class PatternArtifactBuilder {
         if (lastModified == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.lastModified = new SimpleDateFormat(Build.STARTED_FORMAT).format(lastModified);
+        this.lastModified = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(lastModified);
         return this;
     }
 
