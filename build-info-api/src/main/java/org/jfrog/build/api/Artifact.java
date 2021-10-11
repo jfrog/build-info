@@ -17,6 +17,7 @@
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Contains the build deployed artifact information
@@ -59,10 +60,7 @@ public class Artifact extends BaseBuildFileBean {
         }
 
         Artifact artifact = (Artifact) o;
-        if (name != null ? !name.equals(artifact.name) : artifact.name != null) {
-            return false;
-        }
-        return true;
+        return (StringUtils.equals(name, artifact.name)) && StringUtils.equals(remotePath, artifact.remotePath);
     }
 
     @Override
