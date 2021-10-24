@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.scan;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -10,13 +11,14 @@ import java.util.Objects;
 /**
  * @author yahavi
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class License {
-    private static String UNKNOWN_LICENCE_FULL_NAME = "Unknown license";
+    private static final String UNKNOWN_LICENCE_FULL_NAME = "Unknown license";
     @SuppressWarnings("FieldCanBeLocal")
-    private static String UNKNOWN_LICENCE_NAME = "Unknown";
+    private static final String UNKNOWN_LICENCE_NAME = "Unknown";
     private List<String> components = new ArrayList<>();
-    private String fullName;
-    private String name;
+    private final String fullName;
+    private final String name;
     private List<String> moreInfoUrl = new ArrayList<>();
     private boolean violate;
 
@@ -55,6 +57,7 @@ public class License {
         return violate;
     }
 
+    @SuppressWarnings("unused")
     public void setViolate(boolean violate) {
         this.violate = violate;
     }

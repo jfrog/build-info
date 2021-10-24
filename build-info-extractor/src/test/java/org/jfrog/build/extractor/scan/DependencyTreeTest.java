@@ -5,7 +5,10 @@ import org.apache.commons.compress.utils.Sets;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.testng.Assert.*;
 import static org.testng.AssertJUnit.assertEquals;
@@ -182,7 +185,7 @@ public class DependencyTreeTest {
      * @return the random issue
      */
     private Issue createIssue(Severity severity) {
-        return new Issue(generateUID(), generateUID(), generateUID(), generateUID(), severity, generateUID(), Lists.newArrayList());
+        return new Issue(generateUID(), severity, generateUID(), Lists.newArrayList());
     }
 
     /**

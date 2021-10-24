@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.scan;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nonnull;
@@ -10,26 +11,21 @@ import java.util.Objects;
 /**
  * @author yahavi
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Issue implements Comparable<Issue> {
 
-    private String created;
-    private String description;
-    private String issueType = "N/A";
-    private String provider;
     private Severity severity = Severity.Normal;
-    private String summary;
-    private String component = "";
     private List<String> fixedVersions;
+    private String component = "";
+    private String description;
+    private String summary;
 
     public Issue() {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String created, String description, String issueType, String provider, Severity severity, String summary, List<String> fixedVersions) {
-        this.created = created;
+    public Issue(String description, Severity severity, String summary, List<String> fixedVersions) {
         this.description = description;
-        this.issueType = issueType;
-        this.provider = provider;
         this.severity = severity;
         this.summary = summary;
         this.fixedVersions = fixedVersions;
@@ -47,23 +43,9 @@ public class Issue implements Comparable<Issue> {
         this.component = component;
     }
 
-    public String getCreated() {
-        return created;
-    }
-
     @SuppressWarnings("unused")
     public String getDescription() {
         return description;
-    }
-
-    @SuppressWarnings("unused")
-    public String getIssueType() {
-        return issueType;
-    }
-
-    @SuppressWarnings("unused")
-    public String getProvider() {
-        return provider;
     }
 
     @SuppressWarnings("unused")
