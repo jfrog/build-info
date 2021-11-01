@@ -19,16 +19,18 @@ public class Issue implements Comparable<Issue> {
     private String component = "";
     private String description;
     private String summary;
+    private String cve;
 
     public Issue() {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String description, Severity severity, String summary, List<String> fixedVersions) {
+    public Issue(String description, Severity severity, String summary, List<String> fixedVersions, String cve) {
         this.description = description;
         this.severity = severity;
         this.summary = summary;
         this.fixedVersions = fixedVersions;
+        this.cve = cve;
     }
 
     public Severity getSeverity() {
@@ -61,6 +63,11 @@ public class Issue implements Comparable<Issue> {
     @SuppressWarnings("unused")
     public void setFixedVersions(List<String> fixedVersions) {
         this.fixedVersions = fixedVersions;
+    }
+
+    @SuppressWarnings("unused")
+    public String getCve() {
+        return cve;
     }
 
     @JsonIgnore
