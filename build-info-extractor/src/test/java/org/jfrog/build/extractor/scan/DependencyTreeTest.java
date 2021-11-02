@@ -185,7 +185,7 @@ public class DependencyTreeTest {
      * @return the random issue
      */
     private Issue createIssue(Severity severity) {
-        return new Issue(generateUID(), severity, generateUID(), Lists.newArrayList());
+        return new Issue(generateUID(), severity, generateUID(), Lists.newArrayList(), generateUID());
     }
 
     /**
