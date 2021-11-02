@@ -23,7 +23,7 @@ pipelines:
             - name: biReleaseGit
           integrations:
             - name: releases_temp
-            - name: github_generic
+            - name: github
             - name: mvn_central
         execution:
           onStart:
@@ -38,7 +38,7 @@ pipelines:
 
             # Configure git
             - git checkout master
-            - git remote set-url origin https://$int_github_generic_token@github.com/jfrog/build-info.git
+            - git remote set-url origin https://$int_github_token@github.com/jfrog/build-info.git
 
             # Make sure versions provided
             - echo "Checking variables"
