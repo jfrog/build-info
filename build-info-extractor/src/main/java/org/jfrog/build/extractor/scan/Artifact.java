@@ -11,12 +11,15 @@ public class Artifact implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private GeneralInfo generalInfo = new GeneralInfo();
-    private Set<Issue> issues = new HashSet<>();
-    private Set<License> licenses = new HashSet<>();
+    private GeneralInfo generalInfo;
+    private Set<Issue> issues;
+    private Set<License> licenses;
 
     // Empty constructor for serialization
     public Artifact() {
+        generalInfo = new GeneralInfo();
+        issues = new HashSet<>();
+        licenses = new HashSet<>();
     }
 
     public Artifact(GeneralInfo generalInfo, Set<Issue> issues, Set<License> licenses) {
@@ -49,9 +52,5 @@ public class Artifact implements Serializable {
 
     public void setLicenses(Set<License> licenses) {
         this.licenses = licenses;
-    }
-
-    public boolean isLicenseViolating() {
-        return licenses.stream().anyMatch(License::isViolate);
     }
 }
