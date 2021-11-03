@@ -1,4 +1,8 @@
 # Release Notes
+## build-info-extractor 2.31.2 / gradle-artifactory-plugin 4.24.21 (November 3, 2021)
+- Add CVE ID to Xray scan Issue ([564](https://github.com/jfrog/build-info/pull/564))
+- Improve dependency tree performance and memory consumption ([562](https://github.com/jfrog/build-info/pull/562)) ([565](https://github.com/jfrog/build-info/pull/565))
+
 ## build-info-extractor 2.31.1 / gradle-artifactory-plugin 4.24.20 (October 1, 2021)
 - Add metadata field to dependency tree node ([558](https://github.com/jfrog/build-info/pull/558))
 
