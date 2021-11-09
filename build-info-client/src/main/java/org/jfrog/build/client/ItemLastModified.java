@@ -1,6 +1,6 @@
 package org.jfrog.build.client;
 
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.Build;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -46,7 +46,7 @@ public class ItemLastModified {
     }
 
     private long getLastModified(String date) throws ParseException {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         Date parse = simpleDateFormat.parse(date);
         return parse.getTime();
     }

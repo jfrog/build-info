@@ -6,7 +6,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;

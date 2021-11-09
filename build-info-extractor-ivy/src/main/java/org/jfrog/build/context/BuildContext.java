@@ -1,7 +1,7 @@
 package org.jfrog.build.context;
 
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 

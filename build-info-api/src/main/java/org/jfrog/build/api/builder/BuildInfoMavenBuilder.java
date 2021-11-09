@@ -1,32 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.Artifact;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.BuildRetention;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.LicenseControl;
-import org.jfrog.build.api.ci.Module;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 
@@ -53,7 +28,7 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
      *
      * @return Assembled build
      */
-    public BuildInfo build() {
+    public Build build() {
         return super.build();
     }
 
@@ -263,17 +238,6 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
 
     public BuildInfoMavenBuilder addStatus(PromotionStatus promotionStatus) {
         super.addStatus(promotionStatus);
-        return this;
-    }
-
-    /**
-     * Sets the violation notifications of the build
-     *
-     * @param licenseControl Build violation  recipients.
-     * @return Builder instance
-     */
-    public BuildInfoMavenBuilder licenseControl(LicenseControl licenseControl) {
-        super.licenseControl(licenseControl);
         return this;
     }
 

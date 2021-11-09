@@ -1,26 +1,12 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
 
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.MatrixParameter;
-import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.MatrixParameter;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.annotations.Test;
 
@@ -48,7 +34,7 @@ public class BuildBuilderTest {
      * Validates the build values when using the defaults
      */
     public void testDefaultBuild() {
-        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").build();
+        Build buildInfo = new BuildInfoBuilder("test").number("4").started("test").build();
         assertEquals(buildInfo.getVersion(), "1.0.1", "Unexpected default buildInfo version.");
         assertEquals(buildInfo.getNumber(), "4", "Unexpected default buildInfo number.");
 
@@ -85,7 +71,7 @@ public class BuildBuilderTest {
         Properties properties = new Properties();
         List<MatrixParameter> runParameters = new ArrayList<>();
 
-        BuildInfo buildInfo = new BuildInfoBuilder(name).started("test").version(version).number(number)
+        Build buildInfo = new BuildInfoBuilder(name).started("test").version(version).number(number)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
                 .modules(modules).properties(properties).buildAgent(buildAgent).buildRunParameters(runParameters)
@@ -115,13 +101,13 @@ public class BuildBuilderTest {
      */
     public void testStartedSetters() throws ParseException {
         String started = "192-1212-1";
-        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started(started).build();
+        Build buildInfo = new BuildInfoBuilder("test").number("4").started(started).build();
         assertEquals(buildInfo.getStarted(), started, "Unexpected buildInfo started.");
 
         Date startedDate = new Date();
         buildInfo = new BuildInfoBuilder("test").number("4").startedDate(startedDate).build();
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         assertEquals(buildInfo.getStarted(), simpleDateFormat.format(startedDate), "Unexpected buildInfo started.");
     }
 
@@ -139,7 +125,7 @@ public class BuildBuilderTest {
         String propertyValue = "value";
         PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();
 
-        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
+        Build buildInfo = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
                 .addProperty(propertyKey, propertyValue).addStatus(promotionStatus).build();
         List<Module> modules = buildInfo.getModules();
         assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");

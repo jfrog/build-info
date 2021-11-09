@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.retention;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.BuildRetention;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;

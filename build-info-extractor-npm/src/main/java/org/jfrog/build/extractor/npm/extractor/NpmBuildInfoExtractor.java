@@ -2,11 +2,11 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.BuildInfoExtractor;

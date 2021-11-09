@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.JFrogService;
 import org.jfrog.build.extractor.clientConfiguration.client.response.GetBuildInfoResponse;
@@ -36,6 +36,6 @@ public class GetBuildInfo extends JFrogService<BuildInfo> {
     @Override
     protected void setResponse(InputStream stream) throws IOException {
         Build build = getMapper().readValue(stream, GetBuildInfoResponse.class).getBuildInfo();
-        result = build == null ? null : build.ToBuildInfo();
+        result = build == null ? null : org.jfrog.build.extractor.ci.BuildInfo.ToBuildInfo(build);
     }
 }

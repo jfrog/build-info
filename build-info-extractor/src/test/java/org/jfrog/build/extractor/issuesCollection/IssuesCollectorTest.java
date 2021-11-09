@@ -2,11 +2,11 @@ package org.jfrog.build.extractor.issuesCollection;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.IssuesCollectionConfig;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.IssuesCollectionConfig;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;

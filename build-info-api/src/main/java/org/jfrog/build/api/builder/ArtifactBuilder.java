@@ -1,23 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.Artifact;
 
 import java.util.Properties;
 
@@ -33,7 +17,6 @@ public class ArtifactBuilder {
     private String sha1;
     private String sha256;
     private String md5;
-    private String localPath;
     private String remotePath;
     private Properties properties;
 
@@ -56,7 +39,6 @@ public class ArtifactBuilder {
         artifact.setSha1(sha1);
         artifact.setSha256(sha256);
         artifact.setMd5(md5);
-        artifact.setLocalPath(localPath);
         artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
         return artifact;
@@ -114,17 +96,6 @@ public class ArtifactBuilder {
      */
     public ArtifactBuilder md5(String md5) {
         this.md5 = md5;
-        return this;
-    }
-
-    /**
-     * Sets the local path of the artifact
-     *
-     * @param localPath Artifact local Path
-     * @return Builder instance
-     */
-    public ArtifactBuilder localPath(String localPath) {
-        this.localPath = localPath;
         return this;
     }
 

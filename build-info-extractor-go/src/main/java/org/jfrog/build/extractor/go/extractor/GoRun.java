@@ -2,12 +2,12 @@ package org.jfrog.build.extractor.go.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Module;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;

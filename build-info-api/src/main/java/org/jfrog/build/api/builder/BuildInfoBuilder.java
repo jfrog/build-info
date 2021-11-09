@@ -1,31 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.BuildRetention;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.LicenseControl;
-import org.jfrog.build.api.ci.MatrixParameter;
-import org.jfrog.build.api.ci.Module;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.api.*;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
@@ -64,7 +40,6 @@ public class BuildInfoBuilder {
     protected ConcurrentHashMap<String, Module> modules;
     protected List<PromotionStatus> statuses;
     protected Properties properties;
-    protected LicenseControl licenseControl;
     protected BuildRetention buildRetention;
     protected Issues issues;
 
@@ -77,7 +52,7 @@ public class BuildInfoBuilder {
      *
      * @return Assembled build
      */
-    public BuildInfo build() {
+    public Build build() {
         if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Build must have a name");
         }
@@ -88,39 +63,38 @@ public class BuildInfoBuilder {
             throw new IllegalArgumentException("Build start time must be set");
         }
 
-        BuildInfo buildInfo = new BuildInfo();
+        Build build = new Build();
         if (StringUtils.isNotBlank(version)) {
-            buildInfo.setVersion(version);
+            build.setVersion(version);
         }
-        buildInfo.setName(name);
-        buildInfo.setNumber(number);
-        buildInfo.setProject(project);
-        buildInfo.setAgent(agent);
-        buildInfo.setBuildAgent(buildAgent);
-        buildInfo.setStarted(started);
-        buildInfo.setStartedMillis(startedMillis);
-        buildInfo.setDurationMillis(durationMillis);
-        buildInfo.setPrincipal(principal);
-        buildInfo.setArtifactoryPrincipal(artifactoryPrincipal);
-        buildInfo.setArtifactoryPluginVersion(artifactoryPluginVersion);
-        buildInfo.setUrl(url);
-        buildInfo.setParentName(parentName);
-        buildInfo.setParentNumber(parentNumber);
-        buildInfo.setRunParameters(runParameters);
-        buildInfo.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
-        buildInfo.setStatuses(statuses);
-        buildInfo.setProperties(properties);
-        buildInfo.setVcs(vcs);
-        buildInfo.setLicenseControl(licenseControl);
-        buildInfo.setBuildRetention(buildRetention);
-        buildInfo.setIssues(issues);
-        return buildInfo;
+        build.setName(name);
+        build.setNumber(number);
+        build.setProject(project);
+        build.setAgent(agent);
+        build.setBuildAgent(buildAgent);
+        build.setStarted(started);
+        build.setStartedMillis(startedMillis);
+        build.setDurationMillis(durationMillis);
+        build.setPrincipal(principal);
+        build.setArtifactoryPrincipal(artifactoryPrincipal);
+        build.setArtifactoryPluginVersion(artifactoryPluginVersion);
+        build.setUrl(url);
+        build.setParentName(parentName);
+        build.setParentNumber(parentNumber);
+        build.setRunParameters(runParameters);
+        build.setModules(modules != null ? new ArrayList<Module>(modules.values()) : null);
+        build.setStatuses(statuses);
+        build.setProperties(properties);
+        build.setVcs(vcs);
+        build.setBuildRetention(buildRetention);
+        build.setIssues(issues);
+        return build;
     }
 
     /**
      * Sets the version of the build
      *
-     * @param version BuildInfo version
+     * @param version Build version
      * @return Builder instance
      */
     public BuildInfoBuilder version(String version) {
@@ -184,25 +158,25 @@ public class BuildInfoBuilder {
     }
 
     /**
-     * Sets the started time in millis of the build
-     *
-     * @return Builder instance
-     */
-    public BuildInfoBuilder startedMillis(long startedMillis) {
-        this.startedMillis = startedMillis;
-        return this;
-    }
-
-    /**
      * Sets the started time of the build
      *
      * @param startedDate Build started date
      * @return Builder instance
      */
     public BuildInfoBuilder startedDate(Date startedDate) {
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
         this.started = simpleDateFormat.format(startedDate);
         this.startedMillis = startedDate.getTime();
+        return this;
+    }
+
+    /**
+     * Sets the started time in millis of the build
+     *
+     * @return Builder instance
+     */
+    public BuildInfoBuilder startedMillis(long startedMillis) {
+        this.startedMillis = startedMillis;
         return this;
     }
 
@@ -348,17 +322,6 @@ public class BuildInfoBuilder {
             statuses = new ArrayList<>();
         }
         statuses.add(promotionStatus);
-        return this;
-    }
-
-    /**
-     * Sets the violation notifications of the build
-     *
-     * @param licenseControl Build violation  recipients.
-     * @return Builder instance
-     */
-    public BuildInfoBuilder licenseControl(LicenseControl licenseControl) {
-        this.licenseControl = licenseControl;
         return this;
     }
 

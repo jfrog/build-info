@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.jfrog.build.api.ci.BuildRetention;
+import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 

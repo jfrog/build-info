@@ -1,14 +1,14 @@
 package org.jfrog.build.extractor.pip.extractor;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Module;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;

@@ -8,9 +8,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Module;
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 

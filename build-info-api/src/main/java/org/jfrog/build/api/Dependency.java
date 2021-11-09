@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -137,19 +121,5 @@ public class Dependency extends BaseBuildFileBean {
     @Override
     public int hashCode() {
         return Objects.hash(id, scopes, Arrays.deepHashCode(requestedBy), remotePath);
-    }
-
-    public org.jfrog.build.api.ci.Dependency ToBuildDependency() {
-        org.jfrog.build.api.ci.Dependency result = new org.jfrog.build.api.ci.Dependency();
-        result.setId(id);
-        result.setRequestedBy(requestedBy);
-        result.setScopes(scopes);
-        result.setType(type);
-        result.setMd5(md5);
-        result.setSha256(sha256);
-        result.setSha1(sha1);
-        result.setRemotePath(remotePath);
-        result.setProperties(getProperties());
-        return result;
     }
 }

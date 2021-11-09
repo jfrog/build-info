@@ -1,23 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.api.Dependency;
 
 import java.util.HashSet;
 import java.util.Properties;
@@ -36,7 +20,6 @@ public class DependencyBuilder {
     private String sha1;
     private String sha256;
     private String md5;
-    private String localPath;
     private String remotePath;
     private String[][] requestedBy;
     private Properties properties;
@@ -54,7 +37,6 @@ public class DependencyBuilder {
         dependency.setSha1(sha1);
         dependency.setSha256(sha256);
         dependency.setMd5(md5);
-        dependency.setLocalPath(localPath);
         dependency.setRemotePath(remotePath);
         dependency.setRequestedBy(requestedBy);
         dependency.setProperties(properties);
@@ -138,17 +120,6 @@ public class DependencyBuilder {
      */
     public DependencyBuilder md5(String md5) {
         this.md5 = md5;
-        return this;
-    }
-
-    /**
-     * Sets the local path of the dependency
-     *
-     * @param localPath Dependency local path
-     * @return Builder instance
-     */
-    public DependencyBuilder localPath(String localPath) {
-        this.localPath = localPath;
         return this;
     }
 

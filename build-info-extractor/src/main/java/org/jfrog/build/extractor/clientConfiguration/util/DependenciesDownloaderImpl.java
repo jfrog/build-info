@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;

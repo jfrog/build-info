@@ -1,25 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.BuildInfoModuleBuilder;
-import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
@@ -27,13 +9,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.jfrog.build.api.BuildBean.ROOT;
 
 /**
  * Represents pure (without logic) schema of build info which contains the build info properties of a typical build.
- * Convert {@link org.jfrog.build.api.ci.BuildInfo} to this class before sending the build info.
+ * Convert org.jfrog.build.extractor.ci.BuildInfo to this class before sending the build info.
  */
 @XStreamAlias(ROOT)
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
@@ -60,8 +41,6 @@ public class Build extends BaseBuildBean {
 
     @Deprecated
     private String parentBuildId;
-
-    private LicenseControl licenseControl;
 
     private BuildRetention buildRetention;
 
@@ -436,14 +415,6 @@ public class Build extends BaseBuildBean {
         return null;
     }
 
-    public LicenseControl getLicenseControl() {
-        return licenseControl;
-    }
-
-    public void setLicenseControl(LicenseControl licenseControl) {
-        this.licenseControl = licenseControl;
-    }
-
     public BuildRetention getBuildRetention() {
         return buildRetention;
     }
@@ -520,7 +491,6 @@ public class Build extends BaseBuildBean {
                 ", parentNumber='" + parentNumber + '\'' +
                 ", vcs='" + vcs + '\'' +
                 ", parentBuildId='" + parentBuildId + '\'' +
-                ", licenseControl=" + licenseControl +
                 ", buildRetention=" + buildRetention +
                 ", runParameters=" + runParameters +
                 ", modules=" + modules +
@@ -528,43 +498,5 @@ public class Build extends BaseBuildBean {
                 ", buildDependencies=" + buildDependencies +
                 ", issues=" + issues +
                 '}';
-    }
-
-    public BuildInfo ToBuildInfo() {
-        BuildInfoBuilder builder = new BuildInfoBuilder(name)
-                .number(number)
-                .setProject(project)
-                .agent(agent == null ? null : new org.jfrog.build.api.ci.Agent(agent.getName(), agent.getVersion()))
-                .buildAgent(buildAgent == null ? null : new org.jfrog.build.api.ci.BuildAgent(buildAgent.getName(), buildAgent.getVersion()))
-                .started(started)
-                .startedMillis(startedMillis)
-                .durationMillis(durationMillis)
-                .principal(principal)
-                .artifactoryPrincipal(artifactoryPrincipal)
-                .artifactoryPluginVersion(artifactoryPluginVersion)
-                .url(url)
-                .parentName(parentName)
-                .parentNumber(parentNumber)
-                .buildRunParameters(runParameters == null ? null : runParameters.stream().map(rp -> new org.jfrog.build.api.ci.MatrixParameter(rp.getKey(), rp.getValue())).collect(Collectors.toList()))
-                .statuses(statuses)
-                .properties(getProperties())
-                .vcs(vcs == null ? null : vcs.stream().map(Vcs::ToBuildInfoVcs).collect(Collectors.toList()))
-                .licenseControl(licenseControl == null ? null : licenseControl.ToBuildInfoLicenseControl())
-                .buildRetention(buildRetention == null ? null : buildRetention.ToBuildInfoRetention())
-                .issues(issues == null ? null : issues.ToBuildInfoIssues());
-        if (modules != null) {
-            builder.modules(modules.stream().map(m -> new BuildInfoModuleBuilder().
-                    type(m.getType())
-                    .id(m.getId())
-                    .repository(m.getRepository())
-                    .sha1(m.getSha1())
-                    .md5(m.getType())
-                    .artifacts(m.getArtifacts() == null ? null : m.getArtifacts().stream().map(Artifact::ToBuildInfoArtifact).collect(Collectors.toList()))
-                    .dependencies(m.getDependencies() == null ? null : m.getDependencies().stream().map(Dependency::ToBuildDependency).collect(Collectors.toList()))
-                    .properties(m.getProperties())
-                    .excludedArtifacts(m.getExcludedArtifacts() == null ? null : m.getExcludedArtifacts().stream().map(Artifact::ToBuildInfoArtifact).collect(Collectors.toList()))
-                    .build()).collect(Collectors.toList()));
-        }
-        return builder.build();
     }
 }

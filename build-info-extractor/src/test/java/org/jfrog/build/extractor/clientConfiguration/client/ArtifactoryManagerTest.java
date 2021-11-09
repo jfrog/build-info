@@ -2,16 +2,15 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.BuildRetention;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.LicenseControl;
-import org.jfrog.build.api.ci.MatrixParameter;
-import org.jfrog.build.api.ci.Module;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildRetention;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -88,7 +87,6 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
                 .parentName("baz")
                 .parentNumber("10")
                 .vcs(VCS)
-                .licenseControl(new LicenseControl(false))
                 .buildRetention(new BuildRetention(true))
                 .buildRunParameters(RUN_PARAMETERS)
                 .modules(Collections.singletonList(module))

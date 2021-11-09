@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.packageManager;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.jfrog.build.api.ci.BuildInfo;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
 import java.net.MalformedURLException;

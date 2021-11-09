@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.jfrog.build.api.ci.Dependency;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 

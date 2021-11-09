@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;

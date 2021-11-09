@@ -1,6 +1,6 @@
 package org.jfrog.build.api.release;
 
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.Build;
 
 import java.io.Serializable;
 import java.text.ParseException;
@@ -67,7 +67,7 @@ public class PromotionStatus implements Serializable {
         if (timestamp == null) {
             throw new IllegalArgumentException("Cannot parse a null timestamp as a date");
         }
-        SimpleDateFormat format = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
         try {
             return format.parse(timestamp);
         } catch (ParseException e) {
@@ -77,7 +77,7 @@ public class PromotionStatus implements Serializable {
 
     // For Serialization/Deserialization
     public void setTimestampDate(Date timestampDate) {
-        SimpleDateFormat format = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
+        SimpleDateFormat format = new SimpleDateFormat(Build.STARTED_FORMAT);
         setTimestamp(format.format(timestampDate));
     }
 

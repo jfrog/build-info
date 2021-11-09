@@ -52,7 +52,5 @@ public class IssueTracker implements Serializable {
         return Objects.equals(name, that.name) && Objects.equals(version, that.version);
     }
 
-    public org.jfrog.build.api.ci.IssueTracker ToBuildInfoIssueTracker() {
-        return new org.jfrog.build.api.ci.IssueTracker(name, version);
-    }
+
 }

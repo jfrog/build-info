@@ -88,12 +88,4 @@ public class Issue implements Serializable {
         return result;
     }
 
-    public org.jfrog.build.api.ci.Issue ToBuildInfoIssue() {
-        org.jfrog.build.api.ci.Issue result = new org.jfrog.build.api.ci.Issue();
-        result.setKey(key);
-        result.setUrl(url);
-        result.setSummary(summary);
-        result.setAggregated(aggregated);
-        return result;
-    }
 }

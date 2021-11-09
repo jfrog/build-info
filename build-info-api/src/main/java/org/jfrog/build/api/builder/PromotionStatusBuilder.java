@@ -1,6 +1,6 @@
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.ci.BuildInfo;
+import org.jfrog.build.api.Build;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
@@ -41,7 +41,7 @@ public class PromotionStatusBuilder {
         if (timestampDate == null) {
             throw new IllegalArgumentException("Cannot format a null date.");
         }
-        this.timestamp = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(timestampDate);
+        this.timestamp = new SimpleDateFormat(Build.STARTED_FORMAT).format(timestampDate);
         return this;
     }
 

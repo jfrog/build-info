@@ -1,22 +1,6 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api.builder;
 
-import org.jfrog.build.api.ci.Artifact;
+import org.jfrog.build.api.Artifact;
 import org.testng.annotations.Test;
 
 import java.util.Properties;
@@ -40,7 +24,6 @@ public class ArtifactBuilderTest {
         Artifact artifact = new ArtifactBuilder("name").build();
 
         assertEquals(artifact.getName(), "name", "Unexpected artifact name.");
-        assertNull(artifact.getLocalPath(), "Default artifact local path should be null");
         assertNull(artifact.getRemotePath(), "Default artifact remote path should be null");
         assertNull(artifact.getType(), "Default artifact type.");
         assertNull(artifact.getSha1(), "Default artifact SHA1 checksum should be null.");
@@ -62,7 +45,7 @@ public class ArtifactBuilderTest {
         String remotePath = "blop";
         Properties properties = new Properties();
 
-        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).sha256(sha256).md5(md5).localPath(localPath)
+        Artifact artifact = new ArtifactBuilder(name).type(type).sha1(sha1).sha256(sha256).md5(md5)
                 .remotePath(remotePath).properties(properties)
                 .build();
 
@@ -71,7 +54,6 @@ public class ArtifactBuilderTest {
         assertEquals(artifact.getSha1(), sha1, "Unexpected artifact SHA1 checksum.");
         assertEquals(artifact.getSha256(), sha256, "Unexpected artifact SHA256 checksum.");
         assertEquals(artifact.getMd5(), md5, "Unexpected artifact SHA1 checksum.");
-        assertEquals(artifact.getLocalPath(), localPath, "Unexpected artifact local path.");
         assertEquals(artifact.getRemotePath(), remotePath, "Unexpected artifact remote path.");
         assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
         assertTrue(artifact.getProperties().isEmpty(), "Artifact properties list should not have been populated.");

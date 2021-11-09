@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.lang.StringUtils;
-import org.jfrog.build.api.ci.Issue;
+import org.jfrog.build.extractor.ci.Issue;
 
 import java.util.HashSet;
 import java.util.Set;

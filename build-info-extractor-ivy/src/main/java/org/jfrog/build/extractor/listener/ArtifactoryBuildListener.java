@@ -15,17 +15,16 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.taskdefs.Ant;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.BuildInfoConfigProperties;
-import org.jfrog.build.api.ci.Issue;
-import org.jfrog.build.api.ci.IssueTracker;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.LicenseControl;
-import org.jfrog.build.api.ci.MatrixParameter;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.context.BuildContext;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -331,18 +330,6 @@ public class ArtifactoryBuildListener implements BuildListener {
         if (StringUtils.isNotBlank(parentBuildNumber)) {
             builder.parentNumber(parentBuildNumber);
         }
-        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
-        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
-        if (StringUtils.isNotBlank(notificationRecipients)) {
-            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
-        }
-        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
-        String scopes = clientConf.info.licenseControl.getScopes();
-        if (StringUtils.isNotBlank(scopes)) {
-            licenseControl.setScopesList(scopes);
-        }
-        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-        builder.licenseControl(licenseControl);
 
         String issueTrackerName = clientConf.info.issues.getIssueTrackerName();
         if (StringUtils.isNotBlank(issueTrackerName)) {

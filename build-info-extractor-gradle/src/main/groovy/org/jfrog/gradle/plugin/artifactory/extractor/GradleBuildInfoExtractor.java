@@ -1,39 +1,22 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
-import org.jfrog.build.api.ci.Agent;
-import org.jfrog.build.api.ci.Artifact;
-import org.jfrog.build.api.ci.BuildAgent;
-import org.jfrog.build.api.ci.BuildInfo;
-import org.jfrog.build.api.ci.Dependency;
-import org.jfrog.build.api.ci.Issue;
-import org.jfrog.build.api.ci.IssueTracker;
-import org.jfrog.build.api.ci.Issues;
-import org.jfrog.build.api.ci.LicenseControl;
-import org.jfrog.build.api.ci.MatrixParameter;
-import org.jfrog.build.api.ci.Module;
-import org.jfrog.build.api.ci.Vcs;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.Artifact;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
@@ -162,19 +145,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         if (!vcs.isEmpty()) {
             bib.vcs(Arrays.asList(vcs));
         }
-
-        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
-        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
-        if (StringUtils.isNotBlank(notificationRecipients)) {
-            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
-        }
-        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
-        String scopes = clientConf.info.licenseControl.getScopes();
-        if (StringUtils.isNotBlank(scopes)) {
-            licenseControl.setScopesList(scopes);
-        }
-        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-        bib.licenseControl(licenseControl);
 
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
