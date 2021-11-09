@@ -60,7 +60,7 @@ public class Artifact extends BaseBuildFileBean {
         }
 
         Artifact artifact = (Artifact) o;
-        return (StringUtils.equals(name, artifact.name)) && StringUtils.equals(remotePath, artifact.remotePath);
+        return StringUtils.equals(name, artifact.name) && StringUtils.equals(remotePath, artifact.remotePath);
     }
 
     @Override
