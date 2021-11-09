@@ -1,10 +1,10 @@
 # Deployer settings
-artifactory.publish.publications=${publications}
-artifactory.publish.contextUrl=${contextUrl}
-artifactory.publish.repoKey=${localRepo}
-artifactory.publish.username=${username}
-artifactory.publish.password=${password}
-artifactory.publish.unstable=false
-artifactory.publish.buildInfo=true
-artifactory.publish.maven=true
-artifactory.publish.ivy=true
+publish.publications=${publications}
+publish.contextUrl=${contextUrl}
+publish.repoKey=${localRepo}
+publish.username=${username}
+publish.password=${password}
+publish.unstable=false
+publish.buildInfo=true
+publish.maven=true
+publish.ivy=true
