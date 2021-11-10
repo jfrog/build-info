@@ -1,4 +1,8 @@
 # Release Notes
+## build-info-extractor 2.31.3 / gradle-artifactory-plugin 4.24.22 (November 10, 2021)
+- Use the latest release of the Gradle Artifactory plugin. ([566](https://github.com/jfrog/build-info/pull/566))
+- Deprecate 'artifactory.' properties prefix ([570](https://github.com/jfrog/build-info/pull/570))
+
 ## build-info-extractor 2.31.2 / gradle-artifactory-plugin 4.24.21 (November 3, 2021)
 - Add CVE ID to Xray scan Issue ([564](https://github.com/jfrog/build-info/pull/564))
 - Improve dependency tree performance and memory consumption ([562](https://github.com/jfrog/build-info/pull/562)) ([565](https://github.com/jfrog/build-info/pull/565))
