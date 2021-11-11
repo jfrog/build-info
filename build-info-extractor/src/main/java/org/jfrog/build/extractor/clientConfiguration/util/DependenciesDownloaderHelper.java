@@ -21,22 +21,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.artifactory.Artifact
 import org.jfrog.filespecs.FileSpec;
 import org.jfrog.filespecs.entities.FilesGroup;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.SequenceInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.MD5_HEADER_NAME;
@@ -75,7 +62,7 @@ public class DependenciesDownloaderHelper {
 
     /**
      * Download dependencies by the provided spec using the provided in the constructor client.
-     * returns a distinct list of downloaded artifacts
+     * returns list of downloaded artifacts
      *
      * @param downloadSpec the download spec
      * @return list of downloaded artifacts
@@ -85,7 +72,7 @@ public class DependenciesDownloaderHelper {
         ArtifactorySearcher searcher = new ArtifactorySearcher(downloader.getArtifactoryManager(), log);
         Set<DownloadableArtifact> downloadableArtifacts;
         List<AqlSearchResult.SearchEntry> searchResults;
-        HashSet<Dependency> resolvedDependencies = new HashSet<>();
+        List<Dependency> resolvedDependencies = new ArrayList<>();
 
         for (FilesGroup file : downloadSpec.getFiles()) {
             log.debug("Downloading dependencies using spec: \n" + file.toString());
@@ -97,7 +84,7 @@ public class DependenciesDownloaderHelper {
             }
             resolvedDependencies.addAll(downloadDependencies(downloadableArtifacts));
         }
-        return new ArrayList<>(resolvedDependencies);
+        return resolvedDependencies;
     }
 
     private void replaceTargetPlaceholders(String searchPattern, Set<DownloadableArtifact> downloadableArtifacts, String target) {
