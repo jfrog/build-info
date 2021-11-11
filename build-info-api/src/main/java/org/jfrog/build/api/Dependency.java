@@ -18,6 +18,7 @@ package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -121,7 +122,10 @@ public class Dependency extends BaseBuildFileBean {
         }
         Dependency that = (Dependency) o;
 
-        if (!Objects.equals(id, that.id)) {
+        if (!StringUtils.equals(id, that.id)) {
+            return false;
+        }
+        if (!StringUtils.equals(remotePath, that.remotePath)) {
             return false;
         }
         if (!Objects.equals(scopes, that.scopes)) {
@@ -132,6 +136,6 @@ public class Dependency extends BaseBuildFileBean {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, scopes, Arrays.deepHashCode(requestedBy));
+        return Objects.hash(id, scopes, Arrays.deepHashCode(requestedBy), remotePath);
     }
 }
