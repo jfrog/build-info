@@ -7,8 +7,6 @@ import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
-import org.jfrog.filespecs.FileSpec;
-import org.jfrog.filespecs.entities.FilesGroup;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -20,13 +18,9 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.ArtifactMetaData;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MD5_ALGORITHM_NAME;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MIN_SIZE_FOR_CONCURRENT_DOWNLOAD;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.SHA1_ALGORITHM_NAME;
+import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.*;
 
 /**
  * Integration tests for the DependenciesDownloader classes.
@@ -116,36 +110,6 @@ public class DownloadTest extends IntegrationTestsBase {
         Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
         Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
         Assert.assertEquals((new File(targetDirPath + fileName)).length(), fileSize);
-    }
-
-    public void testDownloadArtifactFromDifferentPath() throws IOException {
-        String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "testDownloaddupArtifactFromDifferentPath" + File.separatorChar;
-        FileSpec fileSpec = new FileSpec();
-        // Upload one file to different locations in Artifactory.
-        try {
-            File file = createRandomFile(tempWorkspace.getPath() + File.pathSeparatorChar + "file", 1);
-            for (int i = 0; i < 3; i++) {
-                String filePath = TEST_REPO_PATH + "/" + i + "/file";
-                DeployDetails deployDetails = new DeployDetails.Builder()
-                        .file(file)
-                        .artifactPath(filePath)
-                        .targetRepository(localRepo1)
-                        .explode(false)
-                        .packageType(DeployDetails.PackageType.GENERIC)
-                        .build();
-                FilesGroup fg = new FilesGroup();
-                fg.setPattern(localRepo1 + "/" + filePath);
-                fg.setTarget(targetDirPath);
-                fileSpec.addFilesGroup(fg);
-                // Upload artifact
-                artifactoryManager.upload(deployDetails);
-            }
-            DependenciesDownloaderHelper helper = new DependenciesDownloaderHelper(artifactoryManager, tempWorkspace.getPath(), log);
-            List<Dependency> dependencies = helper.downloadDependencies(fileSpec);
-            Assert.assertEquals(dependencies.size(), 3);
-        } finally {
-            FileUtils.deleteDirectory(tempWorkspace);
-        }
     }
 
     /**
