@@ -7,7 +7,7 @@ buildscript {
         dependencies {
             classpath "com.gradle.publish:plugin-publish-plugin:+"
             classpath "io.github.gradle-nexus:publish-plugin:+"
-            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:+"
+            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
         }
     }
 }
