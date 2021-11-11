@@ -5,6 +5,8 @@ import org.jfrog.build.api.util.Log;
 
 import java.util.Map;
 
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.ARTIFACTORY_PREFIX;
+
 /**
  * @author freds
  *         Date: 1/6/11
@@ -41,11 +43,18 @@ public class PrefixPropertyHandler {
     }
 
     public String getStringValue(String key, String def) {
-        String s = props.get(prefix + key);
-        if (s == null) {
-            s = def;
+        String value = props.get(prefix + key);
+        if (StringUtils.isNotBlank(value)) {
+            return value;
         }
-        return s;
+        if (StringUtils.startsWith(prefix, ARTIFACTORY_PREFIX)) {
+            value = props.get(prefix.substring(ARTIFACTORY_PREFIX.length()) + key);
+            if (StringUtils.isNotBlank(value)) {
+                return value;
+            }
+        }
+
+        return def;
     }
 
     public void setStringValue(String key, String value) {
@@ -57,13 +66,20 @@ public class PrefixPropertyHandler {
     }
 
     public Boolean getBooleanValue(String key, Boolean def) {
-        String s = props.get(prefix + key);
+        String value = props.get(prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else
-        Boolean result = (s == null) ? null : Boolean.parseBoolean(s);
-        if (result == null) {
-            result = def;
+        Boolean result = (value == null) ? null : Boolean.parseBoolean(value);
+        if (result != null) {
+            return result;
         }
-        return result;
+        if (StringUtils.startsWith(prefix, ARTIFACTORY_PREFIX)) {
+            value = props.get(prefix.substring(ARTIFACTORY_PREFIX.length()) + key);
+            result = (value == null) ? null : Boolean.parseBoolean(value);
+            if (result != null) {
+                return result;
+            }
+        }
+        return def;
     }
 
     public void setBooleanValue(String key, Boolean value) {
@@ -79,16 +95,28 @@ public class PrefixPropertyHandler {
     }
 
     public Integer getIntegerValue(String key, Integer def) {
+        Integer result = getInteger(key, null);
+        if (result != null) {
+            return result;
+        }
+        if (StringUtils.startsWith(prefix, ARTIFACTORY_PREFIX)) {
+            result = getInteger(key, prefix.substring(ARTIFACTORY_PREFIX.length()));
+            if (result != null) {
+                return result;
+            }
+        }
+        return def;
+    }
+
+    private Integer getInteger(String key, String customPrefix) {
+        String targetPrefix = customPrefix == null ? prefix : customPrefix;
         Integer result;
-        String s = props.get(prefix + key);
+        String s = props.get(targetPrefix + key);
         if (s != null && !StringUtils.isNumeric(s)) {
-            log.debug("Property '" + prefix + key + "' is not of numeric value '" + s + "'");
+            log.debug("Property '" + targetPrefix + key + "' is not of numeric value '" + s + "'");
             result = null;
         } else {
             result = (s == null) ? null : Integer.parseInt(s);
-        }
-        if (result == null) {
-            result = def;
         }
         return result;
     }
