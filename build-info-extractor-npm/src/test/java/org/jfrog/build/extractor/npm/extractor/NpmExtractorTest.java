@@ -38,11 +38,9 @@ import static org.testng.Assert.*;
 public class NpmExtractorTest extends IntegrationTestsBase {
 
     private static final String NPM_LOCAL_REPO = "build-info-tests-npm-local";
-    private static final String NPM_REMOTE_REPO = "build-info-tests-npm-remote";
-    private static final String NPM_VIRTUAL_REPO = "build-info-tests-npm-virtual";
     private static final Set<String> DEV_SCOPE = Stream.of("dev").collect(Collectors.toSet());
     private static final Set<String> PROD_SCOPE = Stream.of("prod").collect(Collectors.toSet());
-    private static final Set<String> DEV_PROD_SCOPE = Stream.of("prod","dev").collect(Collectors.toSet());
+    private static final Set<String> DEV_PROD_SCOPE = Stream.of("prod", "dev").collect(Collectors.toSet());
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
@@ -51,8 +49,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     public NpmExtractorTest() {
         localRepo1 = NPM_LOCAL_REPO;
-        remoteRepo = NPM_REMOTE_REPO;
-        virtualRepo = NPM_VIRTUAL_REPO;
+        virtualRepo = "";
     }
 
     private enum Project {
@@ -186,15 +183,15 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             Path path = packageJsonPath ? projectDir.resolve("package.json") : projectDir;
             if (isNpmCi) {
                 // Run npm install to generate package-lock.json file.
-                new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, false, null).execute();
+                new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, false, null).execute();
             }
 
             // Execute command.
             NpmInstallCi buildExecutor;
             if (isNpmCi) {
-                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, true, null);
+                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, true, null);
             } else {
-                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, virtualRepo, args, log, path, null, null, null, false, null);
+                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, false, null);
             }
             Build build = buildExecutor.execute();
 
@@ -233,7 +230,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Run npm publish
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
-            NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder, props, path, virtualRepo, log, null, null);
+            NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder, props, path, localRepo1, log, null, null);
             Build build = npmPublish.execute();
             assertEquals(build.getModules().size(), 1);
             Module module = build.getModules().get(0);
@@ -241,7 +238,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             // Check correctness of the module and the artifact
             assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
-            assertEquals(module.getRepository(), virtualRepo);
+            assertEquals(module.getRepository(), localRepo1);
             assertEquals(module.getArtifacts().size(), 1);
             assertEquals(module.getArtifacts().get(0).getName(), project.getModuleId());
             assertEquals(module.getArtifacts().get(0).getRemotePath(), project.getRemotePath());
