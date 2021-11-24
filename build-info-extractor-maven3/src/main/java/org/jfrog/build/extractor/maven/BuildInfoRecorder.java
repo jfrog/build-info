@@ -151,6 +151,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = new ConcurrentHashMap<>();
+            skipDefaultDeploy(event.getSession());
 
             if (wrappedListener != null) {
                 wrappedListener.sessionStarted(event);
@@ -729,5 +730,11 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         currentModuleArtifacts.remove();
         currentModuleDependencies.remove();
         resolvedArtifacts.clear();
+    }
+    /**
+     * Skip the default maven deploy behaviour.
+     */
+    private void skipDefaultDeploy(MavenSession session) {
+        session.getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString());
     }
 }
