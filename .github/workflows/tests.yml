@@ -1,0 +1,110 @@
+name: Build-Info Tests
+env:
+  BITESTS_PLATFORM_URL: ${{ secrets.BITESTS_PLATFORM_URL }}
+  BITESTS_PLATFORM_USERNAME: ${{ secrets.BITESTS_PLATFORM_USERNAME }}
+  BITESTS_PLATFORM_ADMIN_TOKEN: ${{ secrets.BITESTS_PLATFORM_ADMIN_TOKEN }}
+  BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_LOCAL_DOMAIN }}
+  BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_REMOTE_DOMAIN }}
+  BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN }}
+  BITESTS_ARTIFACTORY_DOCKER_LOCAL_REPO: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_LOCAL_REPO }}
+  BITESTS_ARTIFACTORY_DOCKER_REMOTE_REPO: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_REMOTE_REPO }}
+  BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO: ${{ secrets.BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_REPO }}
+on:
+  push:
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [labeled]
+# Ensures that only the latest commit is running for each PR at a time.
+# Ignores this rule for push events.
+concurrency:
+  group: ${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+jobs:
+  Extractor-Tests:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    name: ${{ matrix.suite }} ${{ matrix.os }}
+    concurrency: ${{ matrix.suite }}
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [extractor, pip, npm, maven3, gradle, nuget, go]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Java
+        uses: actions/setup-java@v2
+        with:
+          java-version: "8"
+          distribution: "zulu"
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.x
+        if: ${{ matrix.suite == 'go' }}
+
+      - name: Install npm
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+        if: ${{ matrix.suite == 'npm' }}
+
+      - name: Install NuGet
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: 5.x
+        if: ${{ matrix.suite == 'nuget' }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+        if: ${{ matrix.suite == 'pip' }}
+
+      - name: Setup Python virtual environment
+        if: ${{ matrix.suite == 'pip' }}
+        run: python -m venv venv
+
+      - name: Activate Python virtual env on Windows
+        if: ${{ matrix.suite == 'pip' && matrix.os == 'windows-latest' }}
+        run: . venv\Scripts\activate.ps1
+
+      - name: Activate Python virtual env on Posix
+        if: ${{ matrix.suite == 'pip' && ( matrix.os == 'ubuntu-latest' || matrix.os == 'macos-latest' ) }}
+        run: source venv/bin/activate
+
+      - name: Extractor-Tests
+        run: ./gradlew clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test
+        if: ${{ matrix.suite == 'extractor' }}
+
+      - name: Build-Tools-Tests
+        run: ./gradlew clean build-info-extractor-${{ matrix.suite }}:test
+        if: ${{ matrix.suite != 'extractor' }}
+
+  Docker-Tests:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    name: docker ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+       max-parallel: 1
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Install Gradle
+        uses: actions/setup-java@v2
+        with:
+          java-version: "8"
+          distribution: "zulu"
+      - uses: docker-practice/actions-setup-docker@master
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Docker-Tests
+        run: ./gradlew clean build-info-extractor-docker:test
