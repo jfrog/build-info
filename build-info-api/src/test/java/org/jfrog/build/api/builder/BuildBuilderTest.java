@@ -1,5 +1,3 @@
-
-
 package org.jfrog.build.api.builder;
 
 import org.jfrog.build.api.Agent;

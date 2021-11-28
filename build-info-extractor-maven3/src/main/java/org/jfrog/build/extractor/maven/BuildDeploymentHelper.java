@@ -4,13 +4,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ModuleParallelDeployHelper;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
-import org.jfrog.build.extractor.ModuleParallelDeployHelper;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -36,12 +36,7 @@ public class BuildDeploymentHelper {
     @Requirement
     private ArtifactoryManagerBuilder artifactoryManagerBuilder;
 
-    public void deploy(BuildInfo buildInfo,
-                       ArtifactoryClientConfiguration clientConf,
-                       Map<String, DeployDetails> deployableArtifactBuilders,
-                       boolean wereThereTestFailures,
-                       File basedir) {
-
+    public void deploy(BuildInfo buildInfo, ArtifactoryClientConfiguration clientConf, Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Map<String, Set<DeployDetails>> deployableArtifactsByModule = prepareDeployableArtifacts(buildInfo, deployableArtifactBuilders);
 
         logger.debug("Build Info Recorder: deploy artifacts: " + clientConf.publisher.isPublishArtifacts());
@@ -57,7 +52,7 @@ public class BuildDeploymentHelper {
             try {
                 BuildInfoExtractorUtils.saveBuildInfoToFile(buildInfo, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
             } catch (Exception e) {
-                logger.error("Failed writing build info to file: " , e);
+                logger.error("Failed writing build info to file: ", e);
                 throw new RuntimeException("Failed writing build info to file", e);
             }
         }
