@@ -1,5 +1,5 @@
 # Resolver settings
-artifactory.resolve.contextUrl=${contextUrl}
-artifactory.resolve.repoKey=${virtualRepo}
-artifactory.resolve.username=${username}
-artifactory.resolve.password=${password}
+resolve.contextUrl=${contextUrl}
+resolve.repoKey=${virtualRepo}
+resolve.username=${username}
+resolve.password=${password}

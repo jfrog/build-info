@@ -5,9 +5,11 @@ import org.jfrog.build.api.util.Log;
 
 import java.util.Map;
 
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.ARTIFACTORY_PREFIX;
+
 /**
  * @author freds
- *         Date: 1/6/11
+ * Date: 1/6/11
  */
 public class PrefixPropertyHandler {
     protected final Map<String, String> props;
@@ -36,16 +38,25 @@ public class PrefixPropertyHandler {
         return prefix;
     }
 
+    public String getDeprecatedPrefix() {
+        return ARTIFACTORY_PREFIX + prefix;
+    }
+
     public String getStringValue(String key) {
         return getStringValue(key, null);
     }
 
     public String getStringValue(String key, String def) {
-        String s = props.get(prefix + key);
-        if (s == null) {
-            s = def;
+        String value = props.get(prefix + key);
+        if (StringUtils.isNotBlank(value)) {
+            return value;
         }
-        return s;
+        value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        if (StringUtils.isNotBlank(value)) {
+            return value;
+        }
+
+        return def;
     }
 
     public void setStringValue(String key, String value) {
@@ -57,13 +68,18 @@ public class PrefixPropertyHandler {
     }
 
     public Boolean getBooleanValue(String key, Boolean def) {
-        String s = props.get(prefix + key);
+        String value = props.get(prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else
-        Boolean result = (s == null) ? null : Boolean.parseBoolean(s);
-        if (result == null) {
-            result = def;
+        Boolean result = (value == null) ? null : Boolean.parseBoolean(value);
+        if (result != null) {
+            return result;
         }
-        return result;
+        value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        result = (value == null) ? null : Boolean.parseBoolean(value);
+        if (result != null) {
+            return result;
+        }
+        return def;
     }
 
     public void setBooleanValue(String key, Boolean value) {
@@ -79,16 +95,25 @@ public class PrefixPropertyHandler {
     }
 
     public Integer getIntegerValue(String key, Integer def) {
+        Integer result = getInteger(key, prefix);
+        if (result != null) {
+            return result;
+        }
+        result = getInteger(key, ARTIFACTORY_PREFIX + prefix);
+        if (result != null) {
+            return result;
+        }
+        return def;
+    }
+
+    private Integer getInteger(String key, String targetPrefix) {
         Integer result;
-        String s = props.get(prefix + key);
+        String s = props.get(targetPrefix + key);
         if (s != null && !StringUtils.isNumeric(s)) {
-            log.debug("Property '" + prefix + key + "' is not of numeric value '" + s + "'");
+            log.debug("Property '" + targetPrefix + key + "' is not of numeric value '" + s + "'");
             result = null;
         } else {
             result = (s == null) ? null : Integer.parseInt(s);
-        }
-        if (result == null) {
-            result = def;
         }
         return result;
     }
