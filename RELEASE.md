@@ -1,4 +1,7 @@
 # Release Notes
+## build-info-extractor 2.32.0 / gradle-artifactory-plugin 4.25.0 (November 30, 2021)
+- Add 'mvn deploy' command.
+ 
 ## build-info-extractor 2.31.2 / gradle-artifactory-plugin 4.24.21 (November 3, 2021)
 - Add CVE ID to Xray scan Issue ([564](https://github.com/jfrog/build-info/pull/564))
 - Improve dependency tree performance and memory consumption ([562](https://github.com/jfrog/build-info/pull/562)) ([565](https://github.com/jfrog/build-info/pull/565))
