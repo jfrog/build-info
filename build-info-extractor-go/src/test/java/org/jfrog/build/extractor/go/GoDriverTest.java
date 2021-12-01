@@ -35,8 +35,17 @@ public class GoDriverTest {
             FileUtils.copyDirectory(PROJECT_ORIGIN.toFile(), projectDir);
             GoDriver driver = new GoDriver(null, System.getenv(), projectDir, new NullLog());
             driver.modTidy(false);
-            CommandResults results = driver.getUsedModules(false);
+
+            // Run "go list -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
+            CommandResults results = driver.getUsedModules(false, false);
             Set<String> actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n"))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+            assertEquals(actualUsedModules, EXPECTED_USED_MODULES);
+
+            // Run "go list -e -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
+            results = driver.getUsedModules(false, true);
+            actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n"))
                     .map(String::trim)
                     .collect(Collectors.toSet());
             assertEquals(actualUsedModules, EXPECTED_USED_MODULES);
