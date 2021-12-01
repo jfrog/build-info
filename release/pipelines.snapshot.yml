@@ -36,9 +36,10 @@ pipelines:
             - export JFROG_CLI_BUILD_PROJECT=ecosys
 
             # Configure JFrog CLI
-            - curl -fL https://getcli.jfrog.io | bash -s v2 && chmod +x jfrog
-            - ./jfrog c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
-            - ./jfrog gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
+            - curl -fL https://getcli.jfrog.io/v2-jf | sh && chmod +x jfrog
+            - ./jf c rm --quiet
+            - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
 
             # Run install and publish
             - >
@@ -46,14 +47,14 @@ pipelines:
               JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
               JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
               JFROG_CLI_BUILD_PROJECT=$JFROG_CLI_BUILD_PROJECT
-              ./jfrog gradle clean aP -x test
-            - ./jfrog rt bag && ./jfrog rt bce
-            - ./jfrog rt bp
-            # - ./jfrog rt bs
+              ./jf gradle clean aP -x test
+            - ./jf rt bag && ./jf rt bce
+            - ./jf rt bp
+            - ./jf rt bs --fail=false
 
             # Distribute release bundle
-            - ./jfrog ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --spec-vars="version=$run_number" --sign
-            - ./jfrog ds rbd build-info-snapshot $run_number --site="releases.jfrog.io"
+            - ./jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --spec-vars="version=$run_number" --sign
+            - ./jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io"
 
           onComplete:
             - *UPDATE_COMMIT_STATUS
