@@ -3,7 +3,7 @@ resources:
     type: GitRepo
     configuration:
       path: jfrog/build-info
-      gitProvider: github
+      gitProvider: il_automation
       branches:
         include: master
 
@@ -11,7 +11,7 @@ resources:
     type: GitRepo
     configuration:
       path: jfrog/build-info
-      gitProvider: github
+      gitProvider: il_automation
       buildOn:
         commit: false
       branches:

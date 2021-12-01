@@ -1,5 +1,5 @@
 pipelines:
-  - name: build_bi
+  - name: release_build_info
     configuration:
       runtime:
         type: image
@@ -22,23 +22,23 @@ pipelines:
           inputResources:
             - name: biReleaseGit
           integrations:
-            - name: releases_temp
-            - name: github
+            - name: il_automation
+            - name: entplus_deployer
             - name: mvn_central
         execution:
-          onStart:
-            - restore_cache_files gradle_cache $res_biReleaseGit_resourcePath/.gradle
           onExecute:
             - cd $res_biReleaseGit_resourcePath
 
             # Set env
             - export CI=true
-            - export JFROG_CLI_BUILD_NAME=build-info
+            - export JFROG_BUILD_STATUS=PASS
+            - export JFROG_CLI_BUILD_NAME=ecosystem-build-info-release
             - export JFROG_CLI_BUILD_NUMBER=$run_number
+            - export JFROG_CLI_BUILD_PROJECT=ecosys
 
             # Configure git
             - git checkout master
-            - git remote set-url origin https://$int_github_token@github.com/jfrog/build-info.git
+            - git remote set-url origin https://$int_il_automation_token@github.com/jfrog/build-info.git
 
             # Make sure versions provided
             - echo "Checking variables"
@@ -48,11 +48,9 @@ pipelines:
             - test -n "$NEXT_GRADLE_DEVELOPMENT_VERSION" -a "$NEXT_GRADLE_DEVELOPMENT_VERSION" != "0.0.0"
 
             # Configure JFrog CLI
-            - curl -fL https://getcli.jfrog.io | sh && chmod +x jfrog
-            - ./jfrog c add releases --artifactory-url=https://releases.jfrog.io/artifactory --access-token=$int_releases_temp_token
-            - ./jfrog rt gradlec --use-wrapper --uses-plugin
-              --server-id-resolve releases --repo-resolve jcenter
-              --server-id-deploy releases --repo-deploy oss-release-local
+            - curl -fL https://getcli.jfrog.io | bash -s v2 && chmod +x jfrog
+            - ./jfrog c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - ./jfrog gradlec --use-wrapper --uses-plugin --repo-resolve jcenter --repo-deploy oss-release-local
 
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
@@ -66,9 +64,14 @@ pipelines:
             - >
               ORG_GRADLE_PROJECT_signingKey=$(echo $int_mvn_central_signingKey | base64 -d)
               ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
-              ./jfrog rt gradle clean aP -x test -Psign
-#             - ./jfrog rt bag
-#             - ./jfrog rt bp
+              ./jfrog gradle clean aP -x test -Psign
+              - ./jfrog rt bag && ./jfrog rt bce
+              - ./jfrog rt bp
+            # - ./jfrog rt bs
+
+            # Distribute release bundle
+            - ./jfrog ds rbc build-info $NEXT_VERSION --spec=./ci/distribution/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION" --sign
+            - ./jfrog ds rbd build-info $NEXT_VERSION --site="releases.jfrog.io"
 
             # Publish to Maven Central
             - >
@@ -84,7 +87,3 @@ pipelines:
 
             # Push changes
             - git push
-
-          onComplete:
-            # Save .m2 cache
-            - add_cache_files $res_biReleaseGit_resourcePath/.gradle gradle_cache

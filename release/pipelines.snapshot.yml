@@ -1,0 +1,61 @@
+updateCommitStatus: &UPDATE_COMMIT_STATUS update_commit_status biSnapshotGit --context "$step_name"
+
+pipelines:
+  # Global configuration
+  - name: create_build_info_snapshot
+    configuration:
+      runtime:
+        type: image
+        image:
+          auto:
+            language: java
+            versions:
+              - "8.0.0"
+
+    steps:
+      - name: Snapshot
+        type: Bash
+        configuration:
+          inputResources:
+            - name: biSnapshotGit
+          integrations:
+            - name: entplus_deployer
+        execution:
+          onStart:
+            - *UPDATE_COMMIT_STATUS
+            # Save gradle cache
+            - restore_cache_files gradle_cache $res_biSnapshotGit_resourcePath/.gradle
+          onExecute:
+            - cd $res_biSnapshotGit_resourcePath
+
+            # Set env
+            - export CI=true
+            - export JFROG_BUILD_STATUS=PASS
+            - export JFROG_CLI_BUILD_NAME=ecosystem-build-info-dev
+            - export JFROG_CLI_BUILD_NUMBER=$run_number
+            - export JFROG_CLI_BUILD_PROJECT=ecosys
+
+            # Configure JFrog CLI
+            - curl -fL https://getcli.jfrog.io | bash -s v2 && chmod +x jfrog
+            - ./jfrog c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - ./jfrog gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
+
+            # Run install and publish
+            - >
+              env -i PATH=$PATH HOME=$HOME
+              JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
+              JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
+              JFROG_CLI_BUILD_PROJECT=$JFROG_CLI_BUILD_PROJECT
+              ./jfrog gradle clean aP -x test
+            - ./jfrog rt bag && ./jfrog rt bce
+            - ./jfrog rt bp
+            # - ./jfrog rt bs
+
+            # Distribute release bundle
+            - ./jfrog ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --spec-vars="version=$run_number" --sign
+            - ./jfrog ds rbd build-info-snapshot $run_number --site="releases.jfrog.io"
+
+          onComplete:
+            - *UPDATE_COMMIT_STATUS
+            # Save gradle cache
+            - add_cache_files $res_biSnapshotGit_resourcePath/.gradle gradle_cache

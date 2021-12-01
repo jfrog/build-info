@@ -1,0 +1,8 @@
+{
+  "files": [
+    {
+      "pattern": "ecosys-oss-release-local/(org/jfrog/buildinfo/*/${version}/build-info-*)",
+      "target": "oss-release-local/{1}"
+    }
+  ]
+}
