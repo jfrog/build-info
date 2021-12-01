@@ -36,7 +36,7 @@ pipelines:
             - export JFROG_CLI_BUILD_PROJECT=ecosys
 
             # Configure JFrog CLI
-            - curl -fL https://getcli.jfrog.io/v2-jf | sh && chmod +x jfrog
+            - curl -fL https://getcli.jfrog.io/v2-jf | sh && chmod +x jf
             - ./jf c rm --quiet
             - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
             - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
