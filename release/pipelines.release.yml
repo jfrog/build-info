@@ -22,8 +22,8 @@ pipelines:
           inputResources:
             - name: biReleaseGit
           integrations:
-            - name: ecosystem_automation
             - name: il_automation
+            - name: entplus_deployer
             - name: mvn_central
         execution:
           onExecute:
@@ -49,8 +49,8 @@ pipelines:
 
             # Configure JFrog CLI
             - curl -fL https://getcli.jfrog.io | bash -s v2 && chmod +x jfrog
-            - ./jfrog c add internal --url=$int_ecosystem_automation_url --access-token=$int_ecosystem_automation_token
-            - ./jfrog rt gradlec --use-wrapper --uses-plugin --repo-resolve jcenter --repo-deploy oss-release-local
+            - ./jfrog c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - ./jfrog gradlec --use-wrapper --uses-plugin --repo-resolve jcenter --repo-deploy oss-release-local
 
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
@@ -64,14 +64,14 @@ pipelines:
             - >
               ORG_GRADLE_PROJECT_signingKey=$(echo $int_mvn_central_signingKey | base64 -d)
               ORG_GRADLE_PROJECT_signingPassword=$int_mvn_central_signingPassword
-              ./jfrog rt gradle clean aP -x test -Psign
+              ./jfrog gradle clean aP -x test -Psign
               - ./jfrog rt bag && ./jfrog rt bce
               - ./jfrog rt bp
-              - ./jfrog rt bs
+            # - ./jfrog rt bs
 
             # Distribute release bundle
-            - ./jfrog ds rbc --spec=./ci/distribution/prod-filespec.json $JFROG_CLI_BUILD_NAME $JFROG_CLI_BUILD_NUMBER --spec-vars="version=$JFROG_CLI_BUILD_NUMBER" --sign
-            - ./jfrog ds rbd $JFROG_CLI_BUILD_NAME $JFROG_CLI_BUILD_NUMBER --site="releases.jfrog.io"
+            - ./jfrog ds rbc build-info $NEXT_VERSION --spec=./ci/distribution/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION" --sign
+            - ./jfrog ds rbd build-info $NEXT_VERSION --site="releases.jfrog.io"
 
             # Publish to Maven Central
             - >
