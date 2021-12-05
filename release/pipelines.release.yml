@@ -51,7 +51,7 @@ pipelines:
             - curl -fL https://getcli.jfrog.io/v2-jf | sh && chmod +x jf
             - ./jf c rm --quiet
             - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
-            - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve jcenter --repo-deploy oss-release-local
+            - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-release-local
 
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
@@ -68,11 +68,11 @@ pipelines:
               ./jf gradle clean aP -x test -Psign
             - ./jf rt bag && ./jf rt bce
             - ./jf rt bp
-            - ./jf rt bs --fail=false
+            - ./jf bs --fail=false
 
             # Distribute release bundle
-            - ./jf ds rbc build-info $NEXT_VERSION --spec=./ci/distribution/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION" --sign
-            - ./jf ds rbd build-info $NEXT_VERSION --site="releases.jfrog.io"
+            - ./jf ds rbc build-info $NEXT_VERSION --spec=./release/specs/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION" --sign
+            - ./jf ds rbd build-info $NEXT_VERSION --site="releases.jfrog.io" --sync
 
             # Publish to Maven Central
             - >
