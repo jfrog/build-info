@@ -73,11 +73,7 @@ public class Issue implements Serializable {
             return false;
         }
 
-        if (summary != null ? !summary.equals(that.summary) : that.summary != null) {
-            return false;
-        }
-
-        return true;
+        return summary != null ? summary.equals(that.summary) : that.summary == null;
     }
 
     @Override
@@ -87,5 +83,4 @@ public class Issue implements Serializable {
         result = 31 * result + (summary != null ? summary.hashCode() : 0);
         return result;
     }
-
 }

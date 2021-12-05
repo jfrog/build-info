@@ -44,7 +44,7 @@ public class PackageManagerUtils {
      * Collect environment variables according to the env include-exclude patterns.
      *
      * @param clientConfiguration - Artifactory client configuration
-     * @param buildInfo           - The target buildInfo
+     * @param buildInfo           - The target build-info
      */
     public static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
         if (!clientConfiguration.isIncludeEnvVars()) {

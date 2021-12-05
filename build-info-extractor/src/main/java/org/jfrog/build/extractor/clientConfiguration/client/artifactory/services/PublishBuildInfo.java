@@ -110,7 +110,7 @@ public class PublishBuildInfo extends VoidJFrogService {
         } else {
             url = createBuildInfoUrl(client.getUrl(), build.getName(), build.getNumber(), true);
         }
-        log.info("BuildInfo successfully deployed. Browse it in Artifactory under " + url);
+        log.info("Build-info successfully deployed. Browse it in Artifactory under " + url);
         return result;
     }
 }

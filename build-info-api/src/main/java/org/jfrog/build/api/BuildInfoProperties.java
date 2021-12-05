@@ -16,8 +16,6 @@ public interface BuildInfoProperties {
     String BUILD_INFO_PROP_PREFIX = BUILD_INFO_PREFIX + "property.";
     String BUILD_INFO_ISSUES_TRACKER_PREFIX = BUILD_INFO_PREFIX + "issues.";
 
-    String BUILD_INFO_GOVERNANCE_PREFIX = BUILD_INFO_PREFIX + "governance.";
-
     /**
      * Prefix for build info properties that are coming from the CI server.
      */

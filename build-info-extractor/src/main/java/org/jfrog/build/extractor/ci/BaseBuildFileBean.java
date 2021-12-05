@@ -93,6 +93,7 @@ public abstract class BaseBuildFileBean extends BaseBuildBean implements BuildFi
         result = 31 * result + (sha1 != null ? sha1.hashCode() : 0);
         result = 31 * result + (sha256 != null ? sha256.hashCode() : 0);
         result = 31 * result + (md5 != null ? md5.hashCode() : 0);
+        result = 31 * result + (remotePath != null ? remotePath.hashCode() : 0);
         return result;
     }
 }

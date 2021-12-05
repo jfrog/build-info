@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
@@ -606,7 +607,7 @@ public class BuildInfo extends BaseBuildBean {
         if (modules != null) {
             builder.modules(modules.stream().map(m -> {
                 return new org.jfrog.build.api.builder.ModuleBuilder().
-                        type(m.getType())
+                        type(ModuleType.valueOf(m.getType().toUpperCase()))
                         .id(m.getId())
                         .repository(m.getRepository())
                         .sha1(m.getSha1())

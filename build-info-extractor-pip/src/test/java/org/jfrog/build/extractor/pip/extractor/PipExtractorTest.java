@@ -132,7 +132,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
             BuildInfo buildInfo = pipInstall.execute();
             assertNotNull(buildInfo, "Pip execution returned empty buildInfo.");
 
-            // Validate produced buildInfo-info.
+            // Validate produced build-info.
             Module module = buildInfo.getModules().get(0);
             assertEquals(module.getType(), "pypi");
             assertEquals(module.getId(), project.moduleId);

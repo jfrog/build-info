@@ -33,7 +33,7 @@ public class SendModuleInfo extends VoidJFrogService {
         StringEntity stringEntity = new StringEntity(modulesAsJsonString, "UTF-8");
         stringEntity.setContentType(APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         request.setEntity(stringEntity);
-        log.info("Deploying buildInfo descriptor to: " + request.getURI().toString());
+        log.info("Deploying build-info descriptor to: " + request.getURI().toString());
         return request;
     }
 

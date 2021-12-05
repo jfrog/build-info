@@ -47,7 +47,7 @@ public class NpmPublish extends NpmCommand {
      * Publish npm package.
      *
      * @param artifactoryManagerBuilder - Artifactory manager builder builder.
-     * @param properties                - The Artifact properties to set (BuildInfo name, BuildInfo number, etc...).
+     * @param properties                - The Artifact properties to set (Build name, Build number, etc...).
      * @param path                      - Path to directory contains package.json or path to '.tgz' file.
      * @param deploymentRepository      - The repository it'll deploy to.
      * @param logger                    - The logger.

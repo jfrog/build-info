@@ -15,7 +15,7 @@ import java.util.Properties;
  */
 public class ModuleBuilder {
 
-    private String type;
+    private ModuleType type;
     private String id;
     private String repository;
     private String sha1;
@@ -35,7 +35,9 @@ public class ModuleBuilder {
             throw new IllegalArgumentException("Cannot build module entity without Module ID value");
         }
         Module module = new Module();
-        module.setType(type);
+        if (type != null) {
+            module.setType(type.name().toLowerCase());
+        }
         module.setId(id.trim());
         module.setRepository(repository);
         module.setSha1(sha1);
@@ -54,11 +56,6 @@ public class ModuleBuilder {
      * @return Builder instance
      */
     public ModuleBuilder type(ModuleType type) {
-        this.type = type.name().toLowerCase();
-        return this;
-    }
-
-    public ModuleBuilder type(String type) {
         this.type = type;
         return this;
     }

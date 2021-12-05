@@ -1,4 +1,4 @@
-package org.jfrog.build.api.builder;
+package org.jfrog.build.extractor.ci;
 
 import org.jfrog.build.api.Agent;
 import org.jfrog.build.api.Artifact;
@@ -7,6 +7,13 @@ import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.Vcs;
+import org.jfrog.build.api.builder.ArtifactBuilder;
+import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
+import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;

@@ -42,7 +42,7 @@ public abstract class PackageManagerExtractor implements Serializable {
      * Save the calculated build info .
      *
      * @param clientConfiguration - The client configuration
-     * @param buildInfo           - The buildInfo to save
+     * @param buildInfo           - The build-info to save
      */
     static void saveBuildInfoToFile(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
         String generatedBuildInfoPath = clientConfiguration.info.getGeneratedBuildInfoFilePath();

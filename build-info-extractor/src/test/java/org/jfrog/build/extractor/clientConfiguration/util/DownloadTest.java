@@ -119,7 +119,7 @@ public class DownloadTest extends IntegrationTestsBase {
     }
 
     public void testDownloadArtifactFromDifferentPath() throws IOException {
-        String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "testDownloaddupArtifactFromDifferentPath" + File.separatorChar;
+        String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "testDownloadDupArtifactFromDifferentPath" + File.separatorChar;
         FileSpec fileSpec = new FileSpec();
         // Upload one file to different locations in Artifactory.
         try {
