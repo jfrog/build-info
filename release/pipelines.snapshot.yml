@@ -41,6 +41,9 @@ pipelines:
             - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
             - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
 
+            # Delete former snapshots to make sure the release bundle will not contain the same artifacts
+            - ./jf rt rm "ecosys-oss-snapshot-local/org/jfrog/buildinfo/*"
+
             # Run install and publish
             - >
               env -i PATH=$PATH HOME=$HOME
@@ -50,11 +53,11 @@ pipelines:
               ./jf gradle clean aP -x test
             - ./jf rt bag && ./jf rt bce
             - ./jf rt bp
-            - ./jf rt bs --fail=false
+            - ./jf bs --fail=false
 
             # Distribute release bundle
-            - ./jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --spec-vars="version=$run_number" --sign
-            - ./jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io"
+            - ./jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --sign
+            - ./jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io" --sync
 
           onComplete:
             - *UPDATE_COMMIT_STATUS
