@@ -1,6 +1,6 @@
 package org.jfrog.build.api;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.testng.annotations.Test;
 
