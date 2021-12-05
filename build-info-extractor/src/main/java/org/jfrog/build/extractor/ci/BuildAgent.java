@@ -3,7 +3,7 @@
 package org.jfrog.build.extractor.ci;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 

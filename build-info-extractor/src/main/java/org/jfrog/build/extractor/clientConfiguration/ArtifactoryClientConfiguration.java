@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.api.util.CommonUtils;

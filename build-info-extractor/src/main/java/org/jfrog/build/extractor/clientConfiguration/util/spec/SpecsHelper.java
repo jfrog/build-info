@@ -3,7 +3,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.spec;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.Dependency;

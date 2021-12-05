@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.PatternResultFileSet;

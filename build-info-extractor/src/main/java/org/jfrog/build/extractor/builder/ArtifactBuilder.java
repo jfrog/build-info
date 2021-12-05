@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.builder;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.Artifact;
 
 import java.util.Properties;

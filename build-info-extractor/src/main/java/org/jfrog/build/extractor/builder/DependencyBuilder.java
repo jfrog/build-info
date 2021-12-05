@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.builder;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jfrog.build.extractor.ci.Dependency;
 
 import java.util.HashSet;

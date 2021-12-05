@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.pip.extractor;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;

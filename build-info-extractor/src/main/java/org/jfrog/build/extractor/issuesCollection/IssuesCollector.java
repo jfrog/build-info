@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.issuesCollection;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.ci.IssueTracker;

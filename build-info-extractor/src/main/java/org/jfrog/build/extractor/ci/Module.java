@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.ci;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
 import java.util.Collections;

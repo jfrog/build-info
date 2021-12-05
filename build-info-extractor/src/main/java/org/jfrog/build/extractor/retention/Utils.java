@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.retention;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.client.ArtifactoryVersion;
