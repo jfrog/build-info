@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.docker.extractor;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.Build;

@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.client.Version;

@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.npm.types;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 
 import java.io.IOException;

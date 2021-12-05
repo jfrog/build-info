@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.executor;
 
-import org.apache.commons.lang.SystemUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.UrlUtils;
 

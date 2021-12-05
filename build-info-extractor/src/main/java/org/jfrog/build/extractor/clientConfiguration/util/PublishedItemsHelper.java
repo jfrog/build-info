@@ -19,7 +19,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.UploadSpecHelper;
 
 import java.io.File;

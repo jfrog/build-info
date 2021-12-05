@@ -1,6 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
-import org.apache.commons.lang.ArrayUtils
+import org.apache.commons.lang3.ArrayUtils
 import org.gradle.api.artifacts.DependencyResolutionListener
 import org.gradle.api.artifacts.ModuleVersionIdentifier
 import org.gradle.api.artifacts.ResolvableDependencies

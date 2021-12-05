@@ -18,7 +18,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.codec.net.URLCodec;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 

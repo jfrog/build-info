@@ -269,7 +269,7 @@ public class DockerUtils {
         // Assuming proxy-less e.g. orgab.jfrog.team/docker-local.
         paths.add(imagePath);
 
-        int totalSlash = org.apache.commons.lang.StringUtils.countMatches(imagePath, "/");
+        int totalSlash = org.apache.commons.lang3.StringUtils.countMatches(imagePath, "/");
         if (cmd == CommandType.Push || totalSlash > 3) {
             return paths;
         }
