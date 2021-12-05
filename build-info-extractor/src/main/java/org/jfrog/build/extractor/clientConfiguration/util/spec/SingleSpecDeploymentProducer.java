@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
 import com.google.common.collect.Multimap;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.BooleanUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;

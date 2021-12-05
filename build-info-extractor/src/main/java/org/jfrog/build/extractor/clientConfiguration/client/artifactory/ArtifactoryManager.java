@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.BuildRetention;

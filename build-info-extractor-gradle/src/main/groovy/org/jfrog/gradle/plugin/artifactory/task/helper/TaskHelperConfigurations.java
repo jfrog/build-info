@@ -16,7 +16,7 @@
 
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.apache.tools.ant.util.FileUtils;
 import org.gradle.api.GradleException;

@@ -4,8 +4,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NullArgumentException;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
@@ -77,7 +76,7 @@ public class ScanBuild extends JFrogService<ArtifactoryXrayResponse> {
         try {
             result = mapper.readTree(content);
             if (result == null) {
-                throw new NullArgumentException("Received empty content from Artifactory");
+                throw new NullPointerException("Received empty content from Artifactory");
             }
         } catch (Exception ex) {
             // Throwing XrayErrorException since the retry-mechanism should not reset the retries-count in such error.

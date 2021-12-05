@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.apache.commons.lang.mutable.MutableBoolean;
+import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;

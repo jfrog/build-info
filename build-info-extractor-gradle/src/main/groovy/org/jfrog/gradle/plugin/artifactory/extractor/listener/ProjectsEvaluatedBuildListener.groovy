@@ -1,6 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.extractor.listener
 
-import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang3.StringUtils
 import org.gradle.BuildAdapter
 import org.gradle.StartParameter
 import org.gradle.api.Project

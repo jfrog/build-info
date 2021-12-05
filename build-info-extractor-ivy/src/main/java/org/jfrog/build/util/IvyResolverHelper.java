@@ -1,6 +1,6 @@
 package org.jfrog.build.util;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ivy.core.IvyPatternHelper;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 

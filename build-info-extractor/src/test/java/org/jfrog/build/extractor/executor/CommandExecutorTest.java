@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.executor;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.npm.types.NpmPackageInfo;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 

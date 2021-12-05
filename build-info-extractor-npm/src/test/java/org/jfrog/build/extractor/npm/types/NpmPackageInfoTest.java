@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.npm.types;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 

@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.distribution.services;
 
 import com.fasterxml.jackson.databind.type.TypeFactory;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.util.Log;

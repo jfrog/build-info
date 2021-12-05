@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.client.ProxyConfiguration;

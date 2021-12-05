@@ -1,7 +1,7 @@
 package org.jfrog.build.api.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.BuildInfoFields;
 
 import java.util.ArrayList;

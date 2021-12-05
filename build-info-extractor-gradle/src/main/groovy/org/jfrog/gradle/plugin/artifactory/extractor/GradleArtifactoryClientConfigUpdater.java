@@ -16,7 +16,7 @@
 
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.api.Build;

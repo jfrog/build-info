@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.maven.eventspy.AbstractEventSpy;
 import org.apache.maven.eventspy.EventSpy;
 import org.apache.maven.project.DependencyResolutionResult;

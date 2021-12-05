@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.extractor.clientConfiguration.client.access.AccessManager;
 import org.testng.Assert;

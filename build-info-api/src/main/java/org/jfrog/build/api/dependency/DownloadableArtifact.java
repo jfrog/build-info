@@ -1,6 +1,6 @@
 package org.jfrog.build.api.dependency;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 
 import java.io.Serializable;
