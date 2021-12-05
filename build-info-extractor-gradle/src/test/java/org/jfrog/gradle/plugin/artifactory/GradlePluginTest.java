@@ -73,6 +73,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
         BuildResult buildResult = runGradle(gradleVersion, envVars, false);
         // Check results
         checkBuildResults(artifactoryManager, buildResult, VersionNumber.parse(gradleVersion).getMajor() >= 6, localRepo1);
+        checkBuildInfoProps(artifactoryManager, buildResult);
         // Cleanup
         Pair<String, String> buildDetails = getBuildDetails(buildResult);
         cleanTestBuilds(buildDetails.getLeft(), buildDetails.getRight(), null);

@@ -8,9 +8,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jfrog.build.extractor.ci.Dependency;
-import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.api.Artifact;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.Dependency;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
@@ -255,6 +256,26 @@ public class Utils {
                     break;
                 default:
                     fail("Unexpected module ID: " + module.getId());
+            }
+        }
+    }
+
+    /**
+     * Check expected build info properties is found on each published artifacts.
+     *
+     * @param artifactoryManager - ArtifactoryManager client
+     * @param buildResult        - The build results
+     */
+    static void checkBuildInfoProps(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
+        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
+        for (Module module : buildInfo.getModules()) {
+            for (Artifact artifact : module.getArtifacts()) {
+                Properties properties = artifact.getProperties();
+                assertNotNull(properties);
+                assertEquals(properties.getProperty("qa.level"), "basic");
+                assertEquals(properties.getProperty("q.os"), "win32");
+                assertEquals(properties.getProperty("q.os"), "deb");
+                assertEquals(properties.getProperty("q.os"), "osx");
             }
         }
     }
