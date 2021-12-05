@@ -83,8 +83,11 @@ public class GoDriver implements Serializable {
         runCmd(GO_MOD_TIDY_CMD, prompt);
     }
 
-    public CommandResults getUsedModules(boolean prompt) throws IOException {
+    public CommandResults getUsedModules(boolean prompt, boolean ignoreErrors) throws IOException {
         List<String> argsList = new ArrayList<>(GO_LIST_USED_MODULES_CMD);
+        if (ignoreErrors) {
+            argsList.add(1, "-e");
+        }
         return runCmd(argsList, prompt);
     }
 
