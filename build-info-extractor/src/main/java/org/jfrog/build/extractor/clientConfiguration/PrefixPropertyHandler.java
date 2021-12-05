@@ -51,6 +51,8 @@ public class PrefixPropertyHandler {
         if (StringUtils.isNotBlank(value)) {
             return value;
         }
+        // Fallback, try to get value with deprecated key.
+        // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
         value = props.get(ARTIFACTORY_PREFIX + prefix + key);
         if (StringUtils.isNotBlank(value)) {
             return value;
@@ -74,6 +76,8 @@ public class PrefixPropertyHandler {
         if (result != null) {
             return result;
         }
+        // Fallback, try to get value with deprecated key.
+        // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
         value = props.get(ARTIFACTORY_PREFIX + prefix + key);
         result = (value == null) ? null : Boolean.parseBoolean(value);
         if (result != null) {
@@ -99,6 +103,8 @@ public class PrefixPropertyHandler {
         if (result != null) {
             return result;
         }
+        // Fallback, try to get value with deprecated key.
+        // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
         result = getInteger(key, ARTIFACTORY_PREFIX + prefix);
         if (result != null) {
             return result;

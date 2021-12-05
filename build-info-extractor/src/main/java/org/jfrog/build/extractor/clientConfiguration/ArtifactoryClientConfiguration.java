@@ -922,15 +922,15 @@ public class ArtifactoryClientConfiguration {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
-            Map<String, String> result = resolveMatrixParams(getMatrixParamPrefix());
+            Map<String, String> result = getResolveMatrixParams(getMatrixParamPrefix());
             if (result.size() == 0) {
-                result = resolveMatrixParams(getDeprecatedMatrixParamPrefix());
+                result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
             }
             this.calculatedMatrixParams = ImmutableMap.copyOf(result);
             return calculatedMatrixParams;
         }
 
-        private Map<String, String> resolveMatrixParams(String matrixPrefix) {
+        private Map<String, String> getResolveMatrixParams(String matrixPrefix) {
             Map<String, String> result = new HashMap<>();
             for (Map.Entry<String, String> entry : props.entrySet()) {
                 if (entry.getKey().startsWith(matrixPrefix)) {
