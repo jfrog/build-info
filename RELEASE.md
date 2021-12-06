@@ -1,4 +1,10 @@
 # Release Notes
+
+## build-info-extractor 2.32.2 / gradle-artifactory-plugin 4.25.1 (December 5, 2021)
+- Update apache commons-lang (2) to current commons-lang3 ([580](https://github.com/jfrog/build-info/pull/580))
+- Allow ignoring go list errors ([577](https://github.com/jfrog/build-info/pull/577))
+- Bugfix - Build-info ignores duplicate artifacts checksum ([579](https://github.com/jfrog/build-info/pull/579))
+
 ## build-info-extractor 2.32.0 / gradle-artifactory-plugin 4.25.0 (November 30, 2021)
 - Add 'mvn deploy' command.
  
