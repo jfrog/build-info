@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.32.3 / gradle-artifactory-plugin 4.25.2 (December 7, 2021)
+- Update file-specs-java dependency to 1.1.1
+
 ## build-info-extractor 2.32.2 / gradle-artifactory-plugin 4.25.1 (December 5, 2021)
 - Update apache commons-lang (2) to current commons-lang3 ([580](https://github.com/jfrog/build-info/pull/580))
 - Allow ignoring go list errors ([577](https://github.com/jfrog/build-info/pull/577))
