@@ -53,6 +53,9 @@ pipelines:
             - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
             - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-release-local
 
+            # Run audit
+            - jf ag
+
             # Update version
             - sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
             - git commit -am "[artifactory-release] Release version ${NEXT_VERSION} [skipRun]" --allow-empty
@@ -68,7 +71,6 @@ pipelines:
               ./jf gradle clean aP -x test -Psign
             - ./jf rt bag && ./jf rt bce
             - ./jf rt bp
-            - ./jf bs --fail=false
 
             # Distribute release bundle
             - ./jf ds rbc build-info $NEXT_VERSION --spec=./release/specs/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION" --sign
