@@ -81,6 +81,8 @@ configure<org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention> {
             publications("mavenJava", "ivyJava")
             setPublishArtifacts(true)
             // Properties to be attached to the published artifacts.
+            properties.put("gradle.test.multi.values.key", "val1, val2, val3")
+            properties.put("gradle.test.single.value.key", "basic")
             setPublishPom(true) // Publish generated POM files to Artifactory (true by default)
             setPublishIvy(true) // Publish generated Ivy descriptor files to Artifactory (true by default)
         }

@@ -12,6 +12,7 @@ import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
+import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
@@ -261,23 +262,21 @@ public class Utils {
     }
 
     /**
-     * Check expected build info properties is found on each published artifacts.
+     * Check expected properties is found on each published artifacts.
      *
      * @param artifactoryManager - ArtifactoryManager client
-     * @param buildResult        - The build results
      */
-    static void checkBuildInfoProps(ArtifactoryManager artifactoryManager, BuildResult buildResult) throws IOException {
-        Build buildInfo = getBuildInfo(artifactoryManager, buildResult);
-        for (Module module : buildInfo.getModules()) {
-            for (Artifact artifact : module.getArtifacts()) {
-                Properties properties = artifact.getProperties();
-                assertNotNull(properties);
-                assertEquals(properties.getProperty("qa.level"), "basic");
-                assertEquals(properties.getProperty("q.os"), "win32");
-                assertEquals(properties.getProperty("q.os"), "deb");
-                assertEquals(properties.getProperty("q.os"), "osx");
-            }
-        }
+    static void checkArtifactsProps(ArtifactoryManager artifactoryManager) throws IOException {
+        // Test single value prop
+        PropertySearchResult artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.single.value.key=basic");
+        assertTrue(artifacts.getResults().size()>=12);
+        // Test multi value props
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val1");
+        assertTrue(artifacts.getResults().size()>= 12);
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val2");
+        assertTrue(artifacts.getResults().size()>=12);
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val3");
+        assertTrue(artifacts.getResults().size()>= 12);
     }
 
     /**
