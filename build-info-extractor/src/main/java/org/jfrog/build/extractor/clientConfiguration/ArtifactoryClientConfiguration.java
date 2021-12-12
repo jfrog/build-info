@@ -109,6 +109,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.SNAPSHOT_REPO_KEY;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.URL;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.USERNAME;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.DEPRECATED_PROP_DEPLOY_PARAM_PROP_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONNECTION_RETRIES;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONTEXT_URL;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX;
