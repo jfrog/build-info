@@ -21,7 +21,7 @@ public class DeploymentUrlUtilsTest {
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "buildName", "moo");
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "buildNumber", "1");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
-        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildName=moo;buildNumber=1");
+        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";buildNumber=1;buildName=moo");
     }
 
     public void getDeploymentUrlWithEncodingNeeded() throws UnsupportedEncodingException {
@@ -30,7 +30,7 @@ public class DeploymentUrlUtilsTest {
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "build Name", "moo");
         props.put(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX + "build Number", "1");
         String deploymentUrl = DeploymentUrlUtils.getDeploymentUrl(artifactoryUrl, props);
-        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";build+Number=1;build+Name=moo");
+        Assert.assertEquals(deploymentUrl, artifactoryUrl + ";build+Name=moo;build+Number=1");
     }
 
 

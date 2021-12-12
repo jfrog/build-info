@@ -396,6 +396,11 @@ public class ArtifactoryClientConfiguration {
             return getPrefix() + MATRIX;
         }
 
+        @Override
+        public String getDeprecatedMatrixParamPrefix() {
+            return getDeprecatedPrefix() + MATRIX;
+        }
+
         public String getDownloadSnapshotRepoKey() {
             return getStringValue(DOWN_SNAPSHOT_REPO_KEY);
         }
@@ -515,6 +520,11 @@ public class ArtifactoryClientConfiguration {
         @Override
         public String getMatrixParamPrefix() {
             return PROP_DEPLOY_PARAM_PROP_PREFIX;
+        }
+
+        @Override
+        public String getDeprecatedMatrixParamPrefix() {
+            return DEPRECATED_PROP_DEPLOY_PARAM_PROP_PREFIX;
         }
 
         public ArtifactSpecs getArtifactSpecs() {
@@ -858,6 +868,8 @@ public class ArtifactoryClientConfiguration {
 
         public abstract String getMatrixParamPrefix();
 
+        public abstract String getDeprecatedMatrixParamPrefix();
+
         public abstract String getContextUrl();
 
         public void setMatrixParam(String key, String value) {
@@ -910,15 +922,22 @@ public class ArtifactoryClientConfiguration {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
+            Map<String, String> result = getResolveMatrixParams(getMatrixParamPrefix());
+            if (result.size() == 0) {
+                result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
+            }
+            this.calculatedMatrixParams = ImmutableMap.copyOf(result);
+            return calculatedMatrixParams;
+        }
+
+        private Map<String, String> getResolveMatrixParams(String matrixPrefix) {
             Map<String, String> result = new HashMap<>();
-            String matrixPrefix = getMatrixParamPrefix();
             for (Map.Entry<String, String> entry : props.entrySet()) {
                 if (entry.getKey().startsWith(matrixPrefix)) {
                     result.put(entry.getKey().substring(matrixPrefix.length()), entry.getValue());
                 }
             }
-            this.calculatedMatrixParams = ImmutableMap.copyOf(result);
-            return calculatedMatrixParams;
+            return result;
         }
     }
 
