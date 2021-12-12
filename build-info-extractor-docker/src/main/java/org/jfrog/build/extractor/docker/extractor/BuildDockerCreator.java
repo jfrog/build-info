@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
@@ -104,7 +104,7 @@ public class BuildDockerCreator extends PackageManagerExtractor {
     }
 
     @Override
-    public Build execute() {
+    public BuildInfo execute() {
         logger.info("Generating build info for: " + imageFile);
         try {
             List<Module> modules = new ArrayList<>();
@@ -124,9 +124,9 @@ public class BuildDockerCreator extends PackageManagerExtractor {
                 modules.add(module);
                 logger.info("Successfully created build info for image: " + imageFileWithDigest.imageName);
             }
-            Build build = new Build();
-            build.setModules(modules);
-            return build;
+            BuildInfo buildInfo = new BuildInfo();
+            buildInfo.setModules(modules);
+            return buildInfo;
         } catch (Exception e) {
             logger.error(ExceptionUtils.getRootCauseMessage(e), e);
             throw new RuntimeException(e);

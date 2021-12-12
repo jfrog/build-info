@@ -5,12 +5,12 @@ import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Artifact;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.extractor.builder.ArtifactBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.Artifact;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
@@ -27,7 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -69,7 +74,7 @@ public class GoPublish extends GoCommand {
         this.version = GO_VERSION_PREFIX + version;
     }
 
-    public Build execute() {
+    public BuildInfo execute() {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             preparePrerequisites(deploymentRepo, artifactoryManager);
             publishPkg(artifactoryManager);
@@ -213,8 +218,8 @@ public class GoPublish extends GoCommand {
                 .build();
     }
 
-    private Build createBuild() {
-        Build build = new Build();
+    private BuildInfo createBuild() {
+        BuildInfo buildInfo = new BuildInfo();
         String moduleId = StringUtils.defaultIfBlank(buildInfoModuleId, moduleName);
         Module module = new ModuleBuilder()
                 .type(ModuleType.GO)
@@ -222,7 +227,7 @@ public class GoPublish extends GoCommand {
                 .repository(deploymentRepo)
                 .artifacts(artifactList)
                 .build();
-        build.setModules(Collections.singletonList(module));
-        return build;
+        buildInfo.setModules(Collections.singletonList(module));
+        return buildInfo;
     }
 }

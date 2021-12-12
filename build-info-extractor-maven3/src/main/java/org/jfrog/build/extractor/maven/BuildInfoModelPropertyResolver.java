@@ -7,9 +7,16 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
@@ -17,9 +24,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
-import static org.jfrog.build.api.BuildInfoFields.*;
+import static org.jfrog.build.api.BuildInfoFields.BUILD_NAME;
+import static org.jfrog.build.api.BuildInfoFields.BUILD_NUMBER;
+import static org.jfrog.build.api.BuildInfoFields.BUILD_STARTED;
+import static org.jfrog.build.api.BuildInfoFields.BUILD_TIMESTAMP;
 
 
 /**
@@ -71,26 +85,6 @@ public class BuildInfoModelPropertyResolver {
             agentVersion = buildAgent.getVersion();
         }
         builder.agent(new Agent(agentName, agentVersion));
-        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
-        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
-        if (StringUtils.isNotBlank(notificationRecipients)) {
-            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
-        }
-        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
-        licenseControl.setScopesList(clientConf.info.licenseControl.getScopes());
-        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-        builder.licenseControl(licenseControl);
-
-        final BlackDuckProperties blackDuckProperties;
-        if (clientConf.info.blackDuckProperties.isRunChecks()) {
-            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
-        } else {
-            blackDuckProperties = new BlackDuckProperties();
-        }
-
-        Governance governance = new Governance();
-        governance.setBlackDuckProperties(blackDuckProperties);
-        builder.governance(governance);
         attachStagingIfNeeded(clientConf, builder);
         builder.artifactoryPrincipal(clientConf.publisher.getName());
 
@@ -127,9 +121,9 @@ public class BuildInfoModelPropertyResolver {
             String buildStartedIso = clientConf.info.getBuildStarted();
             Date buildStartDate;
             try {
-                buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+                buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
             } catch (ParseException e) {
-                throw new IllegalArgumentException("Build start date format error: " + buildStartedIso, e);
+                throw new IllegalArgumentException("BuildInfo start date format error: " + buildStartedIso, e);
             }
             builder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
                     .comment(comment).repository(stagingRepository)
@@ -150,7 +144,7 @@ public class BuildInfoModelPropertyResolver {
         Date buildStartedDate = event.getSession().getRequest().getStartTime();
         String buildStarted = clientConf.info.getBuildStarted();
         if (StringUtils.isBlank(buildStarted)) {
-            buildStarted = new SimpleDateFormat(Build.STARTED_FORMAT).format(buildStartedDate);
+            buildStarted = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(buildStartedDate);
         }
 
         String buildTimestamp = clientConf.info.getBuildTimestamp();

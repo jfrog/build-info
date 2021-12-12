@@ -6,10 +6,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.DependencyBuilder;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
@@ -29,7 +29,9 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertEqualsNoOrder;
+import static org.testng.Assert.fail;
 
 /**
  * @author Yahav Itzhak
@@ -193,11 +195,11 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             } else {
                 buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, false, null);
             }
-            Build build = buildExecutor.execute();
+            BuildInfo buildInfo = buildExecutor.execute();
 
             // Validate.
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
+            assertEquals(buildInfo.getModules().size(), 1);
+            Module module = buildInfo.getModules().get(0);
             assertEquals(module.getType(), "npm");
             assertEquals(module.getId(), project.getModuleId());
             assertEqualsNoOrder(module.getDependencies().toArray(), expectedDependencies);
@@ -231,9 +233,9 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             projectDir = createProjectDir(project);
             Path path = StringUtils.isNotBlank(packageName) ? projectDir.resolve(packageName) : projectDir;
             NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder, props, path, localRepo1, log, null, null);
-            Build build = npmPublish.execute();
-            assertEquals(build.getModules().size(), 1);
-            Module module = build.getModules().get(0);
+            BuildInfo buildInfo = npmPublish.execute();
+            assertEquals(buildInfo.getModules().size(), 1);
+            Module module = buildInfo.getModules().get(0);
 
             // Check correctness of the module and the artifact
             assertEquals(module.getType(), "npm");

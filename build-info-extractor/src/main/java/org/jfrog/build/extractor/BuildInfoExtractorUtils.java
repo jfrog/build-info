@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.extractor;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -26,16 +10,22 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildInfoConfigProperties;
-import org.jfrog.build.api.BuildInfoProperties;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -182,7 +172,7 @@ public abstract class BuildInfoExtractorUtils {
         return jsonFactory;
     }
 
-    public static String buildInfoToJsonString(Build buildInfo) throws IOException {
+    public static String buildInfoToJsonString(BuildInfo buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
         StringWriter writer = new StringWriter();
@@ -194,10 +184,10 @@ public abstract class BuildInfoExtractorUtils {
         return result;
     }
 
-    public static Build jsonStringToBuildInfo(String json) throws IOException {
+    public static BuildInfo jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
         JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, Build.class);
+        return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
     }
 
     public static <T extends Serializable> String buildInfoToJsonString(T buildComponent) throws IOException {
@@ -218,8 +208,8 @@ public abstract class BuildInfoExtractorUtils {
         return jsonFactory.getCodec().readValue(parser, clazz);
     }
 
-    public static void saveBuildInfoToFile(Build build, File toFile) throws IOException {
-        String buildInfoJson = buildInfoToJsonString(build);
+    public static void saveBuildInfoToFile(BuildInfo buildInfo, File toFile) throws IOException {
+        String buildInfoJson = buildInfoToJsonString(buildInfo);
         if (!toFile.getParentFile().exists()) {
             toFile.getParentFile().mkdirs();
         }

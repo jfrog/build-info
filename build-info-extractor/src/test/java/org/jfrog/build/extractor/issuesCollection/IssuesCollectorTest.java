@@ -2,11 +2,11 @@ package org.jfrog.build.extractor.issuesCollection;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Issues;
-import org.jfrog.build.api.IssuesCollectionConfig;
-import org.jfrog.build.api.Vcs;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.IssuesCollectionConfig;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -130,7 +130,7 @@ public class IssuesCollectorTest extends IntegrationTestsBase {
                 .startedDate(new Date())
                 .url(getArtifactoryUrl())
                 .vcs(vcsList);
-        Build buildInfoToSend = buildInfoBuilder.build();
+        BuildInfo buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
         artifactoryManager.publishBuildInfo(buildInfoToSend, null);

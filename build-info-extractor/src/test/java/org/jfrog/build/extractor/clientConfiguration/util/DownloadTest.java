@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.Dependency;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -119,7 +119,7 @@ public class DownloadTest extends IntegrationTestsBase {
     }
 
     public void testDownloadArtifactFromDifferentPath() throws IOException {
-        String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "testDownloaddupArtifactFromDifferentPath" + File.separatorChar;
+        String targetDirPath = tempWorkspace.getPath() + File.separatorChar + "testDownloadDupArtifactFromDifferentPath" + File.separatorChar;
         FileSpec fileSpec = new FileSpec();
         // Upload one file to different locations in Artifactory.
         try {

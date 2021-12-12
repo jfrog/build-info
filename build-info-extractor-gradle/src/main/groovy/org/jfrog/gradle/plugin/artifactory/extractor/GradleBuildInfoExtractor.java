@@ -1,28 +1,22 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.Artifact;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.ModuleExtractorUtils;
@@ -33,7 +27,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +52,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
     }
 
     @Override
-    public Build extract(Project rootProject) {
+    public BuildInfo extract(Project rootProject) {
         String buildName = clientConf.info.getBuildName();
         BuildInfoBuilder bib = new BuildInfoBuilder(buildName);
 
@@ -64,7 +62,7 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         String buildStartedIso = clientConf.info.getBuildStarted();
         Date buildStartDate = null;
         try {
-            buildStartDate = new SimpleDateFormat(Build.STARTED_FORMAT).parse(buildStartedIso);
+            buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
         } catch (ParseException e) {
             log.error("Build start date format error: " + buildStartedIso, e);
         }
@@ -148,30 +146,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             bib.vcs(Arrays.asList(vcs));
         }
 
-        LicenseControl licenseControl = new LicenseControl(clientConf.info.licenseControl.isRunChecks());
-        String notificationRecipients = clientConf.info.licenseControl.getViolationRecipients();
-        if (StringUtils.isNotBlank(notificationRecipients)) {
-            licenseControl.setLicenseViolationsRecipientsList(notificationRecipients);
-        }
-        licenseControl.setIncludePublishedArtifacts(clientConf.info.licenseControl.isIncludePublishedArtifacts());
-        String scopes = clientConf.info.licenseControl.getScopes();
-        if (StringUtils.isNotBlank(scopes)) {
-            licenseControl.setScopesList(scopes);
-        }
-        licenseControl.setAutoDiscover(clientConf.info.licenseControl.isAutoDiscover());
-        bib.licenseControl(licenseControl);
-
-        final BlackDuckProperties blackDuckProperties;
-        if (clientConf.info.blackDuckProperties.isRunChecks()) {
-            blackDuckProperties = clientConf.info.blackDuckProperties.copyBlackDuckProperties();
-        } else {
-            blackDuckProperties = new BlackDuckProperties();
-        }
-
-        Governance governance = new Governance();
-        governance.setBlackDuckProperties(blackDuckProperties);
-        bib.governance(governance);
-
         if (clientConf.info.isReleaseEnabled()) {
             String stagingRepository = clientConf.publisher.getRepoKey();
             String comment = clientConf.info.getReleaseComment();
@@ -203,11 +177,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
 
         log.debug("buildInfoBuilder = " + bib);
         // for backward compatibility for Artifactory 2.2.3
-        Build build = bib.build();
+        BuildInfo buildInfo = bib.build();
         if (parentName != null && parentNumber != null) {
-            build.setParentBuildId(parentName);
+            buildInfo.setParentBuildId(parentName);
         }
-        PackageManagerUtils.collectEnvIfNeeded(clientConf, build);
-        return build;
+        PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
+        return buildInfo;
     }
 }

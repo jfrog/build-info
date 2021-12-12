@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import com.google.common.base.Charsets;
 import com.google.common.io.Files;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.extractor.ci.Module;
 
 import java.io.File;
 import java.io.IOException;

@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.packageManager;
 
 import org.apache.http.client.utils.URIBuilder;
-import org.jfrog.build.api.Build;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
 import java.net.MalformedURLException;
@@ -44,9 +44,9 @@ public class PackageManagerUtils {
      * Collect environment variables according to the env include-exclude patterns.
      *
      * @param clientConfiguration - Artifactory client configuration
-     * @param build               - The target build
+     * @param buildInfo           - The target build-info
      */
-    public static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, Build build) {
+    public static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
         if (!clientConfiguration.isIncludeEnvVars()) {
             return;
         }
@@ -57,11 +57,11 @@ public class PackageManagerUtils {
         // Filter env according to the include-exclude patterns
         envProperties = BuildInfoExtractorUtils.getEnvProperties(envProperties, clientConfiguration.getLog());
 
-        // Add results to the build
-        if (build.getProperties() != null) {
-            build.getProperties().putAll(envProperties);
+        // Add results to the buildInfo
+        if (buildInfo.getProperties() != null) {
+            buildInfo.getProperties().putAll(envProperties);
             return;
         }
-        build.setProperties(envProperties);
+        buildInfo.setProperties(envProperties);
     }
 }

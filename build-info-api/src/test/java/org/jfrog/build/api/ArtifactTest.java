@@ -1,19 +1,3 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api;
 
 import org.testng.Assert;
@@ -38,7 +22,6 @@ public class ArtifactTest {
     public void testEmptyConstructor() {
         Artifact artifact = new Artifact();
         assertNull(artifact.getName(), "Artifact name should have not been initialized.");
-        assertNull(artifact.getLocalPath(), "Artifact local should have not been initialized.");
         assertNull(artifact.getRemotePath(), "Artifact remote path should have not been initialized.");
         assertNull(artifact.getType(), "Artifact type should have not been initialized.");
         assertNull(artifact.getSha1(), "Artifact SHA1 checksum should have not been initialized.");
@@ -65,7 +48,6 @@ public class ArtifactTest {
         artifact.setSha1(sha1);
         artifact.setSha256(sha256);
         artifact.setMd5(md5);
-        artifact.setLocalPath(localPath);
         artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
 
@@ -74,7 +56,6 @@ public class ArtifactTest {
         Assert.assertEquals(artifact.getSha1(), sha1, "Unexpected artifact SHA1 checksum.");
         Assert.assertEquals(artifact.getSha256(), sha256, "Unexpected artifact SHA256 checksum.");
         Assert.assertEquals(artifact.getMd5(), md5, "Unexpected artifact MD5 checksum.");
-        Assert.assertEquals(artifact.getLocalPath(), localPath, "Unexpected artifact local path.");
         Assert.assertEquals(artifact.getRemotePath(), remotePath, "Unexpected artifact remote path.");
         Assert.assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
     }

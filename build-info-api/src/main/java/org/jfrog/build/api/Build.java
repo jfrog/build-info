@@ -1,23 +1,7 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
-import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
@@ -25,14 +9,12 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 
 import static org.jfrog.build.api.BuildBean.ROOT;
 
 /**
- * Contains the general build information
- *
- * @author Noam Y. Tenne
+ * Represents pure (without logic) schema of build info which contains the build info properties of a typical build.
+ * Convert org.jfrog.build.extractor.ci.BuildInfo to this class before sending the build info.
  */
 @XStreamAlias(ROOT)
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
@@ -60,8 +42,6 @@ public class Build extends BaseBuildBean {
     @Deprecated
     private String parentBuildId;
 
-    private LicenseControl licenseControl;
-
     private BuildRetention buildRetention;
 
     @XStreamAlias(RUN_PARAMETERS)
@@ -75,8 +55,6 @@ public class Build extends BaseBuildBean {
     private List<BuildDependency> buildDependencies;
 
     private Issues issues;
-
-    private Governance governance;
 
     /**
      * Formats the timestamp to the ISO date time string format expected by the build info API.
@@ -381,7 +359,7 @@ public class Build extends BaseBuildBean {
      * Returns the parent build ID of the build
      *
      * @return Build parent build ID
-     * @deprecated Use {@link org.jfrog.build.api.Build#getParentName()} and {@link Build#getParentNumber()} instead.
+     * @deprecated Use {@link Build#getParentName()} and {@link Build#getParentNumber()} instead.
      */
     @Deprecated
     public String getParentBuildId() {
@@ -392,7 +370,7 @@ public class Build extends BaseBuildBean {
      * Sets the parent build ID of the build
      *
      * @param parentBuildId Build parent build ID
-     * @deprecated Use {@link org.jfrog.build.api.Build#setParentName(String)} and {@link Build#setParentNumber(String)}
+     * @deprecated Use {@link Build#setParentName(String)} and {@link Build#setParentNumber(String)}
      * instead.
      */
     @Deprecated
@@ -435,14 +413,6 @@ public class Build extends BaseBuildBean {
         }
 
         return null;
-    }
-
-    public LicenseControl getLicenseControl() {
-        return licenseControl;
-    }
-
-    public void setLicenseControl(LicenseControl licenseControl) {
-        this.licenseControl = licenseControl;
     }
 
     public BuildRetention getBuildRetention() {
@@ -495,97 +465,13 @@ public class Build extends BaseBuildBean {
         this.buildDependencies = buildDependencies;
     }
 
-    /**
-     * Adds one #BuildDependency to build dependencies list
-     *
-     * @param buildDependency the #BuildDependency to add
-     */
-    public void addBuildDependency(BuildDependency buildDependency) {
-        if (buildDependencies == null) {
-            buildDependencies = new ArrayList<>();
-        }
-        buildDependencies.add(buildDependency);
-    }
-
     public Issues getIssues() {
         return issues;
     }
-
     public void setIssues(Issues issues) {
         this.issues = issues;
     }
 
-    public Governance getGovernance() {
-        return governance;
-    }
-
-    public void setGovernance(Governance governance) {
-        this.governance = governance;
-    }
-
-    public void append(Build other) {
-        if (buildAgent == null) {
-            setBuildAgent(other.buildAgent);
-        }
-
-        appendProperties(other);
-        appendModules(other);
-        appendBuildDependencies(other);
-        if (this.issues == null) {
-            this.issues = other.issues;
-            return;
-        }
-        this.issues.append(other.issues);
-    }
-
-    private void appendBuildDependencies(Build other) {
-        List<BuildDependency> buildDependencies = other.getBuildDependencies();
-        if (buildDependencies != null && buildDependencies.size() > 0) {
-            if (this.buildDependencies == null) {
-                this.setBuildDependencies(buildDependencies);
-            } else {
-                this.buildDependencies.addAll(buildDependencies);
-            }
-        }
-    }
-
-    private void appendModules(Build other) {
-        List<Module> modules = other.getModules();
-        if (modules != null && modules.size() > 0) {
-            if (this.getModules() == null) {
-                this.setModules(modules);
-            } else {
-                modules.forEach(this::addModule);
-            }
-        }
-    }
-
-    private void appendProperties(Build other) {
-        Properties properties = other.getProperties();
-        if (properties != null && properties.size() > 0) {
-            if (this.getProperties() == null) {
-                this.setProperties(properties);
-            } else {
-                this.getProperties().putAll(properties);
-            }
-        }
-    }
-
-    private void addModule(Module other) {
-        List<Module> modules = getModules();
-        Module currentModule = modules.stream()
-                // Check if there's already a module with the same name.
-                .filter(module -> StringUtils.equals(module.getId(), other.getId()))
-                .findAny()
-                .orElse(null);
-        if (currentModule == null) {
-            // Append new module.
-            modules.add(other);
-        } else {
-            // Append the other module into the existing module with the same name.
-            currentModule.append(other);
-        }
-    }
 
     @Override
     public String toString() {
@@ -605,14 +491,12 @@ public class Build extends BaseBuildBean {
                 ", parentNumber='" + parentNumber + '\'' +
                 ", vcs='" + vcs + '\'' +
                 ", parentBuildId='" + parentBuildId + '\'' +
-                ", licenseControl=" + licenseControl +
                 ", buildRetention=" + buildRetention +
                 ", runParameters=" + runParameters +
                 ", modules=" + modules +
                 ", statuses=" + statuses +
                 ", buildDependencies=" + buildDependencies +
                 ", issues=" + issues +
-                ", governance=" + governance +
                 '}';
     }
 }

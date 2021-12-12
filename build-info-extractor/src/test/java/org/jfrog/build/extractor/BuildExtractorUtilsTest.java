@@ -1,26 +1,14 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.extractor;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.ci.BuildInfoProperties;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -31,8 +19,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
-import static org.testng.Assert.*;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * Test the build info extractor
@@ -40,7 +35,7 @@ import static org.testng.Assert.*;
  * @author Tomer Cohen
  */
 @Test
-public class BuildInfoExtractorUtilsTest {
+public class BuildExtractorUtilsTest {
     private static final String POPO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "popo";
     private static final String MOMO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "momo";
     private static final String ENV_POPO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "popo";
@@ -210,18 +205,18 @@ public class BuildInfoExtractorUtilsTest {
         String[] requestedByB = new String[]{"parentB", "d", "moduleId"};
         Dependency dependencyA = new DependencyBuilder().id("depA").addRequestedBy(requestedByA).addRequestedBy(requestedByB).build();
         Module module = new ModuleBuilder().id("moduleId").addDependency(dependencyA).build();
-        Build build = new BuildInfoBuilder("buildId").number("12").started("34").addModule(module).build();
+        BuildInfo buildInfo = new BuildInfoBuilder("buildId").number("12").started("34").addModule(module).build();
 
         // Serialize and deserialize again
-        Build actualBuild = jsonStringToBuildInfo(buildInfoToJsonString(build));
+        BuildInfo actualBuildInfo = jsonStringToBuildInfo(buildInfoToJsonString(buildInfo));
 
-        // Check build
-        assertEquals(actualBuild.getName(), build.getName());
-        assertEquals(actualBuild.getNumber(), build.getNumber());
-        assertEquals(actualBuild.getStarted(), build.getStarted());
+        // Check buildInfo
+        assertEquals(actualBuildInfo.getName(), buildInfo.getName());
+        assertEquals(actualBuildInfo.getNumber(), buildInfo.getNumber());
+        assertEquals(actualBuildInfo.getStarted(), buildInfo.getStarted());
 
         // Check module
-        Module actualModule = actualBuild.getModule(module.getId());
+        Module actualModule = actualBuildInfo.getModule(module.getId());
         assertNotNull(actualModule);
 
         // Check dependency

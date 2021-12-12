@@ -13,7 +13,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class BuildScanTableHelperTest {
+public class BuildInfoScanTableHelperTest {
     private static final String SCAN_RESULT_PATH = "/buildScanTable/scanResult.json";
     private static final String EMPTY_RESULT_PATH = "/buildScanTable/emptyResult.json";
     private static final String INVALID_RESULT_PATH = "/buildScanTable/invalidResult.json";

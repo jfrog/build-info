@@ -2,8 +2,15 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.api.*;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildRetention;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -63,7 +70,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         final List<MatrixParameter> RUN_PARAMETERS = Arrays.asList(new MatrixParameter("a", "b"), new MatrixParameter("c", "d"));
         final Module module = new Module();
         module.setId("foo");
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(Build.STARTED_FORMAT);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
         final List<PromotionStatus> STATUSES = Collections.singletonList(new PromotionStatus("a", "b", "c", simpleDateFormat.format(STARTED), "e", "f"));
 
         BuildInfoBuilder buildInfoBuilder = new BuildInfoBuilder(BUILD_NAME)
@@ -80,19 +87,18 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
                 .parentName("baz")
                 .parentNumber("10")
                 .vcs(VCS)
-                .licenseControl(new LicenseControl(false))
                 .buildRetention(new BuildRetention(true))
                 .buildRunParameters(RUN_PARAMETERS)
                 .modules(Collections.singletonList(module))
                 .statuses(STATUSES)
                 .issues(new Issues());
-        Build buildInfoToSend = buildInfoBuilder.build();
+        BuildInfo buildInfoToSend = buildInfoBuilder.build();
 
         // Publish build info
         artifactoryManager.publishBuildInfo(buildInfoToSend, project);
 
         // Get build info
-        Build receivedBuildInfo = artifactoryManager.getBuildInfo(BUILD_NAME, BUILD_NUMBER, project);
+        BuildInfo receivedBuildInfo = artifactoryManager.getBuildInfo(BUILD_NAME, BUILD_NUMBER, project);
 
         // Compare
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));

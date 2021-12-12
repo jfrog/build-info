@@ -5,6 +5,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
@@ -18,9 +19,9 @@ public class SendModuleInfo extends VoidJFrogService {
     private static final String SEND_MODULE_INFO_ENDPOINT = "/api/build/append/";
     private final Build build;
 
-    public SendModuleInfo(Build build, Log logger) {
+    public SendModuleInfo(BuildInfo buildInfo, Log logger) {
         super(logger);
-        this.build = build;
+        this.build = buildInfo.ToBuild();
     }
 
     @Override
@@ -32,7 +33,7 @@ public class SendModuleInfo extends VoidJFrogService {
         StringEntity stringEntity = new StringEntity(modulesAsJsonString, "UTF-8");
         stringEntity.setContentType(APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON);
         request.setEntity(stringEntity);
-        log.info("Deploying build descriptor to: " + request.getURI().toString());
+        log.info("Deploying build-info descriptor to: " + request.getURI().toString());
         return request;
     }
 

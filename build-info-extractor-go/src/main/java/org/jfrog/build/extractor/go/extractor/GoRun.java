@@ -2,12 +2,12 @@ package org.jfrog.build.extractor.go.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
@@ -103,7 +103,7 @@ public class GoRun extends GoCommand {
         }
     }
 
-    public Build execute() {
+    public BuildInfo execute() {
         try (ArtifactoryManager artifactoryClient = (artifactoryManagerBuilder != null ? artifactoryManagerBuilder.build() : null)) {
             if (artifactoryClient != null) {
                 preparePrerequisites(resolutionRepository, artifactoryClient);
@@ -226,15 +226,15 @@ public class GoRun extends GoCommand {
         }
     }
 
-    private Build createBuild() {
-        Build build = new Build();
+    private BuildInfo createBuild() {
+        BuildInfo buildInfo = new BuildInfo();
         String moduleId = StringUtils.defaultIfBlank(buildInfoModuleId, moduleName);
         Module module = new ModuleBuilder()
                 .type(ModuleType.GO)
                 .id(moduleId)
                 .dependencies(dependenciesList)
                 .build();
-        build.setModules(Collections.singletonList(module));
-        return build;
+        buildInfo.setModules(Collections.singletonList(module));
+        return buildInfo;
     }
 }

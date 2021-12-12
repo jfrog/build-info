@@ -2,8 +2,8 @@ package org.jfrog.build.extractor.pip.extractor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Build;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -89,7 +89,7 @@ public class PipInstall extends PackageManagerExtractor {
         }
     }
 
-    public Build execute() {
+    public BuildInfo execute() {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             validateRepoExists(artifactoryManager, repo, "Source repo must be specified");
             String artifactoryUrlWithCredentials = PackageManagerUtils.createArtifactoryUrlWithCredentials(artifactoryManager.getUrl(), username, password, ARTIFACTORY_PIP_API_START + repo + ARTIFACTORY_PIP_API_END);

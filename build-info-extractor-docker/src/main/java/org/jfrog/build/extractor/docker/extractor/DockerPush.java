@@ -3,8 +3,8 @@ package org.jfrog.build.extractor.docker.extractor;
 import com.google.common.collect.ArrayListMultimap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Module;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
@@ -74,7 +74,7 @@ public class DockerPush extends DockerCommand {
     }
 
     @Override
-    public Build execute() {
+    public BuildInfo execute() {
         String message = "Pushing image: " + imageTag;
         if (StringUtils.isNotEmpty(host)) {
             message += " using docker daemon host: " + host;
@@ -90,11 +90,11 @@ public class DockerPush extends DockerCommand {
             } else {
                 setImageLayersProps(image.getLayers(), artifactProperties, artifactoryManagerBuilder);
             }
-            Build build = new Build();
+            BuildInfo buildInfo = new BuildInfo();
             modulesList.add(module);
-            build.setModules(modulesList);
+            buildInfo.setModules(modulesList);
             logger.info("Successfully pushed docker image: " + imageTag);
-            return build;
+            return buildInfo;
         } catch (IOException | InterruptedException e) {
             logger.error(e.getMessage(), e);
             throw new RuntimeException(e);

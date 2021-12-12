@@ -6,6 +6,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
@@ -20,13 +21,13 @@ public class PublishBuildInfo extends VoidJFrogService {
     public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
     private static final String BUILD_PROJECT_PARAM = "?project=";
 
-    private final Build buildInfo;
+    private final Build build;
     private final String platformUrl;
-    private String buildInfoJson;
+    private String buildJson;
 
-    public PublishBuildInfo(Build buildInfo, String platformUrl, Log logger) {
+    public PublishBuildInfo(BuildInfo buildInfo, String platformUrl, Log logger) {
         super(logger);
-        this.buildInfo = buildInfo;
+        this.build = buildInfo.ToBuild();
         this.platformUrl = platformUrl;
     }
 
@@ -84,16 +85,16 @@ public class PublishBuildInfo extends VoidJFrogService {
 
     @Override
     protected void ensureRequirements(JFrogHttpClient client) throws IOException {
-        if (buildInfo == null) {
+        if (build == null) {
             return;
         }
-        buildInfoJson = toJsonString(buildInfo);
+        buildJson = toJsonString(build);
     }
 
     @Override
     public HttpRequestBase createRequest() {
-        HttpPut request = new HttpPut(BUILD_REST_URL + getProjectQueryParam(buildInfo.getProject()));
-        StringEntity stringEntity = new StringEntity(buildInfoJson, "UTF-8");
+        HttpPut request = new HttpPut(BUILD_REST_URL + getProjectQueryParam(build.getProject()));
+        StringEntity stringEntity = new StringEntity(buildJson, "UTF-8");
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory+json");
         request.setEntity(stringEntity);
         log.info("Deploying build info...");
@@ -105,11 +106,11 @@ public class PublishBuildInfo extends VoidJFrogService {
         super.execute(client);
         String url;
         if (StringUtils.isNotBlank(platformUrl)) {
-            url = createBuildInfoUrl(platformUrl, buildInfo.getName(), buildInfo.getNumber(), String.valueOf(buildInfo.getStartedMillis()), buildInfo.getProject(), true);
+            url = createBuildInfoUrl(platformUrl, build.getName(), build.getNumber(), String.valueOf(build.getStartedMillis()), build.getProject(), true);
         } else {
-            url = createBuildInfoUrl(client.getUrl(), buildInfo.getName(), buildInfo.getNumber(), true);
+            url = createBuildInfoUrl(client.getUrl(), build.getName(), build.getNumber(), true);
         }
-        log.info("Build successfully deployed. Browse it in Artifactory under " + url);
+        log.info("Build-info successfully deployed. Browse it in Artifactory under " + url);
         return result;
     }
 }

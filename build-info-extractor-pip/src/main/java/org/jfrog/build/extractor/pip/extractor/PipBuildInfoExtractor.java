@@ -1,19 +1,25 @@
 package org.jfrog.build.extractor.pip.extractor;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.Build;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -29,14 +35,14 @@ public class PipBuildInfoExtractor {
     private static final String PIP_AQL_FILE_PART = "{\"name\":\"%s\"},";
     private static final int PIP_AQL_BULK_SIZE = 3;
 
-    Build extract(ArtifactoryManager artifactoryManager, String repository, String installationLog, Path executionPath, String module, Log logger) throws IOException {
+    BuildInfo extract(ArtifactoryManager artifactoryManager, String repository, String installationLog, Path executionPath, String module, Log logger) throws IOException {
         // Parse logs and create dependency list of <pkg-name, pkg-file>
         Map<String, String> downloadedDependencies = PipLogParser.parse(installationLog, logger);
 
         // Create package-name to dependency map.
         Map<String, Dependency> dependenciesMap = buildDependenciesMap(downloadedDependencies, artifactoryManager, repository, executionPath, logger);
 
-        // Create Build.
+        // Create BuildInfo.
         List<Dependency> dependenciesList = new ArrayList<>(dependenciesMap.values());
         return createBuild(dependenciesList, module);
     }
@@ -197,12 +203,12 @@ public class PipBuildInfoExtractor {
         logger.debug("Failed fetching checksums from Artifactory for the above files.");
     }
 
-    private Build createBuild(List<Dependency> dependenciesList, String moduleName) {
+    private BuildInfo createBuild(List<Dependency> dependenciesList, String moduleName) {
         Module module = new ModuleBuilder().type(ModuleType.PYPI).id(moduleName).dependencies(dependenciesList).build();
         List<Module> modules = new ArrayList<>();
         modules.add(module);
-        Build build = new Build();
-        build.setModules(modules);
-        return build;
+        BuildInfo buildInfo = new BuildInfo();
+        buildInfo.setModules(modules);
+        return buildInfo;
     }
 }

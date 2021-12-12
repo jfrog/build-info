@@ -3,7 +3,12 @@ package org.jfrog.build.extractor.issuesCollection;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.*;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.IssuesCollectionConfig;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -76,7 +81,7 @@ public class IssuesCollector implements Serializable {
     private String getPreviousVcsRevision(ArtifactoryManagerBuilder artifactoryManagerBuilder, String prevBuildName, Vcs prevVcs, String project) throws IOException {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             // Get LATEST build info from Artifactory
-            Build previousBuildInfo = artifactoryManager.getBuildInfo(prevBuildName, LATEST, project);
+            BuildInfo previousBuildInfo = artifactoryManager.getBuildInfo(prevBuildName, LATEST, project);
             if (previousBuildInfo == null) {
                 return "";
             }

@@ -1,28 +1,11 @@
-/*
- * Copyright (C) 2011 JFrog Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.jfrog.build.api;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.List;
+import java.util.Objects;
 
 import static org.jfrog.build.api.BuildBean.MODULE;
 
@@ -195,31 +178,6 @@ public class Module extends BaseBuildBean {
      */
     public void setExcludedArtifacts(List<Artifact> excludedArtifacts) {
         this.excludedArtifacts = excludedArtifacts;
-    }
-
-    /**
-     * Append other module to this module
-     *
-     * @param other Module to append
-     */
-    public void append(Module other) {
-        artifacts = appendBuildFileLists(artifacts, other.getArtifacts());
-        excludedArtifacts = appendBuildFileLists(excludedArtifacts, other.getExcludedArtifacts());
-        dependencies = appendBuildFileLists(dependencies, other.getDependencies());
-        type = StringUtils.defaultIfEmpty(type, other.type);
-        repository = StringUtils.defaultIfEmpty(repository, other.repository);
-        md5 = StringUtils.defaultIfEmpty(md5, other.md5);
-        sha1 = StringUtils.defaultIfEmpty(sha1, other.sha1);
-    }
-
-    private <T extends BaseBuildBean> List<T> appendBuildFileLists(List<T> a, List<T> b) {
-        if (a == null && b == null) {
-            return null;
-        }
-        return Stream.of(Optional.ofNullable(a).orElseGet(Collections::emptyList), Optional.ofNullable(b).orElseGet(Collections::emptyList))
-                .flatMap(Collection::stream)
-                .distinct()
-                .collect(Collectors.toList());
     }
 
     @Override

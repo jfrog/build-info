@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jfrog.build.api.Dependency;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.util.Log;
 
 import java.io.File;
