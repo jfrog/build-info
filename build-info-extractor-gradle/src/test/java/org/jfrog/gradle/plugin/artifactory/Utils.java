@@ -8,7 +8,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
-import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.Dependency;
 import org.jfrog.build.api.Module;
@@ -262,21 +261,21 @@ public class Utils {
     }
 
     /**
-     * Check expected properties is found on each published artifacts.
+     * Check that the expected properties are found on each published artifact.
      *
      * @param artifactoryManager - ArtifactoryManager client
      */
     static void checkArtifactsProps(ArtifactoryManager artifactoryManager) throws IOException {
         // Test single value prop
         PropertySearchResult artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.single.value.key=basic");
-        assertTrue(artifacts.getResults().size()>=12);
+        assertTrue(artifacts.getResults().size() >= 12);
         // Test multi value props
         artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val1");
-        assertTrue(artifacts.getResults().size()>= 12);
+        assertTrue(artifacts.getResults().size() >= 12);
         artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val2");
-        assertTrue(artifacts.getResults().size()>=12);
+        assertTrue(artifacts.getResults().size() >= 12);
         artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val3");
-        assertTrue(artifacts.getResults().size()>= 12);
+        assertTrue(artifacts.getResults().size() >= 12);
     }
 
     /**
