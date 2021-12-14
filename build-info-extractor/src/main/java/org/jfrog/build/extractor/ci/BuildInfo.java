@@ -607,11 +607,11 @@ public class BuildInfo extends BaseBuildBean {
         if (modules != null) {
             builder.modules(modules.stream().map(m -> {
                 return new org.jfrog.build.api.builder.ModuleBuilder().
-                        type(ModuleType.valueOf(m.getType().toUpperCase()))
+                        type(m.getType() == null ? null : ModuleType.valueOf(m.getType().toUpperCase()))
                         .id(m.getId())
                         .repository(m.getRepository())
                         .sha1(m.getSha1())
-                        .md5(m.getType())
+                        .md5(m.getMd5())
                         .artifacts(m.getArtifacts() == null ? null : m.getArtifacts().stream().map(Artifact::ToBuildArtifact).collect(Collectors.toList()))
                         .dependencies(m.getDependencies() == null ? null : m.getDependencies().stream().map(Dependency::ToBuildDependency).collect(Collectors.toList()))
                         .properties(m.getProperties())
