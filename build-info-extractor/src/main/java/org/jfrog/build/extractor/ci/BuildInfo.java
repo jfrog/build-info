@@ -605,8 +605,8 @@ public class BuildInfo extends BaseBuildBean {
                 .buildRetention(buildRetention == null ? null : buildRetention.ToBuildRetention())
                 .issues(issues == null ? null : issues.ToBuildIssues());
         if (modules != null) {
-            builder.modules(modules.stream().map(m -> new org.jfrog.build.api.builder.ModuleBuilder().
-                    type(m.getType() == null ? null : ModuleType.valueOf(m.getType().toUpperCase()))
+            builder.modules(modules.stream().map(m -> new org.jfrog.build.api.builder.ModuleBuilder()
+                    .type(m.getType() == null ? null : ModuleType.valueOf(m.getType().toUpperCase()))
                     .id(m.getId())
                     .repository(m.getRepository())
                     .sha1(m.getSha1())
@@ -643,8 +643,8 @@ public class BuildInfo extends BaseBuildBean {
                 .buildRetention(build.getBuildRetention() == null ? null : BuildRetention.ToBuildInfoRetention(build.getBuildRetention()))
                 .issues(build.getIssues() == null ? null : Issues.ToBuildInfoIssues(build.getIssues()));
         if (build.getModules() != null) {
-            builder.modules(build.getModules().stream().map(m -> new ModuleBuilder().
-                    type(m.getType())
+            builder.modules(build.getModules().stream().map(m -> new ModuleBuilder()
+                    .type(m.getType())
                     .id(m.getId())
                     .repository(m.getRepository())
                     .sha1(m.getSha1())
