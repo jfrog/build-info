@@ -62,7 +62,7 @@ public class DockerJavaWrapper {
         } else {
             // If open JDK is used and the host is null
             // then instead of a null reference, the host is the string "null".
-            if (!StringUtils.isEmpty(host) && !host.equalsIgnoreCase("null")) {
+            if (StringUtils.isNotBlank(host) && !host.equalsIgnoreCase("null")) {
                 configBuilder.withDockerHost(host);
             }
         }
