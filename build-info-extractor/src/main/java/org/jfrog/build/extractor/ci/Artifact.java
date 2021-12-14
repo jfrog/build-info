@@ -55,6 +55,7 @@ public class Artifact extends BaseBuildFileBean {
     public org.jfrog.build.api.Artifact ToBuildArtifact() {
         org.jfrog.build.api.Artifact result = new org.jfrog.build.api.Artifact();
         result.setName(name);
+        result.setType(type);
         result.setMd5(md5);
         result.setSha256(sha256);
         result.setSha1(sha1);
@@ -66,6 +67,7 @@ public class Artifact extends BaseBuildFileBean {
     public static Artifact ToBuildInfoArtifact(org.jfrog.build.api.Artifact artifact) {
         Artifact result = new Artifact();
         result.setName(artifact.getName());
+        result.setType(artifact.getType());
         result.setMd5(artifact.getMd5());
         result.setSha256(artifact.getSha256());
         result.setSha1(artifact.getSha1());
