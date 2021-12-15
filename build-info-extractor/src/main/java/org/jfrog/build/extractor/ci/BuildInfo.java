@@ -605,19 +605,17 @@ public class BuildInfo extends BaseBuildBean {
                 .buildRetention(buildRetention == null ? null : buildRetention.ToBuildRetention())
                 .issues(issues == null ? null : issues.ToBuildIssues());
         if (modules != null) {
-            builder.modules(modules.stream().map(m -> {
-                return new org.jfrog.build.api.builder.ModuleBuilder().
-                        type(ModuleType.valueOf(m.getType().toUpperCase()))
-                        .id(m.getId())
-                        .repository(m.getRepository())
-                        .sha1(m.getSha1())
-                        .md5(m.getType())
-                        .artifacts(m.getArtifacts() == null ? null : m.getArtifacts().stream().map(Artifact::ToBuildArtifact).collect(Collectors.toList()))
-                        .dependencies(m.getDependencies() == null ? null : m.getDependencies().stream().map(Dependency::ToBuildDependency).collect(Collectors.toList()))
-                        .properties(m.getProperties())
-                        .excludedArtifacts(m.getExcludedArtifacts() == null ? null : m.getExcludedArtifacts().stream().map(Artifact::ToBuildArtifact).collect(Collectors.toList()))
-                        .build();
-            }).collect(Collectors.toList()));
+            builder.modules(modules.stream().map(m -> new org.jfrog.build.api.builder.ModuleBuilder()
+                    .type(m.getType() == null ? null : ModuleType.valueOf(m.getType().toUpperCase()))
+                    .id(m.getId())
+                    .repository(m.getRepository())
+                    .sha1(m.getSha1())
+                    .md5(m.getMd5())
+                    .artifacts(m.getArtifacts() == null ? null : m.getArtifacts().stream().map(Artifact::ToBuildArtifact).collect(Collectors.toList()))
+                    .dependencies(m.getDependencies() == null ? null : m.getDependencies().stream().map(Dependency::ToBuildDependency).collect(Collectors.toList()))
+                    .properties(m.getProperties())
+                    .excludedArtifacts(m.getExcludedArtifacts() == null ? null : m.getExcludedArtifacts().stream().map(Artifact::ToBuildArtifact).collect(Collectors.toList()))
+                    .build()).collect(Collectors.toList()));
         }
         return builder.build();
     }
@@ -645,8 +643,8 @@ public class BuildInfo extends BaseBuildBean {
                 .buildRetention(build.getBuildRetention() == null ? null : BuildRetention.ToBuildInfoRetention(build.getBuildRetention()))
                 .issues(build.getIssues() == null ? null : Issues.ToBuildInfoIssues(build.getIssues()));
         if (build.getModules() != null) {
-            builder.modules(build.getModules().stream().map(m -> new ModuleBuilder().
-                    type(m.getType())
+            builder.modules(build.getModules().stream().map(m -> new ModuleBuilder()
+                    .type(m.getType())
                     .id(m.getId())
                     .repository(m.getRepository())
                     .sha1(m.getSha1())
