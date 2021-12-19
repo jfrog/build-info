@@ -71,14 +71,20 @@ public abstract class DeploymentUrlUtils {
         return escaped;
     }
 
+
     public static String buildMatrixParamsString(ArrayListMultimap<String, String> matrixParams, boolean encodeProperties)
             throws UnsupportedEncodingException {
         StringBuilder matrix = new StringBuilder();
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
-                for (String propertyValue : matrixParams.get(propertyKey)) {
-                    matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey)
-                            .append("=").append(encodeProperties ? encode(propertyValue) : propertyValue);
+                for (String multiPropertyValue : matrixParams.get(propertyKey)) {
+                    // Due to known bug in Artifactory, in order to support multi values properties
+                    // we add a statement to each value separately.
+                    for (String propertyValue:multiPropertyValue.split(",")) {
+                        propertyValue = propertyValue.trim();
+                        matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey)
+                                .append("=").append(encodeProperties ? encode(propertyValue) : propertyValue);
+                    }
                 }
             }
         }

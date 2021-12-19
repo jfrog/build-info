@@ -8,10 +8,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
+import org.jfrog.build.api.dependency.PropertySearchResult;
+import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.File;
@@ -19,29 +20,13 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.BUILD_BROWSE_URL;
-import static org.jfrog.gradle.plugin.artifactory.Consts.ARTIFACTS_GROUP_ID;
-import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER;
-import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_SOURCE_RESOLVER;
-import static org.jfrog.gradle.plugin.artifactory.Consts.BUILD_INFO_PROPERTIES_TARGET;
-import static org.jfrog.gradle.plugin.artifactory.Consts.EXPECTED_ARTIFACTS;
-import static org.jfrog.gradle.plugin.artifactory.Consts.EXPECTED_MODULE_ARTIFACTS;
-import static org.jfrog.gradle.plugin.artifactory.Consts.INIT_SCRIPT;
-import static org.jfrog.gradle.plugin.artifactory.Consts.LIBS_DIR;
-import static org.jfrog.gradle.plugin.artifactory.Consts.TEST_DIR;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import static org.jfrog.gradle.plugin.artifactory.Consts.*;
+import static org.testng.Assert.*;
 
 /**
  * @author yahavi
@@ -257,6 +242,24 @@ public class Utils {
                     fail("Unexpected module ID: " + module.getId());
             }
         }
+    }
+
+    /**
+     * Check that the expected properties are found on each published artifact.
+     *
+     * @param artifactoryManager - ArtifactoryManager client
+     */
+    static void checkArtifactsProps(ArtifactoryManager artifactoryManager) throws IOException {
+        // Test single value prop
+        PropertySearchResult artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.single.value.key=basic");
+        assertTrue(artifacts.getResults().size() >= 12);
+        // Test multi value props
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val1");
+        assertTrue(artifacts.getResults().size() >= 12);
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val2");
+        assertTrue(artifacts.getResults().size() >= 12);
+        artifacts = artifactoryManager.searchArtifactsByProperties("gradle.test.multi.values.key=val3");
+        assertTrue(artifacts.getResults().size() >= 12);
     }
 
     /**
