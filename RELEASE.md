@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.32.4 / gradle-artifactory-plugin 4.25.3 (December 19, 2021)
+- Deprecate 'artifactory.' property prefix.
+- Bug fix - Multi Values Properties Set ([583](https://github.com/jfrog/build-info/pull/583))
+
 ## build-info-extractor 2.32.3 / gradle-artifactory-plugin 4.25.2 (December 7, 2021)
 - Update file-specs-java dependency to 1.1.1
 
