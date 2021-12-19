@@ -251,16 +251,21 @@ public class GoZipBallStreamer implements Closeable {
     /**
      * Based on the original go client behaviour:
      * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch
-     * /coderepo.go
+     * /coderepo.go which using https://cs.opensource.google/go/x/mod/+/refs/tags/v0.5.1:zip/zip.go (Create function)
+     * There is a known bug here - see https://golang.org/issue/31562.
      *
      * @return True if the entry belongs to a vendor package
      */
     private boolean isVendorPackage(String entryName) {
-        if (entryName.startsWith(VENDOR) || entryName.contains('/' + VENDOR)) {
-            return entryName.substring(entryName.indexOf(VENDOR) + VENDOR.length()).contains("/");
+        int i;
+        if (entryName.startsWith(VENDOR)) {
+            i = VENDOR.length();
+        } else if (entryName.contains('/' + VENDOR)) {
+            i = VENDOR.length() + 1;
         } else {
             return false;
         }
+        return entryName.substring(i).contains("/");
     }
 
     /**
