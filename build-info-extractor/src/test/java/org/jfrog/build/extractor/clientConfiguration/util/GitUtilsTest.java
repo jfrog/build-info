@@ -29,6 +29,9 @@ public class GitUtilsTest {
         Assert.assertNotNull(vcs);
         Assert.assertEquals(vcs.getUrl(), getGitUrlWithExecutor(curDir, testLog));
         Assert.assertEquals(vcs.getRevision(), getGitRevisionWithExecutor(curDir, testLog));
+        Assert.assertEquals(vcs.getBranch(), getGitBranchWithExecutor(curDir, testLog));
+        Assert.assertEquals(vcs.getMessage(), getGitMessageWithExecutor(curDir, testLog));
+
     }
 
     private String getGitFieldWithExecutor(File execDir, Log log, List<String> args) throws IOException, InterruptedException {
@@ -52,6 +55,23 @@ public class GitUtilsTest {
         args.add("-s");
         args.add("--format=%H");
         args.add("HEAD");
+        return getGitFieldWithExecutor(execDir, log, args);
+    }
+
+    private String getGitBranchWithExecutor(File execDir, Log log) throws IOException, InterruptedException {
+        List<String> args = new ArrayList<>();
+        args.add("rev-parse");
+        args.add("--abbrev-ref");
+        args.add("HEAD");
+        return getGitFieldWithExecutor(execDir, log, args);
+    }
+
+    private String getGitMessageWithExecutor(File execDir, Log log) throws IOException, InterruptedException {
+        // git log -1 --pretty=%B
+        List<String> args = new ArrayList<>();
+        args.add("log");
+        args.add("-1");
+        args.add("--pretty=%B");
         return getGitFieldWithExecutor(execDir, log, args);
     }
 

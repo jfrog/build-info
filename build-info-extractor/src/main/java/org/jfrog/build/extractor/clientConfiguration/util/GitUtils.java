@@ -1,6 +1,11 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.util.Log;
 
@@ -43,6 +48,8 @@ public class GitUtils {
         Vcs vcs = new Vcs();
         vcs.setRevision(extractVcsRevision(dotGit, log));
         vcs.setUrl(extractVcsUrl(dotGit, log));
+        vcs.setMessage(extractVcsMessage(dotGit, log));
+        vcs.setBranch(extractVcsBranch(dotGit, log));
         return vcs;
     }
 
@@ -171,6 +178,35 @@ public class GitUtils {
         }
 
         return result;
+    }
+
+    private static String extractVcsBranch(File dotGit, Log log) throws IOException {
+        RevisionOrRef revisionOrRef = getRevisionOrBranchPath(dotGit);
+        // If found ref, returns the name after the last "/" as the git branch name.
+        if (StringUtils.isNotBlank(revisionOrRef.ref)) {
+            String[] splitArr = revisionOrRef.ref.split("/");
+            return splitArr[splitArr.length - 1];
+        }
+        log.warn("Failed fetching git branch from git directory: " + dotGit);
+        return "";
+    }
+
+    private static String extractVcsMessage(File dotGit, Log log) throws IOException {
+        FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
+        Repository repository = repositoryBuilder.setGitDir(dotGit)
+                .readEnvironment()
+                .findGitDir()
+                .setMustExist(true)
+                .build();
+        RevCommit latestCommit;
+        try {
+            latestCommit = new Git(repository).log().setMaxCount(1).call().iterator().next();
+        } catch (GitAPIException e) {
+            log.warn("Failed fetching commit message from git directory: " + dotGit);
+            return "";
+        }
+
+        return latestCommit.getFullMessage();
     }
 
     /**

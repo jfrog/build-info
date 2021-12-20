@@ -266,6 +266,7 @@ project('build-info-extractor') {
     apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Extractor'
     dependencies {
+        implementation 'org.eclipse.jgit:org.eclipse.jgit:5.1.16.202106041830-r'
         implementation project(':build-info-client')
         implementation project(':build-info-api')
 
