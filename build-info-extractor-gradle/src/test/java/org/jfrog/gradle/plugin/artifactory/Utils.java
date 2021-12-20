@@ -89,11 +89,11 @@ public class Utils {
      * @param setDeployer      - Set deployer details in file
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer) throws IOException {
-        String content = generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER);
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer,Path buildInfoPropertiesSourceResolver,Path buildInfoPropertiesSourceDeployer) throws IOException {
+        String content = generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, buildInfoPropertiesSourceResolver);
         if (setDeployer) {
             content += "\n";
-            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
+            content += generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, buildInfoPropertiesSourceDeployer);
         }
         Files.write(BUILD_INFO_PROPERTIES_TARGET, content.getBytes(StandardCharsets.UTF_8));
     }

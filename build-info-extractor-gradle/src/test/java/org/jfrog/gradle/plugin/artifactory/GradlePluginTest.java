@@ -97,7 +97,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -111,10 +111,28 @@ public class GradlePluginTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "gradleVersions")
+    public void deprecatedCiServerTest(String gradleVersion) throws IOException {
+        // Create test environment
+        createTestDir(DEPRECATED_GRADLE_EXAMPLE_CI_SERVER);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true, DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
+        Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
+            put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
+        }};
+        // Run Gradle
+        BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
+        // Check results
+        // Assert all tasks ended with success outcome
+        assertProjectsSuccess(buildResult);
+        // Cleanup
+        Pair<String, String> buildDetails = getBuildDetails(buildResult);
+        cleanTestBuilds(buildDetails.getLeft(), buildDetails.getRight(), null);
+    }
+
+    @Test(dataProvider = "gradleVersions")
     public void ciServerPublicationsTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", true, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", true, true, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -131,7 +149,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void requestedByTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", false, true);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "mavenJava,customIvyPublication", false, true, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};
@@ -148,7 +166,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
     public void ciServerResolverOnlyTest(String gradleVersion) throws IOException {
         // Create test environment
         createTestDir(GRADLE_EXAMPLE_CI_SERVER);
-        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", false, false);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", false, false, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
         Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
             put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
         }};

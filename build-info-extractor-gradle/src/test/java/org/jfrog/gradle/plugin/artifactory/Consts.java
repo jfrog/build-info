@@ -30,12 +30,15 @@ public class Consts {
     static final Path GRADLE_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-example-publish");
     static final Path GRADLE_KTS_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-kts-example-publish");
     static final Path GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server");
+    static final Path DEPRECATED_GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server-deprecated");
 
     // CI example paths
     static final Path LIBS_DIR = GRADLE_EXTRACTOR.resolve(Paths.get("build", "libs"));
     static final Path INIT_SCRIPT = GRADLE_EXTRACTOR_SRC.resolve(Paths.get("main", "resources", "initscripttemplate.gradle"));
     static final Path BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER = PROJECTS_ROOT.resolve("buildinfo.properties.deployer");
     static final Path BUILD_INFO_PROPERTIES_SOURCE_RESOLVER = PROJECTS_ROOT.resolve("buildinfo.properties.resolver");
+    static final Path DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER = PROJECTS_ROOT.resolve("deprecated.buildinfo.properties.deployer");
+    static final Path DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_RESOLVER = PROJECTS_ROOT.resolve("deprecated.buildinfo.properties.resolver");
     static final Path BUILD_INFO_PROPERTIES_TARGET = TEST_DIR.toPath().resolve("buildinfo.properties");
 
     // Expected artifacts
