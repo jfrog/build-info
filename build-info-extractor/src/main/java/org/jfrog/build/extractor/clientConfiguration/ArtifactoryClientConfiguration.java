@@ -923,9 +923,16 @@ public class ArtifactoryClientConfiguration {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
-            Map<String, String> result = getResolveMatrixParams(getMatrixParamPrefix());
+            // Try to get value using the deprecated key.
+            // This check must be first because we may have both types of property keys in props, deprecated and none deprecated.
+            // This may happen when the deprecated keys are added from the build-info properties file and the none deprecated keys added by Gradle as defaults.
+            // in that case, we must honor the deprecated keys first.
+            //
+            // In addition, when none deprecated keys are being used, and the build info properties file contains the up to date keys,
+            // those will override gradle defaults.
+            Map<String, String> result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
             if (result.size() == 0) {
-                result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
+                result = getResolveMatrixParams(getMatrixParamPrefix());
             }
             this.calculatedMatrixParams = ImmutableMap.copyOf(result);
             return calculatedMatrixParams;

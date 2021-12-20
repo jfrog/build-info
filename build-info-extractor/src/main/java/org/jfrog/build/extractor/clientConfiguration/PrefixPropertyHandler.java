@@ -47,13 +47,20 @@ public class PrefixPropertyHandler {
     }
 
     public String getStringValue(String key, String def) {
-        String value = props.get(prefix + key);
+        // Try to get value using the deprecated key.
+        // This check must be first because we may have both types of property keys in props, deprecated and none deprecated.
+        // This may happen when the deprecated keys are added from the build-info properties file and the none deprecated keys added by Gradle as defaults.
+        // in that case, we must honor the deprecated keys first.
+        //
+        // In addition, when none deprecated keys are being used, and the build info properties file contains the up to date keys,
+        // those will override gradle defaults.
+        String value = props.get(ARTIFACTORY_PREFIX + prefix + key);
         if (StringUtils.isNotBlank(value)) {
             return value;
         }
         // Fallback, try to get value with deprecated key.
         // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
-        value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        value = props.get(prefix + key);
         if (StringUtils.isNotBlank(value)) {
             return value;
         }
@@ -70,15 +77,20 @@ public class PrefixPropertyHandler {
     }
 
     public Boolean getBooleanValue(String key, Boolean def) {
-        String value = props.get(prefix + key);
+        // Try to get value using the deprecated key.
+        // This check must be first because we may have both types of property keys in props, deprecated and none deprecated.
+        // This may happen when the deprecated keys are added from the build-info properties file and the none deprecated keys added by Gradle as defaults.
+        // in that case, we must honor the deprecated keys first.
+        //
+        // In addition, when none deprecated keys are being used, and the build info properties file contains the up to date keys,
+        // those will override gradle defaults.
+        String value = props.get(ARTIFACTORY_PREFIX + prefix + key);
         // TODO: throw exception if not true or false. If prop set to something else
         Boolean result = (value == null) ? null : Boolean.parseBoolean(value);
         if (result != null) {
             return result;
         }
-        // Fallback, try to get value with deprecated key.
-        // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
-        value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        value = props.get(prefix + key);
         result = (value == null) ? null : Boolean.parseBoolean(value);
         if (result != null) {
             return result;
@@ -99,13 +111,19 @@ public class PrefixPropertyHandler {
     }
 
     public Integer getIntegerValue(String key, Integer def) {
-        Integer result = getInteger(key, prefix);
+        // Try to get value using the deprecated key.
+        // This check must be first because we may have both types of property keys in props, deprecated and none deprecated.
+        // This may happen when the deprecated keys are added from the build-info properties file and the none deprecated keys added by Gradle as defaults.
+        // in that case, we must honor the deprecated keys first.
+        //
+        // In addition, when none deprecated keys are being used, and the build info properties file contains the up to date keys,
+        // those will override gradle defaults.
+        Integer result = getInteger(key, ARTIFACTORY_PREFIX + prefix);
         if (result != null) {
             return result;
         }
-        // Fallback, try to get value with deprecated key.
-        // This may happen if a newer version of Build-Info is used old CI which generates the deprecated properties.
-        result = getInteger(key, ARTIFACTORY_PREFIX + prefix);
+        // Fallback, try to get the regular key.
+         result = getInteger(key, prefix);
         if (result != null) {
             return result;
         }
