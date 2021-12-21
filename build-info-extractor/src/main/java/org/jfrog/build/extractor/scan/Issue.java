@@ -17,20 +17,24 @@ public class Issue implements Comparable<Issue> {
     private Severity severity = Severity.Normal;
     private List<String> fixedVersions;
     private String component = "";
-    private String description;
     private String summary;
+    private String issueId;
     private String cve;
 
     public Issue() {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String description, Severity severity, String summary, List<String> fixedVersions, String cve) {
-        this.description = description;
+    public Issue(String issueId, Severity severity, String summary, List<String> fixedVersions, String cve) {
+        this.issueId = issueId;
         this.severity = severity;
         this.summary = summary;
         this.fixedVersions = fixedVersions;
         this.cve = cve;
+    }
+
+    public String getIssueId() {
+        return this.issueId;
     }
 
     public Severity getSeverity() {
@@ -43,11 +47,6 @@ public class Issue implements Comparable<Issue> {
 
     public void setComponent(String component) {
         this.component = component;
-    }
-
-    @SuppressWarnings("unused")
-    public String getDescription() {
-        return description;
     }
 
     @SuppressWarnings("unused")
@@ -88,21 +87,14 @@ public class Issue implements Comparable<Issue> {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (other == null || getClass() != other.getClass()) {
+        if (!(other instanceof Issue)) {
             return false;
         }
-        Issue otherIssue = (Issue) other;
-        if (StringUtils.isEmpty(component)) {
-            return StringUtils.equals(description, otherIssue.description) && StringUtils.equals(summary, otherIssue.summary);
-        }
-        return StringUtils.equals(component, otherIssue.component) && StringUtils.equals(summary, otherIssue.summary);
+        return StringUtils.equals(((Issue) other).getIssueId(), getIssueId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(summary, component, description);
+        return Objects.hash(issueId);
     }
 }
