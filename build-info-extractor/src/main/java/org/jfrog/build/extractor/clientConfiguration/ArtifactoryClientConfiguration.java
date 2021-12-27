@@ -923,9 +923,12 @@ public class ArtifactoryClientConfiguration {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
-            Map<String, String> result = getResolveMatrixParams(getMatrixParamPrefix());
+            // First, get value using deprecated key.
+            // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
+            Map<String, String> result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
             if (result.size() == 0) {
-                result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
+                // Fallback to none deprecated key.
+                result = getResolveMatrixParams(getMatrixParamPrefix());
             }
             this.calculatedMatrixParams = ImmutableMap.copyOf(result);
             return calculatedMatrixParams;
