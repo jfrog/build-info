@@ -47,18 +47,10 @@ public class PrefixPropertyHandler {
     }
 
     public String getStringValue(String key, String def) {
-        // First, get value using deprecated key.
-        // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
-        String value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        String value = getValueWithFallback(key);
         if (StringUtils.isNotBlank(value)) {
             return value;
         }
-        // Fallback to none deprecated key.
-        value = props.get(prefix + key);
-        if (StringUtils.isNotBlank(value)) {
-            return value;
-        }
-
         return def;
     }
 
@@ -71,17 +63,8 @@ public class PrefixPropertyHandler {
     }
 
     public Boolean getBooleanValue(String key, Boolean def) {
-        // First, get value using deprecated key.
-        // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
-        String value = props.get(ARTIFACTORY_PREFIX + prefix + key);
-        // TODO: throw exception if not true or false. If prop set to something else
+        String value = getValueWithFallback(key);
         Boolean result = (value == null) ? null : Boolean.parseBoolean(value);
-        if (result != null) {
-            return result;
-        }
-        // Fallback to none deprecated key.
-        value = props.get(prefix + key);
-        result = (value == null) ? null : Boolean.parseBoolean(value);
         if (result != null) {
             return result;
         }
@@ -101,31 +84,36 @@ public class PrefixPropertyHandler {
     }
 
     public Integer getIntegerValue(String key, Integer def) {
-        // First, get value using deprecated key.
-        // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
-        Integer result = getInteger(key, ARTIFACTORY_PREFIX + prefix);
-        if (result != null) {
-            return result;
-        }
-        // Fallback to none deprecated key.
-         result = getInteger(key, prefix);
+        Integer result = getInteger(key);
         if (result != null) {
             return result;
         }
         return def;
     }
 
-    private Integer getInteger(String key, String targetPrefix) {
+    private Integer getInteger(String key) {
         Integer result;
-        String s = props.get(targetPrefix + key);
+        String s = getValueWithFallback(key);
         if (s != null && !StringUtils.isNumeric(s)) {
-            log.debug("Property '" + targetPrefix + key + "' is not of numeric value '" + s + "'");
+            log.debug("Property '" + key + "' is not of numeric value '" + s + "'");
             result = null;
         } else {
             result = (s == null) ? null : Integer.parseInt(s);
         }
         return result;
     }
+
+    private String getValueWithFallback(String key) {
+        // First, get value using deprecated key.
+        // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
+        String value = props.get(ARTIFACTORY_PREFIX + prefix + key);
+        if (StringUtils.isNotBlank(value)) {
+            return value;
+        }
+        // Fallback to none deprecated key.
+        return props.get(prefix + key);
+    }
+
 
     public void setIntegerValue(String key, Integer value) {
         if (value == null) {
