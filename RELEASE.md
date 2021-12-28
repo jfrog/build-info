@@ -1,5 +1,10 @@
 # Release Notes
 
+## build-info-extractor 2.32.5 / gradle-artifactory-plugin 4.25.4 (December 28, 2021)
+- Add support for v2 compatible Go projects with submodule as root ([594](https://github.com/jfrog/build-info/pull/594))
+- Bugfix - Gradle defaults props should not ignore deprecated build-info properties ([590](https://github.com/jfrog/build-info/pull/590))
+- IDEs - Compare scan issues by ID ([589](https://github.com/jfrog/build-info/pull/589))
+
 ## build-info-extractor 2.32.4 / gradle-artifactory-plugin 4.25.3 (December 19, 2021)
 - Deprecate 'artifactory.' property prefix.
 - Bug fix - Multi Values Properties Set ([583](https://github.com/jfrog/build-info/pull/583))
