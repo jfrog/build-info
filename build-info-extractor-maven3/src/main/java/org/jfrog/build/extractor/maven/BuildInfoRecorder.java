@@ -525,7 +525,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             if (artifactFile != null && artifactFile.isFile()) {
                 boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
                 addArtifactToBuildInfo(artifact, pathConflicts, excludeArtifactsFromBuild, module);
-                if (conf.publisher.generateDeployArtifactsMap()) {
+                if (conf.publisher.shouldAddDeployableArtifacts()) {
                     addDeployableArtifact(artifact, artifactFile, pathConflicts, groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
                 }
             }
@@ -558,7 +558,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 if (pomFile != null && pomFile.isFile()) {
                     boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
                     addArtifactToBuildInfo(pomArtifact, pathConflicts, excludeArtifactsFromBuild, module);
-                    if (conf.publisher.generateDeployArtifactsMap()) {
+                    if (conf.publisher.shouldAddDeployableArtifacts()) {
                         addDeployableArtifact(pomArtifact, pomFile, pathConflicts, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
                     }
                 }

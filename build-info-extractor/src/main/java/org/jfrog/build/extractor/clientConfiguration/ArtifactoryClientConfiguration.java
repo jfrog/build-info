@@ -79,7 +79,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EVEN_UNSTABLE;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EXCLUDE_PATTERNS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.GENERATE_DEPLOY_ARTIFACTS_MAP;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ADD_DEPLOYABLE_ARTIFACTS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.GO_PUBLISHED_VERSION;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.HOST;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.INCLUDE_PATTERNS;
@@ -455,8 +455,8 @@ public class ArtifactoryClientConfiguration {
             return getBooleanValue(PUBLISH_ARTIFACTS, true);
         }
 
-        public Boolean generateDeployArtifactsMap() {
-            return getBooleanValue(GENERATE_DEPLOY_ARTIFACTS_MAP, true);
+        public Boolean shouldAddDeployableArtifacts() {
+            return getBooleanValue(ADD_DEPLOYABLE_ARTIFACTS, true);
         }
 
         public void setPublishBuildInfo(Boolean enabled) {
