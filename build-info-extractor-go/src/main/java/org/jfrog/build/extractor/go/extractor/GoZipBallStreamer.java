@@ -41,11 +41,14 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.util.Log;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -58,12 +61,13 @@ public class GoZipBallStreamer implements Closeable {
 
     protected ArchiveOutputStream archiveOutputStream;
     private final Log log;
-    private ZipFile zipFile;
-    private String projectName;
-    private String version;
-    private Set<String> excludedDirectories;
-    private String subModuleName;
-    private static final String MOD_FILE = "/go.mod";
+    private final ZipFile zipFile;
+    private final String projectName;
+    private final String version;
+    private final Set<String> excludedDirectories;
+    private String subModuleName = "";
+    private static final String MOD_FILE = "go.mod";
+    private static final String MOD_FILE_PATH = "/" + MOD_FILE;
     private static final String VENDOR = "vendor/";
 
     public GoZipBallStreamer(ZipFile zipFile, String projectName, String version, Log log) {
@@ -89,15 +93,22 @@ public class GoZipBallStreamer implements Closeable {
         writeEntries();
     }
 
+    void setSubModuleName(String subModuleName) {
+        this.subModuleName = subModuleName;
+    }
+
     /**
-     * Determine if the project is a compatible module from version 2+, a sub module or an incompatible module
+     * Determine if the project is a compatible module from version 2+, a submodule or an incompatible module
      */
     private void initiateProjectType() {
         boolean compatibleModuleFromV2 = GoVersionUtils.getMajorVersion(version, log) >= 2 &&
                 GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
         if (compatibleModuleFromV2) {
-            subModuleName = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
-            log.debug(projectName + "@" + version + " is compatible Go module from major version " + subModuleName);
+            String majorVersion = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
+            if (!hasRootModFileOfCompatibleModuleFromV2(majorVersion)) {
+                subModuleName = majorVersion;
+                log.debug(projectName + "@" + version + " is compatible Go module from major version " + subModuleName);
+            }
         } else {
             subModuleName = GoVersionUtils.getSubModule(projectName);
             if (shouldPackSubModule()) {
@@ -195,7 +206,7 @@ public class GoZipBallStreamer implements Closeable {
         while (entries.hasMoreElements()) {
             zipEntry = entries.nextElement();
             if (!zipEntry.isDirectory() && isSubModule(zipEntry.getName())) {
-                String subModulePath = zipEntry.getName().replace(MOD_FILE, "");
+                String subModulePath = zipEntry.getName().replace(MOD_FILE_PATH, "");
                 excludedDirectories.add(subModulePath);
             } else {
                 allDirectories.add(GoVersionUtils.getParent(zipEntry.getName()));
@@ -237,15 +248,47 @@ public class GoZipBallStreamer implements Closeable {
     /**
      * @return True if the entry is a go.mod file which doesn't belong to the project we are packing
      */
-    private boolean isSubModule(String entryName) {
-        if (entryName.endsWith(MOD_FILE)) {
+    boolean isSubModule(String entryName) {
+        if (entryName.endsWith(MOD_FILE_PATH)) {
             if (shouldPackSubModule()) {
-                return (!entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE));
+                return (!entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE_PATH));
             } else {
-                return entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE);
+                return !entryName.substring(entryName.indexOf('/') + 1).equals(MOD_FILE);
             }
         }
         return false;
+    }
+
+    /**
+     * @param majorVersion - major version of a compatible v2 project
+     *                     example zip structure:
+     *                     - go.mod (module github.com/owner/repo/v2)
+     *                     - hello.go
+     *                     - v3/
+     *                     majorVersion = v3 -> false
+     *                     majorVersion = v2 -> true
+     * @return true, if the go.mod file in the root specifies a path of submodule of the given major version
+     */
+    private boolean hasRootModFileOfCompatibleModuleFromV2(String majorVersion) {
+        Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
+        // no need to iterate over the entire zip, all we need is to check the content of the go.mod file in the root (if exists)
+        if (entries.hasMoreElements()) {
+            ZipArchiveEntry zipEntry = entries.nextElement();
+            ZipArchiveEntry modEntry = zipFile.getEntry(getFirstPathElement(zipEntry.getName()) + MOD_FILE_PATH);
+            if (modEntry == null) {
+                modEntry = zipFile.getEntry(MOD_FILE);
+            }
+            if (modEntry != null) {
+                try (InputStream inputStream = zipFile.getInputStream(modEntry)) {
+                    String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+                    return StringUtils.substringBefore(modFileContent, System.lineSeparator()).endsWith("/" + majorVersion);
+                } catch (IOException e) {
+                    log.warn("Failed to read go.mod file of the root project: " + ExceptionUtils.getRootCauseMessage(e));
+                }
+            }
+        }
+        return false;
+
     }
 
     /**
@@ -291,5 +334,19 @@ public class GoZipBallStreamer implements Closeable {
     @Override
     public void close() throws IOException {
         zipFile.close();
+    }
+
+    /**
+     * null -> null
+     * example/file -> example
+     *
+     * @return first path element without '/' as a string
+     */
+    private String getFirstPathElement(String path) {
+        if (path == null) {
+            return "";
+        }
+        path = StringUtils.removeStart(path, "/");
+        return StringUtils.substringBefore(path, "/");
     }
 }
