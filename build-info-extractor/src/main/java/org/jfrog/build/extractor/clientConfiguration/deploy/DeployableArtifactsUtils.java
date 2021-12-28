@@ -87,7 +87,7 @@ public class DeployableArtifactsUtils {
     private static List<DeployableArtifactDetail> getDeployableArtifactsPaths(Set<DeployDetails> deployDetails) {
         List<DeployableArtifactDetail> deployableArtifacts = new ArrayList<>();
         for (DeployDetails artifact : deployDetails) {
-            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifact.getArtifactPath(), artifact.getSha1(), artifact.getSha256(), artifact.getDeploySucceeded(), artifact.getTargetRepository()));
+            deployableArtifacts.add(new DeployableArtifactDetail(artifact.getFile().getAbsolutePath(), artifact.getArtifactPath(), artifact.getSha1(), artifact.getSha256(), artifact.getDeploySucceeded(), artifact.getTargetRepository(), artifact.getProperties().asMap()));
         }
         return deployableArtifacts;
     }
