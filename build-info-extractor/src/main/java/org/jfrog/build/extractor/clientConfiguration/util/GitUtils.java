@@ -202,7 +202,7 @@ public class GitUtils {
         try {
             latestCommit = new Git(repository).log().setMaxCount(1).call().iterator().next();
         } catch (GitAPIException e) {
-            log.warn("Failed fetching commit message from git directory: " + dotGit);
+            log.warn("Failed fetching commit message from git directory: " + dotGit + "\nWith the following error: " + e.getMessage());
             return "";
         }
 

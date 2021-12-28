@@ -31,7 +31,6 @@ public class GitUtilsTest {
         Assert.assertEquals(vcs.getRevision(), getGitRevisionWithExecutor(curDir, testLog));
         Assert.assertEquals(vcs.getBranch(), getGitBranchWithExecutor(curDir, testLog));
         Assert.assertEquals(vcs.getMessage(), getGitMessageWithExecutor(curDir, testLog));
-
     }
 
     private String getGitFieldWithExecutor(File execDir, Log log, List<String> args) throws IOException, InterruptedException {
