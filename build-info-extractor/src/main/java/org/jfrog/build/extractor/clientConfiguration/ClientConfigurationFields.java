@@ -45,4 +45,5 @@ public interface ClientConfigurationFields {
     String EVEN_UNSTABLE = "unstable";
     String CONTEXT_URL = "contextUrl";
     String PUBLICATIONS = "publications";
+    String ADD_DEPLOYABLE_ARTIFACTS = "add.deployable.artifacts";
 }
