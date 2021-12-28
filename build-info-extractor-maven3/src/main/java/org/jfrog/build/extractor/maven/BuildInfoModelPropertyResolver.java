@@ -50,7 +50,7 @@ public class BuildInfoModelPropertyResolver {
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
                 artifactoryPrincipal(clientConf.publisher.getName()).artifactoryPluginVersion(clientConf.info.getArtifactoryPluginVersion()).
                 principal(clientConf.info.getPrincipal()).parentName(
-                clientConf.info.getParentBuildName()).
+                        clientConf.info.getParentBuildName()).
                 parentNumber(clientConf.info.getParentBuildNumber());
 
         String buildUrl = clientConf.info.getBuildUrl();
@@ -58,17 +58,15 @@ public class BuildInfoModelPropertyResolver {
             builder.url(buildUrl);
         }
 
-        Vcs vcs = new Vcs();
         String vcsRevision = clientConf.info.getVcsRevision();
         if (StringUtils.isNotBlank(vcsRevision)) {
-            vcs.setRevision(vcsRevision);
             builder.vcsRevision(vcsRevision);
         }
         String vcsUrl = clientConf.info.getVcsUrl();
         if (StringUtils.isNotBlank(vcsUrl)) {
-            vcs.setUrl(vcsUrl);
             builder.vcsUrl(vcsUrl);
         }
+        Vcs vcs = new Vcs(vcsUrl, vcsRevision, clientConf.info.getVcsBranch(), clientConf.info.getVcsMessage());
         if (!vcs.isEmpty()) {
             builder.vcs(Arrays.asList(vcs));
         }

@@ -29,38 +29,7 @@ import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ENV_VARS_IN
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.EXPORT_FILE;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.INCLUDE_ENV_VARS;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROPERTIES_FILE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.ARTIFACTORY_PLUGIN_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBER;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBERS_NOT_TO_DELETE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NUMBER;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PROJECT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_ASYNC;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_COUNT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_DAYS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_MINIMUM_DATE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_ROOT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_STARTED;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_TIMESTAMP;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_URL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.DELETE_BUILD_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.DEPLOYABLE_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.ENVIRONMENT_PREFIX;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.GENERATED_BUILD_INFO;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.INCREMENTAL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.MIN_CHECKSUM_DEPLOY_SIZE_KB;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.PRINCIPAL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_COMMENT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_ENABLED;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RUN_PARAMETERS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_REVISION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_URL;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.*;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_ISSUES_TRACKER_PREFIX;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_PREFIX;
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AFFECTED_ISSUES;
@@ -1094,6 +1063,22 @@ public class ArtifactoryClientConfiguration {
 
         public void setVcsUrl(String vcsUrl) {
             setStringValue(VCS_URL, vcsUrl);
+        }
+
+        public String getVcsBranch() {
+            return getStringValue(VCS_BRANCH);
+        }
+
+        public void setVcsBranch(String vcsBranch) {
+            setStringValue(VCS_BRANCH, vcsBranch);
+        }
+
+        public String getVcsMessage() {
+            return getStringValue(VCS_MESSAGE);
+        }
+
+        public void setVcsMessage(String vcsMessage) {
+            setStringValue(VCS_MESSAGE, vcsMessage);
         }
 
         public String getAgentName() {
