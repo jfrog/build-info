@@ -1,6 +1,10 @@
 package org.jfrog.build.client;
 
+import com.google.common.collect.ArrayListMultimap;
+
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Created by yahavi on 08/05/2017.
@@ -31,13 +35,19 @@ public class DeployableArtifactDetail implements Serializable {
      */
     private String targetRepository;
 
-    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1, String sha256, Boolean deploySucceeded, String targetRepository) {
+    /**
+     * Properties to attach to the deployed file as matrix params.
+     */
+    private Map<String, Collection<String>> properties;
+
+    public DeployableArtifactDetail(String artifactSource, String artifactDest, String sha1, String sha256, Boolean deploySucceeded, String targetRepository, Map<String, Collection<String>> properties) {
         this.sourcePath = artifactSource;
         this.artifactDest = artifactDest;
         this.sha1 = sha1;
         this.sha256 = sha256;
         this.deploySucceeded = deploySucceeded;
         this.targetRepository = targetRepository;
+        this.properties = properties;
     }
 
     public DeployableArtifactDetail() {
@@ -65,5 +75,9 @@ public class DeployableArtifactDetail implements Serializable {
 
     public Boolean isDeploySucceeded() {
         return deploySucceeded;
+    }
+
+    public Map<String, Collection<String>> getProperties() {
+        return properties;
     }
 }
