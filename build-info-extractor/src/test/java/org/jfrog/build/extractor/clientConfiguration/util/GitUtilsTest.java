@@ -21,16 +21,25 @@ public class GitUtilsTest {
      * Tests extracting Vcs details manually by comparing results to those received from the git executable
      */
     @Test
-    private void testReadGitConfig() throws IOException, InterruptedException {
-        File curDir = new File("").getAbsoluteFile();
-        Log testLog = new TestingLog();
-        Vcs vcs = GitUtils.extractVcs(curDir, testLog);
+    private void testReadGitConfig() throws IOException, InterruptedException, URISyntaxException {
+        String gitResource = "git_simple_.git_suffix";
+        File testResourcesPath = new File(this.getClass().getResource("/gitutils").toURI()).getCanonicalFile();
+        File dotGitDir = new File(testResourcesPath, ".git").getAbsoluteFile();
+        try {
+            FileUtils.copyDirectory(new File(testResourcesPath, gitResource), dotGitDir);
+            Log testLog = new TestingLog();
+            Vcs vcs = GitUtils.extractVcs(dotGitDir, testLog);
 
-        Assert.assertNotNull(vcs);
-        Assert.assertEquals(vcs.getUrl(), getGitUrlWithExecutor(curDir, testLog));
-        Assert.assertEquals(vcs.getRevision(), getGitRevisionWithExecutor(curDir, testLog));
-        Assert.assertEquals(vcs.getBranch(), getGitBranchWithExecutor(curDir, testLog));
-        Assert.assertEquals(vcs.getMessage(), getGitMessageWithExecutor(curDir, testLog));
+            Assert.assertNotNull(vcs);
+            Assert.assertEquals(vcs.getUrl(), getGitUrlWithExecutor(dotGitDir, testLog));
+            Assert.assertEquals(vcs.getRevision(), getGitRevisionWithExecutor(dotGitDir, testLog));
+            Assert.assertEquals(vcs.getBranch(), getGitBranchWithExecutor(dotGitDir, testLog));
+            Assert.assertEquals(vcs.getMessage(), getGitMessageWithExecutor(dotGitDir, testLog));
+
+        } finally {
+            // Cleanup.
+            FileUtils.deleteDirectory(dotGitDir);
+        }
     }
 
     private String getGitFieldWithExecutor(File execDir, Log log, List<String> args) throws IOException, InterruptedException {
