@@ -6,8 +6,8 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.Vcs;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -196,7 +196,6 @@ public class GitUtils {
         Repository repository = repositoryBuilder.setGitDir(dotGit)
                 .readEnvironment()
                 .findGitDir()
-                .setMustExist(true)
                 .build();
         RevCommit latestCommit;
         try {
@@ -206,7 +205,7 @@ public class GitUtils {
             return "";
         }
 
-        return latestCommit.getFullMessage();
+        return latestCommit.getFullMessage().trim();
     }
 
     /**

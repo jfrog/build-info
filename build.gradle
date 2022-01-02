@@ -107,6 +107,7 @@ subprojects {
         from {
             configurations.uberJar.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
         }
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
         with jar
         archiveClassifier.set('uber')
     }
@@ -266,7 +267,7 @@ project('build-info-extractor') {
     apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Extractor'
     dependencies {
-        implementation 'org.eclipse.jgit:org.eclipse.jgit:5.1.16.202106041830-r'
+        implementation 'org.eclipse.jgit:org.eclipse.jgit:5.13.0.202109080827-r'
         implementation project(':build-info-client')
         implementation project(':build-info-api')
 
