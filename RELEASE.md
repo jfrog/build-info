@@ -1,7 +1,7 @@
 # Release Notes
 
 ## build-info-extractor 2.32.6 / gradle-artifactory-plugin 4.25.5 (January 3, 2022)
-- Add VCS branch and VCS message to build-info VCS deatils ([591](https://github.com/jfrog/build-info/pull/591))
+- Add VCS branch and VCS message to build-info VCS details ([591](https://github.com/jfrog/build-info/pull/591))
 - Bug fix - VCS properties on artifacts are not added on maven late deploy ([596](https://github.com/jfrog/build-info/pull/596))
 
 ## build-info-extractor 2.32.5 / gradle-artifactory-plugin 4.25.4 (December 28, 2021)
