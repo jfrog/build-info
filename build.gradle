@@ -230,9 +230,9 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
+        implementation group: 'software.amazon.cryptools', name: 'AmazonCorrettoCryptoProvider', version: '1.6.1', classifier: 'linux-x86_64'
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5.1'
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
-        implementation 'software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.+:linux-x86_64'
         implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
     }
 }
