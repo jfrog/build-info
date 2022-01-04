@@ -3,13 +3,13 @@ package org.jfrog.build.extractor.go.extractor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -30,6 +30,7 @@ import java.util.Map;
 
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toLowerCase;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 
@@ -216,10 +217,10 @@ public class GoRun extends GoCommand {
         String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + File.separator + "@v" + File.separator + moduleVersion + ".zip";
         File moduleZip = new File(cachedPkgPath);
         if (moduleZip.exists()) {
-            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5, SHA1);
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
             Dependency dependency = new DependencyBuilder()
                     .id(moduleName + ':' + moduleVersion)
-                    .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                     .type("zip")
                     .build();
             dependenciesList.add(dependency);

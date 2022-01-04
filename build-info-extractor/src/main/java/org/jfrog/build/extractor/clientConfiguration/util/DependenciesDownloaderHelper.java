@@ -9,36 +9,24 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.jfrog.build.extractor.builder.DependencyBuilder;
-import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.search.AqlSearchResult;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.api.util.ZipUtils;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.filespecs.FileSpec;
 import org.jfrog.filespecs.entities.FilesGroup;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
-import java.io.SequenceInputStream;
-import java.io.StringWriter;
+import java.io.*;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.MD5_HEADER_NAME;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.SHA1_HEADER_NAME;
 
@@ -48,9 +36,6 @@ import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.s
  * @author Shay Yaakov
  */
 public class DependenciesDownloaderHelper {
-
-    public static final String SHA1_ALGORITHM_NAME = "sha1";
-    public static final String MD5_ALGORITHM_NAME = "md5";
 
     private final DependenciesDownloader downloader;
     private final Log log;
@@ -241,7 +226,7 @@ public class DependenciesDownloaderHelper {
     protected Map<String, String> downloadFile(String downloadPath, String fileDestination) throws IOException {
         File downloadedFile = downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination);
         try {
-            return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
+            return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
@@ -401,12 +386,14 @@ public class DependenciesDownloaderHelper {
 
     private Dependency validateChecksumsAndBuildDependency(Map<String, String> checksumsMap, ArtifactMetaData artifactMetaData, String filePath, String fileDestination, String remotePath)
             throws IOException {
-        String md5 = validateMd5Checksum(artifactMetaData.getMd5(), checksumsMap.get(MD5_ALGORITHM_NAME));
-        String sha1 = validateSha1Checksum(artifactMetaData.getSha1(), checksumsMap.get(SHA1_ALGORITHM_NAME));
+        String md5 = validateMd5Checksum(artifactMetaData.getMd5(), checksumsMap.get(MD5_ALGORITHM));
+        String sha1 = validateSha1Checksum(artifactMetaData.getSha1(), checksumsMap.get(SHA1_ALGORITHM));
 
         return new DependencyBuilder()
                 .md5(md5)
                 .sha1(sha1)
+                // Checksum verification for sha256 is disabled for now
+                .sha256(checksumsMap.get(SHA256_ALGORITHM))
                 .id(filePath.substring(filePath.lastIndexOf(File.separatorChar) + 1))
                 .localPath(fileDestination)
                 .remotePath(remotePath)
@@ -444,6 +431,7 @@ public class DependenciesDownloaderHelper {
     }
 
     protected static class ArtifactMetaData {
+        private String sha256;
         private String sha1;
         private String md5;
         private long size;
@@ -455,6 +443,14 @@ public class DependenciesDownloaderHelper {
 
         public void setSize(long size) {
             this.size = size;
+        }
+
+        public String getSha256() {
+            return this.sha256;
+        }
+
+        public void setSha256(String sha256) {
+            this.sha256 = sha256;
         }
 
         public String getSha1() {

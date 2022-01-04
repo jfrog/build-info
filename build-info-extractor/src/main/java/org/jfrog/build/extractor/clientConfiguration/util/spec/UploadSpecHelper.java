@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
 import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.removeUnescapedChar;
 
 /**
@@ -25,17 +27,14 @@ import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.remo
  */
 public class UploadSpecHelper {
 
-    private static final String SHA1 = "SHA1";
-    private static final String MD5 = "MD5";
-
     /**
      * Create a DeployDetails from the given properties
      *
-     * @param targetPath target of the created artifact in Artifactory
-     * @param artifactFile the artifact to deploy
-     * @param uploadTarget target repository in Artifactory
-     * @param explode explode archive
-     * @param props properties to attach to the deployed file
+     * @param targetPath      target of the created artifact in Artifactory
+     * @param artifactFile    the artifact to deploy
+     * @param uploadTarget    target repository in Artifactory
+     * @param explode         explode archive
+     * @param props           properties to attach to the deployed file
      * @param buildProperties a map of properties to add to the DeployDetails objects
      */
     public static DeployDetails buildDeployDetails(String targetPath, File artifactFile,
@@ -48,16 +47,16 @@ public class UploadSpecHelper {
         // calculate the sha1 checksum and add it to the deploy artifactsToDeploy
         Map<String, String> checksums;
         try {
-            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, SHA1, MD5);
+            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5_ALGORITHM, SHA1_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(
-                    String.format("Could not find checksum algorithm for %s or %s.", SHA1, MD5), e);
+                    String.format("Could not find checksum algorithm for %s or %s.", MD5_ALGORITHM, SHA1_ALGORITHM), e);
         }
         DeployDetails.Builder builder = new DeployDetails.Builder()
                 .file(artifactFile)
                 .artifactPath(path)
                 .targetRepository(getRepositoryKey(uploadTarget))
-                .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
                 .explode(BooleanUtils.toBoolean(explode))
                 .addProperties(SpecsHelper.getPropertiesMap(props))
                 .packageType(DeployDetails.PackageType.GENERIC);
@@ -95,7 +94,8 @@ public class UploadSpecHelper {
 
     /**
      * Gets the relative path of a given file to the workspace path.
-     * @param absolutePath the file's absolute path
+     *
+     * @param absolutePath  the file's absolute path
      * @param workspacePath path to the job's workspace
      * @return the relative path of a given file to the workspace path
      */
@@ -129,7 +129,7 @@ public class UploadSpecHelper {
     }
 
     protected static String getUploadPath(File file, Pattern pathPattern, String targetPath, boolean isFlat,
-                                        boolean isAbsolutePath, File workspaceDir, boolean isTargetDirectory) {
+                                          boolean isAbsolutePath, File workspaceDir, boolean isTargetDirectory) {
         String sourcePath;
         String fileTargetPath = targetPath;
         if (isTargetDirectory && !isFlat) {
@@ -168,11 +168,12 @@ public class UploadSpecHelper {
     /**
      * Returns base directory path with slash in the end.
      * The base directory is the path where the file collection starts from.
-     *
+     * <p>
      * Base directory is the last directory that not contains wildcards in case of regexp=false.
      * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
+     *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the pattern provided by the user
+     * @param pattern      the pattern provided by the user
      * @return String that represents the base directory
      */
     public static String getWildcardBaseDir(File workspaceDir, String pattern) {
@@ -191,11 +192,12 @@ public class UploadSpecHelper {
     /**
      * Returns base directory path with slash in the end.
      * The base directory is the path where the file collection starts from.
-     *
+     * <p>
      * Base directory is the last directory that not contains wildcards in case of regexp=false.
      * In case of regexp=true the base directory will be the last existing directory that not contains a regex char.
+     *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the pattern provided by the user
+     * @param pattern      the pattern provided by the user
      * @return String that represents the base directory
      */
     public static String getRegexBaseDir(File workspaceDir, String pattern) throws FileNotFoundException {
@@ -214,9 +216,10 @@ public class UploadSpecHelper {
     /**
      * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
      * this method removes the part of the pattern that exists in the base directory.
+     *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the provided by the user pattern
-     * @param baseDir the calculated base directory
+     * @param pattern      the provided by the user pattern
+     * @param baseDir      the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
     public static String prepareRegexPattern(File workspaceDir, String pattern, String baseDir) {
@@ -233,9 +236,10 @@ public class UploadSpecHelper {
     /**
      * The user can provide pattern that will contain static path (without wildcards) that will become part of the base directory.
      * this method removes the part of the pattern that exists in the base directory.
+     *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the provided by the user pattern
-     * @param baseDir the calculated base directory
+     * @param pattern      the provided by the user pattern
+     * @param baseDir      the calculated base directory
      * @return new calculated pattern based on the provided patern and base directory
      */
     public static String prepareWildcardPattern(File workspaceDir, String pattern, String baseDir) {
@@ -326,6 +330,7 @@ public class UploadSpecHelper {
 
     /**
      * Remove repository's name from a given Spec's target
+     *
      * @param path target path in Artifactory
      * @return the local path inside the repository
      */
@@ -345,7 +350,7 @@ public class UploadSpecHelper {
      * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
      *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the provided by the user patter, can be absolute or relative
+     * @param pattern      the provided by the user patter, can be absolute or relative
      * @return the absolute path of pattern
      */
     private static String getRegexpAbsolutePattern(File workspaceDir, String pattern) {
@@ -363,7 +368,7 @@ public class UploadSpecHelper {
      * in case of regexp=true escape chars will be prepended to regex chars in the checkout directory path.
      *
      * @param workspaceDir the workspaceDir directory
-     * @param pattern the provided by the user patter, can be absolute or relative
+     * @param pattern      the provided by the user patter, can be absolute or relative
      * @return the absolute path of pattern
      */
     private static String getWildcardAbsolutePattern(File workspaceDir, String pattern) {
@@ -376,6 +381,7 @@ public class UploadSpecHelper {
 
     /**
      * Returns the last existing directory of the provided baseDire that not contains a regex characters.
+     *
      * @param baseDir the path to search in
      * @return the last existing directory of the provided baseDire that not contains a regex characters
      */
@@ -392,13 +398,13 @@ public class UploadSpecHelper {
     }
 
     private static String removeParenthesis(String baseDir) {
-        baseDir = removeUnescapedChar(baseDir ,"(".charAt(0));
-        baseDir = removeUnescapedChar(baseDir ,")".charAt(0));
+        baseDir = removeUnescapedChar(baseDir, "(".charAt(0));
+        baseDir = removeUnescapedChar(baseDir, ")".charAt(0));
         return baseDir;
     }
 
     private static String escapeParentheses(String path) {
-        return path.replace("(", "\\(").replace(")","\\)");
+        return path.replace("(", "\\(").replace(")", "\\)");
     }
 
     private static String cleanRegexpPattern(String absolutePattern, String baseDir) {
@@ -420,6 +426,7 @@ public class UploadSpecHelper {
      * This method removes parenthesis that was not opened in the string.
      * In other words, every ')' char that has no '(' in front of it (regardless of the text in between them) will be deleted.
      * For example, "aaa)bbb(c(ddd)e)ff)" will return "aaabbb(c(ddd)e)ff".
+     *
      * @param pattern the string to remove from
      * @return string without unopened parenthesis
      */

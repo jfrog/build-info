@@ -37,6 +37,8 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
+
 
 /**
  * @author Fred Simon
@@ -353,8 +355,8 @@ public class TaskHelperPublications extends TaskHelper {
                 .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums =
-                    FileChecksumCalculator.calculateChecksums(file, "MD5", "SHA1");
-            artifactBuilder.md5(checksums.get("MD5")).sha1(checksums.get("SHA1"));
+                    FileChecksumCalculator.calculateChecksums(file, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
+            artifactBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM));
         } catch (Exception e) {
             throw new GradleException(
                     "Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);

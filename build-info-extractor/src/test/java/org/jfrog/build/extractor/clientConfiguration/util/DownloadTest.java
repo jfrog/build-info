@@ -2,10 +2,10 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.dependency.pattern.PatternType;
 import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.filespecs.FileSpec;
 import org.jfrog.filespecs.entities.FilesGroup;
@@ -23,10 +23,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
 import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.ArtifactMetaData;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MD5_ALGORITHM_NAME;
 import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MIN_SIZE_FOR_CONCURRENT_DOWNLOAD;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.SHA1_ALGORITHM_NAME;
 
 /**
  * Integration tests for the DependenciesDownloader classes.
@@ -69,8 +69,8 @@ public class DownloadTest extends IntegrationTestsBase {
         }
 
         // Verify the downloaded file.
-        Assert.assertEquals(uploadedChecksum.get(MD5_ALGORITHM_NAME), downloadedChecksum.get(MD5_ALGORITHM_NAME));
-        Assert.assertEquals(uploadedChecksum.get(SHA1_ALGORITHM_NAME), downloadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(uploadedChecksum.get(MD5_ALGORITHM), downloadedChecksum.get(MD5_ALGORITHM));
+        Assert.assertEquals(uploadedChecksum.get(SHA1_ALGORITHM), downloadedChecksum.get(SHA1_ALGORITHM));
     }
 
     @Test(dataProvider = "testDownloadFilesProvider")
@@ -83,15 +83,15 @@ public class DownloadTest extends IntegrationTestsBase {
         String url = repoUrl + "/" + fileName;
 
         ArtifactMetaData artifactMetaData = dependenciesDownloaderHelper.downloadArtifactMetaData(url);
-        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
-        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM));
+        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM));
         Assert.assertEquals(artifactMetaData.getSize(), fileSize);
 
         DownloadableArtifact downloadableArtifact = new DownloadableArtifact(repoUrl, targetDirPath, fileName, "", fileName, PatternType.NORMAL);
         Dependency dependency = dependenciesDownloaderHelper.downloadArtifact(downloadableArtifact, artifactMetaData, url, fileName);
         Assert.assertEquals(dependency.getId(), fileName);
-        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
-        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM));
+        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM));
         Assert.assertEquals((new File(targetDirPath + fileName)).length(), fileSize);
     }
 
@@ -105,16 +105,16 @@ public class DownloadTest extends IntegrationTestsBase {
         String url = repoUrl + "/" + fileName;
 
         ArtifactMetaData artifactMetaData = dependenciesDownloaderHelper.downloadArtifactMetaData(url);
-        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
-        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(artifactMetaData.getMd5(), uploadedChecksum.get(MD5_ALGORITHM));
+        Assert.assertEquals(artifactMetaData.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM));
         Assert.assertEquals(artifactMetaData.getSize(), fileSize);
         artifactMetaData.setSize(0); // When content-length is missing
 
         DownloadableArtifact downloadableArtifact = new DownloadableArtifact(repoUrl, targetDirPath, fileName, "", fileName, PatternType.NORMAL);
         Dependency dependency = dependenciesDownloaderHelper.downloadArtifact(downloadableArtifact, artifactMetaData, url, fileName);
         Assert.assertEquals(dependency.getId(), fileName);
-        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM_NAME));
-        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM_NAME));
+        Assert.assertEquals(dependency.getMd5(), uploadedChecksum.get(MD5_ALGORITHM));
+        Assert.assertEquals(dependency.getSha1(), uploadedChecksum.get(SHA1_ALGORITHM));
         Assert.assertEquals((new File(targetDirPath + fileName)).length(), fileSize);
     }
 
@@ -173,14 +173,14 @@ public class DownloadTest extends IntegrationTestsBase {
 
                 // Create file and calculate checksum
                 File file = createRandomFile(tempWorkspace.getPath() + File.pathSeparatorChar + fileName, fileSize);
-                Map<String, String> checksum = FileChecksumCalculator.calculateChecksums(file, SHA1_ALGORITHM_NAME, MD5_ALGORITHM_NAME);
+                Map<String, String> checksum = FileChecksumCalculator.calculateChecksums(file, SHA1_ALGORITHM, MD5_ALGORITHM);
 
                 DeployDetails deployDetails = new DeployDetails.Builder()
                         .file(file)
                         .artifactPath(TEST_REPO_PATH + "/" + fileName)
                         .targetRepository(localRepo1)
-                        .md5(checksum.get(MD5_ALGORITHM_NAME))
-                        .sha1(checksum.get(SHA1_ALGORITHM_NAME))
+                        .md5(checksum.get(MD5_ALGORITHM))
+                        .sha1(checksum.get(SHA1_ALGORITHM))
                         .explode(false)
                         .packageType(DeployDetails.PackageType.GENERIC)
                         .build();

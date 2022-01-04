@@ -10,6 +10,7 @@ import org.gradle.testkit.runner.BuildTask;
 import org.gradle.testkit.runner.GradleRunner;
 import org.jfrog.build.api.dependency.PropertySearchResult;
 import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
@@ -89,7 +90,7 @@ public class Utils {
      * @param setDeployer      - Set deployer details in file
      * @throws IOException - In case of any IO error
      */
-    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer,Path buildInfoPropertiesSourceResolver,Path buildInfoPropertiesSourceDeployer) throws IOException {
+    static void generateBuildInfoProperties(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, boolean setDeployer, Path buildInfoPropertiesSourceResolver, Path buildInfoPropertiesSourceDeployer) throws IOException {
         String content = generateBuildInfoPropertiesForServer(contextUrl, username, password, localRepo, virtualRepo, publications, publishBuildInfo, buildInfoPropertiesSourceResolver);
         if (setDeployer) {
             content += "\n";
@@ -231,6 +232,10 @@ public class Utils {
             switch (module.getId()) {
                 case "org.jfrog.test.gradle.publish:webservice:1.0-SNAPSHOT":
                     assertEquals(module.getDependencies().size(), 7);
+                    if (expectedArtifactsPerModule > 0) {
+                        checkWebserviceArtifact(module);
+                    }
+                    checkWebserviceDependency(module);
                     break;
                 case "org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT":
                     assertEquals(module.getDependencies().size(), 5);
@@ -242,6 +247,40 @@ public class Utils {
                     fail("Unexpected module ID: " + module.getId());
             }
         }
+    }
+
+    /**
+     * Check commons-collections:commons-collections:3.2 dependency under webservice module.
+     *
+     * @param webservice - The webservice module
+     */
+    private static void checkWebserviceDependency(Module webservice) {
+        Dependency commonsCollections = webservice.getDependencies().stream()
+                .filter(dependency -> StringUtils.equals(dependency.getId(), "commons-collections:commons-collections:3.2"))
+                .findAny().orElse(null);
+        assertNotNull(commonsCollections);
+        assertEquals(commonsCollections.getType(), "jar");
+        assertEquals(commonsCollections.getMd5(), "7b9216b608d550787bdf43a63d88bf3b");
+        assertEquals(commonsCollections.getSha1(), "f951934aa5ae5a88d7e6dfaa6d32307d834a88be");
+        assertEquals(commonsCollections.getSha256(), "093fea360752de55afcb80cf713403eb1a66cb7dc0d529955b6f4a96f975df5c");
+        assertEquals(commonsCollections.getRequestedBy(), new String[][]{{"org.jfrog.test.gradle.publish:webservice:1.0-SNAPSHOT"}});
+    }
+
+    /**
+     * Check webservice-1.0-SNAPSHOT.jar artifact under webservice module.
+     *
+     * @param webservice - The webservice module
+     */
+    private static void checkWebserviceArtifact(Module webservice) {
+        Artifact webServiceJar = webservice.getArtifacts().stream()
+                .filter(artifact -> StringUtils.equals(artifact.getName(), "webservice-1.0-SNAPSHOT.jar"))
+                .findAny().orElse(null);
+        assertNotNull(webServiceJar);
+        assertEquals(webServiceJar.getType(), "jar");
+        assertEquals(webServiceJar.getRemotePath(), "org/jfrog/test/gradle/publish/webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.jar");
+        assertTrue(StringUtils.isNotBlank(webServiceJar.getMd5()));
+        assertTrue(StringUtils.isNotBlank(webServiceJar.getSha1()));
+        assertTrue(StringUtils.isNotBlank(webServiceJar.getSha256()));
     }
 
     /**

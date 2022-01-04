@@ -6,14 +6,14 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
-import org.jfrog.build.extractor.builder.ArtifactBuilder;
-import org.jfrog.build.extractor.builder.ModuleBuilder;
-import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.Artifact;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
+import org.jfrog.build.extractor.builder.ArtifactBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
+import org.jfrog.build.extractor.ci.Artifact;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -27,16 +27,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -198,14 +194,14 @@ public class GoPublish extends GoCommand {
      */
     private Artifact deploy(ArtifactoryManager artifactoryManager, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
-        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5, SHA1);
+        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         String remotePath = moduleName + "/@v";
         DeployDetails deployDetails = new DeployDetails.Builder()
                 .file(deployedFile)
                 .targetRepository(deploymentRepo)
                 .addProperties(properties)
                 .artifactPath(remotePath + "/" + artifactName)
-                .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                 .packageType(DeployDetails.PackageType.GO)
                 .build();
 
@@ -214,6 +210,7 @@ public class GoPublish extends GoCommand {
         return new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .sha256(response.getChecksums().getSha256())
                 .remotePath(remotePath)
                 .build();
     }

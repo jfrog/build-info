@@ -11,14 +11,14 @@ import org.gradle.api.artifacts.ResolvedConfiguration;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.ModuleExtractor;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.ModuleExtractor;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
@@ -38,17 +38,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.google.common.collect.Iterables.any;
-import static com.google.common.collect.Iterables.find;
 import static com.google.common.collect.Lists.newArrayList;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
 public class GradleModuleExtractor implements ModuleExtractor<Project> {
     private static final Logger log = Logging.getLogger(GradleModuleExtractor.class);
-
-    private static final String SHA1 = "sha1";
-    private static final String MD5 = "md5";
 
     @Override
     public Module extractModule(Project project) {
@@ -112,7 +108,10 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
             return new ArtifactBuilder(artifactPath.substring(index + 1))
                     .type(getTypeString(publishArtifact.getType(),
                             publishArtifact.getClassifier(), publishArtifact.getExtension()))
-                    .md5(deployDetails1.getMd5()).sha1(deployDetails1.getSha1()).remotePath(artifactPath).build();
+                    .md5(deployDetails1.getMd5())
+                    .sha1(deployDetails1.getSha1())
+                    .sha256(deployDetails1.getSha256())
+                    .remotePath(artifactPath).build();
         }).collect(Collectors.toList());
     }
 
@@ -132,18 +131,14 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
             Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 File file = artifact.getFile();
-                if (file != null && file.exists()) {
+                if (file.exists()) {
                     ModuleVersionIdentifier id = artifact.getModuleVersion().getId();
                     final String depId = getModuleIdString(id.getGroup(),
                             id.getName(), id.getVersion());
-                    Predicate<Dependency> idEqualsPredicate = new Predicate<Dependency>() {
-                        public boolean apply(@Nullable Dependency input) {
-                            return input.getId().equals(depId);
-                        }
-                    };
                     // if it's already in the dependencies list just add the current scope
-                    if (any(dependencies, idEqualsPredicate)) {
-                        Dependency existingDependency = find(dependencies, idEqualsPredicate);
+                    Dependency existingDependency = dependencies.stream()
+                            .filter(input -> input.getId().equals(depId)).findAny().orElse(null);
+                    if (existingDependency != null) {
                         Set<String> existingScopes = existingDependency.getScopes();
                         existingScopes.add(configuration.getName());
                         existingDependency.setScopes(existingScopes);
@@ -158,8 +153,8 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                         }
                         if (file.isFile()) {
                             // In recent gradle builds (3.4+) subproject dependencies are represented by a dir not jar.
-                            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
-                            dependencyBuilder.md5(checksums.get(MD5)).sha1(checksums.get(SHA1));
+                            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
+                            dependencyBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM));
                         }
                         dependencies.add(dependencyBuilder.build());
                     }
@@ -169,7 +164,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         return dependencies;
     }
 
-    private class ProjectPredicate implements Predicate<GradleDeployDetails> {
+    private static class ProjectPredicate implements Predicate<GradleDeployDetails> {
         private final Project project;
 
         private ProjectPredicate(Project project) {
@@ -177,14 +172,17 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         }
 
         public boolean apply(@Nullable GradleDeployDetails input) {
+            if (input == null) {
+                return false;
+            }
             return input.getProject().equals(project);
         }
     }
 
-    private class IncludeExcludePredicate implements Predicate<GradleDeployDetails> {
-        private Project project;
-        private IncludeExcludePatterns patterns;
-        private boolean include;
+    private static class IncludeExcludePredicate implements Predicate<GradleDeployDetails> {
+        private final Project project;
+        private final IncludeExcludePatterns patterns;
+        private final boolean include;
 
         public IncludeExcludePredicate(Project project, IncludeExcludePatterns patterns, boolean isInclude) {
             this.project = project;
@@ -193,6 +191,9 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         }
 
         public boolean apply(@Nullable GradleDeployDetails input) {
+            if (input == null) {
+                return false;
+            }
             if (include) {
                 return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
             } else {

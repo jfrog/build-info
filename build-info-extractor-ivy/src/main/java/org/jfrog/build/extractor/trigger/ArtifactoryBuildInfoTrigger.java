@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
@@ -49,8 +50,6 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
  */
 public class ArtifactoryBuildInfoTrigger implements Trigger {
 
-    private static final String MD5 = "MD5";
-    private static final String SHA1 = "SHA1";
     private final Filter filter;
     private BuildContext ctx;
     private String eventName;
@@ -121,13 +120,14 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
                         File file = artifactsReport.getLocalFile();
                         Map<String, String> checksums;
                         try {
-                            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+                            checksums = FileChecksumCalculator.calculateChecksums(file, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                        String md5 = checksums.get(MD5);
-                        String sha1 = checksums.get(SHA1);
-                        dependencyBuilder.md5(md5).sha1(sha1);
+                        String md5 = checksums.get(MD5_ALGORITHM);
+                        String sha1 = checksums.get(SHA1_ALGORITHM);
+                        String sha256 = checksums.get(SHA256_ALGORITHM);
+                        dependencyBuilder.md5(md5).sha1(sha1).sha256(sha256);
                         dependency = dependencyBuilder.build();
                         moduleDependencies.add(dependency);
                         project.log(
@@ -203,9 +203,10 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
 
         File artifactFile = new File(file);
         Map<String, String> checksums = calculateFileChecksum(artifactFile);
-        String md5 = checksums.get(MD5);
-        String sha1 = checksums.get(SHA1);
-        artifactBuilder.md5(md5).sha1(sha1);
+        String md5 = checksums.get(MD5_ALGORITHM);
+        String sha1 = checksums.get(SHA1_ALGORITHM);
+        String sha256 = checksums.get(SHA256_ALGORITHM);
+        artifactBuilder.md5(md5).sha1(sha1).sha256(sha256);
         Artifact artifact = artifactBuilder.build();
         if (excludeArtifactsFromBuild && PatternMatcher.pathConflicts(fullPath, patterns)) {
             module.getExcludedArtifacts().add(artifact);
@@ -272,7 +273,7 @@ public class ArtifactoryBuildInfoTrigger implements Trigger {
     private Map<String, String> calculateFileChecksum(File file) {
         Map<String, String> checksums;
         try {
-            checksums = FileChecksumCalculator.calculateChecksums(file, MD5, SHA1);
+            checksums = FileChecksumCalculator.calculateChecksums(file, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

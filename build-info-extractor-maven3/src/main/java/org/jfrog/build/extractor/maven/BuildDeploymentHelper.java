@@ -19,11 +19,9 @@ import org.jfrog.build.extractor.retention.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 
 /**
  * @author Noam Y. Tenne
@@ -143,6 +141,7 @@ public class BuildDeploymentHelper {
                                 file(file).
                                 md5(artifact.getMd5()).
                                 sha1(artifact.getSha1()).
+                                sha256(artifact.getSha256()).
                                 addProperties(deployable.getProperties()).
                                 targetRepository(deployable.getTargetRepository()).
                                 packageType(DeployDetails.PackageType.MAVEN).
@@ -160,9 +159,10 @@ public class BuildDeploymentHelper {
     private void setArtifactChecksums(File artifactFile, Artifact artifact) {
         if ((artifactFile != null) && (artifactFile.isFile())) {
             try {
-                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(artifactFile, "md5", "sha1");
-                artifact.setMd5(checksums.get("md5"));
-                artifact.setSha1(checksums.get("sha1"));
+                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
+                artifact.setMd5(checksums.get(MD5_ALGORITHM));
+                artifact.setSha1(checksums.get(SHA1_ALGORITHM));
+                artifact.setSha256(checksums.get(SHA256_ALGORITHM));
             } catch (Exception e) {
                 logger.error("Could not set checksum values on '" + artifact.getName() + "': " + e.getMessage(), e);
             }
