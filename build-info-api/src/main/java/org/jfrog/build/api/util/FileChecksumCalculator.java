@@ -9,6 +9,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * File checksum calculator class
@@ -17,18 +18,17 @@ import java.util.Map;
  */
 public abstract class FileChecksumCalculator {
 
+    private static final AtomicBoolean ACCP_INITIALIZED = new AtomicBoolean();
     public static final String SHA256_ALGORITHM = "SHA-256";
     public static final String SHA1_ALGORITHM = "SHA1";
     public static final String MD5_ALGORITHM = "MD5";
     private static final int BUFFER_SIZE = 32768;
-    private static boolean accpInitialized;
 
     /**
      * Installs the AmazonCorrettoCryptoProvider provider as the highest-priority (i.e. default) provider systemwide.
      */
     private static void initAmazonCorrettoCryptoProvider() {
         AmazonCorrettoCryptoProvider.install();
-        accpInitialized = true;
     }
 
     /**
@@ -82,7 +82,7 @@ public abstract class FileChecksumCalculator {
      */
     private static Map<String, String> calculate(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
-        if (!accpInitialized) {
+        if (ACCP_INITIALIZED.compareAndSet(false, true)) {
             initAmazonCorrettoCryptoProvider();
         }
         Map<String, MessageDigest> digestMap = new HashMap<>();
