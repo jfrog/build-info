@@ -34,8 +34,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class NugetRun extends PackageManagerExtractor {
@@ -417,10 +416,10 @@ public class NugetRun extends PackageManagerExtractor {
             }
         }
         if (found) {
-            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM);
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
             Dependency dependency = new DependencyBuilder()
                     .id(pkg.getId() + ':' + pkg.getVersion())
-                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
+                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                     .build();
             return dependency;
         }
@@ -449,10 +448,10 @@ public class NugetRun extends PackageManagerExtractor {
             }
             File nupkg = new File(assets.getPackagesPath(), library.getNupkgFilePath());
             if (nupkg.exists()) {
-                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM);
+                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
                 Dependency dependency = new DependencyBuilder()
                         .id(pkgKey.replace('/', ':'))
-                        .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
+                        .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                         .build();
                 dependenciesList.add(dependency);
             } else {

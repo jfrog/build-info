@@ -48,8 +48,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
@@ -668,9 +667,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if ((dependencyFile != null) && (dependencyFile.isFile())) {
             try {
                 Map<String, String> checksumsMap
-                        = FileChecksumCalculator.calculateChecksums(dependencyFile, MD5_ALGORITHM, SHA1_ALGORITHM);
+                        = FileChecksumCalculator.calculateChecksums(dependencyFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
                 dependencyBuilder.md5(checksumsMap.get(MD5_ALGORITHM));
                 dependencyBuilder.sha1(checksumsMap.get(SHA1_ALGORITHM));
+                dependencyBuilder.sha256(checksumsMap.get(SHA256_ALGORITHM));
             } catch (NoSuchAlgorithmException | IOException e) {
                 logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
                         + e.getMessage(), e);

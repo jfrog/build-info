@@ -32,8 +32,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 @SuppressWarnings({"unused", "WeakerAccess"})
@@ -195,14 +194,14 @@ public class GoPublish extends GoCommand {
      */
     private Artifact deploy(ArtifactoryManager artifactoryManager, File deployedFile, String extension) throws Exception {
         String artifactName = version + "." + extension;
-        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5_ALGORITHM, SHA1_ALGORITHM);
+        Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(deployedFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         String remotePath = moduleName + "/@v";
         DeployDetails deployDetails = new DeployDetails.Builder()
                 .file(deployedFile)
                 .targetRepository(deploymentRepo)
                 .addProperties(properties)
                 .artifactPath(remotePath + "/" + artifactName)
-                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
+                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                 .packageType(DeployDetails.PackageType.GO)
                 .build();
 
@@ -211,6 +210,7 @@ public class GoPublish extends GoCommand {
         return new ArtifactBuilder(moduleName + ":" + artifactName)
                 .md5(response.getChecksums().getMd5())
                 .sha1(response.getChecksums().getSha1())
+                .sha256(response.getChecksums().getSha256())
                 .remotePath(remotePath)
                 .build();
     }

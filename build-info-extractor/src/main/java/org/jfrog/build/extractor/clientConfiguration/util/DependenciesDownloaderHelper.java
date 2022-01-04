@@ -26,8 +26,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.MD5_HEADER_NAME;
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload.SHA1_HEADER_NAME;
 
@@ -227,7 +226,7 @@ public class DependenciesDownloaderHelper {
     protected Map<String, String> downloadFile(String downloadPath, String fileDestination) throws IOException {
         File downloadedFile = downloader.getArtifactoryManager().downloadToFile(downloadPath, fileDestination);
         try {
-            return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM, SHA1_ALGORITHM);
+            return FileChecksumCalculator.calculateChecksums(downloadedFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
@@ -393,6 +392,8 @@ public class DependenciesDownloaderHelper {
         return new DependencyBuilder()
                 .md5(md5)
                 .sha1(sha1)
+                // Checksum verification for sha256 is disabled for now
+                .sha256(checksumsMap.get(SHA256_ALGORITHM))
                 .id(filePath.substring(filePath.lastIndexOf(File.separatorChar) + 1))
                 .localPath(fileDestination)
                 .remotePath(remotePath)
@@ -430,6 +431,7 @@ public class DependenciesDownloaderHelper {
     }
 
     protected static class ArtifactMetaData {
+        private String sha256;
         private String sha1;
         private String md5;
         private long size;
@@ -441,6 +443,14 @@ public class DependenciesDownloaderHelper {
 
         public void setSize(long size) {
             this.size = size;
+        }
+
+        public String getSha256() {
+            return this.sha256;
+        }
+
+        public void setSha256(String sha256) {
+            this.sha256 = sha256;
         }
 
         public String getSha1() {

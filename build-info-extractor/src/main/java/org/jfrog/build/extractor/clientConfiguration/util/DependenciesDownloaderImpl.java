@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 
 /**
  * Created by diman on 12/03/2017.
@@ -59,7 +58,7 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
     public Map<String, String> saveDownloadedFile(InputStream is, String filePath) throws IOException {
         File dest = DependenciesDownloaderHelper.saveInputStreamToFile(is, filePath);
         try {
-            return FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM, SHA1_ALGORITHM);
+            return FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }

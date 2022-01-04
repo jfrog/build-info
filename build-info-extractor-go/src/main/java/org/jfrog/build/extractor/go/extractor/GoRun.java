@@ -30,8 +30,7 @@ import java.util.Map;
 
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toLowerCase;
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 
@@ -218,10 +217,10 @@ public class GoRun extends GoCommand {
         String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + File.separator + "@v" + File.separator + moduleVersion + ".zip";
         File moduleZip = new File(cachedPkgPath);
         if (moduleZip.exists()) {
-            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5_ALGORITHM, SHA1_ALGORITHM);
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
             Dependency dependency = new DependencyBuilder()
                     .id(moduleName + ':' + moduleVersion)
-                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
+                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                     .type("zip")
                     .build();
             dependenciesList.add(dependency);
