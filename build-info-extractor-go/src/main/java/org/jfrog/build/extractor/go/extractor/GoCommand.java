@@ -19,8 +19,6 @@ import java.nio.file.Path;
  */
 abstract class GoCommand extends PackageManagerExtractor {
 
-    protected static final String SHA1 = "SHA1";
-    protected static final String MD5 = "MD5";
     protected static final String LOCAL_GO_MOD_FILENAME = "go.mod";
     protected static final String GO_CLIENT_CMD = "go";
     private static final long serialVersionUID = 1L;

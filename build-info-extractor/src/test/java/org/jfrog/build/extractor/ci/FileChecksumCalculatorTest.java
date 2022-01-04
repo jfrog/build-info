@@ -7,13 +7,12 @@ import org.testng.annotations.Test;
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.testng.Assert.assertEquals;
 
 /**
@@ -23,6 +22,9 @@ import static org.testng.Assert.assertEquals;
  */
 @Test
 public class FileChecksumCalculatorTest {
+    private static final String expectedSha256 = "013e8663c28ab4e1fe19cf4fae5d1b935d2ed7f2e6c79da731805f7b0673b8aa";
+    private static final String expectedSha1 = "24ac795ebb58f71a5ef404cc3d3e8cf72469aaa2";
+    private static final String expectedMd5 = "e6fdc59054fcfe4c0e777cffa3cc1262";
 
     /**
      * Tests the behavior of the checksum calculator when given a null file
@@ -74,58 +76,13 @@ public class FileChecksumCalculatorTest {
      * Tests the behavior of the calculator when given a valid file
      */
     public void testValidFile() throws IOException, NoSuchAlgorithmException {
-
         File tempFile = File.createTempFile("moo", "test");
-        BufferedWriter out = new BufferedWriter(new FileWriter(tempFile));
-        out.write("This is a test file");
-        out.close();
-        Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(tempFile, "md5", "sha1");
-        String md5 = getChecksum("md5", tempFile);
-        String sha1 = getChecksum("sha1", tempFile);
-        assertEquals(checksumsMap.get("md5"), md5, "Unexpected test file MD5 checksum value.");
-        assertEquals(checksumsMap.get("sha1"), sha1, "Unexpected test file SHA1 checksum value.");
-    }
-
-    /**
-     * Returns the checksum of the given file
-     *
-     * @param algorithm  Algorithm to calculate by
-     * @param fileToRead File to calculate
-     * @return Checksum value
-     * @throws NoSuchAlgorithmException Thrown if MD5 or SHA1 aren't supported
-     * @throws IOException              Thrown if any error occurs while reading the file or calculating the checksum
-     */
-    private String getChecksum(String algorithm, File fileToRead) throws NoSuchAlgorithmException, IOException {
-        MessageDigest digest = MessageDigest.getInstance(algorithm);
-        FileInputStream inputStream = new FileInputStream(fileToRead);
-
-        byte[] buffer = new byte[32768];
-        try {
-            int size = inputStream.read(buffer, 0, 32768);
-
-            while (size >= 0) {
-                digest.update(buffer, 0, size);
-                size = inputStream.read(buffer, 0, 32768);
-            }
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
-            }
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(tempFile))) {
+            out.write("CI/FileChecksumCalculatorTest - This is a test file");
         }
-
-        byte[] bytes = digest.digest();
-        if (bytes.length != 16 && bytes.length != 20) {
-            int bitLength = bytes.length * 8;
-            throw new IllegalArgumentException("Unrecognised length for binary data: " + bitLength + " bits");
-        }
-        StringBuilder sb = new StringBuilder();
-        for (byte aBinaryData : bytes) {
-            String t = Integer.toHexString(aBinaryData & 0xff);
-            if (t.length() == 1) {
-                sb.append("0");
-            }
-            sb.append(t);
-        }
-        return sb.toString().trim();
+        Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(tempFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
+        assertEquals(checksumsMap.get(MD5_ALGORITHM), expectedMd5, "Unexpected test file MD5 checksum value.");
+        assertEquals(checksumsMap.get(SHA1_ALGORITHM), expectedSha1, "Unexpected test file SHA1 checksum value.");
+        assertEquals(checksumsMap.get(SHA256_ALGORITHM), expectedSha256, "Unexpected test file SHA1 checksum value.");
     }
 }

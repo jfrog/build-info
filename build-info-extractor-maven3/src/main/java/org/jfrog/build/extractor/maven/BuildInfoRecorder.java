@@ -14,16 +14,16 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.extractor.BuildInfoExtractor;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
-import org.jfrog.build.api.util.CommonUtils;
-import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.extractor.BuildInfoExtractor;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
@@ -45,15 +45,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 
@@ -672,9 +668,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         if ((dependencyFile != null) && (dependencyFile.isFile())) {
             try {
                 Map<String, String> checksumsMap
-                        = FileChecksumCalculator.calculateChecksums(dependencyFile, "md5", "sha1");
-                dependencyBuilder.md5(checksumsMap.get("md5"));
-                dependencyBuilder.sha1(checksumsMap.get("sha1"));
+                        = FileChecksumCalculator.calculateChecksums(dependencyFile, MD5_ALGORITHM, SHA1_ALGORITHM);
+                dependencyBuilder.md5(checksumsMap.get(MD5_ALGORITHM));
+                dependencyBuilder.sha1(checksumsMap.get(SHA1_ALGORITHM));
             } catch (NoSuchAlgorithmException | IOException e) {
                 logger.error("Could not set checksum values on '" + dependencyBuilder.build().getId() + "': "
                         + e.getMessage(), e);
@@ -729,6 +725,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         currentModuleDependencies.remove();
         resolvedArtifacts.clear();
     }
+
     /**
      * Skip the default maven deploy behaviour.
      */

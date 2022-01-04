@@ -191,6 +191,11 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
             return this;
         }
 
+        public Builder sha256(String sha256) {
+            deployDetails.sha256 = sha256;
+            return this;
+        }
+
         public Builder sha1(String sha1) {
             deployDetails.sha1 = sha1;
             return this;

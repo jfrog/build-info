@@ -2,11 +2,11 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.api.dependency.DownloadableArtifact;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
 import java.io.File;
@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.MD5_ALGORITHM_NAME;
-import static org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper.SHA1_ALGORITHM_NAME;
+import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
 
 /**
  * Created by diman on 12/03/2017.
@@ -59,7 +59,7 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
     public Map<String, String> saveDownloadedFile(InputStream is, String filePath) throws IOException {
         File dest = DependenciesDownloaderHelper.saveInputStreamToFile(is, filePath);
         try {
-            return FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
+            return FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM, SHA1_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(String.format("Could not find checksum algorithm: %s", e.getLocalizedMessage()), e);
         }
@@ -77,10 +77,10 @@ public class DependenciesDownloaderImpl implements DependenciesDownloader {
         }
 
         try {
-            Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM_NAME, SHA1_ALGORITHM_NAME);
+            Map<String, String> checksumsMap = FileChecksumCalculator.calculateChecksums(dest, MD5_ALGORITHM, SHA1_ALGORITHM);
             boolean isExists = checksumsMap != null &&
-                    StringUtils.isNotBlank(md5) && StringUtils.equals(md5, checksumsMap.get(MD5_ALGORITHM_NAME)) &&
-                    StringUtils.isNotBlank(sha1) && StringUtils.equals(sha1, checksumsMap.get(SHA1_ALGORITHM_NAME));
+                    StringUtils.isNotBlank(md5) && StringUtils.equals(md5, checksumsMap.get(MD5_ALGORITHM)) &&
+                    StringUtils.isNotBlank(sha1) && StringUtils.equals(sha1, checksumsMap.get(SHA1_ALGORITHM));
             if (isExists) {
                 return true;
             }

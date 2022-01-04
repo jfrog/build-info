@@ -4,13 +4,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.util.FileChecksumCalculator;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.FileChecksumCalculator;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -28,16 +28,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class NugetRun extends PackageManagerExtractor {
@@ -60,8 +58,6 @@ public class NugetRun extends PackageManagerExtractor {
             "</configuration>";
     private static final String SOURCE_NAME = "BuildInfo.extractor.nuget";
     private static final String SLN_FILE_PARSING_REGEX = "^Project\\(\\\"(.*)";
-    private static final String SHA1 = "SHA1";
-    private static final String MD5 = "MD5";
     private static final String ABSENT_NUPKG_WARN_MSG = " Skipping adding this dependency to the build info. " +
             "This might be because the package already exists in a different NuGet cache," +
             " possibly the SDK's NuGetFallbackFolder cache. Removing the package from this cache may resolve the issue.";
@@ -85,17 +81,17 @@ public class NugetRun extends PackageManagerExtractor {
     /**
      * Run NuGet.
      *
-     * @param artifactoryManagerBuilder  - ArtifactoryManager builder builder.
-     * @param resolutionRepo - The repository it'll resolve from.
-     * @param useDotnetCli   - Boolean indicates if .Net cli will be used.
-     * @param nugetCmdArgs   - NuGet exec args.
-     * @param logger         - The logger.
-     * @param path           - Path to the directory containing the .sln file.
-     * @param env            - Environment variables to use during npm execution.
-     * @param module         - NuGet module
-     * @param username       - JFrog platform username.
-     * @param password       - JFrog platform password.
-     * @param apiProtocol    - A string indicates which NuGet protocol should be used (V2/V3).
+     * @param artifactoryManagerBuilder - ArtifactoryManager builder builder.
+     * @param resolutionRepo            - The repository it'll resolve from.
+     * @param useDotnetCli              - Boolean indicates if .Net cli will be used.
+     * @param nugetCmdArgs              - NuGet exec args.
+     * @param logger                    - The logger.
+     * @param path                      - Path to the directory containing the .sln file.
+     * @param env                       - Environment variables to use during npm execution.
+     * @param module                    - NuGet module
+     * @param username                  - JFrog platform username.
+     * @param password                  - JFrog platform password.
+     * @param apiProtocol               - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
     public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
@@ -221,7 +217,7 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol) throws Exception{
+    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol) throws Exception {
         String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
         String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
         String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
@@ -421,10 +417,10 @@ public class NugetRun extends PackageManagerExtractor {
             }
         }
         if (found) {
-            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5, SHA1);
+            Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM);
             Dependency dependency = new DependencyBuilder()
                     .id(pkg.getId() + ':' + pkg.getVersion())
-                    .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                    .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
                     .build();
             return dependency;
         }
@@ -453,10 +449,10 @@ public class NugetRun extends PackageManagerExtractor {
             }
             File nupkg = new File(assets.getPackagesPath(), library.getNupkgFilePath());
             if (nupkg.exists()) {
-                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5, SHA1);
+                Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(nupkg, MD5_ALGORITHM, SHA1_ALGORITHM);
                 Dependency dependency = new DependencyBuilder()
                         .id(pkgKey.replace('/', ':'))
-                        .md5(checksums.get(MD5)).sha1(checksums.get(SHA1))
+                        .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
                         .build();
                 dependenciesList.add(dependency);
             } else {

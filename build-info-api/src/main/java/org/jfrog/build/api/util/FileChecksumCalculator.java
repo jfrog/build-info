@@ -1,5 +1,7 @@
 package org.jfrog.build.api.util;
 
+import com.amazon.corretto.crypto.provider.AmazonCorrettoCryptoProvider;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,7 +17,19 @@ import java.util.Map;
  */
 public abstract class FileChecksumCalculator {
 
+    public static final String SHA256_ALGORITHM = "SHA-256";
+    public static final String SHA1_ALGORITHM = "SHA1";
+    public static final String MD5_ALGORITHM = "MD5";
     private static final int BUFFER_SIZE = 32768;
+    private static boolean accpInitialized;
+
+    /**
+     * Installs the AmazonCorrettoCryptoProvider provider as the highest-priority (i.e. default) provider systemwide.
+     */
+    private static void initAmazonCorrettoCryptoProvider() {
+        AmazonCorrettoCryptoProvider.install();
+        accpInitialized = true;
+    }
 
     /**
      * Calculates the given file's checksums
@@ -68,6 +82,9 @@ public abstract class FileChecksumCalculator {
      */
     private static Map<String, String> calculate(File fileToCalculate, String... algorithms)
             throws NoSuchAlgorithmException, IOException {
+        if (!accpInitialized) {
+            initAmazonCorrettoCryptoProvider();
+        }
         Map<String, MessageDigest> digestMap = new HashMap<>();
         Map<String, String> checksumMap = new HashMap<>();
 
@@ -75,10 +92,8 @@ public abstract class FileChecksumCalculator {
             digestMap.put(algorithm, MessageDigest.getInstance(algorithm));
         }
 
-        FileInputStream inputStream = new FileInputStream(fileToCalculate);
-
-        byte[] buffer = new byte[BUFFER_SIZE];
-        try {
+        try (FileInputStream inputStream = new FileInputStream(fileToCalculate)) {
+            byte[] buffer = new byte[BUFFER_SIZE];
             int size = inputStream.read(buffer, 0, BUFFER_SIZE);
 
             while (size >= 0) {
@@ -86,10 +101,6 @@ public abstract class FileChecksumCalculator {
                     digestMap.get(algorithm).update(buffer, 0, size);
                 }
                 size = inputStream.read(buffer, 0, BUFFER_SIZE);
-            }
-        } finally {
-            if (inputStream != null) {
-                inputStream.close();
             }
         }
 

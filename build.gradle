@@ -232,6 +232,7 @@ project('build-info-api') {
     dependencies {
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5.1'
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
+        implementation 'software.amazon.cryptools:AmazonCorrettoCryptoProvider:1.+:linux-x86_64'
         implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
     }
 }
