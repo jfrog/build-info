@@ -1,7 +1,7 @@
 # Release Notes
 
 ## build-info-extractor 2.33.0 / gradle-artifactory-plugin 4.26.0 (January 5, 2022)
-- Calculate SHA256 in builds for  ([598](https://github.com/jfrog/build-info/pull/598))
+- Calculate SHA256 in builds ([598](https://github.com/jfrog/build-info/pull/598))
 
 ## build-info-extractor 2.32.6 / gradle-artifactory-plugin 4.25.5 (January 3, 2022)
 - Add VCS branch and VCS message to build-info VCS details ([591](https://github.com/jfrog/build-info/pull/591))
