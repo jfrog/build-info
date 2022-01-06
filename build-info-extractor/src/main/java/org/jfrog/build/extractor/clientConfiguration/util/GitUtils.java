@@ -1,20 +1,22 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.Vcs;
+import org.jfrog.build.extractor.executor.CommandExecutor;
+import org.jfrog.build.extractor.executor.CommandResults;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.jfrog.build.api.IssuesCollectionConfig.ISSUES_COLLECTION_ERROR_PREFIX;
 
 public class GitUtils {
+    private static final String GIT_LOG_LIMIT = "100";
 
     private static File getDotGit(File file) {
         if (file == null) {
@@ -191,21 +193,17 @@ public class GitUtils {
         return "";
     }
 
-    private static String extractVcsMessage(File dotGit, Log log) throws IOException {
-        FileRepositoryBuilder repositoryBuilder = new FileRepositoryBuilder();
-        Repository repository = repositoryBuilder.setGitDir(dotGit)
-                .readEnvironment()
-                .findGitDir()
-                .build();
-        RevCommit latestCommit;
+    private static String extractVcsMessage(File dotGit, Log log) {
         try {
-            latestCommit = new Git(repository).log().setMaxCount(1).call().iterator().next();
-        } catch (GitAPIException e) {
+            CommandResults res = getGitLog(dotGit, log, 1);
+            if (!res.isOk()) {
+                throw new IOException(res.getErr());
+            }
+            return res.getRes().trim();
+        } catch (Exception e) {
             log.warn("Failed fetching commit message from git directory: " + dotGit + "\nWith the following error: " + e.getMessage());
-            return "";
         }
-
-        return latestCommit.getFullMessage().trim();
+        return "";
     }
 
     /**
@@ -214,5 +212,25 @@ public class GitUtils {
     private static class RevisionOrRef {
         private String revision;
         private String ref;
+    }
+
+    public static CommandResults getGitLog(File execDir, Log logger, String previousVcsRevision) throws InterruptedException, IOException {
+        return getGitLog(execDir, logger, previousVcsRevision, 0);
+    }
+
+    public static CommandResults getGitLog(File execDir, Log logger, int limit) throws InterruptedException, IOException {
+        return getGitLog(execDir, logger, "", limit);
+    }
+
+    public static CommandResults getGitLog(File execDir, Log logger, String previousVcsRevision, int limit) throws InterruptedException, IOException {
+        List<String> args = new ArrayList<>();
+        args.add("log");
+        args.add("--pretty=format:%s");
+        args.add("-" + (limit == 0 ? GIT_LOG_LIMIT : limit));
+        if (!previousVcsRevision.isEmpty()) {
+            args.add(previousVcsRevision + "..");
+        }
+        CommandExecutor commandExecutor = new CommandExecutor("git", null);
+        return commandExecutor.exeCommand(execDir, args, null, logger);
     }
 }

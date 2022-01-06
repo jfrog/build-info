@@ -12,7 +12,7 @@ import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
-import org.jfrog.build.extractor.executor.CommandExecutor;
+import org.jfrog.build.extractor.clientConfiguration.util.GitUtils;
 import org.jfrog.build.extractor.executor.CommandResults;
 
 import java.io.File;
@@ -35,7 +35,6 @@ public class IssuesCollector implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private static final String LATEST = "LATEST";
-    private static final String GIT_LOG_LIMIT = "100";
 
     public static Pattern REVISION_NOT_EXIST;
 
@@ -145,15 +144,7 @@ public class IssuesCollector implements Serializable {
     }
 
     private String getGitLog(File execDir, Log logger, String previousVcsRevision) throws InterruptedException, IOException {
-        List<String> args = new ArrayList<>();
-        args.add("log");
-        args.add("--pretty=format:%s");
-        args.add("-" + GIT_LOG_LIMIT);
-        if (!previousVcsRevision.isEmpty()) {
-            args.add(previousVcsRevision + "..");
-        }
-        CommandExecutor commandExecutor = new CommandExecutor("git", null);
-        CommandResults res = commandExecutor.exeCommand(execDir, args, null, logger);
+        CommandResults res = GitUtils.getGitLog(execDir, logger, previousVcsRevision);
         if (!res.isOk()) {
             if (getRevisionNotExistPattern().matcher(res.getErr()).find()) {
                 logger.info("Revision: " + previousVcsRevision + " that was fetched from latest build info does not exist in the git revision range. No new issues are added.");
