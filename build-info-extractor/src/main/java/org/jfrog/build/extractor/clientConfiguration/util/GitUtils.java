@@ -194,14 +194,15 @@ public class GitUtils {
     }
 
     private static String extractVcsMessage(File dotGit, Log log) {
+        String warnMessage = "Failed fetching commit message from git directory: " + dotGit + "\nWith the following error: ";
         try {
             CommandResults res = getGitLog(dotGit, log, 1);
-            if (!res.isOk()) {
-                throw new IOException(res.getErr());
+            if (res.isOk()) {
+                return res.getRes().trim();
             }
-            return res.getRes().trim();
-        } catch (Exception e) {
-            log.warn("Failed fetching commit message from git directory: " + dotGit + "\nWith the following error: " + e.getMessage());
+            log.warn(warnMessage + res.getErr());
+        } catch (InterruptedException | IOException e) {
+            log.warn(warnMessage + e.getMessage());
         }
         return "";
     }
