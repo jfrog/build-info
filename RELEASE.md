@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.33.1 / gradle-artifactory-plugin 4.26.1 (January 6, 2022)
+- Remove JGIT dependency ([600](https://github.com/jfrog/build-info/pull/600))
+
 ## build-info-extractor 2.33.0 / gradle-artifactory-plugin 4.26.0 (January 5, 2022)
 - Calculate SHA256 in builds ([598](https://github.com/jfrog/build-info/pull/598))
 
