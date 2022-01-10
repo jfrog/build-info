@@ -1,5 +1,3 @@
-updateCommitStatus: &UPDATE_COMMIT_STATUS update_commit_status biSnapshotGit --context "$step_name"
-
 pipelines:
   # Global configuration
   - name: create_build_info_snapshot
@@ -22,7 +20,6 @@ pipelines:
             - name: entplus_deployer
         execution:
           onStart:
-            - *UPDATE_COMMIT_STATUS
             # Save gradle cache
             - restore_cache_files gradle_cache $res_biSnapshotGit_resourcePath/.gradle
           onExecute:
@@ -36,16 +33,16 @@ pipelines:
             - export JFROG_CLI_BUILD_PROJECT=ecosys
 
             # Configure JFrog CLI
-            - curl -fL https://getcli.jfrog.io/v2-jf | sh && chmod +x jf
-            - ./jf c rm --quiet
-            - ./jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
-            - ./jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
+            - curl -fL https://install-cli.jfrog.io | sh
+            - jf c rm --quiet
+            - jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
 
             # Run audit
-            - ./jf ag
+            - jf audit --fail=false
 
             # Delete former snapshots to make sure the release bundle will not contain the same artifacts
-            - ./jf rt del "ecosys-oss-snapshot-local/org/jfrog/buildinfo/*" --quiet
+            - jf rt del "ecosys-oss-snapshot-local/org/jfrog/buildinfo/*" --quiet
 
             # Run install and publish
             - >
@@ -53,15 +50,14 @@ pipelines:
               JFROG_CLI_BUILD_NAME=$JFROG_CLI_BUILD_NAME
               JFROG_CLI_BUILD_NUMBER=$JFROG_CLI_BUILD_NUMBER
               JFROG_CLI_BUILD_PROJECT=$JFROG_CLI_BUILD_PROJECT
-              ./jf gradle clean aP -x test
-            - ./jf rt bag && ./jf rt bce
-            - ./jf rt bp
+              jf gradle clean aP -x test
+            - jf rt bag && jf rt bce
+            - jf rt bp
 
             # Distribute release bundle
-            - ./jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --sign
-            - ./jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io" --sync
+            - jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --sign
+            - jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io" --sync
 
           onComplete:
-            - *UPDATE_COMMIT_STATUS
             # Save gradle cache
             - add_cache_files $res_biSnapshotGit_resourcePath/.gradle gradle_cache
