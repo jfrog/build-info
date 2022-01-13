@@ -40,6 +40,7 @@ public class ArtifactBuilder {
         artifact.setSha1(sha1);
         artifact.setSha256(sha256);
         artifact.setMd5(md5);
+        artifact.setLocalPath(localPath);
         artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
         return artifact;
