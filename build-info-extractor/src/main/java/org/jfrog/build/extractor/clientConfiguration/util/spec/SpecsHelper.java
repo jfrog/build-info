@@ -112,6 +112,7 @@ public class SpecsHelper {
             artifactBuilder
                     .md5(detail.getMd5())
                     .sha1(detail.getSha1())
+                    .sha256(detail.getSha256())
                     .type(ext)
                     .localPath(detail.getFile().getAbsolutePath())
                     .remotePath(detail.getArtifactPath())

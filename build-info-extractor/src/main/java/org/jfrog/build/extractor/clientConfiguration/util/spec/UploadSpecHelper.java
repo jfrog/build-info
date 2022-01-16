@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
 import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.SHA256_ALGORITHM;
 import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.removeUnescapedChar;
 
 /**
@@ -47,16 +48,16 @@ public class UploadSpecHelper {
         // calculate the sha1 checksum and add it to the deploy artifactsToDeploy
         Map<String, String> checksums;
         try {
-            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5_ALGORITHM, SHA1_ALGORITHM);
+            checksums = FileChecksumCalculator.calculateChecksums(artifactFile, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
         } catch (NoSuchAlgorithmException e) {
             throw new NoSuchAlgorithmException(
-                    String.format("Could not find checksum algorithm for %s or %s.", MD5_ALGORITHM, SHA1_ALGORITHM), e);
+                    String.format("Could not find checksum algorithm for %s or %s or %s.", MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM), e);
         }
         DeployDetails.Builder builder = new DeployDetails.Builder()
                 .file(artifactFile)
                 .artifactPath(path)
                 .targetRepository(getRepositoryKey(uploadTarget))
-                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM))
+                .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                 .explode(BooleanUtils.toBoolean(explode))
                 .addProperties(SpecsHelper.getPropertiesMap(props))
                 .packageType(DeployDetails.PackageType.GENERIC);
