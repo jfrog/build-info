@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.33.2 / gradle-artifactory-plugin 4.26.2 (January 20, 2022)
+- Bug fix - Add 'localpath' to artifact builder ([606](https://github.com/jfrog/build-info/pull/606))
+- Add SHA2 to upload files ([605](https://github.com/jfrog/build-info/pull/605))
+
 ## build-info-extractor 2.33.1 / gradle-artifactory-plugin 4.26.1 (January 6, 2022)
 - Remove JGIT dependency ([600](https://github.com/jfrog/build-info/pull/600))
 
