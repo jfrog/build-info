@@ -249,6 +249,10 @@ public class ArtifactoryClientConfiguration {
         return root.getBooleanValue(PROP_INSECURE_TLS, false);
     }
 
+    public void setInsecureTls(boolean enabled) {
+        root.setBooleanValue(PROP_INSECURE_TLS, enabled);
+    }
+
     public Integer getSocketTimeout() {
         return root.getIntegerValue(PROP_SO_TIMEOUT);
     }
