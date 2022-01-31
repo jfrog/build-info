@@ -12,10 +12,10 @@ import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.TaskAction;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
@@ -24,26 +24,13 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.retention.Utils;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleArtifactoryClientConfigUpdater;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleBuildInfoExtractor;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleClientLogger;
-import org.jfrog.gradle.plugin.artifactory.extractor.GradleDeployDetails;
-import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer;
+import org.jfrog.gradle.plugin.artifactory.extractor.*;
 
 import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.*;
+import java.util.concurrent.*;
 
 /**
  * @author Ruben Perez
@@ -195,6 +182,7 @@ public class DeployTask extends DefaultTask {
                             configureProxy(accRoot, artifactoryManager);
                             configConnectionTimeout(accRoot, artifactoryManager);
                             configRetriesParams(accRoot, artifactoryManager);
+                            configInsecureTls(accRoot, artifactoryManager);
                             deployArtifacts(artifactoryTask.deployDetails, artifactoryManager, patterns, logPrefix, publisher.getMinChecksumDeploySizeKb());
                         }
                     }
@@ -241,6 +229,11 @@ public class DeployTask extends DefaultTask {
         if (clientConf.getConnectionRetries() != null) {
             artifactoryManager.setConnectionRetries(clientConf.getConnectionRetries());
         }
+    }
+
+    private void configInsecureTls(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
+        log.debug("Deploying artifacts using InsecureTls = " + clientConf.getInsecureTls());
+        artifactoryManager.setInsecureTls(clientConf.getInsecureTls());
     }
 
     private void exportBuildInfo(BuildInfo buildInfo, File toFile) throws IOException {
@@ -296,7 +289,7 @@ public class DeployTask extends DefaultTask {
                 ArtifactoryUploadResponse response = artifactoryManager.upload(deployDetails, logPrefix, minChecksumDeploySizeKb);
                 detail.getDeployDetails().setDeploySucceeded(true);
                 detail.getDeployDetails().setSha256(response.getChecksums().getSha256());
-            } catch (IOException e){
+            } catch (IOException e) {
                 detail.getDeployDetails().setDeploySucceeded(false);
                 detail.getDeployDetails().setSha256("");
                 throw e;
