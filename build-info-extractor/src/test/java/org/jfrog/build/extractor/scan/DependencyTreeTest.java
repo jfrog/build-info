@@ -178,6 +178,17 @@ public class DependencyTreeTest {
         one.setIssues(Sets.newHashSet());
     }
 
+    @Test
+    public void testFind() {
+        assertNotNull(root.find("0"));
+        assertNotNull(root.find("1"));
+        assertNotNull(root.find("2"));
+        assertNotNull(root.find("3"));
+        assertNotNull(root.find("4"));
+        assertNotNull(root.find("5"));
+        assertNull(root.find("non-existent"));
+    }
+
     /**
      * Create a random issue
      *
@@ -185,7 +196,8 @@ public class DependencyTreeTest {
      * @return the random issue
      */
     private Issue createIssue(Severity severity) {
-        return new Issue(generateUID(), severity, generateUID(), Lists.newArrayList(), generateUID());
+        return new Issue(generateUID(), severity, generateUID(), Lists.newArrayList(),
+                Lists.newArrayList(), Lists.newArrayList(), generateUID());
     }
 
     /**

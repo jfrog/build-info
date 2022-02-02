@@ -1,10 +1,10 @@
 package org.jfrog.build.extractor.scan;
 
-import javax.swing.tree.DefaultMutableTreeNode;
-
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
 
 /**
@@ -192,5 +192,22 @@ public class DependencyTree extends DefaultMutableTreeNode {
             allScopes.addAll(child.getScopes());
             allLicenses.addAll(child.getLicenses());
         }
+    }
+
+    /**
+     * Recursively find a node contains the input component ID.
+     *
+     * @param componentId - The component ID to search
+     * @return a node contains the input component ID or null.
+     */
+    public DependencyTree find(String componentId) {
+        if (StringUtils.equals(toString(), componentId)) {
+            return this;
+        }
+        return getChildren().stream()
+                .map(child -> child.find(componentId))
+                .filter(Objects::nonNull)
+                .findAny()
+                .orElse(null);
     }
 }

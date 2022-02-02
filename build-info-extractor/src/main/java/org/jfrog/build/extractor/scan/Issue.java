@@ -16,21 +16,25 @@ public class Issue implements Comparable<Issue> {
 
     private Severity severity = Severity.Normal;
     private List<String> fixedVersions;
+    private List<String> references;
     private String component = "";
+    private List<String> cves;
+    private String ignoreUrl;
     private String summary;
     private String issueId;
-    private String cve;
 
     public Issue() {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String issueId, Severity severity, String summary, List<String> fixedVersions, String cve) {
+    public Issue(String issueId, Severity severity, String summary, List<String> fixedVersions, List<String> cves, List<String> references, String ignoreUrl) {
         this.issueId = issueId;
         this.severity = severity;
         this.summary = summary;
         this.fixedVersions = fixedVersions;
-        this.cve = cve;
+        this.cves = cves;
+        this.references = references;
+        this.ignoreUrl = ignoreUrl;
     }
 
     public String getIssueId() {
@@ -65,8 +69,18 @@ public class Issue implements Comparable<Issue> {
     }
 
     @SuppressWarnings("unused")
-    public String getCve() {
-        return cve;
+    public List<String> getCves() {
+        return cves;
+    }
+
+    @SuppressWarnings("unused")
+    public List<String> getReferences() {
+        return references;
+    }
+
+    @SuppressWarnings("unused")
+    public String getIgnoreUrl() {
+        return ignoreUrl;
     }
 
     @JsonIgnore
