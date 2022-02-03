@@ -66,6 +66,16 @@ public class BuildInfoMavenBuilder extends BuildInfoBuilder {
     }
 
     /**
+     * Sets the project of the build
+     *
+     * @param project Build project
+     */
+    public BuildInfoMavenBuilder setProject(String project) {
+        super.setProject(project);
+        return this;
+    }
+
+    /**
      * Sets the agent of the build
      *
      * @param agent Build agent
