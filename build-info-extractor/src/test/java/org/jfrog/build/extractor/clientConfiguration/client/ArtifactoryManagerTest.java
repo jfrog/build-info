@@ -49,7 +49,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
     public void sendBuildInfoAndBuildRetentionTest() throws IOException {
         try {
             publishAndCheckBuildInfo(null);
-            sendBuildRetention("");
+            sendBuildRetention(null);
         } finally {
             cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, null);
         }
@@ -70,9 +70,9 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
     public void buildStagingTest() throws IOException {
         try {
             publishAndCheckBuildInfo(null);
-            stageBuild("");
+            stageBuild(null);
         } finally {
-            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, "");
+            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, null);
         }
     }
 
