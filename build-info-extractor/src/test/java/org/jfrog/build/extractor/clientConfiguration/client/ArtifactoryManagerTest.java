@@ -2,16 +2,11 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.builder.BuildInfoBuilder;
-import org.jfrog.build.extractor.ci.Agent;
-import org.jfrog.build.extractor.ci.BuildAgent;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.BuildRetention;
-import org.jfrog.build.extractor.ci.Issues;
-import org.jfrog.build.extractor.ci.MatrixParameter;
-import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.Vcs;
+import org.jfrog.build.api.builder.PromotionBuilder;
+import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.ci.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -51,18 +46,49 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
      * Send build info to artifactory, receive it and compare.
      */
     @Test
-    public void sendBuildInfoAndBuildRetentioTest() throws IOException {
-        doSendBuildInfoTest(null);
-        sendBuildRetention("");
+    public void sendBuildInfoAndBuildRetentionTest() throws IOException {
+        try {
+            publishAndCheckBuildInfo(null);
+            sendBuildRetention(null);
+        } finally {
+            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, null);
+        }
     }
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
-        doSendBuildInfoTest("btests");
-        sendBuildRetention("btests");
+        String projectKey = "btests";
+        try {
+            publishAndCheckBuildInfo(projectKey);
+            sendBuildRetention(projectKey);
+        } finally {
+            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, projectKey);
+        }
     }
 
-    private void doSendBuildInfoTest(String project) throws IOException {
+    @Test
+    public void buildStagingTest() throws IOException {
+        try {
+            publishAndCheckBuildInfo(null);
+            stageBuild(null);
+        } finally {
+            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, null);
+        }
+    }
+
+    @Test
+    public void buildStagingWithProjectTest() throws IOException {
+        String projectKey = "btests";
+        try {
+            publishAndCheckBuildInfo(projectKey);
+            stageBuild(projectKey);
+        } finally {
+            cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, projectKey);
+        }
+    }
+
+
+    private void publishAndCheckBuildInfo(String project) throws IOException {
         final Date STARTED = new Date();
         final List<Vcs> VCS = Arrays.asList(new Vcs("foo", "1"),
                 new Vcs("bar", "2"),
@@ -102,9 +128,6 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
         // Compare
         Assert.assertEquals(toJsonString(buildInfoToSend), toJsonString(receivedBuildInfo));
-
-        // Cleanup
-        cleanTestBuilds(BUILD_NAME, BUILD_NUMBER, project);
     }
 
     private void sendBuildRetention(String project) throws IOException {
@@ -112,5 +135,10 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
         buildRetention.setCount(1);
         buildRetention.setDeleteBuildArtifacts(false);
         artifactoryManager.sendBuildRetention(buildRetention, BUILD_NAME, project, false);
+    }
+
+    private void stageBuild(String project) throws IOException {
+        Promotion promotion = new PromotionBuilder().build();
+        artifactoryManager.stageBuild(BUILD_NAME, BUILD_NUMBER, project, promotion);
     }
 }
