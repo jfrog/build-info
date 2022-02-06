@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.34.0 / gradle-artifactory-plugin 4.27.0 (February 6, 2022)
+- Support build promotion with projects ([613](https://github.com/jfrog/build-info/pull/613))
+- Support insecure TLS in the Gradle Artifactory plugin ([610](https://github.com/jfrog/build-info/pull/610))
+
 ## build-info-extractor 2.33.3 / gradle-artifactory-plugin 4.26.3 (January 26, 2022)
 - Bug fix - Signature of AmazonCorrettoCryptoProvider couldn't found ([609](https://github.com/jfrog/build-info/pull/609))
 
