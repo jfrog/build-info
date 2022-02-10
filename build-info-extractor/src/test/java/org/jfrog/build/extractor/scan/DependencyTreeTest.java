@@ -43,6 +43,8 @@ public class DependencyTreeTest {
         // Sanity test - Check tree with no issues
         Set<Issue> rootIssues = root.processTreeIssues();
         assertTrue(rootIssues.isEmpty());
+        Set<License> rootViolatedLicenses = root.processTreeViolatedLicenses();
+        assertTrue(rootViolatedLicenses.isEmpty());
         assertEquals(Severity.Normal, root.getTopIssue().getSeverity());
     }
 
@@ -58,6 +60,10 @@ public class DependencyTreeTest {
         Set<Issue> rootIssues = root.processTreeIssues();
         assertEquals(1, rootIssues.size());
         assertEquals(Severity.Normal, ((Issue) rootIssues.toArray()[0]).getSeverity());
+
+        // Assert no violated licenses
+        Set<License> rootViolatedLicenses = root.processTreeViolatedLicenses();
+        assertTrue(rootViolatedLicenses.isEmpty());
 
         // Check isHigherSeverityThan() functionality
         assertTrue(createIssue(Severity.Unknown).isHigherSeverityThan(root.getTopIssue()));
@@ -126,22 +132,31 @@ public class DependencyTreeTest {
 
     @Test(dependsOnMethods = {"testFiveNodes"})
     public void testIsLicenseViolating() {
-        assertFalse(root.isLicenseViolating());
+        assertTrue(root.getViolatedLicenses().isEmpty());
+
+        License violatedLicense = createLicense(true);
         // Populate node three with 4 licenses, one violation
         three.setLicenses(Sets.newHashSet(createLicense(false),
                 createLicense(false),
                 createLicense(false),
-                createLicense(true)));
+                violatedLicense));
         // Populate node five with non violated license.
         five.setLicenses(Sets.newHashSet(createLicense(false)));
 
-        // Assert that all issues are in the tree
+        // Assert that all licenses are in the tree
         Set<License> rootLicense = new HashSet<>();
         root.collectAllScopesAndLicenses(new HashSet<>(), rootLicense);
         assertEquals(6, rootLicense.size());
-        assertTrue(root.isLicenseViolating());
-        assertFalse(four.isLicenseViolating());
-        assertFalse(five.isLicenseViolating());
+
+        Set<License> expectedViolatedLicenseSet = Sets.newHashSet(violatedLicense);
+        Set<License> rootViolatedLicenses = root.processTreeViolatedLicenses();
+        assertEquals(expectedViolatedLicenseSet, rootViolatedLicenses);
+        assertTrue(one.getViolatedLicenses().isEmpty());
+        assertEquals(expectedViolatedLicenseSet, two.getViolatedLicenses());
+        assertEquals(expectedViolatedLicenseSet, three.getViolatedLicenses());
+        assertTrue(three.getLicenses().contains(violatedLicense));
+        assertTrue(four.getViolatedLicenses().isEmpty());
+        assertTrue(five.getViolatedLicenses().isEmpty());
     }
 
     @Test
@@ -207,7 +222,7 @@ public class DependencyTreeTest {
      * @return the random issue
      */
     private License createLicense(boolean violating) {
-        return new License(Lists.newArrayList(), generateUID(), generateUID(), Lists.newArrayList(), violating);
+        return new License(generateUID(), generateUID(), Lists.newArrayList(), violating);
     }
 
     private String generateUID() {

@@ -18,8 +18,8 @@ public class Issue implements Comparable<Issue> {
     private List<String> fixedVersions;
     private List<String> references;
     private String component = "";
-    private List<String> cves;
-    private String ignoreUrl;
+    private String ignoreRuleUrl;
+    private List<Cve> cves;
     private String summary;
     private String issueId;
 
@@ -27,14 +27,15 @@ public class Issue implements Comparable<Issue> {
     }
 
     @SuppressWarnings("unused")
-    public Issue(String issueId, Severity severity, String summary, List<String> fixedVersions, List<String> cves, List<String> references, String ignoreUrl) {
+    public Issue(String issueId, Severity severity, String summary, List<String> fixedVersions, List<Cve> cves,
+                 List<String> references, String ignoreRuleUrl) {
         this.issueId = issueId;
         this.severity = severity;
         this.summary = summary;
         this.fixedVersions = fixedVersions;
         this.cves = cves;
         this.references = references;
-        this.ignoreUrl = ignoreUrl;
+        this.ignoreRuleUrl = ignoreRuleUrl;
     }
 
     public String getIssueId() {
@@ -69,7 +70,7 @@ public class Issue implements Comparable<Issue> {
     }
 
     @SuppressWarnings("unused")
-    public List<String> getCves() {
+    public List<Cve> getCves() {
         return cves;
     }
 
@@ -79,8 +80,8 @@ public class Issue implements Comparable<Issue> {
     }
 
     @SuppressWarnings("unused")
-    public String getIgnoreUrl() {
-        return ignoreUrl;
+    public String getIgnoreRuleUrl() {
+        return ignoreRuleUrl;
     }
 
     @JsonIgnore

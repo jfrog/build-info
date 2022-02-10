@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Dependency tree for Xray scan. Used in 'Eclipse' and 'Idea' Xray plugins.
@@ -15,6 +16,7 @@ import java.util.*;
 @JsonFilter("xray-graph-filter")
 public class DependencyTree extends DefaultMutableTreeNode {
 
+    private Set<License> violatedLicenses = new HashSet<>();
     private Set<License> licenses = new HashSet<>();
     private Set<Issue> issues = new HashSet<>();
     private Set<Scope> scopes = new HashSet<>();
@@ -36,6 +38,15 @@ public class DependencyTree extends DefaultMutableTreeNode {
 
     public DependencyTree(Object userObject) {
         super(userObject);
+    }
+
+    @SuppressWarnings("unused")
+    public void setViolatedLicenses(Set<License> violatedLicenses) {
+        this.violatedLicenses = violatedLicenses;
+    }
+
+    public Set<License> getViolatedLicenses() {
+        return violatedLicenses;
     }
 
     public void setLicenses(Set<License> licenses) {
@@ -84,17 +95,6 @@ public class DependencyTree extends DefaultMutableTreeNode {
     @SuppressWarnings("WeakerAccess")
     public Issue getTopIssue() {
         return topIssue;
-    }
-
-    /**
-     * @return if one or more of the licenses is violating define policy
-     */
-    @SuppressWarnings("unused")
-    public boolean isLicenseViolating() {
-        if (licenses.stream().anyMatch(License::isViolate)) {
-            return true;
-        }
-        return getChildren().stream().anyMatch(DependencyTree::isLicenseViolating);
     }
 
     @SuppressWarnings("unused")
@@ -176,6 +176,26 @@ public class DependencyTree extends DefaultMutableTreeNode {
                 topIssue = issue;
             }
         });
+    }
+
+    /**
+     * 1. Populate current node's licenses components
+     * 2. Populate current node and subtree's violated licenses
+     *
+     * @return all violated licenses of the current node and its ancestors
+     */
+    public Set<License> processTreeViolatedLicenses() {
+        setViolatedLicensesComponent();
+        violatedLicenses.addAll(licenses.stream().filter(License::isViolate).collect(Collectors.toSet()));
+        getChildren().forEach(child -> violatedLicenses.addAll(child.processTreeViolatedLicenses()));
+        return violatedLicenses;
+    }
+
+    private void setViolatedLicensesComponent() {
+        Object userObject = getUserObject();
+        if (userObject != null) {
+            licenses.forEach(license -> license.setComponent(userObject.toString()));
+        }
     }
 
     /**
