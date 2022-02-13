@@ -414,6 +414,5 @@ public class BuildInfoBuilder {
     public BuildInfoBuilder setProject(String project) {
         this.project = project;
         return this;
-
     }
 }

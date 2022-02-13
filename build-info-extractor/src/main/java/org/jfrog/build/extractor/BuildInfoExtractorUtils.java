@@ -37,6 +37,8 @@ import java.util.function.Predicate;
  */
 public abstract class BuildInfoExtractorUtils {
 
+    private static final int ARTIFACT_TYPE_LENGTH_LIMIT = 64;
+
     public static final Predicate<Object> BUILD_INFO_PREDICATE =
             new PrefixPredicate(BuildInfoProperties.BUILD_INFO_PREFIX);
 
@@ -278,7 +280,8 @@ public abstract class BuildInfoExtractorUtils {
                 result = result + "-" + extension;
             }
         }
-        return result;
+        // Artifactory limit for type length is 64
+        return result.length() > ARTIFACT_TYPE_LENGTH_LIMIT ? type : result;
     }
 
     public static String getModuleIdString(String organisation, String name, String version) {
