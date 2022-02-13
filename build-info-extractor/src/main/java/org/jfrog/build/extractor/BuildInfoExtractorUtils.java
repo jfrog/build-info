@@ -280,11 +280,8 @@ public abstract class BuildInfoExtractorUtils {
                 result = result + "-" + extension;
             }
         }
-         if (result.length() > ARTIFACT_TYPE_LENGTH_LIMIT) {
-             //  Artifactory limit for type length is 64
-            return type;
-        }
-        return result;
+        // Artifactory limit for type length is 64
+        return result.length() > ARTIFACT_TYPE_LENGTH_LIMIT ? type : result;
     }
 
     public static String getModuleIdString(String organisation, String name, String version) {
