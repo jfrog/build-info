@@ -16,7 +16,7 @@ public class License {
     private static final String UNKNOWN_LICENCE_FULL_NAME = "Unknown license";
     @SuppressWarnings("FieldCanBeLocal")
     private static final String UNKNOWN_LICENCE_NAME = "Unknown";
-    private List<String> components = new ArrayList<>();
+    private String component = "";
     private final String fullName;
     private final String name;
     private List<String> moreInfoUrl = new ArrayList<>();
@@ -27,12 +27,11 @@ public class License {
         this.name = UNKNOWN_LICENCE_NAME;
     }
 
-    public License(List<String> components, String fullName, String name, List<String> moreInfoUrl) {
-        this(components, fullName, name, moreInfoUrl, false);
+    public License(String fullName, String name, List<String> moreInfoUrl) {
+        this(fullName, name, moreInfoUrl, false);
     }
 
-    public License(List<String> components, String fullName, String name, List<String> moreInfoUrl, boolean violate) {
-        this.components = components;
+    public License(String fullName, String name, List<String> moreInfoUrl, boolean violate) {
         this.fullName = StringUtils.trim(fullName);
         this.name = StringUtils.trim(name);
         this.moreInfoUrl = moreInfoUrl;
@@ -40,8 +39,12 @@ public class License {
     }
 
     @SuppressWarnings("unused")
-    public List<String> getComponents() {
-        return components;
+    public String getComponent() {
+        return component;
+    }
+
+    public void setComponent(String component) {
+        this.component = component;
     }
 
     @SuppressWarnings("unused")

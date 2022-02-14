@@ -12,28 +12,36 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 
 public class StageBuild extends VoidJFrogService {
     private static final String BUILD_STAGING_STRATEGY_ENDPOINT = "api/build/promote/";
     private final String buildName;
     private final String buildNumber;
+    private final String project;
     private final Promotion promotion;
 
-    public StageBuild(String buildName, String buildNumber, Promotion promotion, Log logger) {
+    public StageBuild(String buildName, String buildNumber, String project, Promotion promotion, Log logger) {
         super(logger);
         this.buildName = buildName;
         this.buildNumber = buildNumber;
+        this.project = project;
         this.promotion = promotion;
     }
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        HttpPost request = new HttpPost(BUILD_STAGING_STRATEGY_ENDPOINT + encodeUrl(buildName) + "/" + encodeUrl(buildNumber));
+        String url = String.format("%s%s/%s%s", BUILD_STAGING_STRATEGY_ENDPOINT, encodeUrl(buildName), encodeUrl(buildNumber), getProjectQueryParam(project));
+        HttpPost request = new HttpPost(url);
         StringEntity stringEntity = new StringEntity(toJsonString(promotion));
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
         request.setEntity(stringEntity);
-        log.info("Promotion build " + buildName + ", #" + buildNumber);
+        String logMsg = String.format("Promotion build %s, #%s", buildName, buildNumber);
+        if (StringUtils.isNotBlank(project)) {
+            logMsg += ", in project " + project;
+        }
+        log.info(logMsg);
         return request;
     }
 

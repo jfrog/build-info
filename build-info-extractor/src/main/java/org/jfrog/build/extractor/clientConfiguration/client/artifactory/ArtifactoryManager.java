@@ -4,8 +4,6 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
@@ -19,42 +17,11 @@ import org.jfrog.build.client.ArtifactoryVersion;
 import org.jfrog.build.client.DownloadResponse;
 import org.jfrog.build.client.ItemLastModified;
 import org.jfrog.build.client.artifactoryXrayResponse.ArtifactoryXrayResponse;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.extractor.clientConfiguration.client.ManagerBase;
 import org.jfrog.build.extractor.clientConfiguration.client.RepositoryType;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.CheckRepositoryType;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.CreateRepository;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DeleteBuilds;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DeleteProperties;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DeleteRepository;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DeleteRepositoryContent;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DistributeBuild;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Download;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DownloadHeaders;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.DownloadToFile;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.ExecuteUserPlugin;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetAllBuildNumbers;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetBuildInfo;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetItemLastModified;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetNpmAuth;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetRepositoriesKeys;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetStagingStrategy;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.GetUserPluginInfo;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.IsRepositoryExist;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PromotionUserPlugin;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.ReportUsage;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.RetrievePatternArtifacts;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.ScanBuild;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SearchArtifactsByAql;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SearchArtifactsByPattern;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SearchArtifactsByProperties;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SendBuildRetention;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SendModuleInfo;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.SetProperties;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.StageBuild;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.UpdateFileProperty;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Upload;
-import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.Version;
+import org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.*;
 import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuildNumbersResponse;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.usageReport.UsageReporter;
@@ -272,8 +239,8 @@ public class ArtifactoryManager extends ManagerBase {
         sendBuildRetentionService.execute(jfrogHttpClient);
     }
 
-    public void stageBuild(String buildName, String buildNumber, Promotion promotion) throws IOException {
-        StageBuild stageBuildService = new StageBuild(buildName, buildNumber, promotion, log);
+    public void stageBuild(String buildName, String buildNumber, String project, Promotion promotion) throws IOException {
+        StageBuild stageBuildService = new StageBuild(buildName, buildNumber, project, promotion, log);
         stageBuildService.execute(jfrogHttpClient);
     }
 
