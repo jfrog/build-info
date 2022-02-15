@@ -399,7 +399,7 @@ project('build-info-extractor-docker') {
 
     dependencies {
         implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
-        implementation group: 'com.github.docker-java', name: 'docker-java', version: '3.2.12'
+        implementation group: 'com.github.docker-java', name: 'docker-java', version: '3.2.13'
     }
 }
 
