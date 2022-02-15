@@ -4,30 +4,26 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.Header;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.search.AqlSearchResult;
+import org.jfrog.build.api.util.Log;
+import org.jfrog.build.client.ArtifactoryVersion;
+import org.jfrog.build.client.DownloadResponse;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.search.AqlSearchResult;
-import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ArtifactoryVersion;
-import org.jfrog.build.client.DownloadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.docker.DockerUtils;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.*;
 import static org.jfrog.build.client.DownloadResponse.SHA256_HEADER_NAME;
 
 public class DockerImage implements Serializable {
@@ -117,7 +113,7 @@ public class DockerImage implements Serializable {
      */
     private Pair<DownloadResponse, String> getManifestFromArtifactory(ArtifactoryManager artifactoryManager, String
             manifestPath, Log logger) throws IOException {
-        String pathWithoutRepo = StringUtils.substringAfter(manifestPath, "/");
+        String pathWithoutRepo = substringAfter(manifestPath, "/");
         String downloadUrl = manifestPath + "/manifest.json";
         logger.info("Trying to download manifest from " + downloadUrl);
         try {
@@ -135,12 +131,12 @@ public class DockerImage implements Serializable {
             }
             logger.info("Found image digest from fat manifest. Trying to download the resulted manifest from path: " + manifestPath);
             // Remove the tag from the pattern, and place the manifest digest instead.
-            manifestPath = StringUtils.substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
+            manifestPath = substringBeforeLast(manifestPath, "/") + "/" + digestsFromFatManifest.replace(":", "__");
         }
 
         downloadUrl = manifestPath + "/manifest.json";
         logger.info("Trying to download manifest from " + downloadUrl);
-        return Pair.of(artifactoryManager.download(downloadUrl), StringUtils.substringAfter(manifestPath, "/"));
+        return Pair.of(artifactoryManager.download(downloadUrl), substringAfter(manifestPath, "/"));
     }
 
     private void setBuildInfoModuleProps(ModuleBuilder moduleBuilder) {
@@ -232,7 +228,7 @@ public class DockerImage implements Serializable {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             ModuleBuilder moduleBuilder = new ModuleBuilder()
                     .type(ModuleType.DOCKER)
-                    .id(imageTag.substring(imageTag.indexOf("/") + 1))
+                    .id(substringAfterLast(imageTag, "/"))
                     .repository(targetRepo);
             try {
                 findAndSetManifestFromArtifactory(artifactoryManager, logger, cmdType);
