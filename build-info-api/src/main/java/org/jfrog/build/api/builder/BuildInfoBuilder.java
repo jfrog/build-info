@@ -411,7 +411,7 @@ public class BuildInfoBuilder {
         return this;
     }
 
-    public BuildInfoBuilder setProject(String project) {
+    public BuildInfoBuilder project(String project) {
         this.project = project;
         return this;
     }

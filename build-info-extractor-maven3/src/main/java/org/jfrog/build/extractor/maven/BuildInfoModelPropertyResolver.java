@@ -7,33 +7,19 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
-import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
-import org.jfrog.build.extractor.ci.Agent;
-import org.jfrog.build.extractor.ci.BuildAgent;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.Issue;
-import org.jfrog.build.extractor.ci.IssueTracker;
-import org.jfrog.build.extractor.ci.Issues;
-import org.jfrog.build.extractor.ci.MatrixParameter;
-import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.api.release.Promotion;
+import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
+import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
-import static org.jfrog.build.api.BuildInfoFields.BUILD_NAME;
-import static org.jfrog.build.api.BuildInfoFields.BUILD_NUMBER;
-import static org.jfrog.build.api.BuildInfoFields.BUILD_STARTED;
-import static org.jfrog.build.api.BuildInfoFields.BUILD_TIMESTAMP;
+import static org.jfrog.build.api.BuildInfoFields.*;
 
 
 /**
@@ -41,10 +27,10 @@ import static org.jfrog.build.api.BuildInfoFields.BUILD_TIMESTAMP;
  */
 @Component(role = BuildInfoModelPropertyResolver.class)
 public class BuildInfoModelPropertyResolver {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
 
     @Requirement
     private Logger logger;
-
 
     public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).
@@ -139,10 +125,18 @@ public class BuildInfoModelPropertyResolver {
         if (StringUtils.isBlank(buildNumber)) {
             buildNumber = Long.toString(System.currentTimeMillis());
         }
+        String project = clientConf.info.getProject();
         Date buildStartedDate = event.getSession().getRequest().getStartTime();
         String buildStarted = clientConf.info.getBuildStarted();
         if (StringUtils.isBlank(buildStarted)) {
-            buildStarted = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).format(buildStartedDate);
+            buildStarted = DATE_FORMAT.format(buildStartedDate);
+        }
+        long buildMillis = 0;
+        try {
+            buildMillis = DATE_FORMAT.parse(buildStarted).getTime();
+        } catch (ParseException e) {
+            logger.warn(String.format("Artifactory Build Info Model Property Resolver: Couldn't parse start time %s",
+                    buildStarted), e);
         }
 
         String buildTimestamp = clientConf.info.getBuildTimestamp();
@@ -151,9 +145,10 @@ public class BuildInfoModelPropertyResolver {
         }
         logResolvedProperty(BUILD_NAME, buildName);
         logResolvedProperty(BUILD_NUMBER, buildNumber);
+        logResolvedProperty(BUILD_PROJECT, project);
         logResolvedProperty(BUILD_STARTED, buildStarted);
         logResolvedProperty(BUILD_TIMESTAMP, buildTimestamp);
-        return new BuildInfoMavenBuilder(buildName).number(buildNumber).started(buildStarted);
+        return new BuildInfoMavenBuilder(buildName).number(buildNumber).project(project).started(buildStarted).startedMillis(buildMillis);
     }
 
     private String getMavenVersion() {

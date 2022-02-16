@@ -11,7 +11,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuild
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
+import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
 
 public class GetAllBuildNumbers extends JFrogService<GetAllBuildNumbersResponse> {
 

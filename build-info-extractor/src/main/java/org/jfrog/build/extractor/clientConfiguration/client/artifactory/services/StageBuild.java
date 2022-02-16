@@ -12,8 +12,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
 
 public class StageBuild extends VoidJFrogService {
     private static final String BUILD_STAGING_STRATEGY_ENDPOINT = "api/build/promote/";
