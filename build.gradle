@@ -23,6 +23,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
 
 String testNgVersion = '6.10'
+String jacksonVersion = '2.12.6'
 
 // Root project version should not be used
 project.version = '2'
@@ -75,8 +76,9 @@ subprojects {
         implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
         implementation group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
         implementation group: 'commons-io', name: 'commons-io', version: '2.8.0'
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5.1'
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
         implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
         implementation("org.apache.httpcomponents:httpclient:4.5.13") {
             exclude module: "commons-codec"
@@ -230,8 +232,9 @@ evaluationDependsOnChildren()
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.10.5.1'
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
         implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
     }
 }
@@ -363,7 +366,8 @@ project('build-info-extractor-maven3') {
                 'org.eclipse.aether:aether-impl:1.0.2.v20150114',
                 'org.codehaus.plexus:plexus-utils:3.0.10',
                 'org.apache.maven:maven-repository-metadata:3.5.2',
-                'org.apache.maven:maven-model:3.1.0'
+                'org.apache.maven:maven-model:3.1.0',
+                'org.codehaus.plexus:plexus-cipher:1.8'
 
         implementation('org.apache.maven.plugins:maven-deploy-plugin:2.8.2') {
             exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
@@ -372,6 +376,7 @@ project('build-info-extractor-maven3') {
         implementation('org.apache.maven:maven-core:3.3.3') {
             exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
             exclude group: 'org.apache.maven', module: 'maven-model'
+            exclude group: 'org.sonatype.plexus', module: 'plexus-cipher'
         }
 
         uberJar 'org.eclipse.aether:aether-impl:1.0.2.v20150114'
@@ -394,7 +399,7 @@ project('build-info-extractor-docker') {
 
     dependencies {
         implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
-        implementation group: 'com.github.docker-java', name: 'docker-java', version: '3.2.12'
+        implementation group: 'com.github.docker-java', name: 'docker-java', version: '3.2.13'
     }
 }
 
