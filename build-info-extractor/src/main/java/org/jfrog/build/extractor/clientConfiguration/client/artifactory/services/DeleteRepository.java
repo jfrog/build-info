@@ -7,6 +7,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+
 public class DeleteRepository extends VoidJFrogService {
     private static final String API_REPOSITORIES = "api/repositories/";
     private final String repository;
@@ -18,6 +20,6 @@ public class DeleteRepository extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpDelete(API_REPOSITORIES + encodeUrl(repository));
+        return new HttpDelete(API_REPOSITORIES + encodeUrlPathPart(repository));
     }
 }

@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.UrlUtils;
 import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -12,8 +13,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-
-import static org.jfrog.build.api.IssuesCollectionConfig.ISSUES_COLLECTION_ERROR_PREFIX;
 
 public class GitUtils {
     private static final String GIT_LOG_LIMIT = "100";

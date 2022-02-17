@@ -3,8 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.client.JFrogService;
 import org.jfrog.build.extractor.clientConfiguration.client.response.GetBuildInfoResponse;
 
@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class GetBuildInfo extends JFrogService<BuildInfo> {
 
@@ -29,7 +30,8 @@ public class GetBuildInfo extends JFrogService<BuildInfo> {
 
     @Override
     public HttpRequestBase createRequest() {
-        String apiEndPoint = String.format("%s/%s/%s%s", "api/build", encodeUrl(buildName), encodeUrl(buildNumber), getProjectQueryParam(project));
+        String apiEndPoint = String.format("%s/%s/%s%s", "api/build", encodeUrlPathPart(buildName),
+                encodeUrlPathPart(buildNumber), getProjectQueryParam(project));
         return new HttpGet(apiEndPoint);
     }
 

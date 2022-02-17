@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.executor;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
-import org.jfrog.build.extractor.clientConfiguration.util.UrlUtils;
+import org.jfrog.build.extractor.UrlUtils;
 
 import java.io.File;
 import java.io.IOException;

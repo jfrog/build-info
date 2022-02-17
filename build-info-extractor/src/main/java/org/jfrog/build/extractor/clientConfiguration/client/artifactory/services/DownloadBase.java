@@ -12,14 +12,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
+
 public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
     private final String DownloadPath;
     private final boolean isHead;
     private final Map<String, String> headers;
 
-    protected DownloadBase(String DownloadPath, boolean isHead, Map<String, String> headers, Log log) {
+    protected DownloadBase(String downloadPath, boolean isHead, Map<String, String> headers, Log log) {
         super(log);
-        this.DownloadPath = encodeUrl(DownloadPath);
+        this.DownloadPath = encodeUrl(downloadPath);
         this.isHead = isHead;
         this.headers = headers;
     }

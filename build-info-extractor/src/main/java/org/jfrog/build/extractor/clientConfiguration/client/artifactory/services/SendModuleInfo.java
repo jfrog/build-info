@@ -5,14 +5,15 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class SendModuleInfo extends VoidJFrogService {
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";
@@ -26,8 +27,8 @@ public class SendModuleInfo extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        String url = SEND_MODULE_INFO_ENDPOINT + encodeUrl(build.getName()) + "/" +
-                encodeUrl(build.getNumber()) + getProjectQueryParam(build.getProject());
+        String url = SEND_MODULE_INFO_ENDPOINT + encodeUrlPathPart(build.getName()) + "/" +
+                encodeUrlPathPart(build.getNumber()) + getProjectQueryParam(build.getProject());
         HttpPost request = new HttpPost(url);
         String modulesAsJsonString = toJsonString(build.getModules());
         StringEntity stringEntity = new StringEntity(modulesAsJsonString, "UTF-8");

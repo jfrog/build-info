@@ -10,6 +10,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.IOException;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.access.services.Utils.PROJECTS_ENDPOINT;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class UpdateProject extends VoidJFrogService {
     private final String projectKey;
@@ -23,7 +24,7 @@ public class UpdateProject extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        HttpPut request = new HttpPut(PROJECTS_ENDPOINT + "/" + encodeUrl(projectKey));
+        HttpPut request = new HttpPut(PROJECTS_ENDPOINT + "/" + encodeUrlPathPart(projectKey));
         StringEntity stringEntity = new StringEntity(projectJsonConfig, ContentType.APPLICATION_JSON);
         request.setEntity(stringEntity);
         return request;

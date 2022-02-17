@@ -8,6 +8,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.IOException;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.access.services.Utils.PROJECTS_ENDPOINT;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class DeleteProject extends VoidJFrogService {
     private final String projectKey;
@@ -19,6 +20,6 @@ public class DeleteProject extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpDelete(PROJECTS_ENDPOINT + "/" + encodeUrl(projectKey));
+        return new HttpDelete(PROJECTS_ENDPOINT + "/" + encodeUrlPathPart(projectKey));
     }
 }

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class DistributeBuild extends VoidJFrogService {
     private static final String BUILD_REST_URL = "api/build";
@@ -31,7 +32,7 @@ public class DistributeBuild extends VoidJFrogService {
     @Override
     public HttpRequestBase createRequest() throws IOException {
         String urlBuilder = BUILD_REST_URL + "/distribute/" +
-                encodeUrl(buildName) + "/" + encodeUrl(buildNumber);
+                encodeUrlPathPart(buildName) + "/" + encodeUrlPathPart(buildNumber);
         HttpPost request = new HttpPost(urlBuilder);
         StringEntity stringEntity = new StringEntity(toJsonString(promotion));
         stringEntity.setContentType("application/json");

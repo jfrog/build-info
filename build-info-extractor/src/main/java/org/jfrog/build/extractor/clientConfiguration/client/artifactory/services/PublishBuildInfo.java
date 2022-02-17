@@ -6,14 +6,16 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 
 public class PublishBuildInfo extends VoidJFrogService {
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
@@ -54,8 +56,8 @@ public class PublishBuildInfo extends VoidJFrogService {
      */
     public static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
         if (encode) {
-            buildName = encodeUrl(buildName);
-            buildNumber = encodeUrl(buildNumber);
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
         }
         return String.format("%s/%s/%s/%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, buildName, buildNumber, timeStamp, "published" + getProjectQueryParam(project));
     }
@@ -71,8 +73,8 @@ public class PublishBuildInfo extends VoidJFrogService {
      */
     public static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber, boolean encode) {
         if (encode) {
-            buildName = encodeUrl(buildName);
-            buildNumber = encodeUrl(buildNumber);
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
         }
         return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
     }

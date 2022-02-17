@@ -14,6 +14,7 @@ import java.io.IOException;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 public class StageBuild extends VoidJFrogService {
     private static final String BUILD_STAGING_STRATEGY_ENDPOINT = "api/build/promote/";
@@ -32,7 +33,8 @@ public class StageBuild extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        String url = String.format("%s%s/%s%s", BUILD_STAGING_STRATEGY_ENDPOINT, encodeUrl(buildName), encodeUrl(buildNumber), getProjectQueryParam(project));
+        String url = String.format("%s%s/%s%s", BUILD_STAGING_STRATEGY_ENDPOINT, encodeUrlPathPart(buildName),
+                encodeUrlPathPart(buildNumber), getProjectQueryParam(project));
         HttpPost request = new HttpPost(url);
         StringEntity stringEntity = new StringEntity(toJsonString(promotion));
         stringEntity.setContentType("application/vnd.org.jfrog.artifactory.build.PromotionRequest+json");
