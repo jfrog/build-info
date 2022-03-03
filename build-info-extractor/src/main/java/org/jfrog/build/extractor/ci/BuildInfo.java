@@ -586,7 +586,7 @@ public class BuildInfo extends BaseBuildBean {
     public Build ToBuild() {
         org.jfrog.build.api.builder.BuildInfoBuilder builder = new org.jfrog.build.api.builder.BuildInfoBuilder(name)
                 .number(number)
-                .setProject(project)
+                .project(project)
                 .agent(agent == null ? null : new org.jfrog.build.api.Agent(agent.getName(), agent.getVersion()))
                 .buildAgent(buildAgent == null ? null : new org.jfrog.build.api.BuildAgent(buildAgent.getName(), buildAgent.getVersion()))
                 .started(started)

@@ -10,33 +10,34 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.ci.BuildInfoProperties;
-import org.jfrog.build.api.util.CommonUtils;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+
 /**
  * @author Noam Y. Tenne
  */
 public abstract class BuildInfoExtractorUtils {
 
+    public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
+    public static final String BUILD_BROWSE_URL = "/webapp/builds";
+    private static final String BUILD_REPO_PARAM = "?buildRepo=";
     private static final int ARTIFACT_TYPE_LENGTH_LIMIT = 64;
 
     public static final Predicate<Object> BUILD_INFO_PREDICATE =
@@ -331,5 +332,84 @@ public abstract class BuildInfoExtractorUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Creates a build info link to the published build. This method is in use also in the Jenkins Artifactory plugin.
+     *
+     * @param url         JFrog Platform or Artifactory URL
+     * @param buildName   Build name of the published build
+     * @param buildNumber Build number of the published build
+     * @param timeStamp   Timestamp (started date time in milliseconds) of the published build
+     * @param project     Project of the published build
+     * @param encode      True if should encode build name and build number
+     * @param platformUrl True if the input url is platform's URL, false if it is Artifactory's URL
+     * @return Link to the published build.
+     */
+    public static String createBuildInfoUrl(String url, String buildName, String buildNumber, String timeStamp,
+                                            String project, boolean encode, boolean platformUrl) {
+        if (platformUrl) {
+            // Platform URL provided. We have everything we need to create the build info URL.
+            return createBuildInfoUrl(url, buildName, buildNumber, timeStamp, project, encode);
+        }
+        if (isNotBlank(project)) {
+            if (endsWith(url, "/artifactory")) {
+                // If the project parameter provided, try to guess the platform URL.
+                return createBuildInfoUrl(removeEnd(url, "/artifactory"), buildName,
+                        buildNumber, timeStamp, project, encode);
+            }
+            // If Artifactory's URL doesn't end with "/artifactory", it is impossible to create the URL.
+            return "";
+        }
+        // Platform URL and project was not provided - use Artifactory 6 style URL
+        return createBuildInfoUrl(url, buildName, buildNumber, encode);
+    }
+
+    /**
+     * Creates a build info link to the published build in JFrog platform (Artifactory V7)
+     *
+     * @param platformUrl - Base platform URL
+     * @param buildName   - Build name of the published build
+     * @param buildNumber - Build number of the published build
+     * @param timeStamp   - Timestamp (started date time in milliseconds) of the published build
+     * @param project     - Build project of the published build
+     * @param encode      - True if should encode build name and build number
+     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published?buildRepo=ecosys-build-info
+     */
+    private static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
+        if (encode) {
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
+        }
+        String timestampUrlPart = isBlank(timeStamp) ? "" : "/" + timeStamp;
+        return String.format("%s/%s/%s%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, buildName, buildNumber,
+                timestampUrlPart, "published" + getBuildRepoQueryParam(project));
+    }
+
+    /**
+     * Return "?buildRepo=<project>-build-info" if project provided or an empty string otherwise.
+     *
+     * @param project - Project of the published build
+     * @return build repo query param or empty string.
+     */
+    private static String getBuildRepoQueryParam(String project) {
+        return isEmpty(project) ? "" : BUILD_REPO_PARAM + encodeUrl(project) + "-build-info";
+    }
+
+    /**
+     * Creates a build info link to the published build in Artifactory (Artifactory V6 or below)
+     *
+     * @param artifactoryUrl - Base Artifactory URL
+     * @param buildName      - Build name of the published build
+     * @param buildNumber    - Build number of the published build
+     * @param encode         - True if should encode build name and build number
+     * @return Link to the published build in Artifactory e.g. https://myartifactory.com/artifactory/webapp/builds/gradle-cli/1
+     */
+    private static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber, boolean encode) {
+        if (encode) {
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
+        }
+        return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
     }
 }

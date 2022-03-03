@@ -3,15 +3,15 @@ package org.jfrog.build.extractor.clientConfiguration.client.artifactory.service
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
-import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.BuildRetention;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
-import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.UrlUtils.getProjectQueryParam;
+import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 
 public class SendBuildRetention extends VoidJFrogService {
     private static final String RETENTION_REST_URL = "api/build/retention/";

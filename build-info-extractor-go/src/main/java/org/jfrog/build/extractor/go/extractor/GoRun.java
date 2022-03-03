@@ -16,6 +16,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.artifactory.Artifact
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.jfrog.build.extractor.go.GoDriver;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
+import org.jfrog.build.extractor.scan.DependencyTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -23,14 +24,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static java.lang.Character.isUpperCase;
 import static java.lang.Character.toLowerCase;
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
+import static org.jfrog.build.extractor.go.extractor.GoDependencyTree.createDependencyTree;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 
@@ -48,12 +47,12 @@ public class GoRun extends GoCommand {
     private static final String LOCAL_GO_SUM_BACKUP_FILENAME = "jfrog.go.sum.backup";
     private static final String LOCAL_GO_MOD_BACKUP_FILENAME = "jfrog.go.mod.backup";
 
-    private List<Dependency> dependenciesList = new ArrayList<>();
-    private String goCmdArgs;
-    private String resolutionRepository;
-    private String resolverUsername;
-    private String resolverPassword;
-    private Map<String, String> env;
+    private final List<Dependency> dependenciesList = new ArrayList<>();
+    private final String resolutionRepository;
+    private final String resolverUsername;
+    private final String resolverPassword;
+    private final Map<String, String> env;
+    private final String goCmdArgs;
 
     /**
      * Run go command and collect dependencies.
@@ -115,8 +114,7 @@ public class GoRun extends GoCommand {
             // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
             goDriver.version(true);
             goDriver.runCmd(goCmdArgs, true);
-            this.moduleName = goDriver.getModuleName();
-            collectDependencies();
+            populateModuleAndDeps();
             return createBuild();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -135,28 +133,27 @@ public class GoRun extends GoCommand {
     }
 
     /**
-     * Run 'go mod graph' and parse its output.
-     * This command might change go.mod and go.sum content, so we backup and restore those files.
-     * The output format is:
-     * * For direct dependencies:
-     * <module-name> <dependency's-module-name>@v<dependency-module-version>
-     * * For transient dependencies:
-     * <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
-     * In order to populate build info dependencies, we parse the second column uf the mod graph output.
+     * Populate the module name and the dependencies.
      */
-    private void collectDependencies() throws Exception {
-        backupModAnsSumFiles();
-        CommandResults goGraphResult = goDriver.modGraph(true);
-        String cachePath = getCachePath();
-        String[] dependenciesGraph = goGraphResult.getRes().split("\\r?\\n");
-        for (String entry : dependenciesGraph) {
-            String moduleToAdd = entry.split(" ")[1];
-            addModuleDependencies(moduleToAdd, cachePath);
+    private void populateModuleAndDeps() throws Exception {
+        backupModAndSumFiles();
+        try {
+            DependencyTree dependencyTree = createDependencyTree(goDriver, logger, true);
+            moduleName = dependencyTree.toString();
+
+            String cachePath = getCachePath();
+            Enumeration<?> nodes = dependencyTree.breadthFirstEnumeration();
+            nodes.nextElement(); // Skip root
+            while (nodes.hasMoreElements()) {
+                DependencyTree node = (DependencyTree) nodes.nextElement();
+                addDependency(node.toString(), cachePath);
+            }
+        } finally {
+            restoreModAnsSumFiles();
         }
-        restoreModAnsSumFiles();
     }
 
-    private void backupModAnsSumFiles() throws IOException {
+    private void backupModAndSumFiles() throws IOException {
         createBackupFile(path, LOCAL_GO_MOD_FILENAME, LOCAL_GO_MOD_BACKUP_FILENAME);
         createBackupFile(path, LOCAL_GO_SUM_FILENAME, LOCAL_GO_SUM_BACKUP_FILENAME);
     }
@@ -206,20 +203,21 @@ public class GoRun extends GoCommand {
     }
 
     /**
-     * Each module is in format <module-name>@v<module-version>.
+     * Each dependency is in format <name>:<version>.
      * We add only the pgk zip file as build's dependency.
      * The dependency's id is "module-name:version", and its type is "zip".
      * We locate each pkg zip file downloaded to local Go cache, and calculate the pkg checksum.
      */
-    private void addModuleDependencies(String module, String cachePath) throws Exception {
-        String moduleName = module.split("@")[0];
-        String moduleVersion = module.split("@")[1];
-        String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(moduleName) + File.separator + "@v" + File.separator + moduleVersion + ".zip";
+    private void addDependency(String dependencyId, String cachePath) throws Exception {
+        String[] dependencyIdSplit = StringUtils.split(dependencyId, ":");
+        String name = dependencyIdSplit[0];
+        String version = "v" + dependencyIdSplit[1];
+        String cachedPkgPath = cachePath + convertModuleNameToCachePathConvention(name) + File.separator + "@v" + File.separator + version + ".zip";
         File moduleZip = new File(cachedPkgPath);
         if (moduleZip.exists()) {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(moduleZip, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
             Dependency dependency = new DependencyBuilder()
-                    .id(moduleName + ':' + moduleVersion)
+                    .id(name + ":" + version)
                     .md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM))
                     .type("zip")
                     .build();

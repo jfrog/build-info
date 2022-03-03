@@ -35,16 +35,16 @@ public class GoDriver implements Serializable {
         this.logger = logger;
     }
 
-    public CommandResults runCmd(String args, boolean prompt) throws IOException {
+    public CommandResults runCmd(String args, boolean verbose) throws IOException {
         List<String> argsList = new ArrayList<>(Arrays.asList(args.split(" ")));
-        return runCmd(argsList, prompt);
+        return runCmd(argsList, verbose);
     }
 
     /**
      * Run go client cmd with goArs.
      * Write stdout + stderr to logger, and return the command's result.
      */
-    public CommandResults runCmd(List<String> args, boolean prompt) throws IOException {
+    public CommandResults runCmd(List<String> args, boolean verbose) throws IOException {
         CommandResults goCmdResult;
         try {
             goCmdResult = commandExecutor.exeCommand(workingDirectory, args, null, logger);
@@ -55,7 +55,7 @@ public class GoDriver implements Serializable {
         if (!goCmdResult.isOk()) {
             throw new IOException(goCmdResult.getErr());
         }
-        if (prompt) {
+        if (verbose) {
             logger.info(goCmdResult.getErr() + goCmdResult.getRes());
         }
         return goCmdResult;
@@ -71,16 +71,24 @@ public class GoDriver implements Serializable {
         }
     }
 
-    public CommandResults version(boolean prompt) throws IOException {
-        return runCmd(GO_VERSION_CMD, prompt);
+    public CommandResults version(boolean verbose) throws IOException {
+        return runCmd(GO_VERSION_CMD, verbose);
     }
 
-    public CommandResults modGraph(boolean prompt) throws IOException {
-        return runCmd(GO_MOD_GRAPH_CMD, prompt);
+    /**
+     * Run go mod graph.
+     * The output format is:
+     * * For direct dependencies:
+     * [module-name] [dependency's-module-name]@v[dependency-module-version]
+     * * For transitive dependencies:
+     * [dependency's-module-name]@v[dependency-module-version] [dependency's-module-name]@v[dependency-module-version]
+     */
+    public CommandResults modGraph(boolean verbose) throws IOException {
+        return runCmd(GO_MOD_GRAPH_CMD, verbose);
     }
 
-    public void modTidy(boolean prompt) throws IOException {
-        runCmd(GO_MOD_TIDY_CMD, prompt);
+    public void modTidy(boolean verbose) throws IOException {
+        runCmd(GO_MOD_TIDY_CMD, verbose);
     }
 
     public CommandResults getUsedModules(boolean prompt, boolean ignoreErrors) throws IOException {

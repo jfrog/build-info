@@ -11,9 +11,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
-import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.UrlUtils.getProjectQueryParam;
+import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
 
 public class SendModuleInfo extends VoidJFrogService {
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";

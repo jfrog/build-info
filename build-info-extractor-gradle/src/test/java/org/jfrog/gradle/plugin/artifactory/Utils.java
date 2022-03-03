@@ -24,8 +24,8 @@ import java.nio.file.Path;
 import java.util.*;
 
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_BROWSE_URL;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.BUILD_BROWSE_URL;
 import static org.jfrog.gradle.plugin.artifactory.Consts.*;
 import static org.testng.Assert.*;
 
