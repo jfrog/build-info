@@ -80,7 +80,7 @@ public class UrlUtils {
     }
 
     /**
-     * Encode the URL path part. This function does encode slashes.
+     * Encode the URL path part. This method does encode slashes.
      * Use it for encoding a single path part in a URL - for example, encoding build name.
      *
      * @param pathPart - The URL path part to encode
@@ -93,7 +93,7 @@ public class UrlUtils {
     }
 
     /**
-     * Encode URL or the query part of a URL. This function does not encode slashes.
+     * Encode URL or the query part of a URL. This method does not encode slashes.
      * Use it for encoding multiple URL parts (a/b/c) or query params (?a=b).
      *
      * @param url - The URL to encode

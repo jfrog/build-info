@@ -15,20 +15,20 @@ import java.util.Map;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 
 public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
-    private final String DownloadPath;
+    private final String downloadPath;
     private final boolean isHead;
     private final Map<String, String> headers;
 
     protected DownloadBase(String downloadPath, boolean isHead, Map<String, String> headers, Log log) {
         super(log);
-        this.DownloadPath = encodeUrl(downloadPath);
+        this.downloadPath = encodeUrl(downloadPath);
         this.isHead = isHead;
         this.headers = headers;
     }
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        HttpRequestBase request = isHead ? new HttpHead(DownloadPath) : new HttpGet(DownloadPath);
+        HttpRequestBase request = isHead ? new HttpHead(downloadPath) : new HttpGet(downloadPath);
         // Explicitly force keep alive
         request.setHeader("Connection", "Keep-Alive");
         // Add all required headers to the request
@@ -43,9 +43,9 @@ public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
     @Override
     protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
-            throw new FileNotFoundException("Unable to find " + DownloadPath);
+            throw new FileNotFoundException("Unable to find " + downloadPath);
         }
-        log.error("Failed to download from  '" + DownloadPath + "'");
+        log.error("Failed to download from  '" + downloadPath + "'");
         throwException(entity, getStatusCode());
     }
 }
