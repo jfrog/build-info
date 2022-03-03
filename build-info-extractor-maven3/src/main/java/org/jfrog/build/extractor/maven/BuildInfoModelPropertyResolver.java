@@ -102,21 +102,14 @@ public class BuildInfoModelPropertyResolver {
             if (comment == null) {
                 comment = "";
             }
-            String buildStartedIso = clientConf.info.getBuildStarted();
-            Date buildStartDate;
-            try {
-                buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
-            } catch (ParseException e) {
-                throw new IllegalArgumentException("BuildInfo start date format error: " + buildStartedIso, e);
-            }
+            Date buildStartDate = getBuildStartedDate(clientConf.info.getBuildStarted());
             builder.addStatus(new PromotionStatusBuilder(Promotion.STAGED).timestampDate(buildStartDate)
                     .comment(comment).repository(stagingRepository)
                     .ciUser(clientConf.info.getPrincipal()).user(clientConf.publisher.getUsername()).build());
         }
     }
 
-    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event,
-                                                        ArtifactoryClientConfiguration clientConf) {
+    private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
@@ -127,28 +120,24 @@ public class BuildInfoModelPropertyResolver {
         }
         String project = clientConf.info.getProject();
         Date buildStartedDate = event.getSession().getRequest().getStartTime();
-        String buildStarted = clientConf.info.getBuildStarted();
-        if (StringUtils.isBlank(buildStarted)) {
-            buildStarted = DATE_FORMAT.format(buildStartedDate);
-        }
-        long buildMillis = 0;
-        try {
-            buildMillis = DATE_FORMAT.parse(buildStarted).getTime();
-        } catch (ParseException e) {
-            logger.warn(String.format("Artifactory Build Info Model Property Resolver: Couldn't parse start time %s",
-                    buildStarted), e);
-        }
+        String buildStarted = StringUtils.firstNonBlank(clientConf.info.getBuildStarted(), DATE_FORMAT.format(buildStartedDate));
+        long buildMillis = getBuildStartedDate(buildStarted).getTime();
+        String buildTimestamp = StringUtils.firstNonBlank(clientConf.info.getBuildTimestamp(), Long.toString(buildStartedDate.getTime()));
 
-        String buildTimestamp = clientConf.info.getBuildTimestamp();
-        if (StringUtils.isBlank(buildTimestamp)) {
-            buildTimestamp = Long.toString(buildStartedDate.getTime());
-        }
         logResolvedProperty(BUILD_NAME, buildName);
         logResolvedProperty(BUILD_NUMBER, buildNumber);
         logResolvedProperty(BUILD_PROJECT, project);
         logResolvedProperty(BUILD_STARTED, buildStarted);
         logResolvedProperty(BUILD_TIMESTAMP, buildTimestamp);
         return new BuildInfoMavenBuilder(buildName).number(buildNumber).project(project).started(buildStarted).startedMillis(buildMillis);
+    }
+
+    private Date getBuildStartedDate(String buildStartedIso) {
+        try {
+            return new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
+        } catch (ParseException e) {
+            throw new IllegalArgumentException("BuildInfo start date format error: " + buildStartedIso, e);
+        }
     }
 
     private String getMavenVersion() {
