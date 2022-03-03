@@ -1,17 +1,11 @@
 package org.jfrog.build.extractor.ci;
 
-import org.jfrog.build.api.Agent;
-import org.jfrog.build.api.Artifact;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.api.BuildAgent;
-import org.jfrog.build.api.Dependency;
-import org.jfrog.build.api.Module;
-import org.jfrog.build.api.Vcs;
-import org.jfrog.build.api.builder.ArtifactBuilder;
-import org.jfrog.build.api.builder.BuildInfoBuilder;
-import org.jfrog.build.api.builder.BuildInfoMavenBuilder;
-import org.jfrog.build.api.builder.DependencyBuilder;
-import org.jfrog.build.api.builder.ModuleBuilder;
+import org.jfrog.build.extractor.builder.ArtifactBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoBuilder;
+import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
+import org.jfrog.build.extractor.builder.DependencyBuilder;
+import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -45,7 +39,7 @@ public class BuildInfoMavenBuilderTest {
      * Validates the build values when using the defaults
      */
     public void testDefaultBuild() {
-        Build buildInfo = new BuildInfoBuilder("test").number("4").started("test").build();
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").build();
         assertEquals(buildInfo.getVersion(), "1.0.1", "Unexpected default build version.");
         assertEquals(buildInfo.getNumber(), "4", "Unexpected default build number.");
 
@@ -82,7 +76,7 @@ public class BuildInfoMavenBuilderTest {
         List<Module> modules = new ArrayList<>();
         Properties properties = new Properties();
 
-        Build buildInfo = new BuildInfoBuilder(name).started("test").version(version).number(number)
+        BuildInfo buildInfo = new BuildInfoBuilder(name).started("test").version(version).number(number)
                 .agent(agent).durationMillis(durationMillis).principal(principal)
                 .artifactoryPrincipal(artifactoryPrincipal).url(url).parentName(parentName).parentNumber(parentNumber)
                 .modules(modules).properties(properties).buildAgent(buildAgent)
@@ -111,7 +105,7 @@ public class BuildInfoMavenBuilderTest {
      */
     public void testStartedSetters() {
         String started = "192-1212-1";
-        Build buildInfo = new BuildInfoBuilder("test").number("4").started(started).build();
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started(started).build();
         assertEquals(buildInfo.getStarted(), started, "Unexpected buildInfo started.");
 
         Date startedDate = new Date();
@@ -131,7 +125,7 @@ public class BuildInfoMavenBuilderTest {
         String propertyValue = "value";
         PromotionStatus promotionStatus = new PromotionStatusBuilder("momo").timestampDate(new Date()).build();
 
-        Build buildInfo = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
+        BuildInfo buildInfo = new BuildInfoBuilder("test").number("4").started("test").addModule(module)
                 .addProperty(propertyKey, propertyValue).addStatus(promotionStatus).build();
         List<Module> modules = buildInfo.getModules();
         assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
@@ -155,7 +149,7 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1);
         builder.addModule(module2);
-        Build buildInfo = builder.build();
+        BuildInfo buildInfo = builder.build();
 
         List<Module> modules = buildInfo.getModules();
         assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
@@ -179,7 +173,7 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());
         builder.addModule(module2.build());
-        Build buildInfo = builder.build();
+        BuildInfo buildInfo = builder.build();
 
         List<Module> modules = buildInfo.getModules();
         assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
@@ -214,7 +208,7 @@ public class BuildInfoMavenBuilderTest {
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());
         builder.addModule(module2.build());
-        Build buildInfo = builder.build();
+        BuildInfo buildInfo = builder.build();
 
         List<Module> modules = buildInfo.getModules();
         assertFalse(modules.isEmpty(), "A buildInfo module should have been added.");
