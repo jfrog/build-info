@@ -5,14 +5,14 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.StringEntity;
 import org.jfrog.build.api.Build;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
-import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.PublishBuildInfo.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
+import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
 
 public class SendModuleInfo extends VoidJFrogService {
     public static final String APPLICATION_VND_ORG_JFROG_ARTIFACTORY_JSON = "application/vnd.org.jfrog.artifactory+json";

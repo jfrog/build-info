@@ -1,16 +1,8 @@
 package org.jfrog.build.extractor.builder;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.jfrog.build.api.release.PromotionStatus;
-import org.jfrog.build.extractor.ci.Agent;
-import org.jfrog.build.extractor.ci.BuildAgent;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.BuildRetention;
-import org.jfrog.build.extractor.ci.Issues;
-import org.jfrog.build.extractor.ci.MatrixParameter;
-import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.Vcs;
+import org.jfrog.build.extractor.ci.*;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -126,6 +118,17 @@ public class BuildInfoBuilder {
      */
     public BuildInfoBuilder number(String number) {
         this.number = number;
+        return this;
+    }
+
+    /**
+     * Sets the project of the build
+     *
+     * @param project Build project
+     * @return Builder instance
+     */
+    public BuildInfoBuilder project(String project) {
+        this.project = project;
         return this;
     }
 

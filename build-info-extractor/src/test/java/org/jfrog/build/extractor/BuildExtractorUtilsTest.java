@@ -4,13 +4,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
-import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
-import org.jfrog.build.extractor.ci.BuildInfoProperties;
-import org.jfrog.build.extractor.ci.Dependency;
-import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.ci.*;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.io.FileOutputStream;
@@ -19,15 +16,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
+import static org.testng.Assert.*;
 
 /**
  * Test the build info extractor
@@ -229,5 +219,41 @@ public class BuildExtractorUtilsTest {
         assertEquals(ArrayUtils.getLength(requestedBy), 2);
         assertEquals(requestedBy[0], requestedByA);
         assertEquals(requestedBy[1], requestedByB);
+    }
+
+    @DataProvider
+    private Object[][] buildUrlProvider() {
+        return new Object[][]{
+                // Platform URL - encoding
+                {"http://127.0.0.1", "na me", "1 2", "123456", "", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published"},
+                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1", "na me", "1 2", "", "", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/published"},
+
+                // Platform URL - no encoding
+                {"http://127.0.0.1", "na me", "1 2", "123456", "", false, true, "http://127.0.0.1/ui/builds/na me/1 2/123456/published"},
+                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", false, true, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1", "na me", "1 2", "", "", false, true, "http://127.0.0.1/ui/builds/na me/1 2/published"},
+
+                // Artifactory URL - encoding
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "", true, false, "http://127.0.0.1/artifactory/webapp/builds/na%20me/1%202"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", true, false, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "", "", true, false, "http://127.0.0.1/artifactory/webapp/builds/na%20me/1%202"},
+                {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "", true, false, "http://127.0.0.1/non-artifactory/webapp/builds/na%20me/1%202"},
+                {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "proj", true, false, ""},
+
+                // Artifactory URL - no encoding
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "", false, false, "http://127.0.0.1/artifactory/webapp/builds/na me/1 2"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", false, false, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "", "", false, false, "http://127.0.0.1/artifactory/webapp/builds/na me/1 2"},
+                {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "", false, false, "http://127.0.0.1/non-artifactory/webapp/builds/na me/1 2"},
+                {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "proj", false, false, ""},
+        };
+    }
+
+
+    @Test(dataProvider = "buildUrlProvider")
+    public void testCreateBuildInfoUrl(String url, String buildName, String buildNumber, String timeStamp, String project,
+                                       boolean encode, boolean platformUrl, String exceptedUrl) {
+        assertEquals(createBuildInfoUrl(url, buildName, buildNumber, timeStamp, project, encode, platformUrl), exceptedUrl);
     }
 }

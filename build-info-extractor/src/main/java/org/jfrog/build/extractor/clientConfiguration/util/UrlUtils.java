@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.jfrog.build.extractor.clientConfiguration.client.JFrogService.encodeUrl;
 
 /**
@@ -15,6 +16,7 @@ import static org.jfrog.build.extractor.clientConfiguration.client.JFrogService.
 public class UrlUtils {
 
     private static final Pattern CREDENTIALS_IN_URL_REGEX = Pattern.compile("(http|https|git)://.+@");
+    private static final String BUILD_PROJECT_PARAM = "?project=";
 
     /**
      * Remove URL credentials information from a given line (log, URL...).
@@ -52,5 +54,26 @@ public class UrlUtils {
                 }
             }
         }
+    }
+
+    /**
+     * Get the project REST query parameter or an empty string, if project is blank.
+     *
+     * @param project - The project key
+     * @param prefix  - The query param prefix
+     * @return the project REST query parameter or an empty string.
+     */
+    public static String getProjectQueryParam(String project, String prefix) {
+        return isEmpty(project) ? "" : prefix + encodeUrl(project);
+    }
+
+    /**
+     * Get the project REST query parameter or an empty string, if project is blank.
+     *
+     * @param project - The project key
+     * @return the project REST query parameter or an empty string.
+     */
+    public static String getProjectQueryParam(String project) {
+        return getProjectQueryParam(project, BUILD_PROJECT_PARAM);
     }
 }
