@@ -88,7 +88,8 @@ public class UrlUtils {
      */
     public static String encodeUrlPathPart(String pathPart) {
         byte[] rawData = URLCodec.encodeUrl(null, getBytesUtf8(pathPart));
-        return newStringUsAscii(rawData);
+        // URLCodec.encodeUrl replaces spaces with '+', but we want to escape them to %20
+        return newStringUsAscii(rawData).replaceAll("\\+", "%20");
     }
 
     /**
