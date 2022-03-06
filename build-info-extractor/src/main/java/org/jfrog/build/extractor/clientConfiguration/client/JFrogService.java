@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -11,14 +10,11 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.util.EntityUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
-import org.jfrog.build.util.URI;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
-import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 /**
@@ -52,11 +48,6 @@ public abstract class JFrogService<TResult> {
             String ResponseMessage = IOUtils.toString(stream, StandardCharsets.UTF_8.name());
             throw new IOException("JFrog service failed. Received " + statusCode + ": " + ResponseMessage);
         }
-    }
-
-    public static String encodeUrl(String unescaped) {
-        byte[] rawData = URLCodec.encodeUrl(URI.allowed_query, getBytesUtf8(unescaped));
-        return newStringUsAscii(rawData);
     }
 
     /**

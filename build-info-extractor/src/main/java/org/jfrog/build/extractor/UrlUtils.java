@@ -1,14 +1,17 @@
-package org.jfrog.build.extractor.clientConfiguration.util;
+package org.jfrog.build.extractor;
 
+import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.util.URI;
 
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
+import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.jfrog.build.extractor.clientConfiguration.client.JFrogService.encodeUrl;
 
 /**
  * Created by Bar Belity on 19/07/2020.
@@ -49,7 +52,6 @@ public class UrlUtils {
                 }
 
                 if (paramEntryIterator.hasNext()) {
-
                     urlBuilder.append(encodedPipe);
                 }
             }
@@ -75,5 +77,30 @@ public class UrlUtils {
      */
     public static String getProjectQueryParam(String project) {
         return getProjectQueryParam(project, BUILD_PROJECT_PARAM);
+    }
+
+    /**
+     * Encode the URL path part. This method does encode slashes.
+     * Use it for encoding a single path part in a URL - for example, encoding build name.
+     *
+     * @param pathPart - The URL path part to encode
+     * @return the encoded URL path part.
+     */
+    public static String encodeUrlPathPart(String pathPart) {
+        byte[] rawData = URLCodec.encodeUrl(null, getBytesUtf8(pathPart));
+        // URLCodec.encodeUrl replaces spaces with '+', but we want to escape them to %20
+        return newStringUsAscii(rawData).replaceAll("\\+", "%20");
+    }
+
+    /**
+     * Encode URL or the query part of a URL. This method does not encode slashes.
+     * Use it for encoding multiple URL parts (a/b/c) or query params (?a=b).
+     *
+     * @param url - The URL to encode
+     * @return the encoded URL.
+     */
+    public static String encodeUrl(String url) {
+        byte[] rawData = URLCodec.encodeUrl(URI.allowed_query, getBytesUtf8(url));
+        return newStringUsAscii(rawData);
     }
 }

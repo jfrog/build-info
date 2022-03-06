@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
+import org.jfrog.build.extractor.UrlUtils;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;

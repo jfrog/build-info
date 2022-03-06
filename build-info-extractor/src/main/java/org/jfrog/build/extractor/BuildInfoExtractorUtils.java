@@ -27,7 +27,8 @@ import java.util.Properties;
 import java.util.function.Predicate;
 
 import static org.apache.commons.lang3.StringUtils.*;
-import static org.jfrog.build.extractor.clientConfiguration.client.JFrogService.encodeUrl;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 /**
  * @author Noam Y. Tenne
@@ -377,8 +378,8 @@ public abstract class BuildInfoExtractorUtils {
      */
     private static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
         if (encode) {
-            buildName = encodeUrl(buildName);
-            buildNumber = encodeUrl(buildNumber);
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
         }
         String timestampUrlPart = isBlank(timeStamp) ? "" : "/" + timeStamp;
         return String.format("%s/%s/%s%s/%s", platformUrl + BUILD_BROWSE_PLATFORM_URL, buildName, buildNumber,
@@ -406,8 +407,8 @@ public abstract class BuildInfoExtractorUtils {
      */
     private static String createBuildInfoUrl(String artifactoryUrl, String buildName, String buildNumber, boolean encode) {
         if (encode) {
-            buildName = encodeUrl(buildName);
-            buildNumber = encodeUrl(buildNumber);
+            buildName = encodeUrlPathPart(buildName);
+            buildNumber = encodeUrlPathPart(buildNumber);
         }
         return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
     }

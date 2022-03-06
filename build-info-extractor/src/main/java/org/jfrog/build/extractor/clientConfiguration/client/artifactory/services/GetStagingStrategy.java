@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.appendParamsToUrl;
+import static org.jfrog.build.extractor.UrlUtils.*;
 
 public class GetStagingStrategy extends JFrogService<Map> {
     private static final String BUILD_STAGING_STRATEGY_ENDPOINT = "api/plugins/build/staging/";
@@ -30,7 +30,7 @@ public class GetStagingStrategy extends JFrogService<Map> {
     @Override
     public HttpRequestBase createRequest() throws IOException {
         StringBuilder urlBuilder = new StringBuilder(BUILD_STAGING_STRATEGY_ENDPOINT)
-                .append(encodeUrl(strategyName)).append("?buildName=")
+                .append(encodeUrlPathPart(strategyName)).append("?buildName=")
                 .append(encodeUrl(buildName)).append("&");
         appendParamsToUrl(requestParams, urlBuilder);
         return new HttpGet(urlBuilder.toString());

@@ -11,7 +11,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.response.GetAllBuild
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.UrlUtils.getProjectQueryParam;
 
 public class GetAllBuildNumbers extends JFrogService<GetAllBuildNumbersResponse> {
 
@@ -26,7 +27,7 @@ public class GetAllBuildNumbers extends JFrogService<GetAllBuildNumbersResponse>
 
     @Override
     public HttpRequestBase createRequest() {
-        String apiEndPoint = String.format("%s/%s%s", "api/build", encodeUrl(buildName), getProjectQueryParam(project));
+        String apiEndPoint = String.format("%s/%s%s", "api/build", encodeUrlPathPart(buildName), getProjectQueryParam(project));
         return new HttpGet(apiEndPoint);
     }
 

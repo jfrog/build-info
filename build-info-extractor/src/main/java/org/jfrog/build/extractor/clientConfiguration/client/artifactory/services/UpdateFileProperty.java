@@ -8,6 +8,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
+
 public class UpdateFileProperty extends VoidJFrogService {
     private static final String UPDATE_FILE_PROPERTY_ENDPOINT = "api/storage/";
     private final String itemPath;

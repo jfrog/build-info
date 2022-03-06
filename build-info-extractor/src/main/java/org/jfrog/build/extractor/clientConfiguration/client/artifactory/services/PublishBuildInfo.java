@@ -14,8 +14,8 @@ import java.io.IOException;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createBuildInfoUrl;
+import static org.jfrog.build.extractor.UrlUtils.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
 
 public class PublishBuildInfo extends VoidJFrogService {
     private static final String BUILD_REST_URL = "/api/build";

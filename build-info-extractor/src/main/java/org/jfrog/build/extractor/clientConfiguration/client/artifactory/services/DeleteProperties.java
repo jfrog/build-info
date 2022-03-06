@@ -8,6 +8,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
+
 public class DeleteProperties extends VoidJFrogService {
     public static final String DELETE_PROPERTIES_ENDPOINT = "api/storage/";
 
@@ -22,7 +24,7 @@ public class DeleteProperties extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        String requestUrl = DELETE_PROPERTIES_ENDPOINT + encodeUrl(relativePath + "?properties=" + properties);
+        String requestUrl = DELETE_PROPERTIES_ENDPOINT + encodeUrl(relativePath) + "?properties=" + encodeUrl(properties);
         return new HttpDelete(requestUrl);
     }
 

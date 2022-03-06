@@ -9,7 +9,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.appendParamsToUrl;
+import static org.jfrog.build.extractor.UrlUtils.appendParamsToUrl;
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
 
 public class PromotionUserPlugin extends VoidJFrogService {
@@ -30,8 +31,10 @@ public class PromotionUserPlugin extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        StringBuilder urlBuilder = new StringBuilder(PROMOTION_USER_PLUGIN_ENDPOINT).append(promotionName).append("/").append(encodeUrl(buildName)).append("/")
-                .append(encodeUrl(buildNumber)).append("?");
+        StringBuilder urlBuilder = new StringBuilder(PROMOTION_USER_PLUGIN_ENDPOINT)
+                .append(promotionName).append("/")
+                .append(encodeUrlPathPart(buildName)).append("/")
+                .append(encodeUrlPathPart(buildNumber)).append("?");
         appendParamsToUrl(requestParams, urlBuilder);
         return new HttpPost(urlBuilder.toString());
     }

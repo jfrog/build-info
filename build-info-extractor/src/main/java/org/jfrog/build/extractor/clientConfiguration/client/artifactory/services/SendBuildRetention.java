@@ -9,8 +9,9 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.UrlUtils.getProjectQueryParam;
 import static org.jfrog.build.extractor.clientConfiguration.util.JsonUtils.toJsonString;
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.getProjectQueryParam;
 
 public class SendBuildRetention extends VoidJFrogService {
     private static final String RETENTION_REST_URL = "api/build/retention/";
@@ -22,7 +23,7 @@ public class SendBuildRetention extends VoidJFrogService {
     public SendBuildRetention(BuildRetention buildRetention, String buildName, String project, boolean async, Log logger) {
         super(logger);
         this.buildRetention = buildRetention.ToBuildRetention();
-        this.buildName = encodeUrl(buildName);
+        this.buildName = encodeUrlPathPart(buildName);
         this.project = project;
         this.async = async;
     }

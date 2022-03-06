@@ -9,7 +9,7 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.IOException;
 import java.util.Map;
 
-import static org.jfrog.build.extractor.clientConfiguration.util.UrlUtils.appendParamsToUrl;
+import static org.jfrog.build.extractor.UrlUtils.appendParamsToUrl;
 
 public class ExecuteUserPlugin extends VoidJFrogService {
     public static final String EXECUTE_USER_PLUGIN_ENDPOINT = "api/storage/";

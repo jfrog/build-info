@@ -10,6 +10,8 @@ import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+
 public class DeleteRepositoryContent extends VoidJFrogService {
     private final String repository;
 
@@ -20,7 +22,7 @@ public class DeleteRepositoryContent extends VoidJFrogService {
 
     @Override
     public HttpRequestBase createRequest() throws IOException {
-        return new HttpDelete(encodeUrl(repository));
+        return new HttpDelete(encodeUrlPathPart(repository));
     }
 
     @Override

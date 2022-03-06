@@ -79,9 +79,9 @@ public class GoDriver implements Serializable {
      * Run go mod graph.
      * The output format is:
      * * For direct dependencies:
-     * <module-name> <dependency's-module-name>@v<dependency-module-version>
+     * [module-name] [dependency's-module-name]@v[dependency-module-version]
      * * For transitive dependencies:
-     * <dependency's-module-name>@v<dependency-module-version> <dependency's-module-name>@v<dependency-module-version>
+     * [dependency's-module-name]@v[dependency-module-version] [dependency's-module-name]@v[dependency-module-version]
      */
     public CommandResults modGraph(boolean verbose) throws IOException {
         return runCmd(GO_MOD_GRAPH_CMD, verbose);

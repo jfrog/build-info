@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
 import com.google.common.collect.ArrayListMultimap;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.extractor.UrlUtils;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 
 import java.io.UnsupportedEncodingException;
@@ -11,9 +11,6 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import static org.apache.commons.codec.binary.StringUtils.getBytesUtf8;
-import static org.apache.commons.codec.binary.StringUtils.newStringUsAscii;
 
 /**
  * @author Tomer C.
@@ -57,12 +54,9 @@ public abstract class DeploymentUrlUtils {
             }
         }
 
-        URLCodec codec = new URLCodec();
         String[] split = StringUtils.split(path, "/");
         for (int i = 0; i < split.length; i++) {
-            split[i] = newStringUsAscii(codec.encode(getBytesUtf8(split[i])));
-            // codec.encode replaces spaces with '+', but we want to escape them to %20.
-            split[i] = split[i].replaceAll("\\+", "%20");
+            split[i] = UrlUtils.encodeUrlPathPart(split[i]);
         }
         String escaped = StringUtils.join(split, "/");
         if (StringUtils.isNotBlank(matrixParams)) {
@@ -80,7 +74,7 @@ public abstract class DeploymentUrlUtils {
                 for (String multiPropertyValue : matrixParams.get(propertyKey)) {
                     // Due to known bug in Artifactory, in order to support multi values properties
                     // we add a statement to each value separately.
-                    for (String propertyValue:multiPropertyValue.split(",")) {
+                    for (String propertyValue : multiPropertyValue.split(",")) {
                         propertyValue = propertyValue.trim();
                         matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey)
                                 .append("=").append(encodeProperties ? encode(propertyValue) : propertyValue);
