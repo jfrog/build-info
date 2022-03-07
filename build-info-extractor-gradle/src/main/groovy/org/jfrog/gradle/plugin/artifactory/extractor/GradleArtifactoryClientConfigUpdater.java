@@ -19,6 +19,7 @@ import java.util.Set;
 
 import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.setMissingPublisherAttributes;
 
 /**
  * Populator util for filling up an ArtifactoryClientConfiguration based on a gradle project + environment properties
@@ -66,49 +67,9 @@ public class GradleArtifactoryClientConfigUpdater {
         config.fillFromProperties(mergedProps, excludeIfExist);
 
         // After props are set, apply missing project props (not set by CI-plugin generated props)
-        setMissingBuildAttributes(config, project);
+        setMissingPublisherAttributes(config, project.getRootProject().getName(), "Gradle", project.getGradle().getGradleVersion());
     }
 
-    public static void setMissingBuildAttributes(ArtifactoryClientConfiguration config, Project project) {
-        // Build name
-        String buildName = config.info.getBuildName();
-        if (StringUtils.isBlank(buildName)) {
-            buildName = project.getRootProject().getName();
-            config.info.setBuildName(buildName);
-        }
-        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
-
-        // Build number
-        String buildNumber = config.info.getBuildNumber();
-        if (StringUtils.isBlank(buildNumber)) {
-            buildNumber = new Date().getTime() + "";
-            config.info.setBuildNumber(buildNumber);
-        }
-        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
-
-        // Build start (was set by the plugin - no need to make up a fallback val)
-        String buildTimestamp = config.info.getBuildTimestamp();
-        if (StringUtils.isBlank(buildTimestamp)) {
-            String buildStartedIso = config.info.getBuildStarted();
-            Date buildStartDate;
-            try {
-                buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
-            } catch (ParseException e) {
-                throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
-            }
-            buildTimestamp = String.valueOf(buildStartDate.getTime());
-            config.info.setBuildTimestamp(buildTimestamp);
-        }
-        config.publisher.setMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
-
-        // Build agent
-        String buildAgentName = config.info.getBuildAgentName();
-        String buildAgentVersion = config.info.getBuildAgentVersion();
-        if (StringUtils.isBlank(buildAgentName) && StringUtils.isBlank(buildAgentVersion)) {
-            config.info.setBuildAgentName("Gradle");
-            config.info.setBuildAgentVersion(project.getGradle().getGradleVersion());
-        }
-    }
 
     private static void fillProperties(Project project, Properties props) {
         Project parent = project.getParent();
