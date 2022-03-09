@@ -141,7 +141,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             logger.info("Initializing Artifactory Build-Info Recording");
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = new ConcurrentHashMap<>();
-            skipDefaultDeploy(event.getSession());
+            skipDeploy(event);
 
             if (wrappedListener != null) {
                 wrappedListener.sessionStarted(event);
@@ -731,7 +731,16 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     /**
      * Skip the default maven deploy behaviour.
      */
-    private void skipDefaultDeploy(MavenSession session) {
-        session.getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString());
+    private void skipDeploy(ExecutionEvent event) {
+        List<String> goals = event.getSession().getRequest().getGoals();
+        // Override the default Maven deploy behavior with Artifactory.
+        if (goals.contains("deploy")) {
+            event.getSession().getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString());
+            return;
+        }
+        // Skip the artifact deployment behavior if the goals do not contain install phases.
+        if (!goals.contains("install")) {
+            this.conf.publisher.setBooleanValue(ADD_DEPLOYABLE_ARTIFACTS, false);
+        }
     }
 }
