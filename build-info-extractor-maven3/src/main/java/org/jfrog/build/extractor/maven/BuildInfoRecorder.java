@@ -51,6 +51,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
 
 /**
  * Will be called for every project/module in the Maven project.
@@ -469,6 +470,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addArtifactsToCurrentModule(MavenProject project, ModuleBuilder module) {
+        addDefaultPublisherAttributes(conf, project.getName(), "Maven", project.getVersion());
         Set<Artifact> moduleArtifacts = currentModuleArtifacts.get();
         if (moduleArtifacts == null) {
             logger.warn("Skipping Artifactory Build-Info module artifact addition: Null current module artifact list.");

@@ -32,6 +32,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
+
 /**
  * @author Ruben Perez
  */
@@ -75,8 +77,8 @@ public class DeployTask extends DefaultTask {
         Map<String, String> propsRoot = accRoot.publisher.getProps();
 
         // Reset the default properties, they may have changed
-        GradleArtifactoryClientConfigUpdater.setMissingBuildAttributes(
-                accRoot, getProject().getRootProject());
+        addDefaultPublisherAttributes(
+                accRoot, getProject().getRootProject().getName(), "Gradle", getProject().getGradle().getGradleVersion());
 
         Map<String, Set<DeployDetails>> allDeployDetails = new ConcurrentHashMap<>();
         List<ArtifactoryTask> orderedTasks = findArtifactoryPublishTasks(getProject().getGradle().getTaskGraph());

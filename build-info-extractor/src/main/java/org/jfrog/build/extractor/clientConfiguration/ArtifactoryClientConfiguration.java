@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -15,6 +16,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -1279,6 +1283,54 @@ public class ArtifactoryClientConfiguration {
 
         public void setIncremental(Boolean incremental) {
             setBooleanValue(INCREMENTAL, incremental);
+        }
+    }
+
+    /**
+     * Add the the default publisher attributes to ArtifactoryClientConfiguration.
+     * @param config - Global configuration of the current build.
+     * @param defaultProjectName - Default project.
+     * @param defaultAgentName - Default agent name.
+     * @param defaultAgentVersion - Default agent version.
+     */
+    public static void addDefaultPublisherAttributes(ArtifactoryClientConfiguration config, String defaultProjectName, String defaultAgentName, String defaultAgentVersion) {
+        // Build name
+        String buildName = config.info.getBuildName();
+        if (StringUtils.isBlank(buildName)) {
+            buildName = defaultProjectName;
+            config.info.setBuildName(buildName);
+        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
+
+        // Build number
+        String buildNumber = config.info.getBuildNumber();
+        if (StringUtils.isBlank(buildNumber)) {
+            buildNumber = new Date().getTime() + "";
+            config.info.setBuildNumber(buildNumber);
+        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
+
+        // Build start (was set by the plugin - no need to make up a fallback val)
+        String buildTimestamp = config.info.getBuildTimestamp();
+        if (StringUtils.isBlank(buildTimestamp)) {
+            String buildStartedIso = config.info.getBuildStarted();
+            Date buildStartDate;
+            try {
+                buildStartDate = new SimpleDateFormat(BuildInfo.STARTED_FORMAT).parse(buildStartedIso);
+            } catch (ParseException e) {
+                throw new RuntimeException("Build start date format error: " + buildStartedIso, e);
+            }
+            buildTimestamp = String.valueOf(buildStartDate.getTime());
+            config.info.setBuildTimestamp(buildTimestamp);
+        }
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
+
+        // Build agent
+        String buildAgentName = config.info.getBuildAgentName();
+        String buildAgentVersion = config.info.getBuildAgentVersion();
+        if (StringUtils.isBlank(buildAgentName) && StringUtils.isBlank(buildAgentVersion)) {
+            config.info.setBuildAgentName(defaultAgentName);
+            config.info.setBuildAgentVersion(defaultAgentVersion);
         }
     }
 }
