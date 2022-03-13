@@ -1286,10 +1286,14 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    /*
-     Fill the publisher default props. it is used to add props to published artifacts such as build-name and build-number.
+    /**
+     * Add the the default publisher attributes to ArtifactoryClientConfiguration.
+     * @param config - Global configuration of the current build.
+     * @param defaultProjectName - Default project.
+     * @param defaultAgentName - Default agent name.
+     * @param defaultAgentVersion - Default agent version.
      */
-    public static void setMissingPublisherAttributes(ArtifactoryClientConfiguration config, String defaultProjectName, String defaultAgentName, String defaultAgentVersion) {
+    public static void addDefaultPublisherAttributes(ArtifactoryClientConfiguration config, String defaultProjectName, String defaultAgentName, String defaultAgentVersion) {
         // Build name
         String buildName = config.info.getBuildName();
         if (StringUtils.isBlank(buildName)) {

@@ -1,25 +1,20 @@
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import org.apache.commons.lang3.StringUtils;
 import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.BuildInfoProperties;
-import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import static org.jfrog.build.api.BuildInfoProperties.BUILD_INFO_PROP_PREFIX;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
-import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.setMissingPublisherAttributes;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
 
 /**
  * Populator util for filling up an ArtifactoryClientConfiguration based on a gradle project + environment properties
@@ -67,7 +62,7 @@ public class GradleArtifactoryClientConfigUpdater {
         config.fillFromProperties(mergedProps, excludeIfExist);
 
         // After props are set, apply missing project props (not set by CI-plugin generated props)
-        setMissingPublisherAttributes(config, project.getRootProject().getName(), "Gradle", project.getGradle().getGradleVersion());
+        addDefaultPublisherAttributes(config, project.getRootProject().getName(), "Gradle", project.getGradle().getGradleVersion());
     }
 
 
