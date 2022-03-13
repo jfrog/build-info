@@ -90,7 +90,7 @@ public class GoDependencyTree {
      */
     private static void populateDependencyTree(DependencyTree currNode, String currNameVersionString,
                                                Map<String, List<String>> allDependencies, Log logger) {
-        if (hasLoop(currNode, logger)) {
+        if (currNode.hasLoop(logger)) {
             return;
         }
         List<String> currDependencies = allDependencies.get(currNameVersionString);
@@ -103,21 +103,5 @@ public class GoDependencyTree {
             currNode.add(DependencyTree);
             populateDependencyTree(DependencyTree, dependency, allDependencies, logger);
         }
-    }
-
-    /**
-     * Return true if the node contains a loop.
-     *
-     * @param node - The dependency tree node
-     * @return true if the node contains a loop
-     */
-    private static boolean hasLoop(DependencyTree node, Log logger) {
-        for (DependencyTree parent = (DependencyTree) node.getParent(); parent != null; parent = (DependencyTree) parent.getParent()) {
-            if (Objects.equals(node.getUserObject(), parent.getUserObject())) {
-                logger.debug("Loop detected in " + node.getUserObject());
-                return true;
-            }
-        }
-        return false;
     }
 }

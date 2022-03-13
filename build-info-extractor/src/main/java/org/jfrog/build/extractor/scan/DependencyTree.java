@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.scan;
 import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.util.Log;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.*;
@@ -229,5 +230,21 @@ public class DependencyTree extends DefaultMutableTreeNode {
                 .filter(Objects::nonNull)
                 .findAny()
                 .orElse(null);
+    }
+
+    /**
+     * Return true if the node contains a loop.
+     *
+     * @param logger - The logger
+     * @return true if the node contains a loop
+     */
+    public boolean hasLoop(Log logger) {
+        for (DependencyTree parent = (DependencyTree) getParent(); parent != null; parent = (DependencyTree) parent.getParent()) {
+            if (Objects.equals(getUserObject(), parent.getUserObject())) {
+                logger.debug("Loop detected in " + getUserObject());
+                return true;
+            }
+        }
+        return false;
     }
 }
