@@ -130,6 +130,7 @@ public class DeployTask extends DefaultTask {
                     accRoot.publisher.getPassword(),
                     new GradleClientLogger(log))) {
 
+                configureProxy(accRoot, artifactoryManager);
                 if (isPublishBuildInfo(accRoot)) {
                     // If export property set always save the file before sending it to artifactory
                     exportBuildInfo(buildInfo, getExportFile(accRoot));
