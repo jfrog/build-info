@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.scan;
 
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.compress.utils.Sets;
+import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -202,6 +203,24 @@ public class DependencyTreeTest {
         assertNotNull(root.find("4"));
         assertNotNull(root.find("5"));
         assertNull(root.find("non-existent"));
+    }
+
+    @Test
+    public void testHasLoop() {
+        // Make sure the test dependency doesn't have loops
+        assertFalse(root.hasLoop(new NullLog()));
+
+        // Build a dependency tree with a loop: 1 -> 2 -> 3 -> 1
+        DependencyTree one = new DependencyTree("1");
+        DependencyTree two = new DependencyTree("2");
+        DependencyTree three = new DependencyTree("3");
+        DependencyTree anotherOne = new DependencyTree("1");
+        one.add(two);
+        two.add(three);
+        three.add(anotherOne);
+
+        // Make sure the dependency tree has a loop
+        assertTrue(anotherOne.hasLoop(new NullLog()));
     }
 
     /**
