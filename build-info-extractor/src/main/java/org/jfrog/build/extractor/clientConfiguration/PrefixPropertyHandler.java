@@ -79,6 +79,14 @@ public class PrefixPropertyHandler {
         }
     }
 
+    public void setLegacyBooleanValue(String key, Boolean value) {
+        if (value == null) {
+            props.remove(getDeprecatedPrefix() + key);
+        } else {
+            props.put(getDeprecatedPrefix() + key, value.toString());
+        }
+    }
+
     public Integer getIntegerValue(String key) {
         return getIntegerValue(key, null);
     }

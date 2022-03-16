@@ -52,6 +52,8 @@ import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
 import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_ARTIFACTS;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_BUILD_INFO;
 
 /**
  * Will be called for every project/module in the Maven project.
@@ -739,10 +741,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             event.getSession().getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString());
             return;
         }
-        // Skip the artifact deployment behavior if the goals do not contain install phases.
+        // Skip the artifact deployment behavior if the goals do not contain install or deploy phases.
         if (!goals.contains("install")) {
             conf.publisher.setPublishArtifacts(false);
             conf.publisher.setPublishBuildInfo(false);
+
+            conf.publisher.setLegacyBooleanValue(PUBLISH_ARTIFACTS, false);
+            conf.publisher.setLegacyBooleanValue(PUBLISH_BUILD_INFO, false);
         }
     }
 }
