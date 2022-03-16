@@ -1,5 +1,13 @@
 # Release Notes
 
+## build-info-extractor 2.36.0 / gradle-artifactory-plugin 4.28.0 (March 16, 2022)
+- Go - Filter out unused dependencies from build info ([622](https://github.com/jfrog/build-info/pull/622))
+- Gradle - Support proxy in build info publish ([629](https://github.com/jfrog/build-info/pull/629))
+- Maven - Deploy only in mvn install/deploy phases ([626](https://github.com/jfrog/build-info/pull/626)) & ([630](https://github.com/jfrog/build-info/pull/630))
+- Bug fix - Maven artifacts properties not set ([624](https://github.com/jfrog/build-info/pull/624))
+- Bug fix - in some cases, the build info URL is wrong ([618](https://github.com/jfrog/build-info/pull/618)) & ([619](https://github.com/jfrog/build-info/pull/619))
+- Bug fix - In some cases, the project parameter in Maven is ignored ([618](https://github.com/jfrog/build-info/pull/618))
+- Bug fix - in some cases, Docker module name in build-info is wrong ([617](https://github.com/jfrog/build-info/pull/617))
 
 ## build-info-extractor 2.35.0 / gradle-artifactory-plugin 4.27.1 (February 13, 2022)
 - Add project support for Maven ([612](https://github.com/jfrog/build-info/pull/612))
