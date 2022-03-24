@@ -37,7 +37,7 @@ public abstract class BuildInfoExtractorUtils {
 
     public static final String BUILD_BROWSE_PLATFORM_URL = "/ui/builds";
     public static final String BUILD_BROWSE_URL = "/webapp/builds";
-    private static final String BUILD_REPO_PARAM = "?buildRepo=";
+    private static final String BUILD_REPO_PARAM_PATTERN = "?buildRepo=%s-build-info&projectKey=%s";
     private static final int ARTIFACT_TYPE_LENGTH_LIMIT = 64;
 
     public static final Predicate<Object> BUILD_INFO_PREDICATE =
@@ -374,7 +374,7 @@ public abstract class BuildInfoExtractorUtils {
      * @param timeStamp   - Timestamp (started date time in milliseconds) of the published build
      * @param project     - Build project of the published build
      * @param encode      - True if should encode build name and build number
-     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published?buildRepo=ecosys-build-info
+     * @return Link to the published build in JFrog platform e.g. https://myartifactory.com/ui/builds/gradle-cli/1/1619429119501/published?buildRepo=ecosys-build-info&projectKey=ecosys
      */
     private static String createBuildInfoUrl(String platformUrl, String buildName, String buildNumber, String timeStamp, String project, boolean encode) {
         if (encode) {
@@ -393,7 +393,11 @@ public abstract class BuildInfoExtractorUtils {
      * @return build repo query param or empty string.
      */
     private static String getBuildRepoQueryParam(String project) {
-        return isEmpty(project) ? "" : BUILD_REPO_PARAM + encodeUrl(project) + "-build-info";
+        if (isEmpty(project)) {
+            return "";
+        }
+        String encodedProject = encodeUrl(project);
+        return String.format(BUILD_REPO_PARAM_PATTERN, encodedProject, encodedProject);
     }
 
     /**
