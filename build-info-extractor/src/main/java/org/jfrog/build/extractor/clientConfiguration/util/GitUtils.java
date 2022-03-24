@@ -188,7 +188,7 @@ public class GitUtils {
             String[] splitArr = revisionOrRef.ref.split("/");
             return splitArr[splitArr.length - 1];
         }
-        log.warn("Failed fetching git branch from git directory: " + dotGit);
+        log.debug("Failed fetching git branch from git directory: " + dotGit + ". Might be in detached head.");
         return "";
     }
 
