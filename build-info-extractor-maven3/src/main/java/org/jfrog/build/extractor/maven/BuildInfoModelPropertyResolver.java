@@ -19,6 +19,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jfrog.build.api.BuildInfoFields.*;
 
 
@@ -61,11 +62,11 @@ public class BuildInfoModelPropertyResolver {
         builder.buildAgent(buildAgent);
 
         String agentName = clientConf.info.getAgentName();
-        if (StringUtils.isBlank(agentName)) {
+        if (isBlank(agentName)) {
             agentName = buildAgent.getName();
         }
         String agentVersion = clientConf.info.getAgentVersion();
-        if (StringUtils.isBlank(agentVersion)) {
+        if (isBlank(agentVersion)) {
             agentVersion = buildAgent.getVersion();
         }
         builder.agent(new Agent(agentName, agentVersion));
@@ -111,18 +112,24 @@ public class BuildInfoModelPropertyResolver {
 
     private BuildInfoMavenBuilder resolveCoreProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         String buildName = clientConf.info.getBuildName();
-        if (StringUtils.isBlank(buildName)) {
+        if (isBlank(buildName)) {
             buildName = event.getSession().getTopLevelProject().getName();
         }
         String buildNumber = clientConf.info.getBuildNumber();
-        if (StringUtils.isBlank(buildNumber)) {
+        if (isBlank(buildNumber)) {
             buildNumber = Long.toString(System.currentTimeMillis());
         }
         String project = clientConf.info.getProject();
         Date buildStartedDate = event.getSession().getRequest().getStartTime();
-        String buildStarted = StringUtils.firstNonBlank(clientConf.info.getBuildStarted(), DATE_FORMAT.format(buildStartedDate));
+        String buildStarted = clientConf.info.getBuildStarted();
+        if (isBlank(buildStarted)) {
+            buildStarted = DATE_FORMAT.format(buildStartedDate);
+        }
         long buildMillis = getBuildStartedDate(buildStarted).getTime();
-        String buildTimestamp = StringUtils.firstNonBlank(clientConf.info.getBuildTimestamp(), Long.toString(buildStartedDate.getTime()));
+        String buildTimestamp = clientConf.info.getBuildTimestamp();
+        if (isBlank(buildTimestamp)) {
+            buildTimestamp = Long.toString(buildStartedDate.getTime());
+        }
 
         logResolvedProperty(BUILD_NAME, buildName);
         logResolvedProperty(BUILD_NUMBER, buildNumber);
@@ -163,7 +170,7 @@ public class BuildInfoModelPropertyResolver {
         }
 
         String version = mavenVersionProperties.getProperty("version");
-        if (StringUtils.isBlank(version)) {
+        if (isBlank(version)) {
             throw new RuntimeException("Could not extract Maven version: no version property found in the resource " +
                     "'org/apache/maven/messages/build.properties'");
         }
