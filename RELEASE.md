@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.36.1 / gradle-artifactory-plugin 4.28.1 (March 27, 2022)
+- Remove unnecessary warning log message about missing branch ([632](https://github.com/jfrog/build-info/pull/632))
+- Remove the usage of StringUtils.firstNonBlank ([633](https://github.com/jfrog/build-info/pull/633))
+
 ## build-info-extractor 2.36.0 / gradle-artifactory-plugin 4.28.0 (March 16, 2022)
 - Go - Filter out unused dependencies from build info ([622](https://github.com/jfrog/build-info/pull/622))
 - Gradle - Support proxy in build info publish ([629](https://github.com/jfrog/build-info/pull/629))
