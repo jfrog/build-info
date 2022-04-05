@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 public class GetUserPluginInfo extends JFrogService<Map<String, List<Map>>> {
-    public static final String USER_PLUGIN_ENDPOINT = "api/storage/";
+    public static final String USER_PLUGIN_ENDPOINT = "api/plugins/";
 
     @SuppressWarnings("unchecked")
     public GetUserPluginInfo(Log log) {

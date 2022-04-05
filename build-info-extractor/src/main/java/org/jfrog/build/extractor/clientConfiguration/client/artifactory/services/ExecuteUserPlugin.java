@@ -12,7 +12,7 @@ import java.util.Map;
 import static org.jfrog.build.extractor.UrlUtils.appendParamsToUrl;
 
 public class ExecuteUserPlugin extends VoidJFrogService {
-    public static final String EXECUTE_USER_PLUGIN_ENDPOINT = "api/storage/";
+    public static final String EXECUTE_USER_PLUGIN_ENDPOINT = "api/plugins/execute/";
 
     private final String executionName;
     private final Map<String, String> requestParams;
