@@ -19,9 +19,9 @@ import java.util.Map;
 public class GoDriver implements Serializable {
     private static final List<String> GO_LIST_USED_MODULES_CMD =
             Arrays.asList("list", "-f", "\"{{with .Module}}{{.Path}} {{.Version}}{{end}}\"", "all");
+    private static final List<String> GO_MOD_TIDY_CMD = Arrays.asList("mod", "tidy");
     private static final String GO_MOD_GRAPH_CMD = "mod graph";
     private static final String GO_LIST_MODULE_CMD = "list -m";
-    private static final String GO_MOD_TIDY_CMD = "mod tidy";
     private static final String GO_VERSION_CMD = "version";
 
     private static final long serialVersionUID = 1L;
@@ -82,21 +82,46 @@ public class GoDriver implements Serializable {
      * [module-name] [dependency's-module-name]@v[dependency-module-version]
      * * For transitive dependencies:
      * [dependency's-module-name]@v[dependency-module-version] [dependency's-module-name]@v[dependency-module-version]
+     *
+     * @param verbose - True if should print the results to the log
+     * @throws IOException - in case of any I/O error.
      */
     public CommandResults modGraph(boolean verbose) throws IOException {
         return runCmd(GO_MOD_GRAPH_CMD, verbose);
     }
 
-    public void modTidy(boolean verbose) throws IOException {
-        runCmd(GO_MOD_TIDY_CMD, verbose);
+    /**
+     * If ignoreErrors=false, run: go mod tidy
+     * If ignoreErrors=true, run: go mod tidy -e
+     *
+     * @param verbose      - True if should print the results to the log
+     * @param ignoreErrors - True if errors should be ignored
+     * @throws IOException - in case of any I/O error.
+     */
+    public void modTidy(boolean verbose, boolean ignoreErrors) throws IOException {
+        List<String> argsList = new ArrayList<>(GO_MOD_TIDY_CMD);
+        if (ignoreErrors) {
+            argsList.add("-e");
+        }
+        runCmd(argsList, verbose);
     }
 
-    public CommandResults getUsedModules(boolean prompt, boolean ignoreErrors) throws IOException {
+    /**
+     * If ignoreErrors=false, run:
+     * go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all
+     * If ignoreErrors=false, run:
+     * go list -e -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all
+     *
+     * @param verbose      - True if should print the results to the log
+     * @param ignoreErrors - True if errors should be ignored
+     * @throws IOException - in case of any I/O error.
+     */
+    public CommandResults getUsedModules(boolean verbose, boolean ignoreErrors) throws IOException {
         List<String> argsList = new ArrayList<>(GO_LIST_USED_MODULES_CMD);
         if (ignoreErrors) {
             argsList.add(1, "-e");
         }
-        return runCmd(argsList, prompt);
+        return runCmd(argsList, verbose);
     }
 
     public String getModuleName() throws IOException {
