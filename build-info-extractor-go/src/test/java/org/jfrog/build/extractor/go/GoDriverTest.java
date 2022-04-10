@@ -31,6 +31,11 @@ public class GoDriverTest {
             "golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c",
             "rsc.io/quote v1.5.2");
 
+    /**
+     * Test "go mod tidy" and "go list".
+     *
+     * @throws IOException in case of any I/O exception.
+     */
     @Test
     public void testTidyListUsedModules() throws IOException {
         File projectDir = Files.createTempDirectory("").toFile();
@@ -57,6 +62,11 @@ public class GoDriverTest {
         }
     }
 
+    /**
+     * Test "go mod tidy" and "go list" on a project with errors.
+     *
+     * @throws IOException in case of any I/O exception.
+     */
     @Test
     public void testTidyListUsedModulesErroneous() throws IOException {
         File projectDir = Files.createTempDirectory("").toFile();
