@@ -5,7 +5,7 @@ buildscript {
             url "https://plugins.gradle.org/m2/"
         }
         dependencies {
-            classpath "com.gradle.publish:plugin-publish-plugin:+"
+            classpath "com.gradle.publish:plugin-publish-plugin:0.+"
             classpath "io.github.gradle-nexus:publish-plugin:+"
             classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
         }
