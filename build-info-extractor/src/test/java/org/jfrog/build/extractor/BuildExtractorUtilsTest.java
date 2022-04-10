@@ -226,24 +226,24 @@ public class BuildExtractorUtilsTest {
         return new Object[][]{
                 // Platform URL - encoding
                 {"http://127.0.0.1", "na me", "1 2", "123456", "", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published"},
-                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info&projectKey=proj"},
                 {"http://127.0.0.1", "na me", "1 2", "", "", true, true, "http://127.0.0.1/ui/builds/na%20me/1%202/published"},
 
                 // Platform URL - no encoding
                 {"http://127.0.0.1", "na me", "1 2", "123456", "", false, true, "http://127.0.0.1/ui/builds/na me/1 2/123456/published"},
-                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", false, true, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1", "na me", "1 2", "123456", "proj", false, true, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info&projectKey=proj"},
                 {"http://127.0.0.1", "na me", "1 2", "", "", false, true, "http://127.0.0.1/ui/builds/na me/1 2/published"},
 
                 // Artifactory URL - encoding
                 {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "", true, false, "http://127.0.0.1/artifactory/webapp/builds/na%20me/1%202"},
-                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", true, false, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", true, false, "http://127.0.0.1/ui/builds/na%20me/1%202/123456/published?buildRepo=proj-build-info&projectKey=proj"},
                 {"http://127.0.0.1/artifactory", "na me", "1 2", "", "", true, false, "http://127.0.0.1/artifactory/webapp/builds/na%20me/1%202"},
                 {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "", true, false, "http://127.0.0.1/non-artifactory/webapp/builds/na%20me/1%202"},
                 {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "proj", true, false, ""},
 
                 // Artifactory URL - no encoding
                 {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "", false, false, "http://127.0.0.1/artifactory/webapp/builds/na me/1 2"},
-                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", false, false, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info"},
+                {"http://127.0.0.1/artifactory", "na me", "1 2", "123456", "proj", false, false, "http://127.0.0.1/ui/builds/na me/1 2/123456/published?buildRepo=proj-build-info&projectKey=proj"},
                 {"http://127.0.0.1/artifactory", "na me", "1 2", "", "", false, false, "http://127.0.0.1/artifactory/webapp/builds/na me/1 2"},
                 {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "", false, false, "http://127.0.0.1/non-artifactory/webapp/builds/na me/1 2"},
                 {"http://127.0.0.1/non-artifactory", "na me", "1 2", "123456", "proj", false, false, ""},
