@@ -256,9 +256,9 @@ public class DockerUtils {
     }
 
     /**
-     * @param imagePath - path to an image in artifactory without proxy e.g. image/image-tag
-     * @param repo      - target repo to search
-     * @param cmd       - docker push cmd/ docker pull cmd
+     * @param imagePath - path to an image in artifactory without proxy e.g. image/image-tag.
+     * @param repo      - The repository to use for searching.
+     * @param cmd       - docker push cmd/ docker pull cmd.
      * @return All possible paths in Artifactory in order to find image manifest using proxy.
      */
     public static List<String> getArtManifestPath(String imagePath, String repo, CommandType cmd) {
@@ -277,7 +277,7 @@ public class DockerUtils {
         paths.add(repo + "/library/" + imagePath);
 
         // Assume proxy-less - this time with 'library' as part of the path.
-        int secondSlash = StringUtils.ordinalIndexOf(imagePath, "/", 2);
+        int secondSlash = StringUtils.ordinalIndexOf(imagePath, "/", 1);
         paths.add(repo + "/library/" + imagePath.substring(secondSlash + 1));
 
         return paths;
