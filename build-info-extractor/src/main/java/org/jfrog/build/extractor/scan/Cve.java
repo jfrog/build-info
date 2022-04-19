@@ -11,6 +11,11 @@ public class Cve {
     private String cvssV1;
     private String cvssV2;
 
+    @SuppressWarnings("unused")
+    public Cve() {
+    }
+
+    @SuppressWarnings("unused")
     public Cve(String cveId, String cvssV1, String cvssV2) {
         this.cveId = cveId;
         this.cvssV1 = cvssV1;
