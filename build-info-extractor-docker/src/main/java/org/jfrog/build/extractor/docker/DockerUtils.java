@@ -256,17 +256,19 @@ public class DockerUtils {
     }
 
     /**
-     * @param imagePath - path to an image in artifactory without proxy e.g. image/image-tag.
+     * @param imagePath - path to an image in artifactory without proxy e.g. hello-world/latest.
      * @param repo      - The repository to use for searching.
      * @param cmd       - docker push cmd/ docker pull cmd.
      * @return All possible paths in Artifactory in order to find image manifest using proxy.
      */
     public static List<String> getArtManifestPath(String imagePath, String repo, CommandType cmd) {
         ArrayList<String> paths = new ArrayList<>();
-        // Assuming reverse proxy e.g. ecosysjfrog-docker-local.jfrog.io.
+        // If the docker tag is reverse proxy, e.g. ecosysjfrog-docker-local.jfrog.io/hello-world:latest
+        // then the correct path is: repo = docker-local, imagePath = hello-world:latest
         paths.add(repo + "/" + imagePath);
 
-        // Assuming proxy-less e.g. orgab.jfrog.team/docker-local.
+        // If the docker tag is proxy-less e.g. orgab.jfrog.team/docker-local/hello-world:latest
+        // hen the correct path is: imagePath = docker-local/hello-world/latest
         paths.add(imagePath);
 
         int totalSlash = org.apache.commons.lang3.StringUtils.countMatches(imagePath, "/");
