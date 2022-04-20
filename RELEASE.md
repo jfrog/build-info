@@ -1,5 +1,12 @@
 # Release Notes
 
+## build-info-extractor 2.36.2 / gradle-artifactory-plugin 4.28.2 (April 20, 2022)
+- Bug fix - Incorrect plugins endpoints ([635](https://github.com/jfrog/build-info/pull/635))
+- Bug fix - When project provided, "projectKey" query parameter should be added to build info URL ([631](https://github.com/jfrog/build-info/pull/631))
+- Bug fix - Go driver should allow ignoring errors "go mod tidy" as it does in "go mod graph" ([634](https://github.com/jfrog/build-info/pull/634))
+- Bug fix - Cve should have an empty constructor to allow serialization ([644](https://github.com/jfrog/build-info/pull/644))
+- Bug fix - Incorrect Docker manifest path when collecting build-info ([643](https://github.com/jfrog/build-info/pull/643))
+
 ## build-info-extractor 2.36.1 / gradle-artifactory-plugin 4.28.1 (March 27, 2022)
 - Remove unnecessary warning log message about missing branch ([632](https://github.com/jfrog/build-info/pull/632))
 - Remove the usage of StringUtils.firstNonBlank ([633](https://github.com/jfrog/build-info/pull/633))
