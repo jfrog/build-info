@@ -23,7 +23,7 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
 
 String testNgVersion = '6.10'
-String jacksonVersion = '2.12.6'
+String jacksonVersion = '2.12.6.1'
 
 // Root project version should not be used
 project.version = '2'
