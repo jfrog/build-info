@@ -19,3 +19,10 @@ jobs:
       - name: Run a multi-line script
         run: |
           echo test, and deploy your project.
+
+  build2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: argonsecurity/actions/generate-manifest@v1
