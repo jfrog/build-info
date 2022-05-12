@@ -56,7 +56,7 @@ public abstract class TaskHelper {
             addProps(defaultProps, artifactoryTask.getProperties());
             // Add the publisher properties
             ArtifactoryClientConfiguration.PublisherHandler publisher =
-                    ArtifactoryPluginUtil.getPublisherHandler(project);
+                    ArtifactoryPluginUtil.getPublisherHandler(project.getRootProject());
             if (publisher != null) {
                 defaultProps.putAll(publisher.getMatrixParams());
             }

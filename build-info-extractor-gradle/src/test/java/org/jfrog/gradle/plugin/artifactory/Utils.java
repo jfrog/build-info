@@ -150,6 +150,10 @@ public class Utils {
         BuildInfo buildInfo = getBuildInfo(artifactoryManager, buildResult);
         assertNotNull(buildInfo);
         checkBuildInfoModules(buildInfo, 3, expectModuleArtifacts ? 5 : 4);
+
+        // Check build info properties on published Artifacts
+        PropertySearchResult artifacts = artifactoryManager.searchArtifactsByProperties(String.format("build.name=%s;build.number=%s", buildInfo.getName(), buildInfo.getNumber()));
+        assertTrue(artifacts.getResults().size() >= 12);
     }
 
     static void assertProjectsSuccess(BuildResult buildResult) {
