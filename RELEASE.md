@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.36.3 / gradle-artifactory-plugin 4.28.3 (May 12, 2022)
+- Bug fix - Missing Gradle build-info props on artifacts ([649](https://github.com/jfrog/build-info/pull/649))
+
 ## build-info-extractor 2.36.2 / gradle-artifactory-plugin 4.28.2 (April 20, 2022)
 - Bug fix - Incorrect plugins endpoints ([635](https://github.com/jfrog/build-info/pull/635))
 - Bug fix - When project provided, "projectKey" query parameter should be added to build info URL ([631](https://github.com/jfrog/build-info/pull/631))
