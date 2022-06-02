@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run a single-line script
-        run: test
+#       - name: Run a single-line script
+#         run: test
         
       - name: Run a multi-line script
         run: |
