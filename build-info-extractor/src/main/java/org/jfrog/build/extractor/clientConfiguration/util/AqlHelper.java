@@ -62,7 +62,7 @@ public class AqlHelper {
         if (this.filesGroup.getSpecType() == FilesGroup.SpecType.BUILD) {
             artifactsSha1SearchResults = queryResults;
         } else {
-            if (this.buildName != null && this.buildNumber != null) {
+            if (!StringUtils.isBlank(this.buildName) && !StringUtils.isBlank(this.buildNumber)) {
                 artifactsSha1SearchResults = fetchBuildArtifactsSha1();
             } else {
                 artifactsSha1SearchResults = new ArrayList<>();
