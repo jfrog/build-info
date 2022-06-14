@@ -6,6 +6,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -110,7 +112,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
 
     public void setPrefix(String prefix) {
         packagePrefix = prefix.toLowerCase() + "://";
-        getChildren().forEach(node -> node.setPrefix(prefix));
+        getChildren().forEach(node -> ((DependencyTree)node).setPrefix(prefix));
     }
 
     /**
@@ -125,13 +127,13 @@ public class DependencyTree extends DefaultMutableTreeNode {
      * @return Node's children
      */
     @SuppressWarnings({"WeakerAccess", "unchecked"})
-    public Vector<DependencyTree> getChildren() {
+    public Vector<TreeNode> getChildren() {
         return children != null ? children : new Vector<>();
     }
 
     @JsonProperty(value = "nodes")
     @SuppressWarnings({"unchecked", "unused"})
-    public List<DependencyTree> getNodes() {
+    public List<TreeNode> getNodes() {
         return children;
     }
 
@@ -146,7 +148,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     @SuppressWarnings({"WeakerAccess", "unused"})
     public Set<Issue> processTreeIssues() {
         setIssuesComponent();
-        getChildren().forEach(child -> issues.addAll(child.processTreeIssues()));
+        getChildren().forEach(child -> issues.addAll(((DependencyTree)child).processTreeIssues()));
         setTopIssue();
         sortChildren();
         return issues;
@@ -160,7 +162,10 @@ public class DependencyTree extends DefaultMutableTreeNode {
     }
 
     private void sortChildren() {
-        getChildren().sort(Comparator
+        Vector children = getChildren();
+        Vector<DependencyTree> dependencyTrees = (Vector<DependencyTree>) children;
+
+        dependencyTrees.sort(Comparator
                 .comparing(DependencyTree::getTopIssue, Comparator.comparing(Issue::getSeverity))
                 .thenComparing(DependencyTree::getIssueCount)
                 .thenComparing(DependencyTree::getChildCount)
@@ -188,7 +193,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
     public Set<License> processTreeViolatedLicenses() {
         setViolatedLicensesComponent();
         violatedLicenses.addAll(licenses.stream().filter(License::isViolate).collect(Collectors.toSet()));
-        getChildren().forEach(child -> violatedLicenses.addAll(child.processTreeViolatedLicenses()));
+        getChildren().forEach(child -> violatedLicenses.addAll(((DependencyTree)child).processTreeViolatedLicenses()));
         return violatedLicenses;
     }
 
@@ -226,7 +231,7 @@ public class DependencyTree extends DefaultMutableTreeNode {
             return this;
         }
         return getChildren().stream()
-                .map(child -> child.find(componentId))
+                .map(child -> ((DependencyTree)child).find(componentId))
                 .filter(Objects::nonNull)
                 .findAny()
                 .orElse(null);
