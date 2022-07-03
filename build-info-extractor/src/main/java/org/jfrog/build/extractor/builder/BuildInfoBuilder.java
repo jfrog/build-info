@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.builder;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.extractor.ci.*;
-import org.jfrog.build.extractor.ci.Module;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

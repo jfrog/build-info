@@ -17,4 +17,3 @@ atlassian-*.xml
 /.nb-gradle/private/
 /itest/src/test/resources/org/jfrog/build/cache
 /build-info-extractor/src/test/resources/artifactory-bi.properties
-local.properties

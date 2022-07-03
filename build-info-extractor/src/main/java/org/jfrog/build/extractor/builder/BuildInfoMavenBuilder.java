@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.ci.*;
-import org.jfrog.build.extractor.ci.Module;
 
 import java.util.Date;
 import java.util.List;

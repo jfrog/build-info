@@ -7,7 +7,6 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.ci.*;
-import org.jfrog.build.extractor.ci.Module;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
