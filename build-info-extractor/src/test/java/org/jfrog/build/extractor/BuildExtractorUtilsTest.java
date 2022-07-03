@@ -5,6 +5,7 @@ import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.Module;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;

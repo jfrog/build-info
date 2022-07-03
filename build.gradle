@@ -1,29 +1,74 @@
+import com.github.benmanes.gradle.versions.VersionsPlugin
+
 buildscript {
+    ext {
+        antVersion = '1.10.12'
+        buildInfoExtractorVersion = '4.28.3'
+        commonsCodecVersion = '1.15'
+        commonsCompressVersion = '1.21'
+        commonsIoVersion = '2.11.0'
+        commonsLang3Version = '3.12.0'
+        commonsLoggingVersion = '1.2'
+        dockerJavaVersion = '3.2.13'
+        easymockclassextensionVersion = '3.2'
+        eclipseAetherVersion = '1.1.0'
+        fileSpecsJavaVersion = '1.1.1'
+        gradleVersionsPluginVersion = '0.42.0'
+        groovyAllVersion = '3.0.11'
+        guavaVersion = '31.1-jre'
+        httpClientVersion = '4.5.13'
+        httpCoreVersion = '4.4.15'
+        ivyVersion = '2.5.0'
+        jacksonVersion = '2.13.3'
+        jdomVersion = '2.0.2'
+        jsrVersion = '3.0.2'
+        mavenVersion = '3.8.6'
+        mavenDeployPluginVersion = '2.8.2'
+        p4JavaVersion = '2021.2.2293546'
+
+        plexusCipherVersion = '2.0'
+
+        //TODO: Plexus Component Annotations is deprecated
+        // See: https://codehaus-plexus.github.io/plexus-containers/plexus-component-annotations/
+        plexusComponentAnnotationsVersion = '2.1.1'
+
+        //TODO: Plexus Container is deprecated
+        // See https://codehaus-plexus.github.io/plexus-containers/index.html
+        plexusContainerVersion = '2.1.1'
+
+        plexusUtilsVersion = '3.4.2'
+        pluginPublishPlugin = '0.21.0'
+        publishPluginVersion = '1.1.0'
+        slf4jVersion = '1.7.36'
+        sonatypeAetherVersion = '1.13.1'
+
+        // 7.6.0 causes test failures
+        testNgVersion = '6.10'
+
+        xstreamVersion = '1.4.19'
+    }
+
     repositories {
         mavenCentral()
+
         maven {
             url "https://plugins.gradle.org/m2/"
         }
+
         dependencies {
-            classpath "com.gradle.publish:plugin-publish-plugin:0.+"
-            classpath "io.github.gradle-nexus:publish-plugin:+"
-            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
+            classpath "com.gradle.publish:plugin-publish-plugin:$pluginPublishPlugin"
+            classpath "io.github.gradle-nexus:publish-plugin:$publishPluginVersion"
+            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:$buildInfoExtractorVersion"
+            classpath "com.github.ben-manes:gradle-versions-plugin:$gradleVersionsPluginVersion"
         }
     }
 }
 
-plugins {
-    id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
-    id 'idea'
-}
-
 apply plugin: "com.jfrog.artifactory"
+apply plugin: 'io.github.gradle-nexus.publish-plugin'
 
 import org.apache.tools.ant.filters.ReplaceTokens
 import org.jfrog.build.Version
-
-String testNgVersion = '6.10'
-String jacksonVersion = '2.12.6'
 
 // Root project version should not be used
 project.version = '2'
@@ -41,6 +86,8 @@ task install {
 
 allprojects {
     apply plugin: 'java'
+    apply plugin: VersionsPlugin
+    apply plugin: 'idea'
     group = 'org.jfrog.buildinfo'
 
     repositories {
@@ -73,20 +120,22 @@ subprojects {
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     dependencies {
-        implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
-        implementation group: 'commons-logging', name: 'commons-logging', version: '1.1.1'
-        implementation group: 'commons-io', name: 'commons-io', version: '2.8.0'
+        implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
+        implementation group: 'commons-logging', name: 'commons-logging', version: commonsLoggingVersion
+        implementation group: 'commons-io', name: 'commons-io', version: commonsIoVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.6.1'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
-        implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
-        implementation("org.apache.httpcomponents:httpclient:4.5.13") {
+        implementation group: 'org.apache.commons', name: 'commons-compress', version: commonsCompressVersion
+
+        implementation("org.apache.httpcomponents:httpclient:$httpClientVersion") {
             exclude module: "commons-codec"
         }
-        implementation 'org.apache.httpcomponents:httpcore:4.4.13'
-        implementation "commons-codec:commons-codec:1.13"
-        implementation group: 'com.google.guava', name: 'guava', 'version': '30.0-jre'
-        implementation group: 'org.jfrog.filespecs', name: 'file-specs-java', version: '1.1.1'
+
+        implementation "org.apache.httpcomponents:httpcore:$httpCoreVersion"
+        implementation "commons-codec:commons-codec:$commonsCodecVersion"
+        implementation group: 'com.google.guava', name: 'guava', 'version': guavaVersion
+        implementation group: 'org.jfrog.filespecs', name: 'file-specs-java', version: fileSpecsJavaVersion
         testImplementation group: 'org.testng', name: 'testng', version: testNgVersion
     }
 
@@ -190,7 +239,7 @@ configure(baseProjects()) {
         }
     }
     dependencies {
-        implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: '1.4.19'
+        implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: xstreamVersion
     }
 }
 
@@ -214,7 +263,7 @@ configure(extractorProjects()) {
     }
 
     dependencies {
-        implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+        implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
         implementation project(':build-info-client')
         implementation project(':build-info-api')
         uberJar project(':build-info-extractor')
@@ -226,16 +275,13 @@ configure(extractorProjects()) {
     }
 }
 
-// Declare the root project to build its children first
-evaluationDependsOnChildren()
-
 project('build-info-api') {
     description = 'JFrog Build-Info API'
     dependencies {
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.12.6.1'
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
-        implementation group: 'org.apache.commons', name: 'commons-compress', version: '1.21'
+        implementation group: 'org.apache.commons', name: 'commons-compress', version: commonsCompressVersion
     }
 }
 
@@ -243,12 +289,15 @@ project('build-info-client') {
     description = 'JFrog Build-Info Client'
     dependencies {
         implementation project(':build-info-api')
-        implementation("org.apache.httpcomponents:httpclient:4.5.13") {
+
+        implementation("org.apache.httpcomponents:httpclient:$httpClientVersion") {
             exclude module: "commons-codec"
         }
-        implementation 'org.apache.httpcomponents:httpcore:4.4.13'
-        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.10.5'
-        implementation "commons-codec:commons-codec:1.13"
+
+        implementation "org.apache.httpcomponents:httpcore:httpCoreVersion"
+        implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
+        implementation "commons-codec:commons-codec:$commonsCodecVersion"
+
         sourceSets {
             main {
                 resources {
@@ -258,6 +307,9 @@ project('build-info-client') {
         }
 
         processResources {
+            // https://discuss.gradle.org/t/gradle-7-fail-for-duplicates-in-copy-specs-has-no-duplicates-in-project/39834/8
+            duplicatesStrategy = 'include'
+
             from(sourceSets.main.resources.srcDirs) {
                 include '**/*bi.client.properties'
                 filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
@@ -269,35 +321,37 @@ project('build-info-client') {
 project('build-info-extractor') {
     apply plugin: 'java-test-fixtures'
     description = 'JFrog Build-Info Extractor'
+
     dependencies {
         implementation project(':build-info-client')
         implementation project(':build-info-api')
 
-        testImplementation "org.easymock:easymockclassextension:2.5.2"
+        testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
         testFixturesApi project(':build-info-client')
         testFixturesApi project(':build-info-api')
-        testFixturesApi "org.apache.httpcomponents:httpclient:4.5.13"
-        testFixturesApi group: 'commons-io', name: 'commons-io', version: '2.8.0'
-        testFixturesApi group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+        testFixturesApi "org.apache.httpcomponents:httpclient:$httpClientVersion"
+        testFixturesApi group: 'commons-io', name: 'commons-io', version: commonsIoVersion
+        testFixturesApi group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
         testFixturesApi group: 'org.testng', name: 'testng', version: testNgVersion
-        testFixturesApi group: 'org.jfrog.filespecs', name: 'file-specs-java', version: '1.1.0'
+        testFixturesApi group: 'org.jfrog.filespecs', name: 'file-specs-java', version: fileSpecsJavaVersion
     }
 }
 
 project('build-info-vcs') {
     description = 'JFrog Build-Info VCS'
     dependencies {
-        implementation(group: 'com.perforce', name: 'p4java', version: '2015.1.1210280')
+        implementation(group: 'com.perforce', name: 'p4java', version: p4JavaVersion)
     }
 }
 
 project('build-info-extractor-ivy') {
     description = 'JFrog Build-Info Ivy Extractor'
+
     dependencies {
-        uberJar "org.slf4j:slf4j-api:1.5.8"
-        provided "com.google.code.findbugs:jsr305:1.3.9",
-                "org.apache.ivy:ivy:2.2.0",
-                "org.apache.ant:ant:1.10.12"
+        uberJar "org.slf4j:slf4j-api:$slf4jVersion"
+        provided "com.google.code.findbugs:jsr305:$jsrVersion",
+                "org.apache.ivy:ivy:$ivyVersion",
+                "org.apache.ant:ant:$antVersion"
     }
 }
 
@@ -314,9 +368,9 @@ project('build-info-extractor-gradle') {
         implementation gradleApi()
         implementation fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar')
         //workaround for GRADLE-1699
-        provided "org.codehaus.plexus:plexus-component-annotations:1.5.5",
-                "com.google.code.findbugs:jsr305:1.3.9"
-        uberJar group: 'org.apache.ivy', name: 'ivy', version: '2.2.0'
+        provided "org.codehaus.plexus:plexus-component-annotations:$plexusComponentAnnotationsVersion",
+                "com.google.code.findbugs:jsr305:$jsrVersion"
+        uberJar group: 'org.apache.ivy', name: 'ivy', version: ivyVersion
         implementation localGroovy()
         testImplementation gradleTestKit()
     }
@@ -355,33 +409,34 @@ project('build-info-extractor-maven3') {
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
-        implementation 'org.jdom:jdom:1.1.1',
-                'org.codehaus.groovy:groovy-all:2.4.21',
-                'plexus:plexus-container-default:1.0-alpha-6',
-                'org.sonatype.aether:aether-api:1.13.1',
-                'org.sonatype.aether:aether-util:1.13.1',
-                'org.sonatype.aether:aether-impl:1.13.1',
-                'org.eclipse.aether:aether-api:1.0.2.v20150114',
-                'org.eclipse.aether:aether-util:1.0.2.v20150114',
-                'org.eclipse.aether:aether-impl:1.0.2.v20150114',
-                'org.codehaus.plexus:plexus-utils:3.0.10',
-                'org.apache.maven:maven-repository-metadata:3.5.2',
-                'org.apache.maven:maven-model:3.1.0',
-                'org.codehaus.plexus:plexus-cipher:1.8'
+        implementation "org.jdom:jdom:$jdomVersion",
+                "org.codehaus.groovy:groovy-all:$groovyAllVersion",
+                "plexus:plexus-container-default:$plexusContainerVersion",
+                "org.sonatype.aether:aether-api:$sonatypeAetherVersion",
+                "org.sonatype.aether:aether-util:$sonatypeAetherVersion",
+                "org.sonatype.aether:aether-impl:$sonatypeAetherVersion",
+                "org.eclipse.aether:aether-api:$eclipseAetherVersion",
+                "org.eclipse.aether:aether-util:$eclipseAetherVersion",
+                "org.eclipse.aether:aether-impl:$eclipseAetherVersion",
+                "org.codehaus.plexus:plexus-utils:$plexusUtilsVersion",
+                "org.apache.maven:maven-repository-metadata:$mavenVersion",
+                "org.apache.maven:maven-model:$mavenVersion",
+                "org.codehaus.plexus:plexus-cipher:$plexusCipherVersion"
 
-        implementation('org.apache.maven.plugins:maven-deploy-plugin:2.8.2') {
+        implementation("org.apache.maven.plugins:maven-deploy-plugin:$mavenDeployPluginVersion") {
             exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
             exclude group: 'org.apache.maven', module: 'maven-model'
         }
-        implementation('org.apache.maven:maven-core:3.3.3') {
+
+        implementation("org.apache.maven:maven-core:$mavenVersion") {
             exclude group: 'org.codehaus.plexus', module: 'plexus-utils'
             exclude group: 'org.apache.maven', module: 'maven-model'
             exclude group: 'org.sonatype.plexus', module: 'plexus-cipher'
         }
 
-        uberJar 'org.eclipse.aether:aether-impl:1.0.2.v20150114'
-        provided 'org.codehaus.plexus:plexus-component-annotations:1.6'
-        testImplementation 'org.easymock:easymockclassextension:2.5.2'
+        uberJar "org.eclipse.aether:aether-impl:$eclipseAetherVersion"
+        provided "org.codehaus.plexus:plexus-component-annotations:$plexusComponentAnnotationsVersion"
+        testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
     }
 }
 
@@ -389,7 +444,7 @@ project('build-info-extractor-npm') {
     description = 'JFrog Build-Info npm Extractor'
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+        implementation group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
     }
 }
 
@@ -398,8 +453,8 @@ project('build-info-extractor-docker') {
     description = 'JFrog Build-Info Docker Extractor'
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
-        implementation group: 'com.github.docker-java', name: 'docker-java', version: '3.2.13'
+        implementation group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
+        implementation group: 'com.github.docker-java', name: 'docker-java', version: dockerJavaVersion
     }
 }
 
@@ -411,7 +466,7 @@ project('build-info-extractor-pip') {
     description = 'JFrog Build-Info Pip Extractor'
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-simple', version: '1.7.30'
+        implementation group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
     }
 }
 
@@ -419,7 +474,7 @@ project('build-info-extractor-nuget') {
     description = 'JFrog Build-Info NuGet Extractor'
 
     dependencies {
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: '2.11.1'
+        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: jacksonVersion
     }
 }
 
