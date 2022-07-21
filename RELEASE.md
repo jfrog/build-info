@@ -1,5 +1,11 @@
 # Release Notes
 
+## build-info-extractor 2.37.0 / gradle-artifactory-plugin 4.29.0 (July 21, 2022)
+- Add project field to gradle extractor ([661](https://github.com/jfrog/build-info/pull/661))
+
+## build-info-extractor 2.36.3 / gradle-artifactory-plugin 4.28.3 (May 12, 2022)
+- Bug fix - Missing Gradle build-info props on artifacts ([649](https://github.com/jfrog/build-info/pull/649))
+
 ## build-info-extractor 2.36.4 / gradle-artifactory-plugin 4.28.4 (July 3, 2022)
 - Upgrade httpcore to 4.4.13 ([654](https://github.com/jfrog/build-info/pull/654))
 - Bug fix - Broken AQL request when build is not defined in FilesGroup ([650](https://github.com/jfrog/build-info/pull/650))
