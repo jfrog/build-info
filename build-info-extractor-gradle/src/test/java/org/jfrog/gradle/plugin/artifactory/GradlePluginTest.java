@@ -5,6 +5,8 @@ import org.gradle.testkit.runner.BuildResult;
 import org.gradle.util.VersionNumber;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.BuildInfoConfigProperties;
+import org.jfrog.build.client.Version;
+import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -49,11 +51,14 @@ public class GradlePluginTest extends IntegrationTestsBase {
 
     @DataProvider
     private Object[][] gradleVersions() {
-        return new String[][]{{"4.10.3"}, {"5.6.4"}, {"6.3"}};
+        return new String[][]{{"4.10.3"}, {"5.6.4"}, {"6.9"}, {"7.5.1"}};
     }
 
     @Test(dataProvider = "gradleVersions")
     public void configurationsTest(String gradleVersion) throws IOException {
+        if (MIN_VERSION_WITHOUT_CONFIGURATIONS.isAtLeast(new Version("7"))) {
+            throw new SkipException("Skipping test on Gradle 7");
+        }
         // Create test environment
         createTestDir(GRADLE_EXAMPLE);
         // Run Gradle
@@ -112,11 +117,14 @@ public class GradlePluginTest extends IntegrationTestsBase {
 
     /**
      * Gradle extractor may be run by CI servers such as Jenkins. Before the CI server runs the Gradle extractor in order to build the Gradle project,
-     * it generated build-info properties file that contains Gradle extractor's configurations. those generated properties could be deprecated but the Gradle extractor could be the latest version (according to the build.gradle).
+     * it generated build-info properties file that contains Gradle extractor's configurations. Those generated properties could be deprecated but the Gradle extractor could be the latest version (according to the build.gradle).
      * This test checks that the deprecated build-info properties are being handled correctly
      */
     @Test(dataProvider = "gradleVersions")
     public void deprecatedCiServerTest(String gradleVersion) throws IOException {
+        if (MIN_VERSION_WITHOUT_CONFIGURATIONS.isAtLeast(new Version("7"))) {
+            throw new SkipException("Skipping test on Gradle 7");
+        }
         // Create test environment
         createTestDir(DEPRECATED_GRADLE_EXAMPLE_CI_SERVER);
         generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true, DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, DEPRECATED_BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);

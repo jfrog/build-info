@@ -1,5 +1,7 @@
 package org.jfrog.gradle.plugin.artifactory;
 
+import org.jfrog.build.client.Version;
+
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,6 +11,9 @@ import java.util.stream.Stream;
  * @author yahavi
  */
 public class Consts {
+    // Minimal Gradle version without configurations
+    static final Version MIN_VERSION_WITHOUT_CONFIGURATIONS = new Version("7");
+
     // Repositories
     static final String GRADLE_LOCAL_REPO = "build-info-tests-gradle-local";
     static final String GRADLE_REMOTE_REPO = "build-info-tests-gradle-remote";
@@ -58,10 +63,10 @@ public class Consts {
             "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.properties"
     };
     static final String[] EXPECTED_MODULE_ARTIFACTS = Stream.concat(
-            Stream.of(EXPECTED_ARTIFACTS),
-            Stream.of(
-                    "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.module",
-                    "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.module",
-                    "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.module")).
+                    Stream.of(EXPECTED_ARTIFACTS),
+                    Stream.of(
+                            "api/1.0-SNAPSHOT/api-1.0-SNAPSHOT.module",
+                            "shared/1.0-SNAPSHOT/shared-1.0-SNAPSHOT.module",
+                            "webservice/1.0-SNAPSHOT/webservice-1.0-SNAPSHOT.module")).
             toArray(String[]::new);
 }
