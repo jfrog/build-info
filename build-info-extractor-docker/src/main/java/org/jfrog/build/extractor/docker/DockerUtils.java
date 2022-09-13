@@ -287,18 +287,18 @@ public class DockerUtils {
     }
 
     /**
-     * Calculate the module ID from the image ID and the target repository.
+     * Calculate the module ID from the image tag and the target repository.
      *
-     * @param imageId    - The image ID
+     * @param imageTag   - The image tag
      * @param targetRepo - The target repository
-     * @return module ID
+     * @return the module ID.
      */
-    public static String calculateModuleId(String imageId, String targetRepo) {
+    public static String calculateModuleId(String imageTag, String targetRepo) {
         String targetRepoWrap = String.format("/%s/", targetRepo);
-        if (contains(imageId, targetRepoWrap)) {
-            return substringAfterLast(imageId, targetRepoWrap);
+        if (contains(imageTag, targetRepoWrap)) {
+            return substringAfterLast(imageTag, targetRepoWrap);
         }
-        return substringAfter(imageId, "/");
+        return substringAfter(imageTag, "/");
     }
 
     public enum CommandType {
