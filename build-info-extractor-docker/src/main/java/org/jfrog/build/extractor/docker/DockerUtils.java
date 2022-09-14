@@ -12,6 +12,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 
 public class DockerUtils {
@@ -283,6 +284,21 @@ public class DockerUtils {
         paths.add(repo + "/library/" + imagePath.substring(secondSlash + 1));
 
         return paths;
+    }
+
+    /**
+     * Calculate the module ID from the image tag and the target repository.
+     *
+     * @param imageTag   - The image tag
+     * @param targetRepo - The target repository
+     * @return the module ID.
+     */
+    public static String calculateModuleId(String imageTag, String targetRepo) {
+        String targetRepoWrap = String.format("/%s/", targetRepo);
+        if (contains(imageTag, targetRepoWrap)) {
+            return substringAfterLast(imageTag, targetRepoWrap);
+        }
+        return substringAfter(imageTag, "/");
     }
 
     public enum CommandType {

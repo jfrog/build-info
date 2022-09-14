@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.*;
 import static org.jfrog.build.client.DownloadResponse.SHA256_HEADER_NAME;
+import static org.jfrog.build.extractor.docker.DockerUtils.calculateModuleId;
 
 public class DockerImage implements Serializable {
     private String imageId;
@@ -228,7 +229,7 @@ public class DockerImage implements Serializable {
         try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
             ModuleBuilder moduleBuilder = new ModuleBuilder()
                     .type(ModuleType.DOCKER)
-                    .id(substringAfterLast(imageTag, "/"))
+                    .id(calculateModuleId(imageTag, targetRepo))
                     .repository(targetRepo);
             try {
                 findAndSetManifestFromArtifactory(artifactoryManager, logger, cmdType);
