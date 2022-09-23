@@ -2,6 +2,7 @@ package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.*;
+import org.jfrog.build.api.Module;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;

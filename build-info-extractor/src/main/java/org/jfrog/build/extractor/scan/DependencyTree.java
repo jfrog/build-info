@@ -126,13 +126,13 @@ public class DependencyTree extends DefaultMutableTreeNode {
      */
     @SuppressWarnings({"WeakerAccess", "unchecked"})
     public Vector<DependencyTree> getChildren() {
-        return children != null ? children : new Vector<>();
+        return children != null ? (Vector)children : new Vector<>();
     }
 
     @JsonProperty(value = "nodes")
     @SuppressWarnings({"unchecked", "unused"})
     public List<DependencyTree> getNodes() {
-        return children;
+        return (Vector)children;
     }
 
     /**
