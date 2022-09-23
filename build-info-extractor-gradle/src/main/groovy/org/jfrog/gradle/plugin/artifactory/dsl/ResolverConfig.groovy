@@ -83,6 +83,10 @@ class ResolverConfig {
             }
         }
 
+        def setAllowInsecureProtocol(boolean allow) {
+            ResolverConfig.this.resolver.setAllowInsecureProtocol(allow);
+        }
+
         def setMavenCompatible(boolean mavenCompatible) {
             ResolverConfig.this.resolver.setM2Compatible(mavenCompatible)
         }

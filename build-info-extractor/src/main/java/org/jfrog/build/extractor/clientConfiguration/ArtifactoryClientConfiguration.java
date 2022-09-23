@@ -42,6 +42,7 @@ import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AGGREGATION_BUILD
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_NAME;
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_VERSION;
 import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ALLOWINSECUREPROTOCOL;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ARTIFACT_SPECS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.CONTEXT_URL;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOCKER_HOST;
@@ -807,6 +808,14 @@ public class ArtifactoryClientConfiguration {
 
         public Boolean isMaven() {
             return getBooleanValue(MAVEN, null);
+        }
+
+        public void setAllowInsecureProtocol(boolean enabled) {
+            setBooleanValue(ALLOWINSECUREPROTOCOL, enabled);
+        }
+
+        public Boolean isAllowInsecureProtocol() {
+            return getBooleanValue(ALLOWINSECUREPROTOCOL, null);
         }
 
         public void setIvy(Boolean enabled) {
