@@ -1,7 +1,7 @@
 # Release Notes
 
 ## build-info-extractor 2.37.1 / gradle-artifactory-plugin 4.29.1 (September 28, 2022)
-- Support Docker module ID with slash ([666](https://github.com/jfrog/build-info/pull/666))
+- Bug fix - Support Docker module ID with slash ([666](https://github.com/jfrog/build-info/pull/666))
 
 ## build-info-extractor 2.37.0 / gradle-artifactory-plugin 4.29.0 (July 21, 2022)
 - Add project field to gradle extractor ([661](https://github.com/jfrog/build-info/pull/661))
