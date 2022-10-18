@@ -51,12 +51,12 @@ public class GradlePluginTest extends IntegrationTestsBase {
 
     @DataProvider
     private Object[][] gradleVersions() {
-        return new String[][]{{"4.10.3"}, {"5.6.4"}, {"6.9"}, {"7.5.1"}};
+        return new String[][]{{"4.10.3"}, {"5.6.4"}, {"6.9.3"}, {"7.5.1"}};
     }
 
     @Test(dataProvider = "gradleVersions")
     public void configurationsTest(String gradleVersion) throws IOException {
-        if (MIN_VERSION_WITHOUT_CONFIGURATIONS.isAtLeast(new Version("7"))) {
+        if (new Version(gradleVersion).isAtLeast(MIN_VERSION_WITHOUT_CONFIGURATIONS)) {
             throw new SkipException("Skipping test on Gradle 7");
         }
         // Create test environment
@@ -122,7 +122,7 @@ public class GradlePluginTest extends IntegrationTestsBase {
      */
     @Test(dataProvider = "gradleVersions")
     public void deprecatedCiServerTest(String gradleVersion) throws IOException {
-        if (MIN_VERSION_WITHOUT_CONFIGURATIONS.isAtLeast(new Version("7"))) {
+        if (new Version(gradleVersion).isAtLeast(MIN_VERSION_WITHOUT_CONFIGURATIONS)) {
             throw new SkipException("Skipping test on Gradle 7");
         }
         // Create test environment

@@ -11,7 +11,7 @@ import java.util.stream.Stream;
  * @author yahavi
  */
 public class Consts {
-    // Minimal Gradle version without configurations
+    // Minimum Gradle version without configurations
     static final Version MIN_VERSION_WITHOUT_CONFIGURATIONS = new Version("7");
 
     // Repositories
