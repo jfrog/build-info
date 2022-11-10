@@ -62,8 +62,6 @@ public class BuildScanTableHelper {
             securityViolationsTable.addElement(issue, infectedFile);
         } else if (issueType == Issue.IssueType.LICENSE) {
             licenseViolationsTable.addElement(issue, infectedFile);
-        } else {
-            throw new IllegalArgumentException(String.format("Illegal issue type '%s'. Expecting either 'Security' or 'License'", issue.getType()));
         }
     }
 }
