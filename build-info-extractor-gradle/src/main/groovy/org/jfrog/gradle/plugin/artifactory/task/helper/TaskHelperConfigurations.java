@@ -248,7 +248,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.ivyDescriptor, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
-            artifactBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(SHA256_ALGORITHM);
+            artifactBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM));
         } catch (Exception e) {
             throw new GradleException(
                     "Failed to calculate checksums for artifact: " + artifactoryTask.ivyDescriptor.getAbsolutePath(), e);
@@ -280,7 +280,7 @@ public class TaskHelperConfigurations extends TaskHelper {
         try {
             Map<String, String> checksums =
                     FileChecksumCalculator.calculateChecksums(artifactoryTask.mavenDescriptor, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
-            artifactBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(SHA256_ALGORITHM);
+            artifactBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM));
         } catch (Exception e) {
             throw new GradleException(
                     "Failed to calculate checksums for artifact: " + artifactoryTask.mavenDescriptor.getAbsolutePath(), e);
@@ -397,7 +397,7 @@ public class TaskHelperConfigurations extends TaskHelper {
                 .packageType(DeployDetails.PackageType.GRADLE);
         try {
             Map<String, String> checksums = FileChecksumCalculator.calculateChecksums(file, MD5_ALGORITHM, SHA1_ALGORITHM, SHA256_ALGORITHM);
-            deployDetailsBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(SHA256_ALGORITHM);
+            deployDetailsBuilder.md5(checksums.get(MD5_ALGORITHM)).sha1(checksums.get(SHA1_ALGORITHM)).sha256(checksums.get(SHA256_ALGORITHM));
         } catch (Exception e) {
             throw new GradleException("Failed to calculate checksums for artifact: " + file.getAbsolutePath(), e);
         }
