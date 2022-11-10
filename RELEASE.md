@@ -1,5 +1,12 @@
 # Release Notes
 
+## build-info-extractor 2.37.3 / gradle-artifactory-plugin 4.29.3 (November 10, 2022)
+- Bug fix - Remove custom exception for unknown violation types ([675](https://github.com/jfrog/build-info/pull/675))
+- Bug fix - Sha256 hashes being set to literal "SHA-256" in build-info json ([669](https://github.com/jfrog/build-info/pull/669))
+
+## build-info-extractor 2.37.2 / gradle-artifactory-plugin 4.29.2 (October 18, 2022)
+- Bug fix - Pom doesn't get deployed using Maven Install plugin 3+ ([670](https://github.com/jfrog/build-info/pull/670))
+
 ## build-info-extractor 2.37.1 / gradle-artifactory-plugin 4.29.1 (September 28, 2022)
 - Bug fix - Support Docker module ID with slash ([666](https://github.com/jfrog/build-info/pull/666))
 
