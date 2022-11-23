@@ -181,6 +181,7 @@ public class PreemptiveHttpClientBuilder {
                 .custom()
                 .setSocketTimeout(timeoutMilliSeconds)
                 .setConnectTimeout(timeoutMilliSeconds)
+                .setConnectionRequestTimeout(timeoutMilliSeconds)
                 .setCircularRedirectsAllowed(true)
                 .build();
 
