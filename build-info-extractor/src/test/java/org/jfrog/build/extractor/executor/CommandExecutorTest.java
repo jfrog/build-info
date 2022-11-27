@@ -76,10 +76,11 @@ public class CommandExecutorTest {
             assertTrue(executableFile.setExecutable(true));
             FileUtils.writeStringToFile(executableFile, "echo \"I have spoken\"", StandardCharsets.UTF_8);
 
+            // Run executable in "Kuiil space/ship.bat" with no arguments and make sure it prints "I have spoken"
             CommandExecutor commandExecutor = new CommandExecutor(executableFile.getAbsolutePath(), null);
-            CommandResults results = commandExecutor.exeCommand(null, Lists.newArrayList(executableFile.getAbsolutePath()), new ArrayList<>(), null);
+            CommandResults results = commandExecutor.exeCommand(null, new ArrayList<>(), new ArrayList<>(), null);
             assertTrue(results.isOk(), results.getErr());
-            assertEquals(results.getRes().trim(), "I have spoken");
+            assertTrue(results.getRes().contains("I have spoken"));
         } finally {
             FileUtils.forceDelete(tmpDir.toFile());
         }
