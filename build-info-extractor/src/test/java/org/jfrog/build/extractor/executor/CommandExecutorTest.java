@@ -9,6 +9,7 @@ import org.testng.collections.Lists;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -73,10 +74,12 @@ public class CommandExecutorTest {
             Path testDir = Files.createDirectories(tmpDir.resolve("Kuiil space"));
             File executableFile = Files.createFile(testDir.resolve("ship.bat")).toFile();
             assertTrue(executableFile.setExecutable(true));
+            FileUtils.writeStringToFile(executableFile, "echo \"I have spoken\"", StandardCharsets.UTF_8);
 
             CommandExecutor commandExecutor = new CommandExecutor(executableFile.getAbsolutePath(), null);
-            CommandResults results = commandExecutor.exeCommand(null, new ArrayList<>(), new ArrayList<>(), null);
+            CommandResults results = commandExecutor.exeCommand(null, Lists.newArrayList(executableFile.getAbsolutePath()), new ArrayList<>(), null);
             assertTrue(results.isOk(), results.getErr());
+            assertEquals(results.getRes().trim(), "I have spoken");
         } finally {
             FileUtils.forceDelete(tmpDir.toFile());
         }
