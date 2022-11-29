@@ -188,4 +188,44 @@ public class GradlePluginTest extends IntegrationTestsBase {
         // Check results
         checkLocalBuild(buildResult, BUILD_INFO_JSON.toFile(), 2, 0);
     }
+
+    /**
+     * A test for publishing bom files (pom.xml with dependencyManagement) using the default mavenJavaPlatform publication.
+     */
+    @Test(dataProvider = "gradleVersions")
+    public void publishDefaultBomTest(String gradleVersion) throws IOException {
+        if (!new Version(gradleVersion).isAtLeast(MIN_VERSION_FOR_BOM)) {
+            throw new SkipException("Skipping test on Gradle 7");
+        }
+        // Create test environment
+        createTestDir(GRADLE_EXAMPLE_DEFAULT_BOM);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "", true, true, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
+        Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
+            put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
+        }};
+        // Run Gradle
+        BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
+        // Check results
+        checkBomBuild(buildResult, BUILD_INFO_JSON.toFile(), VersionNumber.parse(gradleVersion).getMajor() >= 6 ? 2 : 1);
+    }
+
+    /**
+     * A test for publishing bom files (pom.xml with dependencyManagement) using the customMavenJavaPlatform publication.
+     */
+    @Test(dataProvider = "gradleVersions")
+    public void publishCustomBomTest(String gradleVersion) throws IOException {
+        if (!new Version(gradleVersion).isAtLeast(MIN_VERSION_FOR_BOM)) {
+            throw new SkipException("Skipping test on Gradle 7");
+        }
+        // Create test environment
+        createTestDir(GRADLE_EXAMPLE_CUSTOM_BOM);
+        generateBuildInfoProperties(getArtifactoryUrl(), getUsername(), getAdminToken(), localRepo1, virtualRepo, "customMavenJavaPlatform", true, true, BUILD_INFO_PROPERTIES_SOURCE_RESOLVER, BUILD_INFO_PROPERTIES_SOURCE_DEPLOYER);
+        Map<String, String> extendedEnv = new HashMap<String, String>(envVars) {{
+            put(BuildInfoConfigProperties.PROP_PROPS_FILE, BUILD_INFO_PROPERTIES_TARGET.toString());
+        }};
+        // Run Gradle
+        BuildResult buildResult = runGradle(gradleVersion, extendedEnv, true);
+        // Check results
+        checkBomBuild(buildResult, BUILD_INFO_JSON.toFile(), VersionNumber.parse(gradleVersion).getMajor() >= 6 ? 2 : 1);
+    }
 }
