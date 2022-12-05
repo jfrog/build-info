@@ -3,28 +3,31 @@ import com.github.benmanes.gradle.versions.VersionsPlugin
 buildscript {
     ext {
         antVersion = '1.10.12'
-        buildInfoExtractorVersion = '4.28.4'
+        buildInfoExtractorVersion = '4.29.4'
         commonsCodecVersion = '1.15'
-        commonsCompressVersion = '1.21'
+        commonsCompressVersion = '1.22'
         commonsIoVersion = '2.11.0'
         commonsLang3Version = '3.12.0'
         commonsLoggingVersion = '1.2'
         dockerJavaVersion = '3.2.14'
         easymockclassextensionVersion = '3.2'
         eclipseAetherVersion = '1.1.0'
-        fileSpecsJavaVersion = '1.1.1'
-        gradleVersionsPluginVersion = '0.44.0'
-        groovyAllVersion = '3.0.11'
+        fileSpecsJavaVersion = '1.1.2'
+
+        // 0.43+ fail with java.lang.NoClassDefFoundError: groovy/xml/XmlSlurper
+        gradleVersionsPluginVersion = '0.42.0'
+
+        groovyAllVersion = '3.0.13'
         guavaVersion = '31.1-jre'
-        httpClientVersion = '4.5.13'
-        httpCoreVersion = '4.4.15'
-        ivyVersion = '2.5.0'
+        httpClientVersion = '4.5.14'
+        httpCoreVersion = '4.4.16'
+        ivyVersion = '2.5.1'
         jacksonVersion = '2.14.1'
         jdomVersion = '2.0.2'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
-        mavenDeployPluginVersion = '2.8.2'
-        p4JavaVersion = '2021.2.2293546'
+        mavenDeployPluginVersion = '3.0.0'
+        p4JavaVersion = '2022.1.2350821'
 
         plexusCipherVersion = '2.0'
 
@@ -36,19 +39,19 @@ buildscript {
         // See https://codehaus-plexus.github.io/plexus-containers/index.html
         plexusContainerVersion = '2.1.1'
 
-        plexusUtilsVersion = '3.4.2'
+        plexusUtilsVersion = '3.5.0'
 
         // 1.0.0 fails with 'Could not find method plugins()'
         pluginPublishPlugin = '0.21.0'
 
         publishPluginVersion = '1.1.0'
-        slf4jVersion = '1.7.36'
+        slf4jVersion = '2.0.5'
         sonatypeAetherVersion = '1.13.1'
 
-        // 7.6.0 causes test failures
-        testNgVersion = '6.10'
+        // 7.6+ require Java 11
+        testNgVersion = '6.14.3'
 
-        woodstoxVersion = '5.4.0'
+        woodstoxVersion = '6.4.0'
         xstreamVersion = '1.4.19'
     }
 
@@ -119,8 +122,11 @@ subprojects {
         mavenCentral()
     }
 
+    // testng version <7.6 required for Java 8
+    // testng version 7.6+ required for Java 11
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
+
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     dependencies {
