@@ -9,17 +9,17 @@ buildscript {
         commonsIoVersion = '2.11.0'
         commonsLang3Version = '3.12.0'
         commonsLoggingVersion = '1.2'
-        dockerJavaVersion = '3.2.13'
+        dockerJavaVersion = '3.2.14'
         easymockclassextensionVersion = '3.2'
         eclipseAetherVersion = '1.1.0'
         fileSpecsJavaVersion = '1.1.1'
-        gradleVersionsPluginVersion = '0.42.0'
+        gradleVersionsPluginVersion = '0.44.0'
         groovyAllVersion = '3.0.11'
         guavaVersion = '31.1-jre'
         httpClientVersion = '4.5.13'
         httpCoreVersion = '4.4.15'
         ivyVersion = '2.5.0'
-        jacksonVersion = '2.13.3'
+        jacksonVersion = '2.14.1'
         jdomVersion = '2.0.2'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
@@ -48,6 +48,7 @@ buildscript {
         // 7.6.0 causes test failures
         testNgVersion = '6.10'
 
+        woodstoxVersion = '5.4.0'
         xstreamVersion = '1.4.19'
     }
 
@@ -479,7 +480,11 @@ project('build-info-extractor-nuget') {
     description = 'JFrog Build-Info NuGet Extractor'
 
     dependencies {
-        implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: jacksonVersion
+        implementation(group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-xml', version: jacksonVersion) {
+            exclude group: 'com.fasterxml.woodstox', module: 'woodstox-core'
+        }
+
+        implementation group: 'com.fasterxml.woodstox', name: 'woodstox-core', version: woodstoxVersion
     }
 }
 

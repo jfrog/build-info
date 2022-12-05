@@ -59,6 +59,9 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
         String buildNumber = clientConf.info.getBuildNumber();
         bib.number(buildNumber);
 
+        String buildProject = clientConf.info.getProject();
+        bib.project(buildProject);
+
         String buildStartedIso = clientConf.info.getBuildStarted();
         Date buildStartDate = null;
         try {
