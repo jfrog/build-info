@@ -1,20 +1,22 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
-        dependencies {
-            classpath "com.gradle.publish:plugin-publish-plugin:0.+"
-            classpath "io.github.gradle-nexus:publish-plugin:+"
-            classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
-        }
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://releases.jfrog.io/artifactory/oss-snapshot-local" }
+    }
+    dependencies {
+        classpath "com.gradle.publish:plugin-publish-plugin:1.0.0"
+        classpath "io.github.gradle-nexus:publish-plugin:+"
+        classpath "org.jfrog.buildinfo:build-info-extractor-gradle:4.24.5"
     }
 }
 
 plugins {
     id 'io.github.gradle-nexus.publish-plugin' version '1.0.0'
     id 'idea'
+    id 'com.gradle.plugin-publish' version '1.0.0'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
 }
 
 apply plugin: "com.jfrog.artifactory"
@@ -44,8 +46,6 @@ allprojects {
     group = 'org.jfrog.buildinfo'
 
     repositories {
-        maven { url "https://plugins.gradle.org/m2/" }
-        maven { url "https://releases.jfrog.io/artifactory/oss-snapshot-local" }
     }
 }
 
@@ -59,7 +59,6 @@ def extractorProjects() {
 
 subprojects {
     apply plugin: 'groovy'
-    apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'signing'
 
@@ -109,6 +108,7 @@ subprojects {
         from {
             configurations.uberJar.findAll { it.name.endsWith('jar') }.collect { zipTree(it) }
         }
+        duplicatesStrategy = 'INCLUDE'
         exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
         with jar
         archiveClassifier.set('uber')
@@ -259,7 +259,7 @@ project('build-info-client') {
 
         processResources {
             from(sourceSets.main.resources.srcDirs) {
-                include '**/*bi.client.properties'
+                include '**/*bi.client.properties' duplicatesStrategy DuplicatesStrategy.INCLUDE
                 filter(ReplaceTokens, tokens: ['project.version': project.version.toString()])
             }
         }
@@ -302,8 +302,6 @@ project('build-info-extractor-ivy') {
 }
 
 project('build-info-extractor-gradle') {
-    apply plugin: 'com.gradle.plugin-publish'
-    apply plugin: 'java-gradle-plugin'
     description = 'JFrog Build-Info Gradle Extractor'
 
     sourceSets.test.resources {
@@ -311,6 +309,7 @@ project('build-info-extractor-gradle') {
     }
 
     dependencies {
+        implementation project(":build-info-extractor")
         implementation gradleApi()
         implementation fileTree(dir: "${gradle.gradleHomeDir}/lib/plugins", include: '**/*.jar')
         //workaround for GRADLE-1699
@@ -321,27 +320,21 @@ project('build-info-extractor-gradle') {
         testImplementation gradleTestKit()
     }
 
-    gradlePlugin {
-        testSourceSets sourceSets.test
-    }
-
     pluginBundle {
         website = 'https://www.jfrog.com/confluence/display/JFROG/Gradle+Artifactory+Plugin'
         vcsUrl = 'https://github.com/jfrog/build-info'
         description = 'JFrog Gradle plugin for Build Info extraction and Artifactory publishing.'
         tags = ['Artifactory']
+    }
 
+    gradlePlugin {
+        testSourceSets sourceSets.test
         plugins {
             artifactoryPlugin {
                 id = 'com.jfrog.artifactory'
                 displayName = 'Gradle Artifactory plugin'
+                implementationClass = "com.jfrog.gradle.plugin.artifactory.ArtifactoryPlugin"
             }
-        }
-
-        mavenCoordinates {
-            groupId = project.getGroup()
-            artifactId = project.getName()
-            version = project.property("build-info-extractor-gradle-version")
         }
     }
 
@@ -355,7 +348,7 @@ project('build-info-extractor-maven3') {
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
-        implementation 'org.jdom:jdom:1.1.1',
+        implementation 'org.jdom:jdom2:2.0.6.1',
                 'org.codehaus.groovy:groovy-all:2.4.21',
                 'plexus:plexus-container-default:1.0-alpha-6',
                 'org.sonatype.aether:aether-api:1.13.1',

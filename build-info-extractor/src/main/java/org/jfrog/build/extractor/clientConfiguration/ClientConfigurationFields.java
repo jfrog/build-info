@@ -10,6 +10,7 @@ public interface ClientConfigurationFields {
     String PORT = "port";
     String PASSWORD = "password";
     String MAVEN = "maven";
+    String ALLOWINSECUREPROTOCOL = "allowinsecureprotocol";
     String IVY = "ivy";
     String IVY_M2_COMPATIBLE = "ivy.m2compatible";
     String IVY_ART_PATTERN = "ivy.artPattern";

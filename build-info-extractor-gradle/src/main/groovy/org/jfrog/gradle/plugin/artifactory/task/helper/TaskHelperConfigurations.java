@@ -14,7 +14,6 @@ import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.PublishArtifactSet;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
-import org.gradle.api.plugins.MavenPluginConvention;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.Upload;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -192,7 +191,7 @@ public class TaskHelperConfigurations extends TaskHelper {
             artifactoryTask.mavenDescriptor = null;
         } else {
             artifactoryTask.mavenDescriptor = new File(
-                    project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
+                    project.getProjectDir(),
                     "pom-default.xml");
             dependsOn(installTask);
         }

@@ -258,6 +258,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                     password = resolverConf.password
                 }
             }
+            allowInsecureProtocol = resolverConf.allowInsecureProtocol
         }
     }
 
@@ -271,6 +272,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                     password = resolverConf.password
                 }
             }
+            allowInsecureProtocol = resolverConf.allowInsecureProtocol
         }
         if (ivyRepo.metaClass.respondsTo(ivyRepo, 'patternLayout')) {
             // Gradle 5 an above
