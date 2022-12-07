@@ -287,15 +287,15 @@ public class TaskHelperPublications extends TaskHelper {
                         getProject().getPath());
                 return;
             }
-            addPublicationIfExist(publishingExtension, MAVEN_JAVA);
-            addPublicationIfExist(publishingExtension, MAVEN_JAVA_PLATFORM);
-            addPublicationIfExist(publishingExtension, MAVEN_WEB);
-            addPublicationIfExist(publishingExtension, IVY_JAVA);
+            addPublicationIfExists(publishingExtension, MAVEN_JAVA);
+            addPublicationIfExists(publishingExtension, MAVEN_JAVA_PLATFORM);
+            addPublicationIfExists(publishingExtension, MAVEN_WEB);
+            addPublicationIfExists(publishingExtension, IVY_JAVA);
             checkDependsOnArtifactsToPublish();
         }
     }
 
-    private void addPublicationIfExist(PublishingExtension publishingExtension, String publicationName) {
+    private void addPublicationIfExists(PublishingExtension publishingExtension, String publicationName) {
         Publication publication = publishingExtension.getPublications().findByName(publicationName);
         if (publication != null) {
             log.info("No publications specified for project '{}' - adding '{}' publication.",

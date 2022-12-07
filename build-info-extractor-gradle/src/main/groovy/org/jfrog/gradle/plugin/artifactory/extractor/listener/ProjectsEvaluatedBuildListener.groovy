@@ -67,7 +67,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     private void addMavenJavaPublication(PublishingExtension publishingExtension, Project project) {
         if (publishingExtension.getPublications().findByName(TaskHelperPublications.MAVEN_JAVA) != null) {
-            // mavenJava publication already exist
+            // mavenJava publication already exists
             return
         }
         project.plugins.withType(MavenPublishPlugin) { MavenPublishPlugin publishingPlugin ->
@@ -83,7 +83,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     private void addMavenJavaPlatformPublication(PublishingExtension publishingExtension, Project project) {
         if (publishingExtension.getPublications().findByName(TaskHelperPublications.MAVEN_JAVA_PLATFORM) != null) {
-            // mavenJavaPlatform publication already exist
+            // mavenJavaPlatform publication already exists
             return
         }
         project.plugins.withType(MavenPublishPlugin) { MavenPublishPlugin publishingPlugin ->
@@ -99,7 +99,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     private void addMavenWebPublication(PublishingExtension publishingExtension, Project project) {
         if (publishingExtension.getPublications().findByName(TaskHelperPublications.MAVEN_WEB) != null) {
-            // mavenWeb publication already exist
+            // mavenWeb publication already exists
             return
         }
         project.plugins.withType(MavenPublishPlugin) { MavenPublishPlugin publishingPlugin ->
@@ -115,7 +115,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
     private void addIvyJavaPublication(PublishingExtension publishingExtension, Project project) {
         if (publishingExtension.getPublications().findByName(TaskHelperPublications.IVY_JAVA) != null) {
-            // ivyJava publication already exist
+            // ivyJava publication already exists
             return
         }
         project.plugins.withType(IvyPublishPlugin) { IvyPublishPlugin publishingPlugin ->
@@ -185,11 +185,11 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     }
 
     /**
-     * Return true if at least of of the input components exist in the project.
-     * If the 'java' component exist - 'java' or 'java-library' plugins are applied.
-     * If the 'javaPlatform' component exist - 'java-platform' plugin is applied.
+     * Return true if at least one of the input components exists in the project.
+     * If the 'java' component exists - 'java' or 'java-library' plugins are applied.
+     * If the 'javaPlatform' component exists - 'java-platform' plugin is applied.
      * @param project - The Gradle project of the task
-     * @return true if at least of of the input components exist in the project.
+     * @return true if at least one of the input components exists in the project.
      */
     private static boolean projectHasOneOfComponents(Project project, String... componentNames) {
         for (componentName in componentNames) {
