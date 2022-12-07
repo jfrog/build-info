@@ -173,6 +173,19 @@ public class Utils {
         assertRequestedBy(buildInfo);
     }
 
+    static void checkBomBuild(BuildResult buildResult, File buildInfoJson, int expectedArtifacts) throws IOException {
+        assertSuccess(buildResult, ":artifactoryPublish");
+
+        // Assert build info.
+        assertTrue(buildInfoJson.exists());
+        BuildInfo buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
+        Module module = buildInfo.getModule("org.jfrog.test.gradle:gradle_tests_space:1.0-SNAPSHOT");
+        assertNotNull(module);
+        assertEquals(module.getArtifacts().size(), expectedArtifacts);
+        assertTrue(module.getArtifacts().stream().map(Artifact::getName)
+                .anyMatch(artifactName -> artifactName.equals("gradle_tests_space-1.0-SNAPSHOT.pom")));
+    }
+
     private static void assertRequestedBy(BuildInfo buildInfo) {
         List<Dependency> apiDependencies = buildInfo.getModule("org.jfrog.test.gradle.publish:api:1.0-SNAPSHOT").getDependencies();
         assertEquals(apiDependencies.size(), 5);

@@ -12,6 +12,7 @@ import java.util.stream.Stream;
  */
 public class Consts {
     // Minimum Gradle version without configurations
+    static final Version MIN_VERSION_FOR_BOM = new Version("5");
     static final Version MIN_VERSION_WITHOUT_CONFIGURATIONS = new Version("7");
 
     // Repositories
@@ -33,8 +34,10 @@ public class Consts {
     // Projects
     static final Path GRADLE_EXAMPLE = PROJECTS_ROOT.resolve("gradle-example");
     static final Path GRADLE_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-example-publish");
-    static final Path GRADLE_KTS_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-kts-example-publish");
     static final Path GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server");
+    static final Path GRADLE_EXAMPLE_CUSTOM_BOM = PROJECTS_ROOT.resolve("gradle-example-custom-bom");
+    static final Path GRADLE_EXAMPLE_DEFAULT_BOM = PROJECTS_ROOT.resolve("gradle-example-default-bom");
+    static final Path GRADLE_KTS_EXAMPLE_PUBLISH = PROJECTS_ROOT.resolve("gradle-kts-example-publish");
     static final Path DEPRECATED_GRADLE_EXAMPLE_CI_SERVER = PROJECTS_ROOT.resolve("gradle-example-ci-server-deprecated");
 
     // CI example paths
