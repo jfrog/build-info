@@ -1,6 +1,6 @@
 {
   "rclass": "virtual",
-  "packageType": "gradle",
+  "packageType": "docker",
   "repositories": [
     "${LOCAL_REPO_1}",
     "${REMOTE_REPO}"

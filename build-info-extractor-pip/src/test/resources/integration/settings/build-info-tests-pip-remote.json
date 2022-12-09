@@ -1,6 +1,5 @@
 {
   "packageType": "pypi",
-  "repoLayoutRef": "simple-default",
   "url": "https://files.pythonhosted.org",
   "rclass": "remote"
 }
