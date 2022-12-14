@@ -1,7 +1,14 @@
 package org.jfrog.build.api.builder;
 
 import org.apache.commons.lang3.StringUtils;
-import org.jfrog.build.api.*;
+import org.jfrog.build.api.Agent;
+import org.jfrog.build.api.Build;
+import org.jfrog.build.api.BuildAgent;
+import org.jfrog.build.api.BuildRetention;
+import org.jfrog.build.api.Issues;
+import org.jfrog.build.api.MatrixParameter;
+import org.jfrog.build.api.Module;
+import org.jfrog.build.api.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
 
 import java.text.SimpleDateFormat;
