@@ -45,7 +45,7 @@ buildscript {
         pluginPublishPlugin = '0.21.0'
 
         publishPluginVersion = '1.1.0'
-        slf4jVersion = '2.0.5'
+        slf4jVersion = '1.7.36'
         sonatypeAetherVersion = '1.13.1'
 
         // 7.6+ require Java 11
