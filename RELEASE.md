@@ -1,6 +1,9 @@
 # Release Notes
 
-## build-info-extractor 2.38.0 / gradle-artifactory-plugin 4.30.0 (December 15, 2022)
+## build-info-extractor 2.38.1 / gradle-artifactory-plugin 4.30.1 (December 15, 2022)
+- Downgrade slf4j to 1.7.36 ([686](https://github.com/jfrog/build-info/pull/686))
+
+## build-info-extractor 2.38.0 / gradle-artifactory-plugin 4.30.0 (December 14, 2022)
 - Add getFederatedRepositoriesKeys to ArtifactoryManager ([685](https://github.com/jfrog/build-info/pull/685)) 
 - Gradle - Publish bom files when 'java-platform' plugin applied ([680](https://github.com/jfrog/build-info/pull/680))
 - Update dependencies and support building Java 11 ([659](https://github.com/jfrog/build-info/pull/659))
