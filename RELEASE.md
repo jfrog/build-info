@@ -1,5 +1,11 @@
 # Release Notes
 
+## build-info-extractor 2.38.0 / gradle-artifactory-plugin 4.30.0 (December 15, 2022)
+- Add getFederatedRepositoriesKeys to ArtifactoryManager ([685](https://github.com/jfrog/build-info/pull/685)) 
+- Gradle - Publish bom files when 'java-platform' plugin applied ([680](https://github.com/jfrog/build-info/pull/680))
+- Update dependencies and support building Java 11 ([659](https://github.com/jfrog/build-info/pull/659))
+- Bug fix - NullPointerException when building the matrix params ([684](https://github.com/jfrog/build-info/pull/684))
+
 ## build-info-extractor 2.37.3 / gradle-artifactory-plugin 4.29.3 (November 10, 2022)
 - Bug fix - Remove custom exception for unknown violation types ([675](https://github.com/jfrog/build-info/pull/675))
 - Bug fix - Sha256 hashes being set to literal "SHA-256" in build-info json ([669](https://github.com/jfrog/build-info/pull/669))
