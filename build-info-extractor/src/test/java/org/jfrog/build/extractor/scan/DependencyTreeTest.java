@@ -6,10 +6,7 @@ import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static org.testng.Assert.*;
 import static org.testng.AssertJUnit.assertEquals;
@@ -37,6 +34,26 @@ public class DependencyTreeTest {
         two.add(three); // 2 -> 3
         two.add(four); // 2 -> 4
         four.add(five); // 4 -> 5
+    }
+
+    @Test
+    public void testGetChildren() {
+        // Check root children
+        List<DependencyTree> rootChildren = root.getChildren();
+        assertTrue(rootChildren.contains(one));
+        assertTrue(rootChildren.contains(two));
+
+        // Check 'one' children
+        assertEquals(new ArrayList<>(), one.getChildren());
+
+        // Check 'two' children
+        List<DependencyTree> twoChildren = two.getChildren();
+        assertTrue(twoChildren.contains(three));
+        assertTrue(twoChildren.contains(four));
+
+        // Check 'four' and 'five' children
+        assertEquals(List.of(five), four.getChildren());
+        assertEquals(new ArrayList<>(), five.getChildren());
     }
 
     @Test
