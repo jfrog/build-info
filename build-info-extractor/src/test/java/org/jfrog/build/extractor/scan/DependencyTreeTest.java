@@ -1,10 +1,10 @@
 package org.jfrog.build.extractor.scan;
 
-import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.compress.utils.Sets;
 import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 import java.util.*;
 
@@ -52,7 +52,7 @@ public class DependencyTreeTest {
         assertTrue(twoChildren.contains(four));
 
         // Check 'four' and 'five' children
-        assertEquals(List.of(five), four.getChildren());
+        assertEquals(Lists.newArrayList(five), four.getChildren());
         assertEquals(new ArrayList<>(), five.getChildren());
     }
 
