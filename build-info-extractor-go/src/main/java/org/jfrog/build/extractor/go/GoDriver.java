@@ -114,10 +114,14 @@ public class GoDriver implements Serializable {
      *
      * @param verbose      - True if should print the results to the log
      * @param ignoreErrors - True if errors should be ignored
+     * @param dontBuildVcs - Skip VCS stamping - can be used only on Go >= 1.18
      * @throws IOException - in case of any I/O error.
      */
-    public CommandResults getUsedModules(boolean verbose, boolean ignoreErrors) throws IOException {
+    public CommandResults getUsedModules(boolean verbose, boolean ignoreErrors, boolean dontBuildVcs) throws IOException {
         List<String> argsList = new ArrayList<>(GO_LIST_USED_MODULES_CMD);
+        if (dontBuildVcs) {
+            argsList.add(1, "-buildvcs=false");
+        }
         if (ignoreErrors) {
             argsList.add(1, "-e");
         }
