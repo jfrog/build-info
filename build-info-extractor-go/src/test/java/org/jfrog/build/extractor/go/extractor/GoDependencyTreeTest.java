@@ -71,7 +71,7 @@ public class GoDependencyTreeTest {
                     "github.com/jfrog/directDep1@v0.1",
                     "github.com/jfrog/directDep2@v0.2",
                     "github.com/jfrog/directDep3@v0.3"));
-            put("github.com/jfrog/directDep1@v0.1", List.of(
+            put("github.com/jfrog/directDep1@v0.1", Arrays.asList(
                     "github.com/jfrog/indirectDep1-1@v1.1",
                     "github.com/jfrog/indirectDep2-1@v1.3"));
             put("github.com/jfrog/directDep2@v0.2", Collections.singletonList(
