@@ -1,5 +1,9 @@
 # Release Notes
 
+## build-info-extractor 2.39.0 / gradle-artifactory-plugin 4.31.0 (December 29, 2022)
+- Allow skipping VCS stamping in Go ([689](https://github.com/jfrog/build-info/pull/689))
+- Remove the dummy remote repository in Maven ([683](https://github.com/jfrog/build-info/pull/683))
+
 ## build-info-extractor 2.38.1 / gradle-artifactory-plugin 4.30.1 (December 15, 2022)
 - Downgrade slf4j to 1.7.36 ([686](https://github.com/jfrog/build-info/pull/686))
 
