@@ -22,7 +22,7 @@ public class GoDependencyTree {
      * @param goDriver     - Go driver
      * @param logger       - The logger
      * @param verbose      - verbose logging
-     * @param dontBuildVcs - Skip VCS stamping - can be used only on Go >= 1.18
+     * @param dontBuildVcs - Skip VCS stamping - can be used only on Go later than 1.18
      * @return Go dependency tree
      * @throws IOException in case of any I/O error.
      */
