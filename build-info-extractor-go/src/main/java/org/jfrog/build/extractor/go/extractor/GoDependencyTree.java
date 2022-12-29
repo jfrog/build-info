@@ -19,13 +19,14 @@ public class GoDependencyTree {
     /**
      * Create Go dependency tree of actually used dependencies.
      *
-     * @param goDriver - Go driver
-     * @param logger   - The logger
-     * @param verbose  - verbose logging
+     * @param goDriver     - Go driver
+     * @param logger       - The logger
+     * @param verbose      - verbose logging
+     * @param dontBuildVcs - Skip VCS stamping - can be used only on Go >= 1.18
      * @return Go dependency tree
      * @throws IOException in case of any I/O error.
      */
-    public static DependencyTree createDependencyTree(GoDriver goDriver, Log logger, boolean verbose) throws IOException {
+    public static DependencyTree createDependencyTree(GoDriver goDriver, Log logger, boolean verbose, boolean dontBuildVcs) throws IOException {
         // Run go mod graph.
         CommandResults goGraphResult = goDriver.modGraph(verbose);
         String[] dependenciesGraph = goGraphResult.getRes().split("\\r?\\n");
@@ -33,10 +34,10 @@ public class GoDependencyTree {
         // Run go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all
         CommandResults usedModulesResults;
         try {
-            usedModulesResults = goDriver.getUsedModules(false, false);
+            usedModulesResults = goDriver.getUsedModules(false, false, dontBuildVcs);
         } catch (IOException e) {
             // Errors occurred during running "go list". Run again and this time ignore errors.
-            usedModulesResults = goDriver.getUsedModules(false, true);
+            usedModulesResults = goDriver.getUsedModules(false, true, dontBuildVcs);
             logger.warn("Errors occurred during building the Go dependency tree. The dependency tree may be incomplete:" +
                     System.lineSeparator() + ExceptionUtils.getRootCauseMessage(e));
         }
@@ -65,7 +66,7 @@ public class GoDependencyTree {
      * @param usedDependencies  - Results of "go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all"
      * @param dependenciesMap   - Dependencies parent to children map results
      */
-    private static void populateDependenciesMap(String[] dependenciesGraph, Set<String> usedDependencies, Map<String, List<String>> dependenciesMap) {
+    static void populateDependenciesMap(String[] dependenciesGraph, Set<String> usedDependencies, Map<String, List<String>> dependenciesMap) {
         for (String entry : dependenciesGraph) {
             if (StringUtils.isAllBlank(entry)) {
                 continue;
@@ -88,8 +89,8 @@ public class GoDependencyTree {
      * @param allDependencies       - Dependency to children map
      * @param logger                - The logger
      */
-    private static void populateDependencyTree(DependencyTree currNode, String currNameVersionString,
-                                               Map<String, List<String>> allDependencies, Log logger) {
+    static void populateDependencyTree(DependencyTree currNode, String currNameVersionString,
+                                       Map<String, List<String>> allDependencies, Log logger) {
         if (currNode.hasLoop(logger)) {
             return;
         }

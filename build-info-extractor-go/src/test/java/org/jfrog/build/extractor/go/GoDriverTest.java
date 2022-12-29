@@ -45,14 +45,14 @@ public class GoDriverTest {
             driver.modTidy(false, false);
 
             // Run "go list -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
-            CommandResults results = driver.getUsedModules(false, false);
+            CommandResults results = driver.getUsedModules(false, false, true);
             Set<String> actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n"))
                     .map(String::trim)
                     .collect(Collectors.toSet());
             assertEquals(actualUsedModules, EXPECTED_USED_MODULES);
 
             // Run "go list -e -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
-            results = driver.getUsedModules(false, true);
+            results = driver.getUsedModules(false, true, true);
             actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n"))
                     .map(String::trim)
                     .collect(Collectors.toSet());
@@ -77,10 +77,10 @@ public class GoDriverTest {
             driver.modTidy(false, true);
 
             // Run "go list -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
-            Assert.assertThrows(() -> driver.getUsedModules(false, false));
+            Assert.assertThrows(() -> driver.getUsedModules(false, false, true));
 
             // Run "go list -e -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
-            CommandResults results = driver.getUsedModules(false, true);
+            CommandResults results = driver.getUsedModules(false, true, true);
             Set<String> actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n"))
                     .map(String::trim)
                     .collect(Collectors.toSet());
