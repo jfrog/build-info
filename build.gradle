@@ -23,7 +23,7 @@ buildscript {
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.1'
         jacksonVersion = '2.14.1'
-        jdomVersion = '2.0.2'
+        jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
         mavenDeployPluginVersion = '3.0.0'
@@ -52,7 +52,7 @@ buildscript {
         testNgVersion = '6.14.3'
 
         woodstoxVersion = '6.4.0'
-        xstreamVersion = '1.4.19'
+        xstreamVersion = '1.4.20'
     }
 
     repositories {
@@ -421,7 +421,7 @@ project('build-info-extractor-maven3') {
     description = 'JFrog Build-Info Maven 3 Extractor'
 
     dependencies {
-        implementation "org.jdom:jdom:$jdomVersion",
+        implementation "org.jdom:jdom2:$jdomVersion",
                 "org.codehaus.groovy:groovy-all:$groovyAllVersion",
                 "org.codehaus.plexus:plexus-container-default:$plexusContainerVersion",
                 "org.sonatype.aether:aether-api:$sonatypeAetherVersion",
