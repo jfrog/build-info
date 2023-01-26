@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_NUGET_PROTOCOL;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class NugetRun extends PackageManagerExtractor {
@@ -103,7 +104,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.nugetCmdArgs = StringUtils.isBlank(nugetCmdArgs) ? StringUtils.EMPTY : nugetCmdArgs;
         this.username = username;
         this.password = password;
-        this.apiProtocol = apiProtocol;
+        this.apiProtocol = StringUtils.isBlank(apiProtocol) ? DEFAULT_NUGET_PROTOCOL : apiProtocol;
         this.module = module;
     }
 
