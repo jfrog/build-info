@@ -41,6 +41,11 @@ public class BuildDeploymentHelper {
         logger.debug("Build Info Recorder: publication fork count: " + clientConf.publisher.getPublishForkCount());
         logger.debug("Build Info Recorder: publish build info: " + clientConf.publisher.isPublishBuildInfo());
 
+        if (clientConf.publisher.isPublishBuildInfo() || StringUtils.isNotBlank(clientConf.info.getGeneratedBuildInfoFilePath())) {
+            // Used by bamboo-artifactory-plugin.
+            saveBuildInfoToFile(buildInfo, clientConf, basedir);
+        }
+
         if (!StringUtils.isEmpty(clientConf.info.getGeneratedBuildInfoFilePath())) {
             try {
                 BuildInfoExtractorUtils.saveBuildInfoToFile(buildInfo, new File(clientConf.info.getGeneratedBuildInfoFilePath()));
