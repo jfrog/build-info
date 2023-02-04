@@ -708,7 +708,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
-     * Only Maven deploy / install goals are supposed to upload artifacts to artifactory.
+     * Only Maven deploy goal are supposed to upload artifacts to artifactory.
      * Other than that, we don't upload artifacts.
      */
     private void setDeploymentPolicy(ExecutionEvent event) {
@@ -716,10 +716,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         // Override the default Maven deploy behavior with Artifactory.
         if (goals.contains("deploy")) {
             event.getSession().getUserProperties().put("maven.deploy.skip", Boolean.TRUE.toString());
-            return;
-        }
-        // Skip the artifact deployment behavior if the goals do not contain install or deploy phases.
-        if (!goals.contains("install")) {
+        } else {
+            // Skip the artifact deployment behavior if the goals do not contain the deploy phase.
             conf.publisher.setPublishArtifacts(false);
             conf.publisher.setPublishBuildInfo(false);
 
