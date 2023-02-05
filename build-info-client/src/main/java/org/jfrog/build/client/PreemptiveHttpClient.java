@@ -61,6 +61,10 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     public CloseableHttpResponse execute(HttpUriRequest request) throws IOException {
         HttpClientContext clientContext = HttpClientContext.create();
+        return execute(request, clientContext);
+    }
+
+    public CloseableHttpResponse execute(HttpUriRequest request, HttpClientContext clientContext) throws IOException {
         if (StringUtils.isNotEmpty(accessToken)) {
             clientContext.setUserToken(accessToken);
         } else {
