@@ -9,9 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  Access-Distribution:
+  Distribution:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
-    name: Access-Distribution (${{ matrix.os }})
+    name: Distribution (${{ matrix.os }})
     strategy:
       fail-fast: false
       matrix:
@@ -41,7 +41,7 @@ jobs:
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: clean build-info-extractor:test --tests *AccessManagerTest* --tests *DistributionManagerTest*
+          arguments: clean build-info-extractor:test --tests *DistributionManagerTest*
         env:
           BITESTS_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           BITESTS_PLATFORM_USERNAME: ${{ secrets.PLATFORM_USER }}
@@ -87,7 +87,9 @@ jobs:
       - name: Run Tests
         uses: gradle/gradle-build-action@v2
         with:
-          arguments: clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test -PexcludeTests=**/*AccessManager*,**/*DistributionManager*
+          arguments: clean build-info-api:test build-info-client:test build-info-extractor:test build-info-vcs:test -PexcludeTests=**/*DistributionManager*
+        env:
+          BITESTS_PLATFORM_ADMIN_TOKEN: ${{ env.JFROG_TESTS_LOCAL_ACCESS_TOKEN }}
 
   Go:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
