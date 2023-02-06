@@ -7,10 +7,7 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.client.Version;
 import org.testng.SkipException;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
-import org.testng.annotations.DataProvider;
-import org.testng.annotations.Test;
+import org.testng.annotations.*;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -25,16 +22,20 @@ import static org.jfrog.gradle.plugin.artifactory.Utils.*;
 @Test
 public class GradlePluginTest extends IntegrationTestsBase {
 
-    final private Map<String, String> envVars;
+    private Map<String, String> envVars;
 
     public GradlePluginTest() {
-        localRepo1 = GRADLE_LOCAL_REPO;
-        remoteRepo = GRADLE_REMOTE_REPO;
-        virtualRepo = GRADLE_VIRTUAL_REPO;
+        localRepo1 = getKeyWithTimestamp(GRADLE_LOCAL_REPO);
+        remoteRepo = getKeyWithTimestamp(GRADLE_REMOTE_REPO);
+        virtualRepo = getKeyWithTimestamp(GRADLE_VIRTUAL_REPO);
+    }
 
+    @BeforeClass
+    public void init() throws IOException {
+        super.init();
         // Set environment variables for variable replacement in build.gradle files
         envVars = new HashMap<String, String>(System.getenv()) {{
-            putIfAbsent(BITESTS_ENV_VAR_PREFIX + "URL", getArtifactoryUrl());
+            putIfAbsent(BITESTS_ENV_VAR_PREFIX + "URL", getPlatformUrl());
             putIfAbsent(BITESTS_ENV_VAR_PREFIX + "USERNAME", getUsername());
             putIfAbsent(BITESTS_ENV_VAR_PREFIX + "ADMIN_TOKEN", getAdminToken());
             putIfAbsent(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "LOCAL_REPO", localRepo1);

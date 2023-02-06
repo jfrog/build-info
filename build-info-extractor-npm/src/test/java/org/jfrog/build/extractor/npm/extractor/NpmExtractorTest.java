@@ -6,11 +6,10 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.ci.Dependency;
-import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
+import org.jfrog.build.extractor.ci.Dependency;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.filespecs.FileSpec;
@@ -29,9 +28,7 @@ import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertEqualsNoOrder;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * @author Yahav Itzhak
@@ -46,11 +43,11 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private DependenciesDownloaderHelper downloaderHelper;
 
     public NpmExtractorTest() {
-        localRepo1 = NPM_LOCAL_REPO;
+        localRepo1 = getKeyWithTimestamp(NPM_LOCAL_REPO);
+        remoteRepo = "";
         virtualRepo = "";
     }
 
@@ -114,7 +111,6 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @BeforeClass
     private void setUp() throws IOException {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getAdminToken()).setLog(getLog());
         downloaderHelper = new DependenciesDownloaderHelper(artifactoryManager, ".", log);
         deployTestDependencies(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
     }
@@ -178,6 +174,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     }
 
     private void runNpmTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath, boolean isNpmCi) {
+        args += " --verbose --no-audit";
         Path projectDir = null;
         try {
             // Prepare.
@@ -189,12 +186,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
             }
 
             // Execute command.
-            NpmInstallCi buildExecutor;
-            if (isNpmCi) {
-                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, true, null);
-            } else {
-                buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, false, null);
-            }
+            NpmInstallCi buildExecutor = new NpmInstallCi(artifactoryManagerBuilder, localRepo1, args, log, path, null, null, null, isNpmCi, null);
             BuildInfo buildInfo = buildExecutor.execute();
 
             // Validate.

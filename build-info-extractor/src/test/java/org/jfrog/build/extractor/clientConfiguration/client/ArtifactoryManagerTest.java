@@ -58,7 +58,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
-        String projectKey = "btests";
+        String projectKey = "default";
         try {
             publishAndCheckBuildInfo(projectKey);
             sendBuildRetention(projectKey);
@@ -79,7 +79,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
     @Test
     public void buildStagingWithProjectTest() throws IOException {
-        String projectKey = "btests";
+        String projectKey = "default";
         try {
             publishAndCheckBuildInfo(projectKey);
             stageBuild(projectKey);

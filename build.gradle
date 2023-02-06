@@ -232,6 +232,9 @@ subprojects {
             events "started", "passed", "skipped", "failed", "standardOut", "standardError"
             minGranularity 0
         }
+        project.properties['excludeTests']?.split(',').each {
+            exclude "${it}"
+        }
     }
 }
 
@@ -344,6 +347,7 @@ project('build-info-extractor') {
         testFixturesApi "org.apache.httpcomponents:httpclient:$httpClientVersion"
         testFixturesApi group: 'commons-io', name: 'commons-io', version: commonsIoVersion
         testFixturesApi group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
+        testFixturesApi group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
         testFixturesApi group: 'org.testng', name: 'testng', version: testNgVersion
         testFixturesApi group: 'org.jfrog.filespecs', name: 'file-specs-java', version: fileSpecsJavaVersion
     }
