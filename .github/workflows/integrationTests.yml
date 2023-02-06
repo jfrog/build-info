@@ -9,8 +9,17 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  Distribution:
+  Pretest:
     if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Unlabel 'safe to test'
+        uses: actions-ecosystem/action-remove-labels@v1
+        if: ${{github.event_name != 'push' }}
+        with:
+          labels: 'safe to test'
+  Distribution:
+    needs: Pretest
     name: Distribution (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -48,7 +57,7 @@ jobs:
           BITESTS_PLATFORM_ADMIN_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
 
   Extractor:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Extractor (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -92,7 +101,7 @@ jobs:
           BITESTS_PLATFORM_ADMIN_TOKEN: ${{ env.JFROG_TESTS_LOCAL_ACCESS_TOKEN }}
 
   Go:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Go (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -134,7 +143,7 @@ jobs:
           BITESTS_PLATFORM_ADMIN_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
 
   Gradle:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Gradle (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -182,7 +191,7 @@ jobs:
           arguments: clean build-info-extractor-gradle:test
 
   Ivy:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Ivy (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -216,7 +225,7 @@ jobs:
           arguments: clean build-info-extractor-ivy:test
 
   Maven:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Maven (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -250,7 +259,7 @@ jobs:
           arguments: clean build-info-extractor-maven3:test
 
   npm:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: npm (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -290,7 +299,7 @@ jobs:
       - name: Setup Artifactory
         run: |
           go install github.com/jfrog/jfrog-testing-infra/local-rt-setup@latest
-          ~/go/bin/local-rt-setup --rt-version=7.39.4
+          ~/go/bin/local-rt-setup
         env:
           RTLIC: ${{secrets.RTLIC}}
           GOPROXY: direct
@@ -301,10 +310,11 @@ jobs:
         with:
           arguments: clean build-info-extractor-npm:test
         env:
+          # We use localhost because npm does not support authenticating with registries started with 127.0.0.1
           BITESTS_PLATFORM_URL: http://localhost:8081
 
   NuGet:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: NuGet (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -358,7 +368,7 @@ jobs:
           arguments: clean build-info-extractor-nuget:test
 
   Python:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Python (${{ matrix.os }})
     strategy:
       fail-fast: false
@@ -408,7 +418,7 @@ jobs:
           BITESTS_ARTIFACTORY_PIP_ENV: fromJSON('{"Linux":"env/bin","macOS":"env/bin","Windows":"env\\Scripts"}')[runner.os]
 
   Docker:
-    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    needs: Pretest
     name: Docker
     runs-on: ubuntu-latest
     steps:
