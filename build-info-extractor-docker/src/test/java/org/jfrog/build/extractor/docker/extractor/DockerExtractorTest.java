@@ -42,9 +42,11 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private static final String SHORT_IMAGE_TAG_LOCAL = "2";
     private static final String SHORT_IMAGE_TAG_VIRTUAL = "3";
     private static final String EXPECTED_REMOTE_PATH_KANIKO = "hello-world/latest";
+    private static final String DOCKER_HOST = "BITESTS_ARTIFACTORY_DOCKER_HOST";
     private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
     private String pullImageFromVirtual;
     private String virtualDomainName;
+    private String host;
     private String imageTagLocal;
     private String imageTagVirtual;
     private String pullImageFromRemote;
@@ -67,6 +69,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         if (SystemUtils.IS_OS_WINDOWS) {
             throw new SkipException("Skipping Docker tests on Windows OS");
         }
+        host = System.getenv(DOCKER_HOST);
         String containerRegistry = readParam(new Properties(), "container_registry", "127.0.0.1:8081");
         virtualDomainName = StringUtils.appendIfMissing(containerRegistry, "/") + virtualRepo;
         imageTagLocal = StringUtils.appendIfMissing(containerRegistry, "/") + localRepo1 + "/" + SHORT_IMAGE_NAME + ":" + SHORT_IMAGE_TAG_LOCAL;
@@ -82,27 +85,27 @@ public class DockerExtractorTest extends IntegrationTestsBase {
 
     @Test
     public void dockerPushToLocalTest() {
-        DockerJavaWrapper.buildImage(imageTagLocal, "", Collections.emptyMap(), PROJECT_PATH);
-        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, "", artifactProperties, localRepo1, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
+        DockerJavaWrapper.buildImage(imageTagLocal, host, Collections.emptyMap(), PROJECT_PATH);
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagLocal, host, artifactProperties, localRepo1, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         pushAndValidateImage(dockerPush, localRepo1, imageTagLocal, SHORT_IMAGE_TAG_LOCAL);
     }
 
     @Test
     public void dockerPushToVirtualTest() {
-        DockerJavaWrapper.buildImage(imageTagVirtual, "", Collections.emptyMap(), PROJECT_PATH);
-        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, "", artifactProperties, virtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
+        DockerJavaWrapper.buildImage(imageTagVirtual, host, Collections.emptyMap(), PROJECT_PATH);
+        DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder, imageTagVirtual, host, artifactProperties, virtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         pushAndValidateImage(dockerPush, virtualRepo, imageTagVirtual, SHORT_IMAGE_TAG_VIRTUAL);
     }
 
     @Test
     public void dockerPullFromRemoteTest() {
-        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, "", remoteRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromRemote, host, remoteRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         validatePulledDockerImage(dockerPull.execute(), pullImageFromRemote);
     }
 
     @Test
     public void dockerPullFromVirtualTest() {
-        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, "", virtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
+        DockerPull dockerPull = new DockerPull(artifactoryManagerBuilder, pullImageFromVirtual, host, virtualRepo, getUsername(), getAdminToken(), getLog(), Collections.emptyMap());
         validatePulledDockerImage(dockerPull.execute(), pullImageFromVirtual);
     }
 
@@ -227,7 +230,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     }
 
     private String getImageId(String image) {
-        String id = DockerJavaWrapper.InspectImage(image, "", Collections.emptyMap(), getLog()).getId();
+        String id = DockerJavaWrapper.InspectImage(image, host, Collections.emptyMap(), getLog()).getId();
         assertNotNull(id);
         return id.replace(":", "__");
     }

@@ -91,6 +91,16 @@ export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/buildinfo-tests-env/bin
 
 #### Docker tests
 * Docker tests run only on Linux/mac.
+* In addition to the general environment variables required for running the tests, you must set the following environment variables, required for the docker tests:
+  ```bash
+  export BITESTS_PLATFORM_CONTAINER_REGISTRY=127.0.0.1:8081
+  export BITESTS_ARTIFACTORY_DOCKER_HOST=tcp://127.0.0.1:1234
+  ```
+* For OSX agents, run a Socat container:
+ ```bash
+ docker run -d -v /var/run/docker.sock:/var/run/docker.sock -p 127.0.0.1:1234:1234 bobrik/socat TCP-LISTEN:1234,fork UNIX-CONNECT:/var/run/docker.sock
+ ```
+* Run tests:
  ```bash
 ./gradlew clean build-info-extractor-docker:test
 ```
