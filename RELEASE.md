@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.1 / gradle-artifactory-plugin 4.31.1 (January 7, 2023)
+- Retry on error codes 500 ([694](https://github.com/jfrog/build-info/pull/694))
+
 ## build-info-extractor 2.39.0 / gradle-artifactory-plugin 4.31.0 (December 29, 2022)
 - Allow skipping VCS stamping in Go ([689](https://github.com/jfrog/build-info/pull/689))
 - Remove the dummy remote repository in Maven ([683](https://github.com/jfrog/build-info/pull/683))
