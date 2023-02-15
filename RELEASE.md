@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.2 / gradle-artifactory-plugin 4.31.2 (February 15, 2023)
+- Fix missing fields for maven 3.9.0 ([706](https://github.com/jfrog/build-info/pull/706))
+
 ## build-info-extractor 2.39.1 / gradle-artifactory-plugin 4.31.1 (January 7, 2023)
 - Retry on error codes 500 ([694](https://github.com/jfrog/build-info/pull/694))
 
