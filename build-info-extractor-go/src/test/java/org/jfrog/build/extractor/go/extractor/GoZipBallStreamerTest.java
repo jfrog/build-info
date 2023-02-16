@@ -9,12 +9,11 @@ import java.io.IOException;
 
 public class GoZipBallStreamerTest {
     @Test(dataProvider = "testIsSubModuleProvider")
-    public void testIsSubModule(String subModuleName, String entryName, boolean expectedResult) throws IOException {
-        try (GoZipBallStreamer goZipBallStreamer = new GoZipBallStreamer(null, "ignore", "ignore", null)) {
-            goZipBallStreamer.setSubModuleName(subModuleName);
-            boolean res = goZipBallStreamer.isSubModule(entryName);
-            Assert.assertEquals(res, expectedResult);
-        }
+    public void testIsSubModule(String subModuleName, String entryName, boolean expectedResult) {
+        GoZipBallStreamer goZipBallStreamer = new GoZipBallStreamer(null, "ignore", "ignore", null);
+        goZipBallStreamer.setSubModuleName(subModuleName);
+        boolean res = goZipBallStreamer.isSubModule(entryName);
+        Assert.assertEquals(res, expectedResult);
     }
 
     @DataProvider
