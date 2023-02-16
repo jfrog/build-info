@@ -179,12 +179,12 @@ public abstract class BuildInfoExtractorUtils {
     public static String buildInfoToJsonString(BuildInfo buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        try (JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
             jsonGenerator.useDefaultPrettyPrinter();
             jsonGenerator.writeObject(buildInfo);
+            return writer.getBuffer().toString();
         }
-        return writer.getBuffer().toString();
     }
 
     public static BuildInfo jsonStringToBuildInfo(String json) throws IOException {
