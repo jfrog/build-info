@@ -322,8 +322,8 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     private void collectDependenciesFromProjectDir(File projectRoot) throws Exception {
-        try (Stream<Path> filesList = Files.list(projectRoot.toPath())) {
-            List<Path> csprojFiles = filesList
+        try (Stream<Path> files = Files.list(projectRoot.toPath())) {
+            List<Path> csprojFiles = files
                     .filter(path -> path.toString().endsWith(".csproj")).collect(Collectors.toList());
             if (csprojFiles.size() == 1) {
                 String csprojPath = csprojFiles.get(0).toString();
