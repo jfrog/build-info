@@ -322,13 +322,15 @@ public class NugetRun extends PackageManagerExtractor {
     }
 
     private void collectDependenciesFromProjectDir(File projectRoot) throws Exception {
-        List<Path> csprojFiles = Files.list(projectRoot.toPath())
-                .filter(path -> path.toString().endsWith(".csproj")).collect(Collectors.toList());
-        if (csprojFiles.size() == 1) {
-            String csprojPath = csprojFiles.get(0).toString();
-            String projectName = csprojFiles.get(0).getFileName().toString().replace(".csproj", "");
-            String globalCachePath = toolchainDriver.globalPackagesCache();
-            singleProjectHandler(projectName, csprojPath, globalCachePath);
+        try (Stream<Path> files = Files.list(projectRoot.toPath())) {
+            List<Path> csprojFiles = files
+                    .filter(path -> path.toString().endsWith(".csproj")).collect(Collectors.toList());
+            if (csprojFiles.size() == 1) {
+                String csprojPath = csprojFiles.get(0).toString();
+                String projectName = csprojFiles.get(0).getFileName().toString().replace(".csproj", "");
+                String globalCachePath = toolchainDriver.globalPackagesCache();
+                singleProjectHandler(projectName, csprojPath, globalCachePath);
+            }
         }
     }
 
