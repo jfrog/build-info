@@ -7,6 +7,7 @@ import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.release.PromotionStatus;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.Module;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -57,7 +58,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
     @Test
     public void sendBuildInfoWithProjectTest() throws IOException {
-        String projectKey = "btests";
+        String projectKey = "default";
         try {
             publishAndCheckBuildInfo(projectKey);
             sendBuildRetention(projectKey);
@@ -78,7 +79,7 @@ public class ArtifactoryManagerTest extends IntegrationTestsBase {
 
     @Test
     public void buildStagingWithProjectTest() throws IOException {
-        String projectKey = "btests";
+        String projectKey = "default";
         try {
             publishAndCheckBuildInfo(projectKey);
             stageBuild(projectKey);

@@ -188,6 +188,11 @@ public class ArtifactoryManager extends ManagerBase {
         return getVirtualRepositoriesKeysService.execute(jfrogHttpClient);
     }
 
+    public List<String> getFederatedRepositoriesKeys() throws IOException {
+        GetRepositoriesKeys getFederatedRepositoriesKeysService = new GetRepositoriesKeys(RepositoryType.FEDERATED, log);
+        return getFederatedRepositoriesKeysService.execute(jfrogHttpClient);
+    }
+
     public Map getStagingStrategy(String strategyName, String buildName, Map<String, String> requestParams) throws IOException {
         GetStagingStrategy getStagingStrategyService = new GetStagingStrategy(strategyName, buildName, requestParams, log);
         return getStagingStrategyService.execute(jfrogHttpClient);

@@ -6,7 +6,6 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.pip.PipDriver;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -18,15 +17,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 /**
  * Created by Bar Belity on 21/07/2020.
@@ -34,22 +27,20 @@ import static org.testng.Assert.fail;
 @Test
 public class PipExtractorTest extends IntegrationTestsBase {
 
-    private static final String PIP_LOCAL_REPO = "";
     private static final String PIP_REMOTE_REPO = "build-info-tests-pip-remote";
     private static final String PIP_VIRTUAL_REPO = "build-info-tests-pip-virtual";
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private String pipEnvVar;
     private PipDriver driver;
     private Map<String, String> env;
     private Path projectDir = null;
 
     public PipExtractorTest() {
-        localRepo1 = PIP_LOCAL_REPO;
-        remoteRepo = PIP_REMOTE_REPO;
-        virtualRepo = PIP_VIRTUAL_REPO;
+        localRepo1 = "";
+        remoteRepo = getKeyWithTimestamp(PIP_REMOTE_REPO);
+        virtualRepo = getKeyWithTimestamp(PIP_VIRTUAL_REPO);
     }
 
     private enum Project {
@@ -60,15 +51,15 @@ public class PipExtractorTest extends IntegrationTestsBase {
         REQUIREMENTSVERBOSE("requirementsProject", "requirements-verbose", "jfrog-pip-requirements-verbose", "-r requirements.txt -v --no-cache-dir --force-reinstall", 5, false, false),
         REQUIREMENTSCACHE("requirementsProject", "requirements-verbose", "jfrog-pip-requirements-usecache", "-r requirements.txt", 5, true, true);
 
-        private File projectOrigin;
-        private String targetDir;
-        private String moduleId;
-        private String args;
-        private int expectedDependencies;
-        private boolean cleanEnvAfterExecution;
+        private final File projectOrigin;
+        private final String targetDir;
+        private final String moduleId;
+        private final String args;
+        private final int expectedDependencies;
+        private final boolean cleanEnvAfterExecution;
         // Allows running a test without cleaning the test environment prior to execution.
         // Used to test pip-install with dependencies-cache from another execution.
-        private boolean allowDirtyEnv;
+        private final boolean allowDirtyEnv;
 
         Project(String project, String outputFolder, String moduleId, String args, int expectedDependencies, boolean cleanEnvAfterExecution, boolean allowDirtyEnv) {
             this.projectOrigin = PROJECTS_ROOT.resolve(project).toFile();
@@ -82,8 +73,8 @@ public class PipExtractorTest extends IntegrationTestsBase {
     }
 
     @BeforeClass
-    private void setUp() {
-        artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setServerUrl(getArtifactoryUrl()).setUsername(getUsername()).setPassword(getAdminToken()).setLog(getLog());
+    private void setUp() throws IOException {
+        super.init();
 
         // Read pip environment path variable.
         pipEnvVar = System.getenv(BITESTS_ARTIFACTORY_ENV_VAR_PREFIX + "PIP_ENV");
@@ -118,7 +109,7 @@ public class PipExtractorTest extends IntegrationTestsBase {
     }
 
     @Test(dataProvider = "pipInstallProvider")
-    private void pipInstallTest(Project project) {
+    public void pipInstallTest(Project project) {
         try {
             if (!project.allowDirtyEnv) {
                 // Copy project files to temp.

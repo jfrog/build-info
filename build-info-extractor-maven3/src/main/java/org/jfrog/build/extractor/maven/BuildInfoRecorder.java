@@ -485,8 +485,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         boolean excludeArtifactsFromBuild = publisher.isFilterExcludedArtifactsFromBuild();
 
         boolean pomFileAdded = false;
-        Artifact nonPomArtifact = null;
-        String pomFileName = null;
 
         for (Artifact moduleArtifact : moduleArtifacts) {
             String groupId = moduleArtifact.getGroupId();
@@ -496,11 +494,6 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             String artifactExtension = moduleArtifact.getArtifactHandler().getExtension();
             String type = getTypeString(moduleArtifact.getType(), artifactClassifier, artifactExtension);
 
-            String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactExtension);
-
-            ArtifactBuilder artifactBuilder = new ArtifactBuilder(artifactName)
-                    .remotePath(getRemotePath(groupId, artifactId, artifactVersion))
-                    .type(type);
             File artifactFile = moduleArtifact.getFile();
 
             if ("pom".equals(type)) {
@@ -509,19 +502,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 if (moduleArtifact.equals(project.getArtifact())) {
                     artifactFile = project.getFile();   // project.getFile() returns the project pom file
                 }
-            } else {
-                for (ArtifactMetadata metadata : moduleArtifact.getMetadataList()) {
-                    if (metadata instanceof ProjectArtifactMetadata) {
-                        nonPomArtifact = moduleArtifact;
-                        pomFileName = StringUtils.removeEnd(artifactName, artifactExtension) + "pom";
-                        break;
-                    }
-                }
             }
 
-            org.jfrog.build.extractor.ci.Artifact artifact = artifactBuilder.build();
-            String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
             if (artifactFile != null && artifactFile.isFile()) {
+                String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactExtension);
+                org.jfrog.build.extractor.ci.Artifact artifact = new ArtifactBuilder(artifactName)
+                        .remotePath(getRemotePath(groupId, artifactId, artifactVersion))
+                        .type(type).build();
+                String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
                 boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
                 addArtifactToBuildInfo(artifact, pathConflicts, excludeArtifactsFromBuild, module);
                 if (conf.publisher.shouldAddDeployableArtifacts()) {
@@ -530,39 +518,28 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
         }
         /*
-         * In case of non packaging Pom project module, we need to create the pom file from the ProjectArtifactMetadata on the Artifact
+         * In case of non packaging Pom project module, we need to create the pom file from the project's Artifact
          */
-        if (!pomFileAdded && nonPomArtifact != null) {
-            String deploymentPath = getDeploymentPath(
-                    nonPomArtifact.getGroupId(),
-                    nonPomArtifact.getArtifactId(),
-                    nonPomArtifact.getVersion(),
-                    nonPomArtifact.getClassifier(), "pom");
-
-            addPomArtifact(nonPomArtifact, module, patterns, deploymentPath, pomFileName, excludeArtifactsFromBuild);
+        if (!pomFileAdded) {
+            addPomArtifact(project, module, patterns, excludeArtifactsFromBuild);
         }
     }
 
-    private void addPomArtifact(Artifact nonPomArtifact, ModuleBuilder module,
-                                IncludeExcludePatterns patterns, String deploymentPath, String pomFileName, boolean excludeArtifactsFromBuild) {
+    private void addPomArtifact(MavenProject project, ModuleBuilder module,
+                                IncludeExcludePatterns patterns, boolean excludeArtifactsFromBuild) {
+        File pomFile = project.getFile();
+        Artifact projectArtifact = project.getArtifact();
+        String artifactName = getArtifactName(projectArtifact.getArtifactId(), projectArtifact.getBaseVersion(), projectArtifact.getClassifier(), "pom");
+        org.jfrog.build.extractor.ci.Artifact pomArtifact = new ArtifactBuilder(artifactName)
+                .remotePath(getRemotePath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getBaseVersion()))
+                .type("pom")
+                .build();
 
-        for (ArtifactMetadata metadata : nonPomArtifact.getMetadataList()) {
-            if (metadata instanceof ProjectArtifactMetadata) { // The pom metadata
-                ArtifactBuilder artifactBuilder = new ArtifactBuilder(pomFileName)
-                        .remotePath(getRemotePath(metadata.getGroupId(), metadata.getArtifactId(), metadata.getBaseVersion()))
-                        .type("pom");
-                File pomFile = ((ProjectArtifactMetadata) metadata).getFile();
-                org.jfrog.build.extractor.ci.Artifact pomArtifact = artifactBuilder.build();
-
-                if (pomFile != null && pomFile.isFile()) {
-                    boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
-                    addArtifactToBuildInfo(pomArtifact, pathConflicts, excludeArtifactsFromBuild, module);
-                    if (conf.publisher.shouldAddDeployableArtifacts()) {
-                        addDeployableArtifact(pomArtifact, pomFile, pathConflicts, nonPomArtifact.getGroupId(), nonPomArtifact.getArtifactId(), nonPomArtifact.getVersion(), nonPomArtifact.getClassifier(), "pom");
-                    }
-                }
-                break;
-            }
+        String deploymentPath = getDeploymentPath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
+        boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
+        addArtifactToBuildInfo(pomArtifact, pathConflicts, excludeArtifactsFromBuild, module);
+        if (conf.publisher.shouldAddDeployableArtifacts()) {
+            addDeployableArtifact(pomArtifact, pomFile, pathConflicts, projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
         }
     }
 

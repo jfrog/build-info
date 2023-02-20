@@ -30,8 +30,6 @@ import static org.testng.Assert.fail;
 public class NugetExtractorTest extends IntegrationTestsBase {
 
     private static final String NUGET_REMOTE_REPO = "build-info-tests-nuget-remote";
-    private static final String NUGET_LOCAL_REPO = "";
-    private static final String NUGET_VIRTUAL_REPO = "";
     private static final String CUSTOM_MODULE = "custom-module-name";
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
@@ -40,9 +38,9 @@ public class NugetExtractorTest extends IntegrationTestsBase {
     private Map<String, String> env = new HashMap<>();
 
     public NugetExtractorTest() {
-        localRepo1 = NUGET_LOCAL_REPO;
-        remoteRepo = NUGET_REMOTE_REPO;
-        virtualRepo = NUGET_VIRTUAL_REPO;
+        localRepo1 = "";
+        remoteRepo = getKeyWithTimestamp(NUGET_REMOTE_REPO);
+        virtualRepo = "";
     }
 
     private enum Project {

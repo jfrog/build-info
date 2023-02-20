@@ -28,7 +28,7 @@ import static org.testng.Assert.assertFalse;
  **/
 public class DistributionManagerTest extends IntegrationTestsBase {
     static final File tempWorkspace = new File(System.getProperty("java.io.tmpdir"), "bi_dist_client_test_space");
-    static final String RELEASE_BUNDLE_NAME = "bitests-dist-name";
+    static final String RELEASE_BUNDLE_NAME = getKeyWithTimestamp("bitests-dist-name");
     static final String RELEASE_BUNDLE_VERSION = "1";
 
     DistributionManager distributionManager;
@@ -39,6 +39,7 @@ public class DistributionManagerTest extends IntegrationTestsBase {
         super.init();
         String distributionUrl = getPlatformUrl() + "/distribution";
         distributionManager = new DistributionManager(distributionUrl, getUsername(), getAdminToken(), "", getLog());
+        distributionManager.setConnectionRetries(10);
         createTestRepo(localRepo2);
     }
 

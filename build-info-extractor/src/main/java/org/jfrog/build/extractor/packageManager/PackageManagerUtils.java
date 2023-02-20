@@ -36,6 +36,7 @@ public class PackageManagerUtils {
                 .setScheme(rtUrl.getProtocol())
                 .setUserInfo(username, password)
                 .setHost(rtUrl.getHost())
+                .setPort(rtUrl.getPort())
                 .setPath(rtUrl.getPath() + path);
         return proxyUrlBuilder.build().toURL().toString();
     }

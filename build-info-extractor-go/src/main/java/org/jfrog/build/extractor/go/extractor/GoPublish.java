@@ -29,6 +29,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -152,9 +153,9 @@ public class GoPublish extends GoCommand {
 
     private File archiveProjectDir() throws IOException {
         File zipFile = File.createTempFile(LOCAL_TMP_PKG_PREFIX + LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
-
-        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-            List<Path> pathsList = Files.walk(path)
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile.toPath()));
+            Stream<Path> pathFileTree = Files.walk(path)) {
+            List<Path> pathsList = pathFileTree
                     // Remove .git dir content, directories and the temp zip file
                     .filter(p -> !path.relativize(p).startsWith(".git/") && !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
                     .collect(Collectors.toList());

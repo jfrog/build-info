@@ -19,11 +19,12 @@ public class UsageReporter {
     }
 
     public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, Log log) throws IOException {
-        ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log);
-        if (proxyConfiguration != null) {
-            artifactoryManager.setProxyConfiguration(proxyConfiguration);
+        try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log)) {
+            if (proxyConfiguration != null) {
+                artifactoryManager.setProxyConfiguration(proxyConfiguration);
+            }
+            artifactoryManager.reportUsage(this);
         }
-        artifactoryManager.reportUsage(this);
     }
 
     public String getProductId() {

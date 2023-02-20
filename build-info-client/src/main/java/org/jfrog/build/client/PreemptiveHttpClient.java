@@ -61,6 +61,10 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
     public CloseableHttpResponse execute(HttpUriRequest request) throws IOException {
         HttpClientContext clientContext = HttpClientContext.create();
+        return execute(request, clientContext);
+    }
+
+    public CloseableHttpResponse execute(HttpUriRequest request, HttpClientContext clientContext) throws IOException {
         if (StringUtils.isNotEmpty(accessToken)) {
             clientContext.setUserToken(accessToken);
         } else {
@@ -155,8 +159,7 @@ public class PreemptiveHttpClient implements AutoCloseable {
 
         @Override
         public boolean retryRequest(HttpResponse response, int executionCount, HttpContext context) {
-            // Code 500 means an unexpected behavior of Artifactory, thus we should not retry.
-            if (response.getStatusLine().getStatusCode() > 500) {
+            if (response.getStatusLine().getStatusCode() >= 500) {
                 HttpClientContext clientContext = HttpClientContext.adapt(context);
                 log.warn("Error occurred for request " + clientContext.getRequest().getRequestLine().toString() +
                         ". Received status code " + response.getStatusLine().getStatusCode() +

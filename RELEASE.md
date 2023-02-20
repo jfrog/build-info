@@ -1,5 +1,37 @@
 # Release Notes
 
+## build-info-extractor 2.39.3 / gradle-artifactory-plugin 4.31.3 (February 16, 2023)
+- Refactor and handle unhandled exceptions ([707](https://github.com/jfrog/build-info/pull/707))
+
+## build-info-extractor 2.39.2 / gradle-artifactory-plugin 4.31.2 (February 15, 2023)
+- Fix missing fields for maven 3.9.0 ([706](https://github.com/jfrog/build-info/pull/706))
+
+## build-info-extractor 2.39.1 / gradle-artifactory-plugin 4.31.1 (January 7, 2023)
+- Retry on error codes 500 ([694](https://github.com/jfrog/build-info/pull/694))
+
+## build-info-extractor 2.39.0 / gradle-artifactory-plugin 4.31.0 (December 29, 2022)
+- Allow skipping VCS stamping in Go ([689](https://github.com/jfrog/build-info/pull/689))
+- Remove the dummy remote repository in Maven ([683](https://github.com/jfrog/build-info/pull/683))
+
+## build-info-extractor 2.38.1 / gradle-artifactory-plugin 4.30.1 (December 15, 2022)
+- Downgrade slf4j to 1.7.36 ([686](https://github.com/jfrog/build-info/pull/686))
+
+## build-info-extractor 2.38.0 / gradle-artifactory-plugin 4.30.0 (December 14, 2022)
+- Add getFederatedRepositoriesKeys to ArtifactoryManager ([685](https://github.com/jfrog/build-info/pull/685)) 
+- Gradle - Publish bom files when 'java-platform' plugin applied ([680](https://github.com/jfrog/build-info/pull/680))
+- Update dependencies and support building Java 11 ([659](https://github.com/jfrog/build-info/pull/659))
+- Bug fix - NullPointerException when building the matrix params ([684](https://github.com/jfrog/build-info/pull/684))
+
+## build-info-extractor 2.37.3 / gradle-artifactory-plugin 4.29.3 (November 10, 2022)
+- Bug fix - Remove custom exception for unknown violation types ([675](https://github.com/jfrog/build-info/pull/675))
+- Bug fix - Sha256 hashes being set to literal "SHA-256" in build-info json ([669](https://github.com/jfrog/build-info/pull/669))
+
+## build-info-extractor 2.37.2 / gradle-artifactory-plugin 4.29.2 (October 18, 2022)
+- Bug fix - Pom doesn't get deployed using Maven Install plugin 3+ ([670](https://github.com/jfrog/build-info/pull/670))
+
+## build-info-extractor 2.37.1 / gradle-artifactory-plugin 4.29.1 (September 28, 2022)
+- Bug fix - Support Docker module ID with slash ([666](https://github.com/jfrog/build-info/pull/666))
+
 ## build-info-extractor 2.37.0 / gradle-artifactory-plugin 4.29.0 (July 21, 2022)
 - Add project field to gradle extractor ([661](https://github.com/jfrog/build-info/pull/661))
 

@@ -44,6 +44,7 @@ import static org.jfrog.build.api.util.FileChecksumCalculator.*;
  * @author Fred Simon
  */
 public class TaskHelperPublications extends TaskHelper {
+    public static final String MAVEN_JAVA_PLATFORM = "mavenJavaPlatform";
     public static final String MAVEN_JAVA = "mavenJava";
     public static final String MAVEN_WEB = "mavenWeb";
     public static final String IVY_JAVA = "ivyJava";
@@ -286,25 +287,20 @@ public class TaskHelperPublications extends TaskHelper {
                         getProject().getPath());
                 return;
             }
-            Publication mavenJavaPublication = publishingExtension.getPublications().findByName(MAVEN_JAVA);
-            if (mavenJavaPublication != null) {
-                log.info("No publications specified for project '{}' - adding '{}' publication.",
-                        getProject().getPath(), MAVEN_JAVA);
-                addPublication(mavenJavaPublication);
-            }
-            Publication mavenWebPublication = publishingExtension.getPublications().findByName(MAVEN_WEB);
-            if (mavenWebPublication != null) {
-                log.info("No publications specified for project '{}' - adding '{}' publication.",
-                        getProject().getPath(), MAVEN_WEB);
-                addPublication(mavenWebPublication);
-            }
-            Publication ivyJavaPublication = publishingExtension.getPublications().findByName(IVY_JAVA);
-            if (ivyJavaPublication != null) {
-                log.info("No publications specified for project '{}' - adding '{}' publication.",
-                        getProject().getPath(), IVY_JAVA);
-                addPublication(ivyJavaPublication);
-            }
+            addPublicationIfExists(publishingExtension, MAVEN_JAVA);
+            addPublicationIfExists(publishingExtension, MAVEN_JAVA_PLATFORM);
+            addPublicationIfExists(publishingExtension, MAVEN_WEB);
+            addPublicationIfExists(publishingExtension, IVY_JAVA);
             checkDependsOnArtifactsToPublish();
+        }
+    }
+
+    private void addPublicationIfExists(PublishingExtension publishingExtension, String publicationName) {
+        Publication publication = publishingExtension.getPublications().findByName(publicationName);
+        if (publication != null) {
+            log.info("No publications specified for project '{}' - adding '{}' publication.",
+                    getProject().getPath(), publicationName);
+            addPublication(publication);
         }
     }
 

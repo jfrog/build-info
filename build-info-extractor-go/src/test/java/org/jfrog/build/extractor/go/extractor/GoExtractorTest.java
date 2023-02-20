@@ -6,11 +6,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.ci.Artifact;
-import org.jfrog.build.extractor.ci.BaseBuildFileBean;
-import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -24,17 +21,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
+import static org.testng.Assert.*;
 
 @Test
 public class GoExtractorTest extends IntegrationTestsBase {
@@ -47,13 +37,12 @@ public class GoExtractorTest extends IntegrationTestsBase {
 
     private static final Path PROJECTS_ROOT = Paths.get(".").toAbsolutePath().normalize().resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
 
-    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private final Map<String, String> env = new TreeMap<>();
 
     public GoExtractorTest() {
-        localRepo1 = GO_LOCAL_REPO;
-        remoteRepo = GO_REMOTE_REPO;
-        virtualRepo = GO_VIRTUAL_REPO;
+        localRepo1 = getKeyWithTimestamp(GO_LOCAL_REPO);
+        remoteRepo = getKeyWithTimestamp(GO_REMOTE_REPO);
+        virtualRepo = getKeyWithTimestamp(GO_VIRTUAL_REPO);
     }
 
     private enum Project {

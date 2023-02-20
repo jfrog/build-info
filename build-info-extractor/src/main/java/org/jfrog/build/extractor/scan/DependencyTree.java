@@ -124,15 +124,20 @@ public class DependencyTree extends DefaultMutableTreeNode {
     /**
      * @return Node's children
      */
-    @SuppressWarnings({"WeakerAccess", "unchecked"})
+    @SuppressWarnings({"rawtypes", "UnnecessaryLocalVariable", "unchecked"})
     public Vector<DependencyTree> getChildren() {
-        return children != null ? children : new Vector<>();
+        if (this.children == null) {
+            return new Vector<>();
+        }
+        // Force upcasting from TreeNode to DependencyTree
+        Vector children = this.children;
+        return children;
     }
 
     @JsonProperty(value = "nodes")
-    @SuppressWarnings({"unchecked", "unused"})
+    @SuppressWarnings({"unused"})
     public List<DependencyTree> getNodes() {
-        return children;
+        return getChildren();
     }
 
     /**

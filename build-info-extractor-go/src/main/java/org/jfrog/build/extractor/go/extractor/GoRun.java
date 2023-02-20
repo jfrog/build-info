@@ -138,7 +138,7 @@ public class GoRun extends GoCommand {
     private void populateModuleAndDeps() throws Exception {
         backupModAndSumFiles();
         try {
-            DependencyTree dependencyTree = createDependencyTree(goDriver, logger, true);
+            DependencyTree dependencyTree = createDependencyTree(goDriver, logger, true, false);
             moduleName = dependencyTree.toString();
 
             String cachePath = getCachePath();

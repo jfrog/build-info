@@ -21,6 +21,7 @@ import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -67,7 +68,7 @@ public abstract class BuildInfoExtractorUtils {
             InputStream inputStream = null;
             try {
                 if (propertiesFile.exists()) {
-                    inputStream = new FileInputStream(propertiesFile);
+                    inputStream = Files.newInputStream(propertiesFile.toPath());
                     props.load(inputStream);
                 }
             } catch (IOException e) {
@@ -147,7 +148,7 @@ public abstract class BuildInfoExtractorUtils {
             File propertiesFile = new File(propsFilePath);
             InputStream inputStream = null;
             try {
-                inputStream = new FileInputStream(propertiesFile);
+                inputStream = Files.newInputStream(propertiesFile.toPath());
                 Properties propertiesFromFile = new Properties();
                 propertiesFromFile.load(inputStream);
                 props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
@@ -178,37 +179,38 @@ public abstract class BuildInfoExtractorUtils {
     public static String buildInfoToJsonString(BuildInfo buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
-
-        jsonGenerator.writeObject(buildInfo);
-        String result = writer.getBuffer().toString();
-        return result;
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(buildInfo);
+            return writer.getBuffer().toString();
+        }
     }
 
     public static BuildInfo jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
+        try (JsonParser parser = jsonFactory.createParser(new StringReader(json))) {
+            return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
+        }
     }
 
     public static <T extends Serializable> String buildInfoToJsonString(T buildComponent) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(buildComponent);
 
-        jsonGenerator.writeObject(buildComponent);
-        String result = writer.getBuffer().toString();
-        return result;
+            return writer.getBuffer().toString();
+        }
     }
 
     public static <T extends Serializable> T jsonStringToGeneric(String json, Class<T> clazz) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, clazz);
+        try (JsonParser parser = jsonFactory.createParser(new StringReader(json))) {
+            return jsonFactory.getCodec().readValue(parser, clazz);
+        }
     }
 
     public static void saveBuildInfoToFile(BuildInfo buildInfo, File toFile) throws IOException {
