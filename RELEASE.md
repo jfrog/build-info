@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.4 / gradle-artifactory-plugin 4.31.4 (February 20, 2023)
+- Adding Go Get command to go driver ([709](https://github.com/jfrog/build-info/pull/709))
+
 ## build-info-extractor 2.39.3 / gradle-artifactory-plugin 4.31.3 (February 16, 2023)
 - Refactor and handle unhandled exceptions ([707](https://github.com/jfrog/build-info/pull/707))
 
