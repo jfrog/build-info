@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author yahavi
@@ -85,6 +86,30 @@ public class GoDriverTest {
                     .map(String::trim)
                     .collect(Collectors.toSet());
             assertEquals(actualUsedModules, EXPECTED_USED_MODULES);
+        } finally {
+            FileUtils.deleteDirectory(projectDir);
+        }
+    }
+
+    /**
+     * Test "go get".
+     *
+     * @throws IOException in case of any I/O exception.
+     */
+    @Test
+    public void testGoGet() throws IOException {
+        File projectDir = Files.createTempDirectory("").toFile();
+        try {
+            FileUtils.copyDirectory(PROJECT_1.toFile(), projectDir);
+            GoDriver driver = new GoDriver(null, System.getenv(), projectDir, new NullLog());
+            driver.modTidy(false, true);
+            // Get dependency and expect it later on go modules list
+            driver.get("rsc.io/sampler@v1.3.1", false);
+
+            // Run "go list -f {{with .Module}}{{.Path}} {{.Version}}{{end}} all"
+            CommandResults results = driver.getUsedModules(false, false, false);
+            Set<String> actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n")).map(String::trim).collect(Collectors.toSet());
+            assertTrue(actualUsedModules.contains("rsc.io/sampler v1.3.1"));
         } finally {
             FileUtils.deleteDirectory(projectDir);
         }

@@ -114,7 +114,8 @@ public class GoDriver implements Serializable {
      * @throws IOException - in case of any I/O error.
      */
     public void get(String componentId, boolean verbose) throws IOException {
-        runCmd(Arrays.asList(GO_GET_CMD, componentId), verbose);
+        List<String> argsList = new ArrayList<>(Arrays.asList(GO_GET_CMD, componentId));
+        runCmd(argsList, verbose);
     }
 
     /**
