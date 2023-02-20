@@ -1,4 +1,9 @@
-[![Tests](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml/badge.svg)](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml) [![Gradle plugin](https://img.shields.io/gradle-plugin-portal/v/com.jfrog.artifactory?label=Gradle%20Artifactory%20plugin)](https://plugins.gradle.org/plugin/com.jfrog.artifactory)
+[![Tests](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml/badge.svg)](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml) 
+
+[![Gradle plugin](https://img.shields.io/gradle-plugin-portal/v/com.jfrog.artifactory?label=Gradle%20Artifactory%20plugin&style=for-the-badge)](https://plugins.gradle.org/plugin/com.jfrog.artifactory)
+
+[![Tag](https://img.shields.io/github/v/tag/jfrog/build-info?label=Latest%20Tag&style=for-the-badge)](https://github.com/jfrog/build-info/tags)
+
 
 ## Overview
 
