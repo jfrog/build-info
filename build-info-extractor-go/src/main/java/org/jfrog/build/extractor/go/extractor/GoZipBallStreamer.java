@@ -280,7 +280,7 @@ public class GoZipBallStreamer implements Closeable {
             }
             if (modEntry != null) {
                 try (InputStream inputStream = zipFile.getInputStream(modEntry)) {
-                    String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+                    String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     return StringUtils.substringBefore(modFileContent, System.lineSeparator()).endsWith("/" + majorVersion);
                 } catch (IOException e) {
                     log.warn("Failed to read go.mod file of the root project: " + ExceptionUtils.getRootCauseMessage(e));
