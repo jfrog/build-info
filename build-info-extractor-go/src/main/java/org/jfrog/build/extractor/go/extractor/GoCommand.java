@@ -30,7 +30,7 @@ abstract class GoCommand extends PackageManagerExtractor {
     // Module name, as specified in go.mod, is used for naming the relevant go package files.
     String moduleName;
     // Module id is used to determine which buildInfo's module should be used for the current go operation.
-    // By default it's value is moduleNme, unless customize differently.
+    // By default, it's value is moduleNme, unless customize differently.
     String buildInfoModuleId;
     Log logger;
 
@@ -43,7 +43,7 @@ abstract class GoCommand extends PackageManagerExtractor {
 
     protected void preparePrerequisites(String repo, ArtifactoryManager artifactoryManager) throws VersionException, IOException {
         validateArtifactoryVersion(artifactoryManager);
-        validateRepoExists(repo, artifactoryManager, "The provided repo must be specified");
+        validateRepoExists(repo, artifactoryManager);
     }
 
     private void validateArtifactoryVersion(ArtifactoryManager artifactoryManager) throws VersionException, IOException {
@@ -53,14 +53,14 @@ abstract class GoCommand extends PackageManagerExtractor {
             throw new VersionException(message, VersionCompatibilityType.NOT_FOUND);
         }
         if (!version.isAtLeast(MIN_SUPPORTED_ARTIFACTORY_VERSION)) {
-            String message = String.format("Couldn't execute Go task. Artifactory version is %s but must be at least %s.", version.toString(), MIN_SUPPORTED_ARTIFACTORY_VERSION.toString());
+            String message = String.format("Couldn't execute Go task. Artifactory version is %s but must be at least %s.", version, MIN_SUPPORTED_ARTIFACTORY_VERSION);
             throw new VersionException(message, VersionCompatibilityType.INCOMPATIBLE);
         }
     }
 
-    private void validateRepoExists(String repo, ArtifactoryManager artifactoryManager, String repoNotSpecifiedMsg) throws IOException {
+    private void validateRepoExists(String repo, ArtifactoryManager artifactoryManager) throws IOException {
         if (StringUtils.isBlank(repo)) {
-            throw new IllegalArgumentException(repoNotSpecifiedMsg);
+            throw new IllegalArgumentException("The provided repo must be specified");
         }
         if (!artifactoryManager.isRepositoryExist(repo)) {
             throw new IOException("Repo " + repo + " doesn't exist");

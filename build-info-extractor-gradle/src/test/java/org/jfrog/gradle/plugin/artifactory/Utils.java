@@ -112,7 +112,7 @@ public class Utils {
      * @throws IOException - In case of any IO error
      */
     private static String generateBuildInfoPropertiesForServer(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, Path source) throws IOException {
-        String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
+        String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8.name());
         Map<String, String> valuesMap = new HashMap<String, String>() {{
             put("publications", publications);
             put("contextUrl", contextUrl);

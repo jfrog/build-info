@@ -40,7 +40,7 @@ public class PipLogParserTest {
         // Read pip log.
         InputStream pipLogStream = this.getClass().getResourceAsStream("/pipLogParser/pipLog.txt");
         try {
-            String pipLog = IOUtils.toString(pipLogStream, StandardCharsets.UTF_8);
+            String pipLog = IOUtils.toString(pipLogStream, StandardCharsets.UTF_8.name());
             // Parse.
             Map<String, String> actualMap = PipLogParser.parse(pipLog, log);
             // Validate.

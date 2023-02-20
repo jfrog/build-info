@@ -158,7 +158,7 @@ public abstract class IntegrationTestsBase {
             if (repoConfigInputStream == null) {
                 throw new IOException("Couldn't find repository settings in " + path);
             }
-            String json = IOUtils.toString(repoConfigInputStream, StandardCharsets.UTF_8);
+            String json = IOUtils.toString(repoConfigInputStream, StandardCharsets.UTF_8.name());
             artifactoryManager.createRepository(repoKey, stringSubstitutor.replace(json));
         }
     }
