@@ -55,8 +55,8 @@ pipelines:
             - jf rt bp
 
             # Distribute release bundle
-            - jf ds rbc build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --sign
-            - jf ds rbd build-info-snapshot $run_number --site="releases.jfrog.io" --sync
+            - jf ds rbc ecosystem-build-info-snapshot $run_number --spec=./release/specs/dev-rbc-filespec.json --sign
+            - jf ds rbd ecosystem-build-info-snapshot $run_number --site="releases.jfrog.io" --sync
 
           onComplete:
             # Save gradle cache
