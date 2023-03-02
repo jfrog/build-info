@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.5 / gradle-artifactory-plugin 4.31.5 (March 2, 2023)
+- Revert "Removed the dummy remote repository in favour for the snapshot and re…" ([714](https://github.com/jfrog/build-info/pull/714))
+
 ## build-info-extractor 2.39.4 / gradle-artifactory-plugin 4.31.4 (February 20, 2023)
 - Adding Go Get command to go driver ([709](https://github.com/jfrog/build-info/pull/709))
 
