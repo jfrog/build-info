@@ -176,13 +176,11 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
             bib.addRunParameters(matrixParameter);
         }
 
-        log.debug("buildInfoBuilder = " + bib);
-        // for backward compatibility for Artifactory 2.2.3
         BuildInfo buildInfo = bib.build();
-        if (parentName != null && parentNumber != null) {
-            buildInfo.setParentBuildId(parentName);
-        }
         PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
+        PackageManagerUtils.filterBuildInfoProperties(clientConf, buildInfo);
+        log.debug("buildInfoBuilder = " + buildInfo);
+
         return buildInfo;
     }
 }

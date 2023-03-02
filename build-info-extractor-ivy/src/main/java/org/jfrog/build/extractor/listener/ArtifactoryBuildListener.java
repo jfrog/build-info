@@ -349,6 +349,7 @@ public class ArtifactoryBuildListener implements BuildListener {
 
         BuildInfo buildInfo = builder.build();
         PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
+        PackageManagerUtils.filterBuildInfoProperties(clientConf, buildInfo);
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();
