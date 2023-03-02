@@ -51,14 +51,37 @@ public class ArtifactoryProjectBuilder extends DefaultProjectBuilder {
     }
 
     private List<ArtifactRepository> getRepositories() {
+        List<ArtifactRepository> repositories = new ArrayList<>();
+
         String releaseRepoUrl = resolutionHelper.getRepoReleaseUrl();
         String snapshotRepoUrl = resolutionHelper.getRepoSnapshotUrl();
 
-        List<ArtifactRepository> repositories = new ArrayList<>();
+        org.apache.maven.artifact.repository.Authentication authentication = null;
+        if (StringUtils.isNotBlank(resolutionHelper.getRepoUsername())) {
+            authentication = new org.apache.maven.artifact.repository.Authentication(resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword());
+        }
+        org.apache.maven.repository.Proxy proxy = null;
+        if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
+            proxy = new org.apache.maven.repository.Proxy();
+            proxy.setHost(resolutionHelper.getProxyHost());
+            proxy.setPort(resolutionHelper.getProxyPort());
+            proxy.setUserName(resolutionHelper.getProxyUsername());
+            proxy.setPassword(resolutionHelper.getProxyPassword());
+        }
+
         if (StringUtils.isNotBlank(snapshotRepoUrl)) {
             ArtifactRepositoryPolicy snapshotPolicy = new ArtifactRepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
             ArtifactRepositoryPolicy releasePolicy = new ArtifactRepositoryPolicy(false, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-            repositories.add(new MavenArtifactRepository("artifactory-snapshot", snapshotRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy));
+            MavenArtifactRepository repository = new MavenArtifactRepository("artifactory-snapshot", snapshotRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy);
+
+            if (authentication != null) {
+                repository.setAuthentication(authentication);
+            }
+            if (proxy != null) {
+                repository.setProxy(proxy);
+            }
+
+            repositories.add(repository);
         }
         if (StringUtils.isNotBlank(releaseRepoUrl)) {
             boolean snapshotPolicyEnabled = StringUtils.isBlank(snapshotRepoUrl);
@@ -66,7 +89,16 @@ public class ArtifactoryProjectBuilder extends DefaultProjectBuilder {
 
             ArtifactRepositoryPolicy snapshotPolicy = new ArtifactRepositoryPolicy(snapshotPolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
             ArtifactRepositoryPolicy releasePolicy = new ArtifactRepositoryPolicy(true, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
-            repositories.add(new MavenArtifactRepository(repositoryId, releaseRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy));
+            MavenArtifactRepository repository = new MavenArtifactRepository(repositoryId, releaseRepoUrl, new DefaultRepositoryLayout(), snapshotPolicy, releasePolicy);
+
+            if (authentication != null) {
+                repository.setAuthentication(authentication);
+            }
+            if (proxy != null) {
+                repository.setProxy(proxy);
+            }
+
+            repositories.add(repository);
         }
         return repositories;
     }
