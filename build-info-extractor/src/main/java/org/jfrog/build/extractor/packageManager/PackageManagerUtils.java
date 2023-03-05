@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.packageManager;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
@@ -77,40 +78,42 @@ public class PackageManagerUtils {
         buildInfo.setProperties(envProperties);
     }
 
-    public static void filterBuildInfoProperties(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
+    public static void filterBuildInfoProperties(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo, Log log) {
         String include = clientConfiguration.getEnvVarsIncludePatterns();
         String exclude = clientConfiguration.getEnvVarsExcludePatterns();
         IncludeExcludePatterns includeExcludePatterns = new IncludeExcludePatterns(include, exclude);
-        filterExcludeIncludeProperties(includeExcludePatterns, buildInfo);
+        filterExcludeIncludeProperties(includeExcludePatterns, buildInfo, log);
     }
 
-    private static void filterExcludeIncludeProperties(IncludeExcludePatterns includePattern, BuildInfo buildInfo) {
+    private static void filterExcludeIncludeProperties(IncludeExcludePatterns includePattern, BuildInfo buildInfo, Log log) {
         // Filter envs/global properties
         Properties props = buildInfo.getProperties();
         if (props != null && props.size() > 0) {
-            Properties filteredProps = getExcludeIncludeProperties(includePattern, props);
+            Properties filteredProps = getExcludeIncludeProperties(includePattern, props, log);
             buildInfo.setProperties(filteredProps);
         }
 
         // Filter modules properties
         List<Module> modules = buildInfo.getModules();
-        if (modules != null && modules.size() > 0) {
+        if (modules == null || modules.size() == 0) {
             return;
         }
         for (Module module : modules) {
             Properties moduleProps = module.getProperties();
             if (moduleProps != null && moduleProps.size() > 0) {
-                module.setProperties(getExcludeIncludeProperties(includePattern, moduleProps));
+                module.setProperties(getExcludeIncludeProperties(includePattern, moduleProps, log));
             }
         }
     }
 
 
-    private static Properties getExcludeIncludeProperties(IncludeExcludePatterns patterns, Properties properties) {
+    private static Properties getExcludeIncludeProperties(IncludeExcludePatterns patterns, Properties properties, Log log) {
         Properties props = new Properties();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             if (!isExcludedByKey(patterns, entry) && !containsSuspectedSecrets(entry.getValue().toString())) {
                 props.put(entry.getKey(), entry.getValue());
+            } else {
+                log.debug("[buildinfo] Property '" + entry.getKey() + "' has been excluded'");
             }
         }
         return props;
@@ -139,7 +142,6 @@ public class PackageManagerUtils {
      * @return whether a secret is suspected
      */
     private static boolean containsSuspectedSecret(String variableValue, String secretPrefix, int secretMinimalLength) {
-        int secretIndex = variableValue.indexOf(secretPrefix);
-        return secretIndex > -1 && variableValue.substring(secretIndex).length() >= secretMinimalLength;
+        return variableValue.startsWith(secretPrefix) && variableValue.length() >= secretMinimalLength;
     }
 }

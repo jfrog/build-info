@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.packageManager;
 
+import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
@@ -23,7 +24,7 @@ public class PackageManagerUtilsTest {
     static String key2 = "test-env-key2";
     static String value2 = "test-env-value2";
     static String key3 = "test-env3";
-    static String value3 = "test-env-key1";
+    static String value3 = "AKCp8-test-env-key333333333est-env-key333333333est-env-key333333333est-env-key333333333";
 
     @BeforeClass
     public static void setup() {
@@ -47,7 +48,7 @@ public class PackageManagerUtilsTest {
                 .startedDate(new Date())
                 .properties(new Properties())
                 .build();
-        filter(buildInfo);
+        filterBuildInfoPropertiesTestHelper(buildInfo);
 
         // build info with properties
         Properties props = new Properties();
@@ -57,7 +58,7 @@ public class PackageManagerUtilsTest {
                 .startedDate(new Date())
                 .properties(props)
                 .build();
-        filter(buildInfo);
+        filterBuildInfoPropertiesTestHelper(buildInfo);
 
         // build info with properties in modules
         Properties moduleProps = new Properties();
@@ -70,7 +71,7 @@ public class PackageManagerUtilsTest {
                 .startedDate(new Date())
                 .properties(new Properties())
                 .addModule(module).build();
-        filter(buildInfo);
+        filterBuildInfoPropertiesTestHelper(buildInfo);
     }
 
     @Test
@@ -78,8 +79,8 @@ public class PackageManagerUtilsTest {
         Properties props = new Properties();
         props.put(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS, "*" + key1);
 
-        BuildInfo buildInfo = createBuildInfoTest(props);
-        filter(buildInfo);
+        BuildInfo buildInfo = createBuildInfo(props);
+        filterBuildInfoPropertiesTestHelper(buildInfo);
 
         // Excluded build info property by key
         assertNull(buildInfo.getProperties().getProperty(key1), "Should not find '" + key1 + "' property due to exclude patterns");
@@ -104,8 +105,8 @@ public class PackageManagerUtilsTest {
         Properties props = new Properties();
         props.put(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS, "*" + key1);
 
-        BuildInfo buildInfo = createBuildInfoTest(props);
-        filter(buildInfo);
+        BuildInfo buildInfo = createBuildInfo(props);
+        filterBuildInfoPropertiesTestHelper(buildInfo);
 
         // Included build info property by key
         assertEquals(buildInfo.getProperties().getProperty(key1), value1, key1 + " property does not match");
@@ -119,27 +120,26 @@ public class PackageManagerUtilsTest {
         assertNull(buildInfo.getModule("foo").getProperties().getProperty(key3), "Should not find " + key3 + " property due to include patterns");
     }
 
-    private BuildInfo createBuildInfoTest(Properties props) {
+    private BuildInfo createBuildInfo(Properties props) {
         Properties buildInfoProperties = getEnvProperties(props, null);
         Properties moduleProps = new Properties();
         moduleProps.setProperty(key1, value1);
         moduleProps.setProperty("dummy-prefix" + key1, value1);
         moduleProps.setProperty(key2, value2);
         moduleProps.setProperty(key3, value3);
-        final Module module = new Module();
+        Module module = new Module();
         module.setId("foo");
         module.setProperties(moduleProps);
-        BuildInfo buildInfo = new BuildInfoBuilder("BUILD_NAME")
+        return new BuildInfoBuilder("BUILD_NAME")
                 .number("BUILD_NUMBER")
                 .startedDate(new Date())
                 .properties(buildInfoProperties)
                 .addModule(module).build();
-        return buildInfo;
     }
 
-    private void filter(BuildInfo buildInfo) {
+    private void filterBuildInfoPropertiesTestHelper(BuildInfo buildInfo) {
         ArtifactoryClientConfiguration config = new ArtifactoryClientConfiguration(null);
         config.fillFromProperties(buildInfo.getProperties());
-        filterBuildInfoProperties(config, buildInfo);
+        filterBuildInfoProperties(config, buildInfo, new NullLog());
     }
 }

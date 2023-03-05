@@ -157,14 +157,11 @@ public abstract class BuildInfoExtractorUtils {
         return props;
     }
 
-    private static boolean isBuildInfoProperty(String PropertyKey) {
-        if (StringUtils.startsWith(PropertyKey, BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX)) {
-            return true;
-        }
-        if (StringUtils.startsWith(PropertyKey, BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS)) {
-            return true;
-        }
-        return StringUtils.startsWith(PropertyKey, BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS);
+    private static boolean isBuildInfoProperty(String propertyKey) {
+        return StringUtils.startsWithAny(propertyKey,
+                BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS,
+                BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX,
+                BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS);
     }
 
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module

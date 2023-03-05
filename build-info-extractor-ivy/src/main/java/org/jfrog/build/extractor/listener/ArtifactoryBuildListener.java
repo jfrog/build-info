@@ -15,6 +15,8 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.UnknownElement;
 import org.apache.tools.ant.taskdefs.Ant;
+import org.jfrog.build.context.BuildContext;
+import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.ci.Agent;
 import org.jfrog.build.extractor.ci.BuildAgent;
@@ -25,8 +27,6 @@ import org.jfrog.build.extractor.ci.IssueTracker;
 import org.jfrog.build.extractor.ci.Issues;
 import org.jfrog.build.extractor.ci.MatrixParameter;
 import org.jfrog.build.extractor.ci.Vcs;
-import org.jfrog.build.context.BuildContext;
-import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
@@ -349,7 +349,7 @@ public class ArtifactoryBuildListener implements BuildListener {
 
         BuildInfo buildInfo = builder.build();
         PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
-        PackageManagerUtils.filterBuildInfoProperties(clientConf, buildInfo);
+        PackageManagerUtils.filterBuildInfoProperties(clientConf, buildInfo, clientConf.getLog());
         String contextUrl = clientConf.publisher.getContextUrl();
         String username = clientConf.publisher.getUsername();
         String password = clientConf.publisher.getPassword();

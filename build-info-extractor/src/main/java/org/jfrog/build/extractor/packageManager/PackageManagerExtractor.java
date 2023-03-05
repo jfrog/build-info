@@ -35,7 +35,7 @@ public abstract class PackageManagerExtractor implements Serializable {
             return;
         }
         PackageManagerUtils.collectEnvIfNeeded(clientConfiguration, buildInfo);
-        PackageManagerUtils.filterBuildInfoProperties(clientConfiguration, buildInfo);
+        PackageManagerUtils.filterBuildInfoProperties(clientConfiguration, buildInfo, clientConfiguration.getLog());
         saveBuildInfoToFile(clientConfiguration, buildInfo);
     }
 
