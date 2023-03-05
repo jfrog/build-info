@@ -14,9 +14,12 @@ import java.util.Date;
 import java.util.Properties;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.containsSuspectedSecrets;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.filterBuildInfoProperties;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
 
 public class PackageManagerUtilsTest {
     static String key1 = "test-env-key1";
@@ -118,6 +121,21 @@ public class PackageManagerUtilsTest {
         assertEquals(buildInfo.getModule("foo").getProperties().getProperty("dummy-prefix" + key1), value1, key1 + " property does not match");
         assertNull(buildInfo.getModule("foo").getProperties().getProperty(key2), "Should not find " + key2 + " property due to include patterns");
         assertNull(buildInfo.getModule("foo").getProperties().getProperty(key3), "Should not find " + key3 + " property due to include patterns");
+    }
+
+    @Test
+    public void testContainsSuspectedSecrets() {
+        assertFalse(containsSuspectedSecrets(null));
+        assertFalse(containsSuspectedSecrets(""));
+        assertFalse(containsSuspectedSecrets("text"));
+        assertFalse(containsSuspectedSecrets("text with space"));
+        assertFalse(containsSuspectedSecrets("text with Capital"));
+        assertFalse(containsSuspectedSecrets(" spacewith spacewith spacewith AKCp8with spacewith spacewith spacewith space"));
+
+
+        assertTrue(containsSuspectedSecrets("AKCp8with spacewith spacewith spacewith spacewith spacewith spacewith space"));
+        assertTrue(containsSuspectedSecrets("cmVmdGtuOjAxOjtext with pacewith spacewith spacewith spacewith spacewith space"));
+        assertTrue(containsSuspectedSecrets("eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiJtext with Capital"));
     }
 
     private BuildInfo createBuildInfo(Properties props) {

@@ -123,7 +123,7 @@ public class PackageManagerUtils {
         return PatternMatcher.pathConflicts(entry.getKey().toString(), patterns);
     }
 
-    private static boolean containsSuspectedSecrets(String value) {
+    public static boolean containsSuspectedSecrets(String value) {
         if (StringUtils.isBlank(value)) {
             return false;
         }
