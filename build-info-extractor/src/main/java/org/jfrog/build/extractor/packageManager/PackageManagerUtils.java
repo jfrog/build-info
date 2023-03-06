@@ -60,7 +60,7 @@ public class PackageManagerUtils {
      * @param clientConfiguration - Artifactory client configuration
      * @param buildInfo           - The target build-info
      */
-    public static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
+    public static void collectAndFilterEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
         if (!clientConfiguration.isIncludeEnvVars()) {
             return;
         }
@@ -76,7 +76,7 @@ public class PackageManagerUtils {
             return;
         }
         buildInfo.setProperties(envProperties);
-        PackageManagerUtils.filterBuildInfoProperties(clientConfiguration, buildInfo, clientConfiguration.getLog());
+        filterBuildInfoProperties(clientConfiguration, buildInfo, clientConfiguration.getLog());
     }
 
     public static void filterBuildInfoProperties(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo, Log log) {

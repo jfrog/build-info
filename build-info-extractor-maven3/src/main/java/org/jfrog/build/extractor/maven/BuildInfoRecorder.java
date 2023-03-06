@@ -674,8 +674,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             long time = finish.getTime() - session.getRequest().getStartTime().getTime();
 
             BuildInfo buildInfo = buildInfoBuilder.durationMillis(time).build();
-            PackageManagerUtils.collectEnvIfNeeded(conf, buildInfo);
-            PackageManagerUtils.filterBuildInfoProperties(conf, buildInfo, conf.getLog());
+            PackageManagerUtils.collectAndFilterEnvIfNeeded(conf, buildInfo);
             return buildInfo;
         }
 
