@@ -19,7 +19,12 @@ import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.HashMap;
@@ -27,7 +32,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
@@ -110,13 +119,10 @@ public abstract class BuildInfoExtractorUtils {
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
-
         Properties props = new Properties();
-
         // Add all the startProps that starts with BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX
         for (Map.Entry<Object, Object> startEntry : startProps.entrySet()) {
-            if (StringUtils.startsWith((String) startEntry.getKey(),
-                    BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX)) {
+            if (isBuildInfoProperty((String) startEntry.getKey())) {
                 props.put(startEntry.getKey(), startEntry.getValue());
             }
         }
@@ -160,6 +166,13 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
         return props;
+    }
+
+    private static boolean isBuildInfoProperty(String propertyKey) {
+        return StringUtils.startsWithAny(propertyKey,
+                BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS,
+                BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX,
+                BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS);
     }
 
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module

@@ -12,7 +12,7 @@ public interface BuildInfoExtractor<C> {
 
     /**
      * <ol> <li>Collect the props (from -D props and the props supplied in the {@link
-     * org.jfrog.build.api.BuildInfoConfigProperties#PROP_PROPS_FILE} file.</li>
+     * org.jfrog.build.extractor.ci.BuildInfoConfigProperties#PROP_PROPS_FILE} file.</li>
      *
      * <li>Collect published artifacts and dependency artifacts produced/used by the underlying build technology, based
      * on the context.</li> </ol>

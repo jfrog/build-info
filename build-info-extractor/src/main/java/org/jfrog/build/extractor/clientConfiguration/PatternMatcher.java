@@ -22,18 +22,26 @@ public abstract class PatternMatcher {
      * @return True if the path conflicts
      */
     public static boolean pathConflicts(String path, IncludeExcludePatterns patterns) {
+        if (!isPathIncluded(path, patterns)) {
+            return true;
+        }
+        return isPathExcluded(path, patterns);
+    }
+
+    public static boolean isPathIncluded(String path, IncludeExcludePatterns patterns) {
         String[] includePatterns = patterns.getIncludePatterns();
+        if (includePatterns.length == 0) {
+            return true;
+        }
+        return pathMatchesPattern(path, includePatterns);
+    }
+
+    public static boolean isPathExcluded(String path, IncludeExcludePatterns patterns) {
         String[] excludePatterns = patterns.getExcludePatterns();
-
-        if ((includePatterns.length > 0) && !pathMatchesPattern(path, includePatterns)) {
-            return true;
+        if (excludePatterns.length == 0) {
+            return false;
         }
-
-        if ((excludePatterns.length > 0) && pathMatchesPattern(path, excludePatterns)) {
-            return true;
-        }
-
-        return false;
+        return pathMatchesPattern(path, excludePatterns);
     }
 
     /**

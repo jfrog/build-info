@@ -3,13 +3,11 @@ package org.jfrog.build.extractor.maven;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.execution.AbstractExecutionListener;
 import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -676,7 +674,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             long time = finish.getTime() - session.getRequest().getStartTime().getTime();
 
             BuildInfo buildInfo = buildInfoBuilder.durationMillis(time).build();
-            PackageManagerUtils.collectEnvIfNeeded(conf, buildInfo);
+            PackageManagerUtils.collectAndFilterEnvIfNeeded(conf, buildInfo);
             return buildInfo;
         }
 
