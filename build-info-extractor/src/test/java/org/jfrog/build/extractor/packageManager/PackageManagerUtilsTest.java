@@ -132,7 +132,6 @@ public class PackageManagerUtilsTest {
         assertFalse(containsSuspectedSecrets("text with Capital"));
         assertFalse(containsSuspectedSecrets(" spacewith spacewith spacewith AKCp8with spacewith spacewith spacewith space"));
 
-
         assertTrue(containsSuspectedSecrets("AKCp8with spacewith spacewith spacewith spacewith spacewith spacewith space"));
         assertTrue(containsSuspectedSecrets("cmVmdGtuOjAxOjtext with pacewith spacewith spacewith spacewith spacewith space"));
         assertTrue(containsSuspectedSecrets("eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwiYWxnIjoiUlMyNTYiLCJraWQiOiJtext with Capital"));

@@ -178,7 +178,6 @@ public class GradleBuildInfoExtractor implements BuildInfoExtractor<Project> {
 
         BuildInfo buildInfo = bib.build();
         PackageManagerUtils.collectEnvIfNeeded(clientConf, buildInfo);
-        PackageManagerUtils.filterBuildInfoProperties(clientConf, buildInfo, clientConf.getLog());
         log.debug("buildInfoBuilder = " + buildInfo);
 
         return buildInfo;

@@ -76,6 +76,7 @@ public class PackageManagerUtils {
             return;
         }
         buildInfo.setProperties(envProperties);
+        PackageManagerUtils.filterBuildInfoProperties(clientConfiguration, buildInfo, clientConfiguration.getLog());
     }
 
     public static void filterBuildInfoProperties(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo, Log log) {
