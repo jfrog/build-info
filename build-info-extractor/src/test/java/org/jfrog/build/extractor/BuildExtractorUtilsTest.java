@@ -150,6 +150,47 @@ public class BuildExtractorUtilsTest {
         System.clearProperty(gogoKey);
     }
 
+    public void testExcludePatterns() {
+        // Put system properties
+        String kokoKey = "koko";
+        String koko2Key = "akoko";
+        String gogoKey = "gogo";
+        System.setProperty(kokoKey, "parent");
+        System.setProperty(koko2Key, "parent2");
+        System.setProperty(gogoKey, "2");
+
+        Properties startProps = new Properties();
+        startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS, "*koko");
+        Properties buildInfoProperties = getEnvProperties(startProps, null);
+        assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to exclude patterns");
+        assertNull(buildInfoProperties.getProperty("akoko"), "Should not find akoko property due to exclude patterns");
+        assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
+
+        System.clearProperty(kokoKey);
+        System.clearProperty(gogoKey);
+    }
+
+    public void testIncludePatterns() {
+        // Put system properties
+        String gogoKey = "gogo1";
+        String gogo2Key = "gogo2a";
+        String kokoKey = "koko";
+        System.setProperty(kokoKey, "parent");
+        System.setProperty(gogoKey, "1");
+        System.setProperty(gogo2Key, "2");
+
+        Properties startProps = new Properties();
+        startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS, "gogo?*");
+        Properties buildInfoProperties = getEnvProperties(startProps, null);
+        assertEquals(buildInfoProperties.getProperty("gogo1"), "1", "gogo1 parent number property does not match");
+        assertEquals(buildInfoProperties.getProperty("gogo2a"), "2", "gogo2a parent number property does not match");
+        assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to include patterns");
+
+        System.clearProperty(gogoKey);
+        System.clearProperty(gogo2Key);
+        System.clearProperty(kokoKey);
+    }
+
     public void testBuildToJson() throws IOException {
         String[] requestedByA = new String[]{"parentA", "b", "moduleId"};
         String[] requestedByB = new String[]{"parentB", "d", "moduleId"};

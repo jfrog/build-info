@@ -16,6 +16,8 @@ import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
+import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
+import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,6 +116,9 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     public static Properties getEnvProperties(Properties startProps, Log log) {
+        IncludeExcludePatterns patterns = new IncludeExcludePatterns(
+                startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
+                startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
         Properties props = new Properties();
         // Add all the startProps that starts with BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX
         for (Map.Entry<Object, Object> startEntry : startProps.entrySet()) {
@@ -126,6 +131,9 @@ public abstract class BuildInfoExtractorUtils {
         Map<String, String> envMap = System.getenv();
         for (Map.Entry<String, String> entry : envMap.entrySet()) {
             String varKey = entry.getKey();
+            if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                continue;
+            }
             props.put(BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + varKey, entry.getValue());
         }
 
@@ -134,6 +142,9 @@ public abstract class BuildInfoExtractorUtils {
         Map<String, String> filteredSysProps = CommonUtils.entriesOnlyOnLeftMap(sysProps, System.getenv());
         for (Map.Entry<String, String> entry : filteredSysProps.entrySet()) {
             String varKey = entry.getKey();
+            if (PatternMatcher.pathConflicts(varKey, patterns)) {
+                continue;
+            }
             props.put(varKey, entry.getValue());
         }
 
