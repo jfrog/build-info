@@ -21,6 +21,9 @@ public class ReportUsage extends VoidJFrogService {
     public ReportUsage(UsageReporter usageReporter, Log log) {
         super(log);
         this.usageReporter = usageReporter;
+        if (usageReporter.getUniqueClientId() == null) {
+            log.debug("Wasn't able to generate unique client ID");
+        }
     }
 
     @Override
