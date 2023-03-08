@@ -16,20 +16,16 @@ import java.util.Enumeration;
 public class UsageReporter {
     private final String productId;
     private FeatureId[] features;
-    private final String uniqueClientId;
+    private String uniqueClientId;
 
     public UsageReporter(String productId, String[] featureIds) {
         this.productId = productId;
         setFeatures(featureIds);
-        this.uniqueClientId = generateUniqueClientId();
     }
 
-    private String generateUniqueClientId() {
+    private String generateUniqueClientId() throws SocketException {
         byte[] macAddress = getMacAddress();
-        if (macAddress != null) {
-            return new String(DigestUtils.sha1(macAddress));
-        }
-        return null;
+        return macAddress != null ? DigestUtils.sha1Hex(macAddress) : null;
     }
 
     @SuppressWarnings("unused")
@@ -37,6 +33,11 @@ public class UsageReporter {
         try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log)) {
             if (proxyConfiguration != null) {
                 artifactoryManager.setProxyConfiguration(proxyConfiguration);
+            }
+            try {
+                uniqueClientId = uniqueClientId == null ? generateUniqueClientId() : uniqueClientId;
+            } catch (SocketException e) {
+                log.debug("Wasn't able to generate unique client ID.");
             }
             artifactoryManager.reportUsage(this);
         }
@@ -66,20 +67,14 @@ public class UsageReporter {
         }
     }
 
-    private static byte[] getMacAddress() {
-        try {
-            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
-            if (!networkInterfaces.hasMoreElements()) {
-                return null;
+    private static byte[] getMacAddress() throws SocketException {
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+        while (networkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = networkInterfaces.nextElement();
+            byte[] macAddressed = networkInterface.getHardwareAddress();
+            if (macAddressed != null) {
+                return macAddressed;
             }
-            for (NetworkInterface networkInterface = networkInterfaces.nextElement(); networkInterfaces.hasMoreElements(); networkInterface = networkInterfaces.nextElement()) {
-                byte[] macAddressed = networkInterface.getHardwareAddress();
-                if (macAddressed != null) {
-                    return macAddressed;
-                }
-            }
-        } catch (SocketException e) {
-            return null;
         }
         return null;
     }
