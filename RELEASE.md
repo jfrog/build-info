@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.6 / gradle-artifactory-plugin 4.31.6 (March 13, 2023)
+- Filter build-info and modules properties ([716](https://github.com/jfrog/build-info/pull/716))
+
 ## build-info-extractor 2.39.5 / gradle-artifactory-plugin 4.31.5 (March 2, 2023)
 - Revert "Removed the dummy remote repository in favour for the snapshot and re…" ([714](https://github.com/jfrog/build-info/pull/714))
 
