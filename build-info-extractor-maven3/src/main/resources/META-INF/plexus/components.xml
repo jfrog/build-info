@@ -178,12 +178,12 @@
                     <role-hint>default</role-hint>
                     <field-name>loggerFactory</field-name>
                 </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>remoteRepositoryFilterManager</field-name>
+                </requirement>
             </requirements>
-            <requirement>
-                <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
-                <role-hint>default</role-hint>
-                <field-name>remoteRepositoryFilterManager</field-name>
-            </requirement>
         </component>
         <!-- A class responssible for enforcing metadata resolution from Artifactory, for Maven 3 versions prior to 3.2.1 -->
         <component>
