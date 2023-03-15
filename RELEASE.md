@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.7 / gradle-artifactory-plugin 4.31.7 (March 15, 2023)
+- Fix missing Maven 3.9.0 requirement field ([718](https://github.com/jfrog/build-info/pull/718))
+
 ## build-info-extractor 2.39.6 / gradle-artifactory-plugin 4.31.6 (March 13, 2023)
 - Filter build-info and modules properties ([716](https://github.com/jfrog/build-info/pull/716))
 
