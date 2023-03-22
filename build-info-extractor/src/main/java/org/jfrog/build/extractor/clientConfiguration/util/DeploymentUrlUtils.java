@@ -8,9 +8,7 @@ import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Tomer C.
@@ -75,22 +73,37 @@ public abstract class DeploymentUrlUtils {
                     if (multiPropertyValue == null) {
                         continue;
                     }
-                    // Due to known bug in Artifactory, in order to support multi values properties
-                    // we add a statement to each value separately.
-                    for (String propertyValue : multiPropertyValue.split(",")) {
-                        propertyValue = propertyValue.trim();
-                        matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey)
-                                .append("=").append(encodeProperties ? encode(propertyValue) : propertyValue);
-                    }
+                    matrix.append(";").append(encodeProperties ? encode(propertyKey) : propertyKey).append("=").append(encodeProperties ? encode(multiPropertyValue) : multiPropertyValue);
                 }
             }
         }
         return matrix.toString();
     }
 
+    private final static Set<Character> escapeChars = new HashSet<>(Arrays.asList('|',',',';','='));
+
+    private static String escape(String s) {
+        StringBuilder builder = new StringBuilder();
+        boolean escaped = false;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == '\\') {
+                // Next char already escaped
+                escaped = true;
+            } else if (escapeChars.contains(c) && !escaped) {
+                // Special char but not escaped
+                builder.append("\\");
+            } else {
+                escaped = false;
+            }
+            builder.append(c);
+        }
+        return builder.toString();
+    }
+
     private static String encode(String s) throws UnsupportedEncodingException {
         if (s != null) {
-            return URLEncoder.encode(s, "UTF-8");
+            return URLEncoder.encode(escape(s), "UTF-8");
         }
         return null;
     }
