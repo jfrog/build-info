@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.8 / gradle-artifactory-plugin 4.31.8 (March 23, 2023)
+- Refactor 'collectAndFilterEnvIfNeeded' func ([721](https://github.com/jfrog/build-info/pull/721))
+
 ## build-info-extractor 2.39.7 / gradle-artifactory-plugin 4.31.7 (March 15, 2023)
 - Fix missing Maven 3.9.0 requirement field ([718](https://github.com/jfrog/build-info/pull/718))
 
