@@ -55,18 +55,17 @@ public class PackageManagerUtils {
     }
 
     /**
-     * Collect environment variables.
-     * Filter buildInfo properties,  according to the env include-exclude patterns.
+     * Collect and filter environment variables if needed.
+     * Filter buildInfo properties according to the env include-exclude patterns.
      * @param clientConfiguration - Artifactory client configuration
      * @param buildInfo           - The target build-info
      */
     public static void collectEnvAndFilterProperties(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
-        collectEnv(clientConfiguration, buildInfo);
+        collectEnvIfNeeded(clientConfiguration, buildInfo);
         filterBuildInfoProperties(clientConfiguration, buildInfo, clientConfiguration.getLog());
-
     }
 
-    private static void collectEnv(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
+    private static void collectEnvIfNeeded(ArtifactoryClientConfiguration clientConfiguration, BuildInfo buildInfo) {
         if (!clientConfiguration.isIncludeEnvVars()) {
             return;
         }
