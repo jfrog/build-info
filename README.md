@@ -5,6 +5,7 @@
 [![Gradle plugin](https://img.shields.io/gradle-plugin-portal/v/com.jfrog.artifactory?label=Gradle%20Artifactory%20plugin&style=for-the-badge)](https://plugins.gradle.org/plugin/com.jfrog.artifactory)
 
 
+
 ## Overview
 
 Build Info is Artifactory's open integration layer for the CI servers and build tools. The build information is sent to Artifactory in json format.
