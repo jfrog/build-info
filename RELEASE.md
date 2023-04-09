@@ -1,5 +1,8 @@
 # Release Notes
 
+## build-info-extractor 2.39.9 / gradle-artifactory-plugin 4.31.9 (April 9, 2023)
+- Add Client ID to the usage report ([717](https://github.com/jfrog/build-info/pull/717))
+
 ## build-info-extractor 2.39.8 / gradle-artifactory-plugin 4.31.8 (March 23, 2023)
 - Refactor 'collectAndFilterEnvIfNeeded' func ([721](https://github.com/jfrog/build-info/pull/721))
 
