@@ -1,7 +1,8 @@
+# Build-Info
+
 [![Build Info Extractor plugin](https://img.shields.io/maven-central/v/org.jfrog.buildinfo/build-info-extractor?label=build-info-extractor&style=for-the-badge)](https://search.maven.org/artifact/org.jfrog.buildinfo/build-info-extractor) [![Gradle plugin](https://img.shields.io/gradle-plugin-portal/v/com.jfrog.artifactory?label=Gradle%20Artifactory%20plugin&style=for-the-badge)](https://plugins.gradle.org/plugin/com.jfrog.artifactory)
 
 [![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.svg)](https://github.com/jfrog/frogbot#readme) [![Tests](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml/badge.svg)](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml) 
-
 
 ## Overview
 
