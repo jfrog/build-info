@@ -99,7 +99,7 @@ public class PreemptiveHttpClientBuilder {
     public PreemptiveHttpClientBuilder setProxyConfiguration(ProxyConfiguration proxyConfiguration) {
         this.proxyConfiguration = proxyConfiguration;
         if (proxyConfiguration != null) {
-            this.proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port);
+            this.proxy = new HttpHost(proxyConfiguration.host, proxyConfiguration.port, proxyConfiguration.https ? "https" : "http");
         }
         return this;
     }

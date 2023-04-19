@@ -20,13 +20,15 @@ public class PreemptiveHttpClientBuilderTest {
         int proxyPort = 8000;
         String proxyUser = "proxy-user";
         String proxyPassword = "proxy-password";
+        boolean https = false;
+        String noProxyDomain = "noProxyDomain";
 
         PreemptiveHttpClientBuilder clientBuilder = new PreemptiveHttpClientBuilder()
                 .setConnectionRetries(3)
                 .setInsecureTls(false)
                 .setTimeout(300)
                 .setLog(new NullLog())
-                .setProxyConfiguration(createProxyConfiguration(proxyHost, proxyPort, proxyUser, proxyPassword))
+                .setProxyConfiguration(createProxyConfiguration(proxyHost, proxyPort, proxyUser, proxyPassword, https, noProxyDomain))
                 .setUserName(rtUser)
                 .setPassword(rtPassword);
         PreemptiveHttpClient deployClient = clientBuilder.build();
@@ -42,12 +44,14 @@ public class PreemptiveHttpClientBuilderTest {
         assertEquals(portCredentials, new UsernamePasswordCredentials(proxyUser, proxyPassword));
     }
 
-    private ProxyConfiguration createProxyConfiguration(String host, int port, String proxyUser, String proxyPassword) {
+    private ProxyConfiguration createProxyConfiguration(String host, int port, String proxyUser, String proxyPassword, boolean https, String noProxyDomain) {
         ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
         proxyConfiguration.host = host;
         proxyConfiguration.port = port;
         proxyConfiguration.username = proxyUser;
         proxyConfiguration.password = proxyPassword;
+        proxyConfiguration.https = https;
+        proxyConfiguration.noProxyDomain = noProxyDomain;
         return proxyConfiguration;
     }
 }

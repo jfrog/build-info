@@ -81,6 +81,14 @@ public class ResolutionHelper {
         return internalConfiguration.proxy.getHost();
     }
 
+    public Boolean isHttps() {
+        return internalConfiguration.proxy.isHttps();
+    }
+
+    public String getNoProxyDomain() {
+        return internalConfiguration.proxy.getNoProxyDomain();
+    }
+
     public Integer getProxyPort() {
         return internalConfiguration.proxy.getPort();
     }

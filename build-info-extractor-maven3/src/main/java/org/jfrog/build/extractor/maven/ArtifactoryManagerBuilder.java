@@ -85,9 +85,9 @@ public class ArtifactoryManagerBuilder {
             if (StringUtils.isNotBlank(proxyUsername)) {
                 logResolvedProperty(ClientConfigurationFields.USERNAME, proxyUsername);
                 artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,
-                        proxyConf.getPassword());
+                        proxyConf.getPassword(), proxyConf.isHttps(), proxyConf.getNoProxyDomain());
             } else {
-                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyConf.isHttps(), proxyConf.getNoProxyDomain());
             }
         }
     }

@@ -393,10 +393,10 @@ public class ArtifactoryBuildListener implements BuildListener {
             String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 buildInfoLog.debug("Found proxy user name '" + proxyUserName + "'");
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword(), proxy.isHttps(), proxy.getNoProxyDomain());
             } else {
                 buildInfoLog.debug("No proxy user name and password found, using anonymous proxy");
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxy.isHttps(), proxy.getNoProxyDomain());
             }
         }
     }

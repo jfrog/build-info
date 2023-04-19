@@ -214,10 +214,10 @@ public class DeployTask extends DefaultTask {
             String proxyUserName = proxy.getUsername();
             if (StringUtils.isNotBlank(proxyUserName)) {
                 log.debug("Found proxy user name '{}'", proxyUserName);
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxyUserName, proxy.getPassword(), proxy.isHttps(), proxy.getNoProxyDomain());
             } else {
                 log.debug("No proxy user name and password found, using anonymous proxy");
-                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort());
+                artifactoryManager.setProxyConfiguration(proxyHost, proxy.getPort(), proxy.isHttps(), proxy.getNoProxyDomain());
             }
         }
     }

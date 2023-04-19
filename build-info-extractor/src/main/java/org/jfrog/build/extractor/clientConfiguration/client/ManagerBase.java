@@ -47,8 +47,8 @@ public abstract class ManagerBase implements AutoCloseable {
      * @param host Proxy host
      * @param port Proxy port
      */
-    public void setProxyConfiguration(String host, int port) {
-        jfrogHttpClient.setProxyConfiguration(host, port, null, null);
+    public void setProxyConfiguration(String host, int port, Boolean https,String noProxyDomain) {
+        jfrogHttpClient.setProxyConfiguration(host, port, null, null,https, noProxyDomain);
     }
 
     /**
@@ -59,8 +59,8 @@ public abstract class ManagerBase implements AutoCloseable {
      * @param username Username to authenticate with the proxy
      * @param password Password to authenticate with the proxy
      */
-    public void setProxyConfiguration(String host, int port, String username, String password) {
-        jfrogHttpClient.setProxyConfiguration(host, port, username, password);
+    public void setProxyConfiguration(String host, int port, String username, String password, Boolean https, String noProxyDomain) {
+        jfrogHttpClient.setProxyConfiguration(host, port, username, password, https, noProxyDomain);
     }
 
     public ProxyConfiguration getProxyConfiguration() {
@@ -73,7 +73,7 @@ public abstract class ManagerBase implements AutoCloseable {
      * @param proxy Proxy instance {@link org.jfrog.build.client.ProxyConfiguration}
      */
     public void setProxyConfiguration(ProxyConfiguration proxy) {
-        jfrogHttpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password);
+        jfrogHttpClient.setProxyConfiguration(proxy.host, proxy.port, proxy.username, proxy.password, proxy.https, proxy.noProxyDomain);
     }
 
     /**

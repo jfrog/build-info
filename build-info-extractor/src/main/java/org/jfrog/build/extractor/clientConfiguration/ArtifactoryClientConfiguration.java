@@ -55,6 +55,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ADD_DEPLOYABLE_ARTIFACTS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.GO_PUBLISHED_VERSION;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.HOST;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.HTTPS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.INCLUDE_PATTERNS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY_ART_PATTERN;
@@ -66,6 +67,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MATRIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NAME;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NO_PROXY_DOMAIN;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NPM_CI_COMMAND;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_ARGS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_MODULE;
@@ -557,6 +559,22 @@ public class ArtifactoryClientConfiguration {
 
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
+        }
+
+        public Boolean isHttps() {
+            return getBooleanValue(HTTPS, false);
+        }
+
+        public void setHttps(Boolean https) {
+            setBooleanValue(HTTPS, https);
+        }
+
+        public String getNoProxyDomain() {
+            return getStringValue(NO_PROXY_DOMAIN);
+        }
+
+        public void setNoProxyDomain(String noProxyDomain) {
+            setStringValue(NO_PROXY_DOMAIN, noProxyDomain);
         }
     }
 
