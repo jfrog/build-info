@@ -60,7 +60,7 @@ public class ArtifactorySonatypeResolversHelper {
             }
             Proxy proxy = null;
             if (StringUtils.isNotBlank(resolutionHelper.getProxyHost())) {
-                proxy = new Proxy(resolutionHelper.getProxyHost().toLowerCase().startsWith("https")? TYPE_HTTPS : TYPE_HTTP, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(),
+                proxy = new Proxy(resolutionHelper.getProxyHost().toLowerCase().startsWith("https") ? TYPE_HTTPS : TYPE_HTTP, resolutionHelper.getProxyHost(), resolutionHelper.getProxyPort(),
                         new Authentication(resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword()));
             }
 
