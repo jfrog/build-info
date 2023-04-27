@@ -42,10 +42,7 @@ public class ArtifactoryEclipseResolversHelper {
     List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories.isEmpty()) {
             initResolutionHelper(session);
-            ArtifactoryResolution artifactoryResolution = new ArtifactoryResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(),
-                    resolutionHelper.getProxyHost(), resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword(), resolutionHelper.getProxyPort(), resolutionHelper.isHttps(),
-                    resolutionHelper.getNoProxyDomain(), logger
-            );
+            ArtifactoryResolution artifactoryResolution = new ArtifactoryResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
             snapshotRepository = artifactoryResolution.createSnapshotRepository();
             if (snapshotRepository != null) {
                 resolutionRepositories.add(snapshotRepository);
@@ -71,10 +68,7 @@ public class ArtifactoryEclipseResolversHelper {
     List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
         if (resolutionPluginRepositories.isEmpty()) {
             initResolutionHelper(session);
-            ArtifactoryPluginResolution repositoryBuilder = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(),
-                    resolutionHelper.getProxyHost(), resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword(), resolutionHelper.getProxyPort(), resolutionHelper.isHttps(),
-                    resolutionHelper.getNoProxyDomain(), logger
-            );
+            ArtifactoryPluginResolution repositoryBuilder = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
             ArtifactRepository snapshotRepository = repositoryBuilder.createSnapshotRepository();
             if (snapshotRepository != null) {
                 resolutionPluginRepositories.add(snapshotRepository);

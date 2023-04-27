@@ -5,19 +5,14 @@ import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.Proxy;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.repository.RepositoryPolicy;
-import org.sonatype.aether.util.repository.DefaultProxySelector;
-
-import static org.sonatype.aether.repository.Proxy.TYPE_HTTP;
-import static org.sonatype.aether.repository.Proxy.TYPE_HTTPS;
 
 /**
  * Based on the Artifactory client configuration, create and configure snapshot and release repositories (e.g. build info properties file).
  * Those repositories will replace the default Maven repositories.
  */
 public class ArtifactorySonatypeResolution extends ArtifactoryResolutionRepositoryBase {
-
-    public ArtifactorySonatypeResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, String proxyUrl, String proxyUsername, String proxyPassword, int proxyPort, boolean proxyHttps, String noProxyDomain, Logger logger) {
-        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxyUrl, proxyUsername, proxyPassword, proxyPort, proxyHttps, noProxyDomain, logger);
+    public ArtifactorySonatypeResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
+        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, logger);
     }
 
     public RemoteRepository createSnapshotRepository() {
@@ -60,13 +55,10 @@ public class ArtifactorySonatypeResolution extends ArtifactoryResolutionReposito
         }
     }
 
-    private void setProxy(RemoteRepository snapshotPluginRepository) {
-        if (shouldSetProxy()) {
-            Proxy proxy = new Proxy(proxyHttps ? TYPE_HTTPS : TYPE_HTTP, proxyUrl, proxyPort,new Authentication(proxyUsername, proxyPassword));
-            DefaultProxySelector proxySelector = new DefaultProxySelector();
-            proxySelector.add(proxy, noProxyDomain);
-            snapshotPluginRepository.setProxy(proxySelector.getProxy(new RemoteRepository(snapshotPluginRepository)));
+    private void setProxy(RemoteRepository repository) {
+        Proxy proxy = createSonatypeProxy(repository.getUrl());
+        if (proxy != null) {
+            repository.setProxy(proxy);
         }
     }
-
 }

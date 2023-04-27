@@ -41,10 +41,7 @@ public class ArtifactorySonatypeResolversHelper {
             allMavenProps.putAll(session.getUserProperties());
             resolutionHelper.init(allMavenProps);
 
-            ArtifactorySonatypeResolution artifactoryResolution = new ArtifactorySonatypeResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(),
-                    resolutionHelper.getProxyHost(), resolutionHelper.getProxyUsername(), resolutionHelper.getProxyPassword(), resolutionHelper.getProxyPort(), resolutionHelper.isHttps(),
-                    resolutionHelper.getNoProxyDomain(), logger
-            );
+            ArtifactorySonatypeResolution artifactoryResolution = new ArtifactorySonatypeResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
 
             snapshotRepository = artifactoryResolution.createSnapshotRepository();
             if (snapshotRepository != null) {

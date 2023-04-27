@@ -12,8 +12,8 @@ import org.codehaus.plexus.logging.Logger;
  */
 public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepositoryBase {
 
-    public ArtifactoryPluginResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, String proxyUrl, String proxyUsername, String proxyPassword, int proxyPort, boolean proxyHttps, String noProxyDomain, Logger logger) {
-        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxyUrl, proxyUsername, proxyPassword, proxyPort, proxyHttps, noProxyDomain, logger);
+    public ArtifactoryPluginResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
+        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, logger);
     }
 
     public ArtifactRepository createSnapshotRepository() {
@@ -39,7 +39,6 @@ public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepository
         repository.setId(repoId);
         setAuth(repository);
         setProxy(repository);
-
         return repository;
     }
 
@@ -57,22 +56,10 @@ public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepository
         }
     }
 
-    private void setProxy(ArtifactRepository snapshotPluginRepository) {
-        if (shouldSetProxy()) {
-            org.apache.maven.repository.Proxy proxy = getProxy();
-            snapshotPluginRepository.setProxy(proxy);
+    private void setProxy(ArtifactRepository repository) {
+        org.apache.maven.repository.Proxy proxy = createMavenProxy(repository.getUrl());
+        if (proxy != null) {
+            repository.setProxy(proxy);
         }
     }
-
-    private org.apache.maven.repository.Proxy getProxy() {
-        org.apache.maven.repository.Proxy proxy = new org.apache.maven.repository.Proxy();
-        proxy.setHost(proxyUrl);
-        proxy.setPort(proxyPort);
-        proxy.setUserName(proxyUsername);
-        proxy.setPassword(proxyPassword);
-        proxy.setProtocol(proxyHttps ? "HTTPS" : "HTTP");
-        proxy.setNonProxyHosts(noProxyDomain);
-        return proxy;
-    }
-
 }
