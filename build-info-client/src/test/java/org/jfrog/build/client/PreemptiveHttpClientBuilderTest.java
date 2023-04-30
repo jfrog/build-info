@@ -50,8 +50,6 @@ public class PreemptiveHttpClientBuilderTest {
         proxyConfiguration.port = port;
         proxyConfiguration.username = proxyUser;
         proxyConfiguration.password = proxyPassword;
-        proxyConfiguration.https = https;
-        proxyConfiguration.noProxyDomain = noProxyDomain;
         return proxyConfiguration;
     }
 }
