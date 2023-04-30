@@ -67,7 +67,7 @@ public class Proxy {
     }
 
     private static boolean isProxyPropertiesAvailable() {
-        return StringUtils.isNotBlank(System.getProperty(SYSTEM_PROPERTY_HTTP_PROXY_HOST) + System.getenv(SYSTEM_PROPERTY_HTTPS_PROXY_HOST));
+        return StringUtils.isNotBlank(System.getProperty(SYSTEM_PROPERTY_HTTP_PROXY_HOST) + System.getProperty(SYSTEM_PROPERTY_HTTPS_PROXY_HOST));
     }
 
     public String getHost() {
