@@ -27,7 +27,7 @@ public class Proxy {
     private Proxy(String host, int port) {
         this.host = host;
         this.port = port;
-        this.https = StringUtils.equals(System.getProperty(SYSTEM_PROPERTY_HTTPS_PROXY_HOST), host);
+        this.https = isHttpsProxy(host);
         this.username = https ? System.getProperty(SYSTEM_PROPERTY_HTTP_PROXY_USERNAME) : System.getProperty(SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME);
         this.password = https ? System.getProperty(SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD) : System.getProperty(SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD);
     }
@@ -39,8 +39,7 @@ public class Proxy {
         if (!isValidRepoUrl(repositoryUrl)) {
             return null;
         }
-        List<java.net.Proxy> applicableProxies = ProxySelector.getDefault().select(URI.create(repositoryUrl));
-        java.net.Proxy proxy = applicableProxies.stream().filter((java.net.Proxy p) -> p.type() == HTTP).findFirst().orElse(null);
+        java.net.Proxy proxy = getProxyFromSelector(repositoryUrl);
         if (proxy == null) {
             return null;
         }
@@ -49,6 +48,15 @@ public class Proxy {
             return new Proxy(inetAddr.getHostName(), inetAddr.getPort());
         }
         return null;
+    }
+
+    private static java.net.Proxy getProxyFromSelector(String repositoryUrl) {
+        List<java.net.Proxy> applicableProxies = ProxySelector.getDefault().select(URI.create(repositoryUrl));
+        return applicableProxies.stream().filter((java.net.Proxy p) -> p.type() == HTTP).findFirst().orElse(null);
+    }
+
+    private static boolean isHttpsProxy(String proxyUrl) {
+        return StringUtils.equals(System.getProperty(SYSTEM_PROPERTY_HTTPS_PROXY_HOST), proxyUrl);
     }
 
     /**
