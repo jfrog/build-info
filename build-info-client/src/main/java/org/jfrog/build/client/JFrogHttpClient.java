@@ -54,27 +54,23 @@ public class JFrogHttpClient implements AutoCloseable {
      * @param port Proxy port
      */
     public void setProxyConfiguration(String host, int port) {
-        setProxyConfiguration(host, port, null, null, false, null);
+        setProxyConfiguration(host, port, null, null);
     }
 
     /**
      * Sets the proxy details.
      *
-     * @param host          Proxy host
-     * @param port          Proxy port
-     * @param username      Username to authenticate with the proxy
-     * @param password      Password to authenticate with the proxy
-     * @param https         Proxy uses https protocol
-     * @param noProxyDomain No Proxy domains
+     * @param host     Proxy host
+     * @param port     Proxy port
+     * @param username Username to authenticate with the proxy
+     * @param password Password to authenticate with the proxy
      */
-    public void setProxyConfiguration(String host, int port, String username, String password, Boolean https, String noProxyDomain) {
+    public void setProxyConfiguration(String host, int port, String username, String password) {
         ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
         proxyConfiguration.host = host;
         proxyConfiguration.port = port;
         proxyConfiguration.username = username;
         proxyConfiguration.password = password;
-        proxyConfiguration.https = https;
-        proxyConfiguration.noProxyDomain = noProxyDomain;
         clientBuilder.setProxyConfiguration(proxyConfiguration);
     }
 

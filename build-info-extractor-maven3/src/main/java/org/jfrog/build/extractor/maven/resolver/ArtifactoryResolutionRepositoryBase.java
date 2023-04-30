@@ -4,7 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.jfrog.build.extractor.Proxy;
 
+import static org.jfrog.build.extractor.Proxy.createFromSystemProperties;
 import static org.sonatype.aether.repository.Proxy.TYPE_HTTP;
 import static org.sonatype.aether.repository.Proxy.TYPE_HTTPS;
 
@@ -48,44 +50,44 @@ public abstract class ArtifactoryResolutionRepositoryBase {
     }
 
     public org.apache.maven.repository.Proxy createMavenProxy(String repoUrl) {
-        org.jfrog.build.extractor.Proxy p = org.jfrog.build.extractor.Proxy.createFromSystemProperties(repoUrl);
-        if (p == null) {
+        Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        if (proxyConfig == null) {
             return null;
         }
         org.apache.maven.repository.Proxy proxy = new org.apache.maven.repository.Proxy();
-        proxy.setHost(p.getHost());
-        proxy.setPort(p.getPort());
-        proxy.setUserName(p.getUsername());
-        proxy.setPassword(p.getPassword());
-        proxy.setProtocol(p.isHttps() ? "HTTPS" : "HTTP");
+        proxy.setHost(proxyConfig.getHost());
+        proxy.setPort(proxyConfig.getPort());
+        proxy.setUserName(proxyConfig.getUsername());
+        proxy.setPassword(proxyConfig.getPassword());
+        proxy.setProtocol(proxyConfig.isHttps() ? "HTTPS" : "HTTP");
         return proxy;
     }
 
     public org.sonatype.aether.repository.Proxy createSonatypeProxy(String repoUrl) {
-        org.jfrog.build.extractor.Proxy p = org.jfrog.build.extractor.Proxy.createFromSystemProperties(repoUrl);
-        if (p == null) {
+        org.jfrog.build.extractor.Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        if (proxyConfig == null) {
             return null;
         }
         return new org.sonatype.aether.repository.Proxy(
-                p.isHttps() ? TYPE_HTTPS : TYPE_HTTP,
-                p.getHost(),
-                p.getPort(),
-                StringUtils.isNotBlank(p.getUsername()) ? new org.sonatype.aether.repository.Authentication(p.getUsername(), p.getPassword()) : null);
+                proxyConfig.isHttps() ? TYPE_HTTPS : TYPE_HTTP,
+                proxyConfig.getHost(),
+                proxyConfig.getPort(),
+                StringUtils.isNotBlank(proxyConfig.getUsername()) ? new org.sonatype.aether.repository.Authentication(proxyConfig.getUsername(), proxyConfig.getPassword()) : null);
     }
 
-    public org.eclipse.aether.repository.Proxy createEclipProxy(String repoUrl) {
-        org.jfrog.build.extractor.Proxy p = org.jfrog.build.extractor.Proxy.createFromSystemProperties(repoUrl);
-        if (p == null) {
+    public org.eclipse.aether.repository.Proxy createEclipseProxy(String repoUrl) {
+        org.jfrog.build.extractor.Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        if (proxyConfig == null) {
             return null;
         }
         Authentication auth = null;
-        if (StringUtils.isNotBlank(p.getUsername())) {
-            auth = new AuthenticationBuilder().addString("username", p.getUsername()).addSecret("password", p.getPassword()).build();
+        if (StringUtils.isNotBlank(proxyConfig.getUsername())) {
+            auth = new AuthenticationBuilder().addString("username", proxyConfig.getUsername()).addSecret("password", proxyConfig.getPassword()).build();
         }
-        return new org.eclipse.aether.repository.Proxy(p.isHttps() ? TYPE_HTTPS : TYPE_HTTP, p.getHost(), p.getPort(), auth);
+        return new org.eclipse.aether.repository.Proxy(proxyConfig.isHttps() ? TYPE_HTTPS : TYPE_HTTP, proxyConfig.getHost(), proxyConfig.getPort(), auth);
     }
 
-    protected Boolean snapshotPolicyEnabled() {
+    protected boolean snapshotPolicyEnabled() {
         return StringUtils.isBlank(snapshotRepoUrl);
     }
 }

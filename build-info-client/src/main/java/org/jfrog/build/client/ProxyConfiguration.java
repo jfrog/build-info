@@ -12,6 +12,4 @@ public class ProxyConfiguration implements Serializable {
     public int port;
     public String username;
     public String password;
-    public String noProxyDomain;
-    public boolean https;
 }

@@ -4,6 +4,7 @@ import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
+import org.apache.maven.repository.Proxy;
 import org.codehaus.plexus.logging.Logger;
 
 /**
@@ -31,7 +32,7 @@ public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepository
         return null;
     }
 
-    private ArtifactRepository createDefaultRepository(String repoUrl, String repoId, Boolean releasePolicy, Boolean snapshotPolicy) {
+    private ArtifactRepository createDefaultRepository(String repoUrl, String repoId, boolean releasePolicy, Boolean snapshotPolicy) {
         ArtifactRepository repository = new MavenArtifactRepository();
         setPolicy(repository, releasePolicy, snapshotPolicy);
         repository.setLayout(new DefaultRepositoryLayout());
@@ -57,7 +58,7 @@ public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepository
     }
 
     private void setProxy(ArtifactRepository repository) {
-        org.apache.maven.repository.Proxy proxy = createMavenProxy(repository.getUrl());
+        Proxy proxy = createMavenProxy(repository.getUrl());
         if (proxy != null) {
             repository.setProxy(proxy);
         }

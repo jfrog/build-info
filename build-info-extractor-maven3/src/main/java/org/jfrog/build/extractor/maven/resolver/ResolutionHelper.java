@@ -76,28 +76,4 @@ public class ResolutionHelper {
     public String getRepoPassword() {
         return internalConfiguration.resolver.getPassword();
     }
-
-    public String getProxyHost() {
-        return internalConfiguration.proxy.getHost();
-    }
-
-    public Boolean isHttps() {
-        return internalConfiguration.proxy.isHttps();
-    }
-
-    public String getNoProxyDomain() {
-        return internalConfiguration.proxy.getNoProxyDomain();
-    }
-
-    public Integer getProxyPort() {
-        return internalConfiguration.proxy.getPort();
-    }
-
-    public String getProxyUsername() {
-        return internalConfiguration.proxy.getUsername();
-    }
-
-    public String getProxyPassword() {
-        return internalConfiguration.proxy.getPassword();
-    }
 }

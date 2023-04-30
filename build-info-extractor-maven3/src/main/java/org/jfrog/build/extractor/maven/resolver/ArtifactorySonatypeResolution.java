@@ -30,7 +30,7 @@ public class ArtifactorySonatypeResolution extends ArtifactoryResolutionReposito
         return null;
     }
 
-    private RemoteRepository createDefaultRepository(String repoUrl, String repoId, Boolean releasePolicy, Boolean snapshotPolicy) {
+    private RemoteRepository createDefaultRepository(String repoUrl, String repoId, Boolean releasePolicy, boolean snapshotPolicy) {
         RemoteRepository repository = new RemoteRepository();
         setPolicy(repository, releasePolicy, snapshotPolicy);
         repository.setUrl(repoUrl);

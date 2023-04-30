@@ -32,7 +32,7 @@ public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
         return null;
     }
 
-    private RemoteRepository createRepository(String repoUrl, String repoId, Boolean releasePolicy, Boolean snapshotPolicy) {
+    private RemoteRepository createRepository(String repoUrl, String repoId, boolean releasePolicy, Boolean snapshotPolicy) {
         RemoteRepository.Builder builder = new RemoteRepository.Builder(repoId, "default", repoUrl);
         setAuthentication(builder);
         setProxy(builder, repoUrl);
@@ -55,8 +55,8 @@ public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
         builder.setSnapshotPolicy(snapshotPolicy);
     }
 
-    private void setProxy(RemoteRepository.Builder builder,String repoUrl) {
-        Proxy proxy = createEclipProxy(repoUrl);
+    private void setProxy(RemoteRepository.Builder builder, String repoUrl) {
+        Proxy proxy = createEclipseProxy(repoUrl);
         if (proxy != null) {
             builder.setProxy(proxy);
         }

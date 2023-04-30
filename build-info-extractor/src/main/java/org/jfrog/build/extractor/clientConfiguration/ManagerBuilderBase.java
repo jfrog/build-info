@@ -89,8 +89,6 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
             ProxyConfiguration proxyConfiguration = new ProxyConfiguration();
             proxyConfiguration.host = proxyHandler.getHost();
             proxyConfiguration.port = proxyHandler.getPort();
-            proxyConfiguration.noProxyDomain = proxyHandler.getNoProxyDomain();
-            proxyConfiguration.https = proxyHandler.isHttps();
             proxyConfiguration.username = proxyHandler.getUsername();
             proxyConfiguration.password = proxyHandler.getPassword();
             setProxyConfiguration(proxyConfiguration);
@@ -112,9 +110,7 @@ public abstract class ManagerBuilderBase<T extends ManagerBuilderBase<T>> implem
             client.setProxyConfiguration(proxyConfiguration.host,
                     proxyConfiguration.port,
                     proxyConfiguration.username,
-                    proxyConfiguration.password,
-                    proxyConfiguration.https,
-                    proxyConfiguration.noProxyDomain);
+                    proxyConfiguration.password);
         }
 
         client.setSslContext(sslContext);
