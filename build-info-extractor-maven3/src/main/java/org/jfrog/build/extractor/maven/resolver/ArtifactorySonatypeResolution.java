@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.extractor.ProxySelector;
 import org.sonatype.aether.repository.Authentication;
 import org.sonatype.aether.repository.Proxy;
 import org.sonatype.aether.repository.RemoteRepository;
@@ -11,8 +12,8 @@ import org.sonatype.aether.repository.RepositoryPolicy;
  * Those repositories will replace the default Maven repositories.
  */
 public class ArtifactorySonatypeResolution extends ArtifactoryResolutionRepositoryBase {
-    public ArtifactorySonatypeResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
-        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, logger);
+    public ArtifactorySonatypeResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, ProxySelector proxySelector, Logger logger) {
+        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxySelector, logger);
     }
 
     public RemoteRepository createSnapshotRepository() {

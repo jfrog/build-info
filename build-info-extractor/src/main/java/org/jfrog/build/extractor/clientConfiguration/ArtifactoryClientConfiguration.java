@@ -99,6 +99,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MATRIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NAME;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NO_PROXY;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NPM_CI_COMMAND;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_ARGS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_MODULE;
@@ -123,6 +124,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOCKER_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOTNET_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_GO_PREFIX;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_HTTPS_PROXY_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_INSECURE_TLS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_CO_PER_ROUTE;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_TOTAL_CO;
@@ -147,6 +149,7 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
+    public final ProxyHandler httpsProxy;
     public final PackageManagerHandler packageManagerHandler;
     public final NpmHandler npmHandler;
     public final PipHandler pipHandler;
@@ -166,6 +169,7 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
+        this.httpsProxy = new HttpsProxyHandler();
         this.packageManagerHandler = new PackageManagerHandler();
         this.npmHandler = new NpmHandler();
         this.pipHandler = new PipHandler();
@@ -569,9 +573,24 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    public class HttpsProxyHandler extends ProxyHandler {
+        public HttpsProxyHandler() {
+            super(PROP_HTTPS_PROXY_PREFIX);
+        }
+
+        @Override
+        public String getPassword() {
+            return System.getenv(PROP_HTTPS_PROXY_PREFIX + PASSWORD);
+        }
+    }
+
     public class ProxyHandler extends AuthenticationConfiguration {
         public ProxyHandler() {
             super(PROP_PROXY_PREFIX);
+        }
+
+        public ProxyHandler(String prefix) {
+            super(prefix);
         }
 
         // TODO: Support proxy type SSL or not
@@ -590,6 +609,13 @@ public class ArtifactoryClientConfiguration {
 
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
+        }
+        public String getNoProxy() {
+            return getStringValue(NO_PROXY);
+        }
+
+        public void setNoProxy(String noProxy) {
+            setStringValue(NO_PROXY, noProxy);
         }
     }
 

@@ -6,6 +6,7 @@ import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
+import org.jfrog.build.extractor.ProxySelector;
 
 import javax.inject.Named;
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ public class ArtifactoryEclipseResolversHelper {
     List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
         if (resolutionRepositories.isEmpty()) {
             initResolutionHelper(session);
-            ArtifactoryResolution artifactoryResolution = new ArtifactoryResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
+            org.jfrog.build.extractor.ProxySelector proxySelector = new org.jfrog.build.extractor.ProxySelector(resolutionHelper.getHttpProxyHost(), resolutionHelper.getHttpProxyPort(), resolutionHelper.getHttpProxyUsername(), resolutionHelper.getHttpProxyPassword(), resolutionHelper.getHttpsProxyHost(), resolutionHelper.getHttpsProxyPort(), resolutionHelper.getHttpsProxyUsername(), resolutionHelper.getHttpsProxyPassword(), resolutionHelper.getNoProxy());
+            ArtifactoryResolution artifactoryResolution = new ArtifactoryResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, logger);
             snapshotRepository = artifactoryResolution.createSnapshotRepository();
             if (snapshotRepository != null) {
                 resolutionRepositories.add(snapshotRepository);
@@ -68,7 +70,8 @@ public class ArtifactoryEclipseResolversHelper {
     List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
         if (resolutionPluginRepositories.isEmpty()) {
             initResolutionHelper(session);
-            ArtifactoryPluginResolution repositoryBuilder = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
+            ProxySelector proxySelector = new ProxySelector(resolutionHelper.getHttpProxyHost(), resolutionHelper.getHttpProxyPort(), resolutionHelper.getHttpProxyUsername(), resolutionHelper.getHttpProxyPassword(), resolutionHelper.getHttpsProxyHost(), resolutionHelper.getHttpsProxyPort(), resolutionHelper.getHttpsProxyUsername(), resolutionHelper.getHttpsProxyPassword(), resolutionHelper.getNoProxy());
+            ArtifactoryPluginResolution repositoryBuilder = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, logger);
             ArtifactRepository snapshotRepository = repositoryBuilder.createSnapshotRepository();
             if (snapshotRepository != null) {
                 resolutionPluginRepositories.add(snapshotRepository);

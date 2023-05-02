@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.maven.resolver;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.extractor.ProxySelector;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.repository.RemoteRepository;
 
@@ -40,8 +41,9 @@ public class ArtifactorySonatypeResolversHelper {
             allMavenProps.putAll(session.getSystemProperties());
             allMavenProps.putAll(session.getUserProperties());
             resolutionHelper.init(allMavenProps);
+            ProxySelector proxySelector = new ProxySelector(resolutionHelper.getHttpProxyHost(), resolutionHelper.getHttpProxyPort(), resolutionHelper.getHttpProxyUsername(), resolutionHelper.getHttpProxyPassword(), resolutionHelper.getHttpsProxyHost(), resolutionHelper.getHttpsProxyPort(), resolutionHelper.getHttpsProxyUsername(), resolutionHelper.getHttpsProxyPassword(), resolutionHelper.getNoProxy());
 
-            ArtifactorySonatypeResolution artifactoryResolution = new ArtifactorySonatypeResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), logger);
+            ArtifactorySonatypeResolution artifactoryResolution = new ArtifactorySonatypeResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, logger);
 
             snapshotRepository = artifactoryResolution.createSnapshotRepository();
             if (snapshotRepository != null) {

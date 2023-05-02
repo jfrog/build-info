@@ -6,6 +6,7 @@ import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
+import org.jfrog.build.extractor.ProxySelector;
 
 /**
  * Create and configure snapshot and release repositories based on the Artifactory client configuration (e.g. build info properties file)
@@ -13,8 +14,8 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
  */
 public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
 
-    public ArtifactoryResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
-        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, logger);
+    public ArtifactoryResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, ProxySelector proxySelector, Logger logger) {
+        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxySelector, logger);
     }
 
     public RemoteRepository createSnapshotRepository() {

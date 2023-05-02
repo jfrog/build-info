@@ -5,8 +5,8 @@ import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jfrog.build.extractor.Proxy;
+import org.jfrog.build.extractor.ProxySelector;
 
-import static org.jfrog.build.extractor.Proxy.createFromSystemProperties;
 import static org.sonatype.aether.repository.Proxy.TYPE_HTTP;
 import static org.sonatype.aether.repository.Proxy.TYPE_HTTPS;
 
@@ -15,13 +15,15 @@ public abstract class ArtifactoryResolutionRepositoryBase {
     protected final String snapshotRepoUrl;
     protected final String repoUsername;
     protected final String repoPassword;
+    private final ProxySelector proxySelector;
     protected final Logger logger;
 
-    public ArtifactoryResolutionRepositoryBase(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
+    public ArtifactoryResolutionRepositoryBase(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, ProxySelector proxySelector, Logger logger) {
         this.releaseRepoUrl = repoReleaseUrl;
         this.snapshotRepoUrl = snapshotRepoUrl;
         this.repoUsername = repoUsername;
         this.repoPassword = repoPassword;
+        this.proxySelector = proxySelector;
         this.logger = logger;
     }
 
@@ -50,7 +52,7 @@ public abstract class ArtifactoryResolutionRepositoryBase {
     }
 
     public org.apache.maven.repository.Proxy createMavenProxy(String repoUrl) {
-        Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        Proxy proxyConfig = proxySelector.getProxy(repoUrl);
         if (proxyConfig == null) {
             return null;
         }
@@ -64,7 +66,7 @@ public abstract class ArtifactoryResolutionRepositoryBase {
     }
 
     public org.sonatype.aether.repository.Proxy createSonatypeProxy(String repoUrl) {
-        org.jfrog.build.extractor.Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        Proxy proxyConfig = proxySelector.getProxy(repoUrl);
         if (proxyConfig == null) {
             return null;
         }
@@ -76,7 +78,7 @@ public abstract class ArtifactoryResolutionRepositoryBase {
     }
 
     public org.eclipse.aether.repository.Proxy createEclipseProxy(String repoUrl) {
-        org.jfrog.build.extractor.Proxy proxyConfig = createFromSystemProperties(repoUrl);
+        Proxy proxyConfig = proxySelector.getProxy(repoUrl);
         if (proxyConfig == null) {
             return null;
         }

@@ -6,6 +6,7 @@ import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.repository.Proxy;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.extractor.ProxySelector;
 
 /**
  * Based on the Artifactory client configuration, create and configure snapshot and release repositories (e.g. build info properties file).
@@ -13,8 +14,8 @@ import org.codehaus.plexus.logging.Logger;
  */
 public class ArtifactoryPluginResolution extends ArtifactoryResolutionRepositoryBase {
 
-    public ArtifactoryPluginResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, Logger logger) {
-        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, logger);
+    public ArtifactoryPluginResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, ProxySelector proxySelector, Logger logger) {
+        super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxySelector, logger);
     }
 
     public ArtifactRepository createSnapshotRepository() {
