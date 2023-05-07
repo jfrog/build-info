@@ -610,8 +610,19 @@ public class ArtifactoryClientConfiguration {
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
         }
+
         public String getNoProxy() {
             return getStringValue(NO_PROXY);
+        }
+
+        @Override
+        public String getPassword() {
+            String password = System.getenv(PASSWORD);
+            if (StringUtils.isNotBlank(password)) {
+                return password;
+            }
+            // Backward compatibility.
+            return super.getPassword();
         }
 
         public void setNoProxy(String noProxy) {

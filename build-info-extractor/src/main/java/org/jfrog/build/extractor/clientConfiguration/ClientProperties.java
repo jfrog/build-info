@@ -18,6 +18,7 @@ public interface ClientProperties {
     String PROP_MAX_TOTAL_CO = "maxTotalCon";
 
     String PROP_PROXY_PREFIX = "proxy.";
+
     String PROP_HTTPS_PROXY_PREFIX = PROP_PROXY_PREFIX + "https.";
 
     String PROP_PACKAGE_MANAGER_PREFIX = "package.manager.";
