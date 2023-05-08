@@ -81,6 +81,10 @@ public class ResolutionHelper {
         return internalConfiguration.proxy.getHost();
     }
 
+    public String getNoProxy() {
+        return internalConfiguration.proxy.getNoProxy();
+    }
+
     public Integer getHttpProxyPort() {
         return internalConfiguration.proxy.getPort();
     }
@@ -109,7 +113,5 @@ public class ResolutionHelper {
         return internalConfiguration.httpsProxy.getPassword();
     }
 
-    public String getNoProxy() {
-        return internalConfiguration.httpsProxy.getNoProxy();
-    }
+
 }

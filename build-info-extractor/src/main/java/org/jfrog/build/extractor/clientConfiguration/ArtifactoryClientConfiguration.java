@@ -617,7 +617,7 @@ public class ArtifactoryClientConfiguration {
 
         @Override
         public String getPassword() {
-            String password = System.getenv(PASSWORD);
+            String password = System.getenv(PROP_PROXY_PREFIX + PASSWORD);
             if (StringUtils.isNotBlank(password)) {
                 return password;
             }

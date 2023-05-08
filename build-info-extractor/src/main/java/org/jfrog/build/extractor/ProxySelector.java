@@ -80,10 +80,15 @@ public class ProxySelector {
 
     private void fillSelectorConfig(Proxy proxy, String hostKey, String portKey, String usernameKey, String passwordKey) {
         if (proxy != null) {
+            if (proxy.getPort() <= 0 || StringUtils.isBlank(proxy.getHost())) {
+                return;
+            }
             System.setProperty(hostKey, proxy.getHost());
             System.setProperty(portKey, Integer.toString(proxy.getPort()));
             if (StringUtils.isNotBlank(proxy.getUsername())) {
                 System.setProperty(usernameKey, proxy.getUsername());
+            }
+            if (StringUtils.isNotBlank(proxy.getPassword())) {
                 System.setProperty(passwordKey, proxy.getPassword());
             }
         }

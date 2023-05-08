@@ -5,10 +5,20 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.jfrog.build.extractor.ProxySelector;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_HOST;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_PORT;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_HOST;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_PORT;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_USERNAME;
+import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_NO_PROXY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -30,8 +40,8 @@ public class ArtifactoryResolutionTest {
     final String HTTP_PROXY_PASSWORD = "http-proxy-pass";
     final String HTTPS_PROXY_USERNAME = "https-proxy-user";
     final String HTTPS_PROXY_PASSWORD = "https-proxy-pass";
-    final int PROXY_HTTP_PORT = 8888;
-    final int PROXY_HTTPS_PORT = 8889;
+    final int HTTP_PROXY_PORT = 8888;
+    final int HTTPS_PROXY_PORT = 8889;
     final String NO_PROXY_PATTERN = "www.http-no-proxy-url.com";
     ArtifactoryResolution artifactoryResolution;
     ArtifactoryResolution artifactoryResolutionOnlyRelease;
@@ -42,12 +52,25 @@ public class ArtifactoryResolutionTest {
 
     @BeforeClass
     public void setup() {
-        proxySelector = new ProxySelector(HTTP_PROXY_URL, PROXY_HTTP_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, HTTPS_PROXY_URL, PROXY_HTTPS_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
+        proxySelector = new ProxySelector(HTTP_PROXY_URL, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, HTTPS_PROXY_URL, HTTPS_PROXY_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
         artifactoryResolution = new ArtifactoryResolution(HTTPS_RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
         snapshotRepository = artifactoryResolution.createSnapshotRepository();
         releaseRepository = artifactoryResolution.createReleaseRepository();
         artifactoryResolutionOnlyRelease = new ArtifactoryResolution(HTTPS_RELEASE_URL, null, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
         releaseSnapshotRepository = artifactoryResolutionOnlyRelease.createReleaseRepository();
+    }
+
+    @BeforeMethod
+    public void cleanOldSystemProperties() {
+        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_HOST);
+        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_PORT);
+        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_USERNAME);
+        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD);
+        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_HOST);
+        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_PORT);
+        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME);
+        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD);
+        System.clearProperty(SYSTEM_PROPERTY_NO_PROXY);
     }
 
     @AfterClass
@@ -107,19 +130,19 @@ public class ArtifactoryResolutionTest {
     public void testProxyHttpsConfiguration() {
         // Snapshot Repository.
         assertEquals(HTTPS_PROXY_URL, snapshotRepository.getProxy().getHost());
-        assertEquals(PROXY_HTTPS_PORT, snapshotRepository.getProxy().getPort());
+        assertEquals(HTTPS_PROXY_PORT, snapshotRepository.getProxy().getPort());
         assertEquals("https", snapshotRepository.getProxy().getType());
         assertEquals("username=https-proxy-user, password=***", snapshotRepository.getProxy().getAuthentication().toString());
 
         // Release Repository.
         assertEquals(HTTPS_PROXY_URL, releaseRepository.getProxy().getHost());
-        assertEquals(PROXY_HTTPS_PORT, releaseRepository.getProxy().getPort());
+        assertEquals(HTTPS_PROXY_PORT, releaseRepository.getProxy().getPort());
         assertEquals("https", releaseRepository.getProxy().getType());
         assertEquals("username=https-proxy-user, password=***", releaseRepository.getProxy().getAuthentication().toString());
 
         // Snapshot & release Repository.
         assertEquals(HTTPS_PROXY_URL, releaseSnapshotRepository.getProxy().getHost());
-        assertEquals(PROXY_HTTPS_PORT, releaseSnapshotRepository.getProxy().getPort());
+        assertEquals(HTTPS_PROXY_PORT, releaseSnapshotRepository.getProxy().getPort());
         assertEquals("https", releaseSnapshotRepository.getProxy().getType());
         assertEquals("username=https-proxy-user, password=***", releaseSnapshotRepository.getProxy().getAuthentication().toString());
     }
@@ -129,7 +152,7 @@ public class ArtifactoryResolutionTest {
         ArtifactoryResolution artifactoryResolutionWithNoHttp = new ArtifactoryResolution(HTTP_RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
         RemoteRepository repo = artifactoryResolutionWithNoHttp.createReleaseRepository();
         assertEquals(HTTP_PROXY_URL, repo.getProxy().getHost());
-        assertEquals(PROXY_HTTP_PORT, repo.getProxy().getPort());
+        assertEquals(HTTP_PROXY_PORT, repo.getProxy().getPort());
         assertEquals("http", repo.getProxy().getType());
         assertEquals("username=http-proxy-user, password=***", repo.getProxy().getAuthentication().toString());
     }
@@ -138,6 +161,34 @@ public class ArtifactoryResolutionTest {
     public void testNullProxyForRepoWithNoHttpInUrl() {
         ArtifactoryResolution repository = new ArtifactoryResolution(RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
         assertNull(repository.createReleaseRepository().getProxy());
+    }
+
+    @Test(description = "Check null proxy is returned if repository url does not contains http(s) prefix.")
+    public void testNullProxyWithNoPassword() {
+        ProxySelector customProxySelector = new ProxySelector(HTTP_PROXY_URL, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, null, null, 0, null, null, null);
+        ArtifactoryResolution repository = new ArtifactoryResolution(RELEASE_URL, HTTP_RELEASE_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
+        assertNotNull(repository.createSnapshotRepository().getProxy());
+    }
+
+    @Test(description = "Check null proxy is returned if repository url does not contains http(s) prefix.")
+    public void testNullProxyWithNoUsername() {
+        ProxySelector customProxySelector = new ProxySelector(HTTP_PROXY_URL, HTTP_PROXY_PORT, null, HTTP_PROXY_PASSWORD, null, 0, null, null, null);
+        ArtifactoryResolution repository = new ArtifactoryResolution(RELEASE_URL, HTTP_RELEASE_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
+        assertNotNull(repository.createSnapshotRepository().getProxy());
+    }
+
+    @Test(description = "Check null proxy is returned if repository url does not contains http(s) prefix.")
+    public void testNullProxyWithNoPort() {
+        ProxySelector customProxySelector = new ProxySelector(HTTP_PROXY_URL, 0, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, null, 0, null, null, null);
+        ArtifactoryResolution repository = new ArtifactoryResolution(RELEASE_URL, HTTP_RELEASE_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
+        assertNull(repository.createSnapshotRepository().getProxy());
+    }
+
+    @Test(description = "Check null proxy is returned if repository url does not contains http(s) prefix.")
+    public void testNullProxyWithNoHost() {
+        ProxySelector customProxySelector = new ProxySelector(null, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, null, 0, null, null, null);
+        ArtifactoryResolution repository = new ArtifactoryResolution(RELEASE_URL, HTTP_RELEASE_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
+        assertNull(repository.createSnapshotRepository().getProxy());
     }
 
     @Test(description = "In the case of 'http.nonProxyHosts' matching the repository URL with 'http' prefix, null is returned from getProxy().")
@@ -155,7 +206,7 @@ public class ArtifactoryResolutionTest {
     @Test(description = "HTTP proxy is configured, but HTTPS isn't => a valid proxy return.")
     public void testOnlyHttpProxyConfigured() {
         // Prepare
-        ProxySelector customProxySelector = new ProxySelector(HTTP_PROXY_URL, PROXY_HTTP_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, "", PROXY_HTTP_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
+        ProxySelector customProxySelector = new ProxySelector(HTTP_PROXY_URL, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, "", HTTP_PROXY_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
         // Act
         ArtifactoryResolution artifactoryResolutionWithNoHttp = new ArtifactoryResolution(HTTP_RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
         // Assert
@@ -165,7 +216,7 @@ public class ArtifactoryResolutionTest {
     @Test(description = "HTTPS proxy is configured, but HTTP isn't => a valid proxy return.")
     public void testOnlyHttpsProxyConfigured() {
         // Prepare
-        ProxySelector customProxySelector = new ProxySelector("", PROXY_HTTP_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, HTTPS_PROXY_URL, PROXY_HTTPS_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
+        ProxySelector customProxySelector = new ProxySelector("", HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, HTTPS_PROXY_URL, HTTPS_PROXY_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
         // Act
         ArtifactoryResolution artifactoryResolutionWithNoHttp = new ArtifactoryResolution(HTTP_RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
         // Assert
@@ -175,7 +226,7 @@ public class ArtifactoryResolutionTest {
     @Test(description = "HTTP proxy is configured, HTTPS is not, and repository URL starts with HTTPS => no proxy return.")
     public void testHttpProxyWithRepoHttps() {
         // Prepare
-        ProxySelector customProxySelector = new ProxySelector(HTTP_RELEASE_URL, PROXY_HTTP_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, "", PROXY_HTTP_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
+        ProxySelector customProxySelector = new ProxySelector(HTTP_RELEASE_URL, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, "", HTTP_PROXY_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, NO_PROXY_PATTERN);
         // Act
         ArtifactoryResolution resolutionRepository = new ArtifactoryResolution(HTTP_RELEASE_URL, SNAPSHOT_URL, USERNAME, PASSWORD, customProxySelector, new NullPlexusLog());
         // Assert
