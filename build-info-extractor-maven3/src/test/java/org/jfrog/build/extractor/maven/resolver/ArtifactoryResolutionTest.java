@@ -5,20 +5,10 @@ import org.eclipse.aether.repository.RepositoryPolicy;
 import org.jfrog.build.extractor.ProxySelector;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_HOST;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_PORT;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_HOST;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_PORT;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_HTTP_PROXY_USERNAME;
-import static org.jfrog.build.extractor.ProxySelector.SYSTEM_PROPERTY_NO_PROXY;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -58,19 +48,6 @@ public class ArtifactoryResolutionTest {
         releaseRepository = artifactoryResolution.createReleaseRepository();
         artifactoryResolutionOnlyRelease = new ArtifactoryResolution(HTTPS_RELEASE_URL, null, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
         releaseSnapshotRepository = artifactoryResolutionOnlyRelease.createReleaseRepository();
-    }
-
-    @BeforeMethod
-    public void cleanOldSystemProperties() {
-        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_HOST);
-        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_PORT);
-        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_USERNAME);
-        System.clearProperty(SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD);
-        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_HOST);
-        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_PORT);
-        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME);
-        System.clearProperty(SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD);
-        System.clearProperty(SYSTEM_PROPERTY_NO_PROXY);
     }
 
     @AfterClass

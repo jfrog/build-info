@@ -5,6 +5,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.util.List;
+import java.util.Properties;
+import java.util.stream.Stream;
 
 import static java.net.Proxy.Type.HTTP;
 
@@ -65,17 +67,48 @@ public class ProxySelector {
     }
 
     private java.net.Proxy selectProxy(String repositoryUrl) {
-        setupProxySelector();
+        Properties propsBackup = setupProxySelector();
         List<java.net.Proxy> applicableProxies = java.net.ProxySelector.getDefault().select(URI.create(repositoryUrl));
+        propsBackup.forEach((key, value) -> System.setProperty(key.toString(), value.toString()));
         return applicableProxies.stream().filter((java.net.Proxy p) -> p.type() == HTTP).findFirst().orElse(null);
     }
 
-    private void setupProxySelector() {
+    /**
+     * Overrides the proxy configuration's system properties.
+     * This proxy selector can read these system properties and return the correct proxy based on no-proxy configuration if any exists.
+     *
+     * @return a copy of the previous proxy configuration, prior to the override.
+     *
+     * <p>Calling this method will modify the system properties for the proxy configuration, which affects all
+     * subsequent network connections made by the JVM. The previous proxy configuration is saved and returned as
+     * a copy to allow it to be restored later if needed.</p>
+     */
+    private Properties setupProxySelector() {
+        Properties propsBackup = getProxyProperties();
         fillSelectorConfig(httpProxy, SYSTEM_PROPERTY_HTTP_PROXY_HOST, SYSTEM_PROPERTY_HTTP_PROXY_PORT, SYSTEM_PROPERTY_HTTP_PROXY_USERNAME, SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD);
         fillSelectorConfig(httpsProxy, SYSTEM_PROPERTY_HTTPS_PROXY_HOST, SYSTEM_PROPERTY_HTTPS_PROXY_PORT, SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME, SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD);
         if (StringUtils.isNotBlank(noProxy)) {
             System.setProperty(SYSTEM_PROPERTY_NO_PROXY, noProxy);
         }
+        return propsBackup;
+    }
+
+    private Properties getProxyProperties() {
+        Properties props = new Properties();
+        Stream.of(SYSTEM_PROPERTY_HTTP_PROXY_HOST,
+                SYSTEM_PROPERTY_HTTP_PROXY_PORT,
+                SYSTEM_PROPERTY_HTTP_PROXY_USERNAME,
+                SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD,
+                SYSTEM_PROPERTY_HTTPS_PROXY_HOST,
+                SYSTEM_PROPERTY_HTTPS_PROXY_PORT,
+                SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME,
+                SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD,
+                SYSTEM_PROPERTY_NO_PROXY
+        ).forEach(key -> {
+            String value = StringUtils.isNotBlank(System.getProperty(key)) ? System.getProperty(key) : "";
+            props.setProperty(key, value);
+        });
+        return props;
     }
 
     private void fillSelectorConfig(Proxy proxy, String hostKey, String portKey, String usernameKey, String passwordKey) {

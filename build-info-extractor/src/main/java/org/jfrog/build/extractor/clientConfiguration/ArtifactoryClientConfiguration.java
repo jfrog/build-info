@@ -604,7 +604,7 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Integer getPort() {
-            return getIntegerValue(PORT);
+            return getIntegerValue(PORT, 0);
         }
 
         public void setPort(Integer port) {
