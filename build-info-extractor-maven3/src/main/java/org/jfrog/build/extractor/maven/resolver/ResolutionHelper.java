@@ -77,19 +77,43 @@ public class ResolutionHelper {
         return internalConfiguration.resolver.getPassword();
     }
 
-    public String getProxyHost() {
+    public String getHttpProxyHost() {
         return internalConfiguration.proxy.getHost();
     }
 
-    public Integer getProxyPort() {
+    public String getNoProxy() {
+        return internalConfiguration.proxy.getNoProxy();
+    }
+
+    public Integer getHttpProxyPort() {
         return internalConfiguration.proxy.getPort();
     }
 
-    public String getProxyUsername() {
+    public String getHttpProxyUsername() {
         return internalConfiguration.proxy.getUsername();
     }
 
-    public String getProxyPassword() {
+    public String getHttpProxyPassword() {
         return internalConfiguration.proxy.getPassword();
+    }
+
+    public String getHttpsProxyHost() {
+        return internalConfiguration.httpsProxy.getHost();
+    }
+
+    public Integer getHttpsProxyPort() {
+        return internalConfiguration.httpsProxy.getPort();
+    }
+
+    public String getHttpsProxyUsername() {
+        return internalConfiguration.httpsProxy.getUsername();
+    }
+
+    public String getHttpsProxyPassword() {
+        return internalConfiguration.httpsProxy.getPassword();
+    }
+
+    public Logger getLogger() {
+        return logger;
     }
 }

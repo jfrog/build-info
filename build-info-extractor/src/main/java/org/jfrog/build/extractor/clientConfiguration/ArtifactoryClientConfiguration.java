@@ -4,11 +4,11 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.util.CommonUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
-import org.jfrog.build.api.util.CommonUtils;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 
 import java.io.File;
@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
+import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ACTIVATE_RECORDER;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.BUILD_INFO_CONFIG_PREFIX;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ENV_VARS_EXCLUDE_PATTERNS;
@@ -33,7 +34,40 @@ import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ENV_VARS_IN
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.EXPORT_FILE;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.INCLUDE_ENV_VARS;
 import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROPERTIES_FILE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.*;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_NAME;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_VERSION;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.ARTIFACTORY_PLUGIN_VERSION;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_NAME;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_VERSION;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NAME;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBER;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBERS_NOT_TO_DELETE;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NAME;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NUMBER;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PROJECT;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_ASYNC;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_COUNT;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_DAYS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_MINIMUM_DATE;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_ROOT;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_STARTED;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_TIMESTAMP;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_URL;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.DELETE_BUILD_ARTIFACTS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.DEPLOYABLE_ARTIFACTS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.ENVIRONMENT_PREFIX;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.GENERATED_BUILD_INFO;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.INCREMENTAL;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.MIN_CHECKSUM_DEPLOY_SIZE_KB;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.PRINCIPAL;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_COMMENT;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_ENABLED;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.RUN_PARAMETERS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_BRANCH;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_MESSAGE;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_REVISION;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_URL;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_ISSUES_TRACKER_PREFIX;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_PREFIX;
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AFFECTED_ISSUES;
@@ -41,7 +75,7 @@ import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AGGREGATE_BUILD_I
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AGGREGATION_BUILD_STATUS;
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_NAME;
 import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_VERSION;
-import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ADD_DEPLOYABLE_ARTIFACTS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ARTIFACT_SPECS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.CONTEXT_URL;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOCKER_HOST;
@@ -52,7 +86,6 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EVEN_UNSTABLE;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EXCLUDE_PATTERNS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ADD_DEPLOYABLE_ARTIFACTS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.GO_PUBLISHED_VERSION;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.HOST;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.INCLUDE_PATTERNS;
@@ -66,6 +99,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MATRIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NAME;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NO_PROXY;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NPM_CI_COMMAND;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_ARGS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_MODULE;
@@ -90,6 +124,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOCKER_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOTNET_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_GO_PREFIX;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_HTTPS_PROXY_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_INSECURE_TLS;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_CO_PER_ROUTE;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_TOTAL_CO;
@@ -114,6 +149,7 @@ public class ArtifactoryClientConfiguration {
     public final PublisherHandler publisher;
     public final BuildInfoHandler info;
     public final ProxyHandler proxy;
+    public final ProxyHandler httpsProxy;
     public final PackageManagerHandler packageManagerHandler;
     public final NpmHandler npmHandler;
     public final PipHandler pipHandler;
@@ -133,6 +169,7 @@ public class ArtifactoryClientConfiguration {
         this.publisher = new PublisherHandler();
         this.info = new BuildInfoHandler();
         this.proxy = new ProxyHandler();
+        this.httpsProxy = new HttpsProxyHandler();
         this.packageManagerHandler = new PackageManagerHandler();
         this.npmHandler = new NpmHandler();
         this.pipHandler = new PipHandler();
@@ -536,9 +573,24 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
+    public class HttpsProxyHandler extends ProxyHandler {
+        public HttpsProxyHandler() {
+            super(PROP_HTTPS_PROXY_PREFIX);
+        }
+
+        @Override
+        public String getPassword() {
+            return System.getenv(PROP_HTTPS_PROXY_PREFIX + PASSWORD);
+        }
+    }
+
     public class ProxyHandler extends AuthenticationConfiguration {
         public ProxyHandler() {
             super(PROP_PROXY_PREFIX);
+        }
+
+        public ProxyHandler(String prefix) {
+            super(prefix);
         }
 
         // TODO: Support proxy type SSL or not
@@ -552,11 +604,29 @@ public class ArtifactoryClientConfiguration {
         }
 
         public Integer getPort() {
-            return getIntegerValue(PORT);
+            return getIntegerValue(PORT, 0);
         }
 
         public void setPort(Integer port) {
             setIntegerValue(PORT, port);
+        }
+
+        public String getNoProxy() {
+            return getStringValue(NO_PROXY);
+        }
+
+        @Override
+        public String getPassword() {
+            String password = System.getenv(PROP_PROXY_PREFIX + PASSWORD);
+            if (StringUtils.isNotBlank(password)) {
+                return password;
+            }
+            // Backward compatibility.
+            return super.getPassword();
+        }
+
+        public void setNoProxy(String noProxy) {
+            setStringValue(NO_PROXY, noProxy);
         }
     }
 
@@ -1287,10 +1357,11 @@ public class ArtifactoryClientConfiguration {
     }
 
     /**
-     * Add the the default publisher attributes to ArtifactoryClientConfiguration.
-     * @param config - Global configuration of the current build.
-     * @param defaultProjectName - Default project.
-     * @param defaultAgentName - Default agent name.
+     * Add the default publisher attributes to ArtifactoryClientConfiguration.
+     *
+     * @param config              - Global configuration of the current build.
+     * @param defaultProjectName  - Default project.
+     * @param defaultAgentName    - Default agent name.
      * @param defaultAgentVersion - Default agent version.
      */
     public static void addDefaultPublisherAttributes(ArtifactoryClientConfiguration config, String defaultProjectName, String defaultAgentName, String defaultAgentVersion) {

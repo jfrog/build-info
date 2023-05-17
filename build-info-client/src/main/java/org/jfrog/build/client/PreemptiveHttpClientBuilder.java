@@ -103,9 +103,11 @@ public class PreemptiveHttpClientBuilder {
         }
         return this;
     }
+
     public ProxyConfiguration getProxyConfiguration(){
         return proxyConfiguration;
     }
+
     public PreemptiveHttpClientBuilder setConnectionRetries(int connectionRetries) {
         this.connectionRetries = connectionRetries;
         return this;
