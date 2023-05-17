@@ -1,5 +1,8 @@
 # Release Notes
 
+| Release notes moved to https://github.com/jfrog/build-info/releases |
+|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+
 ## build-info-extractor 2.39.9 / gradle-artifactory-plugin 4.31.9 (April 9, 2023)
 - Add Client ID to the usage report ([717](https://github.com/jfrog/build-info/pull/717))
 
