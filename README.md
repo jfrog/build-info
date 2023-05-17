@@ -113,4 +113,4 @@ export BITESTS_ARTIFACTORY_PIP_ENV=/Users/user/buildinfo-tests-env/bin
 Read more about build-info in the [Build Integration documentation](https://www.jfrog.com/confluence/display/JFROG/Build+Integration).
 
 ## Release notes
-The release notes are available [here](RELEASE.md).
+The release notes are available [here](https://github.com/jfrog/build-info/releases).
