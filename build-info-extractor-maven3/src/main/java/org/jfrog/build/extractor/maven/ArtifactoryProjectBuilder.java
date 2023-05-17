@@ -9,7 +9,6 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.jfrog.build.extractor.ProxySelector;
 import org.jfrog.build.extractor.maven.resolver.ArtifactoryPluginResolution;
-import org.jfrog.build.extractor.maven.resolver.NullPlexusLog;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 
 import javax.inject.Named;
@@ -52,7 +51,7 @@ public class ArtifactoryProjectBuilder extends DefaultProjectBuilder {
         List<ArtifactRepository> repositories = new ArrayList<>();
         ProxySelector proxySelector = new ProxySelector(resolutionHelper.getHttpProxyHost(), resolutionHelper.getHttpProxyPort(), resolutionHelper.getHttpProxyUsername(), resolutionHelper.getHttpProxyPassword(), resolutionHelper.getHttpsProxyHost(), resolutionHelper.getHttpsProxyPort(), resolutionHelper.getHttpsProxyUsername(), resolutionHelper.getHttpsProxyPassword(), resolutionHelper.getNoProxy());
 
-        ArtifactoryPluginResolution artifactoryResolution = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, new NullPlexusLog());
+        ArtifactoryPluginResolution artifactoryResolution = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, resolutionHelper.getLogger());
         ArtifactRepository snapshotRepository = artifactoryResolution.createSnapshotRepository();
         if (snapshotRepository != null) {
             repositories.add(snapshotRepository);

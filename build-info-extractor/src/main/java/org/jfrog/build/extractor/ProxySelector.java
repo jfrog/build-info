@@ -11,15 +11,15 @@ import java.util.stream.Stream;
 import static java.net.Proxy.Type.HTTP;
 
 public class ProxySelector {
-    public static String SYSTEM_PROPERTY_HTTP_PROXY_HOST = "http.proxyHost";
-    public static String SYSTEM_PROPERTY_HTTP_PROXY_PORT = "http.proxyPort";
-    public static String SYSTEM_PROPERTY_HTTP_PROXY_USERNAME = "http.proxyUser";
-    public static String SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD = "http.proxyPassword";
-    public static String SYSTEM_PROPERTY_HTTPS_PROXY_HOST = "https.proxyHost";
-    public static String SYSTEM_PROPERTY_HTTPS_PROXY_PORT = "https.proxyPort";
-    public static String SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME = "https.proxyUser";
-    public static String SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD = "https.proxyPassword";
-    public static String SYSTEM_PROPERTY_NO_PROXY = "http.nonProxyHosts";
+    private static final String SYSTEM_PROPERTY_HTTP_PROXY_HOST = "http.proxyHost";
+    private static final String SYSTEM_PROPERTY_HTTP_PROXY_PORT = "http.proxyPort";
+    private static final String SYSTEM_PROPERTY_HTTP_PROXY_USERNAME = "http.proxyUser";
+    private static final String SYSTEM_PROPERTY_HTTP_PROXY_PASSWORD = "http.proxyPassword";
+    private static final String SYSTEM_PROPERTY_HTTPS_PROXY_HOST = "https.proxyHost";
+    private static final String SYSTEM_PROPERTY_HTTPS_PROXY_PORT = "https.proxyPort";
+    private static final String SYSTEM_PROPERTY_HTTPS_PROXY_USERNAME = "https.proxyUser";
+    private static final String SYSTEM_PROPERTY_HTTPS_PROXY_PASSWORD = "https.proxyPassword";
+    private static final String SYSTEM_PROPERTY_NO_PROXY = "http.nonProxyHosts";
     private final String noProxy;
     private Proxy httpProxy;
     private Proxy httpsProxy;

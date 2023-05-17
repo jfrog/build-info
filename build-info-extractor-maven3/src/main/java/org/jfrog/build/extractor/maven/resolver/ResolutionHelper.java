@@ -113,5 +113,7 @@ public class ResolutionHelper {
         return internalConfiguration.httpsProxy.getPassword();
     }
 
-
+    public Logger getLogger() {
+        return logger;
+    }
 }
