@@ -92,6 +92,10 @@
                     <role>org.apache.maven.plugin.PluginArtifactsCache</role>
                     <field-name>pluginArtifactsCache</field-name>
                 </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.PluginValidationManager</role>
+                    <field-name>pluginValidationManager</field-name>
+                </requirement>
             </requirements>
         </component>
         <!-- A helper class for the ArtifactorySonatypeArtifactResolver abd ArtifactorySonatypeMetadataResolver classes -->
