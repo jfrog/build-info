@@ -23,7 +23,7 @@ public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final int TIMEOUT_EXIT_VALUE = 124;
     private static final int TIMEOUT_SECONDS = 30;
-
+    private static final int TIMEOUT_MINUTES = 120;
     private final String[] env;
     private final String executablePath;
 
@@ -123,27 +123,41 @@ public class CommandExecutor implements Serializable {
      *
      * @param execDir     - The execution dir (Usually path to project). Null means current directory.
      * @param args        - Command arguments.
-     * @param credentials - If specified, the credentials will be concatenated to the other commands.
-     *                    The credentials will be makes in the log output.
+     * @param credentials - If specified, the credentials will be concatenated to the other commands. The credentials will be masked in the log output.
      * @param logger      - The logger which will log the running command.
      * @return CommandResults object
      */
     public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger) throws InterruptedException, IOException {
+        return exeCommand(execDir, args, credentials, logger, TIMEOUT_MINUTES, TimeUnit.MINUTES);
+    }
+
+    /**
+     * Execute a command in external process.
+     *
+     * @param execDir     - The execution dir (Usually path to project). Null means current directory.
+     * @param args        - Command arguments.
+     * @param credentials - If specified, the credentials will be concatenated to the other commands. The credentials will be masked in the log output.
+     * @param logger      - The logger which will log the running command.
+     * @param timeout     - The maximum time to wait for the command execution.
+     * @param unit        – The time unit of the timeout argument.
+     * @return CommandResults object
+     */
+    public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger, long timeout, TimeUnit unit) throws InterruptedException, IOException {
         args.add(0, executablePath);
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
             Process process = runProcess(execDir, args, credentials, env, logger);
             // The output stream is not necessary in non-interactive scenarios, therefore we can close it now.
             process.getOutputStream().close();
-            try (InputStream inputStream = process.getInputStream();
-                 InputStream errorStream = process.getErrorStream()) {
+            try (InputStream inputStream = process.getInputStream(); InputStream errorStream = process.getErrorStream()) {
                 StreamReader inputStreamReader = new StreamReader(inputStream);
                 StreamReader errorStreamReader = new StreamReader(errorStream);
                 service.submit(inputStreamReader);
                 service.submit(errorStreamReader);
-                process.waitFor();
+                boolean executionTerminatedProperly = process.waitFor(timeout, unit);
                 service.shutdown();
-                boolean terminatedProperly = service.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                boolean outputReaderTerminatedProperly = service.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                boolean terminatedProperly = executionTerminatedProperly && outputReaderTerminatedProperly;
                 return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
             }
         } finally {
@@ -154,8 +168,7 @@ public class CommandExecutor implements Serializable {
     private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue) {
         CommandResults commandRes = new CommandResults();
         if (!terminatedProperly) {
-            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d seconds.",
-                    join(" ", args), TIMEOUT_SECONDS);
+            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d seconds.", join(" ", args), TIMEOUT_SECONDS);
             exitValue = TIMEOUT_EXIT_VALUE;
         }
         commandRes.setRes(output);
