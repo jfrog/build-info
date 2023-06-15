@@ -35,6 +35,7 @@ public interface BuildInfoFields {
     String BUILD_ROOT = "build.root";
     String RUN_PARAMETERS = "runParameters.";
     String INCREMENTAL = "incremental";
+    String DEPENDENCY_SCOPE_EXCLUDES = "dependencyScopeExcludes";
     String GENERATED_BUILD_INFO = "generated.build.info";
     String VCS = "vcs";
     String DEPLOYABLE_ARTIFACTS = "deployable.artifacts.map";

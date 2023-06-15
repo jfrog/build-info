@@ -18,11 +18,13 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
@@ -55,6 +57,7 @@ import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_STARTED;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_TIMESTAMP;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_URL;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.DELETE_BUILD_ARTIFACTS;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.DEPENDENCY_SCOPE_EXCLUDES;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.DEPLOYABLE_ARTIFACTS;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.ENVIRONMENT_PREFIX;
 import static org.jfrog.build.extractor.ci.BuildInfoFields.GENERATED_BUILD_INFO;
@@ -1353,6 +1356,10 @@ public class ArtifactoryClientConfiguration {
 
         public void setIncremental(Boolean incremental) {
             setBooleanValue(INCREMENTAL, incremental);
+        }
+
+        public Set<String> getDependencyScopeExclusions() {
+            return new HashSet<>(Arrays.asList(getStringValue(DEPENDENCY_SCOPE_EXCLUDES, "").split(",")));
         }
     }
 
