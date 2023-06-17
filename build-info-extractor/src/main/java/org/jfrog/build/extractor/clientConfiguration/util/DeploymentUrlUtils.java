@@ -72,6 +72,9 @@ public abstract class DeploymentUrlUtils {
         if (matrixParams != null && !matrixParams.isEmpty()) {
             for (String propertyKey : matrixParams.keySet()) {
                 for (String multiPropertyValue : matrixParams.get(propertyKey)) {
+                    if (multiPropertyValue == null) {
+                        continue;
+                    }
                     // Due to known bug in Artifactory, in order to support multi values properties
                     // we add a statement to each value separately.
                     for (String propertyValue : multiPropertyValue.split(",")) {

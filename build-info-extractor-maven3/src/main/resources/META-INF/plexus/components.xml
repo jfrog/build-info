@@ -57,6 +57,14 @@
                     <field-name>container</field-name>
                 </requirement>
                 <requirement>
+                    <role>java.util.List</role>
+                    <field-name>configurationValidators</field-name>
+                </requirement>
+                <requirement>
+                    <role>java.util.List</role>
+                    <field-name>dependenciesValidators</field-name>
+                </requirement>
+                <requirement>
                     <role>org.apache.maven.classrealm.ClassRealmManager</role>
                     <field-name>classRealmManager</field-name>
                 </requirement>
@@ -87,6 +95,10 @@
                 <requirement>
                     <role>org.apache.maven.plugin.PluginArtifactsCache</role>
                     <field-name>pluginArtifactsCache</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.apache.maven.plugin.PluginValidationManager</role>
+                    <field-name>pluginValidationManager</field-name>
                 </requirement>
             </requirements>
         </component>
@@ -173,6 +185,11 @@
                     <role>org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory</role>
                     <role-hint>default</role-hint>
                     <field-name>loggerFactory</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>remoteRepositoryFilterManager</field-name>
                 </requirement>
             </requirements>
         </component>
@@ -285,6 +302,16 @@
                     <role>org.eclipse.aether.impl.OfflineController</role>
                     <role-hint>default</role-hint>
                     <field-name>offlineController</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
+                    <role-hint>default</role-hint>
+                    <field-name>remoteRepositoryFilterManager</field-name>
+                </requirement>
+                <requirement>
+                    <role>java.util.Map</role>
+                    <role-hint>default</role-hint>
+                    <field-name>artifactResolverPostProcessors</field-name>
                 </requirement>
                 <requirement>
                     <role>org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory</role>

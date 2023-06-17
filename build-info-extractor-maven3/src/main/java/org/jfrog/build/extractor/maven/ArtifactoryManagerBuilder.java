@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
+import org.jfrog.build.extractor.Proxy;
+import org.jfrog.build.extractor.ProxySelector;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -25,7 +27,7 @@ public class ArtifactoryManagerBuilder {
     public ArtifactoryManager resolveProperties(ArtifactoryClientConfiguration clientConf) {
         ArtifactoryManager artifactoryManager = resolveClientProps(clientConf);
         resolveTimeout(clientConf, artifactoryManager);
-        resolveProxy(clientConf.proxy, artifactoryManager);
+        resolveProxy(clientConf, artifactoryManager);
         resolveRetriesParams(clientConf, artifactoryManager);
         resolveInsecureTls(clientConf, artifactoryManager);
         return artifactoryManager;
@@ -72,23 +74,21 @@ public class ArtifactoryManagerBuilder {
         artifactoryManager.setInsecureTls(clientConf.getInsecureTls());
     }
 
-    private void resolveProxy(ArtifactoryClientConfiguration.ProxyHandler proxyConf,
-                              ArtifactoryManager artifactoryManager) {
-        String proxyHost = proxyConf.getHost();
-
-        if (StringUtils.isNotBlank(proxyHost)) {
-            logResolvedProperty(ClientConfigurationFields.HOST, proxyHost);
-            if (proxyConf.getPort() == null) {
-                return;
-            }
-            String proxyUsername = proxyConf.getUsername();
-            if (StringUtils.isNotBlank(proxyUsername)) {
-                logResolvedProperty(ClientConfigurationFields.USERNAME, proxyUsername);
-                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort(), proxyUsername,
-                        proxyConf.getPassword());
-            } else {
-                artifactoryManager.setProxyConfiguration(proxyHost, proxyConf.getPort());
-            }
+    private void resolveProxy(ArtifactoryClientConfiguration clientConf, ArtifactoryManager artifactoryManager) {
+        ProxySelector proxySelector = new ProxySelector(
+                clientConf.proxy.getHost(),
+                clientConf.proxy.getPort(),
+                clientConf.proxy.getUsername(),
+                clientConf.proxy.getPassword(),
+                clientConf.httpsProxy.getHost(),
+                clientConf.httpsProxy.getPort(),
+                clientConf.httpsProxy.getUsername(),
+                clientConf.httpsProxy.getPassword(),
+                clientConf.proxy.getNoProxy()
+        );
+        Proxy proxy = proxySelector.getProxy(clientConf.publisher.getContextUrl());
+        if (proxy != null) {
+            artifactoryManager.setProxyConfiguration(proxy.getHost(), proxy.getPort(), proxy.getUsername(), proxy.getPassword());
         }
     }
 

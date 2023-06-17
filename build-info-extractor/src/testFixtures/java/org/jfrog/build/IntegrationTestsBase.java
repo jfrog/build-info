@@ -3,6 +3,7 @@ package org.jfrog.build;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringSubstitutor;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -16,14 +17,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static org.testng.Assert.fail;
 
 /**
  * Prepares the infrastructure resources used by tests.
@@ -43,10 +40,10 @@ public abstract class IntegrationTestsBase {
     protected static final String BITESTS_ENV_VAR_PREFIX = "BITESTS_PLATFORM_";
     private static final String BITESTS_PROPERTIES_PREFIX = "bitests.platform.";
     protected static final String BITESTS_ARTIFACTORY_ENV_VAR_PREFIX = "BITESTS_ARTIFACTORY_";
-    protected String localRepo1 = "build-info-tests-local";
-    protected String localRepo2 = "build-info-tests-local2";
+    protected String localRepo1 = getKeyWithTimestamp("build-info-tests-local");
+    protected String localRepo2 = getKeyWithTimestamp("build-info-tests-local2");
     protected String remoteRepo;
-    protected String virtualRepo = "build-info-tests-virtual";
+    protected String virtualRepo = getKeyWithTimestamp("build-info-tests-virtual");
     protected String localRepositoriesWildcard = "build-info-tests-local*";
     protected ArtifactoryManager artifactoryManager;
     protected ArtifactoryManagerBuilder artifactoryManagerBuilder;
@@ -56,6 +53,7 @@ public abstract class IntegrationTestsBase {
     private String artifactoryUrl;
     public static final Pattern BUILD_NUMBER_PATTERN = Pattern.compile("^/(\\d+)$");
     public static final long CURRENT_TIME = System.currentTimeMillis();
+    StringSubstitutor stringSubstitutor;
 
     public static Log getLog() {
         return log;
@@ -72,117 +70,96 @@ public abstract class IntegrationTestsBase {
             inputStream.close();
         }
 
-        platformUrl = readParam(props, "url");
+        platformUrl = readParam(props, "url", "http://127.0.0.1:8081");
         if (!platformUrl.endsWith("/")) {
             platformUrl += "/";
         }
         artifactoryUrl = platformUrl + "artifactory/";
-        username = readParam(props, "username");
-        adminToken = readParam(props, "admin_token");
+        username = readParam(props, "username", "admin");
+        adminToken = readParam(props, "admin_token", "password");
         artifactoryManager = createArtifactoryManager();
         artifactoryManagerBuilder = createArtifactoryManagerBuilder();
 
-        if (!artifactoryManager.getVersion().isOSS()) {
-            if (StringUtils.isNotEmpty(localRepo1)) {
-                createTestRepo(localRepo1);
-            }
-            if (StringUtils.isNotEmpty(remoteRepo)) {
-                createTestRepo(remoteRepo);
-            }
-            if (StringUtils.isNotEmpty(virtualRepo)) {
-                createTestRepo(virtualRepo);
-            }
+        createStringSubstitutor();
+        if (StringUtils.isNotEmpty(localRepo1)) {
+            createTestRepo(localRepo1);
+        }
+        if (StringUtils.isNotEmpty(remoteRepo)) {
+            createTestRepo(remoteRepo);
+        }
+        if (StringUtils.isNotEmpty(virtualRepo)) {
+            createTestRepo(virtualRepo);
         }
     }
 
     @AfterClass
     protected void terminate() throws IOException {
-        if (!artifactoryManager.getVersion().isOSS()) {
-            // Delete the virtual first.
-            if (StringUtils.isNotEmpty(virtualRepo)) {
-                deleteTestRepo(virtualRepo);
-            }
-            if (StringUtils.isNotEmpty(remoteRepo)) {
-                deleteTestRepo(remoteRepo);
-            }
-            if (StringUtils.isNotEmpty(localRepo1)) {
-                deleteTestRepo(localRepo1);
-            }
+        // Delete the virtual first.
+        if (StringUtils.isNotEmpty(virtualRepo)) {
+            deleteTestRepo(virtualRepo);
+        }
+        if (StringUtils.isNotEmpty(remoteRepo)) {
+            deleteTestRepo(remoteRepo);
+        }
+        if (StringUtils.isNotEmpty(localRepo1)) {
+            deleteTestRepo(localRepo1);
         }
         artifactoryManager.close();
     }
 
-    private String readParam(Properties props, String paramName) {
+    private void createStringSubstitutor() {
+        Map<String, Object> textParameters = new HashMap<>();
+        textParameters.put("LOCAL_REPO_1", localRepo1);
+        textParameters.put("REMOTE_REPO", remoteRepo);
+        stringSubstitutor = new StringSubstitutor(textParameters);
+    }
+
+    protected String readParam(Properties props, String paramName, String defaultValue) {
         String paramValue = null;
         if (props.size() > 0) {
             paramValue = props.getProperty(BITESTS_PROPERTIES_PREFIX + paramName);
         }
-        if (paramValue == null) {
+        if (StringUtils.isBlank(paramValue)) {
             paramValue = System.getProperty(BITESTS_PROPERTIES_PREFIX + paramName);
         }
-        if (paramValue == null) {
+        if (StringUtils.isBlank(paramValue)) {
             paramValue = System.getenv(BITESTS_ENV_VAR_PREFIX + paramName.toUpperCase());
         }
-        if (paramValue == null) {
-            failInit();
+        if (StringUtils.isBlank(paramValue)) {
+            paramValue = defaultValue;
         }
         return paramValue;
-    }
-
-    private void failInit() {
-        String message =
-                "Failed to load test JFrog platform instance credentials. Looking for System properties:\n'" +
-                        BITESTS_PROPERTIES_PREFIX + "url', \n'" +
-                        BITESTS_PROPERTIES_PREFIX + "username' and \n'" +
-                        BITESTS_PROPERTIES_PREFIX + "password'. \n" +
-                        BITESTS_PROPERTIES_PREFIX + "admin_token'. \n" +
-                        "Or a properties file with those properties in classpath or Environment variables:\n'" +
-                        BITESTS_ENV_VAR_PREFIX + "URL', \n'" +
-                        BITESTS_ENV_VAR_PREFIX + "USERNAME' and \n'" +
-                        BITESTS_ENV_VAR_PREFIX + "PASSWORD' and \n'" +
-                        BITESTS_ENV_VAR_PREFIX + "ADMIN_TOKEN'.";
-
-        fail(message);
     }
 
     /**
      * Delete all content from the given repository.
      *
-     * @param repo - repository name
+     * @param repoKey - repository key
      */
-    protected void deleteContentFromRepo(String repo) throws IOException {
-        if (!isRepoExists(repo)) {
+    protected void deleteContentFromRepo(String repoKey) throws IOException {
+        if (!artifactoryManager.isRepositoryExist(repoKey)) {
             return;
         }
-        artifactoryManager.deleteRepositoryContent(repo);
-    }
-
-    /**
-     * Check if repository exists.
-     *
-     * @param repo - repository name
-     */
-    private boolean isRepoExists(String repo) throws IOException {
-        return artifactoryManager.isRepositoryExist(repo);
+        artifactoryManager.deleteRepositoryContent(repoKey);
     }
 
     /**
      * Create new repository according to the settings.
      *
-     * @param repo - repository name
+     * @param repoKey - repository key
      * @throws IOException in case of any connection issues with Artifactory or the repository doesn't exist.
      */
-    protected void createTestRepo(String repo) throws IOException {
-        if (StringUtils.isBlank(repo) || isRepoExists(repo)) {
+    protected void createTestRepo(String repoKey) throws IOException {
+        if (artifactoryManager.isRepositoryExist(repoKey)) {
             return;
         }
-        String path = "/integration/settings/" + repo + ".json";
+        String path = "/integration/settings/" + StringUtils.substringBeforeLast(repoKey, "-") + ".json";
         try (InputStream repoConfigInputStream = this.getClass().getResourceAsStream(path)) {
             if (repoConfigInputStream == null) {
                 throw new IOException("Couldn't find repository settings in " + path);
             }
-            String json = IOUtils.toString(repoConfigInputStream, StandardCharsets.UTF_8);
-            artifactoryManager.createRepository(repo, json);
+            String json = IOUtils.toString(repoConfigInputStream, StandardCharsets.UTF_8.name());
+            artifactoryManager.createRepository(repoKey, stringSubstitutor.replace(json));
         }
     }
 
@@ -190,7 +167,7 @@ public abstract class IntegrationTestsBase {
      * Delete repository.
      *
      * @param repo - repository name
-     * @throws IOException
+     * @throws IOException in case of any I/O error.
      */
     protected void deleteTestRepo(String repo) throws IOException {
         artifactoryManager.deleteRepository(repo);
@@ -212,6 +189,16 @@ public abstract class IntegrationTestsBase {
         spec = StringUtils.replace(spec, TEMP_FOLDER_PLACEHOLDER, workSpacePath);
         spec = StringUtils.replace(spec, LOCAL_REPOSITORIES_WILDCARD_PLACEHOLDER, localRepositoriesWildcard);
         return StringUtils.replace(spec, "${WORKSPACE}", workSpacePath);
+    }
+
+    /**
+     * Get repository key with timestamp: key-[timestamp]
+     *
+     * @param key - The raw key
+     * @return key with timestamp
+     */
+    protected static String getKeyWithTimestamp(String key) {
+        return key + "-" + CURRENT_TIME;
     }
 
     protected void verifyExpected(Expected expected, File workspace) {

@@ -8,6 +8,7 @@ public interface ClientConfigurationFields {
     String USERNAME = "username";
     String HOST = "host";
     String PORT = "port";
+    String NO_PROXY = "noProxy";
     String PASSWORD = "password";
     String MAVEN = "maven";
     String IVY = "ivy";

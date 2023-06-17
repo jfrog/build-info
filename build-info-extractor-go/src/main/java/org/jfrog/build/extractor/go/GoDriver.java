@@ -21,6 +21,7 @@ public class GoDriver implements Serializable {
             Arrays.asList("list", "-f", "\"{{with .Module}}{{.Path}} {{.Version}}{{end}}\"", "all");
     private static final List<String> GO_MOD_TIDY_CMD = Arrays.asList("mod", "tidy");
     private static final String GO_MOD_GRAPH_CMD = "mod graph";
+    private static final String GO_GET_CMD = "get";
     private static final String GO_LIST_MODULE_CMD = "list -m";
     private static final String GO_VERSION_CMD = "version";
 
@@ -107,6 +108,17 @@ public class GoDriver implements Serializable {
     }
 
     /**
+     * Run go get.
+     * @param componentId - Component ID string. ( Example: github.com/jfrog/build-info-go@v1.8.7 )
+     * @param verbose - True if should print the results to the log
+     * @throws IOException - in case of any I/O error.
+     */
+    public void get(String componentId, boolean verbose) throws IOException {
+        List<String> argsList = new ArrayList<>(Arrays.asList(GO_GET_CMD, componentId));
+        runCmd(argsList, verbose);
+    }
+
+    /**
      * If ignoreErrors=false, run:
      * go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all
      * If ignoreErrors=false, run:
@@ -114,10 +126,14 @@ public class GoDriver implements Serializable {
      *
      * @param verbose      - True if should print the results to the log
      * @param ignoreErrors - True if errors should be ignored
+     * @param dontBuildVcs - Skip VCS stamping - can be used only on Go later than 1.18
      * @throws IOException - in case of any I/O error.
      */
-    public CommandResults getUsedModules(boolean verbose, boolean ignoreErrors) throws IOException {
+    public CommandResults getUsedModules(boolean verbose, boolean ignoreErrors, boolean dontBuildVcs) throws IOException {
         List<String> argsList = new ArrayList<>(GO_LIST_USED_MODULES_CMD);
+        if (dontBuildVcs) {
+            argsList.add(1, "-buildvcs=false");
+        }
         if (ignoreErrors) {
             argsList.add(1, "-e");
         }

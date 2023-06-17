@@ -73,8 +73,8 @@ pipelines:
             - jf rt bp
 
             # Distribute release bundle
-            - jf ds rbc build-info $NEXT_VERSION --spec=./release/specs/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION;gradleVersion=$NEXT_GRADLE_VERSION" --sign
-            - jf ds rbd build-info $NEXT_VERSION --site="releases.jfrog.io" --sync
+            - jf ds rbc ecosystem-build-info $NEXT_VERSION --spec=./release/specs/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION;gradleVersion=$NEXT_GRADLE_VERSION" --sign
+            - jf ds rbd ecosystem-build-info $NEXT_VERSION --site="releases.jfrog.io" --sync
 
             # Publish to Maven Central
             - >

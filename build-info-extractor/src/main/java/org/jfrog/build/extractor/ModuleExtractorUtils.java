@@ -38,12 +38,13 @@ public class ModuleExtractorUtils {
     public static String moduleToJsonString(Module module) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(module);
 
-        jsonGenerator.writeObject(module);
-        return writer.getBuffer().toString();
+            return writer.getBuffer().toString();
+        }
     }
 
     /**

@@ -19,6 +19,8 @@ public interface ClientProperties {
 
     String PROP_PROXY_PREFIX = "proxy.";
 
+    String PROP_HTTPS_PROXY_PREFIX = PROP_PROXY_PREFIX + "https.";
+
     String PROP_PACKAGE_MANAGER_PREFIX = "package.manager.";
 
     String PROP_NPM_PREFIX = "npm.";

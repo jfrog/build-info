@@ -15,11 +15,13 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 public class JsonUtils {
     public static String toJsonString(Object object) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
-        jsonGenerator.writeObject(object);
-        return writer.getBuffer().toString();
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(object);
+
+            return writer.getBuffer().toString();
+        }
     }
 
     public static JsonParser createJsonParser(InputStream in) throws IOException {

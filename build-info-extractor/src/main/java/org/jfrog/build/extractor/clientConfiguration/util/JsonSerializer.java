@@ -38,10 +38,12 @@ public class JsonSerializer<T> {
 
         mapper.setAnnotationIntrospector(new JacksonAnnotationIntrospector());
         jsonFactory.setCodec(mapper);
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
-        jsonGenerator.writeObject(object);
-        return writer.getBuffer().toString();
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(object);
+
+            return writer.getBuffer().toString();
+        }
     }
 }

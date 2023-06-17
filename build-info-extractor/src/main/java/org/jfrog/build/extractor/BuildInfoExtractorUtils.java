@@ -19,14 +19,24 @@ import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.endsWith;
+import static org.apache.commons.lang3.StringUtils.isBlank;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotBlank;
+import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
 
@@ -67,7 +77,7 @@ public abstract class BuildInfoExtractorUtils {
             InputStream inputStream = null;
             try {
                 if (propertiesFile.exists()) {
-                    inputStream = new FileInputStream(propertiesFile);
+                    inputStream = Files.newInputStream(propertiesFile.toPath());
                     props.load(inputStream);
                 }
             } catch (IOException e) {
@@ -109,13 +119,10 @@ public abstract class BuildInfoExtractorUtils {
         IncludeExcludePatterns patterns = new IncludeExcludePatterns(
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS),
                 startProps.getProperty(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS));
-
         Properties props = new Properties();
-
         // Add all the startProps that starts with BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX
         for (Map.Entry<Object, Object> startEntry : startProps.entrySet()) {
-            if (StringUtils.startsWith((String) startEntry.getKey(),
-                    BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX)) {
+            if (isBuildInfoProperty((String) startEntry.getKey())) {
                 props.put(startEntry.getKey(), startEntry.getValue());
             }
         }
@@ -147,7 +154,7 @@ public abstract class BuildInfoExtractorUtils {
             File propertiesFile = new File(propsFilePath);
             InputStream inputStream = null;
             try {
-                inputStream = new FileInputStream(propertiesFile);
+                inputStream = Files.newInputStream(propertiesFile.toPath());
                 Properties propertiesFromFile = new Properties();
                 propertiesFromFile.load(inputStream);
                 props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
@@ -159,6 +166,13 @@ public abstract class BuildInfoExtractorUtils {
             }
         }
         return props;
+    }
+
+    private static boolean isBuildInfoProperty(String propertyKey) {
+        return StringUtils.startsWithAny(propertyKey,
+                BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS,
+                BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX,
+                BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS);
     }
 
     //TODO: [by YS] duplicates ArtifactoryBuildInfoClient. The client should depend on this module
@@ -178,37 +192,38 @@ public abstract class BuildInfoExtractorUtils {
     public static String buildInfoToJsonString(BuildInfo buildInfo) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
-
-        jsonGenerator.writeObject(buildInfo);
-        String result = writer.getBuffer().toString();
-        return result;
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(buildInfo);
+            return writer.getBuffer().toString();
+        }
     }
 
     public static BuildInfo jsonStringToBuildInfo(String json) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
+        try (JsonParser parser = jsonFactory.createParser(new StringReader(json))) {
+            return jsonFactory.getCodec().readValue(parser, BuildInfo.class);
+        }
     }
 
     public static <T extends Serializable> String buildInfoToJsonString(T buildComponent) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
 
-        StringWriter writer = new StringWriter();
-        JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(writer);
-        jsonGenerator.useDefaultPrettyPrinter();
+        try (StringWriter writer = new StringWriter();
+             JsonGenerator jsonGenerator = jsonFactory.createGenerator(writer)) {
+            jsonGenerator.useDefaultPrettyPrinter();
+            jsonGenerator.writeObject(buildComponent);
 
-        jsonGenerator.writeObject(buildComponent);
-        String result = writer.getBuffer().toString();
-        return result;
+            return writer.getBuffer().toString();
+        }
     }
 
     public static <T extends Serializable> T jsonStringToGeneric(String json, Class<T> clazz) throws IOException {
         JsonFactory jsonFactory = createJsonFactory();
-        JsonParser parser = jsonFactory.createParser(new StringReader(json));
-        return jsonFactory.getCodec().readValue(parser, clazz);
+        try (JsonParser parser = jsonFactory.createParser(new StringReader(json))) {
+            return jsonFactory.getCodec().readValue(parser, clazz);
+        }
     }
 
     public static void saveBuildInfoToFile(BuildInfo buildInfo, File toFile) throws IOException {

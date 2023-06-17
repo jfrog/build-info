@@ -10,7 +10,7 @@ import java.io.IOException;
  * Created by Bar Belity on 20/11/2019.
  */
 public class UsageReporter {
-    private String productId;
+    private final String productId;
     private FeatureId[] features;
 
     public UsageReporter(String productId, String[] featureIds) {
@@ -18,18 +18,22 @@ public class UsageReporter {
         setFeatures(featureIds);
     }
 
+    @SuppressWarnings("unused")
     public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, Log log) throws IOException {
-        ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log);
-        if (proxyConfiguration != null) {
-            artifactoryManager.setProxyConfiguration(proxyConfiguration);
+        try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log)) {
+            if (proxyConfiguration != null) {
+                artifactoryManager.setProxyConfiguration(proxyConfiguration);
+            }
+            artifactoryManager.reportUsage(this);
         }
-        artifactoryManager.reportUsage(this);
     }
 
+    @SuppressWarnings("unused")
     public String getProductId() {
         return productId;
     }
 
+    @SuppressWarnings("unused")
     public FeatureId[] getFeatures() {
         return features;
     }
@@ -50,6 +54,7 @@ public class UsageReporter {
             this.featureId = featureId;
         }
 
+        @SuppressWarnings("unused")
         public String getFeatureId() {
             return featureId;
         }

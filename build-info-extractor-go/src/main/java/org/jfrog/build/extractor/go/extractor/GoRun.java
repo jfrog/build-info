@@ -109,7 +109,7 @@ public class GoRun extends GoCommand {
                 preparePrerequisites(resolutionRepository, artifactoryClient);
                 setResolverAsGoProxy(artifactoryClient);
             }
-            // We create the GoDriver here as env might had changed.
+            // We create the GoDriver here as env might have changed.
             this.goDriver = new GoDriver(GO_CLIENT_CMD, env, path.toFile(), logger);
             // First try to run 'go version' to make sure go is in PATH, and write the output to logger.
             goDriver.version(true);
@@ -124,7 +124,7 @@ public class GoRun extends GoCommand {
 
     /**
      * In order to use Artifactory as a resolver we need to set GOPROXY env var with Artifactory details.
-     * Wa also support fallback to VCS in case pkg doesn't exist in Artifactort,
+     * Wa also support fallback to VCS in case pkg doesn't exist in Artifactory,
      */
     private void setResolverAsGoProxy(ArtifactoryManager artifactoryClient) throws Exception {
         String rtUrl = PackageManagerUtils.createArtifactoryUrlWithCredentials(artifactoryClient.getUrl(), resolverUsername, resolverPassword, ARTIFACTORY_GO_API + resolutionRepository);
@@ -138,7 +138,7 @@ public class GoRun extends GoCommand {
     private void populateModuleAndDeps() throws Exception {
         backupModAndSumFiles();
         try {
-            DependencyTree dependencyTree = createDependencyTree(goDriver, logger, true);
+            DependencyTree dependencyTree = createDependencyTree(goDriver, logger, true, false);
             moduleName = dependencyTree.toString();
 
             String cachePath = getCachePath();

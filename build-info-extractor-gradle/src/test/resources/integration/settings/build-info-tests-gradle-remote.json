@@ -1,6 +1,6 @@
 {
   "packageType": "gradle",
   "repoLayoutRef": "maven-2-default",
-  "url": "https://jcenter.bintray.com",
+  "url": "https://repo.maven.apache.org/maven2",
   "rclass": "remote"
 }

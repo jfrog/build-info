@@ -94,7 +94,7 @@ public class GoVersionUtils {
     }
 
     /**
-     * @return Sub module name in github projects
+     * @return Sub module name in GitHub projects
      */
     public static String getSubModule(String projectName) {
         if (StringUtils.isBlank(projectName)) {

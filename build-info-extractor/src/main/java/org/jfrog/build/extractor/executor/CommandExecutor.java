@@ -32,7 +32,7 @@ public class CommandExecutor implements Serializable {
      * @param env            - Environment variables to use during execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
-        this.executablePath = executablePath;
+        this.executablePath = escapeSpacesInPath(executablePath);
         Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
         if (env != null) {
             Map<String, String> fixedEnvMap = new HashMap<>(env);
@@ -59,6 +59,19 @@ public class CommandExecutor implements Serializable {
             path = path.replaceAll(";", File.pathSeparator) + ":/usr/local/bin";
         }
         env.replace("PATH", path);
+    }
+
+    /**
+     * Escape spaces in the input executable path and trim leading and trailing whitespaces.
+     *
+     * @param executablePath - the executable path to process
+     * @return escaped and trimmed executable path.
+     */
+    private static String escapeSpacesInPath(String executablePath) {
+        if (executablePath == null) {
+            return null;
+        }
+        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     /**

@@ -12,11 +12,11 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BuildInfoScanTableHelperTest {
     private static final String SCAN_RESULT_PATH = "/buildScanTable/scanResult.json";
     private static final String EMPTY_RESULT_PATH = "/buildScanTable/emptyResult.json";
-    private static final String INVALID_RESULT_PATH = "/buildScanTable/invalidResult.json";
     private final BuildScanTableHelper tableHelper = new BuildScanTableHelper();
 
     @Test
@@ -69,10 +69,14 @@ public class BuildInfoScanTableHelperTest {
     }
 
     @Test
-    public void testPrintTableWithInvalidType() throws IOException, URISyntaxException {
+    public void testPrintTableWithUnexpectedType() throws IOException, URISyntaxException {
         TestsAggregationLog log = new TestsAggregationLog();
-        ArtifactoryXrayResponse result = getXrayInvalidResultResource();
-        Assert.assertThrows(IllegalArgumentException.class, () -> tableHelper.printTable(result, log));
+        ArtifactoryXrayResponse result = getXrayResultResource();
+
+        // Set type to an unknown one to make sure no exception is thrown.
+        result.getAlerts().get(0).getIssues().get(0).setType("UNKNOWN_TYPE");
+
+        tableHelper.printTable(result, log);
     }
 
     private ArtifactoryXrayResponse getXrayResultResource() throws URISyntaxException, IOException {
@@ -83,12 +87,8 @@ public class BuildInfoScanTableHelperTest {
         return getResource(EMPTY_RESULT_PATH);
     }
 
-    private ArtifactoryXrayResponse getXrayInvalidResultResource() throws URISyntaxException, IOException {
-        return getResource(INVALID_RESULT_PATH);
-    }
-
     private ArtifactoryXrayResponse getResource(String path) throws URISyntaxException, IOException {
-        File testResourcesPath = new File(this.getClass().getResource(path).toURI()).getCanonicalFile();
+        File testResourcesPath = new File(Objects.requireNonNull(this.getClass().getResource(path)).toURI()).getCanonicalFile();
         ObjectMapper mapper = new ObjectMapper(new JsonFactory());
         return mapper.readValue(testResourcesPath, ArtifactoryXrayResponse.class);
     }

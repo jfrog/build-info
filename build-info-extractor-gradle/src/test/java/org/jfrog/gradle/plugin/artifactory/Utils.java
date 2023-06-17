@@ -112,7 +112,7 @@ public class Utils {
      * @throws IOException - In case of any IO error
      */
     private static String generateBuildInfoPropertiesForServer(String contextUrl, String username, String password, String localRepo, String virtualRepo, String publications, boolean publishBuildInfo, Path source) throws IOException {
-        String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8);
+        String content = new String(Files.readAllBytes(source), StandardCharsets.UTF_8.name());
         Map<String, String> valuesMap = new HashMap<String, String>() {{
             put("publications", publications);
             put("contextUrl", contextUrl);
@@ -171,6 +171,19 @@ public class Utils {
         BuildInfo buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
         checkBuildInfoModules(buildInfo, expectedModules, expectedArtifactsPerModule);
         assertRequestedBy(buildInfo);
+    }
+
+    static void checkBomBuild(BuildResult buildResult, File buildInfoJson, int expectedArtifacts) throws IOException {
+        assertSuccess(buildResult, ":artifactoryPublish");
+
+        // Assert build info.
+        assertTrue(buildInfoJson.exists());
+        BuildInfo buildInfo = jsonStringToBuildInfo(CommonUtils.readByCharset(buildInfoJson, StandardCharsets.UTF_8));
+        Module module = buildInfo.getModule("org.jfrog.test.gradle:gradle_tests_space:1.0-SNAPSHOT");
+        assertNotNull(module);
+        assertEquals(module.getArtifacts().size(), expectedArtifacts);
+        assertTrue(module.getArtifacts().stream().map(Artifact::getName)
+                .anyMatch(artifactName -> artifactName.equals("gradle_tests_space-1.0-SNAPSHOT.pom")));
     }
 
     private static void assertRequestedBy(BuildInfo buildInfo) {

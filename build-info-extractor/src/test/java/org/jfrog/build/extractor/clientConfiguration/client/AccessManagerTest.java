@@ -3,6 +3,8 @@ package org.jfrog.build.extractor.clientConfiguration.client;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.util.Log;
+import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.clientConfiguration.client.access.AccessManager;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -62,7 +64,10 @@ public class AccessManagerTest extends IntegrationTestsBase {
     }
 
     private void assertProjectDoesntExist() {
+        Log oldLog = accessManager.log;
+        accessManager.setLog(new NullLog());
         Assert.assertThrows(IOException.class, () -> accessManager.getProject(PROJECT_KEY));
+        accessManager.setLog(oldLog);
     }
 
     @AfterClass

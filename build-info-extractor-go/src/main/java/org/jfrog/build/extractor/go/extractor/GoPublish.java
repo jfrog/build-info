@@ -21,7 +21,6 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.go.GoDriver;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,6 +28,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -46,10 +46,10 @@ public class GoPublish extends GoCommand {
     private static final String PKG_MOD_FILE_EXTENSION = "mod";
     private static final String PKG_INFO_FILE_EXTENSION = "info";
 
-    private ArrayListMultimap<String, String> properties;
-    private List<Artifact> artifactList = new ArrayList<>();
-    private String deploymentRepo;
-    private String version;
+    private final ArrayListMultimap<String, String> properties;
+    private final List<Artifact> artifactList = new ArrayList<>();
+    private final String deploymentRepo;
+    private final String version;
 
     /**
      * Publish go package.
@@ -124,7 +124,7 @@ public class GoPublish extends GoCommand {
         File tmpZipFile = archiveProjectDir();
 
         // Second, filter the raw zip file according to Go rules and create deployable zip can be later resolved.
-        // We use the same code as Artifactory when he resolve a Go module directly from Github.
+        // We use the same code as Artifactory when he resolves a Go module directly from GitHub.
         File deployableZipFile = File.createTempFile(LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
         try (GoZipBallStreamer pkgArchiver = new GoZipBallStreamer(new ZipFile(tmpZipFile), moduleName, version, logger)) {
             pkgArchiver.writeDeployableZip(deployableZipFile);
@@ -152,9 +152,9 @@ public class GoPublish extends GoCommand {
 
     private File archiveProjectDir() throws IOException {
         File zipFile = File.createTempFile(LOCAL_TMP_PKG_PREFIX + LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
-
-        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-            List<Path> pathsList = Files.walk(path)
+        try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile.toPath()));
+            Stream<Path> pathFileTree = Files.walk(path)) {
+            List<Path> pathsList = pathFileTree
                     // Remove .git dir content, directories and the temp zip file
                     .filter(p -> !path.relativize(p).startsWith(".git/") && !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))
                     .collect(Collectors.toList());
@@ -178,7 +178,7 @@ public class GoPublish extends GoCommand {
     private File writeInfoFile(String localInfoPath) throws IOException {
         File infoFile = new File(localInfoPath);
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> infoMap = new HashMap();
+        Map<String, String> infoMap = new HashMap<>();
         Date date = new Date();
         Instant instant = date.toInstant();
 

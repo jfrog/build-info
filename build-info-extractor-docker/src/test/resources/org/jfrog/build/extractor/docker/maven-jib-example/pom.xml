@@ -74,6 +74,7 @@
                 <artifactId>jib-maven-plugin</artifactId>
                 <version>3.0.0</version>
                 <configuration>
+                    <allowInsecureRegistries>true</allowInsecureRegistries>
                     <from>
                         <image>${env.BITESTS_ARTIFACTORY_DOCKER_VIRTUAL_DOMAIN}/adoptopenjdk:8-jdk-hotspot</image>
                         <auth>

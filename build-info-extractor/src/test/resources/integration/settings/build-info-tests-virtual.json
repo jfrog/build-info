@@ -1,6 +1,8 @@
 {
   "rclass": "virtual",
   "packageType": "generic",
-  "repositories": ["build-info-tests-local"],
-  "defaultDeploymentRepo": "build-info-tests-local"
+  "repositories": [
+    "${LOCAL_REPO_1}"
+  ],
+  "defaultDeploymentRepo": "${LOCAL_REPO_1}"
 }

@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.tree.TreeNode;
+
 /**
  * @author Yahav Itzhak
  */
@@ -31,9 +33,10 @@ public class NpmDependencyTree {
     public static DependencyTree createDependencyTree(JsonNode npmList, NpmScope scope, Path workingDir) {
         DependencyTree rootNode = new DependencyTree();
         populateDependenciesTree(rootNode, npmList.get("dependencies"), new String[]{getProjectName(npmList, workingDir)}, scope);
-        for (DependencyTree child : rootNode.getChildren()) {
-            NpmPackageInfo packageInfo = (NpmPackageInfo) child.getUserObject();
-            child.setScopes(getScopes(packageInfo.getName(), packageInfo.getScope()));
+        for (TreeNode child : rootNode.getChildren()) {
+            DependencyTree dependencyTree = (DependencyTree) child;
+            NpmPackageInfo packageInfo = (NpmPackageInfo) dependencyTree.getUserObject();
+            dependencyTree.setScopes(getScopes(packageInfo.getName(), packageInfo.getScope()));
         }
         return rootNode;
     }
