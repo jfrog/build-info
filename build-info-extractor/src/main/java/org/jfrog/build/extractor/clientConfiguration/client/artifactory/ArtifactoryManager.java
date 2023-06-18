@@ -283,8 +283,9 @@ public class ArtifactoryManager extends ManagerBase {
     }
 
     public String getLatestBuildNumber(String buildName, String latestType, String project) throws IOException {
-        if (!LATEST.equals(latestType.trim()) && LAST_RELEASE.equals(latestType.trim())) {
-            log.warn("GetLatestBuildNumber accepts only two latest types: LATEST or LAST_RELEASE");
+        String trimmedLatestType = latestType.trim();
+        if (!LATEST.equals(trimmedLatestType) && !LAST_RELEASE.equals(trimmedLatestType)) {
+            log.warn("GetLatestBuildNumber accepts only two latest types: LATEST or LAST_RELEASE. Got: "+ trimmedLatestType);
             return null;
         }
         Version versionService = new Version(log);
