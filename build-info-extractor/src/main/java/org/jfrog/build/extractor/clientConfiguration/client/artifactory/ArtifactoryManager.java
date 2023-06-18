@@ -93,6 +93,22 @@ public class ArtifactoryManager extends ManagerBase {
         return downloadService.execute(jfrogHttpClient);
     }
 
+    /**
+     * Download headers and return specific header if exists
+     * @param downloadFrom - path to specific artifact in Artifactory.
+     * @param headerName - specific header name to return if exists.
+     * @return - header's string value to return.
+     */
+    public String downloadHeader(String downloadFrom, String headerName) throws IOException {
+        Header[] headers = downloadHeaders(downloadFrom);
+        for (Header header : headers) {
+            if (header.getName().equals(headerName)) {
+                return header.getValue();
+            }
+        }
+        return StringUtils.EMPTY;
+    }
+
     public Header[] downloadHeaders(String downloadFrom) throws IOException {
         return downloadHeaders(downloadFrom, null);
     }
