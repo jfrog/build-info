@@ -22,8 +22,9 @@ import static java.lang.String.join;
 public class CommandExecutor implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final int TIMEOUT_EXIT_VALUE = 124;
-    private static final int TIMEOUT_SECONDS = 30;
-    private static final int TIMEOUT_MINUTES = 120;
+    private static final int READER_SHUTDOWN_TIMEOUT_SECONDS = 30;
+    private static final int PROCESS_TERMINATION_TIMEOUT_SECONDS = 30;
+    private static final int EXECUTION_TIMEOUT_MINUTES = 120;
     private final String[] env;
     private final String executablePath;
 
@@ -128,7 +129,7 @@ public class CommandExecutor implements Serializable {
      * @return CommandResults object
      */
     public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger) throws InterruptedException, IOException {
-        return exeCommand(execDir, args, credentials, logger, TIMEOUT_MINUTES, TimeUnit.MINUTES);
+        return exeCommand(execDir, args, credentials, logger, EXECUTION_TIMEOUT_MINUTES, TimeUnit.MINUTES);
     }
 
     /**
@@ -156,12 +157,20 @@ public class CommandExecutor implements Serializable {
                 service.submit(errorStreamReader);
                 boolean executionTerminatedProperly = process.waitFor(timeout, unit);
                 service.shutdown();
-                boolean outputReaderTerminatedProperly = service.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                boolean outputReaderTerminatedProperly = service.awaitTermination(READER_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 boolean terminatedProperly = executionTerminatedProperly && outputReaderTerminatedProperly;
                 return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
             } finally {
                 // Ensure termination of the subprocess we have created.
-                process.destroyForcibly();
+                if (process.isAlive()) {
+                    // First try to terminate the process gracefully
+                    process.destroy();
+                    process.waitFor(PROCESS_TERMINATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    if (process.isAlive()) {
+                        // Finally, force kill.
+                        process.destroyForcibly();
+                    }
+                }
             }
         } finally {
             service.shutdownNow();
@@ -171,7 +180,7 @@ public class CommandExecutor implements Serializable {
     private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue) {
         CommandResults commandRes = new CommandResults();
         if (!terminatedProperly) {
-            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d seconds.", join(" ", args), TIMEOUT_SECONDS);
+            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d minutes.", join(" ", args), EXECUTION_TIMEOUT_MINUTES);
             exitValue = TIMEOUT_EXIT_VALUE;
         }
         commandRes.setRes(output);
