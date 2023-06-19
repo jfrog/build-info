@@ -159,6 +159,9 @@ public class CommandExecutor implements Serializable {
                 boolean outputReaderTerminatedProperly = service.awaitTermination(TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 boolean terminatedProperly = executionTerminatedProperly && outputReaderTerminatedProperly;
                 return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
+            } finally {
+                // Ensure termination of the subprocess we have created.
+                process.destroyForcibly();
             }
         } finally {
             service.shutdownNow();
