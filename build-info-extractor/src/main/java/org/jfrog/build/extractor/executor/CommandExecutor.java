@@ -159,7 +159,7 @@ public class CommandExecutor implements Serializable {
                 service.shutdown();
                 boolean outputReaderTerminatedProperly = service.awaitTermination(READER_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 boolean terminatedProperly = executionTerminatedProperly && outputReaderTerminatedProperly;
-                return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue(), timeout, unit);
+                return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
             } finally {
                 // Ensure termination of the subprocess we have created.
                 if (process.isAlive()) {
@@ -177,10 +177,10 @@ public class CommandExecutor implements Serializable {
         }
     }
 
-    private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue, long timeout, TimeUnit unit) {
+    private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue) {
         CommandResults commandRes = new CommandResults();
         if (!terminatedProperly) {
-            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout of %d %s.", join(" ", args), timeout, unit);
+            error += System.lineSeparator() + format("Process '%s' had been terminated forcibly after timeout.", join(" ", args));
             exitValue = TIMEOUT_EXIT_VALUE;
         }
         commandRes.setRes(output);
