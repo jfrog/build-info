@@ -52,7 +52,6 @@ buildscript {
         testNgVersion = '6.14.3'
 
         woodstoxVersion = '6.4.0'
-        xstreamVersion = '1.4.20'
     }
 
     repositories {
@@ -252,9 +251,6 @@ configure(baseProjects()) {
             description = 'All jars that should be included in the Uber Jar'
             transitive = true
         }
-    }
-    dependencies {
-        implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: xstreamVersion
     }
 }
 

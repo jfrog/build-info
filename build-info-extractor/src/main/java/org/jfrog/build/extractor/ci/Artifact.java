@@ -1,12 +1,10 @@
 package org.jfrog.build.extractor.ci;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 
 /**
  * Contains the build deployed artifact information
  */
-@XStreamAlias(BuildBean.ARTIFACT)
 public class Artifact extends BaseBuildFileBean {
 
     private String name;

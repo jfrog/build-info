@@ -1,9 +1,6 @@
 package org.jfrog.build.api;
 
-//import com.thoughtworks.xstream.annotations.XStreamAlias;
-
 import java.io.Serializable;
-//import static org.jfrog.build.api.BuildBean.RUN_PARAMETERS;
 
 /**
  * @author Lior Hasson

@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.ci;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -11,7 +10,6 @@ import java.util.Set;
 /**
  * Contains the build info module dependency information
  */
-@XStreamAlias(BuildBean.DEPENDENCY)
 public class Dependency extends BaseBuildFileBean {
 
     public static final String SCOPE_BUILD = "_build_";
