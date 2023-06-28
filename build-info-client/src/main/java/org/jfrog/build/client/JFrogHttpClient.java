@@ -108,6 +108,10 @@ public class JFrogHttpClient implements AutoCloseable {
         return clientBuilder.getProxyConfiguration();
     }
 
+    public void setNoAnonymousUser() {
+        clientBuilder.setNoAnonymousUser(true);
+    }
+
     /**
      * Release all connection and cleanup resources.
      */

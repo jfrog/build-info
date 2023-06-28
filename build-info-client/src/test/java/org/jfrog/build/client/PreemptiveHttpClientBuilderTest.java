@@ -7,11 +7,12 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.jfrog.build.api.util.NullLog;
 import org.testng.annotations.Test;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.*;
 
 @Test
 public class PreemptiveHttpClientBuilderTest {
+    private static final AuthScope ANY_AUTH = new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT);
+
     public void testCredentialsMaintainedWithProxy() {
         String rtUser = "rt-user";
         String rtPassword = "rt-password";
@@ -29,17 +30,25 @@ public class PreemptiveHttpClientBuilderTest {
                 .setProxyConfiguration(createProxyConfiguration(proxyHost, proxyPort, proxyUser, proxyPassword))
                 .setUserName(rtUser)
                 .setPassword(rtPassword);
-        PreemptiveHttpClient deployClient = clientBuilder.build();
+        try (PreemptiveHttpClient deployClient = clientBuilder.build()) {
+            // Assert both Artifactory and proxy credentials exist in the credentials provider.
+            BasicCredentialsProvider credentialsProvider = deployClient.basicCredentialsProvider;
+            Credentials rtCredentials = credentialsProvider.getCredentials(ANY_AUTH);
+            assertNotNull(rtCredentials);
+            assertEquals(rtCredentials, new UsernamePasswordCredentials(rtUser, rtPassword));
 
-        // Assert both Artifactory and proxy credentials exist in the credentials provider.
-        BasicCredentialsProvider credentialsProvider = deployClient.basicCredentialsProvider;
-        Credentials rtCredentials = credentialsProvider.getCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT));
-        assertNotNull(rtCredentials);
-        assertEquals(rtCredentials, new UsernamePasswordCredentials(rtUser, rtPassword));
+            Credentials portCredentials = credentialsProvider.getCredentials(new AuthScope(proxyHost, proxyPort));
+            assertNotNull(portCredentials);
+            assertEquals(portCredentials, new UsernamePasswordCredentials(proxyUser, proxyPassword));
+        }
+    }
 
-        Credentials portCredentials = credentialsProvider.getCredentials(new AuthScope(proxyHost, proxyPort));
-        assertNotNull(portCredentials);
-        assertEquals(portCredentials, new UsernamePasswordCredentials(proxyUser, proxyPassword));
+    public void testAnonymousUser() {
+        try (PreemptiveHttpClient clientWithAnonymous = new PreemptiveHttpClientBuilder().build();
+             PreemptiveHttpClient clientWithoutAnonymous = new PreemptiveHttpClientBuilder().setNoAnonymousUser(true).build()) {
+            assertEquals("anonymous", clientWithAnonymous.basicCredentialsProvider.getCredentials(ANY_AUTH).getUserPrincipal().getName());
+            assertNull(clientWithoutAnonymous.basicCredentialsProvider.getCredentials(ANY_AUTH));
+        }
     }
 
     private ProxyConfiguration createProxyConfiguration(String host, int port, String proxyUser, String proxyPassword) {

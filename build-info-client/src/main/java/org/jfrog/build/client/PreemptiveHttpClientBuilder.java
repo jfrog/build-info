@@ -55,6 +55,8 @@ public class PreemptiveHttpClientBuilder {
     private String userAgent = StringUtils.EMPTY;
     private String userName = StringUtils.EMPTY;
     private String password = StringUtils.EMPTY;
+    // Set to false to use the "anonymous" user if no credentials provided.
+    private boolean noAnonymousUser;
     private SSLContext sslContext;
     private boolean insecureTls;
     private HttpHost proxy;
@@ -91,6 +93,11 @@ public class PreemptiveHttpClientBuilder {
         return this;
     }
 
+    public PreemptiveHttpClientBuilder setNoAnonymousUser(boolean noAnonymousUser) {
+        this.noAnonymousUser = noAnonymousUser;
+        return this;
+    }
+
     public PreemptiveHttpClientBuilder setTimeout(int timeout) {
         this.timeout = timeout;
         return this;
@@ -104,7 +111,7 @@ public class PreemptiveHttpClientBuilder {
         return this;
     }
 
-    public ProxyConfiguration getProxyConfiguration(){
+    public ProxyConfiguration getProxyConfiguration() {
         return proxyConfiguration;
     }
 
@@ -150,6 +157,9 @@ public class PreemptiveHttpClientBuilder {
 
         if (StringUtils.isEmpty(accessToken)) {
             if (StringUtils.isEmpty(userName)) {
+                if (noAnonymousUser) {
+                    return;
+                }
                 userName = "anonymous";
                 password = "";
             }
