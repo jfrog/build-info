@@ -11,16 +11,6 @@ import java.util.Properties;
  * @author Noam Y. Tenne
  */
 public interface BuildBean extends Serializable {
-    String ROOT = "build";
-    String MODULES = "modules";
-    String MODULE = "module";
-    String ARTIFACTS = "artifacts";
-    String EXCLUDED_ARTIFACTS = "excludedArtifacts";
-    String ARTIFACT = "artifact";
-    String DEPENDENCIES = "dependencies";
-    String DEPENDENCY = "dependency";
-    String RUN_PARAMETERS = "runParameters";
-
     /**
      * Returns the properties of the bean
      *

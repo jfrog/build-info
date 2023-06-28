@@ -2,7 +2,6 @@
 package org.jfrog.build.extractor.ci;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.Build;
 import org.jfrog.build.api.builder.ModuleType;
@@ -18,13 +17,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import static org.jfrog.build.extractor.ci.BuildBean.ROOT;
-
 /**
  * A temporary build-info for CI use (e.g. Artifactory jenkins plugin, Maven plugin, etc.).
- *  BuildInfo class should be converted to {@link org.jfrog.build.api.Build} before publishing / getting build-info from Artifactory.
+ * BuildInfo class should be converted to {@link org.jfrog.build.api.Build} before publishing / getting build-info from Artifactory.
  */
-@XStreamAlias(ROOT)
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
 public class BuildInfo extends BaseBuildBean {
 
@@ -52,10 +48,8 @@ public class BuildInfo extends BaseBuildBean {
 
     private BuildRetention buildRetention;
 
-    @XStreamAlias(RUN_PARAMETERS)
     private List<MatrixParameter> runParameters;
 
-    @XStreamAlias(MODULES)
     private List<Module> modules;
 
     private List<PromotionStatus> statuses;
@@ -620,10 +614,9 @@ public class BuildInfo extends BaseBuildBean {
         return builder.build();
     }
 
-    public static BuildInfo ToBuildInfo( org.jfrog.build.api.Build build) {
+    public static BuildInfo ToBuildInfo(org.jfrog.build.api.Build build) {
         BuildInfoBuilder builder = new BuildInfoBuilder(build.getName());
-                 builder
-                .number(build.getNumber())
+        builder.number(build.getNumber())
                 .setProject(build.getProject())
                 .agent(build.getAgent() == null ? null : new Agent(build.getAgent().getName(), build.getAgent().getVersion()))
                 .buildAgent(build.getBuildAgent() == null ? null : new BuildAgent(build.getBuildAgent().getName(), build.getBuildAgent().getVersion()))

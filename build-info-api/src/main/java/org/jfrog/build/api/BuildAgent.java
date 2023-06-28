@@ -2,7 +2,6 @@
 
 package org.jfrog.build.api;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -12,7 +11,6 @@ import java.io.Serializable;
  *
  * @author Tomer Cohen
  */
-@XStreamAlias("buildagent")
 public class BuildAgent implements Serializable {
 
     private String name;

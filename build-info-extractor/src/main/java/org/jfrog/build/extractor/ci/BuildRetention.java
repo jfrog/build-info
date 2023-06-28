@@ -1,14 +1,12 @@
 package org.jfrog.build.extractor.ci;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-@XStreamAlias("buildretention")
 public class BuildRetention implements Serializable {
 
     private int count = -1;
@@ -82,7 +80,7 @@ public class BuildRetention implements Serializable {
     }
 
     public static BuildRetention ToBuildInfoRetention(org.jfrog.build.api.BuildRetention br) {
-       BuildRetention result = new BuildRetention();
+        BuildRetention result = new BuildRetention();
         result.setDeleteBuildArtifacts(br.isDeleteBuildArtifacts());
         result.setCount(br.getCount());
         result.setMinimumBuildDate(br.getMinimumBuildDate());

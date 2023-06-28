@@ -1,13 +1,11 @@
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Objects;
 
-@XStreamAlias(BuildInfoFields.VCS)
 public class Vcs implements Serializable {
     private String revision = "";
     private String message = "";
