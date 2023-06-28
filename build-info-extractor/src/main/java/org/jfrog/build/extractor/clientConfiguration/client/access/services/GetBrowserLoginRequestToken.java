@@ -33,6 +33,7 @@ public class GetBrowserLoginRequestToken extends JFrogService<CreateAccessTokenR
 
     @Override
     protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
+        // Until the user successfully completes the login process, Access will return status code 400.
         if (getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
             return;
         }
