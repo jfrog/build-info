@@ -342,6 +342,14 @@ project('build-info-extractor') {
         implementation project(':build-info-api')
 
         testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
+        testImplementation('org.mock-server:mockserver-netty:5.15.0') {
+            exclude module: 'snakeyaml'
+            exclude module: 'json-smart'
+            exclude module: 'rhino'
+        }
+        testImplementation group: 'org.yaml', name: 'snakeyaml', version: '2.0'
+        testImplementation group: 'net.minidev', name: 'json-smart', version: '2.4.9'
+        testImplementation group: 'org.mozilla', name: 'rhino', version: '1.7.12'
         testFixturesApi project(':build-info-client')
         testFixturesApi project(':build-info-api')
         testFixturesApi "org.apache.httpcomponents:httpclient:$httpClientVersion"
@@ -350,14 +358,6 @@ project('build-info-extractor') {
         testFixturesApi group: 'org.apache.commons', name: 'commons-text', version: '1.10.0'
         testFixturesApi group: 'org.testng', name: 'testng', version: testNgVersion
         testFixturesApi group: 'org.jfrog.filespecs', name: 'file-specs-java', version: fileSpecsJavaVersion
-        testFixturesApi('org.mock-server:mockserver-netty:5.15.0') {
-            exclude module: 'snakeyaml'
-            exclude module: 'json-smart'
-            exclude module: 'rhino'
-        }
-        testFixturesApi group: 'org.yaml', name: 'snakeyaml', version: '2.0'
-        testFixturesApi group: 'net.minidev', name: 'json-smart', version: '2.4.9'
-        testFixturesApi group: 'org.mozilla', name: 'rhino', version: '1.7.12'
     }
 }
 
