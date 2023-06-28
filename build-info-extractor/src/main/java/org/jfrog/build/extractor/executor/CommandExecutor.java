@@ -140,7 +140,7 @@ public class CommandExecutor implements Serializable {
      * @param credentials - If specified, the credentials will be concatenated to the other commands. The credentials will be masked in the log output.
      * @param logger      - The logger which will log the running command.
      * @param timeout     - The maximum time to wait for the command execution.
-     * @param unit        – The time unit of the timeout argument.
+     * @param unit        - The time unit of the timeout argument.
      * @return CommandResults object
      */
     public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger, long timeout, TimeUnit unit) throws InterruptedException, IOException {
