@@ -18,10 +18,10 @@ import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 
 public class SetProperties extends VoidJFrogService {
     public static final String SET_PROPERTIES_ENDPOINT = "api/storage/";
-    private ArrayListMultimap<String, String> propertiesMap;
+    private final ArrayListMultimap<String, String> propertiesMap;
     private final boolean encodeProperties;
     private final String relativePath;
-    private String propertiesString;
+    private final String propertiesString;
 
     private SetProperties(String relativePath, String propertiesString, ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         super(log);
@@ -52,7 +52,7 @@ public class SetProperties extends VoidJFrogService {
 
     @Override
     protected void handleUnsuccessfulResponse(HttpEntity entity) throws IOException {
-        log.error("Failed to set properties to  '" + relativePath + "'");
+        log.error("Failed to set properties to '" + relativePath + "'");
         throwException(entity, getStatusCode());
     }
 

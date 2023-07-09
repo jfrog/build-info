@@ -63,7 +63,7 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
 
     @Override
     public DistributeReleaseBundleResponse execute(JFrogHttpClient client) throws IOException {
-        log.info(request.isDryRun() ? "[Dry run] " : "" + "Distributing " + name + " / " + version);
+        log.info(request.isDryRun() ? "[Dry run] " : "Distributing " + name + " / " + version);
         super.execute(client);
         if (sync && !request.isDryRun()) {
             waitForDistribution(client);
@@ -75,7 +75,7 @@ public class DistributeReleaseBundle extends JFrogService<DistributeReleaseBundl
     protected void setResponse(InputStream stream) throws IOException {
         result = getMapper().readValue(stream, DistributeReleaseBundleResponse.class);
         log.debug("Distribution response: " + getStatusCode());
-        log.debug("Response:  " + toJsonString(result));
+        log.debug("Response: " + toJsonString(result));
     }
 
     private void waitForDistribution(JFrogHttpClient client) throws IOException {
