@@ -65,12 +65,12 @@ public class DeleteReleaseBundle extends JFrogService<DistributeReleaseBundleRes
     protected void setResponse(InputStream stream) throws IOException {
         result = getMapper().readValue(stream, DistributeReleaseBundleResponse.class);
         log.debug("Deletion response: " + getStatusCode());
-        log.debug("Response:  " + toJsonString(result));
+        log.debug("Response: " + toJsonString(result));
     }
 
     @Override
     public DistributeReleaseBundleResponse execute(JFrogHttpClient client) throws IOException {
-        log.info(request.isDryRun() ? "[Dry run] " : "" + "Deleting " + name + " / " + version);
+        log.info(request.isDryRun() ? "[Dry run] " : "Deleting " + name + " / " + version);
         super.execute(client);
         if (sync && !request.isDryRun()) {
             waitForDeletion(client);

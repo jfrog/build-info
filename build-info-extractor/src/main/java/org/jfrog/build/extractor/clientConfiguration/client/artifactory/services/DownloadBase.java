@@ -45,7 +45,7 @@ public abstract class DownloadBase<TResult> extends JFrogService<TResult> {
         if (statusCode == HttpStatus.SC_NOT_FOUND) {
             throw new FileNotFoundException("Unable to find " + downloadPath);
         }
-        log.error("Failed to download from  '" + downloadPath + "'");
+        log.error("Failed to download from '" + downloadPath + "'");
         throwException(entity, getStatusCode());
     }
 }

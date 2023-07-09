@@ -19,6 +19,6 @@ abstract class VoidDistributionService extends VoidJFrogService {
     @Override
     protected void setResponse(InputStream stream) throws IOException {
         String ResponseMessage = getStatusCode() + IOUtils.toString(stream, StandardCharsets.UTF_8.name());
-        log.debug("Distribution response:  " + ResponseMessage);
+        log.debug("Distribution response: " + ResponseMessage);
     }
 }
