@@ -1,20 +1,16 @@
 package org.jfrog.build.api;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.Objects;
 
-import static org.jfrog.build.api.BuildBean.MODULE;
-
 /**
  * Contains the build module information
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias(MODULE)
 public class Module extends BaseBuildBean {
 
     private String type;
@@ -27,13 +23,10 @@ public class Module extends BaseBuildBean {
 
     private String sha1;
 
-    @XStreamAlias(ARTIFACTS)
     private List<Artifact> artifacts;
 
-    @XStreamAlias(EXCLUDED_ARTIFACTS)
     private List<Artifact> excludedArtifacts;
 
-    @XStreamAlias(DEPENDENCIES)
     private List<Dependency> dependencies;
 
     /**

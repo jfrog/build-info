@@ -1,6 +1,5 @@
 package org.jfrog.build.api;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -10,7 +9,6 @@ import java.io.Serializable;
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias("agent")
 public class Agent implements Serializable {
 
     private String name;

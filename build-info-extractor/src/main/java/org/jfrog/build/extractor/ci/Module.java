@@ -1,25 +1,17 @@
 package org.jfrog.build.extractor.ci;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.jfrog.build.extractor.ci.BuildBean.MODULE;
 
 /**
  * Contains the build module information
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias(MODULE)
 public class Module extends BaseBuildBean {
 
     private String type;
@@ -32,13 +24,10 @@ public class Module extends BaseBuildBean {
 
     private String sha1;
 
-    @XStreamAlias(ARTIFACTS)
     private List<Artifact> artifacts;
 
-    @XStreamAlias(EXCLUDED_ARTIFACTS)
     private List<Artifact> excludedArtifacts;
 
-    @XStreamAlias(DEPENDENCIES)
     private List<Dependency> dependencies;
 
     /**

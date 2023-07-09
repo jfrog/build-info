@@ -52,7 +52,6 @@ buildscript {
         testNgVersion = '6.14.3'
 
         woodstoxVersion = '6.4.0'
-        xstreamVersion = '1.4.20'
     }
 
     repositories {
@@ -253,9 +252,6 @@ configure(baseProjects()) {
             transitive = true
         }
     }
-    dependencies {
-        implementation group: 'com.thoughtworks.xstream', name: 'xstream', version: xstreamVersion
-    }
 }
 
 // Create configurations for the extractor projects
@@ -342,6 +338,14 @@ project('build-info-extractor') {
         implementation project(':build-info-api')
 
         testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
+        testImplementation('org.mock-server:mockserver-netty:5.15.0') {
+            exclude module: 'snakeyaml'
+            exclude module: 'json-smart'
+            exclude module: 'rhino'
+        }
+        testImplementation group: 'org.yaml', name: 'snakeyaml', version: '2.0'
+        testImplementation group: 'net.minidev', name: 'json-smart', version: '2.4.9'
+        testImplementation group: 'org.mozilla', name: 'rhino', version: '1.7.12'
         testFixturesApi project(':build-info-client')
         testFixturesApi project(':build-info-api')
         testFixturesApi "org.apache.httpcomponents:httpclient:$httpClientVersion"

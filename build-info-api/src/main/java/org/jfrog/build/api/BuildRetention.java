@@ -1,7 +1,6 @@
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.List;
 /**
  * @author Tomer Cohen
  */
-@XStreamAlias("buildretention")
 public class BuildRetention implements Serializable {
 
     private int count = -1;

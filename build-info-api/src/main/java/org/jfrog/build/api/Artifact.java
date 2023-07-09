@@ -1,6 +1,5 @@
 package org.jfrog.build.api;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -8,7 +7,6 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author Noam Y. Tenne
  */
-@XStreamAlias(BuildBean.ARTIFACT)
 public class Artifact extends BaseBuildFileBean {
 
     private String name;

@@ -119,11 +119,10 @@ public class PreemptiveHttpClient implements AutoCloseable {
                     HttpHost targetHost = finalContext.getTargetHost();
                     Credentials creds = credsProvider.getCredentials(
                             new AuthScope(targetHost.getHostName(), targetHost.getPort()));
-                    if (creds == null) {
-                        throw new HttpException("No credentials for preemptive authentication");
+                    if (creds != null) {
+                        BasicScheme authScheme = new BasicScheme();
+                        authState.update(authScheme, creds);
                     }
-                    BasicScheme authScheme = new BasicScheme();
-                    authState.update(authScheme, creds);
                 }
             }
         }

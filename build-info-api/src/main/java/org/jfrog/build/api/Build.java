@@ -1,7 +1,6 @@
 package org.jfrog.build.api;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.thoughtworks.xstream.annotations.XStreamAlias;
 import org.jfrog.build.api.dependency.BuildDependency;
 import org.jfrog.build.api.release.PromotionStatus;
 
@@ -10,13 +9,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static org.jfrog.build.api.BuildBean.ROOT;
-
 /**
  * Represents pure (without logic) schema of build info which contains the build info properties of a typical build.
  * Convert org.jfrog.build.extractor.ci.BuildInfo to this class before sending the build info.
  */
-@XStreamAlias(ROOT)
 @JsonIgnoreProperties(ignoreUnknown = true, value = {"project", "startedMillis"})
 public class Build extends BaseBuildBean {
 
@@ -44,10 +40,8 @@ public class Build extends BaseBuildBean {
 
     private BuildRetention buildRetention;
 
-    @XStreamAlias(RUN_PARAMETERS)
     private List<MatrixParameter> runParameters;
 
-    @XStreamAlias(MODULES)
     private List<Module> modules;
 
     private List<PromotionStatus> statuses;
@@ -240,7 +234,6 @@ public class Build extends BaseBuildBean {
 
     /**
      * Sets the started time of the build in a unit of milliseconds
-     *
      */
     public void setStartedMillis(long startedMillis) {
         this.startedMillis = startedMillis;
@@ -468,6 +461,7 @@ public class Build extends BaseBuildBean {
     public Issues getIssues() {
         return issues;
     }
+
     public void setIssues(Issues issues) {
         this.issues = issues;
     }
