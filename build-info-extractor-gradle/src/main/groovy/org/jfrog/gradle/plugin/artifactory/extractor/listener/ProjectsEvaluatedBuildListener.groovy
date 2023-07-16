@@ -148,8 +148,8 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                 String publicationsNames = clientConfig.publisher.getPublications()
                 if (publishingExtension != null && StringUtils.isNotBlank(publicationsNames)) {
                     addPublications(artifactoryTask, publishingExtension, publicationsNames)
-                } else if (projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
-                    addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension);
+                } else {
+                    addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension)
                 }
             }
             artifactoryTask.projectEvaluated()
@@ -210,6 +210,9 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      */
     private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask, @Nullable PublishingExtension publishingExtension) {
         if (publishingExtension != null) {
+            if (!projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
+                return
+            }
             Project project = artifactoryTask.project;
             // Add mavenWeb publication if war task exists and enabled
             Task warTask = project.tasks.findByName("war");
@@ -231,7 +234,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
             // Add publications to Artifactory task
             artifactoryTask.addDefaultPublications()
-        } else {
+        } else if (artifactoryTask.project.plugins.hasPlugin("maven")) {
             artifactoryTask.addDefaultArchiveConfiguration()
         }
     }
