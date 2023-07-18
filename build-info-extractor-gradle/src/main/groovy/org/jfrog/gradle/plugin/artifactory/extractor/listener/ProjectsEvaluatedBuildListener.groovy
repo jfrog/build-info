@@ -235,6 +235,8 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             // Add publications to Artifactory task
             artifactoryTask.addDefaultPublications()
         } else if (artifactoryTask.project.plugins.hasPlugin("maven")) {
+            // Only if the legacy Maven plugin is applied, add the default legacy Archive Configurations.
+            // The purpose of this filter is to prevent the addition of legacy Archive Configurations when using new Gradle versions.
             artifactoryTask.addDefaultArchiveConfiguration()
         }
     }
