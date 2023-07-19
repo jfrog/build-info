@@ -10,5 +10,5 @@ setup(
     author_email='jfrog@jfrog.com',
     url='https://github.com/jfrog/project-examples',
     packages=[],
-    install_requires=['PyYAML==5.4', 'nltk==3.4.5'],
+    install_requires=['PyYAML==6.0.1', 'nltk==3.4.5'],
 )
