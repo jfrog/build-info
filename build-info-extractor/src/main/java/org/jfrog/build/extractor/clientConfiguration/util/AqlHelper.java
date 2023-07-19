@@ -135,13 +135,14 @@ public class AqlHelper {
                 // Remove the escape chars before the delimiters
                 buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            if (isBuildLatestType(buildNumber)) {
-                String retrievedBuildNumber = artifactoryManager.getLatestBuildNumber(buildName, buildNumber, null);
-                if (retrievedBuildNumber == null) {
-                    logBuildNotFound(buildName, buildNumber);
-                }
-                buildNumber = retrievedBuildNumber;
+            if (!isBuildLatestType(buildNumber)) {
+                return buildNumber;
             }
+            String retrievedBuildNumber = artifactoryManager.getLatestBuildNumber(buildName, buildNumber, null);
+            if (StringUtils.isBlank(retrievedBuildNumber)) {
+                logBuildNotFound(buildName, buildNumber);
+            }
+            return retrievedBuildNumber;
         }
         return buildNumber;
     }
