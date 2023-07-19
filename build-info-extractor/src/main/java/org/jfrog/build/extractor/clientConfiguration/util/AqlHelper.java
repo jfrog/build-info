@@ -32,9 +32,9 @@ public class AqlHelper {
     }
 
     private void buildQueryAdditionalParts() throws IOException {
-        this.buildName = getBuildName(this.filesGroup.getBuild());
+        this.buildName = getBuildName();
         // AQL doesn't support projects.
-        this.buildNumber = getBuildNumber(artifactoryManager, buildName, this.filesGroup.getBuild(), null);
+        this.buildNumber = getBuildNumber();
     }
 
     public List<AqlSearchResult.SearchEntry> run() throws IOException {
@@ -102,7 +102,8 @@ public class AqlHelper {
         return String.format("{\"artifact.module.build.name\": \"%s\",\"artifact.module.build.number\": \"%s\"}", buildName, buildNumber);
     }
 
-    private static String getBuildName(String build) {
+    private String getBuildName() {
+        String build = this.filesGroup.getBuild();
         if (StringUtils.isBlank(build)) {
             return build;
         }
@@ -118,7 +119,8 @@ public class AqlHelper {
         return buildName.endsWith(ESCAPE_CHAR) ? build : buildName;
     }
 
-    private String getBuildNumber(ArtifactoryManager client, String buildName, String build, String project) throws IOException {
+    String getBuildNumber() throws IOException {
+        String build = filesGroup.getBuild();
         String buildNumber = "";
         if (StringUtils.isNotBlank(buildName)) {
             if (!build.startsWith(buildName)) {
@@ -133,13 +135,26 @@ public class AqlHelper {
                 // Remove the escape chars before the delimiters
                 buildNumber = buildNumber.replace(ESCAPE_CHAR + DELIMITER, DELIMITER);
             }
-            String retrievedBuildNumber = client.getLatestBuildNumber(buildName, buildNumber, project);
-            if (retrievedBuildNumber == null) {
-                logBuildNotFound(buildName, buildNumber);
+            if (isBuildLatestType(buildNumber)) {
+                String retrievedBuildNumber = artifactoryManager.getLatestBuildNumber(buildName, buildNumber, null);
+                if (retrievedBuildNumber == null) {
+                    logBuildNotFound(buildName, buildNumber);
+                }
+                buildNumber = retrievedBuildNumber;
             }
-            buildNumber = retrievedBuildNumber;
         }
         return buildNumber;
+    }
+
+    /**
+     * Return true if the input build number is LATEST or LAST_RELEASE.
+     *
+     * @param buildNumber - The build number to check
+     * @return true if the input build number is LATEST or LAST_RELEASE.
+     */
+    public static boolean isBuildLatestType(String buildNumber) {
+        String trimmedLatestType = buildNumber.trim();
+        return LATEST.equals(trimmedLatestType) || LAST_RELEASE.equals(trimmedLatestType);
     }
 
     private void logBuildNotFound(String buildName, String buildNumber) {

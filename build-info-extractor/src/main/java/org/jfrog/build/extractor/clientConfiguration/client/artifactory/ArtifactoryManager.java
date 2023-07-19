@@ -33,11 +33,9 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.jfrog.build.extractor.clientConfiguration.client.artifactory.services.ScanBuild.XRAY_SCAN_CONNECTION_TIMEOUT_SECS;
+import static org.jfrog.build.extractor.clientConfiguration.util.AqlHelper.isBuildLatestType;
 
 public class ArtifactoryManager extends ManagerBase {
-    public static final String LATEST = "LATEST";
-    public static final String LAST_RELEASE = "LAST_RELEASE";
-
     public ArtifactoryManager(String artifactoryUrl, String username, String password, String accessToken, Log log) {
         super(artifactoryUrl, username, password, accessToken, log);
     }
@@ -181,7 +179,7 @@ public class ArtifactoryManager extends ManagerBase {
     }
 
     public BuildInfo getBuildInfo(String buildName, String buildNumber, String project) throws IOException {
-        if (LATEST.equals(buildNumber.trim()) || LAST_RELEASE.equals(buildNumber.trim())) {
+        if (isBuildLatestType(buildNumber)) {
             buildNumber = getLatestBuildNumber(buildName, buildNumber, project);
             if (buildNumber == null) {
                 return null;
@@ -303,8 +301,8 @@ public class ArtifactoryManager extends ManagerBase {
 
     public String getLatestBuildNumber(String buildName, String latestType, String project) throws IOException {
         String trimmedLatestType = latestType.trim();
-        if (!LATEST.equals(trimmedLatestType) && !LAST_RELEASE.equals(trimmedLatestType)) {
-            log.warn("GetLatestBuildNumber accepts only two latest types: LATEST or LAST_RELEASE. Got: "+ trimmedLatestType);
+        if (!isBuildLatestType(latestType)) {
+            log.warn("GetLatestBuildNumber accepts only two latest types: LATEST or LAST_RELEASE. Got: " + trimmedLatestType);
             return null;
         }
         Version versionService = new Version(log);
