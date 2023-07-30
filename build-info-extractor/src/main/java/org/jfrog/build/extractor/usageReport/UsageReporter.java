@@ -4,6 +4,7 @@ import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 
 /**
@@ -19,10 +20,13 @@ public class UsageReporter {
     }
 
     @SuppressWarnings("unused")
-    public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, Log log) throws IOException {
+    public void reportUsage(String artifactoryUrl, String username, String password, String accessToken, ProxyConfiguration proxyConfiguration, SSLContext sslContext, Log log) throws IOException {
         try (ArtifactoryManager artifactoryManager = new ArtifactoryManager(artifactoryUrl, username, password, accessToken, log)) {
             if (proxyConfiguration != null) {
                 artifactoryManager.setProxyConfiguration(proxyConfiguration);
+            }
+            if (sslContext != null) {
+                artifactoryManager.setSslContext(sslContext);
             }
             artifactoryManager.reportUsage(this);
         }
