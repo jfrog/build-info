@@ -148,8 +148,8 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
                 String publicationsNames = clientConfig.publisher.getPublications()
                 if (publishingExtension != null && StringUtils.isNotBlank(publicationsNames)) {
                     addPublications(artifactoryTask, publishingExtension, publicationsNames)
-                } else {
-                    addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension)
+                } else if (projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
+                    addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension);
                 }
             }
             artifactoryTask.projectEvaluated()
@@ -210,9 +210,6 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
      */
     private void addDefaultPublicationsOrConfigurations(ArtifactoryTask artifactoryTask, @Nullable PublishingExtension publishingExtension) {
         if (publishingExtension != null) {
-            if (!projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
-                return
-            }
             Project project = artifactoryTask.project;
             // Add mavenWeb publication if war task exists and enabled
             Task warTask = project.tasks.findByName("war");
@@ -234,9 +231,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
 
             // Add publications to Artifactory task
             artifactoryTask.addDefaultPublications()
-        } else if (artifactoryTask.project.plugins.hasPlugin("maven")) {
-            // Only if the legacy Maven plugin is applied, add the default legacy Archive Configurations.
-            // The purpose of this filter is to prevent the addition of legacy Archive Configurations when using new Gradle versions.
+        } else {
             artifactoryTask.addDefaultArchiveConfiguration()
         }
     }
