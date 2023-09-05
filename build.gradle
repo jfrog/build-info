@@ -9,7 +9,7 @@ buildscript {
         commonsIoVersion = '2.11.0'
         commonsLang3Version = '3.12.0'
         commonsLoggingVersion = '1.2'
-        dockerJavaVersion = '3.2.14'
+        dockerJavaVersion = '3.3.3'
         easymockclassextensionVersion = '3.2'
         eclipseAetherVersion = '1.1.0'
         fileSpecsJavaVersion = '1.1.2'
@@ -18,10 +18,10 @@ buildscript {
         gradleVersionsPluginVersion = '0.42.0'
 
         groovyAllVersion = '3.0.13'
-        guavaVersion = '31.1-jre'
+        guavaVersion = '32.0.1-jre'
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
-        ivyVersion = '2.5.1'
+        ivyVersion = '2.5.2'
         jacksonVersion = '2.14.1'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
@@ -52,6 +52,7 @@ buildscript {
         testNgVersion = '6.14.3'
 
         woodstoxVersion = '6.4.0'
+        jerseyVersion = '2.34'
     }
 
     repositories {
@@ -130,7 +131,6 @@ subprojects {
 
     dependencies {
         implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
-        implementation group: 'commons-logging', name: 'commons-logging', version: commonsLoggingVersion
         implementation group: 'commons-io', name: 'commons-io', version: commonsIoVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
@@ -474,7 +474,10 @@ project('build-info-extractor-docker') {
 
     dependencies {
         implementation group: 'org.slf4j', name: 'slf4j-simple', version: slf4jVersion
-        implementation group: 'com.github.docker-java', name: 'docker-java', version: dockerJavaVersion
+        implementation(group: 'com.github.docker-java', name: 'docker-java', version: dockerJavaVersion) {
+            exclude group: 'org.glassfish.jersey.core', module: 'jersey-common'
+        }
+        implementation group: 'org.glassfish.jersey.core', name: 'jersey-common', version: jerseyVersion
     }
 }
 
