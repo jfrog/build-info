@@ -183,6 +183,7 @@ public class CommandExecutor implements Serializable {
             args.addAll(credentials);
         }
         if (!SystemUtils.IS_OS_WINDOWS) {
+            args = escapeSpacesUnix(args);
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
@@ -195,6 +196,14 @@ public class CommandExecutor implements Serializable {
                 .directory(execDir);
         processBuilder.environment().putAll(env);
         return processBuilder.start();
+    }
+
+    private static List<String> escapeSpacesUnix(List<String> args) {
+        List<String> res = new ArrayList<>(args.size());
+        for (String arg : args) {
+            res.add(arg.trim().trim().replaceAll(" ", "\\\\ "));
+        }
+        return res;
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
