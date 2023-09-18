@@ -182,10 +182,17 @@ public class CommandExecutor implements Serializable {
         if (credentials != null) {
             args.addAll(credentials);
         }
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            String strArgs = join(" ", args);
+            args = new ArrayList<String>() {{
+                add("/bin/sh");
+                add("-c");
+                add(strArgs);
+            }};
+        }
         logCommand(logger, args, credentials);
         ProcessBuilder processBuilder = new ProcessBuilder(args)
-                .directory(execDir)
-                .redirectErrorStream(true);
+                .directory(execDir);
         processBuilder.environment().putAll(env);
         return processBuilder.start();
     }
