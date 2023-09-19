@@ -211,7 +211,7 @@ public class CommandExecutor implements Serializable {
         if (executablePath == null) {
             return null;
         }
-        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
+        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? " " : "\\\\ ");
     }
 
     /**
