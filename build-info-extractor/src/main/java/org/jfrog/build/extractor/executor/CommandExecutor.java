@@ -33,11 +33,7 @@ public class CommandExecutor implements Serializable {
      * @param env            - Environment variables to use during execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
-        if (SystemUtils.IS_OS_WINDOWS) {
-            this.executablePath = executablePath.trim();
-        } else {
-            this.executablePath = escapeSpacesUnix(executablePath);
-        }
+        this.executablePath = escapeSpacesInPath(executablePath);
         Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
         if (env != null) {
             Map<String, String> fixedEnvMap = new HashMap<>(env);
@@ -196,22 +192,22 @@ public class CommandExecutor implements Serializable {
         }
         logCommand(logger, args, credentials);
         ProcessBuilder processBuilder = new ProcessBuilder(args)
-                .directory(execDir)
-                .redirectErrorStream(true);
+                .directory(execDir);
         processBuilder.environment().putAll(env);
         return processBuilder.start();
     }
 
-    private static List<String> escapeSpacesUnix(List<String> args) {
-        List<String> res = new ArrayList<>(args.size());
-        for (String arg : args) {
-            res.add(escapeSpacesUnix(arg));
+    /**
+     * Escape spaces in the input executable path and trim leading and trailing whitespaces.
+     *
+     * @param executablePath - the executable path to process
+     * @return escaped and trimmed executable path.
+     */
+    private static String escapeSpacesInPath(String executablePath) {
+        if (executablePath == null) {
+            return null;
         }
-        return res;
-    }
-
-    private static String escapeSpacesUnix(String arg) {
-        return arg.trim().trim().replaceAll(" ", "\\\\ ");
+        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
