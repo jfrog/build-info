@@ -194,7 +194,6 @@ public class CommandExecutor implements Serializable {
             }};
         }
         logCommand(logger, args, credentials);
-        args = args.stream().map(CommandExecutor::unQuote).collect(Collectors.toList());
         ProcessBuilder processBuilder = new ProcessBuilder(args)
                 .directory(execDir);
         processBuilder.environment().putAll(env);
@@ -212,19 +211,6 @@ public class CommandExecutor implements Serializable {
             return null;
         }
         return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
-    }
-
-    /**
-     * Removes the surrounding quotes from the given string, if present.
-     *
-     * @param str The string to unquote.
-     * @return The unquoted string.
-     */
-    public static String unQuote(String str) {
-        if ((str.startsWith("\"") && str.endsWith("\"")) || (str.startsWith("'") && str.endsWith("'"))) {
-            return str.substring(1, str.length() - 1);
-        }
-        return str;
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
