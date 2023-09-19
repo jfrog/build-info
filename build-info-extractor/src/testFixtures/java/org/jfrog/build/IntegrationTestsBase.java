@@ -116,7 +116,7 @@ public abstract class IntegrationTestsBase {
 
     protected String readParam(Properties props, String paramName, String defaultValue) {
         String paramValue = null;
-        if (props.size() > 0) {
+        if (!props.isEmpty()) {
             paramValue = props.getProperty(BITESTS_PROPERTIES_PREFIX + paramName);
         }
         if (StringUtils.isBlank(paramValue)) {

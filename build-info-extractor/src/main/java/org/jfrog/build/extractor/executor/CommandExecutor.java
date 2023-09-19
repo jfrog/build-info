@@ -33,7 +33,11 @@ public class CommandExecutor implements Serializable {
      * @param env            - Environment variables to use during execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
-        this.executablePath = executablePath.trim();
+        if (SystemUtils.IS_OS_WINDOWS) {
+            this.executablePath = executablePath.trim();
+        } else {
+            this.executablePath = escapeSpacesUnix(executablePath);
+        }
         Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
         if (env != null) {
             Map<String, String> fixedEnvMap = new HashMap<>(env);
@@ -183,7 +187,6 @@ public class CommandExecutor implements Serializable {
             args.addAll(credentials);
         }
         if (!SystemUtils.IS_OS_WINDOWS) {
-            args = escapeSpacesUnix(args);
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
@@ -193,7 +196,8 @@ public class CommandExecutor implements Serializable {
         }
         logCommand(logger, args, credentials);
         ProcessBuilder processBuilder = new ProcessBuilder(args)
-                .directory(execDir);
+                .directory(execDir)
+                .redirectErrorStream(true);
         processBuilder.environment().putAll(env);
         return processBuilder.start();
     }
@@ -201,9 +205,13 @@ public class CommandExecutor implements Serializable {
     private static List<String> escapeSpacesUnix(List<String> args) {
         List<String> res = new ArrayList<>(args.size());
         for (String arg : args) {
-            res.add(arg.trim().trim().replaceAll(" ", "\\\\ "));
+            res.add(escapeSpacesUnix(arg));
         }
         return res;
+    }
+
+    private static String escapeSpacesUnix(String arg) {
+        return arg.trim().trim().replaceAll(" ", "\\\\ ");
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
