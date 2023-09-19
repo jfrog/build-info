@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -182,7 +183,9 @@ public class CommandExecutor implements Serializable {
         if (credentials != null) {
             args.addAll(credentials);
         }
-        if (!SystemUtils.IS_OS_WINDOWS) {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            args.add(0, "cmd");
+        } else {
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
@@ -191,6 +194,7 @@ public class CommandExecutor implements Serializable {
             }};
         }
         logCommand(logger, args, credentials);
+        args = args.stream().map(CommandExecutor::unQuote).collect(Collectors.toList());
         ProcessBuilder processBuilder = new ProcessBuilder(args)
                 .directory(execDir);
         processBuilder.environment().putAll(env);
@@ -208,6 +212,19 @@ public class CommandExecutor implements Serializable {
             return null;
         }
         return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
+    }
+
+    /**
+     * Removes the surrounding quotes from the given string, if present.
+     *
+     * @param str The string to unquote.
+     * @return The unquoted string.
+     */
+    public static String unQuote(String str) {
+        if ((str.startsWith("\"") && str.endsWith("\"")) || (str.startsWith("'") && str.endsWith("'"))) {
+            return str.substring(1, str.length() - 1);
+        }
+        return str;
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
