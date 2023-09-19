@@ -184,7 +184,7 @@ public class CommandExecutor implements Serializable {
             args.addAll(credentials);
         }
         if (SystemUtils.IS_OS_WINDOWS) {
-            args.add(0, "cmd");
+            args.addAll(0, Arrays.asList("cmd", "/c"));
         } else {
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
@@ -211,7 +211,7 @@ public class CommandExecutor implements Serializable {
         if (executablePath == null) {
             return null;
         }
-        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? " " : "\\\\ ");
+        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     /**
