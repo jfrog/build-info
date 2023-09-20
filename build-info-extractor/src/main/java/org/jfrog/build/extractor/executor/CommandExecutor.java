@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -25,7 +26,7 @@ public class CommandExecutor implements Serializable {
     private static final int READER_SHUTDOWN_TIMEOUT_SECONDS = 30;
     private static final int PROCESS_TERMINATION_TIMEOUT_SECONDS = 30;
     private static final int EXECUTION_TIMEOUT_MINUTES = 120;
-    private final String[] env;
+    private Map<String, String> env;
     private final String executablePath;
 
     /**
@@ -40,7 +41,7 @@ public class CommandExecutor implements Serializable {
             fixPathEnv(fixedEnvMap);
             finalEnvMap.putAll(fixedEnvMap);
         }
-        this.env = finalEnvMap.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
+        this.env = new HashMap<>(finalEnvMap);
     }
 
     /**
@@ -60,19 +61,6 @@ public class CommandExecutor implements Serializable {
             path = path.replaceAll(";", File.pathSeparator) + ":/usr/local/bin";
         }
         env.replace("PATH", path);
-    }
-
-    /**
-     * Escape spaces in the input executable path and trim leading and trailing whitespaces.
-     *
-     * @param executablePath - the executable path to process
-     * @return escaped and trimmed executable path.
-     */
-    private static String escapeSpacesInPath(String executablePath) {
-        if (executablePath == null) {
-            return null;
-        }
-        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     /**
@@ -144,10 +132,11 @@ public class CommandExecutor implements Serializable {
      * @return CommandResults object
      */
     public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger, long timeout, TimeUnit unit) throws InterruptedException, IOException {
-        args.add(0, executablePath);
+        List<String> command = new ArrayList<>(args);
+        command.add(0, executablePath);
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
-            Process process = runProcess(execDir, args, credentials, env, logger);
+            Process process = runProcess(execDir, command, credentials, env, logger);
             // The output stream is not necessary in non-interactive scenarios, therefore we can close it now.
             process.getOutputStream().close();
             try (InputStream inputStream = process.getInputStream(); InputStream errorStream = process.getErrorStream()) {
@@ -159,7 +148,7 @@ public class CommandExecutor implements Serializable {
                 service.shutdown();
                 boolean outputReaderTerminatedProperly = service.awaitTermination(READER_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
                 boolean terminatedProperly = executionTerminatedProperly && outputReaderTerminatedProperly;
-                return getCommandResults(terminatedProperly, args, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
+                return getCommandResults(terminatedProperly, command, inputStreamReader.getOutput(), errorStreamReader.getOutput(), process.exitValue());
             } finally {
                 // Ensure termination of the subprocess we have created.
                 if (process.isAlive()) {
@@ -177,6 +166,7 @@ public class CommandExecutor implements Serializable {
         }
     }
 
+
     private CommandResults getCommandResults(boolean terminatedProperly, List<String> args, String output, String error, int exitValue) {
         CommandResults commandRes = new CommandResults();
         if (!terminatedProperly) {
@@ -189,7 +179,7 @@ public class CommandExecutor implements Serializable {
         return commandRes;
     }
 
-    private static Process runProcess(File execDir, List<String> args, List<String> credentials, String[] env, Log logger) throws IOException {
+    private static Process runProcess(File execDir, List<String> args, List<String> credentials, Map<String, String> env, Log logger) throws IOException {
         if (credentials != null) {
             args.addAll(credentials);
         }
@@ -204,7 +194,23 @@ public class CommandExecutor implements Serializable {
             }};
         }
         logCommand(logger, args, credentials);
-        return Runtime.getRuntime().exec(args.toArray(new String[0]), env, execDir);
+        ProcessBuilder processBuilder = new ProcessBuilder(args)
+                .directory(execDir);
+        processBuilder.environment().putAll(env);
+        return processBuilder.start();
+    }
+
+    /**
+     * Escape spaces in the input executable path and trim leading and trailing whitespaces.
+     *
+     * @param executablePath - the executable path to process
+     * @return escaped and trimmed executable path.
+     */
+    private static String escapeSpacesInPath(String executablePath) {
+        if (executablePath == null) {
+            return null;
+        }
+        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
