@@ -10,10 +10,10 @@ pipelines:
               - "8.0.0"
       environmentVariables:
         readOnly:
-          NEXT_VERSION: 0.0.0
-          NEXT_DEVELOPMENT_VERSION: 0.0.x-SNAPSHOT
-          NEXT_GRADLE_VERSION: 0.0.0
-          NEXT_GRADLE_DEVELOPMENT_VERSION: 0.0.x-SNAPSHOT
+          NEXT_VERSION: 2.0.0
+          NEXT_DEVELOPMENT_VERSION: 2.0.x-SNAPSHOT
+          NEXT_GRADLE_VERSION: 4.0.0
+          NEXT_GRADLE_DEVELOPMENT_VERSION: 4.0.x-SNAPSHOT
 
     steps:
       - name: Release
@@ -42,10 +42,10 @@ pipelines:
 
             # Make sure versions provided
             - echo "Checking variables"
-            - test -n "$NEXT_VERSION" -a "$NEXT_VERSION" != "0.0.0"
-            - test -n "$NEXT_GRADLE_VERSION" -a "$NEXT_GRADLE_VERSION" != "0.0.0"
-            - test -n "$NEXT_DEVELOPMENT_VERSION" -a "$NEXT_DEVELOPMENT_VERSION" != "0.0.0"
-            - test -n "$NEXT_GRADLE_DEVELOPMENT_VERSION" -a "$NEXT_GRADLE_DEVELOPMENT_VERSION" != "0.0.0"
+            - test -n "$NEXT_VERSION" -a "$NEXT_VERSION" != "2.0.0"
+            - test -n "$NEXT_GRADLE_VERSION" -a "$NEXT_GRADLE_VERSION" != "4.0.0"
+            - test -n "$NEXT_DEVELOPMENT_VERSION" -a "$NEXT_DEVELOPMENT_VERSION" != "2.0.x-SNAPSHOT"
+            - test -n "$NEXT_GRADLE_DEVELOPMENT_VERSION" -a "$NEXT_GRADLE_DEVELOPMENT_VERSION" != "4.0.x-SNAPSHOT"
 
             # Configure JFrog CLI
             - curl -fL https://install-cli.jfrog.io | sh
