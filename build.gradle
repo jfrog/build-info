@@ -5,7 +5,7 @@ buildscript {
         antVersion = '1.10.12'
         buildInfoExtractorVersion = '4.29.4'
         commonsCodecVersion = '1.15'
-        commonsCompressVersion = '1.22'
+        commonsCompressVersion = '1.24.0'
         commonsIoVersion = '2.11.0'
         commonsLang3Version = '3.12.0'
         commonsLoggingVersion = '1.2'
