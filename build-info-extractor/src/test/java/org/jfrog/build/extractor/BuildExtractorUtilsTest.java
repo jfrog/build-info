@@ -112,6 +112,26 @@ public class BuildExtractorUtilsTest {
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
 
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+    }
+
+    public void failToReadEncryptedFileWithNoKey() throws IOException {
+        Properties props = new Properties();
+        props.put(POPO_KEY, "buildname");
+        props.put(MOMO_KEY, "1");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            encryptedPropertiesToFile(fileOutputStream, props);
+        }
+
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+
+        Properties fileProps = filterDynamicProperties(
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
+                BUILD_INFO_PROP_PREDICATE);
+
+        assertEquals(fileProps.size(), 0, "0 properties should be present, the file is encrypted, and the key is not available");
+
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
     }
 
     public void getBuildInfoProperties() throws IOException {
