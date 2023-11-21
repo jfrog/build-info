@@ -4,7 +4,10 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
-import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.ci.BuildInfoProperties;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -15,10 +18,21 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
-import static org.testng.Assert.*;
+import static org.jfrog.build.IntegrationTestsBase.getLog;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createBuildInfoUrl;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.encryptedPropertiesToFile;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * Test the build info extractor
@@ -48,7 +62,7 @@ public class BuildExtractorUtilsTest {
         System.setProperty(POPO_KEY, "buildname");
         System.setProperty(MOMO_KEY, "1");
 
-        Properties props = filterDynamicProperties(mergePropertiesWithSystemAndPropertyFile(new Properties()), BUILD_INFO_PROP_PREDICATE);
+        Properties props = filterDynamicProperties(mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()), BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(POPO_KEY), "buildname", "popo property does not match");
@@ -68,7 +82,29 @@ public class BuildExtractorUtilsTest {
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
         Properties fileProps = filterDynamicProperties(
-                mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
+                BUILD_INFO_PROP_PREDICATE);
+
+        assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
+        assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
+        assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
+
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+    }
+
+    public void getBuildInfoPropertiesFromEncryptedFile() throws IOException {
+        Properties props = new Properties();
+        props.put(POPO_KEY, "buildname");
+        props.put(MOMO_KEY, "1");
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            byte[] key = encryptedPropertiesToFile(fileOutputStream, props);
+            System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString((key)));
+        }
+
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+
+        Properties fileProps = filterDynamicProperties(
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
@@ -94,7 +130,7 @@ public class BuildExtractorUtilsTest {
         System.setProperty(gogoKey, "2");
 
         Properties buildInfoProperties = filterDynamicProperties(
-                mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");

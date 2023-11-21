@@ -27,6 +27,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -39,6 +40,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.decryptPropertiesFromFile;
 
 /**
  * @author Noam Y. Tenne
@@ -64,33 +66,49 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
-        return mergePropertiesWithSystemAndPropertyFile(existingProps, null);
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
+        Properties mergedProps = new Properties();
+        mergedProps.putAll(addSystemProperties(existingProps));
+        mergedProps.putAll(addAdditionalPropertiesFile(mergedProps, log));
+        return mergedProps;
     }
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
-        Properties props = new Properties();
-        addPropsFromCommandSystemProp(existingProps, log);
-        String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
-        if (StringUtils.isNotBlank(propsFilePath)) {
-            File propertiesFile = new File(propsFilePath);
-            InputStream inputStream = null;
-            try {
-                if (propertiesFile.exists()) {
-                    inputStream = Files.newInputStream(propertiesFile.toPath());
-                    props.load(inputStream);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(
-                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
-            } finally {
-                IOUtils.closeQuietly(inputStream);
-            }
-        }
 
+    private static Properties addSystemProperties(Properties existingProps) {
+        Properties props = new Properties();
         props.putAll(existingProps);
         props.putAll(System.getProperties());
+        return props;
+    }
 
+    private static Properties addAdditionalPropertiesFile(Properties existingProps, Log log) {
+        Properties props = new Properties();
+        String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
+
+        if (StringUtils.isBlank(propsFilePath)) {
+            log.debug("[buildinfo] BuildInfo properties file path is not found.");
+            return props;
+        }
+
+        File propertiesFile = new File(propsFilePath);
+        if (!propertiesFile.exists()) {
+            log.debug("[buildinfo] BuildInfo properties file is not exists.");
+            return props;
+        }
+
+        try {
+            String encryptionKey = getPropertiesFileEncryptionKey(existingProps);
+            if (StringUtils.isNotBlank(encryptionKey)) {
+                log.debug("[buildinfo] Found an encryption for buildInfo properties file for this build.");
+                props.putAll(decryptPropertiesFromFile(propertiesFile.getPath(), Base64.getDecoder().decode(encryptionKey)));
+            } else {
+                try (InputStream inputStream = Files.newInputStream(propertiesFile.toPath())) {
+                    props.load(inputStream);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+        }
         return props;
     }
 
@@ -237,6 +255,23 @@ public abstract class BuildInfoExtractorUtils {
         CommonUtils.writeByCharset(buildInfoJson, toFile, StandardCharsets.UTF_8);
     }
 
+    private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
+        String key = BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
+        if (StringUtils.isNotBlank(System.getProperty(key))) {
+            return System.getProperty(key);
+        }
+        if (additionalProps != null) {
+            if (StringUtils.isNotBlank(additionalProps.getProperty(key))) {
+                return additionalProps.getProperty(key);
+            }
+            // Jenkins prefixes these variables with "env." so let's try that
+            if (StringUtils.isNotBlank(additionalProps.getProperty("env." + key))) {
+                return additionalProps.getProperty("env." + key);
+            }
+        }
+        return null;
+    }
+
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String filePath = System.getProperty(key);
@@ -245,7 +280,7 @@ public abstract class BuildInfoExtractorUtils {
             filePath = additionalProps.getProperty(key);
             propFoundPath = "additionalProps.getProperty(" + key + ")";
         }
-        if (StringUtils.isBlank(filePath)) {
+        if (StringUtils.isBlank(filePath) && additionalProps != null) {
             // Jenkins prefixes these variables with "env." so let's try that
             filePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(filePath)) {

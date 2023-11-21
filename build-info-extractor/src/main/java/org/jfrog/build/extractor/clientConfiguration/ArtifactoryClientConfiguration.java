@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
@@ -11,11 +12,23 @@ import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -141,6 +154,8 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
  * @author freds
  */
 public class ArtifactoryClientConfiguration {
+    private static final String ALGORITHM = "AES";
+    private static final String TRANSFORMATION = "AES";
     // Try checksum deploy of files greater than 10KB
     public static final transient int DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB = 10;
     public static final String DEFAULT_NUGET_PROTOCOL = "v2";
@@ -242,6 +257,113 @@ public class ArtifactoryClientConfiguration {
         } finally {
             IOUtils.closeQuietly(fos);
         }
+    }
+
+    /**
+     * Encrypts properties to a file represented as a byte array and returns the secret key used for encryption.
+     *
+     * @param os         The output stream where the encrypted properties will be written.
+     * @param properties The Properties object containing the properties to be encrypted.
+     * @return A byte array representing the secret key used for encryption.
+     */
+    public static byte[] encryptedPropertiesToFile(OutputStream os, Properties properties) throws IOException {
+        byte[] secretKey = generateRandomKey();
+        os.write(encryptProperties(properties, secretKey));
+        return secretKey;
+    }
+
+    /**
+     * Decrypts properties from a file using the provided secret key.
+     *
+     * @param filePath  The path to the file containing encrypted properties.
+     * @param secretKey The secret key used for decryption.
+     * @return A Properties object containing the decrypted properties.
+     */
+    public static Properties decryptPropertiesFromFile(String filePath, byte[] secretKey) throws IOException {
+        return decryptProperties(FileUtils.readFileToByteArray(new File(filePath)), secretKey);
+    }
+
+    /**
+     * Encrypts properties into a byte array using the provided secret key.
+     *
+     * @param properties The Properties object to be encrypted.
+     * @param secretKey  The secret key used for encryption.
+     * @return A byte array representing the encrypted properties.
+     */
+    private static byte[] encryptProperties(Properties properties, byte[] secretKey) {
+        try {
+            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+
+            String propertiesString = propertiesToString(properties);
+            return cipher.doFinal(propertiesString.getBytes());
+        } catch (IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException |
+                 InvalidKeyException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static byte[] generateRandomKey() {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] key = new byte[16];
+        secureRandom.nextBytes(key);
+        return key;
+    }
+
+    private static String propertiesToString(Properties properties) {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (String key : properties.stringPropertyNames()) {
+            stringBuilder.append(key).append("=").append(properties.getProperty(key)).append("\n");
+        }
+        return stringBuilder.toString();
+    }
+
+    /**
+     * Decrypts properties from an encrypted byte array using the provided secret key.
+     *
+     * @param encryptedData The encrypted byte array representing properties.
+     * @param secretKey     The secret key used for decryption.
+     * @return A Properties object containing the decrypted properties.
+     */
+    private static Properties decryptProperties(byte[] encryptedData, byte[] secretKey) throws IOException {
+        try {
+            Cipher cipher = Cipher.getInstance(TRANSFORMATION);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
+
+            String decryptedString = new String(cipher.doFinal(encryptedData));
+
+            return stringToProperties(decryptedString);
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                 | BadPaddingException | IllegalBlockSizeException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private static Properties stringToProperties(String propertiesString) throws IOException {
+        Properties properties = new Properties();
+        try (InputStream inputStream = new ByteArrayInputStream(propertiesString.getBytes(StandardCharsets.UTF_8))) {
+            properties.load(inputStream);
+        }
+        return properties;
+    }
+
+    public byte[] persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
+            return null;
+        }
+        Properties properties = new Properties();
+        properties.putAll(filterMapNullValues(rootConfig.props));
+        properties.putAll(filterMapNullValues(root.props));
+        // Properties that have the 'artifactory.' prefix are deprecated.
+        // For backward compatibility reasons, both will be added to the props map.
+        // The build-info 2.32.3 is the last version to be using the deprecated properties as its primary.
+        for (String key : properties.stringPropertyNames()) {
+            properties.put("artifactory." + key, properties.getProperty(key));
+        }
+        return encryptedPropertiesToFile(os, properties);
     }
 
     public static Map<String, String> filterMapNullValues(Map<String, String> map) {
