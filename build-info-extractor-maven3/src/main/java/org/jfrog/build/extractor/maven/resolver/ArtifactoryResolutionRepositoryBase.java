@@ -7,8 +7,8 @@ import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jfrog.build.extractor.Proxy;
 import org.jfrog.build.extractor.ProxySelector;
 
-import static org.sonatype.aether.repository.Proxy.TYPE_HTTP;
-import static org.sonatype.aether.repository.Proxy.TYPE_HTTPS;
+import static org.eclipse.aether.repository.Proxy.TYPE_HTTP;
+import static org.eclipse.aether.repository.Proxy.TYPE_HTTPS;
 
 public abstract class ArtifactoryResolutionRepositoryBase {
     protected final String releaseRepoUrl;
@@ -63,18 +63,6 @@ public abstract class ArtifactoryResolutionRepositoryBase {
         proxy.setPassword(proxyConfig.getPassword());
         proxy.setProtocol(proxyConfig.isHttps() ? "HTTPS" : "HTTP");
         return proxy;
-    }
-
-    public org.sonatype.aether.repository.Proxy createSonatypeProxy(String repoUrl) {
-        Proxy proxyConfig = proxySelector.getProxy(repoUrl);
-        if (proxyConfig == null) {
-            return null;
-        }
-        return new org.sonatype.aether.repository.Proxy(
-                proxyConfig.isHttps() ? TYPE_HTTPS : TYPE_HTTP,
-                proxyConfig.getHost(),
-                proxyConfig.getPort(),
-                StringUtils.isNotBlank(proxyConfig.getUsername()) ? new org.sonatype.aether.repository.Authentication(proxyConfig.getUsername(), proxyConfig.getPassword()) : null);
     }
 
     public org.eclipse.aether.repository.Proxy createEclipseProxy(String repoUrl) {

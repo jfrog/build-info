@@ -116,9 +116,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     /**
-     * The repository listeners (either ArtifactoryEclipseRepositoryListener or
-     * ArtifactorySonatypeRepositoryListener) invoke this method with each
-     * artifact being resolved by Maven.
+     * The repository listener invokes this method with each artifact being resolved by Maven.
      *
      * @param artifact The artifact being resolved by Maven.
      */
