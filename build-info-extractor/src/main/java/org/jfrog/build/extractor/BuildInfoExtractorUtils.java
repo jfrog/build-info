@@ -69,7 +69,7 @@ public abstract class BuildInfoExtractorUtils {
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties mergedProps = new Properties();
         mergedProps.putAll(addSystemProperties(existingProps));
-        mergedProps.putAll(addAdditionalPropertiesFile(mergedProps, log));
+        mergedProps.putAll(searchAdditionalPropertiesFile(mergedProps, log));
         return mergedProps;
     }
 
@@ -81,7 +81,14 @@ public abstract class BuildInfoExtractorUtils {
         return props;
     }
 
-    private static Properties addAdditionalPropertiesFile(Properties existingProps, Log log) {
+    /**
+     * Retrieves additional properties from a specified build info properties file path.
+     *
+     * @param existingProps Existing properties object.
+     * @param log           Logger instance for logging debug information.
+     * @return Properties object containing additional properties if found; otherwise, an empty properties object.
+     */
+    private static Properties searchAdditionalPropertiesFile(Properties existingProps, Log log) {
         Properties props = new Properties();
         String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
 
@@ -255,12 +262,18 @@ public abstract class BuildInfoExtractorUtils {
         CommonUtils.writeByCharset(buildInfoJson, toFile, StandardCharsets.UTF_8);
     }
 
+    /**
+     * @return The encryption key obtained from system properties or additional properties.
+     */
+
     private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
+        // Check if the encryption key is set in system properties
         if (StringUtils.isNotBlank(System.getProperty(key))) {
             return System.getProperty(key);
         }
         if (additionalProps != null) {
+            // Check for the encryption key directly in additional properties
             if (StringUtils.isNotBlank(additionalProps.getProperty(key))) {
                 return additionalProps.getProperty(key);
             }
