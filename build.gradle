@@ -46,7 +46,6 @@ buildscript {
 
         publishPluginVersion = '1.1.0'
         slf4jVersion = '1.7.36'
-        sonatypeAetherVersion = '1.13.1'
 
         // 7.6+ require Java 11
         testNgVersion = '6.14.3'
@@ -432,9 +431,6 @@ project('build-info-extractor-maven3') {
         implementation "org.jdom:jdom2:$jdomVersion",
                 "org.codehaus.groovy:groovy-all:$groovyAllVersion",
                 "org.codehaus.plexus:plexus-container-default:$plexusContainerVersion",
-                "org.sonatype.aether:aether-api:$sonatypeAetherVersion",
-                "org.sonatype.aether:aether-util:$sonatypeAetherVersion",
-                "org.sonatype.aether:aether-impl:$sonatypeAetherVersion",
                 "org.eclipse.aether:aether-api:$eclipseAetherVersion",
                 "org.eclipse.aether:aether-util:$eclipseAetherVersion",
                 "org.eclipse.aether:aether-impl:$eclipseAetherVersion",
