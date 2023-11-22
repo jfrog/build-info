@@ -3,7 +3,6 @@ package org.jfrog.build.extractor.clientConfiguration;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -241,24 +240,6 @@ public class ArtifactoryClientConfiguration {
         return root.getLog();
     }
 
-    public void persistToPropertiesFile() {
-        if (StringUtils.isEmpty(getPropertiesFile())) {
-            return;
-        }
-        Properties props = new Properties();
-        props.putAll(filterMapNullValues(root.props));
-        props.putAll(filterMapNullValues(rootConfig.props));
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile());
-            props.store(fos, "BuildInfo configuration property file");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(fos);
-        }
-    }
-
     /**
      * Encrypts properties to a file represented as a byte array and returns the secret key used for encryption.
      *
@@ -266,10 +247,45 @@ public class ArtifactoryClientConfiguration {
      * @param properties The Properties object containing the properties to be encrypted.
      * @return A byte array representing the secret key used for encryption.
      */
-    public static byte[] encryptedPropertiesToFile(OutputStream os, Properties properties) throws IOException {
+    private static byte[] encryptedPropertiesToFile(OutputStream os, Properties properties) throws IOException {
         byte[] secretKey = generateRandomKey();
         os.write(encryptProperties(properties, secretKey));
         return secretKey;
+    }
+
+    public void persistToPropertiesFile() {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
+            return;
+        }
+        try (FileOutputStream fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile())) {
+            preparePropertiesToPersist().store(fos, "BuildInfo configuration property file");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public byte[] persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
+            return null;
+        }
+        return encryptedPropertiesToFile(os, preparePropertiesToPersist());
+    }
+
+    private Properties preparePropertiesToPersist() {
+        Properties props = new Properties();
+        props.putAll(filterMapNullValues(rootConfig.props));
+        props.putAll(filterMapNullValues(root.props));
+
+        // Properties that have the 'artifactory.' prefix are deprecated.
+        // For backward compatibility reasons, both will be added to the props map.
+        // The build-info 2.32.3 is the last version to be using the deprecated properties as its primary.
+        Properties artifactoryProps = new Properties();
+        for (String key : props.stringPropertyNames()) {
+            artifactoryProps.put("artifactory." + key, props.getProperty(key));
+        }
+        props.putAll(artifactoryProps);
+
+        return props;
     }
 
     /**
@@ -348,22 +364,6 @@ public class ArtifactoryClientConfiguration {
             properties.load(inputStream);
         }
         return properties;
-    }
-
-    public byte[] persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
-        if (StringUtils.isEmpty(getPropertiesFile())) {
-            return null;
-        }
-        Properties properties = new Properties();
-        properties.putAll(filterMapNullValues(rootConfig.props));
-        properties.putAll(filterMapNullValues(root.props));
-        // Properties that have the 'artifactory.' prefix are deprecated.
-        // For backward compatibility reasons, both will be added to the props map.
-        // The build-info 2.32.3 is the last version to be using the deprecated properties as its primary.
-        for (String key : properties.stringPropertyNames()) {
-            properties.put("artifactory." + key, properties.getProperty(key));
-        }
-        return encryptedPropertiesToFile(os, properties);
     }
 
     public static Map<String, String> filterMapNullValues(Map<String, String> map) {

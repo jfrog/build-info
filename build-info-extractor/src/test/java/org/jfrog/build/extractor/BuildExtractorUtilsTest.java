@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
@@ -9,6 +10,7 @@ import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -29,7 +31,6 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicPro
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
-import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.encryptedPropertiesToFile;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
@@ -93,20 +94,11 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromEncryptedFile() throws IOException {
-        Properties props = new Properties();
-        props.put(POPO_KEY, "buildname");
-        props.put(MOMO_KEY, "1");
-        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            byte[] key = encryptedPropertiesToFile(fileOutputStream, props);
-            System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString((key)));
-        }
-
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
-
+        byte[] key = setupEncryptedFileTest();
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(key));
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
-
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
@@ -116,22 +108,26 @@ public class BuildExtractorUtilsTest {
     }
 
     public void failToReadEncryptedFileWithNoKey() throws IOException {
-        Properties props = new Properties();
-        props.put(POPO_KEY, "buildname");
-        props.put(MOMO_KEY, "1");
-        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            encryptedPropertiesToFile(fileOutputStream, props);
-        }
-
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
-
+        setupEncryptedFileTest();
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
-
         assertEquals(fileProps.size(), 0, "0 properties should be present, the file is encrypted, and the key is not available");
-
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+    }
+
+    private byte[] setupEncryptedFileTest() throws IOException {
+        Properties props = new Properties();
+        props.put(POPO_KEY, "buildname");
+        props.put(MOMO_KEY, "1");
+        props.put(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+        ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
+        client.fillFromProperties(props);
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            return client.persistToEncryptedPropertiesFile(fileOutputStream);
+        }
     }
 
     public void getBuildInfoProperties() throws IOException {
