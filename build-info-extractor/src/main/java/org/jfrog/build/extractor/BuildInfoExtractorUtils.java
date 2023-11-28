@@ -263,9 +263,9 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     /**
+     * @param additionalProps Additional properties containing the encryption key.
      * @return The encryption key obtained from system properties or additional properties.
      */
-
     private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
         // Check if the encryption key is set in system properties
@@ -289,11 +289,11 @@ public abstract class BuildInfoExtractorUtils {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String filePath = System.getProperty(key);
         String propFoundPath = "System.getProperty(" + key + ")";
-        if (StringUtils.isBlank(filePath) && additionalProps != null) {
+        if (StringUtils.isBlank(filePath)) {
             filePath = additionalProps.getProperty(key);
             propFoundPath = "additionalProps.getProperty(" + key + ")";
         }
-        if (StringUtils.isBlank(filePath) && additionalProps != null) {
+        if (StringUtils.isBlank(filePath)) {
             // Jenkins prefixes these variables with "env." so let's try that
             filePath = additionalProps.getProperty("env." + key);
             if (StringUtils.isBlank(filePath)) {
