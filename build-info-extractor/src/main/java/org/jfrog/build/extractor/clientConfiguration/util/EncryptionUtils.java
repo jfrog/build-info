@@ -16,8 +16,8 @@ import java.security.SecureRandom;
 import java.util.Properties;
 
 public class EncryptionUtils {
-    private static final String ALGORITHM = "CBC";
-    private static final String TRANSFORMATION = "CBC";
+    private static final String ALGORITHM = "AES";
+    private static final String TRANSFORMATION = "AES/CBC/PKCS5PADDING";
 
     /**
      * Decrypts properties from an encrypted byte array using the provided secret key.
