@@ -4,12 +4,14 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -17,7 +19,10 @@ import java.util.Properties;
 
 public class EncryptionUtils {
     private static final String ALGORITHM = "AES";
-    private static final String TRANSFORMATION = "AES/CBC/PKCS5PADDING";
+    private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+    private static final int GCM_TAG_LENGTH = 128;
+    private static final int AES_256_KEY_LENGTH = 256;
+
 
     /**
      * Decrypts properties from an encrypted byte array using the provided secret key.
@@ -30,13 +35,16 @@ public class EncryptionUtils {
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec);
+            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, new byte[GCM_TAG_LENGTH / 8]);
 
-            String decryptedString = new String(cipher.doFinal(encryptedData));
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec);
+
+            byte[] decryptedBytes = cipher.doFinal(encryptedData);
+            String decryptedString = new String(decryptedBytes, StandardCharsets.UTF_8);
 
             return stringToProperties(decryptedString);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
-                 | BadPaddingException | IllegalBlockSizeException e) {
+                 | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
             e.printStackTrace();
         }
         return null;
@@ -65,7 +73,7 @@ public class EncryptionUtils {
 
     private static byte[] generateRandomKey() {
         SecureRandom secureRandom = new SecureRandom();
-        byte[] key = new byte[16];
+        byte[] key = new byte[AES_256_KEY_LENGTH / 8];
         secureRandom.nextBytes(key);
         return key;
     }
@@ -81,12 +89,14 @@ public class EncryptionUtils {
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
             SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec);
+            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, new byte[GCM_TAG_LENGTH / 8]);
+
+            cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, gcmParameterSpec);
 
             String propertiesString = propertiesToString(properties);
-            return cipher.doFinal(propertiesString.getBytes());
-        } catch (IllegalBlockSizeException | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException |
-                 InvalidKeyException e) {
+            return cipher.doFinal(propertiesString.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException
+                 | BadPaddingException | IllegalBlockSizeException | InvalidAlgorithmParameterException e) {
             throw new RuntimeException(e);
         }
     }
