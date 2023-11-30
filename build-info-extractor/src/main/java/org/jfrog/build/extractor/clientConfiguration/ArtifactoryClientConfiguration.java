@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.clientConfiguration;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -12,12 +11,18 @@ import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -138,8 +143,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RESOLVE_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_SO_TIMEOUT;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
-import static org.jfrog.build.extractor.clientConfiguration.util.encryption.SecurePropertiesEncryption.decryptProperties;
-import static org.jfrog.build.extractor.clientConfiguration.util.encryption.SecurePropertiesEncryption.encryptedPropertiesToFile;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.encryptedPropertiesToStream;
 
 /**
  * @author freds
@@ -230,8 +234,6 @@ public class ArtifactoryClientConfiguration {
         return root.getLog();
     }
 
-
-
     public void persistToPropertiesFile() {
         if (StringUtils.isEmpty(getPropertiesFile())) {
             return;
@@ -243,22 +245,12 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    /**
-     * Decrypts properties from a file using the provided secret key.
-     *
-     * @param filePath  The path to the file containing encrypted properties.
-     * @param keyPair The secret key and iv used for decryption.
-     * @return A Properties object containing the decrypted properties.
-     */
-    public static Properties decryptPropertiesFromFile(String filePath, EncryptionKeyPair keyPair) throws IOException {
-        return decryptProperties(FileUtils.readFileToByteArray(new File(filePath)), keyPair);
-    }
 
-    public EncryptionKeyPair persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
+    public EncryptionKeyPair persistToEncryptedPropertiesFile(OutputStream os) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         if (StringUtils.isEmpty(getPropertiesFile())) {
             return null;
         }
-        return encryptedPropertiesToFile(os, preparePropertiesToPersist());
+        return encryptedPropertiesToStream(os, preparePropertiesToPersist());
     }
 
     private Properties preparePropertiesToPersist() {

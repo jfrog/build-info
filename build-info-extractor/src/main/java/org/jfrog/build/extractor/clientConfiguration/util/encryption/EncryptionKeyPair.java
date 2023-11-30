@@ -10,13 +10,13 @@ import java.util.Base64;
  */
 public class EncryptionKeyPair {
     private static final int AES_256_KEY_LENGTH = 256;
-    private static final int IV_LENGTH = 126;
+    private static final int IV_LENGTH = 128;
     private byte[] secretKey;
-    private byte[] Iv;
+    private byte[] iv;
 
     public EncryptionKeyPair() {
         this.secretKey = generateRandomKey(AES_256_KEY_LENGTH);
-        this.Iv = generateRandomKey(IV_LENGTH);
+        this.iv = generateRandomKey(IV_LENGTH);
     }
 
     public EncryptionKeyPair(String secretKey, String Iv) {
@@ -24,7 +24,7 @@ public class EncryptionKeyPair {
             this.secretKey = Base64.getDecoder().decode(secretKey);
         }
         if (StringUtils.isNotBlank(Iv)) {
-            this.Iv = Base64.getDecoder().decode(Iv);
+            this.iv = Base64.getDecoder().decode(Iv);
         }
     }
 
@@ -45,19 +45,21 @@ public class EncryptionKeyPair {
         return secretKey;
     }
 
+    @SuppressWarnings("unused")
     public String getStringSecretKey() {
         return Base64.getEncoder().encodeToString(secretKey);
     }
 
     public byte[] getIv() {
-        return Iv;
+        return iv;
     }
 
+    @SuppressWarnings("unused")
     public String getStringIv() {
-        return Base64.getEncoder().encodeToString(Iv);
+        return Base64.getEncoder().encodeToString(iv);
     }
 
     public boolean isEmpty() {
-        return secretKey == null || secretKey.length == 0 || Iv == null || Iv.length == 0;
+        return secretKey == null || secretKey.length == 0 || iv == null || iv.length == 0;
     }
 }

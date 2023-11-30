@@ -7,14 +7,21 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.decryptPropertiesFromFile;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 @Test
@@ -51,7 +58,7 @@ public class ArtifactoryClientConfigurationTest {
     }
 
     @Test(description = "Test read encrypted property file")
-    public void testReadEncryptedPropertyFile() throws IOException {
+    public void testReadEncryptedPropertyFile() throws IOException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
         // Prepare
         ArtifactoryClientConfiguration client = createProxyClient();
         tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toAbsolutePath();
@@ -62,6 +69,7 @@ public class ArtifactoryClientConfigurationTest {
             EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
             // Assert decrypted successfully.
             Properties props = decryptPropertiesFromFile(tempFile.toString(), keyPair);
+            assertNotNull(props);
             assertEquals(props.size(), 18);
             assertEquals(props.getProperty("proxy.host"), client.getAllProperties().get("proxy.host"));
         }

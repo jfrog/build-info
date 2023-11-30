@@ -20,6 +20,9 @@ import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,6 +31,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -40,7 +46,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
-import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.decryptPropertiesFromFile;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 
 /**
  * @author Noam Y. Tenne
@@ -113,7 +119,8 @@ public abstract class BuildInfoExtractorUtils {
                     props.load(inputStream);
                 }
             }
-        } catch (IOException e) {
+        } catch (IOException | InvalidAlgorithmParameterException | IllegalBlockSizeException | NoSuchPaddingException |
+                 BadPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException("Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
         }
         return props;
