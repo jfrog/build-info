@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration;
 
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -58,9 +59,9 @@ public class ArtifactoryClientConfigurationTest {
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
             // Save encrypted file.
-            byte[] key = client.persistToEncryptedPropertiesFile(fileOutputStream);
+            EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
             // Assert decrypted successfully.
-            Properties props = decryptPropertiesFromFile(tempFile.toString(), key);
+            Properties props = decryptPropertiesFromFile(tempFile.toString(), keyPair);
             assertEquals(props.size(), 18);
             assertEquals(props.getProperty("proxy.host"), client.getAllProperties().get("proxy.host"));
         }

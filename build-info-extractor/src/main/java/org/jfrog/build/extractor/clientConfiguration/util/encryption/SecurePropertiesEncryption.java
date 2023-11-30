@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.clientConfiguration.util;
+package org.jfrog.build.extractor.clientConfiguration.util.encryption;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -14,28 +14,27 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.util.Properties;
 
-public class EncryptionUtils {
+public class SecurePropertiesEncryption {
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH = 128;
-    private static final int AES_256_KEY_LENGTH = 256;
+
 
 
     /**
      * Decrypts properties from an encrypted byte array using the provided secret key.
      *
      * @param encryptedData The encrypted byte array representing properties.
-     * @param secretKey     The secret key used for decryption.
+     * @param keyPair       The secret key and iv used for decryption.
      * @return A Properties object containing the decrypted properties.
      */
-    public static Properties decryptProperties(byte[] encryptedData, byte[] secretKey) throws IOException {
+    public static Properties decryptProperties(byte[] encryptedData, EncryptionKeyPair keyPair) throws IOException {
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
-            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, new byte[GCM_TAG_LENGTH / 8]);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(keyPair.getSecretKey(), ALGORITHM);
+            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, keyPair.getIv());
 
             cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, gcmParameterSpec);
 
@@ -65,31 +64,26 @@ public class EncryptionUtils {
      * @param properties The Properties object containing the properties to be encrypted.
      * @return A byte array representing the secret key used for encryption.
      */
-    public static byte[] encryptedPropertiesToFile(OutputStream os, Properties properties) throws IOException {
-        byte[] secretKey = generateRandomKey();
-        os.write(encryptProperties(properties, secretKey));
-        return secretKey;
+    public static EncryptionKeyPair encryptedPropertiesToFile(OutputStream os, Properties properties) throws IOException {
+        EncryptionKeyPair keyPair = new EncryptionKeyPair();
+        os.write(encryptProperties(properties, keyPair));
+        return keyPair;
     }
 
-    private static byte[] generateRandomKey() {
-        SecureRandom secureRandom = new SecureRandom();
-        byte[] key = new byte[AES_256_KEY_LENGTH / 8];
-        secureRandom.nextBytes(key);
-        return key;
-    }
+
 
     /**
      * Encrypts properties into a byte array using the provided secret key.
      *
      * @param properties The Properties object to be encrypted.
-     * @param secretKey  The secret key used for encryption.
+     * @param keyPair    The secret key and iv used for encryption.
      * @return A byte array representing the encrypted properties.
      */
-    private static byte[] encryptProperties(Properties properties, byte[] secretKey) {
+    private static byte[] encryptProperties(Properties properties, EncryptionKeyPair keyPair) {
         try {
             Cipher cipher = Cipher.getInstance(TRANSFORMATION);
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey, ALGORITHM);
-            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, new byte[GCM_TAG_LENGTH / 8]);
+            SecretKeySpec secretKeySpec = new SecretKeySpec(keyPair.getSecretKey(), ALGORITHM);
+            GCMParameterSpec gcmParameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH, keyPair.getIv());
 
             cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, gcmParameterSpec);
 

@@ -11,6 +11,7 @@ import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
@@ -94,8 +95,9 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromEncryptedFile() throws IOException {
-        byte[] key = setupEncryptedFileTest();
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(key));
+        EncryptionKeyPair keyPair = setupEncryptedFileTest();
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
@@ -105,6 +107,7 @@ public class BuildExtractorUtilsTest {
 
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
     }
 
     public void failToReadEncryptedFileWithNoKey() throws IOException {
@@ -116,7 +119,7 @@ public class BuildExtractorUtilsTest {
         System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
     }
 
-    private byte[] setupEncryptedFileTest() throws IOException {
+    private EncryptionKeyPair setupEncryptedFileTest() throws IOException {
         Properties props = new Properties();
         props.put(POPO_KEY, "buildname");
         props.put(MOMO_KEY, "1");

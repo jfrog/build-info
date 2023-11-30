@@ -10,6 +10,7 @@ import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -137,8 +138,8 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RESOLVE_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_SO_TIMEOUT;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
-import static org.jfrog.build.extractor.clientConfiguration.util.EncryptionUtils.decryptProperties;
-import static org.jfrog.build.extractor.clientConfiguration.util.EncryptionUtils.encryptedPropertiesToFile;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.SecurePropertiesEncryption.decryptProperties;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.SecurePropertiesEncryption.encryptedPropertiesToFile;
 
 /**
  * @author freds
@@ -242,22 +243,22 @@ public class ArtifactoryClientConfiguration {
         }
     }
 
-    public byte[] persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
-        if (StringUtils.isEmpty(getPropertiesFile())) {
-            return null;
-        }
-        return encryptedPropertiesToFile(os, preparePropertiesToPersist());
-    }
-
     /**
      * Decrypts properties from a file using the provided secret key.
      *
      * @param filePath  The path to the file containing encrypted properties.
-     * @param secretKey The secret key used for decryption.
+     * @param keyPair The secret key and iv used for decryption.
      * @return A Properties object containing the decrypted properties.
      */
-    public static Properties decryptPropertiesFromFile(String filePath, byte[] secretKey) throws IOException {
-        return decryptProperties(FileUtils.readFileToByteArray(new File(filePath)), secretKey);
+    public static Properties decryptPropertiesFromFile(String filePath, EncryptionKeyPair keyPair) throws IOException {
+        return decryptProperties(FileUtils.readFileToByteArray(new File(filePath)), keyPair);
+    }
+
+    public EncryptionKeyPair persistToEncryptedPropertiesFile(OutputStream os) throws IOException {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
+            return null;
+        }
+        return encryptedPropertiesToFile(os, preparePropertiesToPersist());
     }
 
     private Properties preparePropertiesToPersist() {
