@@ -18,7 +18,11 @@ import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +31,9 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -39,6 +46,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 
 /**
  * @author Noam Y. Tenne
@@ -64,33 +72,57 @@ public abstract class BuildInfoExtractorUtils {
     public static final Predicate<Object> MATRIX_PARAM_PREDICATE =
             new PrefixPredicate(ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX);
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps) {
-        return mergePropertiesWithSystemAndPropertyFile(existingProps, null);
+    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
+        Properties mergedProps = new Properties();
+        mergedProps.putAll(addSystemProperties(existingProps));
+        mergedProps.putAll(searchAdditionalPropertiesFile(mergedProps, log));
+        return mergedProps;
     }
 
-    public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
-        Properties props = new Properties();
-        addPropsFromCommandSystemProp(existingProps, log);
-        String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
-        if (StringUtils.isNotBlank(propsFilePath)) {
-            File propertiesFile = new File(propsFilePath);
-            InputStream inputStream = null;
-            try {
-                if (propertiesFile.exists()) {
-                    inputStream = Files.newInputStream(propertiesFile.toPath());
-                    props.load(inputStream);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(
-                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
-            } finally {
-                IOUtils.closeQuietly(inputStream);
-            }
-        }
 
+    private static Properties addSystemProperties(Properties existingProps) {
+        Properties props = new Properties();
         props.putAll(existingProps);
         props.putAll(System.getProperties());
+        return props;
+    }
 
+    /**
+     * Retrieves additional properties from a specified build info properties file path.
+     *
+     * @param existingProps Existing properties object.
+     * @param log           Logger instance for logging debug information.
+     * @return Properties object containing additional properties if found; otherwise, an empty properties object.
+     */
+    private static Properties searchAdditionalPropertiesFile(Properties existingProps, Log log) {
+        Properties props = new Properties();
+        String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
+
+        if (StringUtils.isBlank(propsFilePath)) {
+            log.debug("[buildinfo] BuildInfo properties file path is not found.");
+            return props;
+        }
+
+        File propertiesFile = new File(propsFilePath);
+        if (!propertiesFile.exists()) {
+            log.debug("[buildinfo] BuildInfo properties file is not exists.");
+            return props;
+        }
+
+        try {
+            EncryptionKeyPair keyPair = new EncryptionKeyPair(getPropertiesFileEncryptionKey(existingProps), getPropertiesFileEncryptionKeyIv(existingProps));
+            if (!keyPair.isEmpty()) {
+                log.debug("[buildinfo] Found an encryption for buildInfo properties file for this build.");
+                props.putAll(decryptPropertiesFromFile(propertiesFile.getPath(), keyPair));
+            } else {
+                try (InputStream inputStream = Files.newInputStream(propertiesFile.toPath())) {
+                    props.load(inputStream);
+                }
+            }
+        } catch (IOException | InvalidAlgorithmParameterException | IllegalBlockSizeException | NoSuchPaddingException |
+                 BadPaddingException | NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new RuntimeException("Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
+        }
         return props;
     }
 
@@ -237,11 +269,45 @@ public abstract class BuildInfoExtractorUtils {
         CommonUtils.writeByCharset(buildInfoJson, toFile, StandardCharsets.UTF_8);
     }
 
+    /**
+     * @param additionalProps Additional properties containing the encryption key.
+     * @return The encryption key obtained from system properties or additional properties.
+     */
+    private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
+        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+    }
+
+    /**
+     * @param additionalProps Additional properties containing the encryption IV.
+     * @return The encryption IV obtained from system properties or additional properties.
+     */
+    private static String getPropertiesFileEncryptionKeyIv(Properties additionalProps) {
+        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
+    }
+
+    private static String getPropertiesFileEncryption(Properties additionalProps, String key) {
+        // Check if the encryption key is set in system properties
+        if (StringUtils.isNotBlank(System.getProperty(key))) {
+            return System.getProperty(key);
+        }
+        if (additionalProps != null) {
+            // Check for the encryption key directly in additional properties
+            if (StringUtils.isNotBlank(additionalProps.getProperty(key))) {
+                return additionalProps.getProperty(key);
+            }
+            // Jenkins prefixes these variables with "env." so let's try that
+            if (StringUtils.isNotBlank(additionalProps.getProperty("env." + key))) {
+                return additionalProps.getProperty("env." + key);
+            }
+        }
+        return null;
+    }
+
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
         String key = BuildInfoConfigProperties.PROP_PROPS_FILE;
         String filePath = System.getProperty(key);
         String propFoundPath = "System.getProperty(" + key + ")";
-        if (StringUtils.isBlank(filePath) && additionalProps != null) {
+        if (StringUtils.isBlank(filePath)) {
             filePath = additionalProps.getProperty(key);
             propFoundPath = "additionalProps.getProperty(" + key + ")";
         }

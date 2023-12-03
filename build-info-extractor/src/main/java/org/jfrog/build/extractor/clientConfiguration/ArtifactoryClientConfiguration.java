@@ -2,7 +2,6 @@ package org.jfrog.build.extractor.clientConfiguration;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableMap;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -10,12 +9,20 @@ import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -136,6 +143,7 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RESOLVE_PREFIX;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_SO_TIMEOUT;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.encryptedPropertiesToStream;
 
 /**
  * @author freds
@@ -230,18 +238,36 @@ public class ArtifactoryClientConfiguration {
         if (StringUtils.isEmpty(getPropertiesFile())) {
             return;
         }
-        Properties props = new Properties();
-        props.putAll(filterMapNullValues(root.props));
-        props.putAll(filterMapNullValues(rootConfig.props));
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile());
-            props.store(fos, "BuildInfo configuration property file");
+        try (FileOutputStream fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile())) {
+            preparePropertiesToPersist().store(fos, "BuildInfo configuration property file");
         } catch (IOException e) {
             throw new RuntimeException(e);
-        } finally {
-            IOUtils.closeQuietly(fos);
         }
+    }
+
+
+    public EncryptionKeyPair persistToEncryptedPropertiesFile(OutputStream os) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        if (StringUtils.isEmpty(getPropertiesFile())) {
+            return null;
+        }
+        return encryptedPropertiesToStream(os, preparePropertiesToPersist());
+    }
+
+    private Properties preparePropertiesToPersist() {
+        Properties props = new Properties();
+        props.putAll(filterMapNullValues(rootConfig.props));
+        props.putAll(filterMapNullValues(root.props));
+
+        // Properties that have the 'artifactory.' prefix are deprecated.
+        // For backward compatibility reasons, both will be added to the props map.
+        // The build-info 2.32.3 is the last version to be using the deprecated properties as its primary.
+        Properties artifactoryProps = new Properties();
+        for (String key : props.stringPropertyNames()) {
+            artifactoryProps.put("artifactory." + key, props.getProperty(key));
+        }
+        props.putAll(artifactoryProps);
+
+        return props;
     }
 
     public static Map<String, String> filterMapNullValues(Map<String, String> map) {

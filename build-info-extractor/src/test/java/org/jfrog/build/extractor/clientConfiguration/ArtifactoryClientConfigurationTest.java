@@ -1,15 +1,33 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
 import org.jfrog.build.api.util.NullLog;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
 import java.util.Properties;
 
+import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
 @Test
 public class ArtifactoryClientConfigurationTest {
+    private Path tempFile;
+
     @Test(description = "Test http and https proxy handler.")
     public void testProxyHandler() {
         ArtifactoryClientConfiguration client = createProxyClient();
@@ -27,6 +45,34 @@ public class ArtifactoryClientConfigurationTest {
         assertEquals(httpsProxy.getPort(), Integer.valueOf(8889));
         assertEquals(httpsProxy.getUsername(), "proxyUser2");
         assertNull(httpsProxy.getPassword());
+    }
+
+    @BeforeMethod
+    private void setUp() throws IOException {
+        tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toAbsolutePath();
+    }
+
+    @AfterMethod
+    private void tearDown() throws IOException {
+        Files.deleteIfExists(tempFile);
+    }
+
+    @Test(description = "Test read encrypted property file")
+    public void testReadEncryptedPropertyFile() throws IOException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+        // Prepare
+        ArtifactoryClientConfiguration client = createProxyClient();
+        tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toAbsolutePath();
+        client.root.props.put(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            // Save encrypted file.
+            EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
+            // Assert decrypted successfully.
+            Properties props = decryptPropertiesFromFile(tempFile.toString(), keyPair);
+            assertNotNull(props);
+            assertEquals(props.size(), 18);
+            assertEquals(props.getProperty("proxy.host"), client.getAllProperties().get("proxy.host"));
+        }
     }
 
     private ArtifactoryClientConfiguration createProxyClient() {

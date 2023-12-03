@@ -1,24 +1,46 @@
 package org.jfrog.build.extractor;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.builder.BuildInfoBuilder;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
-import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.jfrog.build.extractor.ci.BuildInfoProperties;
+import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Properties;
 
-import static org.jfrog.build.extractor.BuildInfoExtractorUtils.*;
-import static org.testng.Assert.*;
+import static org.jfrog.build.IntegrationTestsBase.getLog;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createBuildInfoUrl;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 
 /**
  * Test the build info extractor
@@ -42,13 +64,17 @@ public class BuildExtractorUtilsTest {
     @AfterMethod
     private void tearDown() throws IOException {
         Files.deleteIfExists(tempFile);
+
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
     }
 
     public void getBuildInfoPropertiesFromSystemProps() {
         System.setProperty(POPO_KEY, "buildname");
         System.setProperty(MOMO_KEY, "1");
 
-        Properties props = filterDynamicProperties(mergePropertiesWithSystemAndPropertyFile(new Properties()), BUILD_INFO_PROP_PREDICATE);
+        Properties props = filterDynamicProperties(mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()), BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(POPO_KEY), "buildname", "popo property does not match");
@@ -68,14 +94,46 @@ public class BuildExtractorUtilsTest {
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
         Properties fileProps = filterDynamicProperties(
-                mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
+    }
 
-        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+    public void getBuildInfoPropertiesFromEncryptedFile() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        EncryptionKeyPair keyPair = setupEncryptedFileTest();
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
+        Properties fileProps = filterDynamicProperties(
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
+                BUILD_INFO_PROP_PREDICATE);
+        assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
+        assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
+        assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
+    }
+
+    public void failToReadEncryptedFileWithNoKey() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        setupEncryptedFileTest();
+        Properties fileProps = filterDynamicProperties(
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
+                BUILD_INFO_PROP_PREDICATE);
+        assertEquals(fileProps.size(), 0, "0 properties should be present, the file is encrypted, and the key is not available");
+    }
+
+    private EncryptionKeyPair setupEncryptedFileTest() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        Properties props = new Properties();
+        props.put(POPO_KEY, "buildname");
+        props.put(MOMO_KEY, "1");
+        props.put(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+        ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
+        client.fillFromProperties(props);
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            return client.persistToEncryptedPropertiesFile(fileOutputStream);
+        }
     }
 
     public void getBuildInfoProperties() throws IOException {
@@ -94,7 +152,7 @@ public class BuildExtractorUtilsTest {
         System.setProperty(gogoKey, "2");
 
         Properties buildInfoProperties = filterDynamicProperties(
-                mergePropertiesWithSystemAndPropertyFile(new Properties()),
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
 
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
@@ -103,7 +161,6 @@ public class BuildExtractorUtilsTest {
         assertEquals(buildInfoProperties.getProperty(kokoKey), "parent", "koko parent name property does not match");
         assertEquals(buildInfoProperties.getProperty(gogoKey), "2", "gogo parent number property does not match");
 
-        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         System.clearProperty(kokoKey);
         System.clearProperty(gogoKey);
     }
@@ -120,8 +177,6 @@ public class BuildExtractorUtilsTest {
         Properties fileProps = getEnvProperties(new Properties(), null);
         assertEquals(fileProps.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(ENV_MOMO_KEY), "1", "momo property does not match");
-
-        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
     }
 
     public void getEnvAndSysPropertiesFromFile() throws IOException {
@@ -145,7 +200,6 @@ public class BuildExtractorUtilsTest {
         assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
         assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
 
-        System.clearProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         System.clearProperty(kokoKey);
         System.clearProperty(gogoKey);
     }
