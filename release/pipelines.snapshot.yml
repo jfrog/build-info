@@ -17,7 +17,7 @@ pipelines:
           inputResources:
             - name: biSnapshotGit
           integrations:
-            - name: entplus_deployer
+            - name: ecosys_entplus_deployer
         execution:
           onStart:
             # Save gradle cache
