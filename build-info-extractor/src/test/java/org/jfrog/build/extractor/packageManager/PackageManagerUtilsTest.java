@@ -138,7 +138,7 @@ public class PackageManagerUtilsTest {
     }
 
     private BuildInfo createBuildInfo(Properties props) {
-        Properties buildInfoProperties = getEnvProperties(props, null);
+        Properties buildInfoProperties = getEnvProperties(props, new NullLog());
         Properties moduleProps = new Properties();
         moduleProps.setProperty(key1, value1);
         moduleProps.setProperty("dummy-prefix" + key1, value1);

@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -180,23 +179,7 @@ public abstract class BuildInfoExtractorUtils {
             props.put(varKey, entry.getValue());
         }
 
-        // TODO: [by FSI] Test if this is needed! Since start props are used now
-        String propsFilePath = getAdditionalPropertiesFile(startProps, log);
-        if (StringUtils.isNotBlank(propsFilePath)) {
-            File propertiesFile = new File(propsFilePath);
-            InputStream inputStream = null;
-            try {
-                inputStream = Files.newInputStream(propertiesFile.toPath());
-                Properties propertiesFromFile = new Properties();
-                propertiesFromFile.load(inputStream);
-                props.putAll(filterDynamicProperties(propertiesFromFile, ENV_PREDICATE));
-            } catch (IOException e) {
-                throw new RuntimeException(
-                        "Unable to load build info properties from file: " + propertiesFile.getAbsolutePath(), e);
-            } finally {
-                IOUtils.closeQuietly(inputStream);
-            }
-        }
+        props.putAll(filterDynamicProperties(searchAdditionalPropertiesFile(startProps, log), ENV_PREDICATE));
         return props;
     }
 

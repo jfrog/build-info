@@ -84,11 +84,8 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
-        Properties props = new Properties();
-        props.put(POPO_KEY, "buildname");
-        props.put(MOMO_KEY, "1");
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            props.store(fileOutputStream, "");
+            createProperties().store(fileOutputStream, "");
         }
 
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
@@ -103,9 +100,8 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromEncryptedFile() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
-        EncryptionKeyPair keyPair = setupEncryptedFileTest();
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
-        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
+        setupEncryptedFileTest(createProperties());
+
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
@@ -114,34 +110,35 @@ public class BuildExtractorUtilsTest {
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
     }
 
-    public void failToReadEncryptedFileWithNoKey() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
-        setupEncryptedFileTest();
+    public void failToReadEncryptedFileWithNoKey() throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        // Create encrypted file with properties
+        setupEncryptedFileTest(createProperties());
+        // Remove key
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, "");
+        // Read properties from the encrypted file
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
                 BUILD_INFO_PROP_PREDICATE);
+        // Check if no properties are read
         assertEquals(fileProps.size(), 0, "0 properties should be present, the file is encrypted, and the key is not available");
     }
 
-    private EncryptionKeyPair setupEncryptedFileTest() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
-        Properties props = new Properties();
-        props.put(POPO_KEY, "buildname");
-        props.put(MOMO_KEY, "1");
+    private void setupEncryptedFileTest(Properties props) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         props.put(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
         ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
         client.fillFromProperties(props);
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            return client.persistToEncryptedPropertiesFile(fileOutputStream);
+            EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
+            System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
+            System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
         }
     }
 
     public void getBuildInfoProperties() throws IOException {
-        Properties props = new Properties();
-        props.put(POPO_KEY, "buildname");
-        props.put(MOMO_KEY, "1");
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            props.store(fileOutputStream, "");
+            createProperties().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -166,11 +163,8 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getEnvPropertiesFromFile() throws IOException {
-        Properties props = new Properties();
-        props.put(ENV_POPO_KEY, "buildname");
-        props.put(ENV_MOMO_KEY, "1");
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            props.store(fileOutputStream, "");
+            createPropertiesEnvs().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -180,11 +174,8 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getEnvAndSysPropertiesFromFile() throws IOException {
-        Properties props = new Properties();
-        props.put(ENV_POPO_KEY, "buildname");
-        props.put(ENV_MOMO_KEY, "1");
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            props.store(fileOutputStream, "");
+            createPropertiesEnvs().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -195,6 +186,29 @@ public class BuildExtractorUtilsTest {
         System.setProperty(gogoKey, "2");
 
         Properties buildInfoProperties = getEnvProperties(new Properties(), null);
+        assertEquals(buildInfoProperties.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
+        assertEquals(buildInfoProperties.getProperty(ENV_MOMO_KEY), "1", "momo number property does not match");
+        assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
+        assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
+
+        System.clearProperty(kokoKey);
+        System.clearProperty(gogoKey);
+    }
+
+    public void getEnvAndSysPropertiesFromEncryptedFile() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+        // Put system properties
+        String kokoKey = "koko";
+        String gogoKey = "gogo";
+        System.setProperty(kokoKey, "parent");
+        System.setProperty(gogoKey, "2");
+
+        // Encrypt properties and write to the file
+        setupEncryptedFileTest(createPropertiesEnvs());
+
+        // Read properties from the encrypted file
+        Properties buildInfoProperties = getEnvProperties(new Properties(), new NullLog());
+
+        // Check if decrypted properties are as expected
         assertEquals(buildInfoProperties.getProperty(ENV_POPO_KEY), "buildname", "popo property does not match");
         assertEquals(buildInfoProperties.getProperty(ENV_MOMO_KEY), "1", "momo number property does not match");
         assertEquals(buildInfoProperties.getProperty("koko"), "parent", "koko parent name property does not match");
@@ -215,7 +229,7 @@ public class BuildExtractorUtilsTest {
 
         Properties startProps = new Properties();
         startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_EXCLUDE_PATTERNS, "*koko");
-        Properties buildInfoProperties = getEnvProperties(startProps, null);
+        Properties buildInfoProperties = getEnvProperties(startProps, new NullLog());
         assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to exclude patterns");
         assertNull(buildInfoProperties.getProperty("akoko"), "Should not find akoko property due to exclude patterns");
         assertEquals(buildInfoProperties.getProperty("gogo"), "2", "gogo parent number property does not match");
@@ -235,7 +249,7 @@ public class BuildExtractorUtilsTest {
 
         Properties startProps = new Properties();
         startProps.put(BuildInfoConfigProperties.PROP_ENV_VARS_INCLUDE_PATTERNS, "gogo?*");
-        Properties buildInfoProperties = getEnvProperties(startProps, null);
+        Properties buildInfoProperties = getEnvProperties(startProps, new NullLog());
         assertEquals(buildInfoProperties.getProperty("gogo1"), "1", "gogo1 parent number property does not match");
         assertEquals(buildInfoProperties.getProperty("gogo2a"), "2", "gogo2a parent number property does not match");
         assertNull(buildInfoProperties.getProperty("koko"), "Should not find koko property due to include patterns");
@@ -310,5 +324,19 @@ public class BuildExtractorUtilsTest {
     public void testCreateBuildInfoUrl(String url, String buildName, String buildNumber, String timeStamp, String project,
                                        boolean encode, boolean platformUrl, String exceptedUrl) {
         assertEquals(createBuildInfoUrl(url, buildName, buildNumber, timeStamp, project, encode, platformUrl), exceptedUrl);
+    }
+
+    private Properties createProperties() {
+        Properties props = new Properties();
+        props.put(POPO_KEY, "buildname");
+        props.put(MOMO_KEY, "1");
+        return props;
+    }
+
+    private Properties createPropertiesEnvs() {
+        Properties props = new Properties();
+        props.put(ENV_POPO_KEY, "buildname");
+        props.put(ENV_MOMO_KEY, "1");
+        return props;
     }
 }
