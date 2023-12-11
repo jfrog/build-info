@@ -513,17 +513,19 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 }
             }
         }
-        /*
-         * In case of non packaging Pom project module, we need to create the pom file from the project's Artifact
-         */
+
+        // In case of non-pom packaging, add the pom file from the project's artifacts, if exist
         if (!pomFileAdded) {
-            addPomArtifact(project, module, patterns, excludeArtifactsFromBuild);
+            addPomArtifactIfExist(project, module, patterns, excludeArtifactsFromBuild);
         }
     }
 
-    private void addPomArtifact(MavenProject project, ModuleBuilder module,
-                                IncludeExcludePatterns patterns, boolean excludeArtifactsFromBuild) {
+    private void addPomArtifactIfExist(MavenProject project, ModuleBuilder module,
+                                       IncludeExcludePatterns patterns, boolean excludeArtifactsFromBuild) {
         File pomFile = project.getFile();
+        if (pomFile == null || !pomFile.exists()) {
+            return;
+        }
         Artifact projectArtifact = project.getArtifact();
         String artifactName = getArtifactName(projectArtifact.getArtifactId(), projectArtifact.getBaseVersion(), projectArtifact.getClassifier(), "pom");
         org.jfrog.build.extractor.ci.Artifact pomArtifact = new ArtifactBuilder(artifactName)
