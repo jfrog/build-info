@@ -85,7 +85,7 @@ public class BuildExtractorUtilsTest {
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            createProperty().store(fileOutputStream, "");
+            createProperties().store(fileOutputStream, "");
         }
 
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
@@ -100,7 +100,7 @@ public class BuildExtractorUtilsTest {
     }
 
     public void getBuildInfoPropertiesFromEncryptedFile() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
-        setupEncryptedFileTest(createProperty());
+        setupEncryptedFileTest(createProperties());
 
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
@@ -110,9 +110,9 @@ public class BuildExtractorUtilsTest {
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
     }
 
-    public void failToReadEncryptedFileWithNoKey() throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
+    public void failToReadEncryptedFileWithNoKey() throws InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, IOException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         // Create encrypted file with properties
-        createProperty();
+        setupEncryptedFileTest(createProperties());
         // Remove key
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, "");
         // Read properties from the encrypted file
@@ -138,7 +138,7 @@ public class BuildExtractorUtilsTest {
 
     public void getBuildInfoProperties() throws IOException {
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            createProperty().store(fileOutputStream, "");
+            createProperties().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -164,7 +164,7 @@ public class BuildExtractorUtilsTest {
 
     public void getEnvPropertiesFromFile() throws IOException {
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            createPropertyEnv().store(fileOutputStream, "");
+            createPropertiesEnvs().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -175,7 +175,7 @@ public class BuildExtractorUtilsTest {
 
     public void getEnvAndSysPropertiesFromFile() throws IOException {
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
-            createPropertyEnv().store(fileOutputStream, "");
+            createPropertiesEnvs().store(fileOutputStream, "");
         }
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
@@ -203,7 +203,7 @@ public class BuildExtractorUtilsTest {
         System.setProperty(gogoKey, "2");
 
         // Encrypt properties and write to the file
-        setupEncryptedFileTest(createPropertyEnv());
+        setupEncryptedFileTest(createPropertiesEnvs());
 
         // Read properties from the encrypted file
         Properties buildInfoProperties = getEnvProperties(new Properties(), new NullLog());
@@ -326,14 +326,14 @@ public class BuildExtractorUtilsTest {
         assertEquals(createBuildInfoUrl(url, buildName, buildNumber, timeStamp, project, encode, platformUrl), exceptedUrl);
     }
 
-    private Properties createProperty() {
+    private Properties createProperties() {
         Properties props = new Properties();
         props.put(POPO_KEY, "buildname");
         props.put(MOMO_KEY, "1");
         return props;
     }
 
-    private Properties createPropertyEnv() {
+    private Properties createPropertiesEnvs() {
         Properties props = new Properties();
         props.put(ENV_POPO_KEY, "buildname");
         props.put(ENV_MOMO_KEY, "1");
