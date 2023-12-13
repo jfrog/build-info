@@ -31,9 +31,30 @@ public class GoDriver implements Serializable {
     private final Log logger;
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
-        this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
+        putGoExecutablePathInEnv(executablePath, env);
+        this.commandExecutor = new CommandExecutor("go", env);
         this.workingDirectory = workingDirectory;
         this.logger = logger;
+    }
+
+    /**
+     * Add go executable path to PATH env variable, so that go can be executed from any directory.
+     * A bug was found while running go commands in windows,
+     * where the go executable path was mistakenly considered as two command arguments
+     * because of space in the go executable path (for example: "C:\Program Files\Go\bin\go.exe").
+     *
+     * @param executablePath Go executable path
+     * @param env            Environment variables map
+     */
+    private static void putGoExecutablePathInEnv(String executablePath, Map<String, String> env) {
+        if (StringUtils.isBlank(executablePath) || env == null) {
+            return;
+        }
+        if (env.containsKey("PATH")) {
+            env.put("PATH", executablePath + File.pathSeparator + env.get("PATH"));
+        } else {
+            env.put("PATH", executablePath);
+        }
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
