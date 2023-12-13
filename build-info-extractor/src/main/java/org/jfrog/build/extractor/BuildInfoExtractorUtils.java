@@ -109,7 +109,7 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         try {
-            EncryptionKeyPair keyPair = new EncryptionKeyPair(getPropertiesFileEncryptionKey(existingProps), getPropertiesFileEncryptionKeyIv(existingProps));
+            EncryptionKeyPair keyPair = new EncryptionKeyPair(getPropertiesFileEncryptionKey(), getPropertiesFileEncryptionKeyIv());
             if (!keyPair.isEmpty()) {
                 log.debug("[buildinfo] Found an encryption for buildInfo properties file for this build.");
                 props.putAll(decryptPropertiesFromFile(propertiesFile.getPath(), keyPair));
@@ -253,28 +253,17 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     /**
-     * @param additionalProps Additional properties containing the encryption key.
      * @return The encryption key obtained from system properties or additional properties.
      */
-    private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
-        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+    private static String getPropertiesFileEncryptionKey() {
+        return System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
     }
 
     /**
-     * @param additionalProps Additional properties containing the encryption IV.
      * @return The encryption IV obtained from system properties or additional properties.
      */
-    private static String getPropertiesFileEncryptionKeyIv(Properties additionalProps) {
-        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
-    }
-
-    private static String getPropertiesFileEncryption(Properties additionalProps, String key) {
-        // Check if the encryption key is set in system properties
-        if (StringUtils.isNotBlank(System.getProperty(key))) {
-            return System.getProperty(key);
-        }
-        // Check if the encryption key is set in env vars
-        return System.getenv(key);
+    private static String getPropertiesFileEncryptionKeyIv() {
+        return System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
