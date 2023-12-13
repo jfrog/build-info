@@ -273,17 +273,8 @@ public abstract class BuildInfoExtractorUtils {
         if (StringUtils.isNotBlank(System.getProperty(key))) {
             return System.getProperty(key);
         }
-        if (additionalProps != null) {
-            // Check for the encryption key directly in additional properties
-            if (StringUtils.isNotBlank(additionalProps.getProperty(key))) {
-                return additionalProps.getProperty(key);
-            }
-            // Jenkins prefixes these variables with "env." so let's try that
-            if (StringUtils.isNotBlank(additionalProps.getProperty("env." + key))) {
-                return additionalProps.getProperty("env." + key);
-            }
-        }
-        return null;
+        // Check if the encryption key is set in env vars
+        return System.getenv(key);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
