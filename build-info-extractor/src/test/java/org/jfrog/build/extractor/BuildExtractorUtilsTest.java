@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -368,12 +367,12 @@ public class BuildExtractorUtilsTest {
         }
     }
 
-    private static void modifyWindowsEnv(String key, String newValue) {
-        Map<String, String> newEnv = new HashMap<>(System.getenv());
-        newEnv.put(key, newValue);
-        ProcessBuilder processBuilder = new ProcessBuilder();
-        Map<String, String> env = processBuilder.environment();
-        env.putAll(newEnv);
+    private static void modifyWindowsEnv(String key, String value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+        Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
+        Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
+        theEnvironmentField.setAccessible(true);
+        Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
+        env.put(key, value);
     }
 
 }
