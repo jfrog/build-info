@@ -460,4 +460,8 @@ public abstract class BuildInfoExtractorUtils {
         }
         return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
     }
+
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
+    }
 }

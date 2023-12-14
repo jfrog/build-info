@@ -17,9 +17,16 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.testng.Assert.*;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.isWindows;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.fail;
 
 /**
  * Created by Bar Belity on 21/07/2020.
@@ -189,9 +196,5 @@ public class PipExtractorTest extends IntegrationTestsBase {
         Map<String, String> additionalEnvValues = new HashMap<>();
         additionalEnvValues.put("PATH", newPathValue);
         return additionalEnvValues;
-    }
-
-    private static boolean isWindows() {
-        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 }

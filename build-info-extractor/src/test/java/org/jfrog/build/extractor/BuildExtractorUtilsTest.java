@@ -23,6 +23,7 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -32,6 +33,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonS
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createBuildInfoUrl;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.filterDynamicProperties;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.BuildInfoExtractorUtils.isWindows;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.jsonStringToBuildInfo;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile;
 import static org.testng.Assert.assertEquals;
@@ -55,11 +57,6 @@ public class BuildExtractorUtilsTest {
     @BeforeMethod
     private void setUp() throws IOException {
         tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toAbsolutePath();
-    }
-
-    // Method to set environment variables using reflection
-    private static void setEnv(String key, String value) throws Exception {
-        modifyEnv(key, value);
     }
 
     public void getBuildInfoPropertiesFromSystemProps() {
@@ -89,27 +86,6 @@ public class BuildExtractorUtilsTest {
         assertEquals(fileProps.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
-    }
-
-    // Method to unset environment variables using reflection
-    private static void unsetEnv(String key) throws Exception {
-        modifyEnv(key, null);
-    }
-
-    // Method to modify (set/unset) environment variables using reflection
-    @SuppressWarnings("unchecked")
-    private static void modifyEnv(String key, String newValue) throws Exception {
-        Map<String, String> env = System.getenv();
-        Class<?> cl = env.getClass();
-        Field field = cl.getDeclaredField("m");
-        field.setAccessible(true);
-        Map<String, String> writableEnv = (Map<String, String>) field.get(env);
-
-        if (newValue != null) {
-            writableEnv.put(key, newValue);
-        } else {
-            writableEnv.remove(key);
-        }
     }
 
     @AfterMethod
@@ -361,4 +337,43 @@ public class BuildExtractorUtilsTest {
         System.clearProperty(kokoKey);
         System.clearProperty(gogoKey);
     }
+
+    // Method to set environment variables using reflection
+    private static void setEnv(String key, String value) throws Exception {
+        modifyEnv(key, value);
+    }
+
+    // Method to unset environment variables using reflection
+    private static void unsetEnv(String key) throws Exception {
+        modifyEnv(key, null);
+    }
+
+    // Method to modify (set/unset) environment variables using reflection
+    @SuppressWarnings("unchecked")
+    private static void modifyEnv(String key, String newValue) throws Exception {
+        if (isWindows()) {
+            modifyWindowsEnv(key, newValue);
+            return;
+        }
+        Map<String, String> env = System.getenv();
+        Class<?> cl = env.getClass();
+        Field field = cl.getDeclaredField("m");
+        field.setAccessible(true);
+        Map<String, String> writableEnv = (Map<String, String>) field.get(env);
+
+        if (newValue != null) {
+            writableEnv.put(key, newValue);
+        } else {
+            writableEnv.remove(key);
+        }
+    }
+
+    private static void modifyWindowsEnv(String key, String newValue) {
+        Map<String, String> newEnv = new HashMap<>(System.getenv());
+        newEnv.put(key, newValue);
+        ProcessBuilder processBuilder = new ProcessBuilder();
+        Map<String, String> env = processBuilder.environment();
+        env.putAll(newEnv);
+    }
+
 }
