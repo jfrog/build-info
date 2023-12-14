@@ -342,7 +342,7 @@ public class BuildExtractorUtilsTest {
     }
 
     private void unsetEnv(String key) throws Exception {
-        modifyEnv(key, null);
+        modifyEnv(key, "");
     }
 
     // Method to modify (set/unset) environment variables using reflection
