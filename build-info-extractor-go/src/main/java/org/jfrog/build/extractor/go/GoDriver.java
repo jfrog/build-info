@@ -32,45 +32,36 @@ public class GoDriver implements Serializable {
     private final Log logger;
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
-        logger.info("Using go executable path: " + executablePath);
-        logger.info("PATH environment variable before: " + env.get("Path"));
-        putGoExecutablePathInEnv(executablePath, env);
-        logger.info("PATH environment variable after: " + env.get("Path"));
-        this.commandExecutor = new CommandExecutor("go", env);
+        this.commandExecutor = generateCommandExecutor(executablePath, env);
         this.workingDirectory = workingDirectory;
         this.logger = logger;
     }
 
     /**
-     * Add go executable path to PATH env variable, so that go can be executed from any directory.
-     * A bug was found while running go commands in windows,
-     * where the go executable path was mistakenly considered as two command arguments
-     * because of space in the go executable path (for example: "C:\Program Files\Go\bin\go.exe").
+     * Create a CommandExecutor with the given executable path and environment variables.
+     * Handle a bug in windows, where the go executable path was mistakenly considered as two command arguments
+     * in cases where the executable path contains spaces (for example: "C:\Program Files\Go\bin\go.exe").
      *
      * @param executablePath Go executable path
      * @param env            Environment variables map
+     * @return CommandExecutor
      */
-    private static void putGoExecutablePathInEnv(String executablePath, Map<String, String> env) {
-        if (StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
-            return;
+    private static CommandExecutor generateCommandExecutor(String executablePath, Map<String, String> env) {
+        if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
+            return new CommandExecutor(executablePath, env);
         }
-
-        // if executablePath ends with "/go" - remove it with the char before it with
+        // Handling windows case
+        // If executablePath ends with "/go" - remove it
         if (StringUtils.endsWith(executablePath, "go")) {
             executablePath = StringUtils.substring(executablePath, 0, executablePath.length() - 3);
         }
 
-        String envPathKey;
-        if (SystemUtils.IS_OS_WINDOWS) {
-            envPathKey = "Path";
+        if (env.containsKey("Path")) {
+            env.put("Path", executablePath + File.pathSeparator + env.get("Path"));
         } else {
-            envPathKey = "PATH";
+            env.put("Path", executablePath);
         }
-        if (env.containsKey(envPathKey)) {
-            env.put(envPathKey, executablePath + File.pathSeparator + env.get(envPathKey));
-        } else {
-            env.put(envPathKey, executablePath);
-        }
+        return new CommandExecutor("go", env);
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
