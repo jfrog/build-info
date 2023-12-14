@@ -48,7 +48,7 @@ public class GoDriver implements Serializable {
      */
     private static CommandExecutor generateCommandExecutor(String executablePath, Map<String, String> env) {
         if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
-            return new CommandExecutor(executablePath, env);
+            return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
         }
         // Handling windows case
         // If executablePath ends with "/go" - remove it
