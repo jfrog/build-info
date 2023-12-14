@@ -33,9 +33,9 @@ public class GoDriver implements Serializable {
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
         logger.info("Using go executable path: " + executablePath);
-        logger.info("PATH environment variable before: " + env.get("PATH"));
+        logger.info("PATH environment variable before: " + env.get("Path"));
         putGoExecutablePathInEnv(executablePath, env);
-        logger.info("PATH environment variable after: " + env.get("PATH"));
+        logger.info("PATH environment variable after: " + env.get("Path"));
         this.commandExecutor = new CommandExecutor("go", env);
         this.workingDirectory = workingDirectory;
         this.logger = logger;
