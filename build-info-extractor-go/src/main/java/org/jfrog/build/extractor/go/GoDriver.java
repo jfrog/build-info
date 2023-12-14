@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.go;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -31,7 +32,10 @@ public class GoDriver implements Serializable {
     private final Log logger;
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
+        logger.info("Using go executable path: " + executablePath);
+        logger.info("PATH environment variable before: " + env.get("PATH"));
         putGoExecutablePathInEnv(executablePath, env);
+        logger.info("PATH environment variable after: " + env.get("PATH"));
         this.commandExecutor = new CommandExecutor("go", env);
         this.workingDirectory = workingDirectory;
         this.logger = logger;
@@ -47,17 +51,30 @@ public class GoDriver implements Serializable {
      * @param env            Environment variables map
      */
     private static void putGoExecutablePathInEnv(String executablePath, Map<String, String> env) {
-        if (StringUtils.isBlank(executablePath) || env == null) {
+        if (StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
             return;
         }
-        if (env.containsKey("PATH")) {
-            env.put("PATH", executablePath + File.pathSeparator + env.get("PATH"));
+
+        // if executablePath ends with "/go" - remove it with the char before it with
+        if (StringUtils.endsWith(executablePath, "go")) {
+            executablePath = StringUtils.substring(executablePath, 0, executablePath.length() - 3);
+        }
+
+        String envPathKey;
+        if (SystemUtils.IS_OS_WINDOWS) {
+            envPathKey = "Path";
         } else {
-            env.put("PATH", executablePath);
+            envPathKey = "PATH";
+        }
+        if (env.containsKey(envPathKey)) {
+            env.put(envPathKey, executablePath + File.pathSeparator + env.get(envPathKey));
+        } else {
+            env.put(envPathKey, executablePath);
         }
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
+        this.logger.info("Running go command: " + args);
         List<String> argsList = new ArrayList<>(Arrays.asList(args.split(" ")));
         return runCmd(argsList, verbose);
     }
@@ -130,8 +147,9 @@ public class GoDriver implements Serializable {
 
     /**
      * Run go get.
+     *
      * @param componentId - Component ID string. ( Example: github.com/jfrog/build-info-go@v1.8.7 )
-     * @param verbose - True if should print the results to the log
+     * @param verbose     - True if should print the results to the log
      * @throws IOException - in case of any I/O error.
      */
     public void get(String componentId, boolean verbose) throws IOException {
