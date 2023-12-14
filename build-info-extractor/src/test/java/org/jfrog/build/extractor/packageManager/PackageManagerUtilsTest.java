@@ -14,6 +14,9 @@ import java.util.Date;
 import java.util.Properties;
 
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.containsSuspectedSecrets;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.filterBuildInfoProperties;
 import static org.testng.Assert.assertEquals;
@@ -101,6 +104,36 @@ public class PackageManagerUtilsTest {
         // Excluded module property by value
         assertNull(buildInfo.getModule("foo").getProperties().getProperty(key3), "Should not find '" + key3 + "' property due to exclude patterns");
 
+    }
+
+    @Test
+    public void testExcludeJfrogInternalKey() {
+        Properties props = new Properties();
+        Properties buildInfoProperties = getEnvProperties(props, new NullLog());
+        Properties moduleProps = new Properties();
+        moduleProps.setProperty(key1, value1);
+        moduleProps.setProperty(PROP_PROPS_FILE_KEY, value1);
+        moduleProps.setProperty(PROP_PROPS_FILE_KEY_IV, value1);
+        moduleProps.setProperty(PROP_PROPS_FILE, value1);
+        Module module = new Module();
+        module.setId("foo");
+        module.setProperties(moduleProps);
+        BuildInfo buildInfo = new BuildInfoBuilder("BUILD_NAME")
+                .number("BUILD_NUMBER")
+                .properties(buildInfoProperties)
+                .startedDate(new Date())
+                .properties(buildInfoProperties)
+                .addModule(module).build();
+
+        filterBuildInfoPropertiesTestHelper(buildInfo);
+
+        // Excluded build info JFrog internal keys
+        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE), "Should not find '" + PROP_PROPS_FILE + "' property due to exclude JFrog internal key");
+        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE_KEY_IV), "Should not find '" + PROP_PROPS_FILE_KEY_IV + "' property due to exclude JFrog internal key");
+        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE_KEY), "Should not find '" + PROP_PROPS_FILE_KEY + "' property due to exclude JFrog internal key");
+
+        // Keep build info property
+        assertEquals(buildInfo.getModule("foo").getProperties().getProperty(key1), value1, key1 + " property does not match");
     }
 
     @Test
