@@ -45,6 +45,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV;
 import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 
 /**
@@ -256,14 +258,14 @@ public abstract class BuildInfoExtractorUtils {
      * @return The encryption key obtained from system properties or additional properties.
      */
     private static String getPropertiesFileEncryptionKey() {
-        return System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY)) ? System.getenv(PROP_PROPS_FILE_KEY) : System.getProperty(PROP_PROPS_FILE_KEY);
     }
 
     /**
      * @return The encryption IV obtained from system properties or additional properties.
      */
     private static String getPropertiesFileEncryptionKeyIv() {
-        return System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
+        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY_IV)) ? System.getenv(PROP_PROPS_FILE_KEY_IV) : System.getProperty(PROP_PROPS_FILE_KEY_IV);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {

@@ -337,21 +337,19 @@ public class BuildExtractorUtilsTest {
         System.clearProperty(gogoKey);
     }
 
-    // Method to set environment variables using reflection
-    private static void setEnv(String key, String value) throws Exception {
+    private void setEnv(String key, String value) throws Exception {
         modifyEnv(key, value);
     }
 
-    // Method to unset environment variables using reflection
-    private static void unsetEnv(String key) throws Exception {
+    private void unsetEnv(String key) throws Exception {
         modifyEnv(key, null);
     }
 
     // Method to modify (set/unset) environment variables using reflection
     @SuppressWarnings("unchecked")
-    private static void modifyEnv(String key, String newValue) throws Exception {
+    private void modifyEnv(String key, String newValue) throws Exception {
         if (isWindows()) {
-            modifyWindowsEnv(key, newValue);
+            System.setProperty(key, newValue);
             return;
         }
         Map<String, String> env = System.getenv();
@@ -366,13 +364,4 @@ public class BuildExtractorUtilsTest {
             writableEnv.remove(key);
         }
     }
-
-    private static void modifyWindowsEnv(String key, String value) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
-        Class<?> processEnvironmentClass = Class.forName("java.lang.ProcessEnvironment");
-        Field theEnvironmentField = processEnvironmentClass.getDeclaredField("theEnvironment");
-        theEnvironmentField.setAccessible(true);
-        Map<String, String> env = (Map<String, String>) theEnvironmentField.get(null);
-        env.put(key, value);
-    }
-
 }
