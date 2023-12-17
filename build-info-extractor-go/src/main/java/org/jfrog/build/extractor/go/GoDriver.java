@@ -39,8 +39,6 @@ public class GoDriver implements Serializable {
 
     /**
      * Create a CommandExecutor with the given executable path and environment variables.
-     * Handle a bug in windows, where the go executable path was mistakenly considered as two command arguments
-     * in cases where the executable path contains spaces (for example: "C:\Program Files\Go\bin\go.exe").
      *
      * @param executablePath Go executable path
      * @param env            Environment variables map
@@ -50,12 +48,18 @@ public class GoDriver implements Serializable {
         if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
             return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
         }
-        // Handling windows case
-        // If executablePath ends with "/go" - remove it
+        // Handling Windows case:
+        // A bug was identified for the Go executable in Windows where the executable path may be incorrectly parsed
+        // as two command arguments when the path contains spaces (e.g., "C:\Program Files\Go\bin\go.exe").
+
+        // If executablePath ends with "/go" - remove it from the directory path
+        // TODO: handle \\go or go.exe?
         if (StringUtils.endsWith(executablePath, "go")) {
             executablePath = StringUtils.substring(executablePath, 0, executablePath.length() - 3);
         }
 
+        // Insert the Go executable directory path to the beginning of the Path environment variable
+        // todo: test for windows where we check that the right path entered the environment variable
         if (env.containsKey("Path")) {
             env.put("Path", executablePath + File.pathSeparator + env.get("Path"));
         } else {
