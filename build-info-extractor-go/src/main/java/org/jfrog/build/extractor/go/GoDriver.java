@@ -46,8 +46,9 @@ public class GoDriver implements Serializable {
      * @return CommandExecutor
      */
     private static CommandExecutor generateCommandExecutor(String executablePath, Map<String, String> env) {
-        if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals("go", executablePath) || env == null) {
-            return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
+        String defaultExecutablePath = "go";
+        if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals(executablePath, defaultExecutablePath) || env == null) {
+            return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, defaultExecutablePath), env);
         }
         // Handling Windows case:
         // A bug was identified for the Go executable in Windows where the executable path may be incorrectly parsed
@@ -55,17 +56,18 @@ public class GoDriver implements Serializable {
 
         // If executablePath ends with "go" or "go.exe" - remove it from the directory path
         executablePath = StringUtils.removeEnd(executablePath, ".exe");
-        executablePath = StringUtils.removeEnd(executablePath, "go");
+        executablePath = StringUtils.removeEnd(executablePath, defaultExecutablePath);
 
         // Insert the Go executable directory path to the beginning of the Path environment variable
         // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
         env = Maps.newHashMap(env);
-        if (env.containsKey("Path")) {
-            env.put("Path", executablePath + File.pathSeparator + env.get("Path"));
+        String windowsPathEnvKey = "Path";
+        if (env.containsKey(windowsPathEnvKey)) {
+            env.put(windowsPathEnvKey, executablePath + File.pathSeparator + env.get(windowsPathEnvKey));
         } else {
-            env.put("Path", executablePath);
+            env.put(windowsPathEnvKey, executablePath);
         }
-        return new CommandExecutor("go", env);
+        return new CommandExecutor(defaultExecutablePath, env);
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
