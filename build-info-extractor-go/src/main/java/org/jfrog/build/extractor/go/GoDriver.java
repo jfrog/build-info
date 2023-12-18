@@ -52,14 +52,11 @@ public class GoDriver implements Serializable {
         // A bug was identified for the Go executable in Windows where the executable path may be incorrectly parsed
         // as two command arguments when the path contains spaces (e.g., "C:\Program Files\Go\bin\go.exe").
 
-        // If executablePath ends with "/go" - remove it from the directory path
-        // TODO: handle \\go or go.exe?
-        if (StringUtils.endsWith(executablePath, "go")) {
-            executablePath = StringUtils.substring(executablePath, 0, executablePath.length() - 3);
-        }
+        // If executablePath ends with "go" or "go.exe" - remove it from the directory path
+        executablePath = StringUtils.removeEnd(executablePath, ".exe");
+        executablePath = StringUtils.removeEnd(executablePath, "go");
 
         // Insert the Go executable directory path to the beginning of the Path environment variable
-        // todo: test for windows where we check that the right path entered the environment variable
         if (env.containsKey("Path")) {
             env.put("Path", executablePath + File.pathSeparator + env.get("Path"));
         } else {
