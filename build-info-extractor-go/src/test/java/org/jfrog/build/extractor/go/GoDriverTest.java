@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.go;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -126,7 +127,7 @@ public class GoDriverTest {
         File projectDir = Files.createTempDirectory("").toFile();
         try {
             if (SystemUtils.IS_OS_WINDOWS) {
-                Map<String, String> env = System.getenv();
+                Map<String, String> env = Maps.newHashMap(System.getenv());
                 new GoDriver("C:\\Program Files\\Go\\bin\\go", env, projectDir, new NullLog());
                 assertTrue(getPathEnv(env).contains("C:\\Program Files\\Go\\bin"));
             }
