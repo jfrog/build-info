@@ -71,7 +71,6 @@ public class GoDriver implements Serializable {
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
-        this.logger.info("Running go command: " + args);
         List<String> argsList = new ArrayList<>(Arrays.asList(args.split(" ")));
         return runCmd(argsList, verbose);
     }
