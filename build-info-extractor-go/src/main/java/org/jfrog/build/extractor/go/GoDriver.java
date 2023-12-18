@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.go;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
@@ -57,6 +58,8 @@ public class GoDriver implements Serializable {
         executablePath = StringUtils.removeEnd(executablePath, "go");
 
         // Insert the Go executable directory path to the beginning of the Path environment variable
+        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
+        env = Maps.newHashMap(env);
         if (env.containsKey("Path")) {
             env.put("Path", executablePath + File.pathSeparator + env.get("Path"));
         } else {
