@@ -45,6 +45,8 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.apache.commons.lang3.StringUtils.removeEnd;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV;
 import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 
 /**
@@ -109,7 +111,7 @@ public abstract class BuildInfoExtractorUtils {
         }
 
         try {
-            EncryptionKeyPair keyPair = new EncryptionKeyPair(getPropertiesFileEncryptionKey(existingProps), getPropertiesFileEncryptionKeyIv(existingProps));
+            EncryptionKeyPair keyPair = new EncryptionKeyPair(getPropertiesFileEncryptionKey(), getPropertiesFileEncryptionKeyIv());
             if (!keyPair.isEmpty()) {
                 log.debug("[buildinfo] Found an encryption for buildInfo properties file for this build.");
                 props.putAll(decryptPropertiesFromFile(propertiesFile.getPath(), keyPair));
@@ -253,37 +255,17 @@ public abstract class BuildInfoExtractorUtils {
     }
 
     /**
-     * @param additionalProps Additional properties containing the encryption key.
      * @return The encryption key obtained from system properties or additional properties.
      */
-    private static String getPropertiesFileEncryptionKey(Properties additionalProps) {
-        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+    private static String getPropertiesFileEncryptionKey() {
+        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY)) ? System.getenv(PROP_PROPS_FILE_KEY) : System.getProperty(PROP_PROPS_FILE_KEY);
     }
 
     /**
-     * @param additionalProps Additional properties containing the encryption IV.
      * @return The encryption IV obtained from system properties or additional properties.
      */
-    private static String getPropertiesFileEncryptionKeyIv(Properties additionalProps) {
-        return getPropertiesFileEncryption(additionalProps, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
-    }
-
-    private static String getPropertiesFileEncryption(Properties additionalProps, String key) {
-        // Check if the encryption key is set in system properties
-        if (StringUtils.isNotBlank(System.getProperty(key))) {
-            return System.getProperty(key);
-        }
-        if (additionalProps != null) {
-            // Check for the encryption key directly in additional properties
-            if (StringUtils.isNotBlank(additionalProps.getProperty(key))) {
-                return additionalProps.getProperty(key);
-            }
-            // Jenkins prefixes these variables with "env." so let's try that
-            if (StringUtils.isNotBlank(additionalProps.getProperty("env." + key))) {
-                return additionalProps.getProperty("env." + key);
-            }
-        }
-        return null;
+    private static String getPropertiesFileEncryptionKeyIv() {
+        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY_IV)) ? System.getenv(PROP_PROPS_FILE_KEY_IV) : System.getProperty(PROP_PROPS_FILE_KEY_IV);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {
@@ -479,5 +461,9 @@ public abstract class BuildInfoExtractorUtils {
             buildNumber = encodeUrlPathPart(buildNumber);
         }
         return String.format("%s/%s/%s", artifactoryUrl + BUILD_BROWSE_URL, buildName, buildNumber);
+    }
+
+    public static boolean isWindows() {
+        return System.getProperty("os.name").toLowerCase().contains("win");
     }
 }

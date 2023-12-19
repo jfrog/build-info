@@ -5,6 +5,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
@@ -115,7 +116,7 @@ public class PackageManagerUtils {
     private static Properties getExcludeIncludeProperties(IncludeExcludePatterns patterns, Properties properties, Log log) {
         Properties props = new Properties();
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            if (!isExcludedByKey(patterns, entry) && !containsSuspectedSecrets(entry.getValue().toString())) {
+            if (!isExcludedByKey(patterns, entry) && !containsSuspectedSecrets(entry.getValue().toString()) && !isJfrogInternalKey(entry.getKey().toString())) {
                 props.put(entry.getKey(), entry.getValue());
             } else {
                 log.debug("[buildinfo] Property '" + entry.getKey() + "' has been excluded'");
@@ -135,6 +136,12 @@ public class PackageManagerUtils {
         return containsSuspectedSecret(value, apiKeySecretPrefix, apiKeySecretMinimalLength) ||
                 containsSuspectedSecret(value, referenceTokenSecretPrefix, referenceTokenSecretMinimalLength) ||
                 containsSuspectedSecret(value, accessTokenSecretPrefix, accessTokenSecretMinimalLength);
+    }
+
+    public static boolean isJfrogInternalKey(String key) {
+        return StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE) ||
+                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY) ||
+                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
     }
 
     /**
