@@ -345,9 +345,11 @@ public class BuildExtractorUtilsTest {
         modifyEnv(key, "");
     }
 
-    // Method to modify (set/unset) environment variables using reflection
+    /**
+     * Modifies (set/unset) environment variables using reflection
+     */
     @SuppressWarnings("unchecked")
-    private void modifyEnv(String key, String newValue) throws Exception {
+    private static void modifyEnv(String key, String newValue) throws Exception {
         if (isWindows()) {
             System.setProperty(key, newValue);
             return;
@@ -358,10 +360,6 @@ public class BuildExtractorUtilsTest {
         field.setAccessible(true);
         Map<String, String> writableEnv = (Map<String, String>) field.get(env);
 
-        if (newValue != null) {
-            writableEnv.put(key, newValue);
-        } else {
-            writableEnv.remove(key);
-        }
+        writableEnv.put(key, newValue);
     }
 }

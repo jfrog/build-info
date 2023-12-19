@@ -139,9 +139,9 @@ public class PackageManagerUtils {
     }
 
     public static boolean isJfrogInternalKey(String key) {
-        return key.startsWith(BuildInfoConfigProperties.PROP_PROPS_FILE) ||
-                key.startsWith(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY) ||
-                key.startsWith(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
+        return StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE) ||
+                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY) ||
+                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
     }
 
     /**

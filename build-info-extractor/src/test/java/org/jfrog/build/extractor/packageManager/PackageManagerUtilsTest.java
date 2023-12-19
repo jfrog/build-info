@@ -128,12 +128,13 @@ public class PackageManagerUtilsTest {
         filterBuildInfoPropertiesTestHelper(buildInfo);
 
         // Excluded build info JFrog internal keys
-        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE), "Should not find '" + PROP_PROPS_FILE + "' property due to exclude JFrog internal key");
-        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE_KEY_IV), "Should not find '" + PROP_PROPS_FILE_KEY_IV + "' property due to exclude JFrog internal key");
-        assertNull(buildInfo.getProperties().getProperty(PROP_PROPS_FILE_KEY), "Should not find '" + PROP_PROPS_FILE_KEY + "' property due to exclude JFrog internal key");
+        assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE), "Should not find '" + PROP_PROPS_FILE + "' property due to exclude JFrog internal key");
+        assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE_KEY_IV), "Should not find '" + PROP_PROPS_FILE_KEY_IV + "' property due to exclude JFrog internal key");
+        assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE_KEY), "Should not find '" + PROP_PROPS_FILE_KEY + "' property due to exclude JFrog internal key");
 
         // Keep build info property
         assertEquals(buildInfo.getModule("foo").getProperties().getProperty(key1), value1, key1 + " property does not match");
+        assertTrue(buildInfo.getProperties().containsKey(key1), "Should find '" + key1 + "'");
     }
 
     @Test
