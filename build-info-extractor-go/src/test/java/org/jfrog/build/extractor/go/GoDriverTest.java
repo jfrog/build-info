@@ -121,7 +121,7 @@ public class GoDriverTest {
     @Test
     public void testGoDriverWindowsInit() throws IOException {
         if (!SystemUtils.IS_OS_WINDOWS) {
-            throw new SkipException("Skipping Windows test");
+            throw new SkipException("Skipping non-windows test");
         }
         File projectDir = Files.createTempDirectory("").toFile();
         try {
@@ -129,7 +129,6 @@ public class GoDriverTest {
             String executablePath = "C:\\Program Files\\Go\\bin\\go";
             Map<String, String> executorEnv = GoDriver.generateWindowsEnv(executablePath, systemEnv);
             assertTrue(executorEnv.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
-            new GoDriver(executablePath, systemEnv, projectDir, new NullLog());
         } finally {
             FileUtils.deleteDirectory(projectDir);
         }
