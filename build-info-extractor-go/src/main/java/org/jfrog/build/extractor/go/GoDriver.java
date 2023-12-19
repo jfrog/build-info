@@ -31,6 +31,7 @@ public class GoDriver implements Serializable {
     private final CommandExecutor commandExecutor;
     private final File workingDirectory;
     private final Log logger;
+    private static final String defaultExecutablePath = "go";
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
         this.commandExecutor = generateCommandExecutor(executablePath, env);
@@ -48,7 +49,7 @@ public class GoDriver implements Serializable {
     static Map<String, String> generateWindowsEnv(String executablePath, Map<String, String> env) {
         // If executablePath ends with "go" or "go.exe" - remove it from the directory path
         executablePath = StringUtils.removeEnd(executablePath, ".exe");
-        executablePath = StringUtils.removeEnd(executablePath, "go");
+        executablePath = StringUtils.removeEnd(executablePath, defaultExecutablePath);
 
         // Insert the Go executable directory path to the beginning of the Path environment variable
         // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
@@ -61,6 +62,7 @@ public class GoDriver implements Serializable {
         }
         return newEnv;
     }
+
     /**
      * Create a CommandExecutor with the given executable path and environment variables.
      *
@@ -69,7 +71,6 @@ public class GoDriver implements Serializable {
      * @return CommandExecutor
      */
     private static CommandExecutor generateCommandExecutor(String executablePath, Map<String, String> env) {
-        String defaultExecutablePath = "go";
         if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals(executablePath, defaultExecutablePath) || env == null) {
             return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, defaultExecutablePath), env);
         }

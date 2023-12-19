@@ -6,6 +6,7 @@ import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -119,15 +120,16 @@ public class GoDriverTest {
 
     @Test
     public void testGoDriverWindowsInit() throws IOException {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            throw new SkipException("Skipping Windows test");
+        }
         File projectDir = Files.createTempDirectory("").toFile();
         try {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                Map<String, String> systemEnv = System.getenv();
-                String executablePath = "C:\\Program Files\\Go\\bin\\go";
-                Map<String, String> executorEnv = GoDriver.generateWindowsEnv(executablePath, systemEnv);
-                assertTrue(executorEnv.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
-                new GoDriver(executablePath, systemEnv, projectDir, new NullLog());
-            }
+            Map<String, String> systemEnv = System.getenv();
+            String executablePath = "C:\\Program Files\\Go\\bin\\go";
+            Map<String, String> executorEnv = GoDriver.generateWindowsEnv(executablePath, systemEnv);
+            assertTrue(executorEnv.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
+            new GoDriver(executablePath, systemEnv, projectDir, new NullLog());
         } finally {
             FileUtils.deleteDirectory(projectDir);
         }
