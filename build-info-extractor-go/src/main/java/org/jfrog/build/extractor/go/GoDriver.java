@@ -26,12 +26,12 @@ public class GoDriver implements Serializable {
     private static final String GO_GET_CMD = "get";
     private static final String GO_LIST_MODULE_CMD = "list -m";
     private static final String GO_VERSION_CMD = "version";
+    private static final String DEFAULT_EXECUTABLE_NAME = "go";
 
     private static final long serialVersionUID = 1L;
     private final CommandExecutor commandExecutor;
     private final File workingDirectory;
     private final Log logger;
-    private static final String defaultExecutablePath = "go";
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
         this.commandExecutor = generateCommandExecutor(executablePath, env);
@@ -49,7 +49,7 @@ public class GoDriver implements Serializable {
     static Map<String, String> generateWindowsEnv(String executablePath, Map<String, String> env) {
         // If executablePath ends with "go" or "go.exe" - remove it from the directory path
         executablePath = StringUtils.removeEnd(executablePath, ".exe");
-        executablePath = StringUtils.removeEnd(executablePath, defaultExecutablePath);
+        executablePath = StringUtils.removeEnd(executablePath, DEFAULT_EXECUTABLE_NAME);
 
         // Insert the Go executable directory path to the beginning of the Path environment variable
         // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
@@ -71,13 +71,13 @@ public class GoDriver implements Serializable {
      * @return CommandExecutor
      */
     private static CommandExecutor generateCommandExecutor(String executablePath, Map<String, String> env) {
-        if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals(executablePath, defaultExecutablePath) || env == null) {
-            return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, defaultExecutablePath), env);
+        if (!SystemUtils.IS_OS_WINDOWS || StringUtils.isBlank(executablePath) || StringUtils.equals(executablePath, DEFAULT_EXECUTABLE_NAME) || env == null) {
+            return new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, DEFAULT_EXECUTABLE_NAME), env);
         }
-        // Handling Windows case:
+        // Handling Windows case with a given executable path:
         // A bug was identified for the Go executable in Windows where the executable path may be incorrectly parsed
         // as two command arguments when the path contains spaces (e.g., "C:\Program Files\Go\bin\go.exe").
-        return new CommandExecutor(defaultExecutablePath, generateWindowsEnv(executablePath, env));
+        return new CommandExecutor(DEFAULT_EXECUTABLE_NAME, generateWindowsEnv(executablePath, env));
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
