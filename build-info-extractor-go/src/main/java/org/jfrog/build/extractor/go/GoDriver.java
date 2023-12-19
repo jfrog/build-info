@@ -39,6 +39,29 @@ public class GoDriver implements Serializable {
     }
 
     /**
+     * Generate a new mutable copy of environment variables map with the Go executable directory path inserted to the beginning of the Path.
+     *
+     * @param executablePath Go executable path
+     * @param env            Environment variables map
+     * @return a new Environment variables map
+     */
+    static Map<String, String> generateWindowsEnv(String executablePath, Map<String, String> env) {
+        // If executablePath ends with "go" or "go.exe" - remove it from the directory path
+        executablePath = StringUtils.removeEnd(executablePath, ".exe");
+        executablePath = StringUtils.removeEnd(executablePath, "go");
+
+        // Insert the Go executable directory path to the beginning of the Path environment variable
+        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
+        Map<String, String> newEnv = Maps.newHashMap(env);
+        String windowsPathEnvKey = "Path";
+        if (newEnv.containsKey(windowsPathEnvKey)) {
+            newEnv.put(windowsPathEnvKey, executablePath + File.pathSeparator + newEnv.get(windowsPathEnvKey));
+        } else {
+            newEnv.put(windowsPathEnvKey, executablePath);
+        }
+        return newEnv;
+    }
+    /**
      * Create a CommandExecutor with the given executable path and environment variables.
      *
      * @param executablePath Go executable path
@@ -53,21 +76,7 @@ public class GoDriver implements Serializable {
         // Handling Windows case:
         // A bug was identified for the Go executable in Windows where the executable path may be incorrectly parsed
         // as two command arguments when the path contains spaces (e.g., "C:\Program Files\Go\bin\go.exe").
-
-        // If executablePath ends with "go" or "go.exe" - remove it from the directory path
-        executablePath = StringUtils.removeEnd(executablePath, ".exe");
-        executablePath = StringUtils.removeEnd(executablePath, defaultExecutablePath);
-
-        // Insert the Go executable directory path to the beginning of the Path environment variable
-        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable
-        env = Maps.newHashMap(env);
-        String windowsPathEnvKey = "Path";
-        if (env.containsKey(windowsPathEnvKey)) {
-            env.put(windowsPathEnvKey, executablePath + File.pathSeparator + env.get(windowsPathEnvKey));
-        } else {
-            env.put(windowsPathEnvKey, executablePath);
-        }
-        return new CommandExecutor(defaultExecutablePath, env);
+        return new CommandExecutor(defaultExecutablePath, generateWindowsEnv(executablePath, env));
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
