@@ -2,9 +2,11 @@ package org.jfrog.build.extractor.go;
 
 import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.executor.CommandResults;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.Test;
 
 import java.io.File;
@@ -13,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -110,6 +113,22 @@ public class GoDriverTest {
             CommandResults results = driver.getUsedModules(false, false, false);
             Set<String> actualUsedModules = Arrays.stream(results.getRes().split("\\r?\\n")).map(String::trim).collect(Collectors.toSet());
             assertTrue(actualUsedModules.contains("rsc.io/sampler v1.3.1"));
+        } finally {
+            FileUtils.deleteDirectory(projectDir);
+        }
+    }
+
+    @Test
+    public void testGoDriverWindowsInit() throws IOException {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            throw new SkipException("Skipping non-windows test");
+        }
+        File projectDir = Files.createTempDirectory("").toFile();
+        try {
+            Map<String, String> systemEnv = System.getenv();
+            String executablePath = "C:\\Program Files\\Go\\bin\\go";
+            Map<String, String> executorEnv = GoDriver.generateWindowsEnv(executablePath, systemEnv);
+            assertTrue(executorEnv.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
         } finally {
             FileUtils.deleteDirectory(projectDir);
         }
