@@ -49,6 +49,8 @@ public class PropertyEncryptor {
     private static Properties decryptProperties(byte[] encryptedData, EncryptionKeyPair keyPair) throws IOException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
         byte[] decryptedBytes = decrypt(encryptedData, keyPair);
         String decryptedString = new String(decryptedBytes, StandardCharsets.UTF_8);
+        // Escape backslashes so that they won't be removed when loading the properties.
+        decryptedString = decryptedString.replace("\\", "\\\\");
         return stringToProperties(decryptedString);
     }
 
