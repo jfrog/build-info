@@ -75,6 +75,30 @@ public class ArtifactoryClientConfigurationTest {
         }
     }
 
+    @Test(description = "Test read encrypted property file")
+    public void testReadEncryptedWindowsPath() throws IOException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
+        // Create property with windows path
+        String key = "path";
+        String value = "C:\\user\\home";
+        ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
+        Properties clientProps = new Properties();
+        clientProps.put(key, value);
+        client.fillFromProperties(clientProps);
+
+        // Save property into the file
+        tempFile = Files.createTempFile("BuildInfoExtractorUtilsTest", "").toAbsolutePath();
+        client.root.props.put(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            // Save encrypted file.
+            EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
+            // Assert decrypted successfully.
+            Properties props = decryptPropertiesFromFile(tempFile.toString(), keyPair);
+            assertNotNull(props);
+            assertEquals(props.getProperty(key), value);
+        }
+    }
+
     private ArtifactoryClientConfiguration createProxyClient() {
         ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
         Properties props = new Properties();
