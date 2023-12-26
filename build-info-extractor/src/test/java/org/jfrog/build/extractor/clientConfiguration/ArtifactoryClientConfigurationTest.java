@@ -79,7 +79,7 @@ public class ArtifactoryClientConfigurationTest {
     public void testReadEncryptedWindowsPath() throws IOException, InvalidAlgorithmParameterException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException {
         // Create property with windows path
         String key = "path";
-        String value = "C:\\use\\home";
+        String value = "C:\\user\\home";
         ArtifactoryClientConfiguration client = new ArtifactoryClientConfiguration(new NullLog());
         Properties clientProps = new Properties();
         clientProps.put(key, value);
@@ -95,7 +95,7 @@ public class ArtifactoryClientConfigurationTest {
             // Assert decrypted successfully.
             Properties props = decryptPropertiesFromFile(tempFile.toString(), keyPair);
             assertNotNull(props);
-            assertEquals(props.getProperty(key), client.getAllProperties().get(key));
+            assertEquals(props.getProperty(key), value);
         }
     }
 
