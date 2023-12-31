@@ -75,8 +75,8 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties mergedProps = new Properties();
-        mergedProps.putAll(addSystemProperties(existingProps));
         mergedProps.putAll(searchAdditionalPropertiesFile(mergedProps, log));
+        mergedProps.putAll(addSystemProperties(existingProps));
         return mergedProps;
     }
 
