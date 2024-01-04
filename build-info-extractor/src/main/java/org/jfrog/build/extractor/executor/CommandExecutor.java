@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.executor;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.UrlUtils;
@@ -8,11 +9,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -26,7 +28,7 @@ public class CommandExecutor implements Serializable {
     private static final int READER_SHUTDOWN_TIMEOUT_SECONDS = 30;
     private static final int PROCESS_TERMINATION_TIMEOUT_SECONDS = 30;
     private static final int EXECUTION_TIMEOUT_MINUTES = 120;
-    private Map<String, String> env;
+    private final Map<String, String> env;
     private final String executablePath;
 
     /**
@@ -133,10 +135,9 @@ public class CommandExecutor implements Serializable {
      */
     public CommandResults exeCommand(File execDir, List<String> args, List<String> credentials, Log logger, long timeout, TimeUnit unit) throws InterruptedException, IOException {
         List<String> command = new ArrayList<>(args);
-        command.add(0, executablePath);
         ExecutorService service = Executors.newFixedThreadPool(2);
         try {
-            Process process = runProcess(execDir, command, credentials, env, logger);
+            Process process = runProcess(execDir, executablePath, command, credentials, env, logger);
             // The output stream is not necessary in non-interactive scenarios, therefore we can close it now.
             process.getOutputStream().close();
             try (InputStream inputStream = process.getInputStream(); InputStream errorStream = process.getErrorStream()) {
@@ -179,13 +180,21 @@ public class CommandExecutor implements Serializable {
         return commandRes;
     }
 
-    private static Process runProcess(File execDir, List<String> args, List<String> credentials, Map<String, String> env, Log logger) throws IOException {
+    private static Process runProcess(File execDir, String executablePath, List<String> args, List<String> credentials, Map<String, String> env, Log logger) throws IOException {
         if (credentials != null) {
             args.addAll(credentials);
         }
         if (SystemUtils.IS_OS_WINDOWS) {
+            Path execPath = Paths.get(executablePath);
+            if (execPath.isAbsolute()) {
+                env = generateWindowsEnv(execPath, env);
+                args.add(0, execPath.getFileName().toString());
+            } else {
+                args.add(0, executablePath);
+            }
             args.addAll(0, Arrays.asList("cmd", "/c"));
         } else {
+            args.add(0, executablePath);
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
@@ -198,6 +207,32 @@ public class CommandExecutor implements Serializable {
                 .directory(execDir);
         processBuilder.environment().putAll(env);
         return processBuilder.start();
+    }
+
+    /**
+     * Generate a new mutable copy of environment variables map with the executable directory path inserted at the
+     * beginning of the Path.
+     * This is done to handle cases where the executable path contains spaces. In such scenarios, the "cmd" command used
+     * to execute this command in Windows may incorrectly parse the path, treating the section after the space as an
+     * argument for the command.
+     *
+     * @param execPath the executable path
+     * @param env      environment variables map
+     * @return a new environment variables map
+     */
+    static Map<String, String> generateWindowsEnv(Path execPath, Map<String, String> env) {
+        String execDirPath = execPath.getParent().toString();
+
+        // Insert the executable directory path to the beginning of the Path environment variable.
+        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable.
+        Map<String, String> newEnv = Maps.newHashMap(env);
+        String windowsPathEnvKey = "Path";
+        if (newEnv.containsKey(windowsPathEnvKey)) {
+            newEnv.put(windowsPathEnvKey, execDirPath + File.pathSeparator + newEnv.get(windowsPathEnvKey));
+        } else {
+            newEnv.put(windowsPathEnvKey, execDirPath);
+        }
+        return newEnv;
     }
 
     /**
