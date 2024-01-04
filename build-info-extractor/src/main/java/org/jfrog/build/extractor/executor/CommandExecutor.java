@@ -36,7 +36,7 @@ public class CommandExecutor implements Serializable {
      * @param env            - Environment variables to use during execution.
      */
     public CommandExecutor(String executablePath, Map<String, String> env) {
-        this.executablePath = escapeSpacesInPath(executablePath);
+        this.executablePath = executablePath.trim();
         Map<String, String> finalEnvMap = new HashMap<>(System.getenv());
         if (env != null) {
             Map<String, String> fixedEnvMap = new HashMap<>(env);
@@ -190,11 +190,11 @@ public class CommandExecutor implements Serializable {
                 env = generateWindowsEnv(execPath, env);
                 args.add(0, execPath.getFileName().toString());
             } else {
-                args.add(0, executablePath);
+                args.add(0, executablePath.replaceAll(" ", "^ "));
             }
             args.addAll(0, Arrays.asList("cmd", "/c"));
         } else {
-            args.add(0, executablePath);
+            args.add(0, executablePath.replaceAll(" ", "\\\\ "));
             String strArgs = join(" ", args);
             args = new ArrayList<String>() {{
                 add("/bin/sh");
@@ -233,19 +233,6 @@ public class CommandExecutor implements Serializable {
             newEnv.put(windowsPathEnvKey, execDirPath);
         }
         return newEnv;
-    }
-
-    /**
-     * Escape spaces in the input executable path and trim leading and trailing whitespaces.
-     *
-     * @param executablePath - the executable path to process
-     * @return escaped and trimmed executable path.
-     */
-    private static String escapeSpacesInPath(String executablePath) {
-        if (executablePath == null) {
-            return null;
-        }
-        return executablePath.trim().replaceAll(" ", SystemUtils.IS_OS_WINDOWS ? "^ " : "\\\\ ");
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
