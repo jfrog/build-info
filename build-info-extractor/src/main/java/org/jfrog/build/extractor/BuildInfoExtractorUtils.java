@@ -75,8 +75,10 @@ public abstract class BuildInfoExtractorUtils {
 
     public static Properties mergePropertiesWithSystemAndPropertyFile(Properties existingProps, Log log) {
         Properties mergedProps = new Properties();
-        mergedProps.putAll(addSystemProperties(existingProps));
+        // Add properties from file.
         mergedProps.putAll(searchAdditionalPropertiesFile(mergedProps, log));
+        // Merge properties from system properties - should be second to override any properties defined in the file.
+        mergedProps.putAll(addSystemProperties(existingProps));
         return mergedProps;
     }
 

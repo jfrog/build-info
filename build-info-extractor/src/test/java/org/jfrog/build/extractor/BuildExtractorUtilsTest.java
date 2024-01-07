@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
@@ -48,6 +49,8 @@ import static org.testng.Assert.assertNull;
 public class BuildExtractorUtilsTest {
     private static final String POPO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "popo";
     private static final String MOMO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "momo";
+    private static final String KOKO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "koko";
+    private static final String GOGO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "gogo";
     private static final String ENV_POPO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "popo";
     private static final String ENV_MOMO_KEY = BuildInfoProperties.BUILD_INFO_ENVIRONMENT_PREFIX + "momo";
 
@@ -67,8 +70,6 @@ public class BuildExtractorUtilsTest {
         assertEquals(props.size(), 2, "there should only be 2 properties after the filtering");
         assertEquals(props.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(props.getProperty(MOMO_KEY), "1", "momo property does not match");
-        System.clearProperty(POPO_KEY);
-        System.clearProperty(MOMO_KEY);
     }
 
     public void getBuildInfoPropertiesFromFile() throws IOException {
@@ -87,10 +88,31 @@ public class BuildExtractorUtilsTest {
         assertEquals(fileProps.getProperty(MOMO_KEY), "1", "momo property does not match");
     }
 
+    public void getBuildInfoPropertiesFromFileAndSystemProps() throws IOException {
+        try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
+            createProperties().store(fileOutputStream, "");
+        }
+
+        System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
+        System.setProperty(KOKO_KEY, "3");
+        // Override MOMO_KEY from file
+        System.setProperty(MOMO_KEY, "2");
+
+        Properties fileProps = filterDynamicProperties(
+                mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
+                BUILD_INFO_PROP_PREDICATE);
+
+        assertEquals(fileProps.size(), 3, "there should only be 2 properties after the filtering");
+        assertEquals(fileProps.getProperty(POPO_KEY), "buildname", "popo property does not match");
+        assertEquals(fileProps.getProperty(MOMO_KEY), "2", "momo property does not match");
+        assertEquals(fileProps.getProperty(KOKO_KEY), "3", "koko property does not match");
+    }
+
     @AfterMethod
     private void tearDown() throws Exception {
         Files.deleteIfExists(tempFile);
 
+        Arrays.asList(POPO_KEY, MOMO_KEY, KOKO_KEY, GOGO_KEY).forEach(System::clearProperty);
         unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE);
         unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
         unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
@@ -103,10 +125,8 @@ public class BuildExtractorUtilsTest {
         System.setProperty(BuildInfoConfigProperties.PROP_PROPS_FILE, tempFile.toString());
 
         // Put system properties
-        String kokoKey = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "koko";
-        String gogoKey = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "gogo";
-        System.setProperty(kokoKey, "parent");
-        System.setProperty(gogoKey, "2");
+        System.setProperty(KOKO_KEY, "parent");
+        System.setProperty(GOGO_KEY, "2");
 
         Properties buildInfoProperties = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
@@ -115,11 +135,8 @@ public class BuildExtractorUtilsTest {
         assertEquals(buildInfoProperties.size(), 4, "There should be 4 properties");
         assertEquals(buildInfoProperties.getProperty(POPO_KEY), "buildname", "popo property does not match");
         assertEquals(buildInfoProperties.getProperty(MOMO_KEY), "1", "momo number property does not match");
-        assertEquals(buildInfoProperties.getProperty(kokoKey), "parent", "koko parent name property does not match");
-        assertEquals(buildInfoProperties.getProperty(gogoKey), "2", "gogo parent number property does not match");
-
-        System.clearProperty(kokoKey);
-        System.clearProperty(gogoKey);
+        assertEquals(buildInfoProperties.getProperty(KOKO_KEY), "parent", "koko parent name property does not match");
+        assertEquals(buildInfoProperties.getProperty(GOGO_KEY), "2", "gogo parent number property does not match");
     }
 
     public void getEnvPropertiesFromFile() throws IOException {
