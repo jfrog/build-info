@@ -13,16 +13,11 @@ import org.testng.annotations.Test;
 import java.util.Date;
 import java.util.Properties;
 
+import static org.jfrog.build.api.BuildInfoConfigProperties.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getEnvProperties;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.containsSuspectedSecrets;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.filterBuildInfoProperties;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
 
 public class PackageManagerUtilsTest {
     static String key1 = "test-env-key1";
@@ -112,8 +107,8 @@ public class PackageManagerUtilsTest {
         Properties buildInfoProperties = getEnvProperties(props, new NullLog());
         Properties moduleProps = new Properties();
         moduleProps.setProperty(key1, value1);
-        moduleProps.setProperty(PROP_PROPS_FILE_KEY, value1);
-        moduleProps.setProperty(PROP_PROPS_FILE_KEY_IV, value1);
+        moduleProps.setProperty(ENV_PROPERTIES_FILE_KEY, value1);
+        moduleProps.setProperty(ENV_PROPERTIES_FILE_KEY_IV, value1);
         moduleProps.setProperty(PROP_PROPS_FILE, value1);
         Module module = new Module();
         module.setId("foo");
@@ -129,8 +124,8 @@ public class PackageManagerUtilsTest {
 
         // Excluded build info JFrog internal keys
         assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE), "Should not find '" + PROP_PROPS_FILE + "' property due to exclude JFrog internal key");
-        assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE_KEY_IV), "Should not find '" + PROP_PROPS_FILE_KEY_IV + "' property due to exclude JFrog internal key");
-        assertFalse(buildInfo.getProperties().containsKey(PROP_PROPS_FILE_KEY), "Should not find '" + PROP_PROPS_FILE_KEY + "' property due to exclude JFrog internal key");
+        assertFalse(buildInfo.getProperties().containsKey(ENV_PROPERTIES_FILE_KEY_IV), "Should not find '" + ENV_PROPERTIES_FILE_KEY_IV + "' property due to exclude JFrog internal key");
+        assertFalse(buildInfo.getProperties().containsKey(ENV_PROPERTIES_FILE_KEY), "Should not find '" + ENV_PROPERTIES_FILE_KEY + "' property due to exclude JFrog internal key");
 
         // Keep build info property
         assertEquals(buildInfo.getModule("foo").getProperties().getProperty(key1), value1, key1 + " property does not match");

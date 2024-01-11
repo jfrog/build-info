@@ -33,6 +33,12 @@ public interface BuildInfoConfigProperties {
     String ENV_BUILDINFO_PROPFILE = "BUILDINFO_PROPFILE";
 
     /**
+     * Environment variables holding the properties file encryption key
+     */
+    String ENV_PROPERTIES_FILE_KEY = "PROPERTIES_FILE_KEY";
+    String ENV_PROPERTIES_FILE_KEY_IV = "PROPERTIES_FILE_KEY_IV";
+
+    /**
      * Maven property which indicates whether to resolve dependencies from Artifactory.
      */
     String ARTIFACTORY_RESOLUTION_ENABLED = "artifactoryResolutionEnabled";

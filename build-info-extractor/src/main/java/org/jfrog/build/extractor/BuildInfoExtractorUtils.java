@@ -22,12 +22,7 @@ import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionK
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Serializable;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.InvalidAlgorithmParameterException;
@@ -38,15 +33,11 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Predicate;
 
-import static org.apache.commons.lang3.StringUtils.endsWith;
-import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isEmpty;
-import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.apache.commons.lang3.StringUtils.removeEnd;
+import static org.apache.commons.lang3.StringUtils.*;
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY;
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY_IV;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 import static org.jfrog.build.extractor.UrlUtils.encodeUrlPathPart;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV;
 import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.decryptPropertiesFromFile;
 
 /**
@@ -260,14 +251,14 @@ public abstract class BuildInfoExtractorUtils {
      * @return The encryption key obtained from system properties or additional properties.
      */
     private static String getPropertiesFileEncryptionKey() {
-        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY)) ? System.getenv(PROP_PROPS_FILE_KEY) : System.getProperty(PROP_PROPS_FILE_KEY);
+        return StringUtils.isNotBlank(System.getenv(ENV_PROPERTIES_FILE_KEY)) ? System.getenv(ENV_PROPERTIES_FILE_KEY) : System.getProperty(ENV_PROPERTIES_FILE_KEY);
     }
 
     /**
      * @return The encryption IV obtained from system properties or additional properties.
      */
     private static String getPropertiesFileEncryptionKeyIv() {
-        return StringUtils.isNotBlank(System.getenv(PROP_PROPS_FILE_KEY_IV)) ? System.getenv(PROP_PROPS_FILE_KEY_IV) : System.getProperty(PROP_PROPS_FILE_KEY_IV);
+        return StringUtils.isNotBlank(System.getenv(ENV_PROPERTIES_FILE_KEY_IV)) ? System.getenv(ENV_PROPERTIES_FILE_KEY_IV) : System.getProperty(ENV_PROPERTIES_FILE_KEY_IV);
     }
 
     private static String getAdditionalPropertiesFile(Properties additionalProps, Log log) {

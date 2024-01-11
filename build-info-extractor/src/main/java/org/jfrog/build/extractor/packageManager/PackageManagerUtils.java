@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY;
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY_IV;
+
 /**
  * Created by Bar Belity on 12/07/2020.
  */
@@ -58,6 +61,7 @@ public class PackageManagerUtils {
     /**
      * Collect and filter environment variables if needed.
      * Filter buildInfo properties according to the env include-exclude patterns.
+     *
      * @param clientConfiguration - Artifactory client configuration
      * @param buildInfo           - The target build-info
      */
@@ -140,8 +144,8 @@ public class PackageManagerUtils {
 
     public static boolean isJfrogInternalKey(String key) {
         return StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE) ||
-                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY) ||
-                StringUtils.contains(key, BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
+                StringUtils.contains(key, ENV_PROPERTIES_FILE_KEY) ||
+                StringUtils.contains(key, ENV_PROPERTIES_FILE_KEY_IV);
     }
 
     /**
