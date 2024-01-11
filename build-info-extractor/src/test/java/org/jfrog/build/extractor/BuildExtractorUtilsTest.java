@@ -28,6 +28,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import static org.jfrog.build.IntegrationTestsBase.getLog;
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY;
+import static org.jfrog.build.api.BuildInfoConfigProperties.ENV_PROPERTIES_FILE_KEY_IV;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.BUILD_INFO_PROP_PREDICATE;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.buildInfoToJsonString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createBuildInfoUrl;
@@ -114,8 +116,8 @@ public class BuildExtractorUtilsTest {
 
         Arrays.asList(POPO_KEY, MOMO_KEY, KOKO_KEY, GOGO_KEY).forEach(System::clearProperty);
         unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE);
-        unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
-        unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV);
+        unsetEnv(ENV_PROPERTIES_FILE_KEY);
+        unsetEnv(ENV_PROPERTIES_FILE_KEY_IV);
     }
 
     public void getBuildInfoProperties() throws IOException {
@@ -309,7 +311,7 @@ public class BuildExtractorUtilsTest {
         // Create encrypted file with properties
         setupEncryptedFileTest(createProperties());
         // Remove key
-        unsetEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY);
+        unsetEnv(ENV_PROPERTIES_FILE_KEY);
         // Read properties from the encrypted file
         Properties fileProps = filterDynamicProperties(
                 mergePropertiesWithSystemAndPropertyFile(new Properties(), getLog()),
@@ -326,8 +328,8 @@ public class BuildExtractorUtilsTest {
 
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile.toFile())) {
             EncryptionKeyPair keyPair = client.persistToEncryptedPropertiesFile(fileOutputStream);
-            setEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
-            setEnv(BuildInfoConfigProperties.PROP_PROPS_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
+            setEnv(ENV_PROPERTIES_FILE_KEY, Base64.getEncoder().encodeToString(keyPair.getSecretKey()));
+            setEnv(ENV_PROPERTIES_FILE_KEY_IV, Base64.getEncoder().encodeToString(keyPair.getIv()));
         }
     }
 
