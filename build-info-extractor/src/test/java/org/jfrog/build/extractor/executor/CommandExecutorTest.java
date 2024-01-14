@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.executor;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -97,10 +98,10 @@ public class CommandExecutorTest {
         }
         File projectDir = Files.createTempDirectory("").toFile();
         try {
-            Map<String, String> systemEnv = System.getenv();
+            Map<String, String> env = Maps.newHashMap(System.getenv());
             Path execPath = Paths.get("C:\\Program Files\\Go\\bin\\go");
-            Map<String, String> executorEnv = CommandExecutor.generateWindowsEnv(execPath, systemEnv);
-            assertTrue(executorEnv.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
+            CommandExecutor.addToWindowsPath(env, execPath);
+            assertTrue(env.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
         } finally {
             FileUtils.deleteDirectory(projectDir);
         }

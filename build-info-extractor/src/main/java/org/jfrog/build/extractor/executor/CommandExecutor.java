@@ -181,58 +181,85 @@ public class CommandExecutor implements Serializable {
     }
 
     private static Process runProcess(File execDir, String executablePath, List<String> args, List<String> credentials, Map<String, String> env, Log logger) throws IOException {
-        if (credentials != null) {
-            args.addAll(credentials);
-        }
-        if (SystemUtils.IS_OS_WINDOWS) {
-            Path execPath = Paths.get(executablePath);
-            if (execPath.isAbsolute()) {
-                env = generateWindowsEnv(execPath, env);
-                args.add(0, execPath.getFileName().toString());
-            } else {
-                args.add(0, executablePath.replaceAll(" ", "^ "));
-            }
-            args.addAll(0, Arrays.asList("cmd", "/c"));
-        } else {
-            args.add(0, executablePath.replaceAll(" ", "\\\\ "));
-            String strArgs = join(" ", args);
-            args = new ArrayList<String>() {{
-                add("/bin/sh");
-                add("-c");
-                add(strArgs);
-            }};
-        }
+        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable.
+        Map<String, String> newEnv = Maps.newHashMap(env);
+
+        args = formatCommand(args, credentials, executablePath, env);
         logCommand(logger, args, credentials);
         ProcessBuilder processBuilder = new ProcessBuilder(args)
                 .directory(execDir);
-        processBuilder.environment().putAll(env);
+        processBuilder.environment().putAll(newEnv);
         return processBuilder.start();
     }
 
     /**
-     * Generate a new mutable copy of environment variables map with the executable directory path inserted at the
-     * beginning of the Path.
+     * Formats a command for execution, incorporating credentials and environment variables.
+     *
+     * @param args           the list of arguments to be included in the command
+     * @param credentials    if specified, the credentials will be concatenated to the command
+     * @param executablePath the path to the executable to be executed
+     * @param env            environment variables map. It might be modified as part of the formatting process
+     * @return the formatted command as a list of strings, ready for execution
+     */
+    private static List<String> formatCommand(List<String> args, List<String> credentials, String executablePath, Map<String, String> env) {
+        if (credentials != null) {
+            args.addAll(credentials);
+        }
+
+        if (SystemUtils.IS_OS_WINDOWS) {
+            formatWindowsCommand(args, executablePath, env);
+            return args;
+        }
+        return formatUnixCommand(args, executablePath);
+    }
+
+    /**
+     * Formats a Windows command for execution.
+     *
+     * @param args           the list of arguments to be included in the command
+     * @param executablePath the path to the executable to be executed
+     * @param env            environment variables map. It might be modified as part of the formatting process
+     */
+    private static void formatWindowsCommand(List<String> args, String executablePath, Map<String, String> env) {
+        Path execPath = Paths.get(executablePath);
+        if (execPath.isAbsolute()) {
+            addToWindowsPath(env, execPath);
+            args.add(0, execPath.getFileName().toString());
+        } else {
+            args.add(0, executablePath.replaceAll(" ", "^ "));
+        }
+        args.addAll(0, Arrays.asList("cmd", "/c"));
+    }
+
+    private static List<String> formatUnixCommand(List<String> args, String executablePath) {
+        args.add(0, executablePath.replaceAll(" ", "\\\\ "));
+        String strArgs = join(" ", args);
+        return new ArrayList<String>() {{
+            add("/bin/sh");
+            add("-c");
+            add(strArgs);
+        }};
+    }
+
+    /**
+     * Inserts the executable directory path at the beginning of the Path environment variable.
      * This is done to handle cases where the executable path contains spaces. In such scenarios, the "cmd" command used
      * to execute this command in Windows may incorrectly parse the path, treating the section after the space as an
      * argument for the command.
      *
-     * @param execPath the executable path
      * @param env      environment variables map
-     * @return a new environment variables map
+     * @param execPath the executable path
      */
-    static Map<String, String> generateWindowsEnv(Path execPath, Map<String, String> env) {
+    static void addToWindowsPath(Map<String, String> env, Path execPath) {
         String execDirPath = execPath.getParent().toString();
 
         // Insert the executable directory path to the beginning of the Path environment variable.
-        // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable.
-        Map<String, String> newEnv = Maps.newHashMap(env);
         String windowsPathEnvKey = "Path";
-        if (newEnv.containsKey(windowsPathEnvKey)) {
-            newEnv.put(windowsPathEnvKey, execDirPath + File.pathSeparator + newEnv.get(windowsPathEnvKey));
+        if (env.containsKey(windowsPathEnvKey)) {
+            env.put(windowsPathEnvKey, execDirPath + File.pathSeparator + env.get(windowsPathEnvKey));
         } else {
-            newEnv.put(windowsPathEnvKey, execDirPath);
+            env.put(windowsPathEnvKey, execDirPath);
         }
-        return newEnv;
     }
 
     private static void logCommand(Log logger, List<String> args, List<String> credentials) {
