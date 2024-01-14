@@ -10,12 +10,8 @@ public interface BuildInfoConfigProperties {
      */
     String BUILD_INFO_CONFIG_PREFIX = "buildInfoConfig.";
     String PROPERTIES_FILE = "propertiesFile";
-    String PROPERTIES_FILE_KEY = "propertiesFileKey";
-    String PROPERTIES_FILE_KEY_IV = "propertiesFileKeyIv";
 
     String PROP_PROPS_FILE = BUILD_INFO_CONFIG_PREFIX + PROPERTIES_FILE;
-    String PROP_PROPS_FILE_KEY = BUILD_INFO_CONFIG_PREFIX + PROPERTIES_FILE_KEY;
-    String PROP_PROPS_FILE_KEY_IV = BUILD_INFO_CONFIG_PREFIX + PROPERTIES_FILE_KEY_IV;
 
     String EXPORT_FILE = "exportFile";
     String PROP_EXPORT_FILE_PATH = BUILD_INFO_CONFIG_PREFIX + EXPORT_FILE;
