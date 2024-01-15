@@ -1,8 +1,11 @@
 package org.jfrog.build.extractor.executor;
 
+import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.util.NullLog;
+import org.testng.SkipException;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import org.testng.collections.Lists;
@@ -12,8 +15,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.testng.Assert.*;
 
@@ -83,6 +88,22 @@ public class CommandExecutorTest {
             assertTrue(results.getRes().contains("I have spoken"));
         } finally {
             FileUtils.forceDelete(tmpDir.toFile());
+        }
+    }
+
+    @Test
+    public void testGenerateWindowsEnv() throws IOException {
+        if (!SystemUtils.IS_OS_WINDOWS) {
+            throw new SkipException("Skipping test on non-Windows OS");
+        }
+        File projectDir = Files.createTempDirectory("").toFile();
+        try {
+            Map<String, String> env = Maps.newHashMap(System.getenv());
+            Path execPath = Paths.get("C:\\Program Files\\Go\\bin\\go");
+            CommandExecutor.addToWindowsPath(env, execPath);
+            assertTrue(env.get("Path").startsWith("C:\\Program Files\\Go\\bin"));
+        } finally {
+            FileUtils.deleteDirectory(projectDir);
         }
     }
 }
