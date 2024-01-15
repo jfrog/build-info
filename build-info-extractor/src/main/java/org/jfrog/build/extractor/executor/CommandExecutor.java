@@ -184,7 +184,7 @@ public class CommandExecutor implements Serializable {
         // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable.
         Map<String, String> newEnv = Maps.newHashMap(env);
 
-        args = formatCommand(args, credentials, executablePath, env);
+        args = formatCommand(args, credentials, executablePath, newEnv);
         logCommand(logger, args, credentials);
         ProcessBuilder processBuilder = new ProcessBuilder(args)
                 .directory(execDir);
