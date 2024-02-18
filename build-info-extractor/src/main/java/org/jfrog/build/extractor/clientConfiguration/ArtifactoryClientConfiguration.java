@@ -239,12 +239,15 @@ public class ArtifactoryClientConfiguration {
             return;
         }
         try (FileOutputStream fos = new FileOutputStream(new File(getPropertiesFile()).getCanonicalFile())) {
-            preparePropertiesToPersist().store(fos, "BuildInfo configuration property file");
+            persistToPropertiesFile(fos);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
+    public void persistToPropertiesFile(OutputStream os) throws IOException {
+        preparePropertiesToPersist().store(os, "BuildInfo configuration property file");
+    }
 
     public EncryptionKeyPair persistToEncryptedPropertiesFile(OutputStream os) throws IOException, InvalidAlgorithmParameterException, NoSuchPaddingException, IllegalBlockSizeException, NoSuchAlgorithmException, BadPaddingException, InvalidKeyException {
         if (StringUtils.isEmpty(getPropertiesFile())) {
