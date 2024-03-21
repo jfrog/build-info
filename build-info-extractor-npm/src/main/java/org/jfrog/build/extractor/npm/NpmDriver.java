@@ -97,8 +97,8 @@ public class NpmDriver implements Serializable {
         }
     }
 
-    public int compareVersionTo(File workingDirectory, String compareVersion){
-        String currentVersion = this.version(workingDirectory);
+    public int compareVersionTo(File workingDirectory, String compareVersion) throws IOException, InterruptedException {
+        String currentVersion = version(workingDirectory);
 
         List<Integer> currentComponents = Arrays.stream(currentVersion.split("\\."))
                                                 .map(Integer::parseInt)
