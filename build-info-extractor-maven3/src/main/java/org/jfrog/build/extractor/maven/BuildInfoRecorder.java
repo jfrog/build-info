@@ -612,19 +612,23 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
         for (Artifact dependency : moduleDependencies) {
-            File depFile = dependency.getFile();
             String gav = getModuleIdString(dependency.getGroupId(), dependency.getArtifactId(), dependency.getVersion());
-            DependencyBuilder dependencyBuilder = new DependencyBuilder()
-                    .id(gav)
-                    .requestedBy(dependencyParentsMaps.get(gav))
-                    .type(getTypeString(dependency.getType(),
-                            dependency.getClassifier(), getExtension(depFile)));
             String scopes = dependency.getScope();
-            if (StringUtils.isNotBlank(scopes)) {
-                dependencyBuilder.scopes(CommonUtils.newHashSet(scopes));
+            if (StringUtils.isNotBlank(scopes) && conf.info.getDependencyScopeExclusions().contains(scopes)) {
+                logger.info("Excluding dependency " + gav + " as its scope (" + scopes + ") is excluded.");
+            } else {
+                File depFile = dependency.getFile();
+                DependencyBuilder dependencyBuilder = new DependencyBuilder()
+                        .id(gav)
+                        .requestedBy(dependencyParentsMaps.get(gav))
+                        .type(getTypeString(dependency.getType(),
+                                dependency.getClassifier(), getExtension(depFile)));
+                if (StringUtils.isNotBlank(scopes)) {
+                    dependencyBuilder.scopes(CommonUtils.newHashSet(scopes));
+                }
+                setDependencyChecksums(depFile, dependencyBuilder);
+                module.addDependency(dependencyBuilder.build());
             }
-            setDependencyChecksums(depFile, dependencyBuilder);
-            module.addDependency(dependencyBuilder.build());
         }
     }
 
