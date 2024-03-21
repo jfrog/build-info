@@ -189,9 +189,22 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             npmrcBuilder.append("proxy = ").append(this.npmProxy).append("\n");
         }
 
+        //Update Auth property for newer npm versions
+        if(this.npmDrive.compareVersionTo(workingDir, "8.19") >= 0)
+            String authProp = npmAuth.getProperty("_auth");
+        
+            String newAuthKey = artifactoryManage.getUrl();
+            if (!StringUtils.endsWith(newAuthKey, "/")) {
+                newAuthKey += "/";
+            }
+            newAuthKey += "api/npm/:_auth";
+            newAuthKey = newAuthKey.replaceAll("^http(s)?:","") + ":_auth";
+            npmAuth.setProperty(newAuthKey, authProp);
+            npmAuth.remove("_auth");
+        }
+
         // Save npm auth
         npmAuth.forEach((key, value) -> npmrcBuilder.append(key).append("=").append(value).append("\n"));
-
         // Write npmrc file
         try (FileWriter fileWriter = new FileWriter(npmrcPath.toFile());
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
