@@ -18,3 +18,8 @@ atlassian-*.xml
 /itest/src/test/resources/org/jfrog/build/cache
 /build-info-extractor/src/test/resources/artifactory-bi.properties
 local.properties
+*.class
+/*/bin/test/org/jfrog/build
+/*/bin/test/*/snapshots/*.xml
+/*/bin/test/*/settings/build-info*.json
+/*/bin/test/*/pipLog.txt

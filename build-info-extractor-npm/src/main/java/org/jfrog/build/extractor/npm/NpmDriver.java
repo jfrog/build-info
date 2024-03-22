@@ -97,32 +97,6 @@ public class NpmDriver implements Serializable {
         }
     }
 
-    public int compareVersionTo(File workingDirectory, String compareVersion) throws IOException, InterruptedException {
-        String currentVersion = version(workingDirectory);
-
-        List<Integer> currentComponents = Arrays.stream(currentVersion.split("\\."))
-                                                .map(Integer::parseInt)
-                                                .collect(Collectors.toList());
-        List<Integer> compareComponents = Arrays.stream(compareVersion.split("\\."))
-                                                .map(Integer::parseInt)
-                                                .collect(Collectors.toList());
-
-        int currentSize = currentComponents.size();
-        int compareSize = compareComponents.size();
-        int maxLength = Math.max(currentSize, compareSize);
-        
-        for (int i = 0; i < maxLength; i++){
-            int currentComp = i < currentSize ? currentComponents.get(i) : 0;
-            int compareComp = i < compareSize ? compareComponents.get(i) : 0;
-
-            int comp = compareComp - currentComp;
-            if(comp != 0){
-                return comp;
-            }
-        }
-        return 0;
-    }
-
     public String version(File workingDirectory) throws IOException, InterruptedException {
         return runCommand(workingDirectory, new String[]{"--version"}, Collections.emptyList()).getRes();
     }
