@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ProxyConfiguration;
+import org.jfrog.build.client.Version;
 import org.jfrog.build.extractor.BuildInfoExtractor;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
@@ -189,14 +190,57 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
             npmrcBuilder.append("proxy = ").append(this.npmProxy).append("\n");
         }
 
+        // Update Auth property for newer npm versions
+        handleNpmCompatibility(npmAuth, workingDir);
+
         // Save npm auth
         npmAuth.forEach((key, value) -> npmrcBuilder.append(key).append("=").append(value).append("\n"));
-
         // Write npmrc file
         try (FileWriter fileWriter = new FileWriter(npmrcPath.toFile());
              BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
             bufferedWriter.write(npmrcBuilder.toString());
             bufferedWriter.flush();
+        }
+    }
+
+    /**
+     * Handles when Npm is at least version 8.19 the Auth related settings needing to be scoped to a specific registry.
+     * Results in transforming:
+     * 
+     * old NPMRC of :
+     * 
+     * registry=http://NO-NO-Repo/
+     * _auth={{AuthString}} 
+     * 
+     * 
+     * into the new NPMRC:
+     * 
+     * registry=http://NO-NO-Repo/
+     * //NO-NO-Repo/:_auth={{AuthString}}
+     * 
+     */
+    private void handleNpmCompatibility(Properties npmAuth, Path workingDir) throws IOException, InterruptedException{
+        Version npmVersion = new Version(this.npmDriver.version(workingDir.toFile()));
+        if(npmVersion.isAtLeast(new Version("8.19"))){
+            logger.debug("NPM version at least 8.19");
+            try (ArtifactoryManager artifactoryManager = artifactoryManagerBuilder.build()) {
+                String newAuthKey = artifactoryManager.getUrl();
+                    if (!StringUtils.endsWith(newAuthKey, "/")) {
+                        newAuthKey += "/";
+                    }
+                    newAuthKey += "api/npm/:";
+                    newAuthKey = newAuthKey.replaceAll("^http(s)?:","");
+
+                String[] checkList = { "_auth","_authToken","username","_password", "email", "certfile", "keyfile"};
+                for(String propKey: checkList){
+                    String prop = npmAuth.getProperty(propKey);
+                    if(prop != null){
+                        logger.debug("Found "+ propKey +", replacing with " + newAuthKey + propKey);
+                        npmAuth.setProperty(newAuthKey+propKey, prop);
+                        npmAuth.remove(propKey);
+                    }
+                }
+            }
         }
     }
 
