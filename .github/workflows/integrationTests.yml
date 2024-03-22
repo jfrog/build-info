@@ -259,7 +259,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: clean build-info-extractor-maven3:test
-
+ 
   npm:
     needs: Pretest
     name: npm (${{ matrix.os }}) < 8.19
@@ -314,7 +314,8 @@ jobs:
         env:
           # We use localhost because npm does not support authenticating with registries started with 127.0.0.1
           BITESTS_PLATFORM_URL: http://localhost:8081
-  npm:
+
+  npm_9:
     needs: Pretest
     name: npm (${{ matrix.os }}) >= 8.19
     strategy:
