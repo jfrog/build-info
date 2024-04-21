@@ -50,7 +50,7 @@ public class GoVersionUtils {
     public static int getMajorProjectVersion(String project, Log log) {
         if (!StringUtils.isEmpty(project)) {
             project = project.toLowerCase();
-            if (project.matches("^.*/v\\d")) {
+            if (project.matches("^.*/v\\d+")) {
                 String major = project.substring(project.lastIndexOf("/v") + 2);
                 try {
                     return Integer.parseInt(major);
