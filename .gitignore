@@ -23,3 +23,4 @@ local.properties
 /*/bin/test/*/snapshots/*.xml
 /*/bin/test/*/settings/build-info*.json
 /*/bin/test/*/pipLog.txt
+target

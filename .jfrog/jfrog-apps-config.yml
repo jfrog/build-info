@@ -1,0 +1,12 @@
+version: "1.0"
+modules:
+  - exclude_patterns:
+      - "**/.git/**"
+      - "**/build/**"
+      - "**/target/**"
+      - "**/.vscode/**"
+      - "**/.idea/**"
+    exclude_scanners:
+      - "iac"
+      # Temporarily disabling secrets scanner - the scanner removes essential Gradle files
+      - "secrets"
