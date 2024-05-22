@@ -49,7 +49,13 @@ public class NpmBuildInfoExtractorTest extends IntegrationTestsBase {
     private static final Set<String> DEV_SCOPE = Stream.of("dev").collect(Collectors.toSet());
     private static final Set<String> PROD_SCOPE = Stream.of("prod").collect(Collectors.toSet());
     private static final Set<String> DEV_PROD_SCOPE = Stream.of("prod", "dev").collect(Collectors.toSet());
-    
+
+    public NpmBuildInfoExtractorTest() {
+        localRepo1 = getKeyWithTimestamp(NPM_LOCAL_REPO);
+        remoteRepo = "";
+        virtualRepo = "";
+    }
+
     @AfterMethod
     protected void cleanup() throws IOException {
         FileUtils.deleteDirectory(tempWorkspace);

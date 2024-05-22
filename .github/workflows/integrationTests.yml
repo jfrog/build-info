@@ -289,7 +289,7 @@ jobs:
       - name: Install npm
         uses: actions/setup-node@v3
         with:
-          node-version: matrix.node
+          node-version: ${{ matrix.node }}
 
       - name: Config list
         run: npm config ls -l
