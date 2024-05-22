@@ -1,2 +1,2 @@
-- [ ] All [tests](https://ci.appveyor.com/project/jfrog-ecosystem/build-info) passed. If this feature is not already covered by the tests, I added new tests.
+- [ ] All [tests](https://github.com/jfrog/build-info/actions/workflows/integrationTests.yml) have passed. If this feature is not already covered by the tests, new tests have been added.
 -----
