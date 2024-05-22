@@ -272,11 +272,13 @@ jobs:
 
   npm:
     needs: Pretest
-    name: npm (${{ matrix.os }})
+    name: npm (${{ matrix.os }}) - node ${{ matrix.node }}
     strategy:
       fail-fast: false
       matrix:
         os: [ ubuntu-latest, macos-13, windows-latest ]
+        # Testing both npm < 8.19 and npm >= 8.19
+        node: [ 15, 20 ]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -287,9 +289,11 @@ jobs:
       - name: Install npm
         uses: actions/setup-node@v3
         with:
-          node-version: "15"
+          node-version: ${{ matrix.node }}
+
       - name: Config list
         run: npm config ls -l
+
       - name: Install Java
         uses: actions/setup-java@v3
         with:
