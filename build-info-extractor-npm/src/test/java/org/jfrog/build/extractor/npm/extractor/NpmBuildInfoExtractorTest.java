@@ -10,10 +10,13 @@ import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
 import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.util.DependenciesDownloaderHelper;
 import org.jfrog.build.extractor.npm.NpmDriver;
 import org.jfrog.build.extractor.npm.types.NpmProject;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -225,6 +228,23 @@ public class NpmBuildInfoExtractorTest extends IntegrationTestsBase {
         }
     }
 
+    @BeforeClass
+    private void setUp() throws IOException {
+        deployTestDependencies(Project.ASGARD, Project.MIDGARD, Project.ALFHEIM, Project.SVARTALFHEIM);
+    }
+
+    private void deployTestDependencies(Project... projects) throws IOException {
+        for (Project project : projects) {
+            DeployDetails deployDetails = new DeployDetails.Builder()
+                    .file(project.projectOrigin.toPath().resolve(project.getPackedFileName()).toFile())
+                    .targetRepository(localRepo1)
+                    .artifactPath(project.getTargetPath())
+                    .packageType(DeployDetails.PackageType.NPM)
+                    .build();
+            artifactoryManager.upload(deployDetails);
+        }
+    }
+
     
     @DataProvider
     private Object[][] npmCiProvider() {
@@ -244,12 +264,13 @@ public class NpmBuildInfoExtractorTest extends IntegrationTestsBase {
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmCiProvider")
     public void npmCiTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath) {
-        runNpmTest(project, expectedDependencies, args, packageJsonPath, true);
+        runNpmTest(project, expectedDependencies, args, packageJsonPath);
     }
 
-    private void runNpmTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath, boolean isNpmCi) {
+    private void runNpmTest(Project project, Dependency[] expectedDependencies, String args, boolean packageJsonPath) {
         args += " --verbose --no-audit";
         Path projectDir = null;
+        boolean isNpmCi = true;
         try {
             // Prepare.
             projectDir = createProjectDir(project);
