@@ -269,7 +269,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
         with:
           arguments: clean build-info-extractor-maven3:test
-
+ 
   npm:
     needs: Pretest
     name: npm (${{ matrix.os }}) - node ${{ matrix.node }}
