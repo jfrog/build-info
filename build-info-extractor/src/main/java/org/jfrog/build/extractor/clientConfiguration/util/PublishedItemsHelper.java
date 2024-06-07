@@ -16,8 +16,8 @@
 
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.spec.UploadSpecHelper;
@@ -45,8 +45,8 @@ public class PublishedItemsHelper {
      *                                    then the value is treated as a source only (target will be "").
      * @return a Map containing the sources as keys and targets as values
      */
-    public static Multimap<String, String> getPublishedItemsPatternPairs(String publishedItemsPropertyValue) {
-        Multimap<String, String> patternPairMap = HashMultimap.create();
+    public static MultiValuedMap<String, String> getPublishedItemsPatternPairs(String publishedItemsPropertyValue) {
+        MultiValuedMap<String, String> patternPairMap = MultiMapUtils.newSetValuedHashMap();
         if (StringUtils.isNotBlank(publishedItemsPropertyValue)) {
 
             List<String> patternPairs = parsePatternsFromProperty(publishedItemsPropertyValue);
@@ -148,9 +148,9 @@ public class PublishedItemsHelper {
      * @throws IOException in case of any file system exception
      */
     @Deprecated
-    public static Multimap<String, File> buildPublishingData(File checkoutDir, String pattern, String targetPath)
+    public static MultiValuedMap<String, File> buildPublishingData(File checkoutDir, String pattern, String targetPath)
             throws IOException {
-        final Multimap<String, File> filePathsMap = HashMultimap.create();
+        final MultiValuedMap<String, File> filePathsMap = MultiMapUtils.newSetValuedHashMap();
         File patternAbsolutePath = getAbsolutePath(checkoutDir, pattern);
         if (patternAbsolutePath.isFile()) {
             // The given pattern is an absolute path of just one file, let's add it to our result map
@@ -211,7 +211,7 @@ public class PublishedItemsHelper {
      * @return a Multimap containing the targets as keys and the files as values
      */
     @Deprecated
-    public static Multimap<String, File> wildCardBuildPublishingData(
+    public static MultiValuedMap<String, File> wildCardBuildPublishingData(
             File checkoutDir, String pattern, String targetPath, boolean flat, boolean isRecursive, boolean regexp) {
         if (!regexp) {
             pattern = PathsUtils.pathToRegExp(pattern);

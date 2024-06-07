@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 import org.jfrog.filespecs.FileSpec;
@@ -12,7 +12,6 @@ import java.util.Set;
 
 /**
  * Producer object to use with the ProducerConsumerExecutor during artifact deployment by filespec operation.
- *
  * Created by Bar Belity on 27/03/2018.
  */
 public class SpecDeploymentProducer extends ProducerRunnableBase {
@@ -24,9 +23,9 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
 
     private FileSpec spec;
     private File workspace;
-    private Multimap<String, String> buildProperties;
+    private MultiValuedMap<String, String> buildProperties;
 
-    SpecDeploymentProducer(FileSpec spec, File workspace, Multimap<String, String> buildProperties) {
+    SpecDeploymentProducer(FileSpec spec, File workspace, MultiValuedMap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;

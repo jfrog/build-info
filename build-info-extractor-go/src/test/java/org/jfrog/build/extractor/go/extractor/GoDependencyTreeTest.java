@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import com.google.common.collect.Sets;
+import org.apache.commons.compress.utils.Sets;
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.scan.DependencyTree;
 import org.testng.annotations.Test;

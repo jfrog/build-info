@@ -1,8 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.extractor;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Sets;
+import org.apache.commons.compress.utils.Sets;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ModuleVersionIdentifier;
@@ -31,14 +29,11 @@ import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static com.google.common.collect.Lists.newArrayList;
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getModuleIdString;
 import static org.jfrog.build.extractor.BuildInfoExtractorUtils.getTypeString;
@@ -48,7 +43,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
 
     @Override
     public Module extractModule(Project project) {
-        Set<GradleDeployDetails> gradleDeployDetails = Sets.newHashSet();
+        Set<GradleDeployDetails> gradleDeployDetails = new HashSet<>();
         String artifactName = project.getName();
         ArtifactoryTask artifactoryTask = ProjectUtils.getBuildInfoTask(project);
         if (artifactoryTask != null) {
@@ -81,10 +76,10 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
                 Iterable<GradleDeployDetails> deployExcludeDetails;
                 Iterable<GradleDeployDetails> deployIncludeDetails;
                 if (excludeArtifactsFromBuild) {
-                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, true));
-                    deployExcludeDetails = Iterables.filter(gradleDeployDetails, new IncludeExcludePredicate(project, patterns, false));
+                    deployIncludeDetails = gradleDeployDetails.stream().filter(new IncludeExcludePredicate(project, patterns, true)).collect(Collectors.toSet());
+                    deployExcludeDetails = gradleDeployDetails.stream().filter(new IncludeExcludePredicate(project, patterns, false)).collect(Collectors.toSet());
                 } else {
-                    deployIncludeDetails = Iterables.filter(gradleDeployDetails, new ProjectPredicate(project));
+                    deployIncludeDetails = gradleDeployDetails.stream().filter(new ProjectPredicate(project)).collect(Collectors.toSet());
                     deployExcludeDetails = new ArrayList<>();
                 }
                 builder.artifacts(calculateArtifacts(deployIncludeDetails))
@@ -121,7 +116,7 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         Map<String, String[][]> requestedByMap = artifactoryDependencyResolutionListener.getModulesHierarchyMap().get(moduleId);
 
         Set<Configuration> configurationSet = project.getConfigurations();
-        List<Dependency> dependencies = newArrayList();
+        List<Dependency> dependencies = new ArrayList<>();
         for (Configuration configuration : configurationSet) {
             if (configuration.getState() != Configuration.State.RESOLVED) {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
@@ -171,7 +166,8 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
             this.project = project;
         }
 
-        public boolean apply(@Nullable GradleDeployDetails input) {
+        @Override
+        public boolean test(@Nullable GradleDeployDetails input) {
             if (input == null) {
                 return false;
             }
@@ -184,21 +180,21 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         private final IncludeExcludePatterns patterns;
         private final boolean include;
 
-        public IncludeExcludePredicate(Project project, IncludeExcludePatterns patterns, boolean isInclude) {
+        public IncludeExcludePredicate(Project project, IncludeExcludePatterns patterns, boolean include) {
             this.project = project;
             this.patterns = patterns;
-            include = isInclude;
+            this.include = include;
         }
 
-        public boolean apply(@Nullable GradleDeployDetails input) {
+        @Override
+        public boolean test(@Nullable GradleDeployDetails input) {
             if (input == null) {
                 return false;
             }
             if (include) {
                 return input.getProject().equals(project) && !PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
-            } else {
-                return input.getProject().equals(project) && PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
             }
+            return input.getProject().equals(project) && PatternMatcher.pathConflicts(input.getDeployDetails().getArtifactPath(), patterns);
         }
     }
 }

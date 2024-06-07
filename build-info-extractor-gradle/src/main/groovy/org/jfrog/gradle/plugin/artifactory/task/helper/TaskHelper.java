@@ -1,6 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.task.helper;
 
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -70,12 +70,12 @@ public abstract class TaskHelper {
                         .name(project.getName()).version(project.getVersion().toString())
                         .classifier(artifact.getClassifier())
                         .type(artifact.getType()).build();
-        Multimap<String, CharSequence> artifactSpecsProperties = artifactoryTask.artifactSpecs.getProperties(spec);
+        MultiValuedMap<String, CharSequence> artifactSpecsProperties = artifactoryTask.artifactSpecs.getProperties(spec);
         addProps(propsToAdd, artifactSpecsProperties);
         return propsToAdd;
     }
 
-    private void addProps(Map<String, String> target, Multimap<String, CharSequence> props) {
+    private void addProps(Map<String, String> target, MultiValuedMap<String, CharSequence> props) {
         for (Map.Entry<String, CharSequence> entry : props.entries()) {
             // Make sure all GString are now Java Strings
             String key = entry.getKey();

@@ -2,10 +2,9 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
+import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
@@ -18,6 +17,7 @@ import org.jfrog.build.extractor.executor.CommandResults;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+import org.testng.collections.Lists;
 
 import java.io.File;
 import java.io.IOException;
@@ -43,7 +43,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private static final String SHORT_IMAGE_TAG_VIRTUAL = "3";
     private static final String EXPECTED_REMOTE_PATH_KANIKO = "hello-world/latest";
     private static final String DOCKER_HOST = "BITESTS_ARTIFACTORY_DOCKER_HOST";
-    private final ArrayListMultimap<String, String> artifactProperties = ArrayListMultimap.create();
+    private final MultiValuedMap<String, String> artifactProperties;
     private String pullImageFromVirtual;
     private String virtualDomainName;
     private String host;
@@ -56,12 +56,12 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         localRepo1 = getKeyWithTimestamp(DOCKER_LOCAL_REPO);
         remoteRepo = getKeyWithTimestamp(DOCKER_REMOTE_REPO);
         virtualRepo = getKeyWithTimestamp(DOCKER_VIRTUAL_REPO);
-        artifactProperties.putAll(ImmutableMultimap.<String, String>builder()
-                .put("build.name", "docker-push-test")
-                .put("build.number", "1")
-                .put("build.timestamp", "321")
-                .put("property-key", "property-value")
-                .build());
+        artifactProperties = new ArrayListValuedHashMap<String, String>() {{
+            put("build.name", "docker-push-test");
+            put("build.number", "1");
+            put("build.timestamp", "321");
+            put("property-key", "property-value");
+        }};
     }
 
     @BeforeClass

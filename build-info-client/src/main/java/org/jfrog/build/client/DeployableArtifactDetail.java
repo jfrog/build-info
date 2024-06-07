@@ -1,7 +1,5 @@
 package org.jfrog.build.client;
 
-import com.google.common.collect.ArrayListMultimap;
-
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Map;

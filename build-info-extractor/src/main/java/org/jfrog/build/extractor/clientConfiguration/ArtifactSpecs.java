@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.LinkedList;
@@ -41,8 +41,8 @@ public class ArtifactSpecs extends LinkedList<ArtifactSpec> {
      * @param spec
      * @return
      */
-    public Multimap<String, CharSequence> getProperties(ArtifactSpec spec) {
-        Multimap<String, CharSequence> props = ArrayListMultimap.create();
+    public MultiValuedMap<String, CharSequence> getProperties(ArtifactSpec spec) {
+        MultiValuedMap<String, CharSequence> props = MultiMapUtils.newListValuedHashMap();
         for (ArtifactSpec matcherSpec : this) {
             if (matcherSpec.matches(spec)) {
                 Map<String, CharSequence> matcherSpecProperties = matcherSpec.getProperties();

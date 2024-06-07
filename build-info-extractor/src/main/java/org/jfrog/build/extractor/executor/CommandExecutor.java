@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.executor;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.UrlUtils;
@@ -182,7 +181,7 @@ public class CommandExecutor implements Serializable {
 
     private static Process runProcess(File execDir, String executablePath, List<String> args, List<String> credentials, Map<String, String> env, Log logger) throws IOException {
         // Make sure to copy the environment variables map to avoid changing the original map or in case it is immutable.
-        Map<String, String> newEnv = Maps.newHashMap(env);
+        Map<String, String> newEnv = new HashMap<>(env);
 
         args = formatCommand(args, credentials, executablePath, newEnv);
         logCommand(logger, args, credentials);

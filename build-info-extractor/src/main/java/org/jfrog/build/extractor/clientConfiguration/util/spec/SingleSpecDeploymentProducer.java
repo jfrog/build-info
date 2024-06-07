@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -20,14 +20,13 @@ import java.util.regex.Pattern;
 /**
  * Actual FileSpec performer, scans the file-system for matching files and creates the deployment data.
  * Handles a single Spec from the 'files' section of a FileSpec.
- *
  * Created by Bar Belity on 07/03/2018.
  */
 public class SingleSpecDeploymentProducer {
 
     private FilesGroup spec;
     private File workspace;
-    private Multimap<String, String> buildProperties;
+    private MultiValuedMap<String, String> buildProperties;
 
     private Pattern regexpPattern;
     private Pattern regexpExcludePattern;
@@ -43,7 +42,7 @@ public class SingleSpecDeploymentProducer {
     private int separatorsCount;
     private Set<String> symlinkSet = new HashSet<>();
 
-    SingleSpecDeploymentProducer(FilesGroup spec, File workspace, Multimap<String, String> buildProperties) {
+    SingleSpecDeploymentProducer(FilesGroup spec, File workspace, MultiValuedMap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;
@@ -52,6 +51,7 @@ public class SingleSpecDeploymentProducer {
     /**
      * Executes a single FileSpec.
      * Find all files matching the spec, create and publish its DeployDetails.
+     *
      * @param deploymentSet Set containing the DeployDetails to deploy
      */
     public void executeSpec(Set<DeployDetails> deploymentSet, ProducerConsumerExecutor executor)
@@ -136,8 +136,9 @@ public class SingleSpecDeploymentProducer {
 
     /**
      * Check all file candidates for upload in the provided directory, to specified depth.
-     * @param dir base directory to start search for files
-     * @param depth level of folders to search in
+     *
+     * @param dir           base directory to start search for files
+     * @param depth         level of folders to search in
      * @param deploymentSet Set containing the DeployDetails to deploy
      */
     private void collectFiles(String dir, int depth, Set<DeployDetails> deploymentSet, ProducerConsumerExecutor executor)
@@ -195,7 +196,8 @@ public class SingleSpecDeploymentProducer {
     /**
      * Receives a candidate file to upload, creates DeployDetails for the file in case should upload it.
      * Adds the DeployDetails to the BlockingQueue.
-     * @param file upload candidate
+     *
+     * @param file          upload candidate
      * @param deploymentSet Set containing the DeployDetails to deploy
      */
     private void processDeployCandidate(File file, Set<DeployDetails> deploymentSet, ProducerConsumerExecutor executor)
@@ -223,11 +225,12 @@ public class SingleSpecDeploymentProducer {
 
     /**
      * Checks if the provided file path matches spec's patterns
-     * @param filePath to candidate file
-     * @param regexpPattern regexp to matched files
+     *
+     * @param filePath             to candidate file
+     * @param regexpPattern        regexp to matched files
      * @param regexpExcludePattern regexp to excluded files
-     * @param workspaceDir File object that represents the workspace
-     * @param baseDirFile the directory to get files from
+     * @param workspaceDir         File object that represents the workspace
+     * @param baseDirFile          the directory to get files from
      * @return true if the file path matches all terms
      */
     private static boolean isFileMatchPattern(String filePath, Pattern regexpPattern, Pattern regexpExcludePattern,
@@ -250,6 +253,7 @@ public class SingleSpecDeploymentProducer {
 
     /**
      * Throws exception if more than 1M files to deploy found
+     *
      * @param numberOfFiles the number of artifacts to deploy
      */
     private static void validateUploadLimit(int numberOfFiles) {

@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Lists;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
@@ -28,6 +27,7 @@ import org.jfrog.build.extractor.usageReport.UsageReporter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -72,7 +72,7 @@ public class ArtifactoryManager extends ManagerBase {
         setPropertiesService.execute(jfrogHttpClient);
     }
 
-    public void setProperties(String relativePath, ArrayListMultimap<String, String> properties, boolean encodeProperties) throws IOException {
+    public void setProperties(String relativePath, MultiValuedMap<String, String> properties, boolean encodeProperties) throws IOException {
         SetProperties setPropertiesService = new SetProperties(relativePath, properties, encodeProperties, log);
         setPropertiesService.execute(jfrogHttpClient);
     }
@@ -309,7 +309,7 @@ public class ArtifactoryManager extends ManagerBase {
         if (versionService.execute(jfrogHttpClient).isOSS()) {
             throw new IllegalArgumentException(String.format("%s is not supported in Artifactory OSS.", latestType));
         }
-        List<BuildPatternArtifactsRequest> artifactsRequest = Lists.newArrayList();
+        List<BuildPatternArtifactsRequest> artifactsRequest = new ArrayList<>();
         artifactsRequest.add(new BuildPatternArtifactsRequest(buildName, latestType, project));
         List<BuildPatternArtifacts> artifactsResponses = retrievePatternArtifacts(artifactsRequest);
         // Artifactory returns null if no build was found

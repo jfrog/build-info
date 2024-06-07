@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPut;
@@ -18,12 +19,12 @@ import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 
 public class SetProperties extends VoidJFrogService {
     public static final String SET_PROPERTIES_ENDPOINT = "api/storage/";
-    private final ArrayListMultimap<String, String> propertiesMap;
+    private final MultiValuedMap<String, String> propertiesMap;
     private final boolean encodeProperties;
     private final String relativePath;
     private final String propertiesString;
 
-    private SetProperties(String relativePath, String propertiesString, ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
+    private SetProperties(String relativePath, String propertiesString, MultiValuedMap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         super(log);
         this.relativePath = relativePath;
         this.propertiesMap = propertiesMap;
@@ -35,7 +36,7 @@ public class SetProperties extends VoidJFrogService {
         this(relativePath, propertiesString, null, encodeProperties, log);
     }
 
-    public SetProperties(String relativePath, ArrayListMultimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
+    public SetProperties(String relativePath, MultiValuedMap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         this(relativePath, null, propertiesMap, encodeProperties, log);
     }
 
@@ -79,8 +80,8 @@ public class SetProperties extends VoidJFrogService {
         }
     }
 
-    private ArrayListMultimap<String, String> mapPropsString(String props) {
-        ArrayListMultimap<String, String> propsMap = ArrayListMultimap.create();
+    private MultiValuedMap<String, String> mapPropsString(String props) {
+        MultiValuedMap<String, String> propsMap = MultiMapUtils.newListValuedHashMap();
         String[] propsList = props.split(";");
         for (String prop : propsList) {
             if (isNotEmpty(prop)) {

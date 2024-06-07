@@ -34,7 +34,6 @@
 
 package org.jfrog.build.extractor.go.extractor;
 
-import com.google.common.collect.Sets;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -50,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 
@@ -75,7 +75,7 @@ public class GoZipBallStreamer implements Closeable {
         this.projectName = projectName;
         this.version = version;
         this.log = log;
-        excludedDirectories = Sets.newHashSet();
+        excludedDirectories = new HashSet<>();
     }
 
     public void writeDeployableZip(File deployableZip) throws IOException {
@@ -202,7 +202,7 @@ public class GoZipBallStreamer implements Closeable {
     private void scanEntries() {
         Enumeration<? extends ZipEntry> entries = zipFile.getEntries();
         ZipEntry zipEntry;
-        Set<String> allDirectories = Sets.newHashSet();
+        Set<String> allDirectories = new HashSet<>();
         while (entries.hasMoreElements()) {
             zipEntry = entries.nextElement();
             if (!zipEntry.isDirectory() && isSubModule(zipEntry.getName())) {

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Objects;
 
@@ -96,7 +95,7 @@ public class Issue implements Comparable<Issue> {
     }
 
     @Override
-    public int compareTo(@Nonnull Issue otherIssue) {
+    public int compareTo(Issue otherIssue) {
         return Integer.compare(hashCode(), Objects.hashCode(otherIssue));
     }
 

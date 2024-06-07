@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.client;
 
-import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.util.DeploymentUrlUtils;
 import org.testng.Assert;
@@ -35,7 +36,7 @@ public class DeploymentUrlUtilsTest {
 
 
     public void testKeyWithMultiValuesParam() throws UnsupportedEncodingException {
-        ArrayListMultimap<String, String> params = ArrayListMultimap.create();
+        MultiValuedMap<String, String> params = MultiMapUtils.newListValuedHashMap();
         params.put("key", "valueA");
         params.put("key", "valueB");
         params.put("keyA", "valueA");
