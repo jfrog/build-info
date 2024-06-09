@@ -1,7 +1,8 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -46,7 +47,7 @@ public class GoPublish extends GoCommand {
     private static final String PKG_MOD_FILE_EXTENSION = "mod";
     private static final String PKG_INFO_FILE_EXTENSION = "info";
 
-    private final ArrayListMultimap<String, String> properties;
+    private final MultiValuedMap<String, String> properties;
     private final List<Artifact> artifactList = new ArrayList<>();
     private final String deploymentRepo;
     private final String version;
@@ -61,7 +62,7 @@ public class GoPublish extends GoCommand {
      * @param version                   - The package's version.
      * @param logger                    - The logger.
      */
-    public GoPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, ArrayListMultimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
+    public GoPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, MultiValuedMap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
         super(artifactoryManagerBuilder, path, module, logger);
         this.goDriver = new GoDriver(GO_CLIENT_CMD, null, path.toFile(), logger);
         this.moduleName = goDriver.getModuleName();
@@ -93,7 +94,7 @@ public class GoPublish extends GoCommand {
 
             GoPublish goPublish = new GoPublish(
                     artifactoryManagerBuilder,
-                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
                     clientConfiguration.publisher.getRepoKey(),
                     Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : ".").toAbsolutePath(),
                     clientConfiguration.goHandler.getGoPublishedVersion(),
@@ -153,7 +154,7 @@ public class GoPublish extends GoCommand {
     private File archiveProjectDir() throws IOException {
         File zipFile = File.createTempFile(LOCAL_TMP_PKG_PREFIX + LOCAL_PKG_FILENAME, PKG_ZIP_FILE_EXTENSION, path.toFile());
         try (ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFile.toPath()));
-            Stream<Path> pathFileTree = Files.walk(path)) {
+             Stream<Path> pathFileTree = Files.walk(path)) {
             List<Path> pathsList = pathFileTree
                     // Remove .git dir content, directories and the temp zip file
                     .filter(p -> !path.relativize(p).startsWith(".git/") && !Files.isDirectory(p) && !p.toFile().getName().equals(zipFile.getName()))

@@ -1,19 +1,20 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.util.Log;
+import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.builder.ModuleBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.Log;
-import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -38,7 +39,7 @@ import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.creat
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
-    private final ArrayListMultimap<String, String> properties;
+    private final MultiValuedMap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
     private final String module;
@@ -53,7 +54,7 @@ public class NpmPublish extends NpmCommand {
      * @param logger                    - The logger.
      * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, ArrayListMultimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
+    public NpmPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, MultiValuedMap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
         super(artifactoryManagerBuilder, deploymentRepository, logger, path, env);
         this.properties = properties;
         this.module = module;
@@ -69,7 +70,7 @@ public class NpmPublish extends NpmCommand {
             ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
             ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder,
-                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
                     Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),
@@ -116,9 +117,9 @@ public class NpmPublish extends NpmCommand {
             throw new IOException("Publish path must be a '.tgz' file or a directory containing package.json");
         }
         try (TarArchiveInputStream inputStream = new TarArchiveInputStream(
-                new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(path.toFile()))))) {
+                new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(path.toFile().toPath()))))) {
             TarArchiveEntry entry;
-            while ((entry = inputStream.getNextTarEntry()) != null) {
+            while ((entry = inputStream.getNextEntry()) != null) {
                 Path parent = Paths.get(entry.getName()).getParent();
                 if (parent != null && StringUtils.equals(parent.toString(), "package") && StringUtils.endsWith(entry.getName(), "package.json")) {
                     npmPackageInfo.readPackageInfo(inputStream);

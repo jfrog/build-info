@@ -1,8 +1,9 @@
 package org.jfrog.build.extractor.client;
 
-import com.google.common.collect.ImmutableMap;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpec;
 import org.testng.annotations.Test;
+
+import java.util.HashMap;
 
 import static org.testng.Assert.*;
 
@@ -14,7 +15,7 @@ import static org.testng.Assert.*;
 public class ArtifactSpecTest {
 
     @Test
-    public void stringConstruction() throws Exception {
+    public void stringConstruction() {
         ArtifactSpec standard = ArtifactSpec.newSpec("conf grp:art:ver:cls@jar k1:v1, k2:v2 , k3:   v3");
         ArtifactSpec noPropSpaces = ArtifactSpec.newSpec("conf grp:art:ver:cls@jar k1:v1,k2:v2,k3:v3");
         ArtifactSpec noConf = ArtifactSpec.newSpec("grp:art:ver:cls@jar k1:v1, k2:v2 , k3:   v3");
@@ -26,41 +27,50 @@ public class ArtifactSpecTest {
         assertEquals(standard.getVersion(), "ver");
         assertEquals(standard.getClassifier(), "cls");
         assertEquals(standard.getType(), "jar");
-        assertEquals(standard.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
-
+        assertEquals(standard.getProperties(), new HashMap<String, String>() {{
+            put("k1", "v1");
+            put("k2", "v2");
+            put("k3", "v3");
+        }});
         assertEquals(noPropSpaces.getConfiguration(), "conf");
         assertEquals(noPropSpaces.getGroup(), "grp");
         assertEquals(noPropSpaces.getName(), "art");
         assertEquals(noPropSpaces.getVersion(), "ver");
         assertEquals(noPropSpaces.getClassifier(), "cls");
         assertEquals(noPropSpaces.getType(), "jar");
-        assertEquals(noPropSpaces.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
-
+        assertEquals(noPropSpaces.getProperties(), new HashMap<String, String>() {{
+            put("k1", "v1");
+            put("k2", "v2");
+            put("k3", "v3");
+        }});
         assertEquals(noConf.getConfiguration(), "*");
         assertEquals(noConf.getGroup(), "grp");
         assertEquals(noConf.getName(), "art");
         assertEquals(noConf.getVersion(), "ver");
         assertEquals(noConf.getClassifier(), "cls");
         assertEquals(noConf.getType(), "jar");
-        assertEquals(noConf.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
+        assertEquals(noConf.getProperties(), new HashMap<String, String>() {{
+            put("k1", "v1");
+            put("k2", "v2");
+            put("k3", "v3");
+        }});
 
-        try {
-            ArtifactSpec noProps = ArtifactSpec.newSpec("all grp:art:ver:cls@jar");
-            fail("Artifact spec cannot be constructed from string without a properties notation.");
-        } catch (IllegalArgumentException e) {
-            //Expected
-        }
+        assertThrows(IllegalArgumentException.class, () -> ArtifactSpec.newSpec("all grp:art:ver:cls@jar"));
         assertEquals(allConf.getConfiguration(), "*");
         assertEquals(allConf.getGroup(), "grp");
         assertEquals(allConf.getName(), "art");
         assertEquals(allConf.getVersion(), "ver");
         assertEquals(allConf.getClassifier(), "cls");
         assertEquals(allConf.getType(), "jar");
-        assertEquals(allConf.getProperties(), ImmutableMap.of("k1", "v1", "k2", "v2", "k3", "v3"));
+        assertEquals(allConf.getProperties(), new HashMap<String, String>() {{
+            put("k1", "v1");
+            put("k2", "v2");
+            put("k3", "v3");
+        }});
     }
 
     @Test
-    public void matches() throws Exception {
+    public void matches() {
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration("conf").group("grp").name("art").version("ver").classifier("cls")
                         .type("jar").build();
@@ -89,7 +99,7 @@ public class ArtifactSpecTest {
     }
 
     @Test
-    public void matchesWithNull1() throws Exception {
+    public void matchesWithNull1() {
         ArtifactSpec spec =
                 ArtifactSpec.builder().configuration(null).group("org.jfrog").name("shared")
                         .version("1.0")
@@ -99,9 +109,9 @@ public class ArtifactSpecTest {
     }
 
     @Test
-    public void matchesWithNull2() throws Exception {
+    public void matchesWithNull2() {
         ArtifactSpec spec = ArtifactSpec.builder().group("org.jfrog").name("shared")
-                        .version("1.0").build();
+                .version("1.0").build();
         someTests(spec);
     }
 

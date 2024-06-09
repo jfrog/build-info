@@ -1,7 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMap;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
@@ -14,135 +13,25 @@ import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionK
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Predicate;
 
 import static org.jfrog.build.extractor.ModuleParallelDeployHelper.DEFAULT_DEPLOYMENT_THREADS;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ACTIVATE_RECORDER;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.BUILD_INFO_CONFIG_PREFIX;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ENV_VARS_EXCLUDE_PATTERNS;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.ENV_VARS_INCLUDE_PATTERNS;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.EXPORT_FILE;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.INCLUDE_ENV_VARS;
-import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.PROPERTIES_FILE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.AGENT_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.ARTIFACTORY_PLUGIN_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BACKWARD_COMPATIBLE_DEPLOYABLE_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_AGENT_VERSION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBER;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_NUMBERS_NOT_TO_DELETE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NAME;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PARENT_NUMBER;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_PROJECT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_ASYNC;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_COUNT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_DAYS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_RETENTION_MINIMUM_DATE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_ROOT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_STARTED;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_TIMESTAMP;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.BUILD_URL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.DELETE_BUILD_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.DEPLOYABLE_ARTIFACTS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.ENVIRONMENT_PREFIX;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.GENERATED_BUILD_INFO;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.INCREMENTAL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.MIN_CHECKSUM_DEPLOY_SIZE_KB;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.PRINCIPAL;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_COMMENT;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RELEASE_ENABLED;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.RUN_PARAMETERS;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_BRANCH;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_MESSAGE;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_REVISION;
-import static org.jfrog.build.extractor.ci.BuildInfoFields.VCS_URL;
+import static org.jfrog.build.extractor.ci.BuildInfoConfigProperties.*;
+import static org.jfrog.build.extractor.ci.BuildInfoFields.*;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_ISSUES_TRACKER_PREFIX;
 import static org.jfrog.build.extractor.ci.BuildInfoProperties.BUILD_INFO_PREFIX;
-import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AFFECTED_ISSUES;
-import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AGGREGATE_BUILD_ISSUES;
-import static org.jfrog.build.extractor.ci.IssuesTrackerFields.AGGREGATION_BUILD_STATUS;
-import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_NAME;
-import static org.jfrog.build.extractor.ci.IssuesTrackerFields.ISSUES_TRACKER_VERSION;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ADD_DEPLOYABLE_ARTIFACTS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.ARTIFACT_SPECS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.CONTEXT_URL;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOCKER_HOST;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOCKER_IMAGE_TAG;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOTNET_NUGET_PROTOCOL;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOTNET_USE_DOTNET_CORE_CLI;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.DOWN_SNAPSHOT_REPO_KEY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EVEN_UNSTABLE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.EXCLUDE_PATTERNS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.FILTER_EXCLUDED_ARTIFACTS_FROM_BUILD;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.GO_PUBLISHED_VERSION;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.HOST;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.INCLUDE_PATTERNS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY_ART_PATTERN;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY_IVY_PATTERN;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY_M2_COMPATIBLE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.IVY_REPO_DEFINED;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.JIB_IMAGE_FILE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.KANIKO_IMAGE_FILE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MATRIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.MAVEN;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NAME;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NO_PROXY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.NPM_CI_COMMAND;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_ARGS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_MODULE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PACKAGE_MANAGER_PATH;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PASSWORD;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PIP_ENV_ACTIVATION;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PORT;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLICATIONS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_ARTIFACTS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_BUILD_INFO;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.PUBLISH_FORK_COUNT;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.RECORD_ALL_DEPENDENCIES;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.RELEASE_REPO_KEY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.REPO_KEY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.SNAPSHOT_REPO_KEY;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.URL;
-import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.USERNAME;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.DEPRECATED_PROP_DEPLOY_PARAM_PROP_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONNECTION_RETRIES;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONTEXT_URL;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DEPLOY_PARAM_PROP_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOCKER_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_DOTNET_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_GO_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_HTTPS_PROXY_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_INSECURE_TLS;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_CO_PER_ROUTE;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_MAX_TOTAL_CO;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_NPM_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PACKAGE_MANAGER_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PIP_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PROXY_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_PUBLISH_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_RESOLVE_PREFIX;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_SO_TIMEOUT;
-import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
+import static org.jfrog.build.extractor.ci.IssuesTrackerFields.*;
+import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields.*;
+import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.*;
 import static org.jfrog.build.extractor.clientConfiguration.util.encryption.PropertyEncryptor.encryptedPropertiesToStream;
 
 /**
@@ -817,7 +706,7 @@ public class ArtifactoryClientConfiguration {
 
     public abstract class RepositoryConfiguration extends AuthenticationConfiguration {
 
-        private ImmutableMap<String, String> calculatedMatrixParams;
+        private Map<String, String> calculatedMatrixParams;
 
         protected RepositoryConfiguration(String prefix) {
             super(prefix);
@@ -994,24 +883,24 @@ public class ArtifactoryClientConfiguration {
             }
         }
 
-        public void addMatrixParams(ArrayListMultimap<String, String> vars) {
+        public void addMatrixParams(MultiValuedMap<String, String> vars) {
             for (Map.Entry<String, String> entry : vars.entries()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }
         }
 
-        public ImmutableMap<String, String> getMatrixParams() {
+        public Map<String, String> getMatrixParams() {
             if (calculatedMatrixParams != null) {
                 return calculatedMatrixParams;
             }
             // First, get value using deprecated key.
             // This check must be first, otherwise, build.gradle properties will override the CI (e.g Jenkins / teamcity) properties.
             Map<String, String> result = getResolveMatrixParams(getDeprecatedMatrixParamPrefix());
-            if (result.size() == 0) {
+            if (result.isEmpty()) {
                 // Fallback to none deprecated key.
                 result = getResolveMatrixParams(getMatrixParamPrefix());
             }
-            this.calculatedMatrixParams = ImmutableMap.copyOf(result);
+            this.calculatedMatrixParams = Collections.unmodifiableMap(new LinkedHashMap<>(result));
             return calculatedMatrixParams;
         }
 

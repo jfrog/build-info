@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.go;
 
-import com.google.common.collect.Sets;
+import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.executor.CommandResults;

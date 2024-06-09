@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.executor;
 
-import com.google.common.collect.Maps;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -17,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -98,7 +98,7 @@ public class CommandExecutorTest {
         }
         File projectDir = Files.createTempDirectory("").toFile();
         try {
-            Map<String, String> env = Maps.newHashMap(System.getenv());
+            Map<String, String> env = new HashMap<>(System.getenv());
             Path execPath = Paths.get("C:\\Program Files\\Go\\bin\\go");
             CommandExecutor.addToWindowsPath(env, execPath);
             assertTrue(env.get("Path").startsWith("C:\\Program Files\\Go\\bin"));

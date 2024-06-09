@@ -1,12 +1,11 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Sets;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -66,7 +65,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
             this.targetDir = targetDir;
             this.name = name;
             this.version = version;
-            this.dependencies = Sets.newHashSet(dependencies);
+            this.dependencies = new HashSet<>(Arrays.asList(dependencies));
         }
 
         private String getDependencyId() {
@@ -176,7 +175,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     @Test
     public void goRunPublishTest() {
         Path projectDir = null;
-        ArrayListMultimap<String, String> properties = ArrayListMultimap.create();
+        MultiValuedMap<String, String> properties = MultiMapUtils.newListValuedHashMap();
         try {
             // Run Go build on project1 locally
             Project project = Project.PROJECT_1;

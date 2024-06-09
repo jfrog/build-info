@@ -1,11 +1,12 @@
 package org.jfrog.build.extractor.docker.extractor;
 
-import com.google.common.collect.ArrayListMultimap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
@@ -21,7 +22,7 @@ import java.util.Map;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends DockerCommand {
-    private final ArrayListMultimap<String, String> artifactProperties;
+    private final MultiValuedMap<String, String> artifactProperties;
 
 
     /**
@@ -36,7 +37,7 @@ public class DockerPush extends DockerCommand {
      * @param env                       - Environment variables to use during docker push execution.
      */
     public DockerPush(ArtifactoryManagerBuilder artifactoryManagerBuilder,
-                      String imageTag, String host, ArrayListMultimap<String, String> artifactProperties, String targetRepository, String username,
+                      String imageTag, String host, MultiValuedMap<String, String> artifactProperties, String targetRepository, String username,
                       String password, Log logger, Map<String, String> env) {
         super(artifactoryManagerBuilder, imageTag, host, targetRepository, username, password, logger, env);
         this.artifactProperties = artifactProperties;
@@ -58,7 +59,7 @@ public class DockerPush extends DockerCommand {
             DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder,
                     dockerHandler.getImageTag(),
                     dockerHandler.getHost(),
-                    ArrayListMultimap.create(clientConfiguration.publisher.getMatrixParams().asMultimap()),
+                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.publisher.getUsername(),
                     clientConfiguration.publisher.getPassword(),
@@ -85,7 +86,7 @@ public class DockerPush extends DockerCommand {
             String imageId = DockerJavaWrapper.getImageIdFromTag(imageTag, host, env, logger);
             DockerImage image = new DockerImage(imageId, imageTag, "", targetRepository, artifactoryManagerBuilder, "", "");
             Module module = image.generateBuildInfoModule(logger, DockerUtils.CommandType.Push);
-            if (module.getArtifacts() == null || module.getArtifacts().size() == 0) {
+            if (module.getArtifacts() == null || module.getArtifacts().isEmpty()) {
                 logger.warn("Could not find docker image: " + imageTag + " in Artifactory.");
             } else {
                 setImageLayersProps(image.getLayers(), artifactProperties, artifactoryManagerBuilder);
@@ -104,7 +105,7 @@ public class DockerPush extends DockerCommand {
     /**
      * Update each layer's properties with artifactProperties.
      */
-    private void setImageLayersProps(DockerLayers layers, ArrayListMultimap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
+    private void setImageLayersProps(DockerLayers layers, MultiValuedMap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
         if (layers == null) {
             return;
         }

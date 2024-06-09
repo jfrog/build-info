@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -22,6 +21,8 @@ import org.jfrog.filespecs.FileSpec;
 import org.jfrog.filespecs.entities.FilesGroup;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -245,15 +246,15 @@ public class DependenciesDownloaderHelper {
     protected Map<String, String> downloadFileConcurrently(final String uriWithParams, long fileSize, final String fileDestination, String filePath)
             throws Exception {
         String[] downloadedFilesPaths;
-        File tempDir = Files.createTempDir();
-        String tempPath = tempDir.getPath() + File.separatorChar + filePath;
+        Path tempDir = Files.createTempDirectory("downloadFileConcurrently");
+        Path tempPath = tempDir.resolve(filePath);
         try {
-            downloadedFilesPaths = doConcurrentDownload(fileSize, uriWithParams, tempPath);
+            downloadedFilesPaths = doConcurrentDownload(fileSize, uriWithParams, tempPath.toString());
             try (InputStream inputStream = concatenateFilesToSingleStream(downloadedFilesPaths)) {
                 return downloader.saveDownloadedFile(inputStream, fileDestination);
             }
         } finally {
-            FileUtils.deleteDirectory(tempDir);
+            FileUtils.deleteDirectory(tempDir.toFile());
         }
     }
 

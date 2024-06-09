@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
@@ -18,9 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static org.jfrog.build.api.util.FileChecksumCalculator.MD5_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA1_ALGORITHM;
-import static org.jfrog.build.api.util.FileChecksumCalculator.SHA256_ALGORITHM;
+import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 import static org.jfrog.build.extractor.clientConfiguration.util.PathsUtils.removeUnescapedChar;
 
 /**
@@ -40,7 +38,7 @@ public class UploadSpecHelper {
      */
     public static DeployDetails buildDeployDetails(String targetPath, File artifactFile,
                                                    String uploadTarget, String explode, String props,
-                                                   Multimap<String, String> buildProperties)
+                                                   MultiValuedMap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         String path = UploadSpecHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
         path = StringUtils.replace(path, "//", "/");
@@ -153,9 +151,9 @@ public class UploadSpecHelper {
         return PathsUtils.reformatRegexp(sourcePath, fileTargetPath.replace('\\', '/'), pathPattern);
     }
 
-    public static Multimap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
-                                                           boolean isFlat, Pattern regexPattern, boolean isAbsolutePath) {
-        Multimap<String, File> filePathsMap = HashMultimap.create();
+    public static MultiValuedMap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
+                                                                 boolean isFlat, Pattern regexPattern, boolean isAbsolutePath) {
+        MultiValuedMap<String, File> filePathsMap = new HashSetValuedHashMap<>();
         boolean isTargetDirectory = StringUtils.endsWith(targetPath, "/");
 
         for (File file : files) {

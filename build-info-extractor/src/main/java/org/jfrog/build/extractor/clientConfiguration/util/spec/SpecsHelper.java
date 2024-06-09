@@ -1,13 +1,13 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
 import org.jfrog.build.extractor.ci.Dependency;
-import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -21,11 +21,7 @@ import org.jfrog.filespecs.FileSpecsValidation;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.jfrog.build.api.util.CommonUtils.handleJavaTmpdirProperty;
 import static org.jfrog.build.client.PreemptiveHttpClientBuilder.CONNECTION_POOL_SIZE;
@@ -61,8 +57,8 @@ public class SpecsHelper {
         return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), artifactoryManagerBuilder);
     }
 
-    private static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {
-        Multimap<K, V> multimap = ArrayListMultimap.create();
+    private static <K, V> MultiValuedMap<K, V> createMultiMap(Map<K, V> input) {
+        MultiValuedMap<K, V> multimap = MultiMapUtils.newListValuedHashMap();
         for (Map.Entry<K, V> entry : input.entrySet()) {
             multimap.put(entry.getKey(), entry.getValue());
         }
@@ -82,7 +78,7 @@ public class SpecsHelper {
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, int numberOfThreads, File workspace,
-                                                Multimap<String, String> buildProperties,
+                                                MultiValuedMap<String, String> buildProperties,
                                                 ArtifactoryManagerBuilder artifactoryManagerBuilder) throws Exception {
         FileSpec fileSpec = FileSpec.fromString(uploadSpec);
         FileSpecsValidation.validateUploadFileSpec(fileSpec, this.log);
@@ -157,13 +153,13 @@ public class SpecsHelper {
      * @param props Spec's properties
      * @return created properties map
      */
-    public static ArrayListMultimap<String, String> getPropertiesMap(String props) {
-        ArrayListMultimap<String, String> propertiesMap = ArrayListMultimap.create();
+    public static MultiValuedMap<String, String> getPropertiesMap(String props) {
+        MultiValuedMap<String, String> propertiesMap = MultiMapUtils.newListValuedHashMap();
         fillPropertiesMap(props, propertiesMap);
         return propertiesMap;
     }
 
-    public static void fillPropertiesMap(String props, ArrayListMultimap<String, String> propertiesMap) {
+    public static void fillPropertiesMap(String props, MultiValuedMap<String, String> propertiesMap) {
         if (StringUtils.isBlank(props)) {
             return;
         }

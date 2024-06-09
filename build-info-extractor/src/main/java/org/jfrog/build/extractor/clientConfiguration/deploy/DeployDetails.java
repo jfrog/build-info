@@ -1,9 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.deploy;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
@@ -47,7 +45,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
     /**
      * Properties to attach to the deployed file as matrix params.
      */
-    ArrayListMultimap<String, String> properties;
+    MultiValuedMap<String, String> properties;
     /**
      * Target deploy repository.
      */
@@ -60,6 +58,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
      * The package type generated this artifact's deploy details.
      */
     private PackageType packageType;
+
     /**
      * @return Return the target deployment repository.
      */
@@ -75,7 +74,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return file;
     }
 
-    public ArrayListMultimap<String, String> getProperties() {
+    public MultiValuedMap<String, String> getProperties() {
         return properties;
     }
 
@@ -88,11 +87,11 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
     }
 
     public void setSha256(String sha256) {
-        this.sha256=sha256;
+        this.sha256 = sha256;
     }
 
     public void setArtifactPath(String artifactPath) {
-        this.artifactPath=artifactPath;
+        this.artifactPath = artifactPath;
     }
 
     public Boolean getDeploySucceeded() {
@@ -165,10 +164,8 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         public Builder bean(BuildFileBean bean) {
             Properties beanProperties = bean.getProperties();
             if (beanProperties != null) {
-                ArrayListMultimap<String, String> multimap = ArrayListMultimap.create();
-                for (Map.Entry<String, String> entry : Maps.fromProperties(beanProperties).entrySet()) {
-                    multimap.put(entry.getKey(), entry.getValue());
-                }
+                MultiValuedMap<String, String> multimap = MultiMapUtils.newListValuedHashMap();
+                beanProperties.forEach((key, value) -> multimap.put((String) key, (String) value));
                 deployDetails.properties = multimap;
             }
             deployDetails.sha1 = bean.getSha1();
@@ -218,7 +215,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder addProperty(String key, String value) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = ArrayListMultimap.create();
+                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
             }
             deployDetails.properties.put(key, value);
             return this;
@@ -226,16 +223,16 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder addProperties(Map<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = ArrayListMultimap.create();
+                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
             }
 
-            deployDetails.properties.putAll(Multimaps.forMap(propertiesToAdd));
+            deployDetails.properties.putAll(propertiesToAdd);
             return this;
         }
 
-        public Builder addProperties(Multimap<String, String> propertiesToAdd) {
+        public Builder addProperties(MultiValuedMap<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = ArrayListMultimap.create();
+                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
             }
 
             deployDetails.properties.putAll(propertiesToAdd);

@@ -1,7 +1,8 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ImmutableMultimap;
+import org.apache.commons.collections4.MultiMapUtils;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -207,18 +208,26 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @DataProvider
     private Object[][] npmPublishProvider() {
         return new Object[][]{
-                {Project.A, ArrayListMultimap.create(), Project.A.getTargetPath(), ""},
-                {Project.A, ArrayListMultimap.create(ImmutableMultimap.of("a", "b")), Project.A.getTargetPath(), ""},
-                {Project.B, ArrayListMultimap.create(), Project.B.getTargetPath(), Project.B.getPackedFileName()},
-                {Project.B, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "c", "d")), Project.B.getTargetPath(), Project.B.getPackedFileName()},
-                {Project.C, ArrayListMultimap.create(), Project.C.getTargetPath(), ""},
-                {Project.C, ArrayListMultimap.create(ImmutableMultimap.of("a", "b", "a", "d")), Project.C.getTargetPath(), ""}
+                {Project.A, MultiMapUtils.emptyMultiValuedMap(), Project.A.getTargetPath(), ""},
+                {Project.A, new ArrayListValuedHashMap<String, String>() {{
+                    put("a", "b");
+                }}, Project.A.getTargetPath(), ""},
+                {Project.B, MultiMapUtils.emptyMultiValuedMap(), Project.B.getTargetPath(), Project.B.getPackedFileName()},
+                {Project.B, new ArrayListValuedHashMap<String, String>() {{
+                    put("a", "b");
+                    put("c", "d");
+                }}, Project.B.getTargetPath(), Project.B.getPackedFileName()},
+                {Project.C, MultiMapUtils.emptyMultiValuedMap(), Project.C.getTargetPath(), ""},
+                {Project.C, new ArrayListValuedHashMap<String, String>() {{
+                    put("a", "b");
+                    put("a", "d");
+                }}, Project.C.getTargetPath(), ""}
         };
     }
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    public void npmPublishTest(Project project, ArrayListMultimap<String, String> props, String targetPath, String packageName) {
+    public void npmPublishTest(Project project, MultiValuedMap<String, String> props, String targetPath, String packageName) {
         Path projectDir = null;
         try {
             // Run npm publish
