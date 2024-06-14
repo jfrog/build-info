@@ -2,7 +2,7 @@ package org.jfrog.build.extractor.npm.extractor;
 
 import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
@@ -118,7 +118,7 @@ public class NpmPublish extends NpmCommand {
         }
         try (TarArchiveInputStream inputStream = new TarArchiveInputStream(
                 new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(path.toFile().toPath()))))) {
-            TarArchiveEntry entry;
+            ArchiveEntry entry;
             while ((entry = inputStream.getNextEntry()) != null) {
                 Path parent = Paths.get(entry.getName()).getParent();
                 if (parent != null && StringUtils.equals(parent.toString(), "package") && StringUtils.endsWith(entry.getName(), "package.json")) {
