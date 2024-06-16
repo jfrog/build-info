@@ -1,8 +1,6 @@
 package org.jfrog.gradle.plugin.artifactory.task;
 
 import groovy.lang.Closure;
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.gradle.api.Action;
 import org.gradle.api.DefaultTask;
@@ -17,6 +15,8 @@ import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.*;
 import org.gradle.util.ConfigureUtil;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactSpecs;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.gradle.plugin.artifactory.ArtifactoryPluginUtil;
@@ -162,10 +162,10 @@ public class ArtifactoryTask extends DefaultTask {
 
     public final Set<GradleDeployDetails> deployDetails = new TreeSet<>();
 
-    private final MultiValuedMap<String, CharSequence> properties = MultiMapUtils.newListValuedHashMap();
+    private final Multimap<String, CharSequence> properties = new ListMultimap<>();
 
     @Input
-    public MultiValuedMap<String, CharSequence> getProperties() {
+    public Multimap<String, CharSequence> getProperties() {
         return properties;
     }
 

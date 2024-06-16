@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.go.extractor;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
@@ -175,7 +175,7 @@ public class GoExtractorTest extends IntegrationTestsBase {
     @Test
     public void goRunPublishTest() {
         Path projectDir = null;
-        MultiValuedMap<String, String> properties = MultiMapUtils.newListValuedHashMap();
+        Multimap<String, String> properties = new ListMultimap<>();
         try {
             // Run Go build on project1 locally
             Project project = Project.PROJECT_1;

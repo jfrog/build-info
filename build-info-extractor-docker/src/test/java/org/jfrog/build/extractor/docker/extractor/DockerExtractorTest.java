@@ -2,14 +2,13 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.compress.utils.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.IntegrationTestsBase;
-import org.jfrog.build.extractor.ci.Module;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.executor.CommandExecutor;
@@ -43,7 +42,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
     private static final String SHORT_IMAGE_TAG_VIRTUAL = "3";
     private static final String EXPECTED_REMOTE_PATH_KANIKO = "hello-world/latest";
     private static final String DOCKER_HOST = "BITESTS_ARTIFACTORY_DOCKER_HOST";
-    private final MultiValuedMap<String, String> artifactProperties;
+    private final Multimap<String, String> artifactProperties;
     private String pullImageFromVirtual;
     private String virtualDomainName;
     private String host;
@@ -56,7 +55,7 @@ public class DockerExtractorTest extends IntegrationTestsBase {
         localRepo1 = getKeyWithTimestamp(DOCKER_LOCAL_REPO);
         remoteRepo = getKeyWithTimestamp(DOCKER_REMOTE_REPO);
         virtualRepo = getKeyWithTimestamp(DOCKER_VIRTUAL_REPO);
-        artifactProperties = new ArrayListValuedHashMap<String, String>() {{
+        artifactProperties = new ListMultimap<String, String>() {{
             put("build.name", "docker-push-test");
             put("build.number", "1");
             put("build.timestamp", "321");

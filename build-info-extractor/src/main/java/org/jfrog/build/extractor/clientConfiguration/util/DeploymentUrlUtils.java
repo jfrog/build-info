@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration.util;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.UrlUtils;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
@@ -66,7 +66,7 @@ public abstract class DeploymentUrlUtils {
     }
 
 
-    public static String buildMatrixParamsString(MultiValuedMap<String, String> matrixParams, boolean encodeProperties)
+    public static String buildMatrixParamsString(Multimap<String, String> matrixParams, boolean encodeProperties)
             throws UnsupportedEncodingException {
         StringBuilder matrix = new StringBuilder();
         if (matrixParams != null && !matrixParams.isEmpty()) {

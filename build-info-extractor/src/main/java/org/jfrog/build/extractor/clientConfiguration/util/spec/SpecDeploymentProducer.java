@@ -1,6 +1,6 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.apache.commons.collections4.MultiValuedMap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.producerConsumer.ProducerRunnableBase;
 import org.jfrog.filespecs.FileSpec;
@@ -23,9 +23,9 @@ public class SpecDeploymentProducer extends ProducerRunnableBase {
 
     private FileSpec spec;
     private File workspace;
-    private MultiValuedMap<String, String> buildProperties;
+    private Multimap<String, String> buildProperties;
 
-    SpecDeploymentProducer(FileSpec spec, File workspace, MultiValuedMap<String, String> buildProperties) {
+    SpecDeploymentProducer(FileSpec spec, File workspace, Multimap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;

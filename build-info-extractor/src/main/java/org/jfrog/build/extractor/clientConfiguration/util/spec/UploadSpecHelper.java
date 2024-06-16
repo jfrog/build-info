@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.HashSetValuedHashMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.Multimap;
+import org.jfrog.build.api.multiMap.SetMultimap;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
@@ -38,7 +38,7 @@ public class UploadSpecHelper {
      */
     public static DeployDetails buildDeployDetails(String targetPath, File artifactFile,
                                                    String uploadTarget, String explode, String props,
-                                                   MultiValuedMap<String, String> buildProperties)
+                                                   Multimap<String, String> buildProperties)
             throws IOException, NoSuchAlgorithmException {
         String path = UploadSpecHelper.wildcardCalculateTargetPath(targetPath, artifactFile);
         path = StringUtils.replace(path, "//", "/");
@@ -151,9 +151,9 @@ public class UploadSpecHelper {
         return PathsUtils.reformatRegexp(sourcePath, fileTargetPath.replace('\\', '/'), pathPattern);
     }
 
-    public static MultiValuedMap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
-                                                                 boolean isFlat, Pattern regexPattern, boolean isAbsolutePath) {
-        MultiValuedMap<String, File> filePathsMap = new HashSetValuedHashMap<>();
+    public static Multimap<String, File> getUploadPathsMap(List<File> files, File workspaceDir, String targetPath,
+                                                           boolean isFlat, Pattern regexPattern, boolean isAbsolutePath) {
+        Multimap<String, File> filePathsMap = new SetMultimap<>();
         boolean isTargetDirectory = StringUtils.endsWith(targetPath, "/");
 
         for (File file : files) {

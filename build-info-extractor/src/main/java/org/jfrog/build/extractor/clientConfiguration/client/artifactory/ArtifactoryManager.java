@@ -1,12 +1,12 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.jfrog.build.api.dependency.BuildPatternArtifacts;
 import org.jfrog.build.api.dependency.BuildPatternArtifactsRequest;
 import org.jfrog.build.api.dependency.PatternResultFileSet;
 import org.jfrog.build.api.dependency.PropertySearchResult;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.release.Distribution;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.api.search.AqlSearchResult;
@@ -72,7 +72,7 @@ public class ArtifactoryManager extends ManagerBase {
         setPropertiesService.execute(jfrogHttpClient);
     }
 
-    public void setProperties(String relativePath, MultiValuedMap<String, String> properties, boolean encodeProperties) throws IOException {
+    public void setProperties(String relativePath, Multimap<String, String> properties, boolean encodeProperties) throws IOException {
         SetProperties setPropertiesService = new SetProperties(relativePath, properties, encodeProperties, log);
         setPropertiesService.execute(jfrogHttpClient);
     }

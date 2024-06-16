@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.docker.extractor;
 
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
@@ -22,7 +22,7 @@ import java.util.Map;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class DockerPush extends DockerCommand {
-    private final MultiValuedMap<String, String> artifactProperties;
+    private final Multimap<String, String> artifactProperties;
 
 
     /**
@@ -37,7 +37,7 @@ public class DockerPush extends DockerCommand {
      * @param env                       - Environment variables to use during docker push execution.
      */
     public DockerPush(ArtifactoryManagerBuilder artifactoryManagerBuilder,
-                      String imageTag, String host, MultiValuedMap<String, String> artifactProperties, String targetRepository, String username,
+                      String imageTag, String host, Multimap<String, String> artifactProperties, String targetRepository, String username,
                       String password, Log logger, Map<String, String> env) {
         super(artifactoryManagerBuilder, imageTag, host, targetRepository, username, password, logger, env);
         this.artifactProperties = artifactProperties;
@@ -59,7 +59,7 @@ public class DockerPush extends DockerCommand {
             DockerPush dockerPush = new DockerPush(artifactoryManagerBuilder,
                     dockerHandler.getImageTag(),
                     dockerHandler.getHost(),
-                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
+                    new ListMultimap<>(clientConfiguration.publisher.getMatrixParams()),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.publisher.getUsername(),
                     clientConfiguration.publisher.getPassword(),
@@ -105,7 +105,7 @@ public class DockerPush extends DockerCommand {
     /**
      * Update each layer's properties with artifactProperties.
      */
-    private void setImageLayersProps(DockerLayers layers, MultiValuedMap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
+    private void setImageLayersProps(DockerLayers layers, Multimap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
         if (layers == null) {
             return;
         }

@@ -1,12 +1,11 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.IntegrationTestsBase;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.builder.DependencyBuilder;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Dependency;
@@ -208,17 +207,17 @@ public class NpmExtractorTest extends IntegrationTestsBase {
     @DataProvider
     private Object[][] npmPublishProvider() {
         return new Object[][]{
-                {Project.A, MultiMapUtils.emptyMultiValuedMap(), Project.A.getTargetPath(), ""},
-                {Project.A, new ArrayListValuedHashMap<String, String>() {{
+                {Project.A, new ListMultimap<>(), Project.A.getTargetPath(), ""},
+                {Project.A, new ListMultimap<String, String>() {{
                     put("a", "b");
                 }}, Project.A.getTargetPath(), ""},
-                {Project.B, MultiMapUtils.emptyMultiValuedMap(), Project.B.getTargetPath(), Project.B.getPackedFileName()},
-                {Project.B, new ArrayListValuedHashMap<String, String>() {{
+                {Project.B, new ListMultimap<>(), Project.B.getTargetPath(), Project.B.getPackedFileName()},
+                {Project.B, new ListMultimap<String, String>() {{
                     put("a", "b");
                     put("c", "d");
                 }}, Project.B.getTargetPath(), Project.B.getPackedFileName()},
-                {Project.C, MultiMapUtils.emptyMultiValuedMap(), Project.C.getTargetPath(), ""},
-                {Project.C, new ArrayListValuedHashMap<String, String>() {{
+                {Project.C, new ListMultimap<>(), Project.C.getTargetPath(), ""},
+                {Project.C, new ListMultimap<String, String>() {{
                     put("a", "b");
                     put("a", "d");
                 }}, Project.C.getTargetPath(), ""}
@@ -227,7 +226,7 @@ public class NpmExtractorTest extends IntegrationTestsBase {
 
     @SuppressWarnings("unused")
     @Test(dataProvider = "npmPublishProvider")
-    public void npmPublishTest(Project project, MultiValuedMap<String, String> props, String targetPath, String packageName) {
+    public void npmPublishTest(Project project, Multimap<String, String> props, String targetPath, String packageName) {
         Path projectDir = null;
         try {
             // Run npm publish
