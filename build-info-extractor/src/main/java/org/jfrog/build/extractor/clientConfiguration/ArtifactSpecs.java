@@ -1,8 +1,8 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 
 import java.util.LinkedList;
 import java.util.Map;
@@ -41,8 +41,8 @@ public class ArtifactSpecs extends LinkedList<ArtifactSpec> {
      * @param spec
      * @return
      */
-    public MultiValuedMap<String, CharSequence> getProperties(ArtifactSpec spec) {
-        MultiValuedMap<String, CharSequence> props = MultiMapUtils.newListValuedHashMap();
+    public Multimap<String, CharSequence> getProperties(ArtifactSpec spec) {
+        Multimap<String, CharSequence> props = new ListMultimap<>();
         for (ArtifactSpec matcherSpec : this) {
             if (matcherSpec.matches(spec)) {
                 Map<String, CharSequence> matcherSpecProperties = matcherSpec.getProperties();

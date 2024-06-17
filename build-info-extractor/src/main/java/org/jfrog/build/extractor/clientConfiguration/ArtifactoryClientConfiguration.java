@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.clientConfiguration;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
@@ -883,7 +883,7 @@ public class ArtifactoryClientConfiguration {
             }
         }
 
-        public void addMatrixParams(MultiValuedMap<String, String> vars) {
+        public void addMatrixParams(Multimap<String, String> vars) {
             for (Map.Entry<String, String> entry : vars.entries()) {
                 addMatrixParam(entry.getKey(), entry.getValue());
             }

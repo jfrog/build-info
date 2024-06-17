@@ -1,7 +1,7 @@
 package org.jfrog.build.extractor.util;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FilenameUtils;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.clientConfiguration.util.PublishedItemsHelper;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -32,9 +32,9 @@ public class PublishedItemsHelperTest {
     }
 
     public void testDoubleDotWithStartWildcard() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs("../../saas/**/*.xml=>target/xml");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs("../../saas/**/*.xml=>target/xml");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
                 String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue());
@@ -45,10 +45,10 @@ public class PublishedItemsHelperTest {
     }
 
     public void testAbsolutePath() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs(
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs(
                 absoluteFile.getAbsolutePath() + "=>jaja/gululu");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 1, "Expected to find 1 files");
             assertTrue(buildPublishingData.containsValue(absoluteFile), "Expected to find the absolute file");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
@@ -59,9 +59,9 @@ public class PublishedItemsHelperTest {
     }
 
     public void testAbsolutePathSameWorkspace() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs(checkoutDir.getAbsolutePath() + "/inner/*.gradle" + "=>test/props");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs(checkoutDir.getAbsolutePath() + "/inner/*.gradle" + "=>test/props");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 1, "Expected to find 1 file");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
                 String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue());
@@ -72,14 +72,14 @@ public class PublishedItemsHelperTest {
 
     public void testMultiPatterns() throws IOException {
         String pattern = "**/multi1/*=>test/multi1, **multi2/*=>test/multi2";
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs(pattern);
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs(pattern);
         assertEquals(pairs.keySet().size(), 2, "Expected to find 2 keys");
     }
 
     public void testAllWorkspace() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs("**");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs("**");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 6, "Expected to find 6 files");
         }
     }
@@ -87,17 +87,17 @@ public class PublishedItemsHelperTest {
     public void testAbsolutePathWithDoubleStar() throws IOException {
         File resourceAsFile = getResourceAsFile("/root/workspace");
         String fileAbsolutePath = FilenameUtils.separatorsToUnix(resourceAsFile.getAbsolutePath());
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs(fileAbsolutePath + "/ant/**");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs(fileAbsolutePath + "/ant/**");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 7, "Expected to find 7 files");
         }
     }
 
     public void testAllSpecificFilesFromCheckoutDir() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs("**/*.blabla=>blabla");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs("**/*.blabla=>blabla");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
                 String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue());
@@ -107,9 +107,9 @@ public class PublishedItemsHelperTest {
     }
 
     public void testEmptyTargetPath() throws IOException {
-        MultiValuedMap<String, String> pairs = getPublishedItemsPatternPairs("../../**/**/*.xml");
+        Multimap<String, String> pairs = getPublishedItemsPatternPairs("../../**/**/*.xml");
         for (final Map.Entry<String, String> entry : pairs.entries()) {
-            MultiValuedMap<String, File> buildPublishingData = getBuildPublishingData(entry);
+            Multimap<String, File> buildPublishingData = getBuildPublishingData(entry);
             assertEquals(buildPublishingData.size(), 2, "Expected to find 2 files");
             for (Map.Entry<String, File> fileEntry : buildPublishingData.entries()) {
                 String targetPath = PublishedItemsHelper.calculateTargetPath(fileEntry.getKey(), fileEntry.getValue());
@@ -118,11 +118,11 @@ public class PublishedItemsHelperTest {
         }
     }
 
-    private MultiValuedMap<String, String> getPublishedItemsPatternPairs(String pattern) {
+    private Multimap<String, String> getPublishedItemsPatternPairs(String pattern) {
         return PublishedItemsHelper.getPublishedItemsPatternPairs(pattern);
     }
 
-    private MultiValuedMap<String, File> getBuildPublishingData(Map.Entry<String, String> entry) throws IOException {
+    private Multimap<String, File> getBuildPublishingData(Map.Entry<String, String> entry) throws IOException {
         return PublishedItemsHelper.buildPublishingData(checkoutDir, entry.getKey(), entry.getValue());
     }
 

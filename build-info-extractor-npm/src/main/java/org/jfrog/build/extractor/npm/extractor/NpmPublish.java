@@ -1,13 +1,13 @@
 package org.jfrog.build.extractor.npm.extractor;
 
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
@@ -39,7 +39,7 @@ import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.creat
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class NpmPublish extends NpmCommand {
-    private final MultiValuedMap<String, String> properties;
+    private final Multimap<String, String> properties;
     private Artifact deployedArtifact;
     private boolean tarballProvided;
     private final String module;
@@ -54,7 +54,7 @@ public class NpmPublish extends NpmCommand {
      * @param logger                    - The logger.
      * @param env                       - Environment variables to use during npm execution.
      */
-    public NpmPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, MultiValuedMap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
+    public NpmPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, Multimap<String, String> properties, Path path, String deploymentRepository, Log logger, Map<String, String> env, String module) {
         super(artifactoryManagerBuilder, deploymentRepository, logger, path, env);
         this.properties = properties;
         this.module = module;
@@ -70,7 +70,7 @@ public class NpmPublish extends NpmCommand {
             ArtifactoryManagerBuilder artifactoryManagerBuilder = new ArtifactoryManagerBuilder().setClientConfiguration(clientConfiguration, clientConfiguration.publisher);
             ArtifactoryClientConfiguration.PackageManagerHandler npmHandler = clientConfiguration.packageManagerHandler;
             NpmPublish npmPublish = new NpmPublish(artifactoryManagerBuilder,
-                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
+                    new ListMultimap<>(clientConfiguration.publisher.getMatrixParams()),
                     Paths.get(npmHandler.getPath() != null ? npmHandler.getPath() : "."),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog(),

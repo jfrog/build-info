@@ -1,12 +1,12 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.jfrog.build.api.builder.ModuleType;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.ArtifactoryUploadResponse;
@@ -47,7 +47,7 @@ public class GoPublish extends GoCommand {
     private static final String PKG_MOD_FILE_EXTENSION = "mod";
     private static final String PKG_INFO_FILE_EXTENSION = "info";
 
-    private final MultiValuedMap<String, String> properties;
+    private final Multimap<String, String> properties;
     private final List<Artifact> artifactList = new ArrayList<>();
     private final String deploymentRepo;
     private final String version;
@@ -62,7 +62,7 @@ public class GoPublish extends GoCommand {
      * @param version                   - The package's version.
      * @param logger                    - The logger.
      */
-    public GoPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, MultiValuedMap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
+    public GoPublish(ArtifactoryManagerBuilder artifactoryManagerBuilder, Multimap<String, String> properties, String repo, Path path, String version, String module, Log logger) throws IOException {
         super(artifactoryManagerBuilder, path, module, logger);
         this.goDriver = new GoDriver(GO_CLIENT_CMD, null, path.toFile(), logger);
         this.moduleName = goDriver.getModuleName();
@@ -94,7 +94,7 @@ public class GoPublish extends GoCommand {
 
             GoPublish goPublish = new GoPublish(
                     artifactoryManagerBuilder,
-                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
+                    new ListMultimap<>(clientConfiguration.publisher.getMatrixParams()),
                     clientConfiguration.publisher.getRepoKey(),
                     Paths.get(packageManagerHandler.getPath() != null ? packageManagerHandler.getPath() : ".").toAbsolutePath(),
                     clientConfiguration.goHandler.getGoPublishedVersion(),

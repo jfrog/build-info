@@ -1,11 +1,12 @@
 package org.jfrog.build.extractor.clientConfiguration.client.artifactory.services;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
+import org.jfrog.build.api.multiMap.SetMultimap;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.client.JFrogHttpClient;
 import org.jfrog.build.extractor.clientConfiguration.client.VoidJFrogService;
@@ -19,12 +20,12 @@ import static org.jfrog.build.extractor.UrlUtils.encodeUrl;
 
 public class SetProperties extends VoidJFrogService {
     public static final String SET_PROPERTIES_ENDPOINT = "api/storage/";
-    private final MultiValuedMap<String, String> propertiesMap;
+    private final Multimap<String, String> propertiesMap;
     private final boolean encodeProperties;
     private final String relativePath;
     private final String propertiesString;
 
-    private SetProperties(String relativePath, String propertiesString, MultiValuedMap<String, String> propertiesMap, boolean encodeProperties, Log log) {
+    private SetProperties(String relativePath, String propertiesString, Multimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         super(log);
         this.relativePath = relativePath;
         this.propertiesMap = propertiesMap;
@@ -36,7 +37,7 @@ public class SetProperties extends VoidJFrogService {
         this(relativePath, propertiesString, null, encodeProperties, log);
     }
 
-    public SetProperties(String relativePath, MultiValuedMap<String, String> propertiesMap, boolean encodeProperties, Log log) {
+    public SetProperties(String relativePath, Multimap<String, String> propertiesMap, boolean encodeProperties, Log log) {
         this(relativePath, null, propertiesMap, encodeProperties, log);
     }
 
@@ -80,8 +81,8 @@ public class SetProperties extends VoidJFrogService {
         }
     }
 
-    private MultiValuedMap<String, String> mapPropsString(String props) {
-        MultiValuedMap<String, String> propsMap = MultiMapUtils.newListValuedHashMap();
+    private Multimap<String, String> mapPropsString(String props) {
+        Multimap<String, String> propsMap = new ListMultimap<>();
         String[] propsList = props.split(";");
         for (String prop : propsList) {
             if (isNotEmpty(prop)) {

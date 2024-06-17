@@ -1,9 +1,10 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
+import org.jfrog.build.api.multiMap.SetMultimap;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.builder.ArtifactBuilder;
 import org.jfrog.build.extractor.ci.Artifact;
@@ -57,8 +58,8 @@ public class SpecsHelper {
         return uploadArtifactsBySpec(uploadSpec, DEFAULT_NUMBER_OF_THREADS, workspace, createMultiMap(buildProperties), artifactoryManagerBuilder);
     }
 
-    private static <K, V> MultiValuedMap<K, V> createMultiMap(Map<K, V> input) {
-        MultiValuedMap<K, V> multimap = MultiMapUtils.newListValuedHashMap();
+    private static <K, V> Multimap<K, V> createMultiMap(Map<K, V> input) {
+        Multimap<K, V> multimap = new ListMultimap<>();
         for (Map.Entry<K, V> entry : input.entrySet()) {
             multimap.put(entry.getKey(), entry.getValue());
         }
@@ -78,7 +79,7 @@ public class SpecsHelper {
      *                     checksums or in case of any file system exception
      */
     public List<Artifact> uploadArtifactsBySpec(String uploadSpec, int numberOfThreads, File workspace,
-                                                MultiValuedMap<String, String> buildProperties,
+                                                Multimap<String, String> buildProperties,
                                                 ArtifactoryManagerBuilder artifactoryManagerBuilder) throws Exception {
         FileSpec fileSpec = FileSpec.fromString(uploadSpec);
         FileSpecsValidation.validateUploadFileSpec(fileSpec, this.log);
@@ -153,13 +154,13 @@ public class SpecsHelper {
      * @param props Spec's properties
      * @return created properties map
      */
-    public static MultiValuedMap<String, String> getPropertiesMap(String props) {
-        MultiValuedMap<String, String> propertiesMap = MultiMapUtils.newListValuedHashMap();
+    public static Multimap<String, String> getPropertiesMap(String props) {
+        Multimap<String, String> propertiesMap = new ListMultimap<>();
         fillPropertiesMap(props, propertiesMap);
         return propertiesMap;
     }
 
-    public static void fillPropertiesMap(String props, MultiValuedMap<String, String> propertiesMap) {
+    public static void fillPropertiesMap(String props, Multimap<String, String> propertiesMap) {
         if (StringUtils.isBlank(props)) {
             return;
         }

@@ -2,10 +2,10 @@ package org.jfrog.build.extractor.docker.extractor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.collections4.MultiValuedMap;
-import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
 import org.jfrog.build.extractor.ci.Module;
@@ -35,7 +35,7 @@ import static org.jfrog.build.extractor.BuildInfoExtractorUtils.createMapper;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
 public class BuildDockerCreator extends PackageManagerExtractor {
-    private final MultiValuedMap<String, String> artifactProperties;
+    private final Multimap<String, String> artifactProperties;
     private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
     private final ImageFileType imageFileType;
     private final String sourceRepo;
@@ -56,7 +56,7 @@ public class BuildDockerCreator extends PackageManagerExtractor {
      * @param artifactProperties        - Properties to be attached to the docker layers deployed to Artifactory.
      */
     public BuildDockerCreator(ArtifactoryManagerBuilder artifactoryManagerBuilder, String imageFile, ImageFileType imageFileType,
-                              MultiValuedMap<String, String> artifactProperties, String sourceRepo, Log logger) {
+                              Multimap<String, String> artifactProperties, String sourceRepo, Log logger) {
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.artifactProperties = artifactProperties;
         this.sourceRepo = sourceRepo;
@@ -92,7 +92,7 @@ public class BuildDockerCreator extends PackageManagerExtractor {
             BuildDockerCreator dockerBuildCreate = new BuildDockerCreator(artifactoryManagerBuilder,
                     imageFile,
                     imageFileType,
-                    new ArrayListValuedHashMap<>(clientConfiguration.publisher.getMatrixParams()),
+                    new ListMultimap<>(clientConfiguration.publisher.getMatrixParams()),
                     clientConfiguration.publisher.getRepoKey(),
                     clientConfiguration.getLog());
 
@@ -137,7 +137,7 @@ public class BuildDockerCreator extends PackageManagerExtractor {
     /**
      * Update each layer's properties with artifactProperties.
      */
-    private void setImageLayersProps(DockerLayers layers, MultiValuedMap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
+    private void setImageLayersProps(DockerLayers layers, Multimap<String, String> artifactProperties, ArtifactoryManagerBuilder artifactoryManagerBuilder) throws IOException {
         if (layers == null) {
             return;
         }

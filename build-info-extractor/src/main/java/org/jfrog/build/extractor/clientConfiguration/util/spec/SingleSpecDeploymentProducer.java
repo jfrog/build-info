@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.util.spec;
 
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathsUtils;
 import org.jfrog.build.extractor.producerConsumer.ProducerConsumerExecutor;
@@ -26,7 +26,7 @@ public class SingleSpecDeploymentProducer {
 
     private FilesGroup spec;
     private File workspace;
-    private MultiValuedMap<String, String> buildProperties;
+    private Multimap<String, String> buildProperties;
 
     private Pattern regexpPattern;
     private Pattern regexpExcludePattern;
@@ -42,7 +42,7 @@ public class SingleSpecDeploymentProducer {
     private int separatorsCount;
     private Set<String> symlinkSet = new HashSet<>();
 
-    SingleSpecDeploymentProducer(FilesGroup spec, File workspace, MultiValuedMap<String, String> buildProperties) {
+    SingleSpecDeploymentProducer(FilesGroup spec, File workspace, Multimap<String, String> buildProperties) {
         this.spec = spec;
         this.workspace = workspace;
         this.buildProperties = buildProperties;

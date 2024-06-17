@@ -1,9 +1,9 @@
 package org.jfrog.build.extractor.clientConfiguration.deploy;
 
-import org.apache.commons.collections4.MultiMapUtils;
-import org.apache.commons.collections4.MultiValuedMap;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.BuildFileBean;
+import org.jfrog.build.api.multiMap.ListMultimap;
+import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.producerConsumer.ProducerConsumerItem;
 
 import java.io.File;
@@ -45,7 +45,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
     /**
      * Properties to attach to the deployed file as matrix params.
      */
-    MultiValuedMap<String, String> properties;
+    Multimap<String, String> properties;
     /**
      * Target deploy repository.
      */
@@ -74,7 +74,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         return file;
     }
 
-    public MultiValuedMap<String, String> getProperties() {
+    public Multimap<String, String> getProperties() {
         return properties;
     }
 
@@ -164,7 +164,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
         public Builder bean(BuildFileBean bean) {
             Properties beanProperties = bean.getProperties();
             if (beanProperties != null) {
-                MultiValuedMap<String, String> multimap = MultiMapUtils.newListValuedHashMap();
+                Multimap<String, String> multimap = new ListMultimap<>();
                 beanProperties.forEach((key, value) -> multimap.put((String) key, (String) value));
                 deployDetails.properties = multimap;
             }
@@ -215,7 +215,7 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder addProperty(String key, String value) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
+                deployDetails.properties = new ListMultimap<>();
             }
             deployDetails.properties.put(key, value);
             return this;
@@ -223,16 +223,16 @@ public class DeployDetails implements Comparable<DeployDetails>, Serializable, P
 
         public Builder addProperties(Map<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
+                deployDetails.properties = new ListMultimap<>();
             }
 
             deployDetails.properties.putAll(propertiesToAdd);
             return this;
         }
 
-        public Builder addProperties(MultiValuedMap<String, String> propertiesToAdd) {
+        public Builder addProperties(Multimap<String, String> propertiesToAdd) {
             if (deployDetails.properties == null) {
-                deployDetails.properties = MultiMapUtils.newListValuedHashMap();
+                deployDetails.properties = new ListMultimap<>();
             }
 
             deployDetails.properties.putAll(propertiesToAdd);
