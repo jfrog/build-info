@@ -91,12 +91,9 @@ jobs:
             ${{ runner.os }}-maven-
 
       - name: Setup Artifactory
-        run: |
-          go install github.com/jfrog/jfrog-testing-infra/local-rt-setup@latest
-          ~/go/bin/local-rt-setup
-        env:
-          RTLIC: ${{secrets.RTLIC}}
-          GOPROXY: direct
+        uses: jfrog/.github/actions/install-local-artifactory@main
+        with:
+          RTLIC: ${{ secrets.RTLIC }}
 
       # Run tests
       - name: Run Tests
