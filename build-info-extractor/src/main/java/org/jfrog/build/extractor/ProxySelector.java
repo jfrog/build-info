@@ -25,13 +25,15 @@ public class ProxySelector {
     private Proxy httpsProxy;
 
     public ProxySelector(String httpHost, int httpPort, String httpUsername, String httpPassword, String httpsHost, int httpsPort, String httpsUsername, String httpsPassword, String noProxy) {
-        this.noProxy = noProxy;
         if (StringUtils.isNotBlank(httpHost)) {
             this.httpProxy = new Proxy(httpHost, httpPort, httpUsername, httpPassword, false);
         }
         if (StringUtils.isNotBlank(httpsHost)) {
             this.httpsProxy = new Proxy(httpsHost, httpsPort, httpsUsername, httpsPassword, true);
         }
+        // The NO_PROXY environment variable standard uses commas to separate no-proxy hosts.
+        // The Java system property http.nonProxyHosts uses pipes.
+        this.noProxy = StringUtils.replace(noProxy, ",", "|");
     }
 
     public Proxy getProxy(String repositoryUrl) {

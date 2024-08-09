@@ -33,6 +33,7 @@ public class ArtifactoryResolutionTest {
     final int HTTP_PROXY_PORT = 8888;
     final int HTTPS_PROXY_PORT = 8889;
     final String NO_PROXY_PATTERN = "www.http-no-proxy-url.com";
+    final String MULTIPLE_NO_PROXY_PATTERNS = "www.no-proxy-1.com,www.http-no-proxy-url.com";
     ArtifactoryResolution artifactoryResolution;
     ArtifactoryResolution artifactoryResolutionOnlyRelease;
     RemoteRepository snapshotRepository;
@@ -177,6 +178,16 @@ public class ArtifactoryResolutionTest {
     @Test(description = "In the case of 'http.nonProxyHosts' matching the repository URL with 'https' prefix, null is returned from getProxy().")
     public void TestNullProxyHttps() {
         ArtifactoryResolution artifactoryResolutionWithNoHttp = new ArtifactoryResolution(HTTP_RELEASE_URL, "https://" + NO_PROXY_PATTERN, USERNAME, PASSWORD, proxySelector, new NullPlexusLog());
+        assertNull(artifactoryResolutionWithNoHttp.createSnapshotRepository().getProxy());
+    }
+
+    @Test(description = "In the case of 'http.nonProxyHosts' with multiple hosts that one of them is matching the repository URL, null is returned from getProxy().")
+    public void TestMultipleNoProxy() {
+        // Prepare
+        ProxySelector multipleNoHostsProxySelector = new ProxySelector(HTTP_PROXY_URL, HTTP_PROXY_PORT, HTTP_PROXY_USERNAME, HTTP_PROXY_PASSWORD, HTTPS_PROXY_URL, HTTPS_PROXY_PORT, HTTPS_PROXY_USERNAME, HTTPS_PROXY_PASSWORD, MULTIPLE_NO_PROXY_PATTERNS);
+        // Act
+        ArtifactoryResolution artifactoryResolutionWithNoHttp = new ArtifactoryResolution(HTTP_RELEASE_URL, "https://" + NO_PROXY_PATTERN, USERNAME, PASSWORD, multipleNoHostsProxySelector, new NullPlexusLog());
+        // Assert
         assertNull(artifactoryResolutionWithNoHttp.createSnapshotRepository().getProxy());
     }
 
