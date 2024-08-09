@@ -7,4 +7,4 @@ ENV JFROG_HOME=/jfrog_home
 WORKDIR /jfrog_home
 EXPOSE 8082
 EXPOSE 8081
-CMD ["sh","-c","local-rt-setup; sleep infinity"]
+CMD ["sh","-c","local-rt-setup --rt-version 7.84.17; sleep infinity"]
