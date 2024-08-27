@@ -129,7 +129,6 @@ subprojects {
     ext.buildInfoVersion = new Version(rootProject, baseProjectNames)
 
     dependencies {
-        implementation group: 'org.apache.commons', name: 'commons-lang3', version: commonsLang3Version
         implementation group: 'commons-io', name: 'commons-io', version: commonsIoVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: jacksonVersion
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: jacksonVersion
