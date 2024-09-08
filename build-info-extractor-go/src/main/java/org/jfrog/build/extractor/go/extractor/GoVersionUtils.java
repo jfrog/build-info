@@ -14,7 +14,10 @@ public class GoVersionUtils {
 
     public static final String INCOMPATIBLE = "+incompatible";
     public static final int ZERO_OR_ONE = 0;
-    protected static final Pattern VERSION_PATTERN = Pattern.compile("v(\\d*)\\.(\\d+)\\.(\\d+)");
+    // The regular expression used here is derived from the SemVer specification: https://semver.org/
+    protected static final Pattern VERSION_PATTERN = Pattern.compile(
+            "v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\." +
+                    "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$");
 
     /**
      * @param version full version string
