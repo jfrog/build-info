@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 public class Artifact extends BaseBuildFileBean {
 
     private String name;
+    private String originalDeploymentRepo;
 
     /**
      * Returns the name of the artifact
@@ -27,6 +28,24 @@ public class Artifact extends BaseBuildFileBean {
      */
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Returns the original deployment repository of the artifact
+     *
+     * @return repository name
+     */
+    public String getOriginalDeploymentRepo() {
+        return originalDeploymentRepo;
+    }
+
+    /**
+     * Sets the original deployment repository of the artifact
+     *
+     * @param originalDeploymentRepo repository name
+     */
+    public void setOriginalDeploymentRepo(String originalDeploymentRepo) {
+        this.originalDeploymentRepo = originalDeploymentRepo;
     }
 
     @Override
