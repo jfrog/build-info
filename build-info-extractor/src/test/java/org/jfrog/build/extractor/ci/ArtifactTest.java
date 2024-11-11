@@ -30,6 +30,7 @@ public class ArtifactTest {
         assertNull(artifact.getSha1(), "Artifact SHA1 checksum should have not been initialized.");
         assertNull(artifact.getSha256(), "Artifact SHA256 checksum should have not been initialized.");
         assertNull(artifact.getMd5(), "Artifact MD5 checksum should have not been initialized.");
+        assertNull(artifact.getOriginalDeploymentRepo(), "Artifact original deployment repository should have not been initialized.");
     }
 
     /**
@@ -43,6 +44,7 @@ public class ArtifactTest {
         String md5 = "gog";
         String localPath = "blip";
         String remotePath = "blop";
+        String originalDeploymentRepository = "repo";
         Properties properties = new Properties();
 
         Artifact artifact = new Artifact();
@@ -54,6 +56,7 @@ public class ArtifactTest {
         artifact.setLocalPath(localPath);
         artifact.setRemotePath(remotePath);
         artifact.setProperties(properties);
+        artifact.setOriginalDeploymentRepo(originalDeploymentRepository);
 
         Assert.assertEquals(artifact.getName(), name, "Unexpected artifact name.");
         Assert.assertEquals(artifact.getType(), type, "Unexpected artifact type.");
@@ -63,6 +66,7 @@ public class ArtifactTest {
         Assert.assertEquals(artifact.getLocalPath(), localPath, "Unexpected artifact local path.");
         Assert.assertEquals(artifact.getRemotePath(), remotePath, "Unexpected artifact remote path.");
         Assert.assertEquals(artifact.getProperties(), properties, "Unexpected artifact properties.");
+        Assert.assertEquals(artifact.getOriginalDeploymentRepo(),originalDeploymentRepository, "Unexpected artifact original deployment repository.");
     }
 
     public void testEqualsAndHash() {
@@ -75,6 +79,7 @@ public class ArtifactTest {
         artifact1.setSha1("111");
         artifact1.setSha256("11111");
         artifact1.setMd5("1111");
+        artifact1.setOriginalDeploymentRepo("repo");
         artifact1.setProperties(properties);
 
         Artifact artifact2 = new Artifact();
@@ -83,6 +88,7 @@ public class ArtifactTest {
         artifact2.setSha1("111");
         artifact2.setSha256("11111");
         artifact2.setMd5("1111");
+        artifact2.setOriginalDeploymentRepo("repo");
         artifact2.setProperties(properties);
 
         Artifact artifact3 = new Artifact();
@@ -91,6 +97,7 @@ public class ArtifactTest {
         artifact3.setSha1("1113");
         artifact3.setSha256("11133");
         artifact3.setMd5("11113");
+        artifact3.setOriginalDeploymentRepo("diff-repo");
         artifact3.setProperties(properties);
 
         Assert.assertEquals(artifact1, artifact2, "Expected equals == true for equivalent artifacts");

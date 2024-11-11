@@ -48,7 +48,7 @@ import static org.testng.Assert.assertNull;
  * @author Tomer Cohen
  */
 @Test
-public class BuildExtractorUtilsTest {
+public class  BuildExtractorUtilsTest {
     private static final String POPO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "popo";
     private static final String MOMO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "momo";
     private static final String KOKO_KEY = BuildInfoProperties.BUILD_INFO_PROP_PREFIX + "koko";
