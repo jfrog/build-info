@@ -12,7 +12,7 @@ public class Artifact extends BaseBuildFileBean {
     /**
      * Returns the name of the artifact
      *
-     * @return Artifact name
+     * @return Artifact namea
      */
     public String getName() {
         return name;
