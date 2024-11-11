@@ -70,7 +70,7 @@ public abstract class IntegrationTestsBase {
             inputStream.close();
         }
 
-        platformUrl = readParam(props, "url", "http://127.0.0.1:8081");
+        platformUrl = readParam(props, "url", "http://127.0.0.1:8082");
         if (!platformUrl.endsWith("/")) {
             platformUrl += "/";
         }
