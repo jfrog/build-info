@@ -78,7 +78,7 @@ public class Artifact extends BaseBuildFileBean {
         result.setSha1(sha1);
         result.setRemotePath(remotePath);
         result.setProperties(getProperties());
-        result.setOriginalDeploymentRepo(getOriginalDeploymentRepo());
+        result.setOriginalDeploymentRepo(originalDeploymentRepo);
         return result;
     }
 
