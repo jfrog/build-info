@@ -118,7 +118,7 @@ public class NugetExtractorTest extends IntegrationTestsBase {
         try {
             // Run nuget restore install
             projectDir = createProjectDir(project);
-            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getAdminToken(), "v2",false);
+            NugetRun nugetRun = new NugetRun(artifactoryManagerBuilder, remoteRepo, true, args, log, projectDir, env, moduleName, getUsername(), getAdminToken(), "v2",ALLOW_INSECURE_CONNECTIONS_TEST);
             executeAndAssertBuildInfo(nugetRun, expectedModules, expectedDependencies);
         } catch (Exception e) {
             fail(ExceptionUtils.getStackTrace(e));
