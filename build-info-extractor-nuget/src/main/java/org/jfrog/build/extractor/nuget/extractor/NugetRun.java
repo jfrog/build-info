@@ -163,8 +163,7 @@ public class NugetRun extends PackageManagerExtractor {
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword(),
-                    clientConfiguration.dotnetHandler.apiProtocol(),
-                    clientConfiguration.nuGetAllowInsecureConnections);
+                    clientConfiguration.dotnetHandler.apiProtocol(), false);
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
