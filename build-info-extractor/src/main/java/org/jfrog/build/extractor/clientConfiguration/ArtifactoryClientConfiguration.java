@@ -41,7 +41,6 @@ public class ArtifactoryClientConfiguration {
     // Try checksum deploy of files greater than 10KB
     public static final transient int DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB = 10;
     public static final String DEFAULT_NUGET_PROTOCOL = "v2";
-    // TODO add comment here
     public static final boolean DEFAULT_NUGET_ALLOW_INSECURE_CONNECTIONS = false;
 
     public final ResolverHandler resolver;
