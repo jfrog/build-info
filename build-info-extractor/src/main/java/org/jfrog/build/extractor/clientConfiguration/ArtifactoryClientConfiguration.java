@@ -41,6 +41,8 @@ public class ArtifactoryClientConfiguration {
     // Try checksum deploy of files greater than 10KB
     public static final transient int DEFAULT_MIN_CHECKSUM_DEPLOY_SIZE_KB = 10;
     public static final String DEFAULT_NUGET_PROTOCOL = "v2";
+    // TODO add comment here
+    public static final boolean DEFAULT_NUGET_ALLOW_INSECURE_CONNECTIONS = false;
 
     public final ResolverHandler resolver;
     public final PublisherHandler publisher;
@@ -54,7 +56,7 @@ public class ArtifactoryClientConfiguration {
     public final DockerHandler dockerHandler;
     public final GoHandler goHandler;
     public final PrefixPropertyHandler root;
-    public final boolean nuGetAllowInsecureConnections;
+
 
     /**
      * To configure the props builder itself, so all method of this classes delegated from here
@@ -75,7 +77,6 @@ public class ArtifactoryClientConfiguration {
         this.dotnetHandler = new DotnetHandler();
         this.dockerHandler = new DockerHandler();
         this.goHandler = new GoHandler();
-        this.nuGetAllowInsecureConnections = false;
     }
 
     public void fillFromProperties(Map<String, String> props, IncludeExcludePatterns patterns) {
@@ -209,6 +210,10 @@ public class ArtifactoryClientConfiguration {
 
     public boolean getInsecureTls() {
         return root.getBooleanValue(PROP_INSECURE_TLS, false);
+    }
+
+    public boolean getNuGetAllowInsecureConnections() {
+        return root.getBooleanValue(PROP_NUGET_ALLOW_INSECURE_CONNECTIONS, false);
     }
 
     public void setInsecureTls(boolean enabled) {

@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
+import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_NUGET_ALLOW_INSECURE_CONNECTIONS;
 import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.DEFAULT_NUGET_PROTOCOL;
 import static org.jfrog.build.extractor.packageManager.PackageManagerUtils.createArtifactoryClientConfiguration;
 
@@ -96,7 +97,7 @@ public class NugetRun extends PackageManagerExtractor {
      * @param apiProtocol               - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
-    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol, boolean allowInsecureConnections) {
+    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol, Boolean allowInsecureConnections) {
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -108,7 +109,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.password = password;
         this.apiProtocol = StringUtils.isBlank(apiProtocol) ? DEFAULT_NUGET_PROTOCOL : apiProtocol;
         this.module = module;
-        this.allowInsecureConnections = allowInsecureConnections;
+        this.allowInsecureConnections = allowInsecureConnections == null ? DEFAULT_NUGET_ALLOW_INSECURE_CONNECTIONS : allowInsecureConnections;
     }
 
     private static String removeQuotes(String str) {
@@ -163,7 +164,8 @@ public class NugetRun extends PackageManagerExtractor {
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword(),
-                    clientConfiguration.dotnetHandler.apiProtocol(), false);
+                    clientConfiguration.dotnetHandler.apiProtocol(),
+                    clientConfiguration.getNuGetAllowInsecureConnections());
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
