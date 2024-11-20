@@ -70,4 +70,10 @@ public interface ClientProperties {
      * Property for whether to use relaxed ssl check and ignore issues with server certificate
      */
     String PROP_INSECURE_TLS = "insecureTls";
+
+    /**
+     * Property to allow NuGet package sources to use insecure connections (HTTP).
+     * This setting is enforced by the NuGet client and is not recommended for production use.
+     */
+    String PROP_NUGET_ALLOW_INSECURE_CONNECTIONS = "nuget.AllowInsecureConnections";
 }
