@@ -47,7 +47,7 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<configuration>\n" +
             "\t<packageSources>\n" +
-            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" allowInsecureConnections=\"%b\" />\n" +
+            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" allowInsecureConnections=\"%s\"/>\n" +
             "\t</packageSources>\n" +
             "\t<packageSourceCredentials>\n" +
             "\t\t<JFrogJenkins>\n" +
@@ -223,7 +223,7 @@ public class NugetRun extends PackageManagerExtractor {
     private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol, boolean allowInsecureConnections) throws Exception {
         String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
         String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
-        String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password, Boolean.toString(allowInsecureConnections));
+        String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, Boolean.toString(allowInsecureConnections), username, password);
         try (PrintWriter out = new PrintWriter(configPath)) {
             out.println(configFileText);
         }
