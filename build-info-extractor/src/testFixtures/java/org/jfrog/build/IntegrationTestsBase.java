@@ -59,8 +59,7 @@ public abstract class IntegrationTestsBase {
         return log;
     }
 
-    @BeforeClass
-    public void init() throws IOException {
+    public void init(boolean isAccessTest) throws IOException {
         Properties props = new Properties();
         // This file is not in GitHub. Create your own in src/test/resources or use environment variables.
         InputStream inputStream = this.getClass().getResourceAsStream("/artifactory-bi.properties");
@@ -69,8 +68,13 @@ public abstract class IntegrationTestsBase {
             props.load(inputStream);
             inputStream.close();
         }
+        String testPort = "8081";
+        // Change the port variable only if isAccessTest is true
+        if (isAccessTest) {
+            testPort = "8082";
+        }
 
-        platformUrl = readParam(props, "url", "http://127.0.0.1:8081");
+        platformUrl = readParam(props, "url", "http://127.0.0.1:" + testPort);
         if (!platformUrl.endsWith("/")) {
             platformUrl += "/";
         }
@@ -90,6 +94,16 @@ public abstract class IntegrationTestsBase {
         if (StringUtils.isNotEmpty(virtualRepo)) {
             createTestRepo(virtualRepo);
         }
+    }
+
+    @BeforeClass
+    public void init() throws IOException {
+        init(false);
+    }
+
+    @BeforeClass
+    public void accessInit() throws IOException {
+        init(true);
     }
 
     @AfterClass

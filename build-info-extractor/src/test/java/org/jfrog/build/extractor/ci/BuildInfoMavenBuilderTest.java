@@ -34,6 +34,7 @@ public class BuildInfoMavenBuilderTest {
     public static final String SHA1 = "e4e264c711ae7ab54f26542f0dd09a43b93fa12c";
     public static final String SHA2 = "yyyy23029162f3b2dc51f512cb64bce8cb6913ed6e540f23ec567d898f60yyyy";
     public static final String MD5 = "d9303a42c66c2824fd6ba0f75e335294";
+    public static final String DEPLOY_REPO = "repo";
 
     /**
      * Validates the build values when using the defaults
@@ -163,12 +164,12 @@ public class BuildInfoMavenBuilderTest {
      */
     public void testDuplicateModuleArtifacts() {
         ModuleBuilder module1 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
-        module1.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
-        module1.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
+        module1.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).originalDeploymentRepo(DEPLOY_REPO).build());
+        module1.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).originalDeploymentRepo(DEPLOY_REPO).build());
 
         ModuleBuilder module2 = new ModuleBuilder().type(ModuleType.MAVEN).id("id");
-        module2.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).build());
-        module2.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).build());
+        module2.addArtifact(new ArtifactBuilder("artifact1").md5(MD5).sha1(SHA1).sha256(SHA2).originalDeploymentRepo(DEPLOY_REPO).build());
+        module2.addArtifact(new ArtifactBuilder("artifact2").md5(MD5).sha1(SHA1).sha256(SHA2).originalDeploymentRepo(DEPLOY_REPO).build());
 
         BuildInfoMavenBuilder builder = new BuildInfoMavenBuilder("test").number("4").started("test");
         builder.addModule(module1.build());

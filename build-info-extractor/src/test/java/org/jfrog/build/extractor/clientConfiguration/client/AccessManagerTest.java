@@ -45,7 +45,7 @@ public class AccessManagerTest extends IntegrationTestsBase {
     @BeforeClass
     @Override
     public void init() throws IOException {
-        super.init();
+        super.init(true);
         String accessUrl = getPlatformUrl() + "access";
         accessManager = new AccessManager(accessUrl, getAdminToken(), getLog());
     }

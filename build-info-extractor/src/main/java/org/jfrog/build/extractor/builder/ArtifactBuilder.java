@@ -20,6 +20,7 @@ public class ArtifactBuilder {
     private String md5;
     private String remotePath;
     private Properties properties;
+    private String originalDeploymentRepo;
 
     public ArtifactBuilder(String name) {
         this.name = name;
@@ -43,6 +44,7 @@ public class ArtifactBuilder {
         artifact.setRemotePath(remotePath);
         artifact.setLocalPath(localPath);
         artifact.setProperties(properties);
+        artifact.setOriginalDeploymentRepo(originalDeploymentRepo);
         return artifact;
     }
 
@@ -131,6 +133,17 @@ public class ArtifactBuilder {
      */
     public ArtifactBuilder properties(Properties properties) {
         this.properties = properties;
+        return this;
+    }
+
+    /**
+     * Sets the originalDeploymentRepo of the artifact
+     *
+     * @param originalDeploymentRepo Artifact original deployment repository
+     * @return Builder instance
+     */
+    public ArtifactBuilder originalDeploymentRepo(String originalDeploymentRepo) {
+        this.originalDeploymentRepo = originalDeploymentRepo;
         return this;
     }
 
