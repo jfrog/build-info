@@ -47,7 +47,7 @@ public class NugetRun extends PackageManagerExtractor {
     private static final String CONFIG_FILE_FORMAT = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<configuration>\n" +
             "\t<packageSources>\n" +
-            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" />\n" +
+            "\t\t<add key=\"JFrogJenkins\" value=\"%s\" protocolVersion=\"%s\" allowInsecureConnections=\"%b\" />\n" +
             "\t</packageSources>\n" +
             "\t<packageSourceCredentials>\n" +
             "\t\t<JFrogJenkins>\n" +
@@ -75,6 +75,7 @@ public class NugetRun extends PackageManagerExtractor {
     private String apiProtocol;
     private String module;
     private String nugetCmdArgs;
+    private boolean allowInsecureConnections;
     private List<String> dependenciesSources;
     private List<Module> modulesList = new ArrayList<>();
 
@@ -91,10 +92,11 @@ public class NugetRun extends PackageManagerExtractor {
      * @param module                    - NuGet module
      * @param username                  - JFrog platform username.
      * @param password                  - JFrog platform password.
+     * @param allowInsecureConnections  - Allow insecure package sources connection, should be used only for developing.
      * @param apiProtocol               - A string indicates which NuGet protocol should be used (V2/V3).
      */
 
-    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol) {
+    public NugetRun(ArtifactoryManagerBuilder artifactoryManagerBuilder, String resolutionRepo, boolean useDotnetCli, String nugetCmdArgs, Log logger, Path path, Map<String, String> env, String module, String username, String password, String apiProtocol, boolean allowInsecureConnections) {
         this.artifactoryManagerBuilder = artifactoryManagerBuilder;
         this.toolchainDriver = useDotnetCli ? new DotnetDriver(env, path, logger) : new NugetDriver(env, path, logger);
         this.workingDir = Files.isDirectory(path) ? path : path.toAbsolutePath().getParent();
@@ -106,6 +108,7 @@ public class NugetRun extends PackageManagerExtractor {
         this.password = password;
         this.apiProtocol = StringUtils.isBlank(apiProtocol) ? DEFAULT_NUGET_PROTOCOL : apiProtocol;
         this.module = module;
+        this.allowInsecureConnections = allowInsecureConnections;
     }
 
     private static String removeQuotes(String str) {
@@ -160,7 +163,8 @@ public class NugetRun extends PackageManagerExtractor {
                     handler.getModule(),
                     clientConfiguration.resolver.getUsername(),
                     clientConfiguration.resolver.getPassword(),
-                    clientConfiguration.dotnetHandler.apiProtocol());
+                    clientConfiguration.dotnetHandler.apiProtocol(),
+                    clientConfiguration.nuGetAllowInsecureConnections);
             nugetRun.executeAndSaveBuildInfo(clientConfiguration);
         } catch (RuntimeException e) {
             ExceptionUtils.printRootCauseStackTrace(e, System.out);
@@ -208,7 +212,7 @@ public class NugetRun extends PackageManagerExtractor {
         if (!nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.CONFIG_FILE_FLAG)) && !nugetCmdArgs.contains(toolchainDriver.getFlagSyntax(ToolchainDriverBase.SOURCE_FLAG))) {
             configFile = File.createTempFile(NUGET_CONFIG_FILE_PREFIX, null);
             configFile.deleteOnExit();
-            addSourceToConfigFile(configFile.getAbsolutePath(), artifactoryManager, resolutionRepo, username, password, apiProtocol);
+            addSourceToConfigFile(configFile.getAbsolutePath(), artifactoryManager, resolutionRepo, username, password, apiProtocol, allowInsecureConnections);
         }
         return configFile;
     }
@@ -217,10 +221,10 @@ public class NugetRun extends PackageManagerExtractor {
      * We will write a temporary NuGet configuration using a string formater in order to support NuGet v3 protocol.
      * Currently the NuGet configuration utility doesn't allow setting protocolVersion.
      */
-    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol) throws Exception {
+    private void addSourceToConfigFile(String configPath, ArtifactoryManager client, String repo, String username, String password, String apiProtocol, boolean allowInsecureConnections) throws Exception {
         String sourceUrl = toolchainDriver.buildNugetSourceUrl(client, repo, apiProtocol);
         String protocolVersion = apiProtocol.substring(apiProtocol.length() - 1);
-        String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password);
+        String configFileText = String.format(CONFIG_FILE_FORMAT, sourceUrl, protocolVersion, username, password, Boolean.toString(allowInsecureConnections));
         try (PrintWriter out = new PrintWriter(configPath)) {
             out.println(configFileText);
         }
