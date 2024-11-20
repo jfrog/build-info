@@ -5,6 +5,7 @@ import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
@@ -1291,7 +1292,7 @@ public class ArtifactoryClientConfiguration {
             buildName = defaultProjectName;
             config.info.setBuildName(buildName);
         }
-        config.publisher.setMatrixParam(BUILD_NAME, buildName);
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NAME, buildName);
 
         // Build number
         String buildNumber = config.info.getBuildNumber();
@@ -1299,7 +1300,7 @@ public class ArtifactoryClientConfiguration {
             buildNumber = new Date().getTime() + "";
             config.info.setBuildNumber(buildNumber);
         }
-        config.publisher.setMatrixParam(BUILD_NUMBER, buildNumber);
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_NUMBER, buildNumber);
 
         // Build start (was set by the plugin - no need to make up a fallback val)
         String buildTimestamp = config.info.getBuildTimestamp();
@@ -1314,7 +1315,7 @@ public class ArtifactoryClientConfiguration {
             buildTimestamp = String.valueOf(buildStartDate.getTime());
             config.info.setBuildTimestamp(buildTimestamp);
         }
-        config.publisher.setMatrixParam(BUILD_TIMESTAMP, buildTimestamp);
+        config.publisher.setMatrixParam(BuildInfoFields.BUILD_TIMESTAMP, buildTimestamp);
 
         // Build agent
         String buildAgentName = config.info.getBuildAgentName();
