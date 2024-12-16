@@ -472,6 +472,7 @@ project('build-info-extractor-docker') {
         implementation(group: 'com.github.docker-java', name: 'docker-java', version: dockerJavaVersion) {
             exclude group: 'org.glassfish.jersey.core', module: 'jersey-common'
         }
+        implementation group: 'com.github.docker-java', name: 'docker-java-transport-httpclient5', version: dockerJavaVersion
         implementation group: 'org.glassfish.jersey.core', name: 'jersey-common', version: jerseyVersion
     }
 }
