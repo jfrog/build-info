@@ -332,7 +332,7 @@ jobs:
 
       # Prepare ubuntu by installing Mono and handle dotnet installation issues.
       - name: Prepare ubuntu
-        if: matrix.os == 'ubuntu'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           # Install Mono
           sudo apt-get update
