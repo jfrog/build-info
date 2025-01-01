@@ -330,14 +330,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Install dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "3.x"
+
       - name: Install NuGet
         uses: nuget/setup-nuget@v2
         with:
           nuget-version: 6.x
-      - name: Install dotnet
-        uses: actions/setup-dotnet@v2
-        with:
-          dotnet-version: "3.x"
+
       - name: Install Java
         uses: actions/setup-java@v3
         with:
