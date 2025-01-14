@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.go.extractor;
 
+import com.github.zafarkhaja.semver.Version;
 import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.Log;
 
 import java.io.File;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Optional;
 
 /**
  * @author BarakH
@@ -14,30 +14,24 @@ public class GoVersionUtils {
 
     public static final String INCOMPATIBLE = "+incompatible";
     public static final int ZERO_OR_ONE = 0;
-    // The regular expression used here is derived from the SemVer specification: https://semver.org/
-    protected static final Pattern VERSION_PATTERN = Pattern.compile(
-            "v(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\." +
-                    "(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$");
+
+    private GoVersionUtils() {
+    }
 
     /**
      * @param version full version string
      * @return The major version as an integer or 0 if couldn't parse it
      */
-    public static int getMajorVersion(String version, Log log) {
+    public static long getMajorVersion(String version, Log log) {
         if (StringUtils.isEmpty(version)) {
             return 0;
         }
         version = getCleanVersion(version);
-        Matcher matcher = VERSION_PATTERN.matcher(version);
-        if (matcher.matches()) {
-            String major = matcher.group(1);
-            if (!StringUtils.isEmpty(major)) {
-                try {
-                    return Integer.parseInt(major);
-                } catch (NumberFormatException e) {
-                    log.error("Failed to parse major version of " + version, e);
-                }
-            }
+        Optional<Version> parsedVersion = Version.tryParse(StringUtils.removeStart(version, "v"));
+        if (parsedVersion.isPresent()) {
+            return parsedVersion.get().majorVersion();
+        } else {
+            log.debug("Failed to parse major version of " + version);
         }
         return 0;
     }
@@ -89,7 +83,7 @@ public class GoVersionUtils {
         if (StringUtils.isBlank(projectName) || StringUtils.isBlank(version)) {
             return false;
         }
-        int majorVersion = getMajorVersion(version, log);
+        long majorVersion = getMajorVersion(version, log);
         if (majorVersion >= 2) {
             return (projectName.endsWith("/v" + majorVersion) && !version.endsWith(INCOMPATIBLE));
         }
