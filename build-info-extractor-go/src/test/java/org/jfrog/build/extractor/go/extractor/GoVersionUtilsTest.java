@@ -33,6 +33,7 @@ public class GoVersionUtilsTest {
         assertEquals(GoVersionUtils.getMajorVersion("v1.2.3----RC-SNAPSHOT.12.9.1--.12+788", log), 1);
         assertEquals(GoVersionUtils.getMajorVersion("v1.2.3----R-S.12.9.1--.12+meta", log), 1);
         assertEquals(GoVersionUtils.getMajorVersion("v2.2.0-beta.1", log), 2);
+        assertEquals(GoVersionUtils.getMajorVersion("v2.0.0-beta-1", log), 2);
     }
 
     @Test

@@ -478,6 +478,10 @@ project('build-info-extractor-docker') {
 
 project('build-info-extractor-go') {
     description = 'JFrog Build-Info Go Extractor'
+
+    dependencies {
+        implementation group: 'com.github.zafarkhaja', name: 'java-semver', version: '0.10.2'
+    }
 }
 
 project('build-info-extractor-pip') {
