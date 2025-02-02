@@ -1,6 +1,8 @@
 package org.jfrog.gradle.plugin.artifactory
 
+import org.gradle.api.Action
 import org.gradle.api.Project
+import org.gradle.api.tasks.TaskProvider
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.task.ArtifactoryTask
 import org.jfrog.gradle.plugin.artifactory.task.DeployTask
@@ -22,30 +24,22 @@ class ArtifactoryPlugin extends ArtifactoryPluginBase {
     }
 
     @Override
-    protected ArtifactoryTask createArtifactoryPublishTask(Project project) {
-        def result = project.getTasks().create(ARTIFACTORY_PUBLISH_TASK_NAME, ArtifactoryTask.class)
-        result.setDescription('''Adds artifacts and generates build-info to be later deployed to Artifactory.''')
-        return result
+    protected TaskProvider<ArtifactoryTask> createArtifactoryPublishTask(Project project, Action<ArtifactoryTask> configurationAction) {
+        return project.getTasks().register(ARTIFACTORY_PUBLISH_TASK_NAME, ArtifactoryTask.class, configurationAction)
     }
 
     @Override
-    protected DistributeBuildTask createArtifactoryDistributeBuildTask(Project project) {
-        def result = project.getTasks().create(DISTRIBUTE_TASK_NAME, DistributeBuildTask.class)
-        result.setDescription('''Distributes build artifacts to Bintray.''')
-        return result
+    protected TaskProvider<DistributeBuildTask> createArtifactoryDistributeBuildTask(Project project, Action<DistributeBuildTask> configurationAction) {
+        return project.getTasks().register(DISTRIBUTE_TASK_NAME, DistributeBuildTask.class, configurationAction)
     }
 
     @Override
-    protected DeployTask createArtifactoryDeployTask(Project project) {
-        def result = project.getTasks().create(DEPLOY_TASK_NAME, DeployTask.class)
-        result.setDescription('''Deploys artifacts and build-info to Artifactory.''')
-        return result
+    protected TaskProvider<DeployTask> createArtifactoryDeployTask(Project project, Action<DeployTask> configurationAction) {
+        return project.getTasks().register(DEPLOY_TASK_NAME, DeployTask.class, configurationAction)
     }
 
     @Override
-    protected ExtractModuleTask createExtractModuleTask(Project project) {
-        def result = project.getTasks().create(EXTRACT_MODULE_TASK_NAME, ExtractModuleTask.class)
-        result.setDescription('''Extracts module info to an intermediate file''')
-        return result
+    protected TaskProvider<ExtractModuleTask> createExtractModuleTask(Project project, Action<ExtractModuleTask> configurationAction) {
+        return project.getTasks().register(EXTRACT_MODULE_TASK_NAME, ExtractModuleTask.class, configurationAction)
     }
 }
