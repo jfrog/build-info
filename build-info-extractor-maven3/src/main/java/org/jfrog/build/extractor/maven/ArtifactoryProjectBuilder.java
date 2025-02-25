@@ -51,7 +51,10 @@ public class ArtifactoryProjectBuilder extends DefaultProjectBuilder {
         List<ArtifactRepository> repositories = new ArrayList<>();
         ProxySelector proxySelector = new ProxySelector(resolutionHelper.getHttpProxyHost(), resolutionHelper.getHttpProxyPort(), resolutionHelper.getHttpProxyUsername(), resolutionHelper.getHttpProxyPassword(), resolutionHelper.getHttpsProxyHost(), resolutionHelper.getHttpsProxyPort(), resolutionHelper.getHttpsProxyUsername(), resolutionHelper.getHttpsProxyPassword(), resolutionHelper.getNoProxy());
 
-        ArtifactoryPluginResolution artifactoryResolution = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, resolutionHelper.getLogger());
+        boolean isSnapshotEnabled = !resolutionHelper.isSnapshotDisabled();
+        ArtifactoryPluginResolution artifactoryResolution = new ArtifactoryPluginResolution(resolutionHelper.getRepoReleaseUrl(), resolutionHelper.getRepoSnapshotUrl(), resolutionHelper.getRepoUsername(), resolutionHelper.getRepoPassword(), proxySelector, resolutionHelper.getLogger())
+                .setSnapshotEnabled(isSnapshotEnabled)
+                .setSnapshotUpdatePolicy(resolutionHelper.getSnapshotUpdatePolicy());
         ArtifactRepository snapshotRepository = artifactoryResolution.createSnapshotRepository();
         if (snapshotRepository != null) {
             repositories.add(snapshotRepository);

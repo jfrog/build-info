@@ -30,6 +30,8 @@ public interface ClientConfigurationFields {
     String DOCKER_HOST = "docker.host";
     String URL = "url";
     String REPO_KEY = "repoKey";
+    String SNAPSHOTS_DISABLED = "snapshots.disabled";
+    String SNAPSHOT_UPDATE_POLICY = "snapshots.updatePolicy";
     String DOWN_SNAPSHOT_REPO_KEY = "downSnapshotRepoKey";
     // Publish fields
     String PUBLISH_ARTIFACTS = "artifacts";

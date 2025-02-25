@@ -9,6 +9,7 @@ import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.Issue;
 import org.jfrog.build.extractor.clientConfiguration.util.IssuesTrackerUtils;
 import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
+import org.eclipse.aether.repository.RepositoryPolicy;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -784,6 +785,14 @@ public class ArtifactoryClientConfiguration {
 
         public String getRepoKey() {
             return getStringValue(REPO_KEY);
+        }
+
+        public Boolean isSnapshotDisabled() {
+            return getBooleanValue(SNAPSHOTS_DISABLED, false);
+        }
+
+        public String getSnapshotUpdatePolicy() {
+            return getStringValue(SNAPSHOT_UPDATE_POLICY, RepositoryPolicy.UPDATE_POLICY_DAILY);
         }
 
         public void setRepoKey(String repoKey) {
