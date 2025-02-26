@@ -13,14 +13,18 @@ import org.jfrog.build.extractor.ProxySelector;
  * Those repositories will be used instead of the default maven repositories.
  */
 public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
+    private boolean isSnapshotEnabled;
+    private String snapshotUpdatePolicy;
 
     public ArtifactoryResolution(String repoReleaseUrl, String snapshotRepoUrl, String repoUsername, String repoPassword, ProxySelector proxySelector, Logger logger) {
         super(repoReleaseUrl, snapshotRepoUrl, repoUsername, repoPassword, proxySelector, logger);
+        this.isSnapshotEnabled = true;
+        this.snapshotUpdatePolicy = RepositoryPolicy.UPDATE_POLICY_DAILY;
     }
 
     public RemoteRepository createSnapshotRepository() {
         if (super.shouldCreateSnapshotRepository()) {
-            return createRepository(snapshotRepoUrl, "artifactory-snapshot", false, true);
+            return createRepository(snapshotRepoUrl, "artifactory-snapshot", false, this.isSnapshotEnabled, this.snapshotUpdatePolicy);
         }
         return null;
     }
@@ -28,16 +32,26 @@ public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
     public RemoteRepository createReleaseRepository() {
         if (shouldCreateReleaseRepository()) {
             String repositoryId = snapshotPolicyEnabled() ? "artifactory-release-snapshot" : "artifactory-release";
-            return createRepository(releaseRepoUrl, repositoryId, true, snapshotPolicyEnabled());
+            return createRepository(releaseRepoUrl, repositoryId, true, snapshotPolicyEnabled(), this.snapshotUpdatePolicy);
         }
         return null;
     }
 
-    private RemoteRepository createRepository(String repoUrl, String repoId, boolean releasePolicy, Boolean snapshotPolicy) {
+    public ArtifactoryResolution setSnapshotEnabled(boolean isSnapshotEnabled) {
+        this.isSnapshotEnabled = isSnapshotEnabled;
+        return this;
+    }
+
+    public ArtifactoryResolution setSnapshotUpdatePolicy(String snapshotUpdatePolicy) {
+        this.snapshotUpdatePolicy = snapshotUpdatePolicy;
+        return this;
+    }
+
+    private RemoteRepository createRepository(String repoUrl, String repoId, boolean releasePolicy, Boolean snapshotPolicy, String snapshotUpdatePolicy) {
         RemoteRepository.Builder builder = new RemoteRepository.Builder(repoId, "default", repoUrl);
         setAuthentication(builder);
         setProxy(builder, repoUrl);
-        setPolicy(builder, releasePolicy, snapshotPolicy);
+        setPolicy(builder, releasePolicy, snapshotPolicy, snapshotUpdatePolicy);
         return builder.build();
     }
 
@@ -49,10 +63,10 @@ public class ArtifactoryResolution extends ArtifactoryResolutionRepositoryBase {
         }
     }
 
-    private void setPolicy(RemoteRepository.Builder builder, boolean releasePolicyEnabled, boolean snapshotPolicyEnabled) {
+    private void setPolicy(RemoteRepository.Builder builder, boolean releasePolicyEnabled, boolean snapshotPolicyEnabled, String snapshotUpdatePolicy) {
         RepositoryPolicy releasePolicy = new RepositoryPolicy(releasePolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
         builder.setReleasePolicy(releasePolicy);
-        RepositoryPolicy snapshotPolicy = new RepositoryPolicy(snapshotPolicyEnabled, RepositoryPolicy.UPDATE_POLICY_DAILY, RepositoryPolicy.CHECKSUM_POLICY_WARN);
+        RepositoryPolicy snapshotPolicy = new RepositoryPolicy(snapshotPolicyEnabled, snapshotUpdatePolicy, RepositoryPolicy.CHECKSUM_POLICY_WARN);
         builder.setSnapshotPolicy(snapshotPolicy);
     }
 

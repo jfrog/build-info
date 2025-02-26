@@ -334,6 +334,7 @@ project('build-info-extractor') {
     dependencies {
         implementation project(':build-info-client')
         implementation project(':build-info-api')
+        implementation "org.eclipse.aether:aether-api:$eclipseAetherVersion"
 
         testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
         testImplementation('org.mock-server:mockserver-netty:5.15.0') {
