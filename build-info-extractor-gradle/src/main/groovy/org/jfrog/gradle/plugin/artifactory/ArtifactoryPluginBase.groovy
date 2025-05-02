@@ -1,8 +1,11 @@
 package org.jfrog.gradle.plugin.artifactory
 
+import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.UnknownTaskException
 import org.gradle.api.file.FileCollection
+import org.gradle.api.tasks.TaskProvider
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ArtifactoryDependencyResolutionListener
@@ -30,9 +33,9 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         // Add an Artifactory plugin convention to all the project modules
         ArtifactoryPluginConvention conv = getArtifactoryPluginConvention(project)
         // Then add the artifactory publish task
-        ArtifactoryTask artifactoryTask = addArtifactoryPublishTask(project)
+        ArtifactoryTask artifactoryTaskProvider = addArtifactoryPublishTask(project)
         // Add the module info producer task
-        addModuleInfoTask(artifactoryTask)
+        addModuleInfoTask(project, artifactoryTaskProvider)
 
         if (isRootProject(project)) {
             addDeployTask(project)
@@ -53,11 +56,11 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
     }
 
-    protected abstract ArtifactoryTask createArtifactoryPublishTask(Project project)
-    protected abstract DistributeBuildTask createArtifactoryDistributeBuildTask(Project project)
+    protected abstract TaskProvider<ArtifactoryTask> createArtifactoryPublishTask(Project project, Action<ArtifactoryTask> configurationAction)
+    protected abstract TaskProvider<DistributeBuildTask> createArtifactoryDistributeBuildTask(Project project, Action<DistributeBuildTask> configurationAction)
     protected abstract ArtifactoryPluginConvention createArtifactoryPluginConvention(Project project)
-    protected abstract DeployTask createArtifactoryDeployTask(Project project);
-    protected abstract ExtractModuleTask createExtractModuleTask(Project project);
+    protected abstract TaskProvider<DeployTask> createArtifactoryDeployTask(Project project, Action<DeployTask> configurationAction);
+    protected abstract TaskProvider<ExtractModuleTask> createExtractModuleTask(Project project, Action<ExtractModuleTask> configurationAction);
 
     ArtifactoryDependencyResolutionListener getArtifactoryDependencyResolutionListener() {
         return artifactoryDependencyResolutionListener
@@ -83,55 +86,63 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     /**
      * Add the "artifactoryPublish" gradle task (under "publishing" task group)
      */
-    private ArtifactoryTask addArtifactoryPublishTask(Project project) {
-        ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
-        if (artifactoryTask == null) {
+    private TaskProvider<ArtifactoryTask> addArtifactoryPublishTask(Project project) {
+        try {
+            return project.tasks.named(ARTIFACTORY_PUBLISH_TASK_NAME, ArtifactoryTask)
+        } catch (UnknownTaskException ignored) {
             log.debug("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
-            artifactoryTask = createArtifactoryPublishTask(project)
-            artifactoryTask.setGroup(PUBLISH_TASK_GROUP)
+            return createArtifactoryPublishTask(project) {
+                setDescription('''Adds artifacts and generates build-info to be later deployed to Artifactory.''')
+                setGroup(PUBLISH_TASK_GROUP)
+            }
         }
-        artifactoryTask
     }
 
     /**
      * Add the "artifactoryDistribute" gradle task (under "publishing" task group)
      */
-    private DistributeBuildTask addDistributeBuildTask(Project project) {
-        DistributeBuildTask distributeBuildTask = project.tasks.findByName(DISTRIBUTE_TASK_NAME)
-        if (distributeBuildTask == null) {
+    private void addDistributeBuildTask(Project project) {
+        try {
+            // will throw if task not found
+            project.tasks.named(DISTRIBUTE_TASK_NAME)
+        } catch (UnknownTaskException ignored) {
             log.debug("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
-            distributeBuildTask = createArtifactoryDistributeBuildTask(project)
-            distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
+            createArtifactoryDistributeBuildTask(project) {
+                setDescription('''Distributes build artifacts to Bintray.''')
+                setGroup(PUBLISH_TASK_GROUP)
+            }
         }
-        distributeBuildTask
     }
 
-    private ExtractModuleTask addModuleInfoTask(ArtifactoryTask artifactoryTask) {
-        Project project = artifactoryTask.project
-        ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
-        if (extractModuleTask == null) {
+    private void addModuleInfoTask(Project project, TaskProvider<ArtifactoryTask> artifactoryTaskProvider) {
+
+        try {
+            project.tasks.named(EXTRACT_MODULE_TASK_NAME)
+        } catch (UnknownTaskException ignored) {
             log.debug("Configuring extractModuleInfo task for project ${project.path}")
-            extractModuleTask = createExtractModuleTask(project)
-        }
-        extractModuleTask.outputs.upToDateWhen { false }
-        extractModuleTask.moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
-        extractModuleTask.mustRunAfter(project.tasks.withType(ArtifactoryTask.class))
+            createExtractModuleTask(project) { extractModuleTask ->
+                setDescription('''Extracts module info to an intermediate file''')
+                outputs.upToDateWhen { false }
+                moduleFile.set(project.layout.buildDirectory.file("moduleInfo.json"))
+                mustRunAfter(extractModuleTask.project.tasks.withType(ArtifactoryTask.class))
 
-        project.rootProject.tasks.withType(DeployTask).configureEach { deployTask ->
-            deployTask.registerModuleInfoProducer(new DefaultModuleInfoFileProducer(artifactoryTask, extractModuleTask))
+                extractModuleTask.project.rootProject.tasks.withType(DeployTask).configureEach { deployTask ->
+                    deployTask.registerModuleInfoProducer(new DefaultModuleInfoFileProducer(artifactoryTaskProvider.get(), extractModuleTask))
+                }
+            }
         }
-
-        return extractModuleTask
     }
 
-    private DeployTask addDeployTask(Project project) {
-        DeployTask deployTask = project.tasks.findByName(DEPLOY_TASK_NAME)
-        if (deployTask == null) {
+    private void addDeployTask(Project project) {
+        try {
+            project.tasks.named(DEPLOY_TASK_NAME)
+        } catch (UnknownTaskException ignored) {
             log.debug("Configuring deployTask task for project ${project.path}")
-            deployTask = createArtifactoryDeployTask(project)
-            deployTask.setGroup(PUBLISH_TASK_GROUP)
+            createArtifactoryDeployTask(project) {
+                setDescription('''Deploys artifacts and build-info to Artifactory.''')
+                setGroup(PUBLISH_TASK_GROUP)
+            }
         }
-        deployTask
     }
 
     private static class DefaultModuleInfoFileProducer implements ModuleInfoFileProducer {
