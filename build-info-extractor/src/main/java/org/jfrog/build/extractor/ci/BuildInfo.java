@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
+import java.text.ParsePosition;
 
 /**
  * A temporary build-info for CI use (e.g. Artifactory jenkins plugin, Maven plugin, etc.).
@@ -253,6 +254,14 @@ public class BuildInfo extends BaseBuildBean {
      * Sets the started time of the build in a unit of milliseconds
      */
     public void setStartedMillis(long startedMillis) {
+        if (startedMillis == 0 && StringUtils.isNotBlank(started)) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat(STARTED_FORMAT);
+                Date parsedDate = dateFormat.parse(started, new ParsePosition(0));
+                if (parsedDate != null) {
+                    startedMillis = parsedDate.getTime();
+                }
+            }
+
         this.startedMillis = startedMillis;
     }
 
