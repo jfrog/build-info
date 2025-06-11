@@ -111,6 +111,13 @@ public abstract class BuildInfoExtractorUtils {
             } else {
                 try (InputStream inputStream = Files.newInputStream(propertiesFile.toPath())) {
                     props.load(inputStream);
+                } catch (IllegalArgumentException e) {
+                    log.warn("[buildinfo] Properties file contains malformed Unicode encoding. Attempting to load with UTF-8 encoding: " + e.getMessage());
+                    try (BufferedReader reader = Files.newBufferedReader(propertiesFile.toPath(), StandardCharsets.UTF_8)) {
+                        props.load(reader);
+                    } catch (Exception fallbackException) {
+                        log.error("[buildinfo] Failed to load properties file even with UTF-8 fallback: " + fallbackException.getMessage());
+                    }
                 }
             }
         } catch (IOException | InvalidAlgorithmParameterException | IllegalBlockSizeException | NoSuchPaddingException |
