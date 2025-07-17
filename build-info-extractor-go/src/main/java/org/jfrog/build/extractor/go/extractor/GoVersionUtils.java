@@ -15,7 +15,7 @@ public class GoVersionUtils {
     public static final String INCOMPATIBLE = "+incompatible";
     public static final int ZERO_OR_ONE = 0;
 
-    private GoVersionUtils() {
+    public GoVersionUtils() {
     }
 
     /**
