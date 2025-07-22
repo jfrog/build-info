@@ -34,6 +34,7 @@
 
 package org.jfrog.build.extractor.go.extractor;
 
+import com.github.zafarkhaja.semver.Version;
 import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -48,11 +49,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
-import java.util.zip.ZipEntry;
-
 
 /**
  * @author BarakH
@@ -66,6 +67,7 @@ public class GoZipBallStreamer implements Closeable {
     private final String version;
     private final Set<String> excludedDirectories;
     private String subModuleName = "";
+    Version goModVersion = Version.of(1, 12, 0);
     private static final String MOD_FILE = "go.mod";
     private static final String MOD_FILE_PATH = "/" + MOD_FILE;
     private static final String VENDOR = "vendor/";
@@ -200,11 +202,15 @@ public class GoZipBallStreamer implements Closeable {
      * Scanning all the original zip entries and collecting all the relative paths with go.mod files (i.e submodules)
      */
     private void scanEntries() {
-        Enumeration<? extends ZipEntry> entries = zipFile.getEntries();
-        ZipEntry zipEntry;
+        Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
+        ZipArchiveEntry zipEntry;
         Set<String> allDirectories = new HashSet<>();
         while (entries.hasMoreElements()) {
             zipEntry = entries.nextElement();
+            if (zipEntry.getName().endsWith(MOD_FILE_PATH) && !isSubModule(zipEntry.getName())) {
+                // the entry is a go.mod file of the project we are packing (root / submodule / v2)
+                setGoVersionByModFile(zipEntry);
+            }
             if (!zipEntry.isDirectory() && isSubModule(zipEntry.getName())) {
                 String subModulePath = zipEntry.getName().replace(MOD_FILE_PATH, "");
                 excludedDirectories.add(subModulePath);
@@ -293,20 +299,30 @@ public class GoZipBallStreamer implements Closeable {
 
     /**
      * Based on the original go client behaviour:
-     * https://github.com/golang/go/blob/4be6b4a73d2f95752b69f5b6f6bfb4c1a7a57212/src/cmd/go/internal/modfetch
-     * /coderepo.go which using https://cs.opensource.google/go/x/mod/+/refs/tags/v0.5.1:zip/zip.go (Create function)
-     * There is a known bug here - see https://golang.org/issue/31562.
+     * https://github.com/golang/go/blob/release-branch.go1.24/src/cmd/go/internal/modfetch/coderepo.go#L1057
+     * which using https://cs.opensource.google/go/x/mod/+/9cd0e4c9f675aeac595a4cbb5ba1b46798ce0fdf:zip/zip.go;l=796
+     * Go is ignoring vendor packages that are not in the root of the zip file.
+     * From version 1.24, Go is also ignoring the vendor/modules.txt file.
+     * Go issue: https://go-review.googlesource.com/c/mod/+/584635
      *
      * @return True if the entry belongs to a vendor package
      */
     private boolean isVendorPackage(String entryName) {
-        int i;
+        Version go124Version = Version.of(1, 24, 0);
+        if (goModVersion.isHigherThanOrEquivalentTo(go124Version) && entryName.endsWith("vendor/modules.txt")) {
+            return true;
+        }
+
+        int i = 0;
         if (entryName.startsWith(VENDOR)) {
             i = VENDOR.length();
-        } else if (entryName.contains('/' + VENDOR)) {
-            i = VENDOR.length() + 1;
         } else {
-            return false;
+            int j = entryName.indexOf("/" + VENDOR);
+            if (j >= 0) {
+                i = j + ("/" + VENDOR).length();
+            } else {
+                return false;
+            }
         }
         return entryName.substring(i).contains("/");
     }
@@ -349,4 +365,26 @@ public class GoZipBallStreamer implements Closeable {
         path = StringUtils.removeStart(path, "/");
         return StringUtils.substringBefore(path, "/");
     }
+
+    /**
+     * Sets the Go version based on the content of go.mod file of the project we are packing (root / submodule / v2)
+     */
+    private void setGoVersionByModFile(ZipArchiveEntry entry) {
+        // Go version 1.13.0 is the version where we should start looking for go.mod file.
+        if (goModVersion.equals(Version.of(1, 12, 0))) {
+            try (InputStream inputStream = zipFile.getInputStream(entry)) {
+                String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+                if (!StringUtils.isEmpty(modFileContent)) {
+                    String goVersion = Arrays.stream(
+                                    modFileContent.split("\n")).filter(line -> line.startsWith("go"))
+                            .findFirst().get().replace("go", "").trim();
+                    goModVersion = Version.parse(goVersion, false);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to read go.mod file '" + entry.getName() + "': " +
+                        ExceptionUtils.getRootCauseMessage(e));
+            }
+        }
+    }
+
 }
