@@ -70,10 +70,10 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
      *  }
      */
     private ArtifactoryPluginConvention getArtifactoryPluginConvention(Project project) {
-        if (project.convention.plugins.artifactory == null) {
-            project.convention.plugins.artifactory = createArtifactoryPluginConvention(project)
+        if (!project.extensions.findByName("artifactory")) {
+            project.extensions.create("artifactory", ArtifactoryPluginConvention, project)
         }
-        return project.convention.plugins.artifactory
+        return project.extensions.getByName("artifactory")
     }
 
     private static boolean isRootProject(Project project) {
