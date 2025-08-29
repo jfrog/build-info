@@ -93,13 +93,13 @@ public abstract class BuildInfoExtractorUtils {
         String propsFilePath = getAdditionalPropertiesFile(existingProps, log);
 
         if (StringUtils.isBlank(propsFilePath)) {
-            log.debug("[buildinfo] BuildInfo properties file path is not found.");
+            log.info("[buildinfo] BuildInfo properties file path is not found.");
             return props;
         }
 
         File propertiesFile = new File(propsFilePath);
         if (!propertiesFile.exists()) {
-            log.debug("[buildinfo] BuildInfo properties file is not exists.");
+            log.info("[buildinfo] BuildInfo properties file is not exists.");
             return props;
         }
 
@@ -299,9 +299,9 @@ public abstract class BuildInfoExtractorUtils {
         }
         if (log != null) {
             if (StringUtils.isBlank(filePath)) {
-                log.debug("[buildinfo] Not using buildInfo properties file for this build.");
+                log.info("[buildinfo] Not using buildInfo properties file for this build.");
             } else {
-                log.debug("[buildinfo] Properties file '" + filePath + "' retrieved from '" + propFoundPath + "'");
+                log.info("[buildinfo] Properties file '" + filePath + "' retrieved from '" + propFoundPath + "'");
             }
         }
         return filePath;

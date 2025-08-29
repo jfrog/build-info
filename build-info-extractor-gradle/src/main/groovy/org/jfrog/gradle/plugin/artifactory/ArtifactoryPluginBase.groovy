@@ -3,6 +3,7 @@ package org.jfrog.gradle.plugin.artifactory
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
+import org.gradle.api.artifacts.Configuration
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ArtifactoryDependencyResolutionListener
@@ -24,7 +25,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
     void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
-            log.debug("Artifactory Plugin disabled for ${project.path}")
+            log.info("Artifactory Plugin disabled for ${project.path}")
             return
         }
         // Add an Artifactory plugin convention to all the project modules
@@ -48,7 +49,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         if (!conv.clientConfig.info.buildStarted) {
             conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
-        log.debug("Using Artifactory Plugin for ${project.path}")
+        log.info("Using Artifactory Plugin for ${project.path}")
 
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
     }
@@ -86,7 +87,8 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private ArtifactoryTask addArtifactoryPublishTask(Project project) {
         ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
         if (artifactoryTask == null) {
-            log.debug("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            log.info("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            log.info("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
             artifactoryTask = createArtifactoryPublishTask(project)
             artifactoryTask.setGroup(PUBLISH_TASK_GROUP)
         }
@@ -99,7 +101,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private DistributeBuildTask addDistributeBuildTask(Project project) {
         DistributeBuildTask distributeBuildTask = project.tasks.findByName(DISTRIBUTE_TASK_NAME)
         if (distributeBuildTask == null) {
-            log.debug("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            log.info("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
             distributeBuildTask = createArtifactoryDistributeBuildTask(project)
             distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
         }
@@ -107,10 +109,11 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     private ExtractModuleTask addModuleInfoTask(ArtifactoryTask artifactoryTask) {
+        log.info("extractModuleTask for the project: {}", artifactoryTask.project)
         Project project = artifactoryTask.project
         ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
         if (extractModuleTask == null) {
-            log.debug("Configuring extractModuleInfo task for project ${project.path}")
+            log.info("Configuring extractModuleInfo task for project ${project.path}")
             extractModuleTask = createExtractModuleTask(project)
         }
         extractModuleTask.outputs.upToDateWhen { false }
@@ -127,7 +130,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private DeployTask addDeployTask(Project project) {
         DeployTask deployTask = project.tasks.findByName(DEPLOY_TASK_NAME)
         if (deployTask == null) {
-            log.debug("Configuring deployTask task for project ${project.path}")
+            log.info("Configuring deployTask task for project ${project.path}")
             deployTask = createArtifactoryDeployTask(project)
             deployTask.setGroup(PUBLISH_TASK_GROUP)
         }
@@ -145,8 +148,23 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
         @Override
         boolean hasModules() {
+            log.info("artifactoryTask: {} for the project: {}", artifactoryTask, artifactoryTask.project)
             if (artifactoryTask != null && artifactoryTask.project.getState().getExecuted()) {
-                return artifactoryTask.hasModules();
+                // If publications/configurations were explicitly configured, respect that.
+                if (artifactoryTask.hasModules()) {
+                    return true;
+                }
+                // Fallback: consider modules present if the project has any resolved dependencies.
+                try {
+                    for (Configuration conf : artifactoryTask.project.getConfigurations()) {
+                        if (conf.getState() == Configuration.State.RESOLVED &&
+                                !conf.getResolvedConfiguration().getResolvedArtifacts().isEmpty()) {
+                            return true;
+                        }
+                    }
+                } catch (Exception ignored) {
+                   return false;
+                }
             }
             return false;
         }
