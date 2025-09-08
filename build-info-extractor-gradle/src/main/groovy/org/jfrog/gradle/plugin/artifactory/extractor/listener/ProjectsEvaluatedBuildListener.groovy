@@ -130,7 +130,8 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     }
 
     private void evaluate(ArtifactoryTask artifactoryTask) {
-        log.debug("evaluating buildBaseTask: {} for project: {}", artifactoryTask, artifactoryTask.project)
+        log.info("evaluating artifactoryTask for project: {}", artifactoryTask.project)
+        log.debug("evaluating buildBaseTask {}", artifactoryTask)
         ArtifactoryPluginConvention convention =
                 ArtifactoryPluginUtil.getArtifactoryConvention(artifactoryTask.project)
 
