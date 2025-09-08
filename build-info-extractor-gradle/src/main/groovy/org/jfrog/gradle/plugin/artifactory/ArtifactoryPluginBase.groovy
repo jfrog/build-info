@@ -25,7 +25,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
     void apply(Project project) {
         if ("buildSrc".equals(project.name)) {
-            log.info("Artifactory Plugin disabled for ${project.path}")
+            log.debug("Artifactory Plugin disabled for ${project.path}")
             return
         }
         // Add an Artifactory plugin convention to all the project modules
@@ -49,7 +49,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         if (!conv.clientConfig.info.buildStarted) {
             conv.clientConfig.info.setBuildStarted(System.currentTimeMillis())
         }
-        log.info("Using Artifactory Plugin for ${project.path}")
+        log.debug("Using Artifactory Plugin for ${project.path}")
 
         project.gradle.addProjectEvaluationListener(new ProjectsEvaluatedBuildListener())
     }
@@ -87,8 +87,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private ArtifactoryTask addArtifactoryPublishTask(Project project) {
         ArtifactoryTask artifactoryTask = project.tasks.findByName(ARTIFACTORY_PUBLISH_TASK_NAME)
         if (artifactoryTask == null) {
-            log.info("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
-            log.info("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            log.debug("Configuring ${ARTIFACTORY_PUBLISH_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
             artifactoryTask = createArtifactoryPublishTask(project)
             artifactoryTask.setGroup(PUBLISH_TASK_GROUP)
         }
@@ -101,7 +100,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private DistributeBuildTask addDistributeBuildTask(Project project) {
         DistributeBuildTask distributeBuildTask = project.tasks.findByName(DISTRIBUTE_TASK_NAME)
         if (distributeBuildTask == null) {
-            log.info("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
+            log.debug("Configuring ${DISTRIBUTE_TASK_NAME} task for project ${project.path}: is root? ${isRootProject(project)}")
             distributeBuildTask = createArtifactoryDistributeBuildTask(project)
             distributeBuildTask.setGroup(PUBLISH_TASK_GROUP)
         }
@@ -113,7 +112,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         Project project = artifactoryTask.project
         ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
         if (extractModuleTask == null) {
-            log.info("Configuring extractModuleInfo task for project ${project.path}")
+            log.debug("Configuring extractModuleInfo task for project ${project.path}")
             extractModuleTask = createExtractModuleTask(project)
         }
         extractModuleTask.outputs.upToDateWhen { false }
@@ -130,7 +129,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     private DeployTask addDeployTask(Project project) {
         DeployTask deployTask = project.tasks.findByName(DEPLOY_TASK_NAME)
         if (deployTask == null) {
-            log.info("Configuring deployTask task for project ${project.path}")
+            log.debug("Configuring deployTask task for project ${project.path}")
             deployTask = createArtifactoryDeployTask(project)
             deployTask.setGroup(PUBLISH_TASK_GROUP)
         }
