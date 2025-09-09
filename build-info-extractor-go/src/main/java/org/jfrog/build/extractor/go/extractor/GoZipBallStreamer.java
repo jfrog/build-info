@@ -52,7 +52,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -67,10 +66,13 @@ public class GoZipBallStreamer implements Closeable {
     private final String version;
     private final Set<String> excludedDirectories;
     private String subModuleName = "";
-    Version goModVersion = Version.of(1, 12, 0);
+    private String licensePath = "";
+    private static final String GO_VERSION_1_12_0 = "1.12.0";
+    private static final String LICENSE = "LICENSE";
     private static final String MOD_FILE = "go.mod";
     private static final String MOD_FILE_PATH = "/" + MOD_FILE;
     private static final String VENDOR = "vendor/";
+    Version goModVersion = Version.parse(GO_VERSION_1_12_0);
 
     public GoZipBallStreamer(ZipFile zipFile, String projectName, String version, Log log) {
         this.zipFile = zipFile;
@@ -109,12 +111,14 @@ public class GoZipBallStreamer implements Closeable {
             String majorVersion = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
             if (!hasRootModFileOfCompatibleModuleFromV2(majorVersion)) {
                 subModuleName = majorVersion;
-                log.debug(projectName + "@" + version + " is compatible Go module from major version " + subModuleName);
+                log.debug(projectName + "@" + version + " is compatible Go module from major version "
+                        + subModuleName);
             }
         } else {
             subModuleName = GoVersionUtils.getSubModule(projectName);
             if (shouldPackSubModule()) {
-                log.debug(projectName + "@" + version + " is a sub module - the sub module name is " + subModuleName);
+                log.debug(projectName + "@" + version + " is a sub module - the sub module name is "
+                        + subModuleName);
             } else {
                 log.debug(projectName + "@" + version + " is a regular module");
             }
@@ -190,7 +194,7 @@ public class GoZipBallStreamer implements Closeable {
             if (shouldPackSubModule()) {
                 String rootPath = trimmedPrefix.split('/' + subModuleName, 2)[0];
                 if (rootPath.equals(trimmedPrefix)) {
-                    return !entryName.endsWith("LICENSE");
+                    return !licensePath.equals(entryName);
                 }
             }
             return excludedDirectories.contains(trimmedPrefix);
@@ -210,6 +214,9 @@ public class GoZipBallStreamer implements Closeable {
             if (zipEntry.getName().endsWith(MOD_FILE_PATH) && !isSubModule(zipEntry.getName())) {
                 // the entry is a go.mod file of the project we are packing (root / submodule / v2)
                 setGoVersionByModFile(zipEntry);
+            }
+            if (zipEntry.getName().endsWith(LICENSE)) {
+                setLicenseFilePath(zipEntry.getName());
             }
             if (!zipEntry.isDirectory() && isSubModule(zipEntry.getName())) {
                 String subModulePath = zipEntry.getName().replace(MOD_FILE_PATH, "");
@@ -257,7 +264,8 @@ public class GoZipBallStreamer implements Closeable {
     boolean isSubModule(String entryName) {
         if (entryName.endsWith(MOD_FILE_PATH)) {
             if (shouldPackSubModule()) {
-                return (!entryName.substring(entryName.indexOf('/') + 1).endsWith(subModuleName + MOD_FILE_PATH));
+                return (!entryName.substring(entryName.indexOf('/') + 1)
+                        .endsWith(subModuleName + MOD_FILE_PATH));
             } else {
                 return !entryName.substring(entryName.indexOf('/') + 1).equals(MOD_FILE);
             }
@@ -277,7 +285,8 @@ public class GoZipBallStreamer implements Closeable {
      */
     private boolean hasRootModFileOfCompatibleModuleFromV2(String majorVersion) {
         Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
-        // no need to iterate over the entire zip, all we need is to check the content of the go.mod file in the root (if exists)
+        // no need to iterate over the entire zip, all we need is to check the content of the go.mod
+        // file in the root (if exists)
         if (entries.hasMoreElements()) {
             ZipArchiveEntry zipEntry = entries.nextElement();
             ZipArchiveEntry modEntry = zipFile.getEntry(getFirstPathElement(zipEntry.getName()) + MOD_FILE_PATH);
@@ -287,9 +296,11 @@ public class GoZipBallStreamer implements Closeable {
             if (modEntry != null) {
                 try (InputStream inputStream = zipFile.getInputStream(modEntry)) {
                     String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
-                    return StringUtils.substringBefore(modFileContent, System.lineSeparator()).endsWith("/" + majorVersion);
+                    return StringUtils.substringBefore(modFileContent, System.lineSeparator())
+                            .endsWith("/" + majorVersion);
                 } catch (IOException e) {
-                    log.warn("Failed to read go.mod file of the root project: " + ExceptionUtils.getRootCauseMessage(e));
+                    log.warn("Failed to read go.mod file of the root project: " +
+                            ExceptionUtils.getRootCauseMessage(e));
                 }
             }
         }
@@ -308,7 +319,7 @@ public class GoZipBallStreamer implements Closeable {
      * @return True if the entry belongs to a vendor package
      */
     private boolean isVendorPackage(String entryName) {
-        Version go124Version = Version.of(1, 24, 0);
+        Version go124Version = Version.parse("1.24.0");
         if (goModVersion.isHigherThanOrEquivalentTo(go124Version) && entryName.endsWith("vendor/modules.txt")) {
             return true;
         }
@@ -371,19 +382,43 @@ public class GoZipBallStreamer implements Closeable {
      */
     private void setGoVersionByModFile(ZipArchiveEntry entry) {
         // Go version 1.13.0 is the version where we should start looking for go.mod file.
-        if (goModVersion.equals(Version.of(1, 12, 0))) {
+        if (goModVersion.equals(Version.parse(GO_VERSION_1_12_0))) {
             try (InputStream inputStream = zipFile.getInputStream(entry)) {
                 String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
                 if (!StringUtils.isEmpty(modFileContent)) {
                     String goVersion = Arrays.stream(
                                     modFileContent.split("\n")).filter(line -> line.startsWith("go"))
                             .findFirst().get().replace("go", "").trim();
-                    goModVersion = Version.parse(goVersion, false);
+                    goModVersion = Version.parse(goVersion);
                 }
             } catch (Exception e) {
                 log.warn("Failed to read go.mod file '" + entry.getName() + "': " +
                         ExceptionUtils.getRootCauseMessage(e));
             }
+        }
+    }
+
+    /**
+     * Set LICENCE path by priority:
+     * submodule with LICENSE -> use submodule LICENSE
+     * submodule without LICENSE -> use root LICENSE
+     * root module -> use root LICENSE
+     *
+     * @param entryName LICENSE entry
+     */
+    private void setLicenseFilePath(String entryName) {
+        if (!entryName.endsWith(LICENSE)) {
+            return;
+        }
+
+        if (shouldPackSubModule() && entryName.endsWith(subModuleName + "/" + LICENSE)) {
+            // use the packing submodule LICENSE
+            licensePath = entryName;
+            return;
+        }
+        if (entryName.substring(entryName.indexOf('/') + 1).equals(LICENSE)) {
+            // use the root LICENSE
+            licensePath = entryName;
         }
     }
 
