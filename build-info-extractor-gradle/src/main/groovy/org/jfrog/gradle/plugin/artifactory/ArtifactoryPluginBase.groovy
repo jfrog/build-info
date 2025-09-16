@@ -3,6 +3,7 @@ package org.jfrog.gradle.plugin.artifactory
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
+import org.gradle.api.artifacts.Configuration
 import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention
 import org.jfrog.gradle.plugin.artifactory.extractor.ModuleInfoFileProducer
 import org.jfrog.gradle.plugin.artifactory.extractor.listener.ArtifactoryDependencyResolutionListener
@@ -107,6 +108,7 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
     }
 
     private ExtractModuleTask addModuleInfoTask(ArtifactoryTask artifactoryTask) {
+        log.info("extractModuleTask for the project: {}", artifactoryTask.project)
         Project project = artifactoryTask.project
         ExtractModuleTask extractModuleTask = project.tasks.findByName(EXTRACT_MODULE_TASK_NAME)
         if (extractModuleTask == null) {
@@ -145,8 +147,23 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
 
         @Override
         boolean hasModules() {
+            log.info("artifactoryTask: {} for the project: {}", artifactoryTask, artifactoryTask.project)
             if (artifactoryTask != null && artifactoryTask.project.getState().getExecuted()) {
-                return artifactoryTask.hasModules();
+                // If publications/configurations were explicitly configured, respect that.
+                if (artifactoryTask.hasModules()) {
+                    return true;
+                }
+                // Fallback: consider modules present if the project has any resolved dependencies.
+                try {
+                    for (Configuration conf : artifactoryTask.project.getConfigurations()) {
+                        if (conf.getState() == Configuration.State.RESOLVED &&
+                                !conf.getResolvedConfiguration().getResolvedArtifacts().isEmpty()) {
+                            return true;
+                        }
+                    }
+                } catch (Exception ignored) {
+                   return false;
+                }
             }
             return false;
         }

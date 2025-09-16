@@ -130,6 +130,7 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
     }
 
     private void evaluate(ArtifactoryTask artifactoryTask) {
+        log.info("evaluating artifactoryTask for project: {}", artifactoryTask.project)
         log.debug("evaluating buildBaseTask {}", artifactoryTask)
         ArtifactoryPluginConvention convention =
                 ArtifactoryPluginUtil.getArtifactoryConvention(artifactoryTask.project)
@@ -146,9 +147,13 @@ public class ProjectsEvaluatedBuildListener extends BuildAdapter implements Proj
             if (artifactoryTask.isCiServerBuild()) {
                 PublishingExtension publishingExtension = (PublishingExtension) artifactoryTask.project.extensions.findByName("publishing")
                 String publicationsNames = clientConfig.publisher.getPublications()
+                log.info("publishing extension is: {} and publication name: {}", publishingExtension, publicationsNames)
                 if (publishingExtension != null && StringUtils.isNotBlank(publicationsNames)) {
+                    log.info("publishing extension is present and publication name: {}", publicationsNames)
                     addPublications(artifactoryTask, publishingExtension, publicationsNames)
-                } else if (projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
+                }// we need to add default publications for android here because, id("org.jetbrains.kotlin.jvm")  // Creates "java" component
+                else if (projectHasOneOfComponents(artifactoryTask.project, "java", "javaPlatform")) {
+                    log.info("adding default configuration for java project: {}", publicationsNames)
                     addDefaultPublicationsOrConfigurations(artifactoryTask, publishingExtension);
                 }
             }
