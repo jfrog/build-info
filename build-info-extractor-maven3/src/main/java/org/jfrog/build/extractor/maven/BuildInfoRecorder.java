@@ -469,6 +469,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     private void addArtifactsToCurrentModule(MavenProject project, ModuleBuilder module) {
         addDefaultPublisherAttributes(conf, project.getName(), "Maven", project.getVersion());
+        
+        // Check if artifact collection is disabled for build info
+        if (!conf.publisher.isPublishArtifacts()) {
+            logger.info("Artifact publishing is disabled - skipping artifact collection for build info");
+            return;
+        }
+        
         Set<Artifact> moduleArtifacts = currentModuleArtifacts.get();
         if (moduleArtifacts == null) {
             logger.warn("Skipping Artifactory Build-Info module artifact addition: Null current module artifact list.");
