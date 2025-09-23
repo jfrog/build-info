@@ -22,7 +22,7 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        jacksonVersion = '2.17.2'
+        jacksonVersion = '2.16.1'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
@@ -123,7 +123,7 @@ subprojects {
     // Enforce safe, Java 8–compatible versions for transitive deps
     configurations.all {
         resolutionStrategy.eachDependency { details ->
-            if (details.requested.group == 'io.netty') {
+            if (details.requested.group == 'io.netty' && !details.requested.name.startsWith('netty-tcnative')) {
                 details.useVersion '4.1.125.Final'
             }
             if (details.requested.group == 'org.bouncycastle' &&
@@ -135,6 +135,18 @@ subprojects {
             }
             if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
                 details.useVersion '32.0.1-jre'
+            }
+            if (details.requested.group == 'com.nimbusds' && details.requested.name == 'nimbus-jose-jwt') {
+                details.useVersion '9.37.4'
+            }
+            if (details.requested.group == 'com.jayway.jsonpath' && details.requested.name == 'json-path') {
+                details.useVersion '2.9.0'
+            }
+            if (details.requested.group == 'commons-beanutils' && details.requested.name == 'commons-beanutils') {
+                details.useVersion '1.11.0'
+            }
+            if (details.requested.group == 'org.xmlunit' && details.requested.name == 'xmlunit-core') {
+                details.useVersion '2.10.0'
             }
         }
     }
@@ -359,7 +371,7 @@ project('build-info-extractor') {
         implementation "org.eclipse.aether:aether-api:$eclipseAetherVersion"
 
         testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
-        testImplementation('org.mock-server:mockserver-netty:5.15.1') {
+        testImplementation('org.mock-server:mockserver-netty:5.15.0') {
             exclude module: 'snakeyaml'
             exclude module: 'json-smart'
             exclude module: 'rhino'
