@@ -22,7 +22,7 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        jacksonVersion = '2.16.1'
+        jacksonVersion = '2.15.2'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
