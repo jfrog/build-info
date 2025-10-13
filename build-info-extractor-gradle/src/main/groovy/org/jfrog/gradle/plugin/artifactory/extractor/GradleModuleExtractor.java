@@ -118,12 +118,24 @@ public class GradleModuleExtractor implements ModuleExtractor<Project> {
         Set<Configuration> configurationSet = project.getConfigurations();
         List<Dependency> dependencies = new ArrayList<>();
         for (Configuration configuration : configurationSet) {
+            if (!configuration.isCanBeResolved()) {
+                log.debug("Configuration '{}' is not resolvable, skipping.", configuration.getName());
+                continue;
+            }
             if (configuration.getState() != Configuration.State.RESOLVED) {
                 log.info("Artifacts for configuration '{}' were not all resolved, skipping", configuration.getName());
                 continue;
             }
             ResolvedConfiguration resolvedConfiguration = configuration.getResolvedConfiguration();
-            Set<ResolvedArtifact> resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
+            Set<ResolvedArtifact> resolvedArtifactSet;
+            try {
+                log.debug("Attempting to resolve artifacts for configuration: " + configuration.getName());
+                resolvedArtifactSet = resolvedConfiguration.getResolvedArtifacts();
+                log.debug("Successfully resolved {} artifacts for configuration: {}", resolvedArtifactSet.size(), configuration.getName());
+            } catch (Exception e) {
+                log.warn("Failed to resolve artifacts for configuration '{}', skipping: {}", configuration.getName(), e.getMessage());
+                continue;
+            }
             for (final ResolvedArtifact artifact : resolvedArtifactSet) {
                 File file = artifact.getFile();
                 if (file.exists()) {
