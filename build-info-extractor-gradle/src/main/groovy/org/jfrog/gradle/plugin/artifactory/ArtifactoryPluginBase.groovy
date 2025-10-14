@@ -149,20 +149,18 @@ abstract class ArtifactoryPluginBase implements Plugin<Project> {
         boolean hasModules() {
             log.info("artifactoryTask: {} for the project: {}", artifactoryTask, artifactoryTask.project)
             if (artifactoryTask != null && artifactoryTask.project.getState().getExecuted()) {
-                // If publications/configurations were explicitly configured, respect that.
                 if (artifactoryTask.hasModules()) {
                     return true;
                 }
                 // Fallback: consider modules present if the project has any resolved dependencies.
-                try {
-                    for (Configuration conf : artifactoryTask.project.getConfigurations()) {
-                        if (conf.getState() == Configuration.State.RESOLVED &&
-                                !conf.getResolvedConfiguration().getResolvedArtifacts().isEmpty()) {
+                for (Configuration conf : artifactoryTask.project.getConfigurations()) {
+                    try {
+                        if (conf.isCanBeResolved() && !conf.getResolvedConfiguration().getResolvedArtifacts().isEmpty()) {
                             return true;
                         }
+                    } catch (Exception e) {
+                        log.debug("Could not resolve artifacts for configuration '{}', skipping", conf.getName());
                     }
-                } catch (Exception ignored) {
-                   return false;
                 }
             }
             return false;
