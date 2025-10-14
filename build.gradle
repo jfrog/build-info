@@ -5,8 +5,13 @@ buildscript {
         antVersion = '1.10.12'
         buildInfoExtractorVersion = '4.29.4'
         commonsCodecVersion = '1.15'
+<<<<<<< HEAD
         commonsCompressVersion = '1.27.1'
         commonsIoVersion = '2.15.1'
+=======
+        commonsCompressVersion = '1.26.2'
+        commonsIoVersion = '2.14.0'
+>>>>>>> 09df8193 (updating the vulnerable dependency)
         commonsLang3Version = '3.18.0'
         commonsLoggingVersion = '1.2'
         commonsCollections4Version = '4.4'
@@ -22,7 +27,11 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
+<<<<<<< HEAD
         jacksonVersion = '2.14.3'
+=======
+        jacksonVersion = '2.16.0'
+>>>>>>> 09df8193 (updating the vulnerable dependency)
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
@@ -114,6 +123,24 @@ subprojects {
     apply plugin: 'maven-publish'
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'signing'
+
+    configurations.all {
+        resolutionStrategy {
+            force 'org.testng:testng:7.5.1'
+            force 'org.bouncycastle:bcprov-jdk18on:1.78'
+            force 'org.bouncycastle:bcpkix-jdk18on:1.79'
+            force 'com.nimbusds:nimbus-jose-jwt:9.37.4'
+            force 'com.jayway.jsonpath:json-path:2.9.0'
+            force 'com.google.guava:guava:32.0.1-jre'
+            force 'commons-beanutils:commons-beanutils:1.11.0'
+            force 'org.xmlunit:xmlunit-core:2.10.0'
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'io.netty') {
+                    details.useVersion('4.1.125.Final')
+                }
+            }
+        }
+    }
 
     repositories {
         mavenLocal()
@@ -375,6 +402,7 @@ project('build-info-extractor') {
             exclude module: 'snakeyaml'
             exclude module: 'json-smart'
             exclude module: 'rhino'
+            exclude module: 'netty-tcnative-boringssl-static'
         }
         testImplementation group: 'org.yaml', name: 'snakeyaml', version: '2.0'
         testImplementation group: 'net.minidev', name: 'json-smart', version: '2.4.9'
