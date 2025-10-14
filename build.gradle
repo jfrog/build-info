@@ -5,12 +5,12 @@ buildscript {
         antVersion = '1.10.12'
         buildInfoExtractorVersion = '4.29.4'
         commonsCodecVersion = '1.15'
-        commonsCompressVersion = '1.26.2'
-        commonsIoVersion = '2.11.0'
-        commonsLang3Version = '3.12.0'
+        commonsCompressVersion = '1.27.1'
+        commonsIoVersion = '2.15.1'
+        commonsLang3Version = '3.18.0'
         commonsLoggingVersion = '1.2'
         commonsCollections4Version = '4.4'
-        dockerJavaVersion = '3.3.3'
+        dockerJavaVersion = '3.4.0'
         easymockclassextensionVersion = '3.2'
         eclipseAetherVersion = '1.1.0'
         fileSpecsJavaVersion = '1.1.2'
@@ -22,7 +22,7 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        jacksonVersion = '2.14.1'
+        jacksonVersion = '2.14.3'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
@@ -43,12 +43,11 @@ buildscript {
 
         // 1.0.0 fails with 'Could not find method plugins()'
         pluginPublishPlugin = '0.21.0'
-
         publishPluginVersion = '1.1.0'
         slf4jVersion = '1.7.36'
 
         // 7.6+ require Java 11
-        testNgVersion = '6.14.3'
+        testNgVersion = '7.5.1'
 
         woodstoxVersion = '6.4.0'
         jerseyVersion = '2.34'
@@ -119,6 +118,37 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+    }
+
+    // Enforce safe, Java 8–compatible versions for transitive deps
+    configurations.all {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == 'io.netty' && !details.requested.name.startsWith('netty-tcnative')) {
+                details.useVersion '4.1.125.Final'
+            }
+            if (details.requested.group == 'org.bouncycastle' &&
+                    (details.requested.name == 'bcprov-jdk18on' || details.requested.name == 'bcpkix-jdk18on')) {
+                details.useVersion '1.79'
+            }
+            if (details.requested.group == 'org.testng' && details.requested.name == 'testng') {
+                details.useVersion testNgVersion
+            }
+            if (details.requested.group == 'com.google.guava' && details.requested.name == 'guava') {
+                details.useVersion '32.0.1-jre'
+            }
+            if (details.requested.group == 'com.nimbusds' && details.requested.name == 'nimbus-jose-jwt') {
+                details.useVersion '9.37.4'
+            }
+            if (details.requested.group == 'com.jayway.jsonpath' && details.requested.name == 'json-path') {
+                details.useVersion '2.9.0'
+            }
+            if (details.requested.group == 'commons-beanutils' && details.requested.name == 'commons-beanutils') {
+                details.useVersion '1.11.0'
+            }
+            if (details.requested.group == 'org.xmlunit' && details.requested.name == 'xmlunit-core') {
+                details.useVersion '2.10.0'
+            }
+        }
     }
 
     // testng version <7.6 required for Java 8
@@ -310,7 +340,7 @@ project('build-info-client') {
             exclude module: "commons-codec"
         }
 
-        implementation "org.apache.httpcomponents:httpcore:httpCoreVersion"
+        implementation "org.apache.httpcomponents:httpcore:$httpCoreVersion"
         implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: jacksonVersion
         implementation "commons-codec:commons-codec:$commonsCodecVersion"
 
