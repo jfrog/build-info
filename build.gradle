@@ -22,7 +22,8 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        jacksonVersion = '2.16.0'
+        // need to upgrade to 2.16.0 which is compatinle with java 17+
+        jacksonVersion = '2.14.3'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
