@@ -4,10 +4,15 @@ import org.gradle.StartParameter;
 import org.gradle.api.Project;
 import org.jfrog.build.extractor.ci.BuildInfoFields;
 import org.jfrog.build.extractor.ci.BuildInfoProperties;
+import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
+import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -46,6 +51,25 @@ public class GradleArtifactoryClientConfigUpdater {
 
         // Then System properties
         Properties mergedProps = BuildInfoExtractorUtils.mergePropertiesWithSystemAndPropertyFile(props, config.info.getLog());
+
+        // Override file loading with explicit system property check to avoid Gradle daemon caching issues.
+        String buildInfoPropFile = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        String propSource = "system property (" + BuildInfoConfigProperties.PROP_PROPS_FILE + ")";
+
+        if (StringUtils.isBlank(buildInfoPropFile)) {
+            buildInfoPropFile = System.getProperty(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE);
+            propSource = "system property (" + BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE + ")";
+        }
+
+        // If we found a system property-based file path, reload it to ensure it takes priority over env var
+        if (StringUtils.isNotBlank(buildInfoPropFile)) {
+            Properties fileProps = loadBuildInfoProperties(buildInfoPropFile, config.info.getLog());
+            if (fileProps != null) {
+                mergedProps.putAll(fileProps);
+                config.info.getLog().debug("Overriding with properties from " + propSource + ": " + buildInfoPropFile);
+            }
+        }
+        
         // Then special buildInfo properties
         Properties buildInfoProperties =
                 BuildInfoExtractorUtils.filterDynamicProperties(mergedProps, BUILD_INFO_PROP_PREDICATE);
@@ -65,6 +89,29 @@ public class GradleArtifactoryClientConfigUpdater {
         addDefaultPublisherAttributes(config, project.getRootProject().getName(), "Gradle", project.getGradle().getGradleVersion());
     }
 
+    /**
+     * Helper method to load build info properties from a file with proper error handling
+     */
+    private static Properties loadBuildInfoProperties(String filePath, org.jfrog.build.api.util.Log log) {
+        if (StringUtils.isBlank(filePath)) {
+            return null;
+        }
+        
+        File propertiesFile = new File(filePath);
+        if (!propertiesFile.exists()) {
+            log.warn("Properties file not found at: " + filePath);
+            return null;
+        }
+        
+        try (InputStream inputStream = new FileInputStream(propertiesFile)) {
+            Properties fileProps = new Properties();
+            fileProps.load(inputStream);
+            return fileProps;
+        } catch (Exception e) {
+            log.error("Failed to load properties from: " + filePath + " - " + e.getMessage());
+            return null;
+        }
+    }
 
     private static void fillProperties(Project project, Properties props) {
         Project parent = project.getParent();

@@ -53,9 +53,9 @@ public class DeployTask extends DefaultTask {
         log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                 new Object[]{getProject().getPath(), getPath()});
         prepareAndDeploy();
-        String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
+        String propertyFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
         if (StringUtils.isBlank(propertyFilePath)) {
-            propertyFilePath = System.getenv(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE);
+            propertyFilePath = System.getProperty(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE);
         }
         if (StringUtils.isNotBlank(propertyFilePath)) {
             File file = new File(propertyFilePath);
