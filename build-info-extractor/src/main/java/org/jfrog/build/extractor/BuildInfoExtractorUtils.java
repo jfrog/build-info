@@ -317,7 +317,7 @@ public abstract class BuildInfoExtractorUtils {
         if ("jar".equals(type)) {
             // add classifier if it exists
             if (StringUtils.isNotBlank(classifier)) {
-                result = classifier + (StringUtils.isNotBlank(extension) && !classifier.endsWith(extension) ? "-" + extension : "");
+                result = classifier;
             }
         }
         // Add extension if not jar, ivy or pom type
