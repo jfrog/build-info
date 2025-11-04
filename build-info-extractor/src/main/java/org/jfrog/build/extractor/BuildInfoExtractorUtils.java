@@ -77,8 +77,37 @@ public abstract class BuildInfoExtractorUtils {
     private static Properties addSystemProperties(Properties existingProps) {
         Properties props = new Properties();
         props.putAll(existingProps);
-        props.putAll(System.getProperties());
+        // Only add system properties that are relevant to the build
+        Properties systemProps = System.getProperties();
+        for (String propertyName : systemProps.stringPropertyNames()) {
+            // Include properties that are likely to be build-related
+            if (isRelevantSystemProperty(propertyName)) {
+                props.setProperty(propertyName, systemProps.getProperty(propertyName));
+            }
+        }
+        
         return props;
+    }
+    
+    /**
+     * This method filters out IDE-specific and other unrelated properties that could cause
+     * configuration cache invalidation in Gradle.
+     */
+    private static boolean isRelevantSystemProperty(String propertyName) {
+        if (StringUtils.isEmpty(propertyName)) {
+            return false;
+        }
+        if (StringUtils.startsWithAny(propertyName,
+                "idea.",
+                "intellij.",
+                "eclipse.",
+                "netbeans.",
+                "vscode.",
+                "studio.")) {
+            return false;
+        }
+        // By default, include all other properties.
+        return true;
     }
 
     /**
