@@ -102,7 +102,8 @@ public abstract class BuildInfoExtractorUtils {
                 "intellij.",
                 "eclipse.",
                 "netbeans.",
-                "vscode.")) {
+                "vscode.",
+                "studio.")) {
             return false;
         }
         // By default, include all other properties.
