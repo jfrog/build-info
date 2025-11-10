@@ -470,9 +470,10 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     private void addArtifactsToCurrentModule(MavenProject project, ModuleBuilder module) {
         addDefaultPublisherAttributes(conf, project.getName(), "Maven", project.getVersion());
         
-        // Check if artifact collection is disabled for build info
-        if (!conf.publisher.isPublishArtifacts()) {
-            logger.info("Artifact publishing is disabled - skipping artifact collection for build info");
+        // Check if artifact metadata collection is explicitly requested
+        // This is controlled by publish.add.deployable.artifacts property set from JFrog CLI
+        if (!conf.publisher.shouldAddDeployableArtifacts()) {
+            logger.info("Artifact metadata not requested - skipping artifact collection for build info");
             return;
         }
         
