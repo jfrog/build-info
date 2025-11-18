@@ -65,7 +65,7 @@ public class DeployTask extends DefaultTask {
     }
 
     private String getPropertyFilePath() {
-        return Stream.of(
+        return Stream.<Supplier<String>>of(
                 () -> System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE),
                 () -> System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE),
                 () -> System.getenv(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE),
