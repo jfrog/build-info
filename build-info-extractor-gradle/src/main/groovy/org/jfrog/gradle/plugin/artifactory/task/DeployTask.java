@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
 
@@ -53,16 +54,26 @@ public class DeployTask extends DefaultTask {
         log.debug("Starting build info extraction for project '{}' using last task in graph '{}'",
                 new Object[]{getProject().getPath(), getPath()});
         prepareAndDeploy();
-        String propertyFilePath = System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE);
-        if (StringUtils.isBlank(propertyFilePath)) {
-            propertyFilePath = System.getProperty(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE);
-        }
+        String propertyFilePath = getPropertyFilePath();
         if (StringUtils.isNotBlank(propertyFilePath)) {
             File file = new File(propertyFilePath);
             if (file.exists()) {
                 file.delete();
             }
         }
+    }
+
+    private String getPropertyFilePath() {
+        return Arrays.asList(
+                () -> System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE),
+                () -> System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE),
+                () -> System.getenv(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE),
+                () -> System.getProperty(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE)
+        ).stream()
+                .map(supplier -> supplier.get())
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(null);
     }
 
     /**
