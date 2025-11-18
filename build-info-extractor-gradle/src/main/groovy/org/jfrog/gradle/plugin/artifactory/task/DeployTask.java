@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration.addDefaultPublisherAttributes;
 
@@ -64,13 +65,12 @@ public class DeployTask extends DefaultTask {
     }
 
     private String getPropertyFilePath() {
-        return Arrays.asList(
+        return Stream.of(
                 () -> System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE),
                 () -> System.getProperty(BuildInfoConfigProperties.PROP_PROPS_FILE),
                 () -> System.getenv(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE),
                 () -> System.getProperty(BuildInfoConfigProperties.ENV_BUILDINFO_PROPFILE)
-        ).stream()
-                .map(supplier -> supplier.get())
+        ).map(Supplier::get)
                 .filter(StringUtils::isNotBlank)
                 .findFirst()
                 .orElse(null);
