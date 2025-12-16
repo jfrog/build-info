@@ -339,6 +339,8 @@ public class PomTransformer {
         SAXBuilder sb = new SAXBuilder();
         // don't validate and don't load dtd
         sb.setValidation(false);
+        // Note: These are XML feature identifier URIs (not HTTP connections)
+        // They are defined by the SAX/XML specification and cannot be changed
         sb.setFeature("http://xml.org/sax/features/validation", false);
         sb.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
         sb.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);

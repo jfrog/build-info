@@ -31,6 +31,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
+import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.jfrog.build.extractor.retention.Utils;
@@ -142,8 +143,9 @@ public class ArtifactoryBuildListener implements BuildListener {
         } finally {
             String propertyFilePath = System.getenv(BuildInfoConfigProperties.PROP_PROPS_FILE);
             if (StringUtils.isNotBlank(propertyFilePath)) {
-                File file = new File(propertyFilePath);
-                if (file.exists()) {
+                // Validate and sanitize path to prevent path traversal attacks
+                File file = PathSanitizer.validateAndNormalize(propertyFilePath);
+                if (file != null && file.exists() && PathSanitizer.isSafeToDelete(propertyFilePath)) {
                     file.delete();
                 }
             }

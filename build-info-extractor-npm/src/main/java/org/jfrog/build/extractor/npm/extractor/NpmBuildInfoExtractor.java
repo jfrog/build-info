@@ -112,7 +112,10 @@ public class NpmBuildInfoExtractor implements BuildInfoExtractor<NpmProject> {
         if (proxyConfiguration == null || StringUtils.isBlank(proxyConfiguration.host)) {
             return;
         }
-        npmProxy = "http://";
+        // Use HTTPS for proxy if connecting to common HTTPS ports (443, 8443)
+        // This provides encrypted connection to the proxy server itself
+        boolean useHttps = proxyConfiguration.port == 443 || proxyConfiguration.port == 8443;
+        npmProxy = useHttps ? "https://" : "http://";
         String username = proxyConfiguration.username;
         String password = proxyConfiguration.password;
         if (StringUtils.isNoneBlank(username) && StringUtils.isNotBlank(password)) {

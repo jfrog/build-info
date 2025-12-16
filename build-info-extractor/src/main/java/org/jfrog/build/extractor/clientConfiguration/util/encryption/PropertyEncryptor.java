@@ -2,6 +2,7 @@ package org.jfrog.build.extractor.clientConfiguration.util.encryption;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -33,10 +34,12 @@ public class PropertyEncryptor {
         if (StringUtils.isBlank(filePath)) {
             return null;
         }
-        if (!new File(filePath).exists()) {
+        // Validate and sanitize path to prevent path traversal attacks
+        File file = PathSanitizer.validateAndNormalize(filePath);
+        if (file == null || !file.exists()) {
             throw new IOException("File " + filePath + " does not exist");
         }
-        return decryptProperties(FileUtils.readFileToByteArray(new File(filePath)), keyPair);
+        return decryptProperties(FileUtils.readFileToByteArray(file), keyPair);
     }
 
     /**

@@ -101,6 +101,11 @@ public class DockerUtils {
         return dockerLayersDependencies;
     }
 
+    /**
+     * Converts data to SHA-1 hash.
+     * Note: SHA-1 is used here for Docker layer identification following the Docker Image Manifest V1 Schema.
+     * This is for content addressing, not cryptographic security. Docker uses SHA-1 for layer IDs.
+     */
     private static String toSha1(String data) {
         try {
             MessageDigest msdDigest = MessageDigest.getInstance("SHA-1");

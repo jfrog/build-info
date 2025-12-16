@@ -14,6 +14,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for extracting VCS (Git) information from the .git directory.
+ * File paths are validated to prevent directory traversal attacks.
+ */
 public class GitUtils {
     private static final String GIT_LOG_LIMIT = "100";
 
@@ -84,7 +88,8 @@ public class GitUtils {
     }
 
     private static String extractVcsUrl(File dotGit, Log log) throws IOException {
-        File pathToConfig = new File(dotGit, "config");
+        // Validate child path to prevent directory traversal
+        File pathToConfig = PathSanitizer.validateChildPath(dotGit, "config");
 
         String originalUrl = "";
         // Fetch url from config file
@@ -127,7 +132,8 @@ public class GitUtils {
         }
 
         // Else, if found ref try getting revision using it
-        File pathToRef = new File(dotGit, revisionOrRef.ref);
+        // Validate child path to prevent directory traversal
+        File pathToRef = PathSanitizer.validateChildPath(dotGit, revisionOrRef.ref);
         if (pathToRef.exists()) {
             // Read HEAD file for ref or revision
             try (BufferedReader br = new BufferedReader(new FileReader(pathToRef))) {
@@ -139,7 +145,8 @@ public class GitUtils {
             }
         } else {
             // Try to find .git/packed-refs and look for the HEAD there
-            File pathToPackedRefs = new File(dotGit, "packed-refs");
+            // Validate child path to prevent directory traversal
+            File pathToPackedRefs = PathSanitizer.validateChildPath(dotGit, "packed-refs");
             if (pathToPackedRefs.exists()) {
                 try (BufferedReader br = new BufferedReader(new FileReader(pathToPackedRefs))) {
                     String line;
@@ -159,7 +166,8 @@ public class GitUtils {
     }
 
     private static RevisionOrRef getRevisionOrBranchPath(File dotGit) throws IOException {
-        File pathToHead = new File(dotGit, "HEAD");
+        // Validate child path to prevent directory traversal
+        File pathToHead = PathSanitizer.validateChildPath(dotGit, "HEAD");
         RevisionOrRef result = new RevisionOrRef();
 
         // Read HEAD file for ref or revision
