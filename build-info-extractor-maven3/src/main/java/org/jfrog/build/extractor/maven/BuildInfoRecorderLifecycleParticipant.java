@@ -4,27 +4,34 @@ import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.MavenExecutionException;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.BuildInfoConfigProperties;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.Properties;
 
 /**
  * @author Noam Y. Tenne
  */
-@Component(role = AbstractMavenLifecycleParticipant.class)
+@Singleton
+@Named
 public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycleParticipant {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement(role = BuildInfoRecorder.class, hint = "default", optional = false)
-    BuildInfoRecorder recorder;
-    @Requirement
-    private Logger logger;
+    private final BuildInfoRecorder recorder;
+
     private ArtifactoryClientConfiguration internalConfiguration = null;
+
+    @Inject
+    public BuildInfoRecorderLifecycleParticipant(BuildInfoRecorder recorder) {
+        this.recorder = recorder;
+    }
 
     @Override
     public void afterProjectsRead(MavenSession session) throws MavenExecutionException {
@@ -35,7 +42,7 @@ public class BuildInfoRecorderLifecycleParticipant extends AbstractMavenLifecycl
                     BuildInfoConfigProperties.ACTIVATE_RECORDER + ") not found.");
             return;
         }
-        if (!Boolean.valueOf(activateRecorderObject.toString())) {
+        if (!Boolean.parseBoolean(activateRecorderObject.toString())) {
             logger.debug("Disabling Artifactory Maven3 Build-Info Recorder: activation property (" +
                     BuildInfoConfigProperties.ACTIVATE_RECORDER + ") value is either false or invalid.");
             return;

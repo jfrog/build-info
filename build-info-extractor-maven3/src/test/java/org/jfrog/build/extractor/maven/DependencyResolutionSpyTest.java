@@ -24,7 +24,7 @@ public class DependencyResolutionSpyTest {
     private static final String DEP_B_GAV = "b1:b2:b3";
     private static final String DEP_C_GAV = "c1:c2:c3";
 
-    DependencyResolutionSpy dependencyResolutionSpy = new DependencyResolutionSpy();
+    DependencyResolutionSpy dependencyResolutionSpy = new DependencyResolutionSpy(null);
     DependencyNode module;
 
     @BeforeMethod

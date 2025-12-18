@@ -1,11 +1,11 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jfrog.build.extractor.Proxy;
 import org.jfrog.build.extractor.ProxySelector;
+import org.slf4j.Logger;
 
 import static org.eclipse.aether.repository.Proxy.TYPE_HTTP;
 import static org.eclipse.aether.repository.Proxy.TYPE_HTTPS;

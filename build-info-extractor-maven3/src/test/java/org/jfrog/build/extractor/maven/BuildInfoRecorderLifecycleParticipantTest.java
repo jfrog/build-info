@@ -5,14 +5,10 @@ import org.apache.maven.execution.MavenExecutionRequest;
 import org.apache.maven.execution.MavenExecutionResult;
 import org.apache.maven.execution.MavenSession;
 import org.codehaus.plexus.PlexusContainer;
-import org.codehaus.plexus.logging.AbstractLogger;
-import org.codehaus.plexus.logging.Logger;
 import org.easymock.EasyMock;
 import org.eclipse.aether.RepositorySystemSession;
 import org.jfrog.build.extractor.ci.BuildInfoConfigProperties;
-import org.testng.Assert;
 
-import java.lang.reflect.Field;
 import java.util.Properties;
 
 
@@ -22,43 +18,9 @@ import java.util.Properties;
 public class BuildInfoRecorderLifecycleParticipantTest {
 
     public void testParticipantImplementation() throws Exception {
-        BuildInfoRecorder buildInfoRecorder = new BuildInfoRecorder();
+        BuildInfoRecorder buildInfoRecorder = new BuildInfoRecorder(null, null, null);
 
-        BuildInfoRecorderLifecycleParticipant participant = new BuildInfoRecorderLifecycleParticipant();
-
-        Class<BuildInfoRecorderLifecycleParticipant> participantClass = BuildInfoRecorderLifecycleParticipant.class;
-        Field recorderField = participantClass.getDeclaredField("recorder");
-        recorderField.set(participant, buildInfoRecorder);
-
-        Field loggerField = participantClass.getDeclaredField("logger");
-        loggerField.setAccessible(true);
-        loggerField.set(participant, new AbstractLogger(1, "dummy") {
-
-            public void debug(String message, Throwable throwable) {
-                Assert.assertTrue(message.contains("value is true"));
-            }
-
-            public void info(String message, Throwable throwable) {
-                assert false;
-            }
-
-            public void warn(String message, Throwable throwable) {
-                assert false;
-            }
-
-            public void error(String message, Throwable throwable) {
-                assert false;
-            }
-
-            public void fatalError(String message, Throwable throwable) {
-                assert false;
-            }
-
-            public Logger getChildLogger(String name) {
-                assert false;
-                return null;
-            }
-        });
+        BuildInfoRecorderLifecycleParticipant participant = new BuildInfoRecorderLifecycleParticipant(buildInfoRecorder);
 
         PlexusContainer plexusContainerMock = EasyMock.createMock(PlexusContainer.class);
 

@@ -1,12 +1,12 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.repository.Authentication;
 import org.eclipse.aether.repository.Proxy;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.util.repository.AuthenticationBuilder;
 import org.jfrog.build.extractor.ProxySelector;
+import org.slf4j.Logger;
 
 /**
  * Create and configure snapshot and release repositories based on the Artifactory client configuration (e.g. build info properties file)

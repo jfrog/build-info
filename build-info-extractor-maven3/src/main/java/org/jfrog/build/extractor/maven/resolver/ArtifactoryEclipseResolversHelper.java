@@ -1,32 +1,35 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.jfrog.build.extractor.ProxySelector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+@Singleton
 @Named
-@Component(role = ArtifactoryEclipseResolversHelper.class)
 public class ArtifactoryEclipseResolversHelper {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private ResolutionHelper resolutionHelper;
-
-    @Requirement
-    private Logger logger;
+    private final ResolutionHelper resolutionHelper;
 
     private final List<ArtifactRepository> resolutionPluginRepositories = new ArrayList<>();
     private final List<RemoteRepository> resolutionRepositories = new ArrayList<>();
     private RemoteRepository releaseRepository = null;
     private RemoteRepository snapshotRepository = null;
+
+    @Inject
+    public ArtifactoryEclipseResolversHelper(ResolutionHelper resolutionHelper) {
+        this.resolutionHelper = resolutionHelper;
+    }
 
     void initResolutionRepositories(RepositorySystemSession session) {
         getResolutionRepositories(session);

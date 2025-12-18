@@ -2,15 +2,19 @@ package org.jfrog.build.extractor.maven;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.maven.eventspy.AbstractEventSpy;
-import org.apache.maven.eventspy.EventSpy;
 import org.apache.maven.project.DependencyResolutionResult;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.graph.DependencyNode;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 
-import java.util.*;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Listen to DependencyResolutionResult events and populate parents map for each dependency of the current module.
@@ -18,12 +22,16 @@ import java.util.*;
  *
  * @author yahavi
  **/
-@Component(role = EventSpy.class)
+@Singleton
+@Named
 public class DependencyResolutionSpy extends AbstractEventSpy {
 
-    @SuppressWarnings("unused")
-    @Requirement
-    private BuildInfoRecorder buildInfoRecorder;
+    private final BuildInfoRecorder buildInfoRecorder;
+
+    @Inject
+    public DependencyResolutionSpy(BuildInfoRecorder buildInfoRecorder) {
+        this.buildInfoRecorder = buildInfoRecorder;
+    }
 
     @Override
     public void onEvent(Object event) {
