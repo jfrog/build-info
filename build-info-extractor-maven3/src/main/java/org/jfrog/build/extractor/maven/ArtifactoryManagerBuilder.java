@@ -1,14 +1,16 @@
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.jfrog.build.extractor.Proxy;
 import org.jfrog.build.extractor.ProxySelector;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.clientConfiguration.ClientConfigurationFields;
 import org.jfrog.build.extractor.clientConfiguration.client.artifactory.ArtifactoryManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_CONNECTION_RETRIES;
 import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PROP_TIMEOUT;
@@ -18,11 +20,10 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientProperties.PRO
  *
  * @author Noam Y. Tenne
  */
-@Component(role = ArtifactoryManagerBuilder.class)
+@Singleton
+@Named
 public class ArtifactoryManagerBuilder {
-
-    @Requirement
-    private Logger logger;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public ArtifactoryManager resolveProperties(ArtifactoryClientConfiguration clientConf) {
         ArtifactoryManager artifactoryManager = resolveClientProps(clientConf);

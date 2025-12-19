@@ -1,13 +1,13 @@
 package org.jfrog.build.extractor.maven;
 
-import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.api.util.Log;
+import org.slf4j.Logger;
 
 /**
  * @author Noam Y. Tenne
  */
 public class Maven3BuildInfoLogger implements Log {
-    private Logger logger;
+    private final Logger logger;
 
     public Maven3BuildInfoLogger(Logger logger) {
         this.logger = logger;

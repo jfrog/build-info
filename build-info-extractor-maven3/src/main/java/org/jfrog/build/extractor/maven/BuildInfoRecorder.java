@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.execution.AbstractExecutionListener;
@@ -8,9 +7,7 @@ import org.apache.maven.execution.ExecutionEvent;
 import org.apache.maven.execution.ExecutionListener;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.jfrog.build.api.builder.ModuleType;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
@@ -29,9 +26,14 @@ import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -59,20 +61,14 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
  *
  * @author Noam Y. Tenne
  */
-@Component(role = BuildInfoRecorder.class)
+@Singleton
+@Named
 public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent> {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
-
-    @Requirement
-    private BuildDeploymentHelper buildDeploymentHelper;
-
-    @Requirement
-    private ResolutionHelper resolutionHelper;
-
-    @Requirement
-    private Logger logger;
+    private final BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
+    private final BuildDeploymentHelper buildDeploymentHelper;
+    private final ResolutionHelper resolutionHelper;
 
     private final Set<Artifact> resolvedArtifacts = Collections.synchronizedSet(new HashSet<>());
     private final ThreadLocal<Set<Artifact>> currentModuleDependencies = new ThreadLocal<>();
@@ -103,6 +99,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return result;
         }
     };
+
+    @Inject
+    public BuildInfoRecorder(
+            BuildInfoModelPropertyResolver buildInfoModelPropertyResolver, BuildDeploymentHelper buildDeploymentHelper, ResolutionHelper resolutionHelper) {
+        this.buildInfoModelPropertyResolver = buildInfoModelPropertyResolver;
+        this.buildDeploymentHelper = buildDeploymentHelper;
+        this.resolutionHelper = resolutionHelper;
+    }
 
     public void setListenerToWrap(ExecutionListener executionListener) {
         wrappedListener = executionListener;
@@ -639,7 +643,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private String getExtension(File depFile) {
-        String extension = StringUtils.EMPTY;
+        String extension = "";
         if (depFile != null) {
             String fileName = depFile.getName();
             if (fileName != null) {

@@ -6,22 +6,26 @@ import org.apache.maven.plugin.ExtensionRealmCache;
 import org.apache.maven.plugin.PluginManagerException;
 import org.apache.maven.plugin.internal.DefaultMavenPluginManager;
 import org.apache.maven.project.MavenProject;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.eclipse.aether.RepositorySystemSession;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.List;
 
 /**
  * @author yahavi
  */
+@Singleton
 @Named
-@Component(role = DefaultMavenPluginManager.class)
 public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
 
-    @Requirement
-    private ArtifactoryEclipseResolversHelper helper;
+    private final ArtifactoryEclipseResolversHelper helper;
+
+    @Inject
+    public ArtifactoryEclipsePluginManager(ArtifactoryEclipseResolversHelper helper) {
+        this.helper = helper;
+    }
 
     @Override
     public ExtensionRealmCache.CacheRecord setupExtensionsRealm(MavenProject project, Plugin plugin, RepositorySystemSession session) throws PluginManagerException {

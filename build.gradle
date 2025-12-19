@@ -484,7 +484,6 @@ project('build-info-extractor-maven3') {
     dependencies {
         implementation "org.jdom:jdom2:$jdomVersion",
                 "org.codehaus.groovy:groovy-all:$groovyAllVersion",
-                "org.codehaus.plexus:plexus-container-default:$plexusContainerVersion",
                 "org.eclipse.aether:aether-api:$eclipseAetherVersion",
                 "org.eclipse.aether:aether-util:$eclipseAetherVersion",
                 "org.eclipse.aether:aether-impl:$eclipseAetherVersion",
@@ -505,8 +504,10 @@ project('build-info-extractor-maven3') {
         }
 
         uberJar "org.eclipse.aether:aether-impl:$eclipseAetherVersion"
-        provided "org.codehaus.plexus:plexus-component-annotations:$plexusComponentAnnotationsVersion"
+        provided "javax.inject:javax.inject:1"
+        provided "org.slf4j:slf4j-api:1.7.36"
         testImplementation "org.easymock:easymockclassextension:$easymockclassextensionVersion"
+        testImplementation "org.slf4j:slf4j-simple:1.7.36"
     }
 }
 

@@ -5,13 +5,13 @@ import org.apache.maven.project.DefaultProjectBuilder;
 import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingRequest;
 import org.apache.maven.project.ProjectBuildingResult;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
 import org.jfrog.build.extractor.ProxySelector;
 import org.jfrog.build.extractor.maven.resolver.ArtifactoryPluginResolution;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,12 +19,16 @@ import java.util.Properties;
 
 import static org.jfrog.build.api.BuildInfoConfigProperties.PROP_ARTIFACTORY_RESOLUTION_ENABLED;
 
+@Singleton
 @Named
-@Component(role = DefaultProjectBuilder.class, hint = "default")
 public class ArtifactoryProjectBuilder extends DefaultProjectBuilder {
 
-    @Requirement
-    private ResolutionHelper resolutionHelper;
+    private final ResolutionHelper resolutionHelper;
+
+    @Inject
+    public ArtifactoryProjectBuilder(ResolutionHelper resolutionHelper) {
+        this.resolutionHelper = resolutionHelper;
+    }
 
     @Override
     public List<ProjectBuildingResult> build(List<File> pomFiles, boolean recursive, ProjectBuildingRequest request) throws ProjectBuildingException {

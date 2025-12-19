@@ -1,31 +1,33 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.internal.impl.DefaultMetadataResolver;
 import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.MetadataRequest;
 import org.eclipse.aether.resolution.MetadataResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.Collection;
 import java.util.List;
 
+@Singleton
 @Named
-@Component( role = ArtifactoryEclipseMetadataResolver.class )
 public class ArtifactoryEclipseMetadataResolver extends DefaultMetadataResolver {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private ResolutionHelper resolutionHelper;
+    private final ResolutionHelper resolutionHelper;
+    private final ArtifactoryEclipseResolversHelper helper;
 
-    @Requirement
-    private Logger logger;
-
-    @Requirement
-    private ArtifactoryEclipseResolversHelper helper;
+    @Inject
+    public ArtifactoryEclipseMetadataResolver(ResolutionHelper resolutionHelper, ArtifactoryEclipseResolversHelper helper) {
+        this.resolutionHelper = resolutionHelper;
+        this.helper = helper;
+    }
 
     private void enforceResolutionRepositories(RepositorySystemSession session, MetadataRequest request) {
         // Get the Artifactory repositories configured in the Artifactory plugin:

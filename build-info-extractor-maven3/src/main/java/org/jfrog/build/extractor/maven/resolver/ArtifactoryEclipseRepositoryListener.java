@@ -1,18 +1,11 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.plugin.internal.DefaultPluginDependenciesResolver;
 import org.apache.maven.project.DefaultProjectDependenciesResolver;
 import org.apache.maven.repository.internal.DefaultArtifactDescriptorReader;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.context.Context;
-import org.codehaus.plexus.logging.Logger;
-import org.codehaus.plexus.personality.plexus.lifecycle.phase.Contextualizable;
 import org.eclipse.aether.AbstractRepositoryListener;
 import org.eclipse.aether.RepositoryEvent;
-import org.eclipse.aether.RepositoryListener;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.internal.impl.DefaultRepositorySystem;
 import org.eclipse.aether.metadata.Metadata;
@@ -20,9 +13,15 @@ import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RepositoryPolicy;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.jfrog.build.extractor.maven.BuildInfoRecorder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.lang.reflect.Field;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Repository listener when running in Maven 3.1.x
@@ -30,34 +29,43 @@ import java.util.Properties;
  *
  * @author Shay Yaakov
  */
-@Component(role = RepositoryListener.class)
-public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryListener implements Contextualizable {
+@Singleton
+@Named
+public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryListener {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private DefaultProjectDependenciesResolver pojectDependenciesResolver;
+    private final DefaultProjectDependenciesResolver pojectDependenciesResolver;
+    private final DefaultPluginDependenciesResolver pluginDependenciesResolver;
+    private final ArtifactoryEclipseArtifactResolver artifactResolver;
+    private final ArtifactoryEclipseMetadataResolver metadataResolver;
+    private final DefaultArtifactDescriptorReader descriptorReader;
+    private final DefaultRepositorySystem repositorySystem;
+    private final BuildInfoRecorder buildInfoRecorder;
 
-    @Requirement
-    private DefaultPluginDependenciesResolver pluginDependenciesResolver;
+    private final AtomicBoolean artifactoryRepositoriesEnforced = new AtomicBoolean(false);
 
-    @Requirement
-    private ArtifactoryEclipseArtifactResolver artifactResolver;
+    @Inject
+    public ArtifactoryEclipseRepositoryListener(DefaultProjectDependenciesResolver pojectDependenciesResolver,
+                                                DefaultPluginDependenciesResolver pluginDependenciesResolver,
+                                                ArtifactoryEclipseArtifactResolver artifactResolver,
+                                                ArtifactoryEclipseMetadataResolver metadataResolver,
+                                                DefaultArtifactDescriptorReader descriptorReader,
+                                                DefaultRepositorySystem repositorySystem,
+                                                BuildInfoRecorder buildInfoRecorder) {
+        this.pojectDependenciesResolver = pojectDependenciesResolver;
+        this.pluginDependenciesResolver = pluginDependenciesResolver;
+        this.artifactResolver = artifactResolver;
+        this.metadataResolver = metadataResolver;
+        this.descriptorReader = descriptorReader;
+        this.repositorySystem = repositorySystem;
+        this.buildInfoRecorder = buildInfoRecorder;
 
-    @Requirement
-    private ArtifactoryEclipseMetadataResolver metadataResolver;
-
-    @Requirement
-    private DefaultArtifactDescriptorReader descriptorReader;
-
-    @Requirement
-    private DefaultRepositorySystem repositorySystem;
-
-    @Requirement
-    private BuildInfoRecorder buildInfoRecorder;
-
-    @Requirement
-    private Logger logger;
-
-    private final MutableBoolean artifactoryRepositoriesEnforced = new MutableBoolean(false);
+        try {
+            enforceArtifactoryResolver();
+        } catch (Exception e) {
+            logger.error("Failed while enforcing Artifactory artifact resolver", e);
+        }
+    }
 
     /**
      * The method replaces the DefaultArtifactResolver instance with an instance of ArtifactoryEclipseArtifactResolver.
@@ -78,7 +86,7 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         repoSystemPluginField.setAccessible(true);
         repoSystemPluginField.set(pluginDependenciesResolver, repositorySystem);
 
-        artifactoryRepositoriesEnforced.setValue(true);
+        artifactoryRepositoriesEnforced.set(true);
         synchronized (artifactoryRepositoriesEnforced) {
             artifactoryRepositoriesEnforced.notifyAll();
         }
@@ -100,9 +108,9 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
 
     private void waitForResolutionToBeSet() {
         // In case the Artifactory resolver is not yet set, we wait for it first:
-        if (!artifactoryRepositoriesEnforced.booleanValue()) {
+        if (!artifactoryRepositoriesEnforced.get()) {
             synchronized (artifactoryRepositoriesEnforced) {
-                if (!artifactoryRepositoriesEnforced.booleanValue()) {
+                if (!artifactoryRepositoriesEnforced.get()) {
                     try {
                         artifactoryRepositoriesEnforced.wait();
                     } catch (InterruptedException e) {
@@ -241,14 +249,5 @@ public class ArtifactoryEclipseRepositoryListener extends AbstractRepositoryList
         DefaultArtifact artifact = new DefaultArtifact(art.getGroupId(), art.getArtifactId(), art.getVersion(), scope, art.getExtension(), classifier, null);
         artifact.setFile(art.getFile());
         return artifact;
-    }
-
-    @Override
-    public void contextualize(Context context) {
-        try {
-            enforceArtifactoryResolver();
-        } catch (Exception e) {
-            logger.error("Failed while enforcing Artifactory artifact resolver", e);
-        }
     }
 }

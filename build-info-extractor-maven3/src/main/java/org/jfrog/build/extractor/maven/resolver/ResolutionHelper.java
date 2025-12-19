@@ -1,24 +1,24 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
 import org.jfrog.build.extractor.maven.Maven3BuildInfoLogger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.util.Properties;
 
 /**
  * Created by liorh on 4/24/14.
  */
-
-@Component(role = ResolutionHelper.class)
+@Singleton
+@Named
 public class ResolutionHelper {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private Logger logger;
     private ArtifactoryClientConfiguration internalConfiguration;
     private boolean initialized = false;
 

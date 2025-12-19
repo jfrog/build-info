@@ -1,0 +1,14 @@
+org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver
+org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver
+org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipsePluginManager
+org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseRepositoryListener
+org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper
+org.jfrog.build.extractor.maven.resolver.ResolutionHelper
+org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder
+org.jfrog.build.extractor.maven.ArtifactoryProjectBuilder
+org.jfrog.build.extractor.maven.BuildDeploymentHelper
+org.jfrog.build.extractor.maven.BuildInfoModelPropertyResolver
+org.jfrog.build.extractor.maven.BuildInfoRecorder
+org.jfrog.build.extractor.maven.BuildInfoRecorderLifecycleParticipant
+org.jfrog.build.extractor.maven.DependencyResolutionSpy
+

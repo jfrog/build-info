@@ -1,9 +1,6 @@
 package org.jfrog.build.extractor.maven;
 
-import org.apache.commons.lang3.StringUtils;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.jfrog.build.api.util.FileChecksumCalculator;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.ModuleParallelDeployHelper;
@@ -16,23 +13,36 @@ import org.jfrog.build.extractor.clientConfiguration.client.artifactory.Artifact
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployableArtifactsUtils;
 import org.jfrog.build.extractor.retention.Utils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.jfrog.build.api.util.FileChecksumCalculator.*;
 
 /**
  * @author Noam Y. Tenne
  */
-@Component(role = BuildDeploymentHelper.class)
+@Singleton
+@Named
 public class BuildDeploymentHelper {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    @Requirement
-    private Logger logger;
-    @Requirement
-    private ArtifactoryManagerBuilder artifactoryManagerBuilder;
+    private final ArtifactoryManagerBuilder artifactoryManagerBuilder;
+
+    @Inject
+    public BuildDeploymentHelper(ArtifactoryManagerBuilder artifactoryManagerBuilder) {
+        this.artifactoryManagerBuilder = artifactoryManagerBuilder;
+    }
 
     public void deploy(BuildInfo buildInfo, ArtifactoryClientConfiguration clientConf, Map<String, DeployDetails> deployableArtifactBuilders, boolean wereThereTestFailures, File basedir) {
         Map<String, Set<DeployDetails>> deployableArtifactsByModule = prepareDeployableArtifacts(buildInfo, deployableArtifactBuilders);

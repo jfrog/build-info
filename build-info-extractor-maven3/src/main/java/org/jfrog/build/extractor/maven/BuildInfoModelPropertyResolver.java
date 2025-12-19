@@ -1,23 +1,35 @@
 package org.jfrog.build.extractor.maven;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.Maven;
 import org.apache.maven.execution.ExecutionEvent;
-import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
+import org.codehaus.plexus.util.StringUtils;
 import org.jfrog.build.api.builder.PromotionStatusBuilder;
 import org.jfrog.build.api.release.Promotion;
 import org.jfrog.build.extractor.builder.BuildInfoMavenBuilder;
-import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.Agent;
+import org.jfrog.build.extractor.ci.BuildAgent;
+import org.jfrog.build.extractor.ci.BuildInfo;
+import org.jfrog.build.extractor.ci.Issue;
+import org.jfrog.build.extractor.ci.IssueTracker;
+import org.jfrog.build.extractor.ci.Issues;
+import org.jfrog.build.extractor.ci.MatrixParameter;
+import org.jfrog.build.extractor.ci.Vcs;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 import static org.jfrog.build.api.BuildInfoFields.*;
@@ -26,12 +38,12 @@ import static org.jfrog.build.api.BuildInfoFields.*;
 /**
  * @author Noam Y. Tenne
  */
-@Component(role = BuildInfoModelPropertyResolver.class)
+@Singleton
+@Named
 public class BuildInfoModelPropertyResolver {
     private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat(BuildInfo.STARTED_FORMAT);
 
-    @Requirement
-    private Logger logger;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     public BuildInfoMavenBuilder resolveProperties(ExecutionEvent event, ArtifactoryClientConfiguration clientConf) {
         BuildInfoMavenBuilder builder = resolveCoreProperties(event, clientConf).

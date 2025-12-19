@@ -5,8 +5,8 @@ import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.artifact.repository.MavenArtifactRepository;
 import org.apache.maven.artifact.repository.layout.DefaultRepositoryLayout;
 import org.apache.maven.repository.Proxy;
-import org.codehaus.plexus.logging.Logger;
 import org.jfrog.build.extractor.ProxySelector;
+import org.slf4j.Logger;
 
 /**
  * Based on the Artifactory client configuration, create and configure snapshot and release repositories (e.g. build info properties file).
