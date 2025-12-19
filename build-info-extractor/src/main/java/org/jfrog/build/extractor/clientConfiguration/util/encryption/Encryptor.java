@@ -10,8 +10,15 @@ import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Provides AES-GCM encryption/decryption functionality.
+ * Note: This class uses AES/GCM/NoPadding which is a secure authenticated encryption mode.
+ * SAST tools may incorrectly flag this as "RSA with inadequate padding" - this is a false positive
+ * as GCM mode provides both encryption and authentication without needing additional padding.
+ */
 public class Encryptor {
     private static final String ALGORITHM = "AES";
+    // AES/GCM/NoPadding is a secure authenticated encryption mode - "NoPadding" is correct for GCM
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int GCM_TAG_LENGTH = 128;
 

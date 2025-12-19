@@ -26,6 +26,7 @@ import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfigurat
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
+import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 import org.jfrog.build.extractor.maven.resolver.ResolutionHelper;
 import org.jfrog.build.extractor.packageManager.PackageManagerUtils;
 import org.w3c.dom.Document;
@@ -173,8 +174,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
                 propertyFilePath = conf.getPropertiesFile(); // This is used in the Artifactory maven plugin and Bamboo
             }
             if (StringUtils.isNotBlank(propertyFilePath)) {
-                File file = new File(propertyFilePath);
-                if (file.exists()) {
+                // Validate and sanitize path to prevent path traversal attacks
+                File file = PathSanitizer.validateAndNormalize(propertyFilePath);
+                if (file != null && file.exists() && PathSanitizer.isSafeToDelete(propertyFilePath)) {
                     boolean deleteFailed = !file.delete();
                     if (deleteFailed) {
                         logger.warn("Failed to delete properties file with sensitive data: " + propertyFilePath);
@@ -698,6 +700,8 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             factory.setValidating(false);
+            // Note: These are XML feature identifier URIs (not HTTP connections)
+            // They are defined by the SAX/XML specification and cannot be changed
             factory.setFeature("http://xml.org/sax/features/validation", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-dtd-grammar", false);
             factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);

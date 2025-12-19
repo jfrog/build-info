@@ -17,6 +17,7 @@ import org.jfrog.build.extractor.ci.BuildInfoProperties;
 import org.jfrog.build.extractor.clientConfiguration.ClientProperties;
 import org.jfrog.build.extractor.clientConfiguration.IncludeExcludePatterns;
 import org.jfrog.build.extractor.clientConfiguration.PatternMatcher;
+import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 import org.jfrog.build.extractor.clientConfiguration.util.encryption.EncryptionKeyPair;
 
 import javax.crypto.BadPaddingException;
@@ -126,8 +127,9 @@ public abstract class BuildInfoExtractorUtils {
             return props;
         }
 
-        File propertiesFile = new File(propsFilePath);
-        if (!propertiesFile.exists()) {
+        // Validate and sanitize path to prevent path traversal attacks
+        File propertiesFile = PathSanitizer.validateAndNormalize(propsFilePath);
+        if (propertiesFile == null || !propertiesFile.exists()) {
             log.debug("[buildinfo] BuildInfo properties file is not exists.");
             return props;
         }

@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jfrog.build.api.util.CommonUtils;
 import org.jfrog.build.extractor.BuildInfoExtractorUtils;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryClientConfiguration;
+import org.jfrog.build.extractor.clientConfiguration.util.PathSanitizer;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -97,8 +98,9 @@ public class GradleArtifactoryClientConfigUpdater {
             return null;
         }
         
-        File propertiesFile = new File(filePath);
-        if (!propertiesFile.exists()) {
+        // Validate and sanitize path to prevent path traversal attacks
+        File propertiesFile = PathSanitizer.validateAndNormalize(filePath);
+        if (propertiesFile == null || !propertiesFile.exists()) {
             log.warn("Properties file not found at: " + filePath);
             return null;
         }

@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * File checksum calculator class
+ * File checksum calculator class.
+ * Note: This class expects validated File objects from calling code.
+ * Path validation should be performed by the caller before invoking these methods.
  *
  * @author Noam Y. Tenne
  */

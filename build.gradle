@@ -4,9 +4,9 @@ buildscript {
     ext {
         antVersion = '1.10.12'
         buildInfoExtractorVersion = '4.29.4'
-        commonsCodecVersion = '1.15'
+        commonsCodecVersion = '1.17.1'
         commonsCompressVersion = '1.27.1'
-        commonsIoVersion = '2.15.1'
+        commonsIoVersion = '2.18.0'
         commonsLang3Version = '3.18.0'
         commonsLoggingVersion = '1.2'
         commonsCollections4Version = '4.4'
@@ -18,12 +18,12 @@ buildscript {
         // 0.43+ fail with java.lang.NoClassDefFoundError: groovy/xml/XmlSlurper
         gradleVersionsPluginVersion = '0.42.0'
 
-        groovyAllVersion = '3.0.13'
+        groovyAllVersion = '3.0.22'
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        // need to upgrade to 2.16.0 which is compatinle with java 17+
-        jacksonVersion = '2.14.3'
+        // Updated to 2.17.3 for security fixes - compatible with Java 8+
+        jacksonVersion = '2.17.3'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.8.6'
@@ -50,7 +50,7 @@ buildscript {
         // 7.6+ require Java 11
         testNgVersion = '7.5.1'
 
-        woodstoxVersion = '6.4.0'
+        woodstoxVersion = '6.7.1'
         jerseyVersion = '2.34'
     }
 
