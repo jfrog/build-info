@@ -110,13 +110,6 @@ jobs:
           mvn --version
           echo "M2_HOME=$M2_HOME"
 
-      - name: Set up JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v4
-        env:
-          JF_URL: ${{ secrets.PLATFORM_URL }}
-          JF_USER: ${{ secrets.PLATFORM_USER }}
-          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
-
       - name: Install built extractor JAR
         run: |
           # Get the actual version from build output
@@ -210,46 +203,24 @@ jobs:
           echo ""
           echo "✅ Test project created successfully"
 
-      - name: Configure JFrog Maven integration
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/test-project
-        env:
-          JF_URL: ${{ secrets.PLATFORM_URL }}
-          JF_USER: ${{ secrets.PLATFORM_USER }}
-          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
-        run: |
-          # Configure Maven to use JFrog Platform
-          # This tests the build-info extractor with a real Artifactory instance
-          jf mvn-config \
-            --server-id-resolve=artifactory \
-            --server-id-deploy=artifactory \
-            --repo-resolve-releases=maven-remote \
-            --repo-resolve-snapshots=maven-remote \
-            --repo-deploy-releases=maven-local \
-            --repo-deploy-snapshots=maven-local 2>&1 | tee mvn-config-output.log
-          
-          CONFIG_EXIT_CODE=${PIPESTATUS[0]}
-          
-          if [ $CONFIG_EXIT_CODE -eq 0 ]; then
-            echo "✅ JFrog Maven integration configured"
-          else
-            echo "⚠️  Configuration encountered issues (exit code: $CONFIG_EXIT_CODE)"
-            echo "Attempting to continue with test..."
-          fi
-
-      - name: Test with JFrog Maven integration
+      - name: Test Maven with build-info extractor
         id: maven_test
         continue-on-error: true
         working-directory: ${{ github.workspace }}/test-project
-        env:
-          JF_URL: ${{ secrets.PLATFORM_URL }}
-          JF_USER: ${{ secrets.PLATFORM_USER }}
-          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
         run: |
-          # Run Maven through JFrog CLI and capture output
-          jf mvn clean compile \
-            --build-name "maven-compat-test-${{ matrix.maven-version }}" \
-            --build-number "${{ github.run_number }}" 2>&1 | tee maven-output.log
+          # Get extractor version
+          BUILT_JAR=$(find ~/.jfrog/dependencies/maven/ -name "*-uber.jar" -type f | head -1)
+          EXTRACTOR_DIR=$(dirname "$BUILT_JAR")
+          
+          echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
+          echo "Extractor directory: $EXTRACTOR_DIR"
+          echo ""
+          
+          # Run Maven with build-info extractor loaded
+          # This simulates what jf mvn does - loads the extractor as a Maven extension
+          mvn clean compile \
+            -Dmaven.ext.class.path="$BUILT_JAR" \
+            -Dm3plugin.lib="$EXTRACTOR_DIR" 2>&1 | tee maven-output.log
           
           # Save exit code
           echo "MAVEN_EXIT_CODE=${PIPESTATUS[0]}" >> $GITHUB_ENV
