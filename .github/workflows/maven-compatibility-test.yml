@@ -212,39 +212,19 @@ jobs:
           echo ""
           echo "✅ Test project created successfully"
 
-      - name: Configure JFrog CLI server
-        env:
-          JF_URL: ${{ secrets.PLATFORM_URL }}
-          JF_USER: ${{ secrets.PLATFORM_USER }}
-          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
-        run: |
-          # Create JFrog CLI server configuration
-          echo "Creating JFrog CLI server configuration..."
-          
-          if [ -z "$JF_URL" ] || [ -z "$JF_ACCESS_TOKEN" ]; then
-            echo "⚠️  Missing Artifactory credentials in secrets"
-            echo "Creating dummy config for testing (will fail, but we can still test extractor loading)"
-            jf config add artifactory --url=http://localhost:8081/artifactory --access-token=dummy --interactive=false || true
-          else
-            echo "Using real Artifactory instance from secrets"
-            jf config add artifactory \
-              --url="$JF_URL" \
-              --access-token="$JF_ACCESS_TOKEN" \
-              --interactive=false
-          fi
-          
-          # Verify configuration
-          echo ""
-          echo "JFrog CLI servers:"
-          jf config show
-
       - name: Configure Maven with JFrog
         working-directory: ${{ github.workspace }}/test-project
         run: |
+          # Verify JFrog CLI server (auto-created by setup-jfrog-cli action)
+          echo "JFrog CLI servers:"
+          jf config show
+          echo ""
+          
           # Configure Maven to use JFrog Platform
+          # setup-jfrog-cli@v4 automatically creates "setup-jfrog-cli-server" from env vars
           jf mvn-config \
-            --server-id-resolve=artifactory \
-            --server-id-deploy=artifactory \
+            --server-id-resolve=setup-jfrog-cli-server \
+            --server-id-deploy=setup-jfrog-cli-server \
             --repo-resolve-releases=maven-remote \
             --repo-resolve-snapshots=maven-remote \
             --repo-deploy-releases=maven-local \
