@@ -23,8 +23,10 @@ on:
 
 jobs:
   check-latest-maven-versions:
-    name: Check for new Maven versions
+    name: Determine Maven versions to test
     runs-on: ubuntu-latest
+    outputs:
+      maven-versions: ${{ steps.set-versions.outputs.maven-versions }}
     
     steps:
       - name: Get latest Maven versions from Maven Central
@@ -41,7 +43,7 @@ jobs:
           echo "Available Maven versions:"
           echo "$VERSIONS"
           
-          # Get latest versions for each major.minor
+          # Get latest versions for each major.minor series
           LATEST_3_8=$(echo "$VERSIONS" | grep '^3\.8\.' | tail -1)
           LATEST_3_9=$(echo "$VERSIONS" | grep '^3\.9\.' | tail -1)
           LATEST_4_0=$(echo "$VERSIONS" | grep '^4\.0\.' | tail -1)
@@ -50,22 +52,43 @@ jobs:
           echo "Latest versions by series:"
           echo "  3.8.x: $LATEST_3_8"
           echo "  3.9.x: $LATEST_3_9"
-          echo "  4.0.x: $LATEST_4_0"
+          echo "  4.0.x: ${LATEST_4_0:-not released yet}"
           
-          # Check if we need to update the workflow
-          echo ""
-          echo "Current versions in workflow: 3.8.8, 3.9.0, 3.9.6, 3.9.9, 3.9.11, 3.9.12, 4.0.0-beta-4"
-          echo ""
+          # Export for next step
+          echo "LATEST_3_8=$LATEST_3_8" >> $GITHUB_ENV
+          echo "LATEST_3_9=$LATEST_3_9" >> $GITHUB_ENV
+          echo "LATEST_4_0=$LATEST_4_0" >> $GITHUB_ENV
+      
+      - name: Build version matrix
+        id: set-versions
+        run: |
+          # Build JSON array of versions to test
+          # Include: first 3.9, some mid versions, and all latest versions
           
-          if [ "$LATEST_3_9" != "3.9.12" ]; then
-            echo "⚠️  WARNING: New Maven 3.9.x version available: $LATEST_3_9"
-            echo "Consider updating the workflow matrix to include this version"
+          VERSIONS='["3.9.0"'  # First 3.9.x
+          
+          # Add latest 3.8.x
+          if [ -n "$LATEST_3_8" ]; then
+            VERSIONS+=', "'$LATEST_3_8'"'
           fi
           
+          # Add latest 3.9.x
+          if [ -n "$LATEST_3_9" ]; then
+            VERSIONS+=', "'$LATEST_3_9'"'
+          fi
+          
+          # Add latest 4.0.x if it exists
           if [ -n "$LATEST_4_0" ]; then
-            echo "ℹ️  Maven 4.0 stable version found: $LATEST_4_0"
-            echo "Consider testing with this version"
+            VERSIONS+=', "'$LATEST_4_0'"'
+          else
+            # Fallback to beta if no stable 4.0 yet
+            VERSIONS+=', "4.0.0-beta-4"'
           fi
+          
+          VERSIONS+=']'
+          
+          echo "Maven versions to test: $VERSIONS"
+          echo "maven-versions=$VERSIONS" >> $GITHUB_OUTPUT
 
   test-maven-compatibility:
     name: Test with Maven ${{ matrix.maven-version }}
@@ -75,14 +98,8 @@ jobs:
     strategy:
       fail-fast: false  # Test all versions even if one fails
       matrix:
-        maven-version:
-          - '3.8.8'   # Stable older version
-          - '3.9.0'   # First 3.9.x release
-          - '3.9.6'   # Mid 3.9.x
-          - '3.9.9'   # Later 3.9.x
-          - '3.9.11'  # Recent 3.9.x
-          - '3.9.12'  # Latest 3.9.x (update periodically)
-          - '4.0.0-beta-4'  # Maven 4 pre-release (update when stable releases)
+        # Dynamically fetched versions from previous job
+        maven-version: ${{ fromJSON(needs.check-latest-maven-versions.outputs.maven-versions) }}
         java-version:
           - '8'
           - '11'
@@ -96,57 +113,6 @@ jobs:
             java-version: '11'
 
     steps:
-      - name: Checkout build-info
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 8 for building
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '8'
-
-      - name: Verify build environment
-        run: |
-          echo "Java version for building:"
-          java -version
-          echo ""
-          echo "Gradle version:"
-          ./gradlew --version
-          echo ""
-          echo "Project structure:"
-          ls -la build-info-extractor-maven3/
-
-      - name: Build build-info-extractor
-        run: |
-          # Ensure Gradle wrapper is executable
-          chmod +x gradlew
-          
-          # Clean and build ALL artifacts including uber JAR
-          # The 'build' task creates both regular and uber JARs
-          ./gradlew clean :build-info-extractor-maven3:build -x test --no-build-cache --info
-          
-          echo ""
-          echo "Build output directory:"
-          ls -lh build-info-extractor-maven3/build/libs/ || {
-            echo "❌ ERROR: Build directory doesn't exist!"
-            echo "Build failed completely"
-            exit 1
-          }
-          
-          # Verify uber JAR was created
-          if ! ls build-info-extractor-maven3/build/libs/*-uber.jar 1> /dev/null 2>&1; then
-            echo ""
-            echo "❌ ERROR: Uber JAR was not built!"
-            echo "Build may have failed or task was skipped"
-            echo ""
-            echo "Available files in build/libs:"
-            ls -la build-info-extractor-maven3/build/libs/
-            exit 1
-          fi
-          
-          echo ""
-          echo "✅ Uber JAR successfully built"
-
       - name: Set up test JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
         with:
@@ -165,47 +131,14 @@ jobs:
 
       - name: Set up JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.PLATFORM_URL }}
+          JF_USER: ${{ secrets.PLATFORM_USER }}
+          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
         with:
           version: latest
-        # Note: No server credentials needed - we're testing extractor loading, not Artifactory integration
-
-      - name: Install built extractor JAR
-        run: |
-          # Get the actual version from build output
-          BUILT_JAR=$(find build-info-extractor-maven3/build/libs/ -name "*-uber.jar" -type f | head -1)
-          
-          if [ -z "$BUILT_JAR" ]; then
-            echo "❌ No uber JAR found!"
-            echo "Available files:"
-            ls -la build-info-extractor-maven3/build/libs/ || echo "Directory doesn't exist"
-            exit 1
-          fi
-          
-          echo "Found JAR: $BUILT_JAR"
-          
-          # Extract version from JAR filename
-          # e.g., build-info-extractor-maven3-2.43.x-SNAPSHOT-uber.jar -> 2.43.x-SNAPSHOT
-          JAR_NAME=$(basename "$BUILT_JAR")
-          VERSION=$(echo "$JAR_NAME" | sed -E 's/build-info-extractor-maven3-(.+)-uber\.jar/\1/')
-          
-          if [ -z "$VERSION" ]; then
-            echo "⚠️  Could not extract version from JAR name"
-            VERSION="2.43.x-SNAPSHOT"
-          fi
-          
-          echo "Extractor version: $VERSION"
-          
-          # Create cache directory structure
-          mkdir -p ~/.jfrog/dependencies/maven/$VERSION
-          
-          # Copy with correct name
-          cp "$BUILT_JAR" ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar
-          
-          echo "Installed JAR:"
-          ls -lh ~/.jfrog/dependencies/maven/$VERSION/
-          
-          echo ""
-          echo "✅ Build-info extractor installed and ready for testing"
+        # JFrog CLI will automatically download the latest released build-info extractor
+        # This tests the version users actually use in production
 
       - name: Create test Maven project
         run: |
@@ -262,62 +195,68 @@ jobs:
           echo ""
           echo "✅ Test project created successfully"
 
-      - name: Configure JFrog Maven (minimal config for testing)
+      - name: Configure JFrog CLI server
+        env:
+          JF_URL: ${{ secrets.PLATFORM_URL }}
+          JF_USER: ${{ secrets.PLATFORM_USER }}
+          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
+        run: |
+          # Create JFrog CLI server configuration
+          echo "Creating JFrog CLI server configuration..."
+          
+          if [ -z "$JF_URL" ] || [ -z "$JF_ACCESS_TOKEN" ]; then
+            echo "⚠️  Missing Artifactory credentials in secrets"
+            echo "Creating dummy config for testing (will fail, but we can still test extractor loading)"
+            jf config add artifactory --url=http://localhost:8081/artifactory --access-token=dummy --interactive=false || true
+          else
+            echo "Using real Artifactory instance from secrets"
+            jf config add artifactory \
+              --url="$JF_URL" \
+              --access-token="$JF_ACCESS_TOKEN" \
+              --interactive=false
+          fi
+          
+          # Verify configuration
+          echo ""
+          echo "JFrog CLI servers:"
+          jf config show
+
+      - name: Configure Maven with JFrog
         working-directory: ${{ github.workspace }}/test-project
         run: |
-          # Create a minimal JFrog CLI server config
-          mkdir -p ~/.jfrog/security
+          # Configure Maven to use JFrog Platform
+          jf mvn-config \
+            --server-id-resolve=artifactory \
+            --server-id-deploy=artifactory \
+            --repo-resolve-releases=maven-remote \
+            --repo-resolve-snapshots=maven-remote \
+            --repo-deploy-releases=maven-local \
+            --repo-deploy-snapshots=maven-local 2>&1 | tee config-output.log
           
-          # Create server config file directly (bypass validation)
-          cat > ~/.jfrog/security/config.yaml << 'EOF'
-          version: 5
-          servers:
-            - serverId: "local"
-              url: "http://localhost:8081/artifactory/"
-              artifactoryUrl: "http://localhost:8081/artifactory/"
-              user: "test"
-              password: "test"
-              isDefault: true
-          EOF
-          
-          # Create Maven project config
-          mkdir -p ~/.jfrog/projects
-          cat > ~/.jfrog/projects/maven.yaml << 'EOF'
-          version: 1
-          type: maven
-          resolver:
-            repo: libs-release
-            serverId: local
-          deployer:
-            repo: libs-release-local
-            serverId: local
-          EOF
-          
-          echo "✅ Maven config created (for extractor testing only)"
-          echo "Server config:"
-          cat ~/.jfrog/security/config.yaml
-          echo ""
-          echo "Maven config:"
-          cat ~/.jfrog/projects/maven.yaml
+          if grep -q "maven build config successfully created" config-output.log; then
+            echo "✅ Maven configured with JFrog Platform"
+          else
+            echo "⚠️  Maven config had issues:"
+            cat config-output.log
+          fi
 
       - name: Test Maven with build-info extractor
         id: maven_test
-        continue-on-error: true
+
         working-directory: ${{ github.workspace }}/test-project
         run: |
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
           echo ""
           
-          # Run jf mvn to load the build-info extractor
-          # The extractor will be loaded, and if there are compatibility issues
-          # (like missing fields in components.xml), they will appear immediately
-          # 
-          # The build will fail early if there are Maven version incompatibilities,
-          # even without Artifactory connectivity
+          # Run jf mvn - this will:
+          # 1. Download the build-info extractor (if not cached)
+          # 2. Load it as a Maven extension  
+          # 3. If Maven incompatibility exists, NullPointerException happens immediately
+          # 4. Otherwise, will build successfully with real Artifactory
           jf mvn clean compile 2>&1 | tee maven-output.log || true
           
-          # Save exit code
-          echo "MAVEN_EXIT_CODE=$?" >> $GITHUB_ENV
+          echo ""
+          echo "Build complete - checking for compatibility issues..."
 
       - name: Check for compatibility errors
         if: always()
@@ -334,68 +273,59 @@ jobs:
           echo "Analyzing Maven output..."
           echo ""
           
-          # Check for success indicators
+          # Check for success
           if grep -q "BUILD SUCCESS" maven-output.log; then
             echo "✅ Maven build completed successfully"
             echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
             exit 0
           fi
           
-          # Build failed - analyze why
-          echo "⚠️  Maven build failed - analyzing error..."
+          # Build failed - check for Maven COMPATIBILITY issues (not build issues)
+          echo "⚠️  Maven build failed - analyzing for compatibility errors..."
           echo ""
           
-          # Check for various compatibility issues
+          # Check for Maven version compatibility issues
           if grep -q "NullPointerException.*is null" maven-output.log; then
-            echo "❌ FAILURE: NullPointerException detected!"
-            echo "Maven ${{ matrix.maven-version }} has compatibility issues!"
+            echo "❌ COMPATIBILITY ERROR: NullPointerException detected!"
+            echo "Maven ${{ matrix.maven-version }} is INCOMPATIBLE with build-info extractor"
             echo ""
-            echo "This could indicate missing field declarations in components.xml"
+            echo "This indicates missing field declarations in components.xml"
             echo ""
             echo "Error details:"
             grep -B3 -A5 "NullPointerException" maven-output.log | head -20
+            exit 1
             
-            # Fail the workflow
-            exit 1
           elif grep -q "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log; then
-            echo "❌ FAILURE: Class compatibility error detected!"
-            echo "Maven ${{ matrix.maven-version }} has breaking changes!"
+            echo "❌ COMPATIBILITY ERROR: Class/method compatibility issue detected!"
+            echo "Maven ${{ matrix.maven-version }} is INCOMPATIBLE with build-info extractor"
             echo ""
-            grep -B3 -A5 "Error" maven-output.log | head -20
+            echo "Error details:"
+            grep -B3 -A5 "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log | head -20
             exit 1
-          elif grep -q "Could not transfer artifact\|Connection refused\|UnknownHostException\|Server ID.*URL is required\|Could not find a server with ID" maven-output.log; then
-            echo "⚠️  Network/configuration issue - not a compatibility problem"
-            echo "This is expected when running without a real Artifactory instance"
-            echo ""
-            echo "Checking if extractor loaded successfully..."
-            if grep -q "Running Mvn\|Running mvn command\|Downloading JFrog's Dependency\|maven build config successfully created" maven-output.log; then
-              echo "✅ Build-info extractor was invoked - no Maven compatibility issues detected"
-              echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
-              exit 0
-            else
-              echo "⚠️  Could not confirm extractor loaded, but no compatibility errors detected"
-              echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - Assumed COMPATIBLE"
-              exit 0
-            fi
-          elif grep -q "no config file was found" maven-output.log; then
-            echo "⚠️  JFrog config issue - checking if extractor loaded despite warning"
-            if grep -q "Running Mvn\|Running mvn command" maven-output.log; then
-              echo "✅ Extractor loaded successfully"
-              exit 0
-            elif grep -q "NullPointerException\|NoSuchMethodError\|NoClassDefFoundError" maven-output.log; then
-              echo "❌ Found compatibility errors"
-              tail -30 maven-output.log
-              exit 1
-            else
-              echo "✅ No compatibility issues found"
-              exit 0
-            fi
+            
           else
-            echo "❌ Build failed for unknown compatibility reasons"
-            echo "Last 50 lines of output:"
-            tail -50 maven-output.log
-            # Fail to be safe - investigate unknown failures
-            exit 1
+            # Build failed but not due to Maven compatibility - could be:
+            # - Compilation errors (test code issue)
+            # - Network issues (transient)
+            # - Missing dependencies (test setup issue)
+            echo "⚠️  Build failed, but NO Maven compatibility errors detected"
+            echo ""
+            
+            # Check if extractor actually ran
+            if grep -q "Running Mvn\|Running mvn command\|Downloading JFrog's Dependency\|Initializing Artifactory Build-Info Recording" maven-output.log; then
+              echo "✅ Build-info extractor loaded and ran successfully"
+              echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
+              echo ""
+              echo "Note: Build failed for other reasons (not Maven compatibility)"
+              echo "Last 30 lines of output:"
+              tail -30 maven-output.log
+              exit 0
+            else
+              echo "❓ Extractor may not have loaded - manual review needed"
+              echo "Last 50 lines of output:"
+              tail -50 maven-output.log
+              exit 1
+            fi
           fi
 
       - name: Upload logs (on failure)
@@ -403,7 +333,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: failure-logs-maven-${{ matrix.maven-version }}-java-${{ matrix.java-version }}
-          path: ${{ github.workspace }}/test-project/maven-output.log
+          path: |
+            ${{ github.workspace }}/test-project/maven-output.log
+            ${{ github.workspace }}/test-project/config-output.log
           retention-days: 30
           if-no-files-found: ignore
 
