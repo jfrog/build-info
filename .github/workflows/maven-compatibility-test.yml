@@ -142,9 +142,9 @@ jobs:
 
       - name: Create test Maven project
         run: |
-          # Create project structure
-          mkdir -p ${{ github.workspace }}/test-project/src/main/java/com/test
-          cd ${{ github.workspace }}/test-project
+          # Create project structure in testdata/ (excluded from builds like Go testdata/)
+          mkdir -p ${{ github.workspace }}/testdata/maven-compatibility-test/src/main/java/com/test
+          cd ${{ github.workspace }}/testdata/maven-compatibility-test
           
           cat > pom.xml << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
@@ -208,12 +208,12 @@ jobs:
           # Verify project was created
           echo ""
           echo "Test project structure:"
-          ls -la ${{ github.workspace }}/test-project/
+          ls -la ${{ github.workspace }}/testdata/maven-compatibility-test/
           echo ""
           echo "✅ Test project created successfully"
 
       - name: Configure Maven with JFrog (deployment only)
-        working-directory: ${{ github.workspace }}/test-project
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
           # Verify JFrog CLI is set up
           echo "JFrog CLI version:"
@@ -239,7 +239,7 @@ jobs:
       - name: Test Maven with build-info extractor
         id: maven_test
         continue-on-error: true
-        working-directory: ${{ github.workspace }}/test-project
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
           echo ""
@@ -256,7 +256,7 @@ jobs:
 
       - name: Check for compatibility errors
         if: always()
-        working-directory: ${{ github.workspace }}/test-project
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
           # Check if the test actually ran
           if [ ! -f maven-output.log ]; then
