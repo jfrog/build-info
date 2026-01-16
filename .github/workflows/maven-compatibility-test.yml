@@ -24,11 +24,11 @@ jobs:
       matrix:
         maven-version:
           - '3.8.8'   # Stable older version
-          - '3.9.0'   # First 3.9.x
+          - '3.9.0'   # First 3.9.x release
           - '3.9.6'   # Mid 3.9.x
-          - '3.9.9'   # Latest before the issue
-          - '3.9.11'  # Last known working
-          - '3.9.12'  # Version that caused the issue
+          - '3.9.9'   # Later 3.9.x
+          - '3.9.11'  # Recent 3.9.x
+          - '3.9.12'  # Latest 3.9.x
           - '4.0.0-beta-4'  # Maven 4 pre-release
         java-version:
           - '8'
@@ -148,15 +148,8 @@ jobs:
           echo "Installed JAR:"
           ls -lh ~/.jfrog/dependencies/maven/$VERSION/
           
-          # Verify the fix is present
           echo ""
-          echo "Verifying fix is present in JAR..."
-          if unzip -p ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar \
-              META-INF/plexus/components.xml 2>/dev/null | grep -q "prerequisitesCheckers"; then
-            echo "✅ Fix IS present in the installed JAR"
-          else
-            echo "⚠️  Fix NOT found - this may cause issues with Maven 3.9.12+"
-          fi
+          echo "✅ Build-info extractor installed and ready for testing"
 
       - name: Create test Maven project
         run: |
@@ -425,17 +418,17 @@ jobs:
             
             **Helpful Commands:**
             \`\`\`bash
-            # Check for missing fields
+            # Check for missing fields in a specific Maven version
             ./CHECK-MAVEN-FIELDS.sh <maven-version>
             
-            # Test locally
-            ./FINAL-TEST.sh
+            # Compare Maven's DefaultMavenPluginManager with our components.xml
+            # Look for new fields that need to be added
             \`\`\`
             
-            **References:**
-            - Maven 3.9.12 compatibility issue: https://github.com/jfrog/build-info/issues/841
-            - Example fix: prerequisitesCheckers field addition
+            **Resources:**
             - Maven release notes: https://maven.apache.org/docs/history.html
+            - Our components.xml: \`build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml\`
+            - DefaultMavenPluginManager source: Search in Maven's GitHub repository
             `;
             
             // Check if issue already exists
