@@ -52,11 +52,46 @@ jobs:
           distribution: 'temurin'
           java-version: '8'
 
+      - name: Verify build environment
+        run: |
+          echo "Java version for building:"
+          java -version
+          echo ""
+          echo "Gradle version:"
+          ./gradlew --version
+          echo ""
+          echo "Project structure:"
+          ls -la build-info-extractor-maven3/
+
       - name: Build build-info-extractor
         run: |
-          ./gradlew :build-info-extractor-maven3:jar -x test
-          echo "Built JAR:"
-          ls -lh build-info-extractor-maven3/build/libs/
+          # Ensure Gradle wrapper is executable
+          chmod +x gradlew
+          
+          # Clean and build (no cache to ensure fresh build)
+          ./gradlew clean :build-info-extractor-maven3:jar -x test --no-build-cache --info
+          
+          echo ""
+          echo "Build output directory:"
+          ls -lh build-info-extractor-maven3/build/libs/ || {
+            echo "❌ ERROR: Build directory doesn't exist!"
+            echo "Build failed completely"
+            exit 1
+          }
+          
+          # Verify uber JAR was created
+          if ! ls build-info-extractor-maven3/build/libs/*-uber.jar 1> /dev/null 2>&1; then
+            echo ""
+            echo "❌ ERROR: Uber JAR was not built!"
+            echo "Build may have failed or task was skipped"
+            echo ""
+            echo "Available files in build/libs:"
+            ls -la build-info-extractor-maven3/build/libs/
+            exit 1
+          fi
+          
+          echo ""
+          echo "✅ Uber JAR successfully built"
 
       - name: Set up test JDK ${{ matrix.java-version }}
         uses: actions/setup-java@v4
@@ -79,11 +114,25 @@ jobs:
 
       - name: Install built extractor JAR
         run: |
-          # Get the actual version from gradle.properties
-          VERSION=$(grep "^version" gradle.properties | grep -v "#" | cut -d'=' -f2 | tr -d ' ')
+          # Get the actual version from build output
+          BUILT_JAR=$(find build-info-extractor-maven3/build/libs/ -name "*-uber.jar" -type f | head -1)
+          
+          if [ -z "$BUILT_JAR" ]; then
+            echo "❌ No uber JAR found!"
+            echo "Available files:"
+            ls -la build-info-extractor-maven3/build/libs/ || echo "Directory doesn't exist"
+            exit 1
+          fi
+          
+          echo "Found JAR: $BUILT_JAR"
+          
+          # Extract version from JAR filename
+          # e.g., build-info-extractor-maven3-2.43.x-SNAPSHOT-uber.jar -> 2.43.x-SNAPSHOT
+          JAR_NAME=$(basename "$BUILT_JAR")
+          VERSION=$(echo "$JAR_NAME" | sed -E 's/build-info-extractor-maven3-(.+)-uber\.jar/\1/')
           
           if [ -z "$VERSION" ]; then
-            echo "⚠️  Could not determine version from gradle.properties"
+            echo "⚠️  Could not extract version from JAR name"
             VERSION="2.43.x-SNAPSHOT"
           fi
           
@@ -92,28 +141,29 @@ jobs:
           # Create cache directory structure
           mkdir -p ~/.jfrog/dependencies/maven/$VERSION
           
-          # Find and copy the built JAR
-          BUILT_JAR=$(find build-info-extractor-maven3/build/libs/ -name "*-uber.jar" | head -1)
-          
-          if [ -z "$BUILT_JAR" ]; then
-            echo "❌ No uber JAR found!"
-            exit 1
-          fi
-          
-          echo "Found JAR: $BUILT_JAR"
-          
           # Copy with correct name
           cp "$BUILT_JAR" ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar
           
           echo "Installed JAR:"
           ls -lh ~/.jfrog/dependencies/maven/$VERSION/
+          
+          # Verify the fix is present
+          echo ""
+          echo "Verifying fix is present in JAR..."
+          if unzip -p ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar \
+              META-INF/plexus/components.xml 2>/dev/null | grep -q "prerequisitesCheckers"; then
+            echo "✅ Fix IS present in the installed JAR"
+          else
+            echo "⚠️  Fix NOT found - this may cause issues with Maven 3.9.12+"
+          fi
 
       - name: Create test Maven project
-        working-directory: ${{ github.workspace }}
         run: |
-          mkdir -p test-project/src/main/java/com/test
+          # Create project structure
+          mkdir -p ${{ github.workspace }}/test-project/src/main/java/com/test
+          cd ${{ github.workspace }}/test-project
           
-          cat > test-project/pom.xml << 'EOF'
+          cat > pom.xml << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <project xmlns="http://maven.apache.org/POM/4.0.0"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -142,7 +192,7 @@ jobs:
           </project>
           EOF
           
-          cat > test-project/src/main/java/com/test/App.java << 'EOF'
+          cat > src/main/java/com/test/App.java << 'EOF'
           package com.test;
           
           import org.apache.commons.lang3.StringUtils;
@@ -154,6 +204,13 @@ jobs:
               }
           }
           EOF
+          
+          # Verify project was created
+          echo ""
+          echo "Test project structure:"
+          ls -la ${{ github.workspace }}/test-project/
+          echo ""
+          echo "✅ Test project created successfully"
 
       - name: Test with JFrog Maven integration
         id: maven_test
@@ -257,15 +314,28 @@ jobs:
           
           echo "Found DefaultMavenPluginManager at: $PLUGIN_MANAGER"
           
-          # Extract field declarations
+          # Extract field declarations (handle both @Inject and final fields)
           echo "=== Fields in DefaultMavenPluginManager ==="
-          grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
-            sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' || true
           
-          # Save for comparison
-          grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
-            sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt || \
-            echo "No fields found" > /tmp/maven-fields.txt
+          # Try @Inject annotated fields first
+          if grep -q "@Inject" "$PLUGIN_MANAGER"; then
+            grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
+              sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt
+          else
+            # Fallback to private final fields (modern Maven uses constructor injection)
+            grep -E "private final " "$PLUGIN_MANAGER" | \
+              sed -E 's/.*private final .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt
+          fi
+          
+          if [ -s /tmp/maven-fields.txt ]; then
+            cat /tmp/maven-fields.txt
+            FIELD_COUNT=$(wc -l < /tmp/maven-fields.txt | tr -d ' ')
+            echo ""
+            echo "Total: $FIELD_COUNT fields"
+          else
+            echo "No fields found (file may have different structure)"
+            echo "Manual review recommended"
+          fi
       
       - name: Compare with components.xml
         run: |
