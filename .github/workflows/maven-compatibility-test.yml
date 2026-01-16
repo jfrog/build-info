@@ -68,8 +68,9 @@ jobs:
           # Ensure Gradle wrapper is executable
           chmod +x gradlew
           
-          # Clean and build (no cache to ensure fresh build)
-          ./gradlew clean :build-info-extractor-maven3:jar -x test --no-build-cache --info
+          # Clean and build ALL artifacts including uber JAR
+          # The 'build' task creates both regular and uber JARs
+          ./gradlew clean :build-info-extractor-maven3:build -x test --no-build-cache --info
           
           echo ""
           echo "Build output directory:"
