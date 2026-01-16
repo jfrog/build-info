@@ -238,7 +238,6 @@ jobs:
 
       - name: Test Maven with build-info extractor
         id: maven_test
-        continue-on-error: true
         working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
@@ -248,8 +247,9 @@ jobs:
           # 1. Download the build-info extractor (if not cached)
           # 2. Load it as a Maven extension  
           # 3. If Maven incompatibility exists, NullPointerException happens immediately
-          # 4. Otherwise, will build successfully with real Artifactory
-          jf mvn clean compile 2>&1 | tee maven-output.log || true
+          # 4. Otherwise, will build successfully
+          # Note: Output is captured even on failure, analysis step (if: always()) will run
+          jf mvn clean compile 2>&1 | tee maven-output.log
           
           echo ""
           echo "Build complete - checking for compatibility issues..."
@@ -334,93 +334,3 @@ jobs:
             ${{ github.workspace }}/test-project/config-output.log
           retention-days: 30
           if-no-files-found: ignore
-
-  create-issue-on-failure:
-    name: Create issue if compatibility test fails
-    needs: [test-maven-compatibility]
-    # Only run on main branch or non-fork PRs (to avoid permission errors on fork PRs)
-    if: failure() && (github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository)
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    
-    steps:
-      - name: Create issue
-        uses: actions/github-script@v7
-        continue-on-error: true
-        with:
-          script: |
-            const title = '🚨 Maven Compatibility Test Failed';
-            const body = `## Maven Compatibility Test Failure
-            
-            The automated Maven compatibility test has detected a failure with one or more Maven versions.
-            
-            **Details:**
-            - Run: ${{ github.run_number }}
-            - Workflow: ${{ github.workflow }}
-            - Triggered by: ${{ github.event_name }}
-            - Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            
-            **Possible Causes:**
-            1. A new Maven version has been released with breaking changes
-            2. New required fields have been added to DefaultMavenPluginManager
-            3. Method signatures have changed in Maven core classes
-            4. New dependencies or requirements were introduced
-            5. Our Plexus components.xml is missing field declarations
-            
-            **Action Required:**
-            1. Check the "Check for new Maven versions" job output to see if new versions were detected
-            2. Check the workflow logs for specific error messages
-            3. Download the failure logs artifact from the workflow run
-            4. Look for error patterns:
-               - \`NullPointerException\` → Missing field in components.xml
-               - \`NoSuchMethodError\` → Method signature changed
-               - \`NoClassDefFoundError\` → Missing dependency
-            5. If NullPointerException on a field:
-               - Identify the missing field name from the error
-               - Download Maven source for that version
-               - Use \`CHECK-MAVEN-FIELDS.sh <maven-version>\` to compare fields
-               - Update \`build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml\`
-               - Add missing field requirements to the ArtifactoryEclipsePluginManager component
-            6. If a new Maven version was detected, update the workflow matrix to include it
-            
-            **Helpful Commands:**
-            \`\`\`bash
-            # Check for missing fields in a specific Maven version
-            ./CHECK-MAVEN-FIELDS.sh <maven-version>
-            
-            # Compare Maven's DefaultMavenPluginManager with our components.xml
-            # Look for new fields that need to be added
-            \`\`\`
-            
-            **Resources:**
-            - Maven release notes: https://maven.apache.org/docs/history.html
-            - Our components.xml: \`build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml\`
-            - DefaultMavenPluginManager source: Search in Maven's GitHub repository
-            `;
-            
-            // Check if issue already exists
-            const issues = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'maven-compatibility'
-            });
-            
-            if (issues.data.length === 0) {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['bug', 'maven-compatibility', 'automated']
-              });
-            } else {
-              console.log('Issue already exists, adding comment instead');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: issues.data[0].number,
-                body: `Another failure detected in run #${{ github.run_number }}\n\nLink: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
-              });
-            }
