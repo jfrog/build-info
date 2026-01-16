@@ -100,6 +100,10 @@
                     <role>org.apache.maven.plugin.PluginValidationManager</role>
                     <field-name>pluginValidationManager</field-name>
                 </requirement>
+                <requirement>
+                    <role>java.util.List</role>
+                    <field-name>prerequisitesCheckers</field-name>
+                </requirement>
             </requirements>
         </component>
         <!-- A class responssible for enforcing metadata resolution from Artifactory, for Maven 3.2.1 and above -->
