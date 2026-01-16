@@ -212,12 +212,26 @@ jobs:
       - name: Configure JFrog Maven (minimal config for testing)
         working-directory: ${{ github.workspace }}/test-project
         run: |
+          # Create a fake server configuration for testing
+          # We're not actually connecting - just need the config file to exist
+          jf config add test-server \
+            --url=http://localhost:8081/artifactory \
+            --user=test \
+            --password=test \
+            --interactive=false || true
+          
+          # Set it as default
+          jf config use test-server || true
+          
           # Create a minimal Maven config so jf mvn can run
           # We're not connecting to Artifactory - just testing if the extractor loads
-          # Use dummy values that won't actually connect
           jf mvn-config \
+            --server-id-resolve=test-server \
+            --server-id-deploy=test-server \
             --repo-resolve-releases=libs-release \
-            --repo-resolve-snapshots=libs-snapshot 2>&1 || true
+            --repo-resolve-snapshots=libs-snapshot \
+            --repo-deploy-releases=libs-release-local \
+            --repo-deploy-snapshots=libs-snapshot-local 2>&1 || true
           
           echo "✅ Maven config created (for extractor testing only)"
 
