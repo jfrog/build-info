@@ -1,0 +1,346 @@
+name: Maven Compatibility Test
+
+on:
+  # Run on PRs and pushes to main branches
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  
+  # Run weekly to catch new Maven releases
+  schedule:
+    - cron: '0 0 * * 1'  # Every Monday at midnight UTC
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test-maven-compatibility:
+    name: Test with Maven ${{ matrix.maven-version }}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      fail-fast: false  # Test all versions even if one fails
+      matrix:
+        maven-version:
+          - '3.8.8'   # Stable older version
+          - '3.9.0'   # First 3.9.x
+          - '3.9.6'   # Mid 3.9.x
+          - '3.9.9'   # Latest before the issue
+          - '3.9.11'  # Last known working
+          - '3.9.12'  # Version that caused the issue
+          - '4.0.0-beta-4'  # Maven 4 pre-release
+        java-version:
+          - '8'
+          - '11'
+          - '17'
+          - '21'
+        exclude:
+          # Maven 4 requires Java 17+
+          - maven-version: '4.0.0-beta-4'
+            java-version: '8'
+          - maven-version: '4.0.0-beta-4'
+            java-version: '11'
+
+    steps:
+      - name: Checkout build-info
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 8 for building
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+
+      - name: Build build-info-extractor
+        run: |
+          ./gradlew :build-info-extractor-maven3:jar -x test
+          echo "Built JAR:"
+          ls -lh build-info-extractor-maven3/build/libs/
+
+      - name: Set up test JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java-version }}
+
+      - name: Set up Maven ${{ matrix.maven-version }}
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: ${{ matrix.maven-version }}
+
+      - name: Verify Maven version
+        run: |
+          mvn --version
+          echo "M2_HOME=$M2_HOME"
+
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+
+      - name: Install built extractor JAR
+        run: |
+          # Get the actual version from gradle.properties
+          VERSION=$(grep "^version=" gradle.properties | cut -d'=' -f2)
+          echo "Extractor version: $VERSION"
+          
+          # Create cache directory structure
+          mkdir -p ~/.jfrog/dependencies/maven/$VERSION
+          
+          # Copy built JAR
+          cp build-info-extractor-maven3/build/libs/build-info-extractor-maven3-*-uber.jar \
+             ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar
+          
+          echo "Installed JAR:"
+          ls -lh ~/.jfrog/dependencies/maven/$VERSION/
+
+      - name: Create test Maven project
+        run: |
+          mkdir -p test-project/src/main/java/com/test
+          
+          cat > test-project/pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                   http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              
+              <groupId>com.jfrog.test</groupId>
+              <artifactId>maven-compatibility-test</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+              
+              <properties>
+                  <maven.compiler.source>8</maven.compiler.source>
+                  <maven.compiler.target>8</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+              
+              <dependencies>
+                  <dependency>
+                      <groupId>org.apache.commons</groupId>
+                      <artifactId>commons-lang3</artifactId>
+                      <version>3.14.0</version>
+                  </dependency>
+              </dependencies>
+          </project>
+          EOF
+          
+          cat > test-project/src/main/java/com/test/App.java << 'EOF'
+          package com.test;
+          
+          import org.apache.commons.lang3.StringUtils;
+          
+          public class App {
+              public static void main(String[] args) {
+                  System.out.println("Maven version test: " + 
+                      StringUtils.capitalize("success"));
+              }
+          }
+          EOF
+
+      - name: Test with JFrog Maven integration
+        id: maven_test
+        continue-on-error: true
+        run: |
+          cd test-project
+          
+          # Run Maven through JFrog CLI
+          jf mvn clean compile \
+            --build-name "maven-compat-test-${{ matrix.maven-version }}" \
+            --build-number "${{ github.run_number }}"
+
+      - name: Check for compatibility errors
+        if: failure()
+        run: |
+          cd test-project
+          
+          # Re-run with verbose output to capture error
+          jf mvn clean compile -X 2>&1 | tee maven-output.log || true
+          
+          # Check for various compatibility issues
+          if grep -q "NullPointerException.*is null" maven-output.log; then
+            echo "❌ FAILURE: NullPointerException detected!"
+            echo "Maven ${{ matrix.maven-version }} may have compatibility issues!"
+            echo ""
+            echo "This could indicate missing field declarations in components.xml"
+            echo ""
+            echo "Error details:"
+            grep -B3 -A5 "NullPointerException" maven-output.log | head -20
+            
+            # Fail the workflow
+            exit 1
+          elif grep -q "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log; then
+            echo "❌ FAILURE: Class compatibility error detected!"
+            echo "Maven ${{ matrix.maven-version }} has breaking changes!"
+            echo ""
+            grep -B3 -A5 "Error" maven-output.log | head -20
+            exit 1
+          elif grep -q "Could not transfer artifact\|Connection refused\|UnknownHostException" maven-output.log; then
+            echo "⚠️  Network/repository issue - not a compatibility problem"
+            echo "Skipping failure..."
+            # Don't fail - network issues aren't compatibility issues
+          else
+            echo "❓ Build failed for unknown reasons"
+            echo "Last 50 lines of output:"
+            tail -50 maven-output.log
+            # Fail to be safe - investigate unknown failures
+            exit 1
+          fi
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-logs-maven-${{ matrix.maven-version }}-java-${{ matrix.java-version }}
+          path: test-project/maven-output.log
+          retention-days: 30
+
+      - name: Report success
+        if: success()
+        run: |
+          echo "✅ Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
+
+  check-new-maven-fields:
+    name: Check for new DefaultMavenPluginManager fields
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout build-info
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      
+      - name: Download latest Maven source
+        run: |
+          # Get latest Maven release version
+          LATEST_MAVEN=$(curl -s https://api.github.com/repos/apache/maven/releases/latest | \
+            grep '"tag_name":' | sed -E 's/.*"maven-([^"]+)".*/\1/')
+          echo "Latest Maven version: $LATEST_MAVEN"
+          
+          # Download Maven source
+          curl -L "https://github.com/apache/maven/archive/refs/tags/maven-${LATEST_MAVEN}.tar.gz" \
+            -o maven-source.tar.gz
+          
+          tar -xzf maven-source.tar.gz
+          
+          # Find DefaultMavenPluginManager
+          MAVEN_DIR=$(find . -name "maven-${LATEST_MAVEN}" -type d | head -1)
+          PLUGIN_MANAGER=$(find "$MAVEN_DIR" -name "DefaultMavenPluginManager.java" | head -1)
+          
+          echo "Found DefaultMavenPluginManager at: $PLUGIN_MANAGER"
+          
+          # Extract field declarations
+          echo "=== Fields in DefaultMavenPluginManager ==="
+          grep -E "private .* (inject|Inject)" "$PLUGIN_MANAGER" || \
+            grep -E "private final .*;" "$PLUGIN_MANAGER" | head -20
+          
+          # Save for comparison
+          grep -E "private .* (inject|Inject)" "$PLUGIN_MANAGER" > /tmp/maven-fields.txt || \
+            grep -E "private final .*;" "$PLUGIN_MANAGER" > /tmp/maven-fields.txt
+      
+      - name: Compare with components.xml
+        run: |
+          echo "=== Fields in our components.xml ==="
+          grep -E "<field-name>.*</field-name>" \
+            build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml | \
+            grep -A2 "ArtifactoryEclipsePluginManager" || \
+            grep -E "<field-name>.*</field-name>" \
+            build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml | \
+            sed 's/.*<field-name>\(.*\)<\/field-name>.*/\1/' | sort > /tmp/our-fields.txt
+          
+          cat /tmp/our-fields.txt
+          
+          echo ""
+          echo "⚠️  If new fields appear in Maven's DefaultMavenPluginManager,"
+          echo "    they should be added to our components.xml file!"
+
+  create-issue-on-failure:
+    name: Create issue if compatibility test fails
+    needs: [test-maven-compatibility]
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    
+    steps:
+      - name: Create issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Maven Compatibility Test Failed';
+            const body = `## Maven Compatibility Test Failure
+            
+            The automated Maven compatibility test has detected a failure with one or more Maven versions.
+            
+            **Details:**
+            - Run: ${{ github.run_number }}
+            - Workflow: ${{ github.workflow }}
+            - Triggered by: ${{ github.event_name }}
+            - Link: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            
+            **Possible Causes:**
+            1. A new Maven version has been released with breaking changes
+            2. New required fields have been added to DefaultMavenPluginManager
+            3. Method signatures have changed in Maven core classes
+            4. New dependencies or requirements were introduced
+            5. Our Plexus components.xml is missing field declarations
+            
+            **Action Required:**
+            1. Check the workflow logs for specific error messages
+            2. Download the failure logs artifact from the workflow run
+            3. Look for error patterns:
+               - \`NullPointerException\` → Missing field in components.xml
+               - \`NoSuchMethodError\` → Method signature changed
+               - \`NoClassDefFoundError\` → Missing dependency
+            4. If NullPointerException on a field:
+               - Identify the missing field name from the error
+               - Download Maven source for that version
+               - Find new fields in \`DefaultMavenPluginManager.java\`
+               - Update \`build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml\`
+               - Add missing field requirements to the ArtifactoryEclipsePluginManager component
+            
+            **Helpful Commands:**
+            \`\`\`bash
+            # Check for missing fields
+            ./CHECK-MAVEN-FIELDS.sh <maven-version>
+            
+            # Test locally
+            ./FINAL-TEST.sh
+            \`\`\`
+            
+            **References:**
+            - Maven 3.9.12 compatibility issue: https://github.com/jfrog/build-info/issues/841
+            - Example fix: prerequisitesCheckers field addition
+            - Maven release notes: https://maven.apache.org/docs/history.html
+            `;
+            
+            // Check if issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'maven-compatibility'
+            });
+            
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['bug', 'maven-compatibility', 'automated']
+              });
+            } else {
+              console.log('Issue already exists, adding comment instead');
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `Another failure detected in run #${{ github.run_number }}\n\nLink: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`
+              });
+            }
