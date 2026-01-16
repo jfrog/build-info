@@ -246,6 +246,8 @@ jobs:
         id: maven_test
         working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
+          set -o pipefail  # Ensure pipeline fails if jf mvn fails
+          
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
           echo ""
           
@@ -254,81 +256,54 @@ jobs:
           # 2. Load it as a Maven extension  
           # 3. If Maven incompatibility exists, NullPointerException happens immediately
           # 4. Otherwise, will build successfully
-          # Note: Output is captured even on failure, analysis step (if: always()) will run
           jf mvn clean compile 2>&1 | tee maven-output.log
           
           echo ""
-          echo "Build complete - checking for compatibility issues..."
+          echo "Build complete - no compatibility issues detected!"
 
-      - name: Check for compatibility errors
-        if: always()
+      - name: Analyze build failure (if any)
+        if: failure()
+        continue-on-error: true
         working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
         run: |
-          # Check if the test actually ran
-          if [ ! -f maven-output.log ]; then
-            echo "❌ ERROR: No output log found!"
-            echo "This usually means configuration or test setup failed."
-            echo "Check previous steps for errors."
-            exit 1
-          fi
-          
-          echo "Analyzing Maven output..."
+          echo "============================================"
+          echo "Build Failure Analysis"
+          echo "============================================"
           echo ""
           
-          # Check for success
-          if grep -q "BUILD SUCCESS" maven-output.log; then
-            echo "✅ Maven build completed successfully"
-            echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
+          if [ ! -f maven-output.log ]; then
+            echo "❌ No maven-output.log found - build may have failed before Maven ran"
             exit 0
           fi
           
-          # Build failed - check for Maven COMPATIBILITY issues (not build issues)
-          echo "⚠️  Maven build failed - analyzing for compatibility errors..."
+          echo "Checking for compatibility errors..."
           echo ""
           
           # Check for Maven version compatibility issues
-          if grep -q "NullPointerException.*is null" maven-output.log; then
+          if grep -q "NullPointerException" maven-output.log; then
             echo "❌ COMPATIBILITY ERROR: NullPointerException detected!"
+            echo ""
             echo "Maven ${{ matrix.maven-version }} is INCOMPATIBLE with build-info extractor"
+            echo "This likely indicates missing field declarations in components.xml"
             echo ""
-            echo "This indicates missing field declarations in components.xml"
-            echo ""
-            echo "Error details:"
-            grep -B3 -A5 "NullPointerException" maven-output.log | head -20
-            exit 1
+            echo "Error context:"
+            grep -B5 -A10 "NullPointerException" maven-output.log | head -30
             
           elif grep -q "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log; then
-            echo "❌ COMPATIBILITY ERROR: Class/method compatibility issue detected!"
-            echo "Maven ${{ matrix.maven-version }} is INCOMPATIBLE with build-info extractor"
+            echo "❌ COMPATIBILITY ERROR: Class/method compatibility issue!"
             echo ""
-            echo "Error details:"
-            grep -B3 -A5 "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log | head -20
-            exit 1
+            echo "Error context:"
+            grep -B5 -A10 "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log | head -30
             
           else
-            # Build failed but not due to Maven compatibility - could be:
-            # - Compilation errors (test code issue)
-            # - Network issues (transient)
-            # - Missing dependencies (test setup issue)
-            echo "⚠️  Build failed, but NO Maven compatibility errors detected"
+            echo "ℹ️  No obvious Maven compatibility errors detected"
             echo ""
-            
-            # Check if extractor actually ran
-            if grep -q "Running Mvn\|Running mvn command\|Downloading JFrog's Dependency\|Initializing Artifactory Build-Info Recording" maven-output.log; then
-              echo "✅ Build-info extractor loaded and ran successfully"
-              echo "Maven ${{ matrix.maven-version }} with Java ${{ matrix.java-version }} - COMPATIBLE"
-              echo ""
-              echo "Note: Build failed for other reasons (not Maven compatibility)"
-              echo "Last 30 lines of output:"
-              tail -30 maven-output.log
-              exit 0
-            else
-              echo "❓ Extractor may not have loaded - manual review needed"
-              echo "Last 50 lines of output:"
-              tail -50 maven-output.log
-              exit 1
-            fi
+            echo "Last 50 lines of output:"
+            tail -50 maven-output.log
           fi
+          
+          echo ""
+          echo "Full logs available in artifacts"
 
       - name: Upload logs (on failure)
         if: failure()
