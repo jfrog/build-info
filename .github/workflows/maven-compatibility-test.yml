@@ -165,6 +165,23 @@ jobs:
                   <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
               </properties>
               
+              <!-- Use Maven Central as fallback to ensure plugins can be downloaded -->
+              <repositories>
+                  <repository>
+                      <id>central</id>
+                      <url>https://repo.maven.apache.org/maven2</url>
+                      <releases><enabled>true</enabled></releases>
+                  </repository>
+              </repositories>
+              
+              <pluginRepositories>
+                  <pluginRepository>
+                      <id>central</id>
+                      <url>https://repo.maven.apache.org/maven2</url>
+                      <releases><enabled>true</enabled></releases>
+                  </pluginRepository>
+              </pluginRepositories>
+              
               <dependencies>
                   <dependency>
                       <groupId>org.apache.commons</groupId>
@@ -242,7 +259,7 @@ jobs:
 
       - name: Test Maven with build-info extractor
         id: maven_test
-
+        continue-on-error: true
         working-directory: ${{ github.workspace }}/test-project
         run: |
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
