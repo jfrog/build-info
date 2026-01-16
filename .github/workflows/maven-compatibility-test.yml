@@ -212,6 +212,36 @@ jobs:
           echo ""
           echo "✅ Test project created successfully"
 
+      - name: Configure Maven with JFrog
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
+        env:
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+        run: |
+          echo "Configuring Maven for JFrog CLI..."
+          
+          # Ensure we have a valid server config (required by jf mvn)
+          if [ -z "$PLATFORM_URL" ]; then
+            echo "⚠️  No Artifactory secrets - creating dummy server for testing"
+            jf config add test-server \
+              --url=http://localhost:8081/artifactory \
+              --access-token=dummy \
+              --interactive=false --overwrite=true
+            SERVER_ID="test-server"
+          else
+            echo "✅ Using real Artifactory from secrets"
+            SERVER_ID="setup-jfrog-cli-server"
+          fi
+          
+          # Create Maven config (required by jf mvn, even for compatibility testing)
+          # Configure deployment only to avoid overriding resolution (Maven Central stays default)
+          jf mvn-config \
+            --server-id-deploy=$SERVER_ID \
+            --repo-deploy-releases=maven-local \
+            --repo-deploy-snapshots=maven-local
+          
+          echo "✅ Maven config created"
+          echo "Note: Resolution NOT configured - Maven will use Maven Central from pom.xml"
+
       - name: Test Maven with build-info extractor
         id: maven_test
         working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
