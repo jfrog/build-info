@@ -80,20 +80,36 @@ jobs:
       - name: Install built extractor JAR
         run: |
           # Get the actual version from gradle.properties
-          VERSION=$(grep "^version=" gradle.properties | cut -d'=' -f2)
+          VERSION=$(grep "^version" gradle.properties | grep -v "#" | cut -d'=' -f2 | tr -d ' ')
+          
+          if [ -z "$VERSION" ]; then
+            echo "⚠️  Could not determine version from gradle.properties"
+            VERSION="2.43.x-SNAPSHOT"
+          fi
+          
           echo "Extractor version: $VERSION"
           
           # Create cache directory structure
           mkdir -p ~/.jfrog/dependencies/maven/$VERSION
           
-          # Copy built JAR
-          cp build-info-extractor-maven3/build/libs/build-info-extractor-maven3-*-uber.jar \
-             ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar
+          # Find and copy the built JAR
+          BUILT_JAR=$(find build-info-extractor-maven3/build/libs/ -name "*-uber.jar" | head -1)
+          
+          if [ -z "$BUILT_JAR" ]; then
+            echo "❌ No uber JAR found!"
+            exit 1
+          fi
+          
+          echo "Found JAR: $BUILT_JAR"
+          
+          # Copy with correct name
+          cp "$BUILT_JAR" ~/.jfrog/dependencies/maven/$VERSION/build-info-extractor-maven3-$VERSION-uber.jar
           
           echo "Installed JAR:"
           ls -lh ~/.jfrog/dependencies/maven/$VERSION/
 
       - name: Create test Maven project
+        working-directory: ${{ github.workspace }}
         run: |
           mkdir -p test-project/src/main/java/com/test
           
@@ -142,9 +158,8 @@ jobs:
       - name: Test with JFrog Maven integration
         id: maven_test
         continue-on-error: true
+        working-directory: ${{ github.workspace }}/test-project
         run: |
-          cd test-project
-          
           # Run Maven through JFrog CLI
           jf mvn clean compile \
             --build-name "maven-compat-test-${{ matrix.maven-version }}" \
@@ -152,9 +167,8 @@ jobs:
 
       - name: Check for compatibility errors
         if: failure()
+        working-directory: ${{ github.workspace }}/test-project
         run: |
-          cd test-project
-          
           # Re-run with verbose output to capture error
           jf mvn clean compile -X 2>&1 | tee maven-output.log || true
           
@@ -193,8 +207,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: failure-logs-maven-${{ matrix.maven-version }}-java-${{ matrix.java-version }}
-          path: test-project/maven-output.log
+          path: ${{ github.workspace }}/test-project/maven-output.log
           retention-days: 30
+          if-no-files-found: ignore
 
       - name: Report success
         if: success()
@@ -222,6 +237,10 @@ jobs:
             grep '"tag_name":' | sed -E 's/.*"maven-([^"]+)".*/\1/')
           echo "Latest Maven version: $LATEST_MAVEN"
           
+          # Create temp directory
+          TEMP_DIR=$(mktemp -d)
+          cd "$TEMP_DIR"
+          
           # Download Maven source
           curl -L "https://github.com/apache/maven/archive/refs/tags/maven-${LATEST_MAVEN}.tar.gz" \
             -o maven-source.tar.gz
@@ -229,35 +248,64 @@ jobs:
           tar -xzf maven-source.tar.gz
           
           # Find DefaultMavenPluginManager
-          MAVEN_DIR=$(find . -name "maven-${LATEST_MAVEN}" -type d | head -1)
-          PLUGIN_MANAGER=$(find "$MAVEN_DIR" -name "DefaultMavenPluginManager.java" | head -1)
+          PLUGIN_MANAGER=$(find . -name "DefaultMavenPluginManager.java" | head -1)
+          
+          if [ -z "$PLUGIN_MANAGER" ]; then
+            echo "⚠️  Could not find DefaultMavenPluginManager.java"
+            exit 0
+          fi
           
           echo "Found DefaultMavenPluginManager at: $PLUGIN_MANAGER"
           
           # Extract field declarations
           echo "=== Fields in DefaultMavenPluginManager ==="
-          grep -E "private .* (inject|Inject)" "$PLUGIN_MANAGER" || \
-            grep -E "private final .*;" "$PLUGIN_MANAGER" | head -20
+          grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
+            sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' || true
           
           # Save for comparison
-          grep -E "private .* (inject|Inject)" "$PLUGIN_MANAGER" > /tmp/maven-fields.txt || \
-            grep -E "private final .*;" "$PLUGIN_MANAGER" > /tmp/maven-fields.txt
+          grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
+            sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt || \
+            echo "No fields found" > /tmp/maven-fields.txt
       
       - name: Compare with components.xml
         run: |
           echo "=== Fields in our components.xml ==="
-          grep -E "<field-name>.*</field-name>" \
-            build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml | \
-            grep -A2 "ArtifactoryEclipsePluginManager" || \
-            grep -E "<field-name>.*</field-name>" \
-            build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml | \
-            sed 's/.*<field-name>\(.*\)<\/field-name>.*/\1/' | sort > /tmp/our-fields.txt
+          
+          # Extract field names from the ArtifactoryEclipsePluginManager component
+          COMPONENTS_FILE="build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml"
+          
+          if [ ! -f "$COMPONENTS_FILE" ]; then
+            echo "⚠️  components.xml not found at $COMPONENTS_FILE"
+            exit 0
+          fi
+          
+          # Get all field-name entries
+          grep -E "<field-name>.*</field-name>" "$COMPONENTS_FILE" | \
+            sed 's/.*<field-name>\(.*\)<\/field-name>.*/\1/' | \
+            sort | uniq > /tmp/our-fields.txt
           
           cat /tmp/our-fields.txt
           
+          # Compare if we have maven fields
+          if [ -f /tmp/maven-fields.txt ]; then
+            echo ""
+            echo "=== Comparing fields ==="
+            
+            MISSING=$(comm -23 /tmp/maven-fields.txt /tmp/our-fields.txt || true)
+            
+            if [ -n "$MISSING" ]; then
+              echo "⚠️  NEW FIELDS in Maven (not in our components.xml):"
+              echo "$MISSING"
+              echo ""
+              echo "These fields should be reviewed and possibly added!"
+            else
+              echo "✅ All Maven fields are covered"
+            fi
+          fi
+          
           echo ""
-          echo "⚠️  If new fields appear in Maven's DefaultMavenPluginManager,"
-          echo "    they should be added to our components.xml file!"
+          echo "💡 If new fields appear in Maven's DefaultMavenPluginManager,"
+          echo "   they should be added to our components.xml file!"
 
   create-issue-on-failure:
     name: Create issue if compatibility test fails
