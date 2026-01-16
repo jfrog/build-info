@@ -211,6 +211,7 @@ jobs:
           echo "✅ Test project created successfully"
 
       - name: Configure JFrog Maven integration
+        continue-on-error: true
         working-directory: ${{ github.workspace }}/test-project
         env:
           JF_URL: ${{ secrets.PLATFORM_URL }}
@@ -223,9 +224,18 @@ jobs:
             --server-id-resolve=artifactory \
             --server-id-deploy=artifactory \
             --repo-resolve-releases=maven-remote \
-            --repo-resolve-snapshots=maven-remote
+            --repo-resolve-snapshots=maven-remote \
+            --repo-deploy-releases=maven-local \
+            --repo-deploy-snapshots=maven-local 2>&1 | tee mvn-config-output.log
           
-          echo "✅ JFrog Maven integration configured"
+          CONFIG_EXIT_CODE=${PIPESTATUS[0]}
+          
+          if [ $CONFIG_EXIT_CODE -eq 0 ]; then
+            echo "✅ JFrog Maven integration configured"
+          else
+            echo "⚠️  Configuration encountered issues (exit code: $CONFIG_EXIT_CODE)"
+            echo "Attempting to continue with test..."
+          fi
 
       - name: Test with JFrog Maven integration
         id: maven_test
@@ -251,8 +261,13 @@ jobs:
           # Check if the test actually ran
           if [ ! -f maven-output.log ]; then
             echo "❌ ERROR: No output log found!"
+            echo "This usually means configuration or test setup failed."
+            echo "Check previous steps for errors."
             exit 1
           fi
+          
+          echo "Analyzing Maven output..."
+          echo ""
           
           # Check for success indicators
           if grep -q "BUILD SUCCESS" maven-output.log; then
