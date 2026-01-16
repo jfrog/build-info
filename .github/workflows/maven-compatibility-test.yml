@@ -1,23 +1,76 @@
 name: Maven Compatibility Test
 
+# This workflow proactively tests build-info-extractor-maven3 compatibility with multiple Maven versions
+# to catch breaking changes early (e.g., new required fields in DefaultMavenPluginManager).
+#
+# When a compatibility issue is detected:
+# 1. Check error logs for NullPointerException, NoSuchMethodError, etc.
+# 2. Compare Maven's DefaultMavenPluginManager with our components.xml
+# 3. Add missing field declarations to components.xml
+# 4. See CHECK-MAVEN-FIELDS.sh for a helper script to identify missing fields
+
 on:
-  # Run on PRs and pushes to main branches
-  push:
-    branches: [ master, main ]
+  # Run on PRs for testing (remove after initial validation)
   pull_request:
     branches: [ master, main ]
   
-  # Run weekly to catch new Maven releases
+  # Run nightly to catch new Maven releases
   schedule:
-    - cron: '0 0 * * 1'  # Every Monday at midnight UTC
+    - cron: '0 2 * * *'  # Every night at 2 AM UTC
   
-  # Allow manual trigger
+  # Allow manual trigger for testing
   workflow_dispatch:
 
 jobs:
+  check-latest-maven-versions:
+    name: Check for new Maven versions
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Get latest Maven versions from Maven Central
+        id: maven-versions
+        run: |
+          echo "Fetching latest Maven versions from Maven Central..."
+          
+          # Fetch Maven metadata
+          curl -s https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/maven-metadata.xml > maven-metadata.xml
+          
+          # Extract all versions
+          VERSIONS=$(grep -oP '(?<=<version>)[^<]+' maven-metadata.xml | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | sort -V)
+          
+          echo "Available Maven versions:"
+          echo "$VERSIONS"
+          
+          # Get latest versions for each major.minor
+          LATEST_3_8=$(echo "$VERSIONS" | grep '^3\.8\.' | tail -1)
+          LATEST_3_9=$(echo "$VERSIONS" | grep '^3\.9\.' | tail -1)
+          LATEST_4_0=$(echo "$VERSIONS" | grep '^4\.0\.' | tail -1)
+          
+          echo ""
+          echo "Latest versions by series:"
+          echo "  3.8.x: $LATEST_3_8"
+          echo "  3.9.x: $LATEST_3_9"
+          echo "  4.0.x: $LATEST_4_0"
+          
+          # Check if we need to update the workflow
+          echo ""
+          echo "Current versions in workflow: 3.8.8, 3.9.0, 3.9.6, 3.9.9, 3.9.11, 3.9.12, 4.0.0-beta-4"
+          echo ""
+          
+          if [ "$LATEST_3_9" != "3.9.12" ]; then
+            echo "⚠️  WARNING: New Maven 3.9.x version available: $LATEST_3_9"
+            echo "Consider updating the workflow matrix to include this version"
+          fi
+          
+          if [ -n "$LATEST_4_0" ]; then
+            echo "ℹ️  Maven 4.0 stable version found: $LATEST_4_0"
+            echo "Consider testing with this version"
+          fi
+
   test-maven-compatibility:
     name: Test with Maven ${{ matrix.maven-version }}
     runs-on: ubuntu-latest
+    needs: check-latest-maven-versions
     
     strategy:
       fail-fast: false  # Test all versions even if one fails
@@ -28,8 +81,8 @@ jobs:
           - '3.9.6'   # Mid 3.9.x
           - '3.9.9'   # Later 3.9.x
           - '3.9.11'  # Recent 3.9.x
-          - '3.9.12'  # Latest 3.9.x
-          - '4.0.0-beta-4'  # Maven 4 pre-release
+          - '3.9.12'  # Latest 3.9.x (update periodically)
+          - '4.0.0-beta-4'  # Maven 4 pre-release (update when stable releases)
         java-version:
           - '8'
           - '11'
@@ -354,110 +407,6 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
-  check-new-maven-fields:
-    name: Check for new DefaultMavenPluginManager fields
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout build-info
-        uses: actions/checkout@v4
-      
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      
-      - name: Download latest Maven source
-        run: |
-          # Get latest Maven release version
-          LATEST_MAVEN=$(curl -s https://api.github.com/repos/apache/maven/releases/latest | \
-            grep '"tag_name":' | sed -E 's/.*"maven-([^"]+)".*/\1/')
-          echo "Latest Maven version: $LATEST_MAVEN"
-          
-          # Create temp directory
-          TEMP_DIR=$(mktemp -d)
-          cd "$TEMP_DIR"
-          
-          # Download Maven source
-          curl -L "https://github.com/apache/maven/archive/refs/tags/maven-${LATEST_MAVEN}.tar.gz" \
-            -o maven-source.tar.gz
-          
-          tar -xzf maven-source.tar.gz
-          
-          # Find DefaultMavenPluginManager
-          PLUGIN_MANAGER=$(find . -name "DefaultMavenPluginManager.java" | head -1)
-          
-          if [ -z "$PLUGIN_MANAGER" ]; then
-            echo "⚠️  Could not find DefaultMavenPluginManager.java"
-            exit 0
-          fi
-          
-          echo "Found DefaultMavenPluginManager at: $PLUGIN_MANAGER"
-          
-          # Extract field declarations (handle both @Inject and final fields)
-          echo "=== Fields in DefaultMavenPluginManager ==="
-          
-          # Try @Inject annotated fields first
-          if grep -q "@Inject" "$PLUGIN_MANAGER"; then
-            grep -B1 "@Inject" "$PLUGIN_MANAGER" | grep "private" | \
-              sed -E 's/.*private .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt
-          else
-            # Fallback to private final fields (modern Maven uses constructor injection)
-            grep -E "private final " "$PLUGIN_MANAGER" | \
-              sed -E 's/.*private final .* ([a-zA-Z0-9_]+);/\1/' > /tmp/maven-fields.txt
-          fi
-          
-          if [ -s /tmp/maven-fields.txt ]; then
-            cat /tmp/maven-fields.txt
-            FIELD_COUNT=$(wc -l < /tmp/maven-fields.txt | tr -d ' ')
-            echo ""
-            echo "Total: $FIELD_COUNT fields"
-          else
-            echo "No fields found (file may have different structure)"
-            echo "Manual review recommended"
-          fi
-      
-      - name: Compare with components.xml
-        run: |
-          echo "=== Fields in our components.xml ==="
-          
-          # Extract field names from the ArtifactoryEclipsePluginManager component
-          COMPONENTS_FILE="build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml"
-          
-          if [ ! -f "$COMPONENTS_FILE" ]; then
-            echo "⚠️  components.xml not found at $COMPONENTS_FILE"
-            exit 0
-          fi
-          
-          # Get all field-name entries
-          grep -E "<field-name>.*</field-name>" "$COMPONENTS_FILE" | \
-            sed 's/.*<field-name>\(.*\)<\/field-name>.*/\1/' | \
-            sort | uniq > /tmp/our-fields.txt
-          
-          cat /tmp/our-fields.txt
-          
-          # Compare if we have maven fields
-          if [ -f /tmp/maven-fields.txt ]; then
-            echo ""
-            echo "=== Comparing fields ==="
-            
-            MISSING=$(comm -23 /tmp/maven-fields.txt /tmp/our-fields.txt || true)
-            
-            if [ -n "$MISSING" ]; then
-              echo "⚠️  NEW FIELDS in Maven (not in our components.xml):"
-              echo "$MISSING"
-              echo ""
-              echo "These fields should be reviewed and possibly added!"
-            else
-              echo "✅ All Maven fields are covered"
-            fi
-          fi
-          
-          echo ""
-          echo "💡 If new fields appear in Maven's DefaultMavenPluginManager,"
-          echo "   they should be added to our components.xml file!"
-
   create-issue-on-failure:
     name: Create issue if compatibility test fails
     needs: [test-maven-compatibility]
@@ -492,18 +441,20 @@ jobs:
             5. Our Plexus components.xml is missing field declarations
             
             **Action Required:**
-            1. Check the workflow logs for specific error messages
-            2. Download the failure logs artifact from the workflow run
-            3. Look for error patterns:
+            1. Check the "Check for new Maven versions" job output to see if new versions were detected
+            2. Check the workflow logs for specific error messages
+            3. Download the failure logs artifact from the workflow run
+            4. Look for error patterns:
                - \`NullPointerException\` → Missing field in components.xml
                - \`NoSuchMethodError\` → Method signature changed
                - \`NoClassDefFoundError\` → Missing dependency
-            4. If NullPointerException on a field:
+            5. If NullPointerException on a field:
                - Identify the missing field name from the error
                - Download Maven source for that version
-               - Find new fields in \`DefaultMavenPluginManager.java\`
+               - Use \`CHECK-MAVEN-FIELDS.sh <maven-version>\` to compare fields
                - Update \`build-info-extractor-maven3/src/main/resources/META-INF/plexus/components.xml\`
                - Add missing field requirements to the ArtifactoryEclipsePluginManager component
+            6. If a new Maven version was detected, update the workflow matrix to include it
             
             **Helpful Commands:**
             \`\`\`bash
