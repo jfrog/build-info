@@ -209,6 +209,18 @@ jobs:
           echo ""
           echo "✅ Test project created successfully"
 
+      - name: Configure JFrog Maven (minimal config for testing)
+        working-directory: ${{ github.workspace }}/test-project
+        run: |
+          # Create a minimal Maven config so jf mvn can run
+          # We're not connecting to Artifactory - just testing if the extractor loads
+          # Use dummy values that won't actually connect
+          jf mvn-config \
+            --repo-resolve-releases=libs-release \
+            --repo-resolve-snapshots=libs-snapshot 2>&1 || true
+          
+          echo "✅ Maven config created (for extractor testing only)"
+
       - name: Test Maven with build-info extractor
         id: maven_test
         continue-on-error: true
@@ -217,7 +229,7 @@ jobs:
           echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
           echo ""
           
-          # Use jf mvn without any server configuration
+          # Run jf mvn to load the build-info extractor
           # The extractor will be loaded, and if there are compatibility issues
           # (like missing fields in components.xml), they will appear immediately
           # 
