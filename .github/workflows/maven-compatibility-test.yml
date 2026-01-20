@@ -37,8 +37,8 @@ jobs:
           # Fetch Maven metadata
           curl -s https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/maven-metadata.xml > maven-metadata.xml
           
-          # Extract all versions
-          VERSIONS=$(grep -oP '(?<=<version>)[^<]+' maven-metadata.xml | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' | sort -V)
+          # Extract all stable versions (exclude alpha/beta/RC)
+          VERSIONS=$(grep -oP '(?<=<version>)[^<]+' maven-metadata.xml | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
           
           echo "Available Maven versions:"
           echo "$VERSIONS"
