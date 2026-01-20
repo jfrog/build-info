@@ -10,10 +10,6 @@ name: Maven Compatibility Test
 # 4. See CHECK-MAVEN-FIELDS.sh for a helper script to identify missing fields
 
 on:
-  # Run on PRs for testing (remove after initial validation)
-  pull_request:
-    branches: [ master, main ]
-  
   # Run nightly to catch new Maven releases
   schedule:
     - cron: '0 2 * * *'  # Every night at 2 AM UTC
