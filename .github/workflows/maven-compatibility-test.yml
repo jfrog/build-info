@@ -1,0 +1,313 @@
+name: Maven Compatibility Test
+
+# This workflow proactively tests build-info-extractor-maven3 compatibility with multiple Maven versions
+# to catch breaking changes early (e.g., new required fields in DefaultMavenPluginManager).
+#
+# When a compatibility issue is detected:
+# 1. Check error logs for NullPointerException, NoSuchMethodError, etc.
+# 2. Compare Maven's DefaultMavenPluginManager with our components.xml
+# 3. Add missing field declarations to components.xml
+# 4. See CHECK-MAVEN-FIELDS.sh for a helper script to identify missing fields
+
+on:
+  # Run nightly to catch new Maven releases
+  schedule:
+    - cron: '0 2 * * *'  # Every night at 2 AM UTC
+  
+  # Allow manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  check-latest-maven-versions:
+    name: Determine Maven versions to test
+    runs-on: ubuntu-latest
+    outputs:
+      maven-versions: ${{ steps.set-versions.outputs.maven-versions }}
+    
+    steps:
+      - name: Get latest Maven versions from Maven Central
+        id: maven-versions
+        run: |
+          echo "Fetching latest Maven versions from Maven Central..."
+          
+          # Fetch Maven metadata
+          curl -s https://repo.maven.apache.org/maven2/org/apache/maven/maven-core/maven-metadata.xml > maven-metadata.xml
+          
+          # Extract all stable versions (exclude alpha/beta/RC)
+          VERSIONS=$(grep -oP '(?<=<version>)[^<]+' maven-metadata.xml | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
+          
+          echo "Available Maven versions:"
+          echo "$VERSIONS"
+          
+          # Get latest versions for each major.minor series
+          LATEST_3_8=$(echo "$VERSIONS" | grep '^3\.8\.' | tail -1)
+          LATEST_3_9=$(echo "$VERSIONS" | grep '^3\.9\.' | tail -1)
+          LATEST_4_0=$(echo "$VERSIONS" | grep '^4\.0\.' | tail -1)
+          
+          echo ""
+          echo "Latest versions by series:"
+          echo "  3.8.x: $LATEST_3_8"
+          echo "  3.9.x: $LATEST_3_9"
+          echo "  4.0.x: ${LATEST_4_0:-not released yet}"
+          
+          # Export for next step
+          echo "LATEST_3_8=$LATEST_3_8" >> $GITHUB_ENV
+          echo "LATEST_3_9=$LATEST_3_9" >> $GITHUB_ENV
+          echo "LATEST_4_0=$LATEST_4_0" >> $GITHUB_ENV
+      
+      - name: Build version matrix
+        id: set-versions
+        run: |
+          # Build JSON array of versions to test
+          # Include: first 3.9, some mid versions, and all latest versions
+          
+          VERSIONS='["3.9.0"'  # First 3.9.x
+          
+          # Add latest 3.8.x
+          if [ -n "$LATEST_3_8" ]; then
+            VERSIONS+=', "'$LATEST_3_8'"'
+          fi
+          
+          # Add latest 3.9.x
+          if [ -n "$LATEST_3_9" ]; then
+            VERSIONS+=', "'$LATEST_3_9'"'
+          fi
+          
+          # Add latest 4.0.x if it exists
+          if [ -n "$LATEST_4_0" ]; then
+            VERSIONS+=', "'$LATEST_4_0'"'
+          else
+            # Fallback to beta if no stable 4.0 yet
+            VERSIONS+=', "4.0.0-beta-4"'
+          fi
+          
+          VERSIONS+=']'
+          
+          echo "Maven versions to test: $VERSIONS"
+          echo "maven-versions=$VERSIONS" >> $GITHUB_OUTPUT
+
+  test-maven-compatibility:
+    name: Test with Maven ${{ matrix.maven-version }}
+    runs-on: ubuntu-latest
+    needs: check-latest-maven-versions
+    
+    strategy:
+      fail-fast: false  # Test all versions even if one fails
+      matrix:
+        # Dynamically fetched versions from previous job
+        maven-version: ${{ fromJSON(needs.check-latest-maven-versions.outputs.maven-versions) }}
+        java-version:
+          - '8'
+          - '11'
+          - '17'
+          - '21'
+        exclude:
+          # Maven 4 requires Java 17+
+          - maven-version: '4.0.0-beta-4'
+            java-version: '8'
+          - maven-version: '4.0.0-beta-4'
+            java-version: '11'
+
+    steps:
+      - name: Set up test JDK ${{ matrix.java-version }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ matrix.java-version }}
+
+      - name: Set up Maven ${{ matrix.maven-version }}
+        uses: stCarolas/setup-maven@v5
+        with:
+          maven-version: ${{ matrix.maven-version }}
+
+      - name: Verify Maven version
+        run: |
+          mvn --version
+          echo "M2_HOME=$M2_HOME"
+
+      - name: Set up JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.PLATFORM_URL }}
+          JF_USER: ${{ secrets.PLATFORM_USER }}
+          JF_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
+        with:
+          version: latest
+        # JFrog CLI will automatically download the latest released build-info extractor
+        # This tests the version users actually use in production
+
+      - name: Create test Maven project
+        run: |
+          # Create project structure in testdata/ (excluded from builds like Go testdata/)
+          mkdir -p ${{ github.workspace }}/testdata/maven-compatibility-test/src/main/java/com/test
+          cd ${{ github.workspace }}/testdata/maven-compatibility-test
+          
+          cat > pom.xml << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <project xmlns="http://maven.apache.org/POM/4.0.0"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+                   http://maven.apache.org/xsd/maven-4.0.0.xsd">
+              <modelVersion>4.0.0</modelVersion>
+              
+              <groupId>com.jfrog.test</groupId>
+              <artifactId>maven-compatibility-test</artifactId>
+              <version>1.0.0-SNAPSHOT</version>
+              <packaging>jar</packaging>
+              
+              <properties>
+                  <maven.compiler.source>8</maven.compiler.source>
+                  <maven.compiler.target>8</maven.compiler.target>
+                  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+              </properties>
+              
+              <!-- Use Maven Central as fallback to ensure plugins can be downloaded -->
+              <repositories>
+                  <repository>
+                      <id>central</id>
+                      <url>https://repo.maven.apache.org/maven2</url>
+                      <releases><enabled>true</enabled></releases>
+                  </repository>
+              </repositories>
+              
+              <pluginRepositories>
+                  <pluginRepository>
+                      <id>central</id>
+                      <url>https://repo.maven.apache.org/maven2</url>
+                      <releases><enabled>true</enabled></releases>
+                  </pluginRepository>
+              </pluginRepositories>
+              
+              <dependencies>
+                  <dependency>
+                      <groupId>org.apache.commons</groupId>
+                      <artifactId>commons-lang3</artifactId>
+                      <version>3.14.0</version>
+                  </dependency>
+              </dependencies>
+          </project>
+          EOF
+          
+          cat > src/main/java/com/test/App.java << 'EOF'
+          package com.test;
+          
+          import org.apache.commons.lang3.StringUtils;
+          
+          public class App {
+              public static void main(String[] args) {
+                  System.out.println("Maven version test: " + 
+                      StringUtils.capitalize("success"));
+              }
+          }
+          EOF
+          
+          # Verify project was created
+          echo ""
+          echo "Test project structure:"
+          ls -la ${{ github.workspace }}/testdata/maven-compatibility-test/
+          echo ""
+          echo "✅ Test project created successfully"
+
+      - name: Configure Maven with JFrog
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
+        env:
+          PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+        run: |
+          echo "Configuring Maven for JFrog CLI..."
+          
+          # Ensure we have a valid server config (required by jf mvn)
+          if [ -z "$PLATFORM_URL" ]; then
+            echo "⚠️  No Artifactory secrets - creating dummy server for testing"
+            jf config add test-server \
+              --url=http://localhost:8081/artifactory \
+              --access-token=dummy \
+              --interactive=false --overwrite=true
+            SERVER_ID="test-server"
+          else
+            echo "✅ Using real Artifactory from secrets"
+            SERVER_ID="setup-jfrog-cli-server"
+          fi
+          
+          # Create Maven config (required by jf mvn, even for compatibility testing)
+          # Configure deployment only to avoid overriding resolution (Maven Central stays default)
+          jf mvn-config \
+            --server-id-deploy=$SERVER_ID \
+            --repo-deploy-releases=maven-local \
+            --repo-deploy-snapshots=maven-local
+          
+          echo "✅ Maven config created"
+          echo "Note: Resolution NOT configured - Maven will use Maven Central from pom.xml"
+
+      - name: Test Maven with build-info extractor
+        id: maven_test
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
+        run: |
+          set -o pipefail  # Ensure pipeline fails if jf mvn fails
+          
+          echo "Testing Maven ${{ matrix.maven-version }} with build-info extractor"
+          echo ""
+          
+          # Run jf mvn - this will:
+          # 1. Download the build-info extractor (if not cached)
+          # 2. Load it as a Maven extension  
+          # 3. If Maven incompatibility exists, NullPointerException happens immediately
+          # 4. Otherwise, will build successfully
+          jf mvn clean compile 2>&1 | tee maven-output.log
+          
+          echo ""
+          echo "Build complete - no compatibility issues detected!"
+
+      - name: Analyze build failure (if any)
+        if: failure()
+        continue-on-error: true
+        working-directory: ${{ github.workspace }}/testdata/maven-compatibility-test
+        run: |
+          echo "============================================"
+          echo "Build Failure Analysis"
+          echo "============================================"
+          echo ""
+          
+          if [ ! -f maven-output.log ]; then
+            echo "❌ No maven-output.log found - build may have failed before Maven ran"
+            exit 0
+          fi
+          
+          echo "Checking for compatibility errors..."
+          echo ""
+          
+          # Check for Maven version compatibility issues
+          if grep -q "NullPointerException" maven-output.log; then
+            echo "❌ COMPATIBILITY ERROR: NullPointerException detected!"
+            echo ""
+            echo "Maven ${{ matrix.maven-version }} is INCOMPATIBLE with build-info extractor"
+            echo "This likely indicates missing field declarations in components.xml"
+            echo ""
+            echo "Error context:"
+            grep -B5 -A10 "NullPointerException" maven-output.log | head -30
+            
+          elif grep -q "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log; then
+            echo "❌ COMPATIBILITY ERROR: Class/method compatibility issue!"
+            echo ""
+            echo "Error context:"
+            grep -B5 -A10 "NoSuchMethodError\|NoClassDefFoundError\|IncompatibleClassChangeError" maven-output.log | head -30
+            
+          else
+            echo "ℹ️  No obvious Maven compatibility errors detected"
+            echo ""
+            echo "Last 50 lines of output:"
+            tail -50 maven-output.log
+          fi
+          
+          echo ""
+          echo "Full logs available in artifacts"
+
+      - name: Upload logs (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-logs-maven-${{ matrix.maven-version }}-java-${{ matrix.java-version }}
+          path: |
+            ${{ github.workspace }}/test-project/maven-output.log
+            ${{ github.workspace }}/test-project/config-output.log
+          retention-days: 30
+          if-no-files-found: ignore
