@@ -192,7 +192,7 @@ public class TaskHelperConfigurations extends TaskHelper {
             artifactoryTask.mavenDescriptor = null;
         } else {
             artifactoryTask.mavenDescriptor = new File(
-                    project.getConvention().getPlugin(MavenPluginConvention.class).getMavenPomDir(),
+                    Objects.requireNonNull(project.getExtensions().findByType(MavenPluginConvention.class)).getMavenPomDir(),
                     "pom-default.xml");
             dependsOn(installTask);
         }
