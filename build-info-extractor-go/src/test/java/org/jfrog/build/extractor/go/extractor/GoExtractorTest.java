@@ -10,6 +10,7 @@ import org.jfrog.build.extractor.ci.*;
 import org.jfrog.build.extractor.clientConfiguration.ArtifactoryManagerBuilder;
 import org.jfrog.build.extractor.clientConfiguration.deploy.DeployDetails;
 import org.jfrog.build.extractor.executor.CommandExecutor;
+import org.jfrog.build.extractor.ci.Module;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.DataProvider;

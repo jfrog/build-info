@@ -66,6 +66,7 @@ public class GoZipBallStreamer implements Closeable {
     private final String version;
     private final Set<String> excludedDirectories;
     private String subModuleName = "";
+    private boolean subModuleNameExplicitlySet = false;
     private String licensePath = "";
     private static final String GO_VERSION_1_12_0 = "1.12.0";
     private static final String LICENSE = "LICENSE";
@@ -97,22 +98,42 @@ public class GoZipBallStreamer implements Closeable {
         writeEntries();
     }
 
-    void setSubModuleName(String subModuleName) {
-        this.subModuleName = subModuleName;
+    /**
+     * Sets the submodule name explicitly (e.g., by a fetcher with intelligent submodule detection).
+     * This marks the submodule name as explicitly set, so automatic detection will be skipped.
+     *
+     * @param subModuleName The submodule name, or empty string if there is no submodule
+     */
+    public void setSubModuleNameExplicitly(String subModuleName) {
+        this.subModuleName = subModuleName != null ? subModuleName : "";
+        this.subModuleNameExplicitlySet = true;
     }
 
     /**
      * Determine if the project is a compatible module from version 2+, a submodule or an incompatible module
+     * If subModuleName is already set (e.g., by a fetcher with intelligent submodule detection),
+     * skip automatic detection and use the provided value (even if it's empty, indicating no submodule).
      */
     private void initiateProjectType() {
+        // If submodule name was already set externally (e.g., by GitLabIntelligentFetcher),
+        // use it and skip automatic detection - even if it's empty (explicitly indicating no submodule)
+        if (subModuleNameExplicitlySet) {
+            if (StringUtils.isNotEmpty(subModuleName)) {
+                log.debug(projectName + "@" + version + " using externally provided submodule: " + subModuleName);
+            } else {
+                log.debug(projectName + "@" + version + " using externally provided empty submodule (no submodule)");
+            }
+            return;
+        }
+
         boolean compatibleModuleFromV2 = GoVersionUtils.getMajorVersion(version, log) >= 2 &&
                 GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
         if (compatibleModuleFromV2) {
             String majorVersion = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
             if (!hasRootModFileOfCompatibleModuleFromV2(majorVersion)) {
-                subModuleName = majorVersion;
+                subModuleName = GoVersionUtils.getSubModule(projectName);;
                 log.debug(projectName + "@" + version + " is compatible Go module from major version "
-                        + subModuleName);
+                        + majorVersion);
             }
         } else {
             subModuleName = GoVersionUtils.getSubModule(projectName);
@@ -295,7 +316,7 @@ public class GoZipBallStreamer implements Closeable {
             }
             if (modEntry != null) {
                 try (InputStream inputStream = zipFile.getInputStream(modEntry)) {
-                    String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+                    String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                     return StringUtils.substringBefore(modFileContent, System.lineSeparator())
                             .endsWith("/" + majorVersion);
                 } catch (IOException e) {
@@ -384,7 +405,7 @@ public class GoZipBallStreamer implements Closeable {
         // Go version 1.13.0 is the version where we should start looking for go.mod file.
         if (goModVersion.equals(Version.parse(GO_VERSION_1_12_0))) {
             try (InputStream inputStream = zipFile.getInputStream(entry)) {
-                String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8.name());
+                String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
                 if (!StringUtils.isEmpty(modFileContent)) {
                     String goVersion = Arrays.stream(
                                     modFileContent.split("\n")).filter(line -> line.startsWith("go"))
