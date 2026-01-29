@@ -1,9 +1,12 @@
 package org.jfrog.build.extractor.go.extractor;
 
 import com.github.zafarkhaja.semver.Version;
+import org.jfrog.build.api.util.Log;
+import org.jfrog.build.api.util.NullLog;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 
@@ -11,7 +14,7 @@ public class GoZipBallStreamerTest {
     @Test(dataProvider = "testIsSubModuleProvider")
     public void testIsSubModule(String subModuleName, String entryName, boolean expectedResult) {
         GoZipBallStreamer goZipBallStreamer = new GoZipBallStreamer(null, "ignore", "ignore", null);
-        goZipBallStreamer.setSubModuleName(subModuleName);
+        goZipBallStreamer.setSubModuleNameExplicitly(subModuleName);
         boolean res = goZipBallStreamer.isSubModule(entryName);
         Assert.assertEquals(res, expectedResult);
     }
@@ -87,6 +90,89 @@ public class GoZipBallStreamerTest {
                 {"1.24.0", "foo/vendor/pkg/file.go", true},
                 {"1.24.0", "foo/vendor/file.go", false}
         };
+    }
+
+    @Test
+    void testSetSubModuleNameExplicitlySetFlag() throws Exception {
+        // Test that setSubModuleName sets the explicitlySet flag
+        GoZipBallStreamer streamer = new GoZipBallStreamer(null, "project", "v1.0.0", null);
+
+        // Initially, subModuleNameExplicitlySet should be false
+        Field explicitlySetField = GoZipBallStreamer.class.getDeclaredField("subModuleNameExplicitlySet");
+        explicitlySetField.setAccessible(true);
+        Assert.assertFalse((boolean) explicitlySetField.get(streamer), "Initially subModuleNameExplicitlySet should be false");
+
+        // After calling setSubModuleName, it should be true
+        streamer.setSubModuleNameExplicitly("submodule");
+        Assert.assertTrue((boolean) explicitlySetField.get(streamer),
+                "After setSubModuleName, subModuleNameExplicitlySet should be true");
+
+        // Even when setting empty string, flag should be true
+        streamer.setSubModuleNameExplicitly("");
+        Assert.assertTrue((boolean) explicitlySetField.get(streamer),
+                "After setSubModuleName with empty string, subModuleNameExplicitlySet should still be true");
+    }
+
+    @Test
+    void testInitiateProjectTypeSkipsDetectionWhenExplicitlySet() throws Exception {
+        // Test that initiateProjectType skips automatic detection when submodule is explicitly set
+        Log log = new NullLog();
+        GoZipBallStreamer streamer =
+                new GoZipBallStreamer(null, "gitlab.com/group/subgroup/project", "v1.0.0", log);
+
+        // Set submodule name explicitly (simulating GitLabIntelligentFetcher behavior)
+        streamer.setSubModuleNameExplicitly(""); // Empty means no submodule
+
+        // Call initiateProjectType via reflection
+        Method initiateMethod = GoZipBallStreamer.class.getDeclaredMethod("initiateProjectType");
+        initiateMethod.setAccessible(true);
+        initiateMethod.invoke(streamer);
+
+        // Verify that subModuleName remains empty (not detected as "subgroup" by automatic detection)
+        Field subModuleField = GoZipBallStreamer.class.getDeclaredField("subModuleName");
+        subModuleField.setAccessible(true);
+        String subModuleName = (String) subModuleField.get(streamer);
+        Assert.assertEquals(subModuleName, "", "Submodule name should remain empty when explicitly set");
+    }
+
+    @Test
+    void testInitiateProjectTypeUsesExplicitlySetSubmodule() throws Exception {
+        // Test that explicitly set non-empty submodule is used
+        Log log = new NullLog();
+        GoZipBallStreamer streamer = new GoZipBallStreamer(null, "gitlab.com/group/project", "v1.0.0", log);
+
+        // Set submodule name explicitly
+        streamer.setSubModuleNameExplicitly("api");
+
+        // Call initiateProjectType via reflection
+        Method initiateMethod = GoZipBallStreamer.class.getDeclaredMethod("initiateProjectType");
+        initiateMethod.setAccessible(true);
+        initiateMethod.invoke(streamer);
+
+        // Verify that subModuleName remains "api" (not changed by automatic detection)
+        Field subModuleField = GoZipBallStreamer.class.getDeclaredField("subModuleName");
+        subModuleField.setAccessible(true);
+        String subModuleName = (String) subModuleField.get(streamer);
+        Assert.assertEquals(subModuleName, "api", "Submodule name should remain 'api' when explicitly set");
+    }
+
+    @Test
+    void testSetSubModuleNameExplicitlyHandlesNull() {
+        // Test that setSubModuleName handles null gracefully
+        GoZipBallStreamer streamer = new GoZipBallStreamer(null, "project", "v1.0.0", null);
+
+        streamer.setSubModuleNameExplicitly(null);
+
+        // Should not throw exception and should set to empty string
+        // We can verify by checking that explicitlySet flag is true
+        try {
+            Field explicitlySetField = GoZipBallStreamer.class.getDeclaredField("subModuleNameExplicitlySet");
+            explicitlySetField.setAccessible(true);
+            Assert.assertTrue((boolean) explicitlySetField.get(streamer),
+                    "subModuleNameExplicitlySet should be true even when null is passed");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
