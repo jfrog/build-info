@@ -23,6 +23,15 @@ import static org.testng.Assert.assertTrue;
  * @author yahavi
  **/
 public class GoDriverTest {
+
+    @Test
+    public void testResolveGoExecutableForWsl() {
+        assertEquals(GoDriver.resolveGoExecutableForWsl(null), "go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl(" "), "go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl("/usr/local/go/bin/go"), "/usr/local/go/bin/go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl("C:\\Go\\bin\\go.exe"), "go");
+    }
+
     private static final Path BASE_PATH = Paths.get(".").toAbsolutePath().normalize()
             .resolve(Paths.get("src", "test", "resources", "org", "jfrog", "build", "extractor"));
     private static final Path PROJECT_1 = BASE_PATH.resolve("project1");
