@@ -249,7 +249,7 @@ public class GoZipBallStreamer implements Closeable {
 
         if (!excludedDirectories.isEmpty()) {
             String moduleRootDir = allDirectories.stream().
-                    filter(dir -> dir.endsWith(subModuleName)).findFirst().orElse("");
+                    filter(dir -> stripFirstPathElement(dir).equals(subModuleName)).findFirst().orElse("");
             allDirectories.stream().filter(dir -> shouldExcludeDirectory(moduleRootDir, dir))
                     .forEach(excludedDirectories::add);
         }
