@@ -10,7 +10,8 @@ import com.github.dockerjava.core.DockerClientConfig;
 import com.github.dockerjava.core.command.BuildImageResultCallback;
 import com.github.dockerjava.core.command.PullImageResultCallback;
 import com.github.dockerjava.core.command.PushImageResultCallback;
-import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
+import com.github.dockerjava.httpclient5.ApacheDockerHttpClient;
+import com.github.dockerjava.transport.DockerHttpClient;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jfrog.build.api.util.Log;
@@ -74,7 +75,12 @@ public class DockerJavaWrapper {
         }
 
         DockerClientConfig config = configBuilder.build();
-        return DockerClientBuilder.getInstance(config).withDockerCmdExecFactory(new NettyDockerCmdExecFactory()).build();
+        DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()
+            .dockerHost(config.getDockerHost())
+            .sslConfig(config.getSSLConfig())
+            .build();
+
+        return DockerClientBuilder.getInstance(config).withDockerHttpClient(httpClient).build();
     }
 
     /**
