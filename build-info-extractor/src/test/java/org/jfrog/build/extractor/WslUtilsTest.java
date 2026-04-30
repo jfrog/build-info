@@ -1,4 +1,4 @@
-package org.jfrog.build.extractor.util;
+package org.jfrog.build.extractor;
 
 import org.apache.commons.lang3.SystemUtils;
 import org.testng.SkipException;

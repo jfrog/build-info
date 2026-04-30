@@ -3,9 +3,9 @@ package org.jfrog.build.extractor.go;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.WslUtils;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
-import org.jfrog.build.extractor.util.WslUtils;
 
 import java.io.File;
 import java.io.IOException;
