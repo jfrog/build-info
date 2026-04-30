@@ -3,11 +3,26 @@ package org.jfrog.build.extractor.go.extractor;
 import com.github.zafarkhaja.semver.Version;
 import org.jfrog.build.api.util.Log;
 import org.jfrog.build.api.util.NullLog;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 import java.lang.reflect.Field;
+
+import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Set;
 
 
 public class GoZipBallStreamerTest {
@@ -33,7 +48,7 @@ public class GoZipBallStreamerTest {
     @Test(dataProvider = "vendorPackageProvider")
     public void testIsVendorPackage(String goModVersion, String entryName, boolean expected) throws Exception {
         GoZipBallStreamer streamer = new GoZipBallStreamer(null, "project", "1.0.0", null);
-        streamer.goModVersion = Version.valueOf(goModVersion);
+        streamer.goModVersion = Version.parse(goModVersion);
 
         Method method = GoZipBallStreamer.class.getDeclaredMethod("isVendorPackage", String.class);
         method.setAccessible(true);
@@ -172,6 +187,172 @@ public class GoZipBallStreamerTest {
                     "subModuleNameExplicitlySet should be true even when null is passed");
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Tests that scanEntries() correctly identifies the submodule root directory by stripping the first
+     * path element (the zip-level prefix) from each directory and comparing it to subModuleName.
+     * Only files under the matching submodule directory should appear in the output zip.
+     */
+    @Test(dataProvider = "subModulePackingProvider")
+    public void testScanEntriesFindsSubModuleRootByStrippingZipPrefix(
+            Map<String, String> inputEntries,
+            String projectName,
+            String version,
+            Set<String> expectedOutputEntries,
+            Set<String> unexpectedOutputEntries) throws IOException {
+
+        File inputZip = createZipWithEntries(inputEntries);
+        File outputZip = File.createTempFile("output", ".zip");
+        try {
+            try (ZipFile zipFile = ZipFile.builder().setFile(inputZip).get()) {
+                try (GoZipBallStreamer streamer = new GoZipBallStreamer(zipFile, projectName, version, new NullLog())) {
+                    streamer.writeDeployableZip(outputZip);
+                }
+            }
+
+            Set<String> outputEntryNames = getZipEntryNames(outputZip);
+
+            for (String expected : expectedOutputEntries) {
+                Assert.assertTrue(outputEntryNames.contains(expected),
+                        "Expected entry missing from output zip: " + expected + ". Actual entries: " + outputEntryNames);
+            }
+            for (String unexpected : unexpectedOutputEntries) {
+                Assert.assertFalse(outputEntryNames.contains(unexpected),
+                        "Unexpected entry found in output zip: " + unexpected + ". Actual entries: " + outputEntryNames);
+            }
+        } finally {
+            Files.deleteIfExists(inputZip.toPath());
+            Files.deleteIfExists(outputZip.toPath());
+        }
+    }
+
+    @DataProvider
+    private Object[][] subModulePackingProvider() {
+        // Scenario 1: Basic submodule - zip prefix is "myrepo-v1.0.0/", submodule is "submod".
+        // stripFirstPathElement("myrepo-v1.0.0/submod") == "submod" and finds moduleRootDir correctly.
+        Map<String, String> basicSubModuleEntries = new LinkedHashMap<>();
+        basicSubModuleEntries.put("myrepo-v1.0.0/go.mod", "module github.com/owner/repo\n\ngo 1.21.0\n");
+        basicSubModuleEntries.put("myrepo-v1.0.0/root.go", "package main\n");
+        basicSubModuleEntries.put("myrepo-v1.0.0/submod/go.mod", "module github.com/owner/repo/submod\n\ngo 1.21.0\n");
+        basicSubModuleEntries.put("myrepo-v1.0.0/submod/submod.go", "package submod\n");
+
+        // Scenario 2: Submodule with nested directories - non-submodule dirs are excluded.
+        Map<String, String> nestedSubModuleEntries = new LinkedHashMap<>();
+        nestedSubModuleEntries.put("repo-abc123/go.mod", "module github.com/owner/repo\n\ngo 1.21.0\n");
+        nestedSubModuleEntries.put("repo-abc123/util/util.go", "package util\n");
+        nestedSubModuleEntries.put("repo-abc123/lib/go.mod", "module github.com/owner/repo/lib\n\ngo 1.21.0\n");
+        nestedSubModuleEntries.put("repo-abc123/lib/lib.go", "package lib\n");
+        nestedSubModuleEntries.put("repo-abc123/lib/helper/helper.go", "package helper\n");
+
+        // Scenario 3: Submodule with root LICENSE included.
+        Map<String, String> subModuleWithLicenseEntries = new LinkedHashMap<>();
+        subModuleWithLicenseEntries.put("proj-v2.0.0/go.mod", "module github.com/owner/repo\n\ngo 1.21.0\n");
+        subModuleWithLicenseEntries.put("proj-v2.0.0/LICENSE", "MIT License\n");
+        subModuleWithLicenseEntries.put("proj-v2.0.0/main.go", "package main\n");
+        subModuleWithLicenseEntries.put("proj-v2.0.0/submod/go.mod", "module github.com/owner/repo/submod\n\ngo 1.21.0\n");
+        subModuleWithLicenseEntries.put("proj-v2.0.0/submod/api.go", "package submod\n");
+
+        // Scenario 4 (RTDEV-82256): Ambiguous submodule name - another directory deeper in the tree
+        // has the same trailing name as the real submodule ("hello"). The old endsWith() match would
+        // pick "docs/godocs/hello" instead of the actual "hello" submodule root, causing the real
+        // module sources to be dropped.
+        Map<String, String> ambiguousSubModuleEntries = new LinkedHashMap<>();
+        ambiguousSubModuleEntries.put("go-example-abc123/go.mod", "module github.com/owner/go-example\n\ngo 1.21.0\n");
+        ambiguousSubModuleEntries.put("go-example-abc123/main.go", "package main\n");
+        ambiguousSubModuleEntries.put("go-example-abc123/docs/godocs/hello/README.md", "# Hello docs\n");
+        ambiguousSubModuleEntries.put("go-example-abc123/hello/go.mod", "module github.com/owner/go-example/hello\n\ngo 1.21.0\n");
+        ambiguousSubModuleEntries.put("go-example-abc123/hello/hello.go", "package hello\n");
+        ambiguousSubModuleEntries.put("go-example-abc123/hello/world/world.go", "package world\n");
+
+        return new Object[][]{
+                {
+                        // Scenario 1: Only submodule files (submod.go, go.mod) included; root.go excluded.
+                        basicSubModuleEntries,
+                        "github.com/owner/repo/submod",
+                        "v1.0.0",
+                        new HashSet<>(Arrays.asList(
+                                "github.com/owner/repo/submod@v1.0.0/submod.go",
+                                "github.com/owner/repo/submod@v1.0.0/go.mod"
+                        )),
+                        new HashSet<>(Collections.singletonList("github.com/owner/repo/submod@v1.0.0/root.go"))
+                },
+                {
+                        // Scenario 2: lib submodule files included; util/ (outside lib) excluded.
+                        nestedSubModuleEntries,
+                        "github.com/owner/repo/lib",
+                        "v1.0.0",
+                        new HashSet<>(Arrays.asList(
+                                "github.com/owner/repo/lib@v1.0.0/lib.go",
+                                "github.com/owner/repo/lib@v1.0.0/go.mod",
+                                "github.com/owner/repo/lib@v1.0.0/helper/helper.go"
+                        )),
+                        new HashSet<>(Collections.singletonList("github.com/owner/repo/lib@v1.0.0/util.go"))
+                },
+                {
+                        // Scenario 3: Root LICENSE is included in submodule output; main.go is excluded.
+                        subModuleWithLicenseEntries,
+                        "github.com/owner/repo/submod",
+                        "v2.0.0",
+                        new HashSet<>(Arrays.asList(
+                                "github.com/owner/repo/submod@v2.0.0/api.go",
+                                "github.com/owner/repo/submod@v2.0.0/go.mod",
+                                "github.com/owner/repo/submod@v2.0.0/LICENSE"
+                        )),
+                        new HashSet<>(Collections.singletonList("github.com/owner/repo/submod@v2.0.0/main.go"))
+                },
+                {
+                        // Scenario 4 (RTDEV-82256): Ambiguous trailing name - "docs/godocs/hello" must NOT
+                        // be picked as module root; only the real "hello" submodule files should appear.
+                        ambiguousSubModuleEntries,
+                        "github.com/owner/go-example/hello",
+                        "v1.0.0",
+                        new HashSet<>(Arrays.asList(
+                                "github.com/owner/go-example/hello@v1.0.0/hello.go",
+                                "github.com/owner/go-example/hello@v1.0.0/go.mod",
+                                "github.com/owner/go-example/hello@v1.0.0/world/world.go"
+                        )),
+                        new HashSet<>(Arrays.asList(
+                                "github.com/owner/go-example/hello@v1.0.0/main.go",
+                                "github.com/owner/go-example/hello@v1.0.0/README.md",
+                                "github.com/owner/go-example/hello@v1.0.0/docs/godocs/hello/README.md"
+                        ))
+                }
+        };
+    }
+
+    // ── Helper methods ──────────────────────────────────────────────────────────
+
+    /**
+     * Creates a temporary zip file populated with the given entries (name → content).
+     */
+    private File createZipWithEntries(Map<String, String> entries) throws IOException {
+        File tempZip = File.createTempFile("test-input", ".zip");
+        try (ZipArchiveOutputStream zos = new ZipArchiveOutputStream(tempZip)) {
+            for (Map.Entry<String, String> e : entries.entrySet()) {
+                byte[] content = e.getValue().getBytes(StandardCharsets.UTF_8);
+                ZipArchiveEntry ze = new ZipArchiveEntry(e.getKey());
+                ze.setSize(content.length);
+                zos.putArchiveEntry(ze);
+                zos.write(content);
+                zos.closeArchiveEntry();
+            }
+        }
+        return tempZip;
+    }
+
+    /**
+     * Returns the set of all entry names contained in the given zip file.
+     */
+    private Set<String> getZipEntryNames(File zip) throws IOException {
+        try (ZipFile zipFile = ZipFile.builder().setFile(zip).get()) {
+            Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
+            Set<String> names = new HashSet<>();
+            while (entries.hasMoreElements()) {
+                names.add(entries.nextElement().getName());
+            }
+            return names;
         }
     }
 
