@@ -1,6 +1,7 @@
 package org.jfrog.build.extractor.go;
 
 import org.apache.commons.compress.utils.Sets;
+import org.apache.commons.lang3.SystemUtils;
 import org.apache.commons.io.FileUtils;
 import org.jfrog.build.api.util.NullLog;
 import org.jfrog.build.extractor.executor.CommandResults;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 /**
@@ -123,5 +125,16 @@ public class GoDriverTest {
         assertEquals(GoDriver.resolveGoExecutableForWsl(" "), "go");
         assertEquals(GoDriver.resolveGoExecutableForWsl("/usr/local/go/bin/go"), "/usr/local/go/bin/go");
         assertEquals(GoDriver.resolveGoExecutableForWsl("C:\\Go\\bin\\go.exe"), "go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl("  go  "), "go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl(" /usr/bin/go "), "/usr/bin/go");
+        assertEquals(GoDriver.resolveGoExecutableForWsl("usr/bin/go"), "go");
+    }
+
+    @Test
+    public void testRunsThroughWslReflectsOsGate() {
+        GoDriver wslOff = new GoDriver(null, System.getenv(), new File("."), new NullLog(), false);
+        assertFalse(wslOff.runsThroughWsl());
+        GoDriver wslOn = new GoDriver(null, System.getenv(), new File("."), new NullLog(), true);
+        assertEquals(wslOn.runsThroughWsl(), SystemUtils.IS_OS_WINDOWS);
     }
 }

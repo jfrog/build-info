@@ -17,6 +17,7 @@ public class WslUtilsTest {
     public Object[][] wslPathDetection() {
         return new Object[][]{
                 {null, false},
+                {"", false},
                 {"C:\\dev\\project", false},
                 {"\\\\wsl$\\Ubuntu\\home\\user\\repo", true},
                 {"\\\\WSL$\\Ubuntu\\home\\user\\repo", true},
@@ -45,6 +46,7 @@ public class WslUtilsTest {
     public Object[][] toLinuxPathCases() {
         return new Object[][]{
                 {null, null},
+                {"", ""},
                 {"C:\\dev", "C:\\dev"},
                 {"\\\\wsl$\\Ubuntu\\home\\user\\app", "/home/user/app"},
                 {"\\\\WSL$\\Ubuntu\\home\\user\\app", "/home/user/app"},
@@ -66,6 +68,8 @@ public class WslUtilsTest {
                 {"C:/Users/u/tmp", "/mnt/c/Users/u/tmp"},
                 {"d:\\proj", "/mnt/d/proj"},
                 {"\\\\wsl$\\Ubuntu\\home\\u\\p", "/home/u/p"},
+                {"\\\\?\\C:\\Users\\u\\tmp", "/mnt/c/Users/u/tmp"},
+                {"\\\\some-server\\share\\a", "//some-server/share/a"},
         };
     }
 
@@ -104,6 +108,37 @@ public class WslUtilsTest {
     @Test(dataProvider = "linuxToWslWindowsCases")
     public void testLinuxPathToWslWindowsPath(String linuxPath, String distro, String expected) {
         assertEquals(WslUtils.linuxPathToWslWindowsPath(linuxPath, distro), expected);
+    }
+
+    @DataProvider
+    public Object[][] normalizePathStringForWslCases() {
+        return new Object[][]{
+                {null, null},
+                {"", ""},
+                {"\\\\?\\UNC\\wsl$\\Ubuntu\\home\\u", "\\\\wsl$\\Ubuntu\\home\\u"},
+                {"\\\\?\\C:\\Users\\x", "C:\\Users\\x"},
+                {"C:\\plain\\path", "C:\\plain\\path"},
+        };
+    }
+
+    @Test(dataProvider = "normalizePathStringForWslCases")
+    public void testNormalizePathStringForWsl(String input, String expected) {
+        assertEquals(WslUtils.normalizePathStringForWsl(input), expected);
+    }
+
+    @Test
+    public void testToWslLinuxCdPathNull() {
+        assertEquals(WslUtils.toWslLinuxCdPath(null), "/");
+    }
+
+    @Test
+    public void testToWslLinuxCdPathNonWindows() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            throw new SkipException("Uses unix absolute File paths");
+        }
+        File dir = Paths.get("/tmp", "wsl-cd-test").toFile();
+        String expected = dir.getAbsolutePath().replace('\\', '/');
+        assertEquals(WslUtils.toWslLinuxCdPath(dir), expected);
     }
 
     @Test
