@@ -74,6 +74,38 @@ public class WslUtilsTest {
         assertEquals(WslUtils.windowsLocalPathToWslMount(input), expected);
     }
 
+    @DataProvider
+    public Object[][] wslDistributionCases() {
+        return new Object[][]{
+                {null, null},
+                {"C:\\dev\\project", null},
+                {"\\\\wsl$\\Ubuntu\\home\\user\\repo", "Ubuntu"},
+                {"\\\\WSL$\\Ubuntu\\home\\user\\repo", "Ubuntu"},
+                {"\\\\wsl.localhost\\Debian\\home\\user\\repo", "Debian"},
+                {"\\\\WSL.LOCALHOST\\MyDistro\\home\\user\\repo", "MyDistro"},
+                {"\\\\?\\UNC\\wsl$\\Ubuntu\\home\\user\\repo", "Ubuntu"},
+        };
+    }
+
+    @Test(dataProvider = "wslDistributionCases")
+    public void testGetWslDistribution(String path, String expected) {
+        assertEquals(WslUtils.getWslDistribution(path), expected);
+    }
+
+    @DataProvider
+    public Object[][] linuxToWslWindowsCases() {
+        return new Object[][]{
+                {"/home/user/project", "Ubuntu", "\\\\wsl.localhost\\Ubuntu\\home\\user\\project"},
+                {"/home/user/project/build/gradle-dep-tree/abc", "Debian",
+                        "\\\\wsl.localhost\\Debian\\home\\user\\project\\build\\gradle-dep-tree\\abc"},
+        };
+    }
+
+    @Test(dataProvider = "linuxToWslWindowsCases")
+    public void testLinuxPathToWslWindowsPath(String linuxPath, String distro, String expected) {
+        assertEquals(WslUtils.linuxPathToWslWindowsPath(linuxPath, distro), expected);
+    }
+
     @Test
     public void testToWslLinuxCdPathWslUnc() {
         if (!SystemUtils.IS_OS_WINDOWS) {

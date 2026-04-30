@@ -107,6 +107,32 @@ public final class WslUtils {
     }
 
     /**
+     * Extracts the WSL distribution name from a WSL UNC path.
+     * Example: {@code "\\wsl.localhost\Ubuntu\home\\user"} → {@code "Ubuntu"}.
+     *
+     * @return the distribution name, or {@code null} if the path is not a WSL UNC path.
+     */
+    public static String getWslDistribution(String wslPath) {
+        if (!isWslPath(wslPath)) {
+            return null;
+        }
+        String normalized = normalizePathStringForWsl(wslPath);
+        String withoutPrefix = startsWithIgnoreCase(normalized, WSL_LOCALHOST_PREFIX)
+                ? normalized.substring(WSL_LOCALHOST_PREFIX.length())
+                : normalized.substring(WSL_DOLLAR_PREFIX.length());
+        int sep = withoutPrefix.indexOf('\\');
+        return sep == -1 ? withoutPrefix : withoutPrefix.substring(0, sep);
+    }
+
+    /**
+     * Converts a Linux absolute path back to a Windows WSL UNC path using a known distribution.
+     * Example: {@code "/home/user/project"} + {@code "Ubuntu"} → {@code \\wsl.localhost\\Ubuntu\\home\\user\\project}.
+     */
+    public static String linuxPathToWslWindowsPath(String linuxPath, String distro) {
+        return WSL_LOCALHOST_PREFIX + distro + linuxPath.replace('/', '\\');
+    }
+
+    /**
      * Linux path suitable for {@code wsl.exe --cd} for the given working directory.
      * WSL UNC → {@link #toLinuxPath}; Windows drive path → {@link #windowsLocalPathToWslMount}; otherwise forward slashes.
      */
