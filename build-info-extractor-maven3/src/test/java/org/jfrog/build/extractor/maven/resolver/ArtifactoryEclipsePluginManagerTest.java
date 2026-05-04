@@ -11,10 +11,9 @@ import static org.junit.Assert.assertNotNull;
 @Test
 public class ArtifactoryEclipsePluginManagerTest {
 
-    // Mirrors Develocity's exact reflective contract: it calls
-    // Class.getDeclaredMethod("checkPrerequisites", PluginDescriptor.class) on the
-    // Plexus-bound DefaultMavenPluginManager implementation. getDeclaredMethod does
-    // not walk the superclass, so the method must be physically declared here.
+    // checkPrerequisites must be physically declared on this subclass, not just
+    // inherited, so that Class.getDeclaredMethod can find it. getDeclaredMethod
+    // does not walk the superclass chain.
     public void testCheckPrerequisitesIsDeclaredOnSubclass() throws NoSuchMethodException {
         Method m = ArtifactoryEclipsePluginManager.class
                 .getDeclaredMethod("checkPrerequisites", PluginDescriptor.class);

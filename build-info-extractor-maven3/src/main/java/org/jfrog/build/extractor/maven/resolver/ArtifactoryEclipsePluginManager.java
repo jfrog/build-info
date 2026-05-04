@@ -31,9 +31,8 @@ public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
         return super.setupExtensionsRealm(project, plugin, session);
     }
 
-    // Declared so Develocity's reflective lookup
-    // (Class.getDeclaredMethod("checkPrerequisites", PluginDescriptor.class)) succeeds —
-    // getDeclaredMethod does not walk the superclass.
+    // Declared so Class.getDeclaredMethod on this subclass finds it —
+    // getDeclaredMethod does not walk the superclass chain.
     @Override
     public void checkPrerequisites(PluginDescriptor pluginDescriptor) throws PluginIncompatibleException {
         super.checkPrerequisites(pluginDescriptor);
