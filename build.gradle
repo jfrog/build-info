@@ -26,7 +26,7 @@ buildscript {
         jacksonVersion = '2.17.3'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
-        mavenVersion = '3.8.6'
+        mavenVersion = '3.9.12'
         mavenDeployPluginVersion = '3.0.0'
         p4JavaVersion = '2022.1.2350821'
 

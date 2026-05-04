@@ -3,7 +3,9 @@ package org.jfrog.build.extractor.maven.resolver;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.ExtensionRealmCache;
+import org.apache.maven.plugin.PluginIncompatibleException;
 import org.apache.maven.plugin.PluginManagerException;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugin.internal.DefaultMavenPluginManager;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.component.annotations.Component;
@@ -27,6 +29,14 @@ public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
     public ExtensionRealmCache.CacheRecord setupExtensionsRealm(MavenProject project, Plugin plugin, RepositorySystemSession session) throws PluginManagerException {
         enforceResolutionRepositories(project, session);
         return super.setupExtensionsRealm(project, plugin, session);
+    }
+
+    // Declared so Develocity's reflective lookup
+    // (Class.getDeclaredMethod("checkPrerequisites", PluginDescriptor.class)) succeeds —
+    // getDeclaredMethod does not walk the superclass.
+    @Override
+    public void checkPrerequisites(PluginDescriptor pluginDescriptor) throws PluginIncompatibleException {
+        super.checkPrerequisites(pluginDescriptor);
     }
 
     private void enforceResolutionRepositories(MavenProject project, RepositorySystemSession session) {
