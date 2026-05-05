@@ -254,13 +254,14 @@ jobs:
           }
           EOF
 
+          # Only configure the deployer, not the resolver.
+          # When resolver is omitted, ArtifactoryEclipsePluginManager.enforceResolutionRepositories
+          # gets an empty list and does NOT override plugin repositories — Maven keeps using
+          # Maven Central for plugins. This avoids "artifact not found in Artifactory" errors
+          # while still loading the extractor so compatibility is fully tested.
           cat > /tmp/test-project/.jfrog/projects/maven.yaml << 'EOF'
           version: 1
           type: maven
-          resolver:
-            serverID: setup-jfrog-cli-server
-            releaseRepo: maven-virtual
-            snapshotRepo: maven-virtual
           deployer:
             serverID: setup-jfrog-cli-server
             releaseRepo: maven-local
@@ -305,14 +306,6 @@ jobs:
             --batch-mode --quiet
 
           echo "Develocity extension pre-downloaded and installed locally"
-
-      - name: Warm up Maven plugin cache
-        working-directory: /tmp/test-project
-        run: |
-          # Run plain mvn first (no jf routing) to populate the local plugin cache.
-          # jf mvn overrides plugin repositories with Artifactory, so standard plugins
-          # (maven-clean-plugin etc.) must already be cached locally before jf mvn runs.
-          mvn clean compile -B --quiet || true
 
       - name: Run jf mvn
         id: maven_test
