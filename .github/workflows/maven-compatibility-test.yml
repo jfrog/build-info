@@ -212,6 +212,10 @@ jobs:
 
           # Find the downloaded extractor directory
           EXTRACTOR_DIR=$(find ~/.jfrog/dependencies/maven -maxdepth 1 -mindepth 1 -type d | head -1)
+          if [ -z "$EXTRACTOR_DIR" ]; then
+            echo "❌ Extractor download failed — cannot inject built jar"
+            exit 1
+          fi
           EXTRACTOR_VERSION=$(basename "$EXTRACTOR_DIR")
           echo "Extractor version expected by jf CLI: $EXTRACTOR_VERSION"
           echo "EXTRACTOR_VERSION=$EXTRACTOR_VERSION" >> $GITHUB_ENV
@@ -223,6 +227,7 @@ jobs:
           cp "$BUILT_JAR" "$EXTRACTOR_DIR/build-info-extractor-maven3-${EXTRACTOR_VERSION}-uber.jar"
 
           echo "Injected: $(ls -lh $EXTRACTOR_DIR)"
+          echo "Built jar sha256: $(sha256sum $BUILT_JAR)"
 
       - name: Create test Maven project
         run: |
@@ -303,12 +308,14 @@ jobs:
             -DartifactId=develocity-maven-extension \
             -Dversion=${DEVELOCITY_VERSION} \
             -Dpackaging=jar \
+            -DgeneratePom=true \
             --batch-mode --quiet
 
           echo "Develocity extension pre-downloaded and installed locally"
 
       - name: Run jf mvn
         id: maven_test
+        timeout-minutes: 10
         working-directory: /tmp/test-project
         run: |
           set -o pipefail
@@ -318,6 +325,7 @@ jobs:
 
       - name: Analyze failure
         if: failure()
+        continue-on-error: true
         working-directory: /tmp/test-project
         run: |
           echo "=========================================="
@@ -354,5 +362,6 @@ jobs:
         with:
           name: failure-logs-maven${{ matrix.maven-version }}-java${{ matrix.java-version }}-develocity${{ matrix.develocity }}
           path: /tmp/test-project/maven-output.log
+
           retention-days: 7
           if-no-files-found: ignore
