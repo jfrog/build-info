@@ -5,8 +5,8 @@ import org.testng.annotations.Test;
 
 import java.lang.reflect.Method;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 @Test
 public class ArtifactoryEclipsePluginManagerTest {
@@ -18,6 +18,6 @@ public class ArtifactoryEclipsePluginManagerTest {
         Method m = ArtifactoryEclipsePluginManager.class
                 .getDeclaredMethod("checkPrerequisites", PluginDescriptor.class);
         assertNotNull(m);
-        assertEquals(ArtifactoryEclipsePluginManager.class, m.getDeclaringClass());
+        assertEquals(m.getDeclaringClass(), ArtifactoryEclipsePluginManager.class);
     }
 }
