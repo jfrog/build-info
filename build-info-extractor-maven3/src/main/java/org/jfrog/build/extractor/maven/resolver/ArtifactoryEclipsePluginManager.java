@@ -1,5 +1,6 @@
 package org.jfrog.build.extractor.maven.resolver;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.ExtensionRealmCache;
@@ -70,16 +71,13 @@ public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
     // to the older name (checkRequiredMavenVersion) on Maven < 3.9.12 so the check still runs.
     @Override
     public void checkPrerequisites(PluginDescriptor pluginDescriptor) throws PluginIncompatibleException {
-        MethodHandle handle = SUPER_PREREQUISITES_CHECK;
-        if (handle == null) {
+        if (SUPER_PREREQUISITES_CHECK == null) {
             return;
         }
         try {
-            handle.invoke(this, pluginDescriptor);
-        } catch (PluginIncompatibleException | RuntimeException | Error e) {
-            throw e;
+            SUPER_PREREQUISITES_CHECK.invoke(this, pluginDescriptor);
         } catch (Throwable t) {
-            throw new RuntimeException(t);
+            ExceptionUtils.rethrow(t);
         }
     }
 
