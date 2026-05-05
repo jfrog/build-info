@@ -242,16 +242,6 @@ jobs:
               <maven.compiler.source>11</maven.compiler.source>
               <maven.compiler.target>11</maven.compiler.target>
             </properties>
-            <!-- Allow jf mvn to resolve standard Maven plugins from Maven Central
-                 since the Artifactory virtual repo may not mirror all plugin artifacts -->
-            <pluginRepositories>
-              <pluginRepository>
-                <id>central</id>
-                <url>https://repo.maven.apache.org/maven2</url>
-                <releases><enabled>true</enabled></releases>
-                <snapshots><enabled>false</enabled></snapshots>
-              </pluginRepository>
-            </pluginRepositories>
           </project>
           EOF
 
@@ -315,6 +305,14 @@ jobs:
             --batch-mode --quiet
 
           echo "Develocity extension pre-downloaded and installed locally"
+
+      - name: Warm up Maven plugin cache
+        working-directory: /tmp/test-project
+        run: |
+          # Run plain mvn first (no jf routing) to populate the local plugin cache.
+          # jf mvn overrides plugin repositories with Artifactory, so standard plugins
+          # (maven-clean-plugin etc.) must already be cached locally before jf mvn runs.
+          mvn clean compile -B --quiet || true
 
       - name: Run jf mvn
         id: maven_test
