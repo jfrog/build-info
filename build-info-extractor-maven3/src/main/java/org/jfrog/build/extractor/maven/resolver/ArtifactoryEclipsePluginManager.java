@@ -25,16 +25,29 @@ import java.util.List;
 @Component(role = DefaultMavenPluginManager.class)
 public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
 
-    // Non-virtual handle to DefaultMavenPluginManager#checkPrerequisites if and only if the
-    // parent class declares it (Maven >= 3.9.12). On older Maven runtimes the method does not
-    // exist on the parent, the handle stays null, and the override below is a safe no-op.
-    private static final MethodHandle SUPER_CHECK_PREREQUISITES = resolveSuperCheckPrerequisites();
+    // Non-virtual handle to the parent's prerequisites-check method, whichever name it
+    // currently uses. Maven 3.9.12 renamed checkRequiredMavenVersion → checkPrerequisites
+    // and kept the old name as a deprecated default method on the MavenPluginManager interface
+    // that internally delegates to the new name. We must therefore look up the new name first:
+    // on 3.9.12+ that hits the real implementation directly. Falling through to the old name
+    // is only used on Maven < 3.9.12, where the new name does not exist and the old name is
+    // a real method on DefaultMavenPluginManager — so the check still runs.
+    // If neither exists, the handle stays null and the override below is a safe no-op.
+    private static final MethodHandle SUPER_PREREQUISITES_CHECK = resolveSuperPrerequisitesCheck();
 
-    private static MethodHandle resolveSuperCheckPrerequisites() {
+    private static MethodHandle resolveSuperPrerequisitesCheck() {
+        MethodHandle handle = findSuperMethod("checkPrerequisites");
+        if (handle != null) {
+            return handle;
+        }
+        return findSuperMethod("checkRequiredMavenVersion");
+    }
+
+    private static MethodHandle findSuperMethod(String name) {
         try {
             return MethodHandles.lookup().findSpecial(
                     DefaultMavenPluginManager.class,
-                    "checkPrerequisites",
+                    name,
                     MethodType.methodType(void.class, PluginDescriptor.class),
                     ArtifactoryEclipsePluginManager.class);
         } catch (NoSuchMethodException | IllegalAccessException e) {
@@ -52,12 +65,12 @@ public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
     }
 
     // Declared so Class.getDeclaredMethod on this subclass finds it —
-    // getDeclaredMethod does not walk the superclass chain. Delegates to the parent via a
-    // MethodHandle resolved at class-load time so the bytecode does not embed a hard reference
-    // to a method that may not exist on older Maven runtimes (3.8.x / 3.9.0 - 3.9.11).
+    // getDeclaredMethod does not walk the superclass chain. Delegates to the parent's
+    // prerequisites-check method via a MethodHandle resolved at class-load time, falling back
+    // to the older name (checkRequiredMavenVersion) on Maven < 3.9.12 so the check still runs.
     @Override
     public void checkPrerequisites(PluginDescriptor pluginDescriptor) throws PluginIncompatibleException {
-        MethodHandle handle = SUPER_CHECK_PREREQUISITES;
+        MethodHandle handle = SUPER_PREREQUISITES_CHECK;
         if (handle == null) {
             return;
         }
