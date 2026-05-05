@@ -288,15 +288,22 @@ jobs:
           # before jf mvn takes over resolution routing through Artifactory.
           # This avoids "could not find artifact" errors since Develocity may
           # not be available in the configured Artifactory virtual repo.
-          DEVELOCITY_JAR="/tmp/develocity-extension.jar"
+          # Download directly into the local Maven repo (~/.m2/repository).
+          # No -Ddest flag — dependency:get places the jar at its standard repo path
+          # so Maven finds it locally without any network call during jf mvn.
           mvn dependency:get \
             -Dartifact=com.gradle:develocity-maven-extension:${DEVELOCITY_VERSION} \
-            -Ddest=${DEVELOCITY_JAR} \
             -Dmaven.repo.remote=https://repo.maven.apache.org/maven2 \
-            --batch-mode --quiet
+            --batch-mode
+
+          DEVELOCITY_JAR=~/.m2/repository/com/gradle/develocity-maven-extension/${DEVELOCITY_VERSION}/develocity-maven-extension-${DEVELOCITY_VERSION}.jar
+          if [ ! -f "$DEVELOCITY_JAR" ]; then
+            echo "❌ Develocity jar download failed: $DEVELOCITY_JAR not found"
+            exit 1
+          fi
+          echo "✅ Develocity $DEVELOCITY_VERSION downloaded to local Maven repo"
 
           mkdir -p /tmp/test-project/.mvn
-          # Reference the locally downloaded jar so no network call is needed at build time
           cat > /tmp/test-project/.mvn/extensions.xml << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <extensions>
@@ -307,18 +314,7 @@ jobs:
             </extension>
           </extensions>
           EOF
-
-          # Place the jar in the local Maven repo so Maven picks it up without network
-          mvn install:install-file \
-            -Dfile=${DEVELOCITY_JAR} \
-            -DgroupId=com.gradle \
-            -DartifactId=develocity-maven-extension \
-            -Dversion=${DEVELOCITY_VERSION} \
-            -Dpackaging=jar \
-            -DgeneratePom=true \
-            --batch-mode --quiet
-
-          echo "Develocity extension pre-downloaded and installed locally"
+          echo "Develocity extension configured"
 
       - name: Run jf mvn
         id: maven_test
