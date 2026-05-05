@@ -242,6 +242,16 @@ jobs:
               <maven.compiler.source>11</maven.compiler.source>
               <maven.compiler.target>11</maven.compiler.target>
             </properties>
+            <!-- Allow jf mvn to resolve standard Maven plugins from Maven Central
+                 since the Artifactory virtual repo may not mirror all plugin artifacts -->
+            <pluginRepositories>
+              <pluginRepository>
+                <id>central</id>
+                <url>https://repo.maven.apache.org/maven2</url>
+                <releases><enabled>true</enabled></releases>
+                <snapshots><enabled>false</enabled></snapshots>
+              </pluginRepository>
+            </pluginRepositories>
           </project>
           EOF
 
@@ -270,18 +280,41 @@ jobs:
       - name: Add Develocity extension
         if: ${{ matrix.develocity }}
         run: |
+          # Pre-download the Develocity jar from Maven Central using plain mvn
+          # before jf mvn takes over resolution routing through Artifactory.
+          # This avoids "could not find artifact" errors since Develocity may
+          # not be available in the configured Artifactory virtual repo.
+          DEVELOCITY_VERSION="2.4.0"
+          DEVELOCITY_JAR="/tmp/develocity-extension.jar"
+          mvn dependency:get \
+            -Dartifact=com.gradle:develocity-maven-extension:${DEVELOCITY_VERSION} \
+            -Ddest=${DEVELOCITY_JAR} \
+            -Dmaven.repo.remote=https://repo.maven.apache.org/maven2 \
+            --batch-mode --quiet
+
           mkdir -p /tmp/test-project/.mvn
-          cat > /tmp/test-project/.mvn/extensions.xml << 'EOF'
+          # Reference the locally downloaded jar so no network call is needed at build time
+          cat > /tmp/test-project/.mvn/extensions.xml << EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <extensions>
             <extension>
               <groupId>com.gradle</groupId>
               <artifactId>develocity-maven-extension</artifactId>
-              <version>2.4.0</version>
+              <version>${DEVELOCITY_VERSION}</version>
             </extension>
           </extensions>
           EOF
-          echo "Develocity extension added"
+
+          # Place the jar in the local Maven repo so Maven picks it up without network
+          mvn install:install-file \
+            -Dfile=${DEVELOCITY_JAR} \
+            -DgroupId=com.gradle \
+            -DartifactId=develocity-maven-extension \
+            -Dversion=${DEVELOCITY_VERSION} \
+            -Dpackaging=jar \
+            --batch-mode --quiet
+
+          echo "Develocity extension pre-downloaded and installed locally"
 
       - name: Run jf mvn
         id: maven_test
