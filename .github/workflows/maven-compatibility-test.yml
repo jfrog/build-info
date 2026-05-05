@@ -26,8 +26,16 @@ on:
       - 'build-info-extractor-maven3/**'
       - 'build.gradle'
 
-  # Allow manual trigger for testing
+  # Allow manual trigger with optional Develocity version override
   workflow_dispatch:
+    inputs:
+      develocity-version:
+        description: 'Develocity Maven extension version to test against'
+        required: false
+        default: '2.4.0'
+
+env:
+  DEVELOCITY_VERSION: ${{ inputs.develocity-version || '2.4.0' }}
 
 jobs:
   check-latest-maven-versions:
@@ -280,7 +288,6 @@ jobs:
           # before jf mvn takes over resolution routing through Artifactory.
           # This avoids "could not find artifact" errors since Develocity may
           # not be available in the configured Artifactory virtual repo.
-          DEVELOCITY_VERSION="2.4.0"
           DEVELOCITY_JAR="/tmp/develocity-extension.jar"
           mvn dependency:get \
             -Dartifact=com.gradle:develocity-maven-extension:${DEVELOCITY_VERSION} \
@@ -296,7 +303,7 @@ jobs:
             <extension>
               <groupId>com.gradle</groupId>
               <artifactId>develocity-maven-extension</artifactId>
-              <version>${DEVELOCITY_VERSION}</version>
+              <version>$DEVELOCITY_VERSION</version>
             </extension>
           </extensions>
           EOF
