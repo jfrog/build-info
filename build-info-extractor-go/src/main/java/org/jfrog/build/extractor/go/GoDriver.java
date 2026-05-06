@@ -1,7 +1,9 @@
 package org.jfrog.build.extractor.go;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jfrog.build.api.util.Log;
+import org.jfrog.build.extractor.WslUtils;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
 
@@ -29,11 +31,50 @@ public class GoDriver implements Serializable {
     private final CommandExecutor commandExecutor;
     private final File workingDirectory;
     private final Log logger;
+    private final boolean runGoThroughWsl;
+    private final String goExecutableForWsl;
 
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger) {
-        this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
+        this(executablePath, env, workingDirectory, logger, false);
+    }
+
+    /**
+     * @param runGoThroughWsl when {@code true} on Windows, runs {@code go} via {@code wsl.exe --cd <linux-path> --exec ...}
+     *                        so Linux toolchains see WSL-backed projects and Windows temp dirs under {@code /mnt/...}.
+     */
+    public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger,
+                    boolean runGoThroughWsl) {
+        this.runGoThroughWsl = runGoThroughWsl && SystemUtils.IS_OS_WINDOWS;
+        this.goExecutableForWsl = runGoThroughWsl ? resolveGoExecutableForWsl(executablePath) : null;
+        if (this.runGoThroughWsl) {
+            this.commandExecutor = new CommandExecutor("wsl.exe", env);
+        } else {
+            this.commandExecutor = new CommandExecutor(StringUtils.defaultIfEmpty(executablePath, "go"), env);
+        }
         this.workingDirectory = workingDirectory;
         this.logger = logger;
+    }
+
+    /**
+     * For WSL mode: use {@code go} on distro PATH, or a Linux absolute path to the go binary.
+     * Windows paths to {@code go.exe} are not passed to {@code --exec}; {@code "go"} is used instead.
+     */
+    static String resolveGoExecutableForWsl(String executablePath) {
+        String trimmed = StringUtils.trimToNull(executablePath);
+        if (trimmed == null) {
+            return "go";
+        }
+        if (trimmed.startsWith("/")) {
+            return trimmed;
+        }
+        return "go";
+    }
+
+    /**
+     * @return whether {@code go} is executed through {@code wsl.exe}.
+     */
+    public boolean runsThroughWsl() {
+        return runGoThroughWsl;
     }
 
     public CommandResults runCmd(String args, boolean verbose) throws IOException {
@@ -48,7 +89,17 @@ public class GoDriver implements Serializable {
     public CommandResults runCmd(List<String> args, boolean verbose) throws IOException {
         CommandResults goCmdResult;
         try {
-            goCmdResult = commandExecutor.exeCommand(workingDirectory, args, null, logger);
+            if (runGoThroughWsl) {
+                List<String> wslArgs = new ArrayList<>();
+                wslArgs.add("--cd");
+                wslArgs.add(WslUtils.toWslLinuxCdPath(workingDirectory));
+                wslArgs.add("--exec");
+                wslArgs.add(goExecutableForWsl);
+                wslArgs.addAll(args);
+                goCmdResult = commandExecutor.exeCommand(null, wslArgs, null, logger);
+            } else {
+                goCmdResult = commandExecutor.exeCommand(workingDirectory, args, null, logger);
+            }
         } catch (IOException | InterruptedException e) {
             throw new IOException("Go execution failed", e);
         }
