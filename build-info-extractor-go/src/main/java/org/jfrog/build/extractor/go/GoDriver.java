@@ -45,7 +45,7 @@ public class GoDriver implements Serializable {
     public GoDriver(String executablePath, Map<String, String> env, File workingDirectory, Log logger,
                     boolean runGoThroughWsl) {
         this.runGoThroughWsl = runGoThroughWsl && SystemUtils.IS_OS_WINDOWS;
-        this.goExecutableForWsl = resolveGoExecutableForWsl(executablePath);
+        this.goExecutableForWsl = runGoThroughWsl ? resolveGoExecutableForWsl(executablePath) : null;
         if (this.runGoThroughWsl) {
             this.commandExecutor = new CommandExecutor("wsl.exe", env);
         } else {
