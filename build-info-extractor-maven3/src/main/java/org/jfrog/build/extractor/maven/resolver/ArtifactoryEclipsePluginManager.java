@@ -27,12 +27,12 @@ import java.util.List;
 public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
 
     // Non-virtual handle to the parent's prerequisites-check method, whichever name it
-    // currently uses. Maven 3.9.12 renamed checkRequiredMavenVersion → checkPrerequisites
+    // currently uses. Maven 3.9.12 renamed checkRequiredMavenVersion -> checkPrerequisites
     // and kept the old name as a deprecated default method on the MavenPluginManager interface
     // that internally delegates to the new name. We must therefore look up the new name first:
     // on 3.9.12+ that hits the real implementation directly. Falling through to the old name
     // is only used on Maven < 3.9.12, where the new name does not exist and the old name is
-    // a real method on DefaultMavenPluginManager — so the check still runs.
+    // a real method on DefaultMavenPluginManager - so the check still runs.
     // If neither exists, the handle stays null and the override below is a safe no-op.
     private static final MethodHandle SUPER_PREREQUISITES_CHECK = resolveSuperPrerequisitesCheck();
 
@@ -65,7 +65,7 @@ public class ArtifactoryEclipsePluginManager extends DefaultMavenPluginManager {
         return super.setupExtensionsRealm(project, plugin, session);
     }
 
-    // Declared so Class.getDeclaredMethod on this subclass finds it —
+    // Declared so Class.getDeclaredMethod on this subclass finds it -
     // getDeclaredMethod does not walk the superclass chain. Delegates to the parent's
     // prerequisites-check method via a MethodHandle resolved at class-load time, falling back
     // to the older name (checkRequiredMavenVersion) on Maven < 3.9.12 so the check still runs.
