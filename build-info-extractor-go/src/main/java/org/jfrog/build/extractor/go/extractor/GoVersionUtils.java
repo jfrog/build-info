@@ -118,4 +118,9 @@ public class GoVersionUtils {
         }
         return StringUtils.EMPTY;
     }
+
+    public static boolean isSubModuleWithMajorVersion(String subModule) {
+        return StringUtils.isNotBlank(subModule) && subModule.contains("/") &&
+                subModule.matches(".*?/v\\d+");
+    }
 }

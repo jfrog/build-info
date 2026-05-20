@@ -110,39 +110,80 @@ public class GoZipBallStreamer implements Closeable {
     }
 
     /**
-     * Determine if the project is a compatible module from version 2+, a submodule or an incompatible module
+     * Determine if the project is a compatible module from version 2+, a submodule or an incompatible module.
      * If subModuleName is already set (e.g., by a fetcher with intelligent submodule detection),
      * skip automatic detection and use the provided value (even if it's empty, indicating no submodule).
      */
     private void initiateProjectType() {
-        // If submodule name was already set externally (e.g., by GitLabIntelligentFetcher),
-        // use it and skip automatic detection - even if it's empty (explicitly indicating no submodule)
         if (subModuleNameExplicitlySet) {
-            if (StringUtils.isNotEmpty(subModuleName)) {
-                log.debug(projectName + "@" + version + " using externally provided submodule: " + subModuleName);
-            } else {
-                log.debug(projectName + "@" + version + " using externally provided empty submodule (no submodule)");
-            }
+            applyExplicitSubModule();
+        } else if (isCompatibleModuleFromV2()) {
+            detectSubModuleForCompatibleV2();
+        } else {
+            detectSubModuleForStandardModule();
+        }
+    }
+
+    private void applyExplicitSubModule() {
+        correctExplicitMajorVersionSubModule();
+        if (StringUtils.isNotEmpty(subModuleName)) {
+            log.debug(projectName + "@" + version + " using externally provided submodule: " + subModuleName);
+        } else {
+            log.debug(projectName + "@" + version + " using externally provided empty submodule (no submodule)");
+        }
+    }
+
+    private boolean isCompatibleModuleFromV2() {
+        return GoVersionUtils.getMajorVersion(version, log) >= 2
+                && GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
+    }
+
+    private void detectSubModuleForCompatibleV2() {
+        String majorVersion = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
+        String subModule = GoVersionUtils.getSubModule(projectName);
+
+        // Nested submodule (e.g., contrib/nested1/v2) - must detect submodule even when root has /vN.
+        boolean isNestedSubModule = StringUtils.isNotEmpty(subModule) && !subModule.equals(majorVersion);
+        if (hasRootModFileOfCompatibleModuleFromV2(majorVersion) && !isNestedSubModule) {
             return;
         }
 
-        boolean compatibleModuleFromV2 = GoVersionUtils.getMajorVersion(version, log) >= 2 &&
-                GoVersionUtils.isCompatibleGoModuleNaming(projectName, version, log);
-        if (compatibleModuleFromV2) {
-            String majorVersion = "v" + GoVersionUtils.getMajorProjectVersion(projectName, log);
-            if (!hasRootModFileOfCompatibleModuleFromV2(majorVersion)) {
-                subModuleName = GoVersionUtils.getSubModule(projectName);;
-                log.debug(projectName + "@" + version + " is compatible Go module from major version "
-                        + majorVersion);
-            }
+        subModuleName = subModule;
+        if (GoVersionUtils.isSubModuleWithMajorVersion(subModuleName)
+                && !hasModFileAtSubModulePath(subModuleName)) {
+            log.debug(projectName + "@" + version + " no '" + subModuleName
+                    + "/go.mod' in zip - assuming branch/tag layout, stripping '/vN'");
+            subModuleName = subModuleName.substring(0, subModuleName.lastIndexOf('/'));
+        }
+        log.debug(projectName + "@" + version + " is compatible Go module from major version " + majorVersion);
+    }
+
+    private void detectSubModuleForStandardModule() {
+        subModuleName = GoVersionUtils.getSubModule(projectName);
+        if (shouldPackSubModule()) {
+            log.debug(projectName + "@" + version + " is a sub module - the sub module name is " + subModuleName);
         } else {
-            subModuleName = GoVersionUtils.getSubModule(projectName);
-            if (shouldPackSubModule()) {
-                log.debug(projectName + "@" + version + " is a sub module - the sub module name is "
-                        + subModuleName);
-            } else {
-                log.debug(projectName + "@" + version + " is a regular module");
-            }
+            log.debug(projectName + "@" + version + " is a regular module");
+        }
+    }
+
+    /**
+     * When the explicit submodule name is a major version suffix (e.g. "v2"), verify against
+     * the actual zip contents. If the root go.mod declares the module with /vN (compatible layout),
+     * the source files live at root — not under a vN/ subdirectory — so clear the submodule name.
+     * This prevents producing an empty zip for compatible v2+ GitLab modules.
+     */
+    private void correctExplicitMajorVersionSubModule() {
+        if (StringUtils.isEmpty(subModuleName)) {
+            return;
+        }
+        long majorVersion = GoVersionUtils.getMajorVersion(version, log);
+        String majorVersionStr = "v" + majorVersion;
+        if (majorVersion >= 2 && subModuleName.equals(majorVersionStr)
+                && hasRootModFileOfCompatibleModuleFromV2(majorVersionStr)) {
+            log.debug(projectName + "@" + version + " explicit submodule '" + majorVersionStr
+                    + "' overridden: root go.mod declares compatible module, packing from root");
+            subModuleName = "";
         }
     }
 
@@ -317,7 +358,8 @@ public class GoZipBallStreamer implements Closeable {
             if (modEntry != null) {
                 try (InputStream inputStream = zipFile.getInputStream(modEntry)) {
                     String modFileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-                    return StringUtils.substringBefore(modFileContent, System.lineSeparator())
+                    return StringUtils.substringBefore(modFileContent, "\n")
+                            .trim()
                             .endsWith("/" + majorVersion);
                 } catch (IOException e) {
                     log.warn("Failed to read go.mod file of the root project: " +
@@ -327,6 +369,35 @@ public class GoZipBallStreamer implements Closeable {
         }
         return false;
 
+    }
+
+    /**
+     * Checks if {root}/{subModulePath}/go.mod exists, where {root} is the first
+     * path element of the first zip entry (the conventional top-level directory
+     * produced by GitHub/GitLab tarballs).
+     *
+     * Returns false when the zip is empty or its first entry has no root
+     * directory; callers therefore treat "uncertain" identically to
+     * "branch/tag layout".
+     */
+    private boolean hasModFileAtSubModulePath(String subModulePath) {
+        Enumeration<? extends ZipArchiveEntry> entries = zipFile.getEntries();
+        if (!entries.hasMoreElements()) {
+            log.debug(projectName + "@" + version + " hasModFileAtSubModulePath('"
+                    + subModulePath + "'): zip is empty");
+            return false;
+        }
+        String root = getFirstPathElement(entries.nextElement().getName());
+        if (StringUtils.isEmpty(root)) {
+            log.debug(projectName + "@" + version + " hasModFileAtSubModulePath('"
+                    + subModulePath + "'): no top-level dir");
+            return false;
+        }
+        String lookup = root + "/" + subModulePath + MOD_FILE_PATH;
+        boolean found = zipFile.getEntry(lookup) != null;
+        log.debug(projectName + "@" + version + " hasModFileAtSubModulePath: '"
+                + lookup + "' " + (found ? "found" : "not found"));
+        return found;
     }
 
     /**
