@@ -50,6 +50,8 @@ public class Build extends BaseBuildBean {
 
     private Issues issues;
 
+    private List<Trace> traces;
+
     /**
      * Formats the timestamp to the ISO date time string format expected by the build info API.
      *
@@ -466,6 +468,13 @@ public class Build extends BaseBuildBean {
         this.issues = issues;
     }
 
+    public List<Trace> getTraces() {
+        return traces;
+    }
+
+    public void setTraces(List<Trace> traces) {
+        this.traces = traces;
+    }
 
     @Override
     public String toString() {
@@ -491,6 +500,7 @@ public class Build extends BaseBuildBean {
                 ", statuses=" + statuses +
                 ", buildDependencies=" + buildDependencies +
                 ", issues=" + issues +
+                ", traces=" + traces +
                 '}';
     }
 }
