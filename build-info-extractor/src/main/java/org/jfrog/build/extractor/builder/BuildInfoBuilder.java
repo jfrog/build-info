@@ -40,6 +40,7 @@ public class BuildInfoBuilder {
     protected Properties properties;
     protected BuildRetention buildRetention;
     protected Issues issues;
+    protected List<org.jfrog.build.api.Trace> traces;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -86,6 +87,7 @@ public class BuildInfoBuilder {
         buildInfo.setVcs(vcs);
         buildInfo.setBuildRetention(buildRetention);
         buildInfo.setIssues(issues);
+        buildInfo.setTraces(traces);
         return buildInfo;
     }
 
@@ -418,6 +420,11 @@ public class BuildInfoBuilder {
 
     public BuildInfoBuilder issues(Issues issues) {
         this.issues = issues;
+        return this;
+    }
+
+    public BuildInfoBuilder traces(List<org.jfrog.build.api.Trace> traces) {
+        this.traces = traces;
         return this;
     }
 

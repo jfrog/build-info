@@ -7,6 +7,7 @@ import org.jfrog.build.api.BuildAgent;
 import org.jfrog.build.api.BuildRetention;
 import org.jfrog.build.api.Issues;
 import org.jfrog.build.api.MatrixParameter;
+import org.jfrog.build.api.Trace;
 import org.jfrog.build.api.Module;
 import org.jfrog.build.api.Vcs;
 import org.jfrog.build.api.release.PromotionStatus;
@@ -49,6 +50,7 @@ public class BuildInfoBuilder {
     protected Properties properties;
     protected BuildRetention buildRetention;
     protected Issues issues;
+    protected List<Trace> traces;
 
     public BuildInfoBuilder(String name) {
         this.name = name;
@@ -95,6 +97,7 @@ public class BuildInfoBuilder {
         build.setVcs(vcs);
         build.setBuildRetention(buildRetention);
         build.setIssues(issues);
+        build.setTraces(traces);
         return build;
     }
 
@@ -415,6 +418,11 @@ public class BuildInfoBuilder {
 
     public BuildInfoBuilder issues(Issues issues) {
         this.issues = issues;
+        return this;
+    }
+
+    public BuildInfoBuilder traces(List<Trace> traces) {
+        this.traces = traces;
         return this;
     }
 

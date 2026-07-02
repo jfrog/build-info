@@ -58,6 +58,8 @@ public class BuildInfo extends BaseBuildBean {
 
     private Issues issues;
 
+    private List<org.jfrog.build.api.Trace> traces;
+
     /**
      * Formats the timestamp to the ISO date time string format expected by the build info API.
      *
@@ -486,6 +488,14 @@ public class BuildInfo extends BaseBuildBean {
         this.issues = issues;
     }
 
+    public List<org.jfrog.build.api.Trace> getTraces() {
+        return traces;
+    }
+
+    public void setTraces(List<org.jfrog.build.api.Trace> traces) {
+        this.traces = traces;
+    }
+
     public void append(BuildInfo other) {
         if (buildAgent == null) {
             setBuildAgent(other.buildAgent);
@@ -574,6 +584,7 @@ public class BuildInfo extends BaseBuildBean {
                 ", statuses=" + statuses +
                 ", buildDependencies=" + buildDependencies +
                 ", issues=" + issues +
+                ", traces=" + traces +
                 '}';
     }
 
@@ -597,7 +608,8 @@ public class BuildInfo extends BaseBuildBean {
                 .properties(getProperties())
                 .vcs(vcs == null ? null : vcs.stream().map(Vcs::ToBuildVcs).collect(Collectors.toList()))
                 .buildRetention(buildRetention == null ? null : buildRetention.ToBuildRetention())
-                .issues(issues == null ? null : issues.ToBuildIssues());
+                .issues(issues == null ? null : issues.ToBuildIssues())
+                .traces(traces);
         if (modules != null) {
             builder.modules(modules.stream().map(m -> new org.jfrog.build.api.builder.ModuleBuilder()
                     .type(m.getType() == null ? null : ModuleType.valueOf(m.getType().toUpperCase()))
@@ -634,7 +646,8 @@ public class BuildInfo extends BaseBuildBean {
                 .properties(build.getProperties())
                 .vcs(build.getVcs() == null ? null : build.getVcs().stream().map(Vcs::ToBuildInfoVcs).collect(Collectors.toList()))
                 .buildRetention(build.getBuildRetention() == null ? null : BuildRetention.ToBuildInfoRetention(build.getBuildRetention()))
-                .issues(build.getIssues() == null ? null : Issues.ToBuildInfoIssues(build.getIssues()));
+                .issues(build.getIssues() == null ? null : Issues.ToBuildInfoIssues(build.getIssues()))
+                .traces(build.getTraces());
         if (build.getModules() != null) {
             builder.modules(build.getModules().stream().map(m -> new ModuleBuilder()
                     .type(m.getType())
