@@ -10,6 +10,7 @@ import org.jfrog.build.IntegrationTestsBase;
 import org.jfrog.build.api.multiMap.ListMultimap;
 import org.jfrog.build.api.multiMap.Multimap;
 import org.jfrog.build.extractor.ci.*;
+import org.jfrog.build.extractor.ci.Module;
 import org.jfrog.build.extractor.docker.DockerJavaWrapper;
 import org.jfrog.build.extractor.executor.CommandExecutor;
 import org.jfrog.build.extractor.executor.CommandResults;
