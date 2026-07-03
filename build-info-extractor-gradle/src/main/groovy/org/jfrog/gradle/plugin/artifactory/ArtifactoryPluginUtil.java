@@ -7,12 +7,12 @@ import org.jfrog.gradle.plugin.artifactory.dsl.ArtifactoryPluginConvention;
 public class ArtifactoryPluginUtil {
 
     public static ArtifactoryPluginConvention getArtifactoryConvention(Project project) {
-        return project.getRootProject().getConvention().findPlugin(ArtifactoryPluginConvention.class);
+        return project.getRootProject().getExtensions().findByType(ArtifactoryPluginConvention.class);
     }
 
     public static ArtifactoryPluginConvention getPublisherConvention(Project project) {
         while (project != null) {
-            ArtifactoryPluginConvention acc = project.getConvention().findPlugin(ArtifactoryPluginConvention.class);
+            ArtifactoryPluginConvention acc = project.getExtensions().findByType(ArtifactoryPluginConvention.class);
             if (acc != null) {
                 ArtifactoryClientConfiguration.PublisherHandler publisher = acc.getClientConfig().publisher;
                 if (publisher.getContextUrl() != null && (publisher.getRepoKey() != null || publisher.getSnapshotRepoKey() != null)) {
@@ -34,7 +34,7 @@ public class ArtifactoryPluginUtil {
 
     public static ArtifactoryClientConfiguration.ResolverHandler getResolverHandler(Project project) {
         while (project != null) {
-            ArtifactoryPluginConvention acc = project.getConvention().findPlugin(ArtifactoryPluginConvention.class);
+            ArtifactoryPluginConvention acc = project.getExtensions().findByType(ArtifactoryPluginConvention.class);
             if (acc != null) {
                 ArtifactoryClientConfiguration.ResolverHandler resolver = acc.getClientConfig().resolver;
                 if (resolver.getContextUrl() != null && resolver.getRepoKey() != null) {
