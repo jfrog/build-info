@@ -375,6 +375,30 @@
                     <role-hint>default</role-hint>
                     <field-name>resolutionHelper</field-name>
                 </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.SnapshotVersionResolver</role>
+                    <role-hint>default</role-hint>
+                    <field-name>snapshotVersionResolver</field-name>
+                </requirement>
+            </requirements>
+        </component>
+        <!-- A class that names deployed snapshots the way Maven 3 does, with a timestamp and a build number -->
+        <component>
+            <role>org.jfrog.build.extractor.maven.SnapshotVersionResolver</role>
+            <implementation>org.jfrog.build.extractor.maven.SnapshotVersionResolver</implementation>
+            <role-hint>default</role-hint>
+            <isolated-realm>false</isolated-realm>
+            <requirements>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <role-hint>default</role-hint>
+                    <field-name>logger</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.jfrog.build.extractor.maven.ArtifactoryManagerBuilder</role>
+                    <role-hint>default</role-hint>
+                    <field-name>artifactoryManagerBuilder</field-name>
+                </requirement>
             </requirements>
         </component>
         <component>
