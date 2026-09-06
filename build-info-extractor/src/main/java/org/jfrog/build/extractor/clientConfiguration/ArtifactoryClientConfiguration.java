@@ -379,6 +379,17 @@ public class ArtifactoryClientConfiguration {
             setStringValue(SNAPSHOT_REPO_KEY, repoKey);
         }
 
+        /**
+         * Maven 3 has no non-unique snapshots, so unique snapshots are the default here as well.
+         */
+        public Boolean isUniqueSnapshots() {
+            return getBooleanValue(UNIQUE_SNAPSHOTS, true);
+        }
+
+        public void setUniqueSnapshots(Boolean enabled) {
+            setBooleanValue(UNIQUE_SNAPSHOTS, enabled);
+        }
+
         public String getReleaseRepoKey() {
             return getStringValue(RELEASE_REPO_KEY);
         }

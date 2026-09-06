@@ -62,6 +62,11 @@ import static org.jfrog.build.extractor.clientConfiguration.ClientConfigurationF
 @Component(role = BuildInfoRecorder.class)
 public class BuildInfoRecorder extends AbstractExecutionListener implements BuildInfoExtractor<ExecutionEvent> {
 
+    /**
+     * maven-deploy-plugin's own flag for choosing between unique and non-unique snapshots.
+     */
+    private static final String UNIQUE_VERSION_USER_PROPERTY = "uniqueVersion";
+
     @Requirement
     private BuildInfoModelPropertyResolver buildInfoModelPropertyResolver;
 
@@ -70,6 +75,9 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
 
     @Requirement
     private ResolutionHelper resolutionHelper;
+
+    @Requirement
+    private SnapshotVersionResolver snapshotVersionResolver;
 
     @Requirement
     private Logger logger;
@@ -141,6 +149,7 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             buildInfoBuilder = buildInfoModelPropertyResolver.resolveProperties(event, conf);
             deployableArtifactBuilderMap = new ConcurrentHashMap<>();
             setDeploymentPolicy(event);
+            setSnapshotVersionPolicy(event);
 
             if (wrappedListener != null) {
                 wrappedListener.sessionStarted(event);
@@ -511,15 +520,16 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             }
 
             if (artifactFile != null && artifactFile.isFile()) {
-                String artifactName = getArtifactName(artifactId, artifactVersion, artifactClassifier, artifactExtension);
+                String deployedVersion = snapshotVersionResolver.getDeployedVersion(groupId, artifactId, artifactVersion);
+                String artifactName = getArtifactName(artifactId, deployedVersion, artifactClassifier, artifactExtension);
                 org.jfrog.build.extractor.ci.Artifact artifact = new ArtifactBuilder(artifactName)
                         .remotePath(getRemotePath(groupId, artifactId, artifactVersion))
                         .type(type).build();
-                String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
+                String deploymentPath = getDeploymentPath(groupId, artifactId, artifactVersion, deployedVersion, artifactClassifier, artifactExtension);
                 boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
                 addArtifactToBuildInfo(artifact, pathConflicts, excludeArtifactsFromBuild, module);
                 if (conf.publisher.shouldAddDeployableArtifacts()) {
-                    addDeployableArtifact(artifact, artifactFile, pathConflicts, groupId, artifactId, artifactVersion, artifactClassifier, artifactExtension);
+                    addDeployableArtifact(artifact, artifactFile, pathConflicts, groupId, artifactId, artifactVersion, deployedVersion, artifactClassifier, artifactExtension);
                 }
             }
         }
@@ -537,17 +547,19 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
         Artifact projectArtifact = project.getArtifact();
-        String artifactName = getArtifactName(projectArtifact.getArtifactId(), projectArtifact.getBaseVersion(), projectArtifact.getClassifier(), "pom");
+        String baseVersion = projectArtifact.getBaseVersion();
+        String deployedVersion = snapshotVersionResolver.getDeployedVersion(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), baseVersion);
+        String artifactName = getArtifactName(projectArtifact.getArtifactId(), deployedVersion, projectArtifact.getClassifier(), "pom");
         org.jfrog.build.extractor.ci.Artifact pomArtifact = new ArtifactBuilder(artifactName)
-                .remotePath(getRemotePath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getBaseVersion()))
+                .remotePath(getRemotePath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), baseVersion))
                 .type("pom")
                 .build();
 
-        String deploymentPath = getDeploymentPath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
+        String deploymentPath = getDeploymentPath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), baseVersion, deployedVersion, projectArtifact.getClassifier(), "pom");
         boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
         addArtifactToBuildInfo(pomArtifact, pathConflicts, excludeArtifactsFromBuild, module);
         if (conf.publisher.shouldAddDeployableArtifacts()) {
-            addDeployableArtifact(pomArtifact, pomFile, pathConflicts, projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
+            addDeployableArtifact(pomArtifact, pomFile, pathConflicts, projectArtifact.getGroupId(), projectArtifact.getArtifactId(), baseVersion, deployedVersion, projectArtifact.getClassifier(), "pom");
         }
     }
 
@@ -573,12 +585,13 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
     }
 
     private void addDeployableArtifact(org.jfrog.build.extractor.ci.Artifact artifact, File artifactFile, boolean pathConflicts,
-                                       String groupId, String artifactId, String version, String classifier, String fileExtension) {
+                                       String groupId, String artifactId, String version, String deployedVersion,
+                                       String classifier, String fileExtension) {
         if (pathConflicts) {
             logger.info("'" + artifact.getName() + "' will not be deployed due to the defined include-exclude patterns.");
             return;
         }
-        String deploymentPath = getDeploymentPath(groupId, artifactId, version, classifier, fileExtension);
+        String deploymentPath = getDeploymentPath(groupId, artifactId, version, deployedVersion, classifier, fileExtension);
         // deploy to snapshots or releases repository based on the deploy version
         String targetRepository = getTargetRepository(deploymentPath);
 
@@ -609,9 +622,14 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
         return groupId.replace(".", "/") + "/" + artifactId + "/" + version;
     }
 
-    private String getDeploymentPath(String groupId, String artifactId, String version, String classifier,
-                                     String fileExtension) {
-        return getRemotePath(groupId, artifactId, version) + "/" + getArtifactName(artifactId, version, classifier, fileExtension);
+    /**
+     * Maven's layout keeps unique snapshots in the directory of their -SNAPSHOT version, so only the file name
+     * carries the timestamped version. The directory is what {@link #getTargetRepository} reads to route
+     * snapshots to the snapshot repository.
+     */
+    private String getDeploymentPath(String groupId, String artifactId, String version, String deployedVersion,
+                                     String classifier, String fileExtension) {
+        return getRemotePath(groupId, artifactId, version) + "/" + getArtifactName(artifactId, deployedVersion, classifier, fileExtension);
     }
 
     private void addDependenciesToCurrentModule(ModuleBuilder module) {
@@ -736,5 +754,22 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             conf.publisher.setLegacyBooleanValue(PUBLISH_ARTIFACTS, false);
             conf.publisher.setLegacyBooleanValue(PUBLISH_BUILD_INFO, false);
         }
+    }
+
+    /**
+     * Maven 3 knows only unique snapshots, and setDeploymentPolicy hands deployment to the extractor before
+     * maven-deploy-plugin gets to apply them, so the extractor defaults to unique snapshots too. Users opt out
+     * with the plugin's own -DuniqueVersion=false, or with the publisher configuration when there is no command
+     * line to put it on.
+     */
+    private void setSnapshotVersionPolicy(ExecutionEvent event) {
+        String uniqueVersion = event.getSession().getUserProperties().getProperty(UNIQUE_VERSION_USER_PROPERTY);
+        boolean uniqueSnapshots = StringUtils.isNotBlank(uniqueVersion)
+                ? Boolean.parseBoolean(uniqueVersion)
+                : conf.publisher.isUniqueSnapshots();
+        if (!uniqueSnapshots) {
+            logger.info("Artifactory Build Info Recorder: unique snapshots are disabled, snapshots will be deployed without a timestamp.");
+        }
+        snapshotVersionResolver.newSession(conf, event.getSession().getRequest().getStartTime(), uniqueSnapshots);
     }
 }
