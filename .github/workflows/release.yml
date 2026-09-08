@@ -51,71 +51,17 @@ jobs:
           java-version: "8"
           distribution: "zulu"
 
-      - name: Configure git identity
-        run: |
-          git config user.name "JFrog CI"
-          git config user.email "eco-system@jfrog.com"
-
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
 
-      - name: Configure JFrog CLI
-        run: |
-          jf c rm --quiet
-          jf c add internal --url="$ARTIFACTORY_URL" --user="$ARTIFACTORY_USER" --password="$ARTIFACTORY_APIKEY"
-          jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-release-local
+      - name: Run release script
+        run: .github/scripts/release.sh
         env:
           ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_APIKEY: ${{ secrets.ARTIFACTORY_APIKEY }}
-
-      - name: Run audit
-        if: ${{ inputs.skip_audit_check != true }}
-        run: jf audit --fail=false
-
-      - name: Update release version and tag
-        run: |
-          sed -i -e "/build-info-version=/ s/=.*/=$NEXT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_VERSION/" gradle.properties
-          git commit -am "[artifactory-release] Release version ${NEXT_VERSION} [skipRun]" --allow-empty
-          git tag build-info-extractor-${NEXT_VERSION}
-          git tag build-info-gradle-extractor-${NEXT_GRADLE_VERSION}
-          git push
-          git push --tags
-
-      - name: Build and publish to Artifactory
-        run: |
-          export ORG_GRADLE_PROJECT_signingKey=$(echo "$MVN_CENTRAL_SIGNING_KEY" | base64 -d)
-          export ORG_GRADLE_PROJECT_signingPassword="$MVN_CENTRAL_SIGNING_PASSWORD"
-          jf gradle clean aP -x test -Psign
-        env:
-          MVN_CENTRAL_SIGNING_KEY: ${{ secrets.MVN_CENTRAL_SIGNING_KEY }}
-          MVN_CENTRAL_SIGNING_PASSWORD: ${{ secrets.MVN_CENTRAL_SIGNING_PASSWORD }}
-
-      - name: Publish build info
-        run: |
-          jf rt bag && jf rt bce
-          jf rt bp
-
-      - name: Distribute release bundle
-        run: |
-          jf ds rbc ecosystem-build-info $NEXT_VERSION --spec=./release/specs/prod-rbc-filespec.json --spec-vars="version=$NEXT_VERSION;gradleVersion=$NEXT_GRADLE_VERSION" --sign
-          jf ds rbd ecosystem-build-info $NEXT_VERSION --site="releases.jfrog.io" --sync
-
-      - name: Publish to Maven Central
-        run: |
-          export ORG_GRADLE_PROJECT_sonatypeUsername="$MVN_CENTRAL_USER"
-          export ORG_GRADLE_PROJECT_sonatypePassword="$MVN_CENTRAL_PASSWORD"
-          export ORG_GRADLE_PROJECT_signingKey=$(echo "$MVN_CENTRAL_SIGNING_KEY" | base64 -d)
-          export ORG_GRADLE_PROJECT_signingPassword="$MVN_CENTRAL_SIGNING_PASSWORD"
-          ./gradlew clean build publishToSonatype closeAndReleaseSonatypeStagingRepository -x test -Psign
-        env:
           MVN_CENTRAL_USER: ${{ secrets.MVN_CENTRAL_USER }}
           MVN_CENTRAL_PASSWORD: ${{ secrets.MVN_CENTRAL_PASSWORD }}
           MVN_CENTRAL_SIGNING_KEY: ${{ secrets.MVN_CENTRAL_SIGNING_KEY }}
           MVN_CENTRAL_SIGNING_PASSWORD: ${{ secrets.MVN_CENTRAL_SIGNING_PASSWORD }}
-
-      - name: Update next development version
-        run: |
-          sed -i -e "/build-info-version=/ s/=.*/=$NEXT_DEVELOPMENT_VERSION/" -e "/build-info-extractor-gradle-version=/ s/=.*/=$NEXT_GRADLE_DEVELOPMENT_VERSION/" gradle.properties
-          git commit -am "[artifactory-release] Next development version [skipRun]"
-          git push
+          SKIP_AUDIT_CHECK: ${{ inputs.skip_audit_check }}

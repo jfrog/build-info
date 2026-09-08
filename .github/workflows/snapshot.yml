@@ -37,32 +37,10 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
 
-      - name: Configure JFrog CLI
-        run: |
-          jf c rm --quiet
-          jf c add internal --url="$ARTIFACTORY_URL" --user="$ARTIFACTORY_USER" --password="$ARTIFACTORY_APIKEY"
-          jf gradlec --use-wrapper --uses-plugin --repo-resolve ecosys-maven-remote --repo-deploy ecosys-oss-snapshot-local
+      - name: Run snapshot script
+        run: .github/scripts/snapshot.sh
         env:
           ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
           ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
           ARTIFACTORY_APIKEY: ${{ secrets.ARTIFACTORY_APIKEY }}
-
-      - name: Run audit
-        run: jf audit --fail=false
-
-      # Delete former snapshots to make sure the release bundle will not contain stale artifacts
-      - name: Delete former snapshots
-        run: jf rt del "ecosys-oss-snapshot-local/org/jfrog/buildinfo/*" --quiet
-
-      - name: Build and publish to Artifactory
-        run: jf gradle clean aP -x test
-
-      - name: Publish build info
-        run: |
-          jf rt bag && jf rt bce
-          jf rt bp
-
-      - name: Distribute release bundle
-        run: |
-          jf ds rbc ecosystem-build-info-snapshot ${{ github.run_number }} --spec=./release/specs/dev-rbc-filespec.json --sign
-          jf ds rbd ecosystem-build-info-snapshot ${{ github.run_number }} --site="releases.jfrog.io" --sync
+          RUN_NUMBER: ${{ github.run_number }}
