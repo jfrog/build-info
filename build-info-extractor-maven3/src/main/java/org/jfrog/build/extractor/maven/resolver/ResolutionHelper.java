@@ -38,6 +38,10 @@ public class ResolutionHelper {
         return initialized;
     }
 
+    public boolean isInsecureTls() {
+        return internalConfiguration.getInsecureTls();
+    }
+
     /**
      * Determines a deployed artifact's scope (either "project" or "build") according to the maven's request context sent as an argument.
      * @param requestContext    The deployed artifact's request context.
