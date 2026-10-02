@@ -537,17 +537,18 @@ public class BuildInfoRecorder extends AbstractExecutionListener implements Buil
             return;
         }
         Artifact projectArtifact = project.getArtifact();
-        String artifactName = getArtifactName(projectArtifact.getArtifactId(), projectArtifact.getBaseVersion(), projectArtifact.getClassifier(), "pom");
+        // The pom is the module descriptor and never carries a classifier, even when the main artifact dose.
+        String artifactName = getArtifactName(projectArtifact.getArtifactId(), projectArtifact.getBaseVersion(), null, "pom");
         org.jfrog.build.extractor.ci.Artifact pomArtifact = new ArtifactBuilder(artifactName)
                 .remotePath(getRemotePath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getBaseVersion()))
                 .type("pom")
                 .build();
 
-        String deploymentPath = getDeploymentPath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
+        String deploymentPath = getDeploymentPath(projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), null, "pom");
         boolean pathConflicts = PatternMatcher.pathConflicts(deploymentPath, patterns);
         addArtifactToBuildInfo(pomArtifact, pathConflicts, excludeArtifactsFromBuild, module);
         if (conf.publisher.shouldAddDeployableArtifacts()) {
-            addDeployableArtifact(pomArtifact, pomFile, pathConflicts, projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), projectArtifact.getClassifier(), "pom");
+            addDeployableArtifact(pomArtifact, pomFile, pathConflicts, projectArtifact.getGroupId(), projectArtifact.getArtifactId(), projectArtifact.getVersion(), null, "pom");
         }
     }
 
