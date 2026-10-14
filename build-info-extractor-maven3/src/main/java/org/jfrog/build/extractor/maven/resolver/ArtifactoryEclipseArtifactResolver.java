@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.internal.impl.DefaultArtifactResolver;
+import org.eclipse.aether.impl.ArtifactResolver;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResolutionException;
@@ -12,33 +10,22 @@ import org.eclipse.aether.resolution.ArtifactResult;
 
 import javax.inject.Named;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
+/**
+ * Decorates Maven's {@link ArtifactResolver}, and enforces the Artifactory resolution repositories before delegating to it.
+ */
 @Named
-@Component( role = ArtifactoryEclipseArtifactResolver.class )
-public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver {
+@Component( role = ArtifactResolver.class )
+public class ArtifactoryEclipseArtifactResolver extends ArtifactoryEclipseResolverBase<ArtifactResolver> implements ArtifactResolver {
 
-    @Requirement
-    private ResolutionHelper resolutionHelper;
-
-    @Requirement
-    private Logger logger;
-
-    @Requirement
-    private ArtifactoryEclipseResolversHelper helper;
-
-    public void initResolutionRepositories(RepositorySystemSession session) {
-        helper.initResolutionRepositories(session);
-    }
-
-    private void enforceResolutionRepositories(RepositorySystemSession session, ArtifactRequest request) {
-        // Get the Artifactory repositories configured in the Artifactory plugin:
-        List<RemoteRepository> repositories = helper.getResolutionRepositories(session);
-
-        // The repositories list can be empty, in case this build is not running from a CI server.
-        // In that case, we do not want to override Maven's configured repositories:
-        if (repositories != null && !repositories.isEmpty()) {
-            request.setRepositories(repositories);
+    private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests) {
+        List<RemoteRepository> repositories = getResolutionRepositories(session);
+        if (!repositories.isEmpty()) {
+            for (ArtifactRequest request : requests) {
+                request.setRepositories(repositories);
+            }
         }
     }
 
@@ -46,21 +33,18 @@ public class ArtifactoryEclipseArtifactResolver extends DefaultArtifactResolver 
      * Before letting Maven resolve the artifact, this method enforces the configured Artifactory resolution repositories.
      */
     @Override
+    public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
+        enforceResolutionRepositories(session, Collections.singletonList(request));
+        return getDelegate(ArtifactResolver.class).resolveArtifact(session, request);
+    }
+
+    /**
+     * Before letting Maven resolve the artifacts, this method enforces the configured Artifactory resolution repositories.
+     */
+    @Override
     public List<ArtifactResult> resolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests)
             throws ArtifactResolutionException {
-
-        for(ArtifactRequest request : requests) {
-            enforceResolutionRepositories(session, request);
-        }
-        // Now we let Maven resolve the artifacts:
-        return super.resolveArtifacts(session, requests);
-    }
-
-    public RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
-        return helper.getSnapshotRepository(session);
-    }
-
-    public RemoteRepository getReleaseRepository(RepositorySystemSession session) {
-        return helper.getReleaseRepository(session);
+        enforceResolutionRepositories(session, requests);
+        return getDelegate(ArtifactResolver.class).resolveArtifacts(session, requests);
     }
 }
