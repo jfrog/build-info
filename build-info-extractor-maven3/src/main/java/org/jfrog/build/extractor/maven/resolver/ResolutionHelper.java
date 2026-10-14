@@ -1,6 +1,5 @@
 package org.jfrog.build.extractor.maven.resolver;
 
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.component.annotations.Component;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.logging.Logger;
@@ -59,14 +58,6 @@ public class ResolutionHelper {
 
     public String getRepoSnapshotUrl() {
         return internalConfiguration.resolver.getUrl(internalConfiguration.resolver.getDownloadSnapshotRepoKey());
-    }
-
-    /**
-     * Checks whether Artifactory resolution repositories have been configured.
-     * @return  true if at least one Artifactory resolution repository has been configured.
-     */
-    public boolean resolutionRepositoriesConfigured() {
-        return StringUtils.isNotBlank(getRepoReleaseUrl()) || StringUtils.isNotBlank(getRepoSnapshotUrl());
     }
 
     public String getRepoUsername() {

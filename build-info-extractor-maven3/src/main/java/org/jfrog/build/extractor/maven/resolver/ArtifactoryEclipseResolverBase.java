@@ -25,7 +25,7 @@ abstract class ArtifactoryEclipseResolverBase<T> {
     @Requirement
     ArtifactoryEclipseResolversHelper helper;
 
-    private T delegate;
+    private volatile T delegate;
 
     /**
      * Get the Artifactory repositories configured in the Artifactory plugin.
@@ -39,7 +39,7 @@ abstract class ArtifactoryEclipseResolverBase<T> {
     /**
      * Get Maven's own implementation of the decorated role. The decorator is registered with the same role as Maven's implementation, so the
      * look-up can't be a plain requirement - it would resolve to the decorator. The look-up is lazy to avoid circular dependencies,
-     * and idempotent, so a race between threads is harmless.
+     * and idempotent, so two threads that look it up at the same time get the same delegate. The field is volatile to publish it safely.
      */
     T getDelegate(Class<T> role) {
         if (delegate == null) {
