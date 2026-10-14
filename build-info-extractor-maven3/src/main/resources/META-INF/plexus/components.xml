@@ -118,11 +118,6 @@
                     <field-name>helper</field-name>
                 </requirement>
                 <requirement>
-                    <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
-                    <field-name>logger</field-name>
-                </requirement>
-                <requirement>
                     <role>org.codehaus.plexus.PlexusContainer</role>
                     <field-name>container</field-name>
                 </requirement>
@@ -138,11 +133,6 @@
                     <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseResolversHelper</role>
                     <role-hint>default</role-hint>
                     <field-name>helper</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
-                    <field-name>logger</field-name>
                 </requirement>
                 <requirement>
                     <role>org.codehaus.plexus.PlexusContainer</role>

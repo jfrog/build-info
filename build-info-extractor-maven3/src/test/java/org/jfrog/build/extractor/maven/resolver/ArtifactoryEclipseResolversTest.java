@@ -12,18 +12,18 @@ import org.eclipse.aether.resolution.ArtifactResolutionException;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.MetadataRequest;
 import org.eclipse.aether.resolution.MetadataResult;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
 /**
  * The Artifactory resolvers decorate Maven's {@link ArtifactResolver} and {@link MetadataResolver}.
@@ -50,20 +50,19 @@ public class ArtifactoryEclipseResolversTest {
         metadataDelegate = new RecordingMetadataResolver();
 
         artifactResolver = new ArtifactoryEclipseArtifactResolver();
-        set(artifactResolver, "helper", helper);
-        set(artifactResolver, "delegate", artifactDelegate);
+        FieldUtils.writeField(artifactResolver, "helper", helper, true);
+        FieldUtils.writeField(artifactResolver, "delegate", artifactDelegate, true);
 
         metadataResolver = new ArtifactoryEclipseMetadataResolver();
-        set(metadataResolver, "helper", helper);
-        set(metadataResolver, "delegate", metadataDelegate);
+        FieldUtils.writeField(metadataResolver, "helper", helper, true);
+        FieldUtils.writeField(metadataResolver, "delegate", metadataDelegate, true);
     }
 
     @Test
     public void resolversDoNotExtendMavenInternalClasses() {
-        assertSame(Object.class, ArtifactoryEclipseArtifactResolver.class.getSuperclass());
-        assertSame(Object.class, ArtifactoryEclipseMetadataResolver.class.getSuperclass());
-        assertTrue(ArtifactResolver.class.isAssignableFrom(ArtifactoryEclipseArtifactResolver.class));
-        assertTrue(MetadataResolver.class.isAssignableFrom(ArtifactoryEclipseMetadataResolver.class));
+        assertSame(ArtifactoryEclipseResolverBase.class, ArtifactoryEclipseArtifactResolver.class.getSuperclass());
+        assertSame(ArtifactoryEclipseResolverBase.class, ArtifactoryEclipseMetadataResolver.class.getSuperclass());
+        assertSame(Object.class, ArtifactoryEclipseResolverBase.class.getSuperclass());
     }
 
     @Test
@@ -92,7 +91,7 @@ public class ArtifactoryEclipseResolversTest {
     @Test
     public void artifactRepositoriesAreKeptWithoutArtifactoryResolution() throws Exception {
         helper = new StubHelper(false);
-        set(artifactResolver, "helper", helper);
+        FieldUtils.writeField(artifactResolver, "helper", helper, true);
         ArtifactRequest request = artifactRequest();
 
         artifactResolver.resolveArtifact(null, request);
@@ -108,7 +107,7 @@ public class ArtifactoryEclipseResolversTest {
         MetadataRequest release = metadataRequest(Metadata.Nature.RELEASE);
         MetadataRequest snapshot = metadataRequest(Metadata.Nature.SNAPSHOT);
 
-        metadataResolver.resolveMetadata(null, java.util.Arrays.asList(release, snapshot));
+        metadataResolver.resolveMetadata(null, Arrays.asList(release, snapshot));
 
         assertSame(ARTIFACTORY_RELEASE, release.getRepository());
         assertSame(ARTIFACTORY_SNAPSHOT, snapshot.getRepository());
@@ -118,7 +117,7 @@ public class ArtifactoryEclipseResolversTest {
     @Test
     public void metadataRepositoryIsKeptWithoutArtifactoryResolution() throws Exception {
         helper = new StubHelper(false);
-        set(metadataResolver, "helper", helper);
+        FieldUtils.writeField(metadataResolver, "helper", helper, true);
         MetadataRequest request = metadataRequest(Metadata.Nature.RELEASE);
 
         metadataResolver.resolveMetadata(null, Collections.singletonList(request));
@@ -136,12 +135,6 @@ public class ArtifactoryEclipseResolversTest {
 
     private static RemoteRepository repo(String id, String url) {
         return new RemoteRepository.Builder(id, "default", url).build();
-    }
-
-    private static void set(Object target, String fieldName, Object value) throws Exception {
-        Field field = target.getClass().getDeclaredField(fieldName);
-        field.setAccessible(true);
-        field.set(target, value);
     }
 
     /**

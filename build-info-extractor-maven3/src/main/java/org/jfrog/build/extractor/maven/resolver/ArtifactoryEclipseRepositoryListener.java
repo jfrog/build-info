@@ -11,8 +11,7 @@ import org.eclipse.aether.resolution.ArtifactRequest;
 import org.jfrog.build.extractor.maven.BuildInfoRecorder;
 
 /**
- * Repository listener when running in Maven 3.1.x
- * The listener is used for updating the BuildInfoRecorder with each resolved artifact.
+ * Repository listener that updates the BuildInfoRecorder with each resolved artifact.
  * <p>
  * The enforcement of the Artifactory resolution repositories is done by {@link ArtifactoryEclipseArtifactResolver} and
  * {@link ArtifactoryEclipseMetadataResolver}, which decorate Maven's own resolvers.
