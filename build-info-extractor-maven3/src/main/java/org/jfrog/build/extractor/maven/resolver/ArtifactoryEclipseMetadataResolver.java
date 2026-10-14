@@ -18,12 +18,16 @@ import java.util.List;
 @Component( role = MetadataResolver.class )
 public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolverBase<MetadataResolver> implements MetadataResolver {
 
+    private static final String MAVEN_METADATA_FILE = "maven-metadata.xml";
+
     private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
         if (getResolutionRepositories(session).isEmpty()) {
             return;
         }
         for (MetadataRequest request : requests) {
-            if (request.getRepository() != null && request.getMetadata() != null) {
+            // Only Maven's version metadata is redirected to the Artifactory release or snapshot repository. Other metadata is specific to the
+            // repository in the request and must stay there. For example, the '.meta/prefixes.txt' files that Maven Resolver 2.x requests for each repository.
+            if (request.getRepository() != null && request.getMetadata() != null && MAVEN_METADATA_FILE.equals(request.getMetadata().getType())) {
                 if (request.getMetadata().getNature() == Metadata.Nature.SNAPSHOT) {
                     request.setRepository(helper.getSnapshotRepository(session));
                 } else {

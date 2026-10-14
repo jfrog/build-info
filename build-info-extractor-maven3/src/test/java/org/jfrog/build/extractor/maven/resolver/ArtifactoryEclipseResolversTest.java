@@ -13,9 +13,14 @@ import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.resolution.MetadataRequest;
 import org.eclipse.aether.resolution.MetadataResult;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.codehaus.plexus.PlexusContainer;
+import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -125,12 +130,64 @@ public class ArtifactoryEclipseResolversTest {
         assertSame(MAVEN_CENTRAL, request.getRepository());
     }
 
+    @Test
+    public void onlyVersionMetadataIsRedirected() throws Exception {
+        // Maven Resolver 2.x requests the prefixes file of a specific repository. It must not be redirected to another repository.
+        MetadataRequest prefixes = metadataRequest("prefixes.txt", Metadata.Nature.RELEASE_OR_SNAPSHOT);
+
+        metadataResolver.resolveMetadata(null, Collections.singletonList(prefixes));
+
+        assertSame(MAVEN_CENTRAL, prefixes.getRepository());
+        assertEquals(1, metadataDelegate.requests.size());
+    }
+
+    @Test
+    public void delegateIsMavenResolverAndIsLookedUpOnce() throws Exception {
+        ArtifactoryEclipseArtifactResolver decorator = new ArtifactoryEclipseArtifactResolver();
+        RecordingArtifactResolver mavenResolver = new RecordingArtifactResolver();
+        ContainerStub container = new ContainerStub(ArtifactResolver.class, decorator, mavenResolver);
+        FieldUtils.writeField(decorator, "container", container.proxy(), true);
+        FieldUtils.writeField(decorator, "helper", new StubHelper(true), true);
+
+        decorator.resolveArtifact(null, artifactRequest());
+        decorator.resolveArtifact(null, artifactRequest());
+
+        assertEquals(2, mavenResolver.requests.size());
+        assertEquals(1, container.lookups);
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void missingDelegateFailsWithClearError() throws Exception {
+        ArtifactoryEclipseMetadataResolver decorator = new ArtifactoryEclipseMetadataResolver();
+        // Only the decorator itself is registered under the role
+        ContainerStub container = new ContainerStub(MetadataResolver.class, decorator);
+        FieldUtils.writeField(decorator, "container", container.proxy(), true);
+        FieldUtils.writeField(decorator, "helper", new StubHelper(true), true);
+
+        decorator.resolveMetadata(null, Collections.singletonList(metadataRequest(Metadata.Nature.RELEASE)));
+    }
+
+    @Test(expectedExceptions = IllegalStateException.class)
+    public void failedLookupIsReported() throws Exception {
+        ArtifactoryEclipseMetadataResolver decorator = new ArtifactoryEclipseMetadataResolver();
+        ContainerStub container = new ContainerStub(MetadataResolver.class);
+        container.failure = new ComponentLookupException("lookup failed", MetadataResolver.class.getName(), "default");
+        FieldUtils.writeField(decorator, "container", container.proxy(), true);
+        FieldUtils.writeField(decorator, "helper", new StubHelper(true), true);
+
+        decorator.resolveMetadata(null, Collections.singletonList(metadataRequest(Metadata.Nature.RELEASE)));
+    }
+
     private static ArtifactRequest artifactRequest() {
         return new ArtifactRequest(new DefaultArtifact("org.test:test:1.0"), Collections.singletonList(MAVEN_CENTRAL), null);
     }
 
     private static MetadataRequest metadataRequest(Metadata.Nature nature) {
-        return new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", "maven-metadata.xml", nature), MAVEN_CENTRAL, null);
+        return metadataRequest("maven-metadata.xml", nature);
+    }
+
+    private static MetadataRequest metadataRequest(String type, Metadata.Nature nature) {
+        return new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", type, nature), MAVEN_CENTRAL, null);
     }
 
     private static RemoteRepository repo(String id, String url) {
@@ -163,6 +220,37 @@ public class ArtifactoryEclipseResolversTest {
         @Override
         RemoteRepository getReleaseRepository(RepositorySystemSession session) {
             return ARTIFACTORY_RELEASE;
+        }
+    }
+
+    /**
+     * A minimal PlexusContainer, which answers only lookupList(role).
+     */
+    private static class ContainerStub implements InvocationHandler {
+        private final Class<?> role;
+        private final List<Object> registered;
+        private ComponentLookupException failure;
+        private int lookups;
+
+        ContainerStub(Class<?> role, Object... registered) {
+            this.role = role;
+            this.registered = Arrays.asList(registered);
+        }
+
+        PlexusContainer proxy() {
+            return (PlexusContainer) Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[]{PlexusContainer.class}, this);
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            if (!"lookupList".equals(method.getName()) || args.length != 1 || args[0] != role) {
+                throw new UnsupportedOperationException(method.getName());
+            }
+            lookups++;
+            if (failure != null) {
+                throw failure;
+            }
+            return registered;
         }
     }
 
