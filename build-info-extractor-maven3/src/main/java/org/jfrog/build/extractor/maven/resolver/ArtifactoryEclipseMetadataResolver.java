@@ -1,10 +1,8 @@
 package org.jfrog.build.extractor.maven.resolver;
 
 import org.codehaus.plexus.component.annotations.Component;
-import org.codehaus.plexus.component.annotations.Requirement;
-import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
-import org.eclipse.aether.internal.impl.DefaultMetadataResolver;
+import org.eclipse.aether.impl.MetadataResolver;
 import org.eclipse.aether.metadata.Metadata;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.MetadataRequest;
@@ -14,48 +12,38 @@ import javax.inject.Named;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Decorates Maven's {@link MetadataResolver}, and enforces the Artifactory resolution repositories before delegating to it.
+ */
 @Named
-@Component( role = ArtifactoryEclipseMetadataResolver.class )
-public class ArtifactoryEclipseMetadataResolver extends DefaultMetadataResolver {
+@Component( role = MetadataResolver.class )
+public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolverBase<MetadataResolver> implements MetadataResolver {
 
-    @Requirement
-    private ResolutionHelper resolutionHelper;
+    private static final String MAVEN_METADATA_FILE = "maven-metadata.xml";
 
-    @Requirement
-    private Logger logger;
-
-    @Requirement
-    private ArtifactoryEclipseResolversHelper helper;
-
-    private void enforceResolutionRepositories(RepositorySystemSession session, MetadataRequest request) {
-        // Get the Artifactory repositories configured in the Artifactory plugin:
-        List<RemoteRepository> repositories = helper.getResolutionRepositories(session);
-
-        // The repositories list can be empty, in case this build is not running from a CI server.
-        // In that case, we do not want to override Maven's configured repositories:
-        if (repositories != null && !repositories.isEmpty() && request.getRepository() != null && request.getMetadata() != null) {
-            if (request.getMetadata().getNature() == Metadata.Nature.SNAPSHOT) {
-                request.setRepository(getSnapshotRepository(session));
-            } else {
-                request.setRepository(getReleaseRepository(session));
+    private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
+        List<RemoteRepository> repositories = getResolutionRepositories(session);
+        if (repositories.isEmpty()) {
+            return;
+        }
+        for (MetadataRequest request : requests) {
+            // Only Maven's version metadata is redirected to the Artifactory release or snapshot repository. Other metadata is specific to the
+            // repository in the request and must stay there. For example, the '.meta/prefixes.txt' files that Maven Resolver 2.x requests for each repository.
+            // Metadata already requested from an Artifactory repository is kept there, so Maven applies the policy of that repository.
+            if (request.getRepository() != null && !repositories.contains(request.getRepository())
+                    && request.getMetadata() != null && MAVEN_METADATA_FILE.equals(request.getMetadata().getType())) {
+                if (request.getMetadata().getNature() == Metadata.Nature.SNAPSHOT) {
+                    request.setRepository(helper.getSnapshotRepository(session));
+                } else {
+                    request.setRepository(helper.getReleaseRepository(session));
+                }
             }
         }
     }
 
     @Override
-    public List<MetadataResult> resolveMetadata(RepositorySystemSession session, Collection<? extends MetadataRequest> requests ) {
-        for(MetadataRequest request : requests) {
-            enforceResolutionRepositories(session, request);
-        }
-        // Now we let Maven resolve the artifacts:
-        return super.resolveMetadata(session, requests);
-    }
-
-    public RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
-        return helper.getSnapshotRepository(session);
-    }
-
-    public RemoteRepository getReleaseRepository(RepositorySystemSession session) {
-        return helper.getReleaseRepository(session);
+    public List<MetadataResult> resolveMetadata(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
+        enforceResolutionRepositories(session, requests);
+        return getDelegate(MetadataResolver.class).resolveMetadata(session, requests);
     }
 }

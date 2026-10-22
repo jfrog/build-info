@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       maven-versions: ${{ steps.set-versions.outputs.maven-versions }}
+      develocity-exclude: ${{ steps.set-versions.outputs.develocity-exclude }}
 
     steps:
       - name: Get latest Maven versions from Maven Central
@@ -62,16 +63,19 @@ jobs:
           # Get latest versions for each major.minor series
           LATEST_3_8=$(echo "$VERSIONS" | grep '^3\.8\.' | tail -1)
           LATEST_3_9=$(echo "$VERSIONS" | grep '^3\.9\.' | tail -1)
+          LATEST_3_10=$(echo "$VERSIONS" | grep '^3\.10\.' | tail -1)
           LATEST_4_0=$(echo "$VERSIONS" | grep '^4\.0\.' | tail -1)
 
           echo ""
           echo "Latest versions by series:"
           echo "  3.8.x: $LATEST_3_8"
           echo "  3.9.x: $LATEST_3_9"
+          echo "  3.10.x: ${LATEST_3_10:-not released yet}"
           echo "  4.0.x: ${LATEST_4_0:-not released yet}"
 
           echo "LATEST_3_8=$LATEST_3_8" >> $GITHUB_ENV
           echo "LATEST_3_9=$LATEST_3_9" >> $GITHUB_ENV
+          echo "LATEST_3_10=$LATEST_3_10" >> $GITHUB_ENV
           echo "LATEST_4_0=$LATEST_4_0" >> $GITHUB_ENV
 
       - name: Build version matrix
@@ -93,6 +97,11 @@ jobs:
             VERSIONS+=', "'$LATEST_3_9'"'
           fi
 
+          # Add latest 3.10.x if released. Maven 3.10 uses Maven Resolver 2.x, which has different internal classes than Maven 3.9.
+          if [ -n "$LATEST_3_10" ]; then
+            VERSIONS+=', "'$LATEST_3_10'"'
+          fi
+
           # Add latest 4.0.x if released
           if [ -n "$LATEST_4_0" ]; then
             VERSIONS+=', "'$LATEST_4_0'"'
@@ -100,8 +109,16 @@ jobs:
 
           VERSIONS+=']'
 
+          # The Develocity extension (2.4.0, 2.5.0) fails on Maven 3.10 without the extractor too
+          # (Guice/NullInjectedIntoNonNullable for pluginDescriptorCache), so skip that combination.
+          DEVELOCITY_EXCLUDE='[]'
+          if [ -n "$LATEST_3_10" ]; then
+            DEVELOCITY_EXCLUDE='[{"maven-version": "'$LATEST_3_10'", "develocity": true}]'
+          fi
+
           echo "Maven versions to test: $VERSIONS"
           echo "maven-versions=$VERSIONS" >> $GITHUB_OUTPUT
+          echo "develocity-exclude=$DEVELOCITY_EXCLUDE" >> $GITHUB_OUTPUT
 
   build-extractor:
     name: Build extractor from source
@@ -150,6 +167,7 @@ jobs:
         develocity:
           - false
           - true
+        exclude: ${{ fromJSON(needs.check-latest-maven-versions.outputs.develocity-exclude) }}
 
     steps:
       - name: Set up JDK ${{ matrix.java-version }}
@@ -366,5 +384,128 @@ jobs:
           name: failure-logs-maven${{ matrix.maven-version }}-java${{ matrix.java-version }}-develocity${{ matrix.develocity }}
           path: /tmp/test-project/maven-output.log
 
+          retention-days: 7
+          if-no-files-found: ignore
+
+      # The "Run jf mvn" scenario above configures only the deployer, so it can't show that resolution is enforced.
+      # This scenario checks it without a JFrog server: a local repository replaces Artifactory, and all other repositories are unreachable.
+      - name: Verify Artifactory resolution is enforced
+        if: ${{ !matrix.develocity }}
+        timeout-minutes: 10
+        run: |
+          set -euo pipefail
+          WORK=/tmp/resolution-enforcement
+          rm -rf "$WORK"
+          mkdir -p "$WORK/seed" "$WORK/project" "$WORK/art"
+
+          # A local "remote" repository replaces Artifactory, so this check needs no server.
+          # Fill it by resolving a project and a plugin once with plain Maven (no extractor).
+          cat > "$WORK/seed/pom.xml" << 'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>com.jfrog.test</groupId>
+            <artifactId>resolution-seed</artifactId>
+            <version>1.0</version>
+            <dependencies>
+              <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.2</version>
+              </dependency>
+            </dependencies>
+          </project>
+          EOF
+          (cd "$WORK/seed" && mvn -B -q -Dmaven.repo.local="$WORK/art/repository" \
+            org.apache.maven.plugins:maven-dependency-plugin:3.6.1:resolve)
+
+          # The test project declares an unreachable repository, and the settings mirror every other
+          # repository to an unreachable URL. The build can only succeed if the extractor
+          # makes Maven resolve everything, plugins included, from the Artifactory resolution repository.
+          cat > "$WORK/project/pom.xml" << 'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>com.jfrog.test</groupId>
+            <artifactId>resolution-enforcement</artifactId>
+            <version>1.0</version>
+            <repositories>
+              <repository>
+                <id>unreachable</id>
+                <url>http://127.0.0.1:1/unreachable</url>
+              </repository>
+            </repositories>
+            <dependencies>
+              <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13.2</version>
+              </dependency>
+            </dependencies>
+          </project>
+          EOF
+          cat > "$WORK/settings.xml" << 'EOF'
+          <settings>
+            <mirrors>
+              <mirror>
+                <id>blocked</id>
+                <mirrorOf>*</mirrorOf>
+                <url>http://127.0.0.1:1/blocked</url>
+              </mirror>
+            </mirrors>
+          </settings>
+          EOF
+          cat > "$WORK/build-info.properties" << EOF
+          org.jfrog.build.extractor.maven.recorder.activate=true
+          artifactory.resolve.contextUrl=file://$WORK/art
+          artifactory.resolve.repoKey=repository
+          artifactory.publish.artifacts=false
+          artifactory.publish.buildInfo=false
+          artifactory.publish.contextUrl=http://127.0.0.1:1/artifactory
+          artifactory.publish.repoKey=unused-local
+          buildInfo.generated.build.info=$WORK/build-info.json
+          buildInfo.build.name=resolution-enforcement
+          buildInfo.build.number=1
+          buildInfo.build.timestamp=1
+          EOF
+
+          # Run Maven the same way as 'jf mvn' does: the extractor jar is loaded by the Maven class loader configuration
+          MAVEN_HOME=$(mvn --version | sed -n 's/^Maven home: //p')
+          CLASSWORLDS=$(ls "$MAVEN_HOME"/boot/plexus-classworlds*.jar | head -1)
+          set +e
+          (cd "$WORK/project" && "$JAVA_HOME/bin/java" -classpath "$CLASSWORLDS" \
+            -Dclassworlds.conf="$EXTRACTOR_DIR/classworlds.conf" \
+            -Dmaven.home="$MAVEN_HOME" \
+            -Dm3plugin.lib="$EXTRACTOR_DIR" \
+            -DbuildInfoConfig.propertiesFile="$WORK/build-info.properties" \
+            -Dmaven.multiModuleProjectDirectory="$WORK/project" \
+            org.codehaus.plexus.classworlds.launcher.Launcher \
+            -s "$WORK/settings.xml" -Dmaven.repo.local="$WORK/local-repo" -B \
+            org.apache.maven.plugins:maven-dependency-plugin:3.6.1:resolve) 2>&1 | tee "$WORK/maven-output.log"
+          MAVEN_EXIT=${PIPESTATUS[0]}
+          set -e
+
+          if [ "$MAVEN_EXIT" -ne 0 ]; then
+            echo "❌ Build failed. The extractor did not make Maven resolve from the Artifactory resolution repository"
+            exit 1
+          fi
+          TOTAL=$(grep -c "Downloaded from" "$WORK/maven-output.log" || true)
+          ENFORCED=$(grep -c "Downloaded from artifactory-release-snapshot:" "$WORK/maven-output.log" || true)
+          echo "Downloads: $TOTAL, from the Artifactory resolution repository: $ENFORCED"
+          if [ "$TOTAL" -eq 0 ] || [ "$TOTAL" -ne "$ENFORCED" ]; then
+            echo "❌ Some artifacts were not resolved from the Artifactory resolution repository:"
+            grep "Downloaded from" "$WORK/maven-output.log" | grep -v "Downloaded from artifactory-release-snapshot:" || true
+            exit 1
+          fi
+          if ! grep -q '"id" *: *"junit:junit:4.13.2"' "$WORK/build-info.json"; then
+            echo "❌ The resolved dependency junit:junit:4.13.2 is missing in the build-info"
+            exit 1
+          fi
+          echo "✅ All artifacts were resolved from the Artifactory resolution repository"
+
+      - name: Upload resolution check logs on failure
+        if: ${{ failure() && !matrix.develocity }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: resolution-check-logs-maven${{ matrix.maven-version }}-java${{ matrix.java-version }}
+          path: /tmp/resolution-enforcement/maven-output.log
           retention-days: 7
           if-no-files-found: ignore
