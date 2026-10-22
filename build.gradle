@@ -22,8 +22,8 @@ buildscript {
         httpClientVersion = '4.5.14'
         httpCoreVersion = '4.4.16'
         ivyVersion = '2.5.2'
-        // Updated to 2.17.3 for security fixes - compatible with Java 8+
-        jacksonVersion = '2.17.3'
+        // Updated to 2.18.12 for security fixes - compatible with Java 8+
+        jacksonVersion = '2.18.12'
         jdomVersion = '2.0.6.1'
         jsrVersion = '3.0.2'
         mavenVersion = '3.9.12'
