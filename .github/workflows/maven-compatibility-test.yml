@@ -43,6 +43,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       maven-versions: ${{ steps.set-versions.outputs.maven-versions }}
+      develocity-exclude: ${{ steps.set-versions.outputs.develocity-exclude }}
 
     steps:
       - name: Get latest Maven versions from Maven Central
@@ -108,8 +109,16 @@ jobs:
 
           VERSIONS+=']'
 
+          # The Develocity extension (2.4.0, 2.5.0) fails on Maven 3.10 without the extractor too
+          # (Guice/NullInjectedIntoNonNullable for pluginDescriptorCache), so skip that combination.
+          DEVELOCITY_EXCLUDE='[]'
+          if [ -n "$LATEST_3_10" ]; then
+            DEVELOCITY_EXCLUDE='[{"maven-version": "'$LATEST_3_10'", "develocity": true}]'
+          fi
+
           echo "Maven versions to test: $VERSIONS"
           echo "maven-versions=$VERSIONS" >> $GITHUB_OUTPUT
+          echo "develocity-exclude=$DEVELOCITY_EXCLUDE" >> $GITHUB_OUTPUT
 
   build-extractor:
     name: Build extractor from source
@@ -158,6 +167,7 @@ jobs:
         develocity:
           - false
           - true
+        exclude: ${{ fromJSON(needs.check-latest-maven-versions.outputs.develocity-exclude) }}
 
     steps:
       - name: Set up JDK ${{ matrix.java-version }}
