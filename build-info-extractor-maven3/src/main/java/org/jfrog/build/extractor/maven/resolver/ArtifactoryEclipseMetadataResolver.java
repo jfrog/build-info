@@ -4,6 +4,7 @@ import org.codehaus.plexus.component.annotations.Component;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.impl.MetadataResolver;
 import org.eclipse.aether.metadata.Metadata;
+import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.MetadataRequest;
 import org.eclipse.aether.resolution.MetadataResult;
 
@@ -21,13 +22,16 @@ public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolv
     private static final String MAVEN_METADATA_FILE = "maven-metadata.xml";
 
     private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
-        if (getResolutionRepositories(session).isEmpty()) {
+        List<RemoteRepository> repositories = getResolutionRepositories(session);
+        if (repositories.isEmpty()) {
             return;
         }
         for (MetadataRequest request : requests) {
             // Only Maven's version metadata is redirected to the Artifactory release or snapshot repository. Other metadata is specific to the
             // repository in the request and must stay there. For example, the '.meta/prefixes.txt' files that Maven Resolver 2.x requests for each repository.
-            if (request.getRepository() != null && request.getMetadata() != null && MAVEN_METADATA_FILE.equals(request.getMetadata().getType())) {
+            // Metadata already requested from an Artifactory repository is kept there, so Maven applies the policy of that repository.
+            if (request.getRepository() != null && !repositories.contains(request.getRepository())
+                    && request.getMetadata() != null && MAVEN_METADATA_FILE.equals(request.getMetadata().getType())) {
                 if (request.getMetadata().getNature() == Metadata.Nature.SNAPSHOT) {
                     request.setRepository(helper.getSnapshotRepository(session));
                 } else {

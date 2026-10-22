@@ -120,6 +120,18 @@ public class ArtifactoryEclipseResolversTest {
     }
 
     @Test
+    public void metadataOfArtifactoryRepositoriesIsNotRedirected() throws Exception {
+        // Maven skips the release repository for snapshot metadata, according to its policy. Redirecting it would download the metadata again.
+        MetadataRequest snapshotOnRelease = metadataRequest("maven-metadata.xml", Metadata.Nature.SNAPSHOT, ARTIFACTORY_RELEASE);
+        MetadataRequest releaseOnSnapshot = metadataRequest("maven-metadata.xml", Metadata.Nature.RELEASE, ARTIFACTORY_SNAPSHOT);
+
+        metadataResolver.resolveMetadata(null, Arrays.asList(snapshotOnRelease, releaseOnSnapshot));
+
+        assertSame(ARTIFACTORY_RELEASE, snapshotOnRelease.getRepository());
+        assertSame(ARTIFACTORY_SNAPSHOT, releaseOnSnapshot.getRepository());
+    }
+
+    @Test
     public void metadataRepositoryIsKeptWithoutArtifactoryResolution() throws Exception {
         helper = new StubHelper(false);
         FieldUtils.writeField(metadataResolver, "helper", helper, true);
@@ -187,7 +199,11 @@ public class ArtifactoryEclipseResolversTest {
     }
 
     private static MetadataRequest metadataRequest(String type, Metadata.Nature nature) {
-        return new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", type, nature), MAVEN_CENTRAL, null);
+        return metadataRequest(type, nature, MAVEN_CENTRAL);
+    }
+
+    private static MetadataRequest metadataRequest(String type, Metadata.Nature nature, RemoteRepository repository) {
+        return new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", type, nature), repository, null);
     }
 
     private static RemoteRepository repo(String id, String url) {
