@@ -1,0 +1,67 @@
+name: Release Build Info
+
+on:
+  workflow_dispatch:
+    inputs:
+      next_version:
+        description: "Next build-info release version (e.g. 2.44.0)"
+        required: true
+      next_development_version:
+        description: "Next build-info development version (e.g. 2.44.x-SNAPSHOT)"
+        required: true
+      next_gradle_version:
+        description: "Next build-info-extractor-gradle release version (e.g. 4.36.0)"
+        required: true
+      next_gradle_development_version:
+        description: "Next build-info-extractor-gradle development version (e.g. 4.36.x-SNAPSHOT)"
+        required: true
+      skip_audit_check:
+        description: "Skip the jf audit check"
+        required: false
+        type: boolean
+        default: false
+
+env:
+  CI: true
+  JFROG_BUILD_STATUS: PASS
+  JFROG_CLI_BUILD_NAME: ecosystem-build-info-release
+  JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+  JFROG_CLI_BUILD_PROJECT: ecosys
+  NEXT_VERSION: ${{ inputs.next_version }}
+  NEXT_DEVELOPMENT_VERSION: ${{ inputs.next_development_version }}
+  NEXT_GRADLE_VERSION: ${{ inputs.next_gradle_version }}
+  NEXT_GRADLE_DEVELOPMENT_VERSION: ${{ inputs.next_gradle_development_version }}
+
+permissions:
+  contents: write
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v3
+        with:
+          ref: master
+          token: ${{ secrets.IL_AUTOMATION_TOKEN }}
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          java-version: "8"
+          distribution: "zulu"
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+
+      - name: Run release script
+        run: .github/scripts/release.sh
+        env:
+          ARTIFACTORY_URL: ${{ secrets.ARTIFACTORY_URL }}
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_APIKEY: ${{ secrets.ARTIFACTORY_APIKEY }}
+          MVN_CENTRAL_USER: ${{ secrets.MVN_CENTRAL_USER }}
+          MVN_CENTRAL_PASSWORD: ${{ secrets.MVN_CENTRAL_PASSWORD }}
+          MVN_CENTRAL_SIGNING_KEY: ${{ secrets.MVN_CENTRAL_SIGNING_KEY }}
+          MVN_CENTRAL_SIGNING_PASSWORD: ${{ secrets.MVN_CENTRAL_SIGNING_PASSWORD }}
+          SKIP_AUDIT_CHECK: ${{ inputs.skip_audit_check }}
