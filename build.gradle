@@ -96,6 +96,10 @@ allprojects {
     apply plugin: 'idea'
     group = 'org.jfrog.buildinfo'
 
+    // Don't depend on the CI runner's default locale (POSIX => ASCII) when compiling/generating javadoc
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+    tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
+
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
         maven { url "https://releases.jfrog.io/artifactory/oss-snapshot-local" }
