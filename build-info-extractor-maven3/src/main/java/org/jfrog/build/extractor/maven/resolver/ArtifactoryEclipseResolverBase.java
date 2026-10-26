@@ -3,6 +3,7 @@ package org.jfrog.build.extractor.maven.resolver;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.annotations.Requirement;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.logging.Logger;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.repository.RemoteRepository;
 
@@ -23,9 +24,18 @@ abstract class ArtifactoryEclipseResolverBase<T> {
     private PlexusContainer container;
 
     @Requirement
+    private Logger logger;
+
+    @Requirement
     ArtifactoryEclipseResolversHelper helper;
 
+    private final Class<T> role;
+
     private volatile T delegate;
+
+    ArtifactoryEclipseResolverBase(Class<T> role) {
+        this.role = role;
+    }
 
     /**
      * Get the Artifactory repositories configured in the Artifactory plugin.
@@ -41,17 +51,19 @@ abstract class ArtifactoryEclipseResolverBase<T> {
      * look-up can't be a plain requirement - it would resolve to the decorator. The look-up is lazy to avoid circular dependencies,
      * and idempotent, so two threads that look it up at the same time get the same delegate. The field is volatile to publish it safely.
      */
-    T getDelegate(Class<T> role) {
+    T getDelegate() {
         if (delegate == null) {
-            delegate = lookupDelegate(role);
+            delegate = lookupDelegate();
         }
         return delegate;
     }
 
-    private T lookupDelegate(Class<T> role) {
+    private T lookupDelegate() {
         try {
             for (T candidate : container.lookupList(role)) {
                 if (!(candidate instanceof ArtifactoryEclipseResolverBase)) {
+                    // Shows whether the delegate is Maven's own resolver, or one of another extension
+                    logger.debug("Decorating " + role.getSimpleName() + ": " + candidate.getClass().getName());
                     return candidate;
                 }
             }

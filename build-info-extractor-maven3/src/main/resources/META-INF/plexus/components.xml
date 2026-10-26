@@ -121,6 +121,10 @@
                     <role>org.codehaus.plexus.PlexusContainer</role>
                     <field-name>container</field-name>
                 </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <field-name>logger</field-name>
+                </requirement>
             </requirements>
         </component>
         <!-- A decorator of Maven's artifact resolver, responsible for enforcing artifact resolution from Artifactory -->
@@ -137,6 +141,10 @@
                 <requirement>
                     <role>org.codehaus.plexus.PlexusContainer</role>
                     <field-name>container</field-name>
+                </requirement>
+                <requirement>
+                    <role>org.codehaus.plexus.logging.Logger</role>
+                    <field-name>logger</field-name>
                 </requirement>
             </requirements>
         </component>

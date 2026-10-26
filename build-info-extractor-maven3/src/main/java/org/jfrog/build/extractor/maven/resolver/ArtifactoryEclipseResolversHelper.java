@@ -40,7 +40,8 @@ public class ArtifactoryEclipseResolversHelper {
      * @param session - Settings and components that control the repository system
      * @return Snapshot and release resolution repositories
      */
-    List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
+    synchronized List<RemoteRepository> getResolutionRepositories(RepositorySystemSession session) {
+        // Synchronized, so that parallel builds (-T) never see a partially filled list
         if (resolutionRepositories.isEmpty()) {
             initResolutionHelper(session);
             ArtifactoryResolution artifactoryResolution = getArtifactoryResolution();
@@ -73,7 +74,7 @@ public class ArtifactoryEclipseResolversHelper {
         resolutionHelper.init(allMavenProps);
     }
 
-    List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
+    synchronized List<ArtifactRepository> getResolutionPluginRepositories(RepositorySystemSession session) {
         if (resolutionPluginRepositories.isEmpty()) {
             initResolutionHelper(session);
             ArtifactoryPluginResolution repositoryBuilder = getArtifactoryPluginResolution();
@@ -96,7 +97,7 @@ public class ArtifactoryEclipseResolversHelper {
                 .setSnapshotUpdatePolicy(resolutionHelper.getSnapshotUpdatePolicy());
     }
 
-    RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
+    synchronized RemoteRepository getSnapshotRepository(RepositorySystemSession session) {
         // Init repositories configured in the Artifactory plugin:
         initResolutionRepositories(session);
         if (snapshotRepository != null) {
@@ -105,7 +106,7 @@ public class ArtifactoryEclipseResolversHelper {
         return releaseRepository;
     }
 
-    RemoteRepository getReleaseRepository(RepositorySystemSession session) {
+    synchronized RemoteRepository getReleaseRepository(RepositorySystemSession session) {
         // Init repositories configured in the Artifactory plugin:
         initResolutionRepositories(session);
 

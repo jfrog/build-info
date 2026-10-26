@@ -21,6 +21,10 @@ public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolv
 
     private static final String MAVEN_METADATA_FILE = "maven-metadata.xml";
 
+    public ArtifactoryEclipseMetadataResolver() {
+        super(MetadataResolver.class);
+    }
+
     private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
         List<RemoteRepository> repositories = getResolutionRepositories(session);
         if (repositories.isEmpty()) {
@@ -44,6 +48,6 @@ public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolv
     @Override
     public List<MetadataResult> resolveMetadata(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
         enforceResolutionRepositories(session, requests);
-        return getDelegate(MetadataResolver.class).resolveMetadata(session, requests);
+        return getDelegate().resolveMetadata(session, requests);
     }
 }

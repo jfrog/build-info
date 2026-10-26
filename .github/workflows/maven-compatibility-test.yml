@@ -43,7 +43,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       maven-versions: ${{ steps.set-versions.outputs.maven-versions }}
-      develocity-exclude: ${{ steps.set-versions.outputs.develocity-exclude }}
 
     steps:
       - name: Get latest Maven versions from Maven Central
@@ -109,16 +108,8 @@ jobs:
 
           VERSIONS+=']'
 
-          # The Develocity extension (2.4.0, 2.5.0) fails on Maven 3.10 without the extractor too
-          # (Guice/NullInjectedIntoNonNullable for pluginDescriptorCache), so skip that combination.
-          DEVELOCITY_EXCLUDE='[]'
-          if [ -n "$LATEST_3_10" ]; then
-            DEVELOCITY_EXCLUDE='[{"maven-version": "'$LATEST_3_10'", "develocity": true}]'
-          fi
-
           echo "Maven versions to test: $VERSIONS"
           echo "maven-versions=$VERSIONS" >> $GITHUB_OUTPUT
-          echo "develocity-exclude=$DEVELOCITY_EXCLUDE" >> $GITHUB_OUTPUT
 
   build-extractor:
     name: Build extractor from source
@@ -167,7 +158,6 @@ jobs:
         develocity:
           - false
           - true
-        exclude: ${{ fromJSON(needs.check-latest-maven-versions.outputs.develocity-exclude) }}
 
     steps:
       - name: Set up JDK ${{ matrix.java-version }}
@@ -309,6 +299,11 @@ jobs:
           # Download directly into the local Maven repo (~/.m2/repository).
           # No -Ddest flag — dependency:get places the jar at its standard repo path
           # so Maven finds it locally without any network call during jf mvn.
+          # Develocity 2.4.0 and 2.5.0 fail on Maven 3.10 even without the extractor
+          # (Guice/NullInjectedIntoNonNullable for pluginDescriptorCache). 2.6.1 supports it.
+          if [[ "${{ matrix.maven-version }}" == 3.10.* && -z "${{ inputs.develocity-version }}" ]]; then
+            DEVELOCITY_VERSION=2.6.1
+          fi
           mvn dependency:get \
             -Dartifact=com.gradle:develocity-maven-extension:${DEVELOCITY_VERSION} \
             -Dmaven.repo.remote=https://repo.maven.apache.org/maven2 \

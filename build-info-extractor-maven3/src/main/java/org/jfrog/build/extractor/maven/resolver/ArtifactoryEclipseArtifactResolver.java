@@ -20,6 +20,10 @@ import java.util.List;
 @Component( role = ArtifactResolver.class )
 public class ArtifactoryEclipseArtifactResolver extends ArtifactoryEclipseResolverBase<ArtifactResolver> implements ArtifactResolver {
 
+    public ArtifactoryEclipseArtifactResolver() {
+        super(ArtifactResolver.class);
+    }
+
     private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests) {
         List<RemoteRepository> repositories = getResolutionRepositories(session);
         if (!repositories.isEmpty()) {
@@ -35,7 +39,7 @@ public class ArtifactoryEclipseArtifactResolver extends ArtifactoryEclipseResolv
     @Override
     public ArtifactResult resolveArtifact(RepositorySystemSession session, ArtifactRequest request) throws ArtifactResolutionException {
         enforceResolutionRepositories(session, Collections.singletonList(request));
-        return getDelegate(ArtifactResolver.class).resolveArtifact(session, request);
+        return getDelegate().resolveArtifact(session, request);
     }
 
     /**
@@ -45,6 +49,6 @@ public class ArtifactoryEclipseArtifactResolver extends ArtifactoryEclipseResolv
     public List<ArtifactResult> resolveArtifacts(RepositorySystemSession session, Collection<? extends ArtifactRequest> requests)
             throws ArtifactResolutionException {
         enforceResolutionRepositories(session, requests);
-        return getDelegate(ArtifactResolver.class).resolveArtifacts(session, requests);
+        return getDelegate().resolveArtifacts(session, requests);
     }
 }

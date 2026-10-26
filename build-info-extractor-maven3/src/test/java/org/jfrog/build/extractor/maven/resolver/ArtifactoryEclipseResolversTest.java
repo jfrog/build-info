@@ -15,6 +15,8 @@ import org.eclipse.aether.resolution.MetadataResult;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.codehaus.plexus.logging.AbstractLogger;
+import org.codehaus.plexus.logging.Logger;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -160,12 +162,15 @@ public class ArtifactoryEclipseResolversTest {
         ContainerStub container = new ContainerStub(ArtifactResolver.class, decorator, mavenResolver);
         FieldUtils.writeField(decorator, "container", container.proxy(), true);
         FieldUtils.writeField(decorator, "helper", new StubHelper(true), true);
+        RecordingLogger logger = new RecordingLogger();
+        FieldUtils.writeField(decorator, "logger", logger, true);
 
         decorator.resolveArtifact(null, artifactRequest());
         decorator.resolveArtifact(null, artifactRequest());
 
         assertEquals(2, mavenResolver.requests.size());
         assertEquals(1, container.lookups);
+        assertEquals(Collections.singletonList("Decorating ArtifactResolver: " + RecordingArtifactResolver.class.getName()), logger.debugMessages);
     }
 
     @Test(expectedExceptions = IllegalStateException.class)
@@ -236,6 +241,43 @@ public class ArtifactoryEclipseResolversTest {
         @Override
         RemoteRepository getReleaseRepository(RepositorySystemSession session) {
             return ARTIFACTORY_RELEASE;
+        }
+    }
+
+    /**
+     * Records the debug messages.
+     */
+    private static class RecordingLogger extends AbstractLogger {
+        private final List<String> debugMessages = new ArrayList<>();
+
+        RecordingLogger() {
+            super(LEVEL_DEBUG, "test");
+        }
+
+        @Override
+        public void debug(String message, Throwable throwable) {
+            debugMessages.add(message);
+        }
+
+        @Override
+        public void info(String message, Throwable throwable) {
+        }
+
+        @Override
+        public void warn(String message, Throwable throwable) {
+        }
+
+        @Override
+        public void error(String message, Throwable throwable) {
+        }
+
+        @Override
+        public void fatalError(String message, Throwable throwable) {
+        }
+
+        @Override
+        public Logger getChildLogger(String name) {
+            return this;
         }
     }
 
