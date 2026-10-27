@@ -106,9 +106,9 @@
                 </requirement>
             </requirements>
         </component>
-        <!-- A class responssible for enforcing metadata resolution from Artifactory, for Maven 3.2.1 and above -->
+        <!-- A decorator of Maven's metadata resolver, responsible for enforcing metadata resolution from Artifactory -->
         <component>
-            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</role>
+            <role>org.eclipse.aether.impl.MetadataResolver</role>
             <role-hint>default</role-hint>
             <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</implementation>
             <requirements>
@@ -118,70 +118,18 @@
                     <field-name>helper</field-name>
                 </requirement>
                 <requirement>
+                    <role>org.codehaus.plexus.PlexusContainer</role>
+                    <field-name>container</field-name>
+                </requirement>
+                <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
                     <field-name>logger</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
-                    <role-hint>default</role-hint>
-                    <field-name>resolutionHelper</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.spi.io.FileProcessor</role>
-                    <role-hint>default</role-hint>
-                    <field-name>fileProcessor</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RepositoryEventDispatcher</role>
-                    <role-hint>default</role-hint>
-                    <field-name>repositoryEventDispatcher</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.VersionResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>versionResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.UpdateCheckManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>updateCheckManager</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RepositoryConnectorProvider</role>
-                    <role-hint>default</role-hint>
-                    <field-name>repositoryConnectorProvider</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RemoteRepositoryManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>remoteRepositoryManager</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.SyncContextFactory</role>
-                    <role-hint>default</role-hint>
-                    <field-name>syncContextFactory</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.OfflineController</role>
-                    <role-hint>default</role-hint>
-                    <field-name>offlineController</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory</role>
-                    <role-hint>default</role-hint>
-                    <field-name>loggerFactory</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>remoteRepositoryFilterManager</field-name>
                 </requirement>
             </requirements>
         </component>
-        <!-- A class responssible for enforcing artifact resolution from Artifactory, for Maven 3.2.1 and above -->
+        <!-- A decorator of Maven's artifact resolver, responsible for enforcing artifact resolution from Artifactory -->
         <component>
-            <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
+            <role>org.eclipse.aether.impl.ArtifactResolver</role>
             <role-hint>default</role-hint>
             <implementation>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</implementation>
             <requirements>
@@ -191,69 +139,12 @@
                     <field-name>helper</field-name>
                 </requirement>
                 <requirement>
+                    <role>org.codehaus.plexus.PlexusContainer</role>
+                    <field-name>container</field-name>
+                </requirement>
+                <requirement>
                     <role>org.codehaus.plexus.logging.Logger</role>
-                    <role-hint>default</role-hint>
                     <field-name>logger</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ResolutionHelper</role>
-                    <role-hint>default</role-hint>
-                    <field-name>resolutionHelper</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.spi.io.FileProcessor</role>
-                    <role-hint>default</role-hint>
-                    <field-name>fileProcessor</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RepositoryEventDispatcher</role>
-                    <role-hint>default</role-hint>
-                    <field-name>repositoryEventDispatcher</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.VersionResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>versionResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.UpdateCheckManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>updateCheckManager</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RepositoryConnectorProvider</role>
-                    <role-hint>default</role-hint>
-                    <field-name>repositoryConnectorProvider</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RemoteRepositoryManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>remoteRepositoryManager</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.SyncContextFactory</role>
-                    <role-hint>default</role-hint>
-                    <field-name>syncContextFactory</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.OfflineController</role>
-                    <role-hint>default</role-hint>
-                    <field-name>offlineController</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.RemoteRepositoryFilterManager</role>
-                    <role-hint>default</role-hint>
-                    <field-name>remoteRepositoryFilterManager</field-name>
-                </requirement>
-                <requirement>
-                    <role>java.util.Map</role>
-                    <role-hint>default</role-hint>
-                    <field-name>artifactResolverPostProcessors</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.internal.impl.slf4j.Slf4jLoggerFactory</role>
-                    <role-hint>default</role-hint>
-                    <field-name>loggerFactory</field-name>
                 </requirement>
             </requirements>
         </component>
@@ -267,36 +158,6 @@
                     <role>org.codehaus.plexus.logging.Logger</role>
                     <role-hint>default</role-hint>
                     <field-name>logger</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.apache.maven.project.ProjectDependenciesResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>pojectDependenciesResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.apache.maven.plugin.internal.PluginDependenciesResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>pluginDependenciesResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.impl.ArtifactDescriptorReader</role>
-                    <role-hint>default</role-hint>
-                    <field-name>descriptorReader</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.eclipse.aether.RepositorySystem</role>
-                    <role-hint>default</role-hint>
-                    <field-name>repositorySystem</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseArtifactResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>artifactResolver</field-name>
-                </requirement>
-                <requirement>
-                    <role>org.jfrog.build.extractor.maven.resolver.ArtifactoryEclipseMetadataResolver</role>
-                    <role-hint>default</role-hint>
-                    <field-name>metadataResolver</field-name>
                 </requirement>
                 <requirement>
                     <role>org.jfrog.build.extractor.maven.BuildInfoRecorder</role>
