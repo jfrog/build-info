@@ -162,6 +162,7 @@ public class ArtifactoryEclipseResolversTest {
         MetadataRequest fromOtherRepo = metadataRequest("maven-metadata.xml", Metadata.Nature.SNAPSHOT, repo("other", "https://other/repo"));
         MetadataRequest fromArtifactory = metadataRequest("maven-metadata.xml", Metadata.Nature.SNAPSHOT, ARTIFACTORY_SNAPSHOT);
         MetadataRequest release = metadataRequest(Metadata.Nature.RELEASE);
+        metadataDelegate.exception = new Exception("metadata not found");
 
         List<MetadataResult> results = metadataResolver.resolveMetadata(null, Arrays.asList(fromCentral, fromOtherRepo, fromArtifactory, release));
 
@@ -173,7 +174,7 @@ public class ArtifactoryEclipseResolversTest {
         assertSame(release, results.get(3).getRequest());
         for (MetadataResult duplicate : results.subList(1, 3)) {
             assertSame(results.get(0).getMetadata(), duplicate.getMetadata());
-            assertSame(results.get(0).getException(), duplicate.getException());
+            assertSame(metadataDelegate.exception, duplicate.getException());
             assertEquals(results.get(0).isUpdated(), duplicate.isUpdated());
             assertSame(ARTIFACTORY_SNAPSHOT, duplicate.getRequest().getRepository());
         }
@@ -181,15 +182,36 @@ public class ArtifactoryEclipseResolversTest {
 
     @Test
     public void differentMetadataRequestsAreNotDeduplicated() throws Exception {
-        MetadataRequest snapshot = metadataRequest(Metadata.Nature.SNAPSHOT);
-        MetadataRequest otherArtifact = new MetadataRequest(new DefaultMetadata("org.test", "other", "1.0", "maven-metadata.xml", Metadata.Nature.SNAPSHOT), MAVEN_CENTRAL, null);
-        MetadataRequest otherContext = new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", "maven-metadata.xml", Metadata.Nature.SNAPSHOT), MAVEN_CENTRAL, "plugin");
-        MetadataRequest favorLocal = metadataRequest(Metadata.Nature.SNAPSHOT).setFavorLocalRepository(true);
+        // All the requests are on the same Artifactory repository, and each differs from the first one in a single field of the key
+        MetadataRequest request = artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE);
+        List<MetadataRequest> requests = Arrays.asList(
+                request,
+                artifactoryMetadataRequest("org.other", "test", "1.0", Metadata.Nature.RELEASE),
+                artifactoryMetadataRequest("org.test", "other", "1.0", Metadata.Nature.RELEASE),
+                artifactoryMetadataRequest("org.test", "test", "2.0", Metadata.Nature.RELEASE),
+                artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.SNAPSHOT),
+                artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE).setRequestContext("plugin"),
+                artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE).setDeleteLocalCopyIfMissing(true),
+                artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE).setFavorLocalRepository(true));
 
-        List<MetadataResult> results = metadataResolver.resolveMetadata(null, Arrays.asList(snapshot, otherArtifact, otherContext, favorLocal));
+        List<MetadataResult> results = metadataResolver.resolveMetadata(null, requests);
 
-        assertEquals(Arrays.asList(snapshot, otherArtifact, otherContext, favorLocal), metadataDelegate.requests);
-        assertEquals(4, results.size());
+        assertEquals(requests, metadataDelegate.requests);
+        assertEquals(requests.size(), results.size());
+    }
+
+    @Test
+    public void requestsWithoutMetadataAreNotDeduplicated() throws Exception {
+        MetadataRequest withoutMetadata = new MetadataRequest(null, ARTIFACTORY_RELEASE, null);
+        MetadataRequest request = artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE);
+        MetadataRequest duplicate = artifactoryMetadataRequest("org.test", "test", "1.0", Metadata.Nature.RELEASE);
+
+        List<MetadataResult> results = metadataResolver.resolveMetadata(null, Arrays.asList(withoutMetadata, request, duplicate));
+
+        assertEquals(Arrays.asList(withoutMetadata, request), metadataDelegate.requests);
+        assertEquals(3, results.size());
+        assertSame(withoutMetadata, results.get(0).getRequest());
+        assertSame(duplicate, results.get(2).getRequest());
     }
 
     @Test
@@ -268,6 +290,10 @@ public class ArtifactoryEclipseResolversTest {
 
     private static MetadataRequest metadataRequest(String type, Metadata.Nature nature, RemoteRepository repository) {
         return new MetadataRequest(new DefaultMetadata("org.test", "test", "1.0", type, nature), repository, null);
+    }
+
+    private static MetadataRequest artifactoryMetadataRequest(String groupId, String artifactId, String version, Metadata.Nature nature) {
+        return new MetadataRequest(new DefaultMetadata(groupId, artifactId, version, "maven-metadata.xml", nature), ARTIFACTORY_RELEASE, null);
     }
 
     private static RemoteRepository repo(String id, String url) {
@@ -393,13 +419,14 @@ public class ArtifactoryEclipseResolversTest {
 
     private static class RecordingMetadataResolver implements MetadataResolver {
         private final List<MetadataRequest> requests = new ArrayList<>();
+        private Exception exception;
 
         @Override
         public List<MetadataResult> resolveMetadata(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
             List<MetadataResult> results = new ArrayList<>();
             for (MetadataRequest request : requests) {
                 this.requests.add(request);
-                results.add(new MetadataResult(request).setMetadata(request.getMetadata()).setUpdated(true));
+                results.add(new MetadataResult(request).setMetadata(request.getMetadata()).setException(exception).setUpdated(true));
             }
             return results;
         }

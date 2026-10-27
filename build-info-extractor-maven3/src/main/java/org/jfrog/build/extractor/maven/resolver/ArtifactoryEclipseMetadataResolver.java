@@ -30,11 +30,7 @@ public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolv
         super(MetadataResolver.class);
     }
 
-    private void enforceResolutionRepositories(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
-        List<RemoteRepository> repositories = getResolutionRepositories(session);
-        if (repositories.isEmpty()) {
-            return;
-        }
+    private void enforceResolutionRepositories(RepositorySystemSession session, List<RemoteRepository> repositories, Collection<? extends MetadataRequest> requests) {
         for (MetadataRequest request : requests) {
             // Only Maven's version metadata is redirected to the Artifactory release or snapshot repository. Other metadata is specific to the
             // repository in the request and must stay there. For example, the '.meta/prefixes.txt' files that Maven Resolver 2.x requests for each repository.
@@ -51,11 +47,11 @@ public class ArtifactoryEclipseMetadataResolver extends ArtifactoryEclipseResolv
 
     @Override
     public List<MetadataResult> resolveMetadata(RepositorySystemSession session, Collection<? extends MetadataRequest> requests) {
-        enforceResolutionRepositories(session, requests);
         List<RemoteRepository> repositories = getResolutionRepositories(session);
         if (repositories.isEmpty()) {
             return getDelegate().resolveMetadata(session, requests);
         }
+        enforceResolutionRepositories(session, repositories, requests);
 
         // Maven requests the version metadata from each repository of the project. After the redirection, several of these requests are the same
         // request to the same Artifactory repository. Each of them is resolved only once, and its result is shared by the duplicate requests.
