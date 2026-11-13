@@ -8,7 +8,7 @@ import java.util.Map;
 
 /**
  * Represents a single OpenTelemetry-style span attached to a build.
- * The traces array captures CI pipeline observability data — test runs,
+ * The traces array captures CI pipeline observability data - test runs,
  * commands, and their timing relationships.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
